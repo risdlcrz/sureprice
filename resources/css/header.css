@@ -1,0 +1,215 @@
+* {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f4f4;
+  }
+
+  .left-header {
+    width: 260px;
+    background-color: #02912d;
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    padding: 20px 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    z-index: 1000;
+  }
+
+  .logo-title-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .header-logo {
+    width: 55px;
+    height: 55px;
+  }
+
+  .header-title {
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  .separator {
+    width: 90%;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.3);
+    margin: 15px 0;
+  }
+
+  .profile-section {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .profile-section .label {
+    font-size: 14px;
+    color: #e0e0e0;
+  }
+
+  .profile-section .username {
+    font-size: 16px;
+    font-weight: bold;
+    margin-top: 4px;
+  }
+
+  .profile-icon {
+    font-size: 40px;
+    color: white;
+    margin-top: 10px;
+  }
+
+  .nav-buttons button {
+    width: 100%;
+    padding: 12px 30px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 20px;
+    background-color: white;
+    color: #02912d;
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+
+  .nav-buttons button:hover {
+    background-color: #e0f5e7;
+    transform: translateY(-2px);
+  }
+
+  .page-content {
+    margin-left: 260px;
+    padding: 40px;
+    transition: margin-top 0.3s ease; /* Add transition for smooth scrolling */
+    z-index: 1; /* Ensure content is above other elements */
+  }
+
+  /* Mobile Top Header */
+  .mobile-topbar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: #02912d;
+    color: white;
+    z-index: 1500; /* Keep it on top of other content */
+    height: 40px;
+    padding: 5px 10px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Mobile Fullscreen Menu */
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #02912d;
+    color: white;
+    z-index: 2000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 30px 20px;
+  }
+
+  .logo-close-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .logo-close-container .text-start {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .logo-close-container .text-start img {
+    height: 50px;
+    margin-bottom: 10px;
+  }
+
+  .logo-close-container .text-start div {
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+  }
+
+  .close-btn-mobile {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    color: white;
+    transition: color 0.3s ease;
+    padding: 5px;
+  }
+
+  .close-btn-mobile:hover {
+    color: #f1c40f;
+  }
+
+  .mobile-nav-buttons button {
+    width: 100%;
+    padding: 12px 15px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 20px;
+    background-color: white;
+    color: #02912d;
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+
+  .mobile-nav-buttons button:hover {
+    background-color: #e0f5e7;
+    transform: translateY(-2px);
+  }
+
+  /* Adjust page content to avoid overlap with mobile header */
+  @media (max-width: 768px) {
+    .left-header {
+      display: none;
+    }
+
+    .page-content {
+      margin-left: 0;
+      padding: 80px 20px 20px;
+      margin-top: 40px; /* Added margin to avoid overlap with mobile header */
+      z-index: 1; /* Ensure content is above other elements */
+    }
+
+    .mobile-topbar {
+      display: flex;
+    }
+  }

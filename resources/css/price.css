@@ -1,0 +1,73 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background-color: #f4f4f4;
+    display: flex;
+  }
+
+  .sidebar {
+    width: 250px;
+    padding: 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    background-color: transparent;
+  }
+
+  .content {
+    margin-left: 250px;
+    padding: 20px;
+    flex-grow: 1;
+    overflow-x: hidden;
+  }
+
+  .dashboard-box {
+    display: flex;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    overflow: hidden;
+    flex-direction: column;
+  }
+
+  .price-trend-container {
+    padding: 20px;
+    border-bottom: 1px solid #ccc;
+  }
+
+  .table-container {
+    padding: 20px;
+  }
+
+  .table th, .table td {
+    vertical-align: middle;
+    padding: 8px 12px;
+  }
+
+  .table {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+  }
+
+  @media (max-width: 768px) {
+    body {
+      flex-direction: column;
+    }
+
+    .sidebar {
+      width: 100%;
+      height: auto;
+      position: relative;
+    }
+
+    .content {
+      margin-left: 0;
+    }
+
+    .dashboard-box {
+      flex-direction: column;
+    }
+  }

@@ -1,0 +1,98 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background-color: #f4f4f4;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    background-color: transparent;
+    padding: 20px;
+    height: 100vh;
+    color: #fff;
+    position: fixed;
+    width: 250px;
+    transition: all 0.3s ease;
+}
+
+.sidebar a {
+    color: transparent;
+    text-decoration: none;
+    font-size: 16px;
+    display: block;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.sidebar a:hover {
+    background-color: #444;
+}
+
+/* Content Styling */
+.content {
+    margin-left: 250px;
+    padding: 20px;
+    flex-grow: 1;
+    transition: margin-left 0.3s ease;
+}
+
+/* Heading Styling */
+h1, h4 {
+    color: #333;
+}
+
+/* Transaction List Styling */
+.list-group-item {
+    border: none;
+    font-size: 14px;
+    padding: 10px;
+    margin-bottom: 5px;
+}
+
+.list-group-item:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+/* Responsive Styling */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        width: 100%;
+        height: auto;
+        padding: 10px;
+        z-index: 999;
+    }
+
+    .content {
+        margin-left: 0;
+        padding: 10px;
+    }
+
+    .row {
+        display: block;
+    }
+
+    /* Ensure recent transaction doesn't overflow */
+    .col-md-4 {
+        margin-top: 20px; /* Give some space above */
+    }
+
+    .list-group-item {
+        font-size: 12px; /* Slightly smaller font */
+    }
+
+    /* Adjust Graph Heights for Smaller Screens */
+    canvas {
+        height: 150px; /* Further reduced graph height for smaller screens */
+    }
+
+    .card {
+        margin-bottom: 20px;
+    }
+
+    .row-cols-md-3 .col-md-4 {
+        width: 100%;
+    }
+}
