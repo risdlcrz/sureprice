@@ -1,0 +1,308 @@
+:root {
+            --primary-color: #02912d;
+            --primary-hover: #017a25;
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 80px;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f8f9fa;
+            display: flex;
+            min-height: 100vh;
+            color: #333;
+        }
+
+      .sidebar {
+    width: 250px;
+    padding: 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    background-color: transparent;
+}
+
+
+
+
+        .content {
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+            flex-grow: 1;
+            transition: all 0.3s ease;
+        }
+
+        .page-header {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            text-align: center
+        }
+
+        .page-title {
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: 0;
+        }
+
+        .data-card {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            padding: 15px 20px;
+            border: none;
+        }
+
+        .table tbody td {
+            padding: 12px 20px;
+            vertical-align: middle;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(2, 145, 45, 0.05);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .filter-buttons .btn {
+            margin-bottom: 5px;
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .role-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .role-procurement {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .role-supplier {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .role-warehousing {
+            background-color: #fff3e0;
+            color: #e65100;
+        }
+
+        .role-client {
+            background-color: #f3e5f5;
+            color: #8e24aa;
+        }
+
+      .file-upload-container {
+            position: relative;
+            min-width: 200px;
+        }
+
+        .file-upload-container input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .file-upload-display {
+            border: 1px dashed #ddd;
+            border-radius: 5px;
+            padding: 8px 12px;
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative; /* Added for positioning the X button */
+        }
+
+        .file-upload-display span {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+            color: #666;
+        }
+
+        .file-clear-btn {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #dc3545;
+            border: none;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 3;
+            display: none; /* Initially hidden */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .file-clear-btn:hover {
+            background: #c82333;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: var(--sidebar-collapsed-width);
+                padding: 0;
+                overflow: hidden;
+            }
+            
+            .sidebar .nav-link span {
+                display: none;
+            }
+            
+            .sidebar .nav-link i {
+                font-size: 1.2rem;
+                margin-right: 0;
+            }
+            
+            .content {
+                margin-left: var(--sidebar-collapsed-width);
+            }
+        }
+        .menu-toggle {
+                position: fixed;
+                top: 15px;
+                left: 15px;
+                z-index: 1100;
+                background: var(--primary-color);
+                color: white;
+                border: none;
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            }
+
+        @media (max-width: 768px) {
+            .top-controls {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 15px !important;
+            }
+            
+            .filter-buttons {
+                width: 100%;
+                overflow-x: auto;
+                white-space: nowrap;
+                padding-bottom: 10px;
+            }
+            
+            .right-controls {
+                width: 100%;
+            }
+            
+            .table-responsive {
+                border-radius: 0;
+            }
+            
+            .table thead {
+                display: none;
+            }
+            
+            .table tbody tr {
+                display: block;
+                margin-bottom: 15px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            
+            .table tbody td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px 15px;
+                border-top: none;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            
+            .table tbody td:before {
+                content: attr(data-label);
+                font-weight: 600;
+                margin-right: 15px;
+                color: #555;
+                flex: 0 0 120px;
+            }
+            
+            .table tbody td:last-child {
+                border-bottom: none;
+            }
+            
+            .actions {
+                justify-content: flex-end !important;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .content {
+                padding: 15px;
+            }
+            
+            .file-upload-container {
+                width: 100%;
+            }
+            
+            .search-form {
+                width: 100%;
+            }
+        }

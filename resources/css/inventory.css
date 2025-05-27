@@ -1,0 +1,176 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background-color: #f4f4f4;
+    display: flex;
+  }
+
+  .sidebar {
+    width: 250px;
+    padding: 10px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    background-color: transparent;
+  }
+
+  .content {
+    margin-left: 250px;
+    padding: 20px;
+    flex-grow: 1;
+  }
+
+  .dashboard-box {
+    display: flex;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    overflow: hidden;
+  }
+
+  .stock-bar-container {
+    flex: 1 1 60%;
+    padding: 20px;
+  }
+
+  .separator-line {
+    width: 1px;
+    background-color: #ccc;
+    margin: 0 20px;
+  }
+
+  .notifications {
+    flex: 1 1 40%;
+    padding: 20px;
+  }
+
+  .inventory-controls {
+    margin-bottom: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+  }
+
+  .inventory-controls button#toggleAll {
+    order: 1;
+  }
+
+  .table th, .table td {
+    vertical-align: middle;
+    padding: 8px 12px;
+  }
+
+  .table {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+  }
+
+  .form-check-input[type="checkbox"] {
+    transform: scale(1.2);
+  }
+
+  .btn-transparent {
+    background: none;
+    border: none;
+    color: #333;
+    position: relative;
+    padding: 5px 10px;
+  }
+
+  .btn-transparent::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0%;
+    height: 2px;
+    background-color: green;
+    transition: width 0.3s ease;
+  }
+
+  .btn-transparent:hover::after {
+    width: 100%;
+  }
+
+  .notifications .card-title i {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .custom-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+  }
+
+  .custom-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .custom-switch .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 50px;
+  }
+
+  .custom-switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
+  }
+
+  .custom-switch input:checked + .slider {
+    background-color: #28a745;
+  }
+
+  .custom-switch input:checked + .slider:before {
+    transform: translateX(22px);
+  }
+
+  @media (max-width: 768px) {
+    body {
+      flex-direction: column;
+    }
+
+    .sidebar {
+      width: 100%;
+      height: auto;
+      position: relative;
+    }
+
+    .content {
+      margin-left: 0;
+    }
+
+    .dashboard-box {
+      flex-direction: column;
+    }
+
+    .separator-line {
+      display: none;
+    }
+  }
