@@ -5,12 +5,37 @@ namespace App\Http\Controllers;
 use App\Models\Contract;
 use App\Models\Material;
 use App\Models\Supplier;
+use App\Models\Party;
+use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ContractController extends Controller
 {
+    public function index()
+    {
+        $contracts = Contract::with(['contractor', 'client', 'property'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('admin.contracts.index', compact('contracts'));
+    }
+
+    public function show(Contract $contract)
+    {
+        $contract->load([
+            'contractor',
+            'client',
+            'property',
+            'items.material.suppliers' => function($query) {
+                $query->where('is_preferred', true);
+            }
+        ]);
+
+        return view('admin.contracts.show', compact('contract'));
+    }
+
     public function create()
     {
         return view('admin.contract_form', [

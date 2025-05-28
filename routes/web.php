@@ -13,6 +13,7 @@ use App\Http\Controllers\CompanyDocumentController;
 use App\Http\Controllers\InformationManagementController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\ContractController;
+use App\Http\Controllers\PartyController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -96,3 +97,6 @@ Route::resource('contracts', ContractController::class);
 // Material and Supplier Routes
 Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
 Route::get('/materials/{material}/suppliers', [MaterialController::class, 'getSuppliers'])->name('materials.suppliers');
+
+// Client Search Route
+Route::get('/clients/search', [PartyController::class, 'search'])->name('clients.search');
