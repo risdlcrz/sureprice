@@ -40,11 +40,11 @@ class ContractController extends Controller
     {
         return view('admin.contract_form', [
             'edit_mode' => false,
-            'existing_contract' => null,
-            'existing_contractor' => null,
-            'existing_client' => null,
-            'existing_property' => null,
-            'existing_items' => []
+            'contract' => null,
+            'contractor' => null,
+            'client' => null,
+            'property' => null,
+            'items' => []
         ]);
     }
 
@@ -66,11 +66,11 @@ class ContractController extends Controller
 
         return view('admin.contract_form', [
             'edit_mode' => true,
-            'existing_contract' => $contract,
-            'existing_contractor' => $contract->contractor,
-            'existing_client' => $contract->client,
-            'existing_property' => $contract->property,
-            'existing_items' => $contract->items
+            'contract' => $contract,
+            'contractor' => $contract->contractor,
+            'client' => $contract->client,
+            'property' => $contract->property,
+            'items' => $contract->items
         ]);
     }
 

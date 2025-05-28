@@ -3,22 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Party;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PartyController extends Controller
 {
-    public function search(Request $request)
+    public function search(Request $request): JsonResponse
     {
-        $query = $request->input('query');
+        $query = $request->get('query');
         
-        return Party::where('type', 'client')
+        $clients = Party::where('type', 'client')
             ->where(function($q) use ($query) {
-                $q->where('name', 'like', "%{$query}%")
-                  ->orWhere('email', 'like', "%{$query}%")
-                  ->orWhere('company_name', 'like', "%{$query}%");
+                $q->where('name', 'LIKE', "%{$query}%")
+                    ->orWhere('company_name', 'LIKE', "%{$query}%")
+                    ->orWhere('email', 'LIKE', "%{$query}%");
             })
-            ->select('id', 'name', 'company_name', 'entity_type', 'email', 'phone', 'street', 'city', 'state', 'postal')
-            ->limit(10)
+            ->take(10)
             ->get();
+            
+        return response()->json($clients);
     }
 } 

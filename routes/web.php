@@ -14,6 +14,7 @@ use App\Http\Controllers\InformationManagementController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\PartyController;
+use App\Http\Controllers\ClientController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -100,3 +101,14 @@ Route::get('/materials/{material}/suppliers', [MaterialController::class, 'getSu
 
 // Client Search Route
 Route::get('/clients/search', [PartyController::class, 'search'])->name('clients.search');
+
+// Contract routes
+Route::get('/contracts/create', [ContractController::class, 'create'])->name('contracts.create');
+Route::post('/contracts', [ContractController::class, 'store'])->name('contracts.store');
+Route::get('/contracts/{contract}/edit', [ContractController::class, 'edit'])->name('contracts.edit');
+Route::put('/contracts/{contract}', [ContractController::class, 'update'])->name('contracts.update');
+
+// API routes for contract form
+Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
+Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
+Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
