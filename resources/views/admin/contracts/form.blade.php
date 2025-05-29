@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">{{ isset($contract) ? 'Edit Contract' : 'Create New Contract' }}</h4>
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-white py-3">
+                    <h4 class="card-title mb-0">{{ isset($contract) ? 'Edit Contract' : 'Create New Contract' }}</h4>
                 </div>
                 <div class="card-body">
                     <form id="contractForm" method="POST" action="{{ isset($contract) ? route('contracts.update', $contract->id) : route('contracts.store') }}" enctype="multipart/form-data">
@@ -23,14 +23,18 @@
                                     <div class="form-group">
                                         <label for="contractor_name">Contractor Name</label>
                                         <input type="text" class="form-control" id="contractor_name" name="contractor_name" 
-                                            value="{{ old('contractor_name', $contract->contractor_name ?? '') }}" required>
+                                            value="{{ old('contractor_name', $contract->contractor_name ?? '') }}" 
+                                            required pattern="[A-Za-z0-9\s\-\.']{2,}" 
+                                            title="Name must be at least 2 characters long and can contain letters, numbers, spaces, hyphens, and periods">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="contractor_address">Address</label>
                                         <input type="text" class="form-control" id="contractor_address" name="contractor_address" 
-                                            value="{{ old('contractor_address', $contract->contractor_address ?? '') }}" required>
+                                            value="{{ old('contractor_address', $contract->contractor_address ?? '') }}" 
+                                            required minlength="5" 
+                                            title="Please enter a valid address (minimum 5 characters)">
                                     </div>
                                 </div>
                             </div>
@@ -39,21 +43,28 @@
                                     <div class="form-group">
                                         <label for="contractor_email">Email</label>
                                         <input type="email" class="form-control" id="contractor_email" name="contractor_email" 
-                                            value="{{ old('contractor_email', $contract->contractor_email ?? '') }}" required>
+                                            value="{{ old('contractor_email', $contract->contractor_email ?? '') }}" 
+                                            required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" 
+                                            title="Please enter a valid email address">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="contractor_phone">Phone Number</label>
                                         <input type="tel" class="form-control" id="contractor_phone" name="contractor_phone" 
-                                            value="{{ old('contractor_phone', $contract->contractor_phone ?? '') }}" required>
+                                            value="{{ old('contractor_phone', $contract->contractor_phone ?? '') }}" 
+                                            required pattern="[0-9\-\(\)\s]{10,}" 
+                                            title="Please enter a valid phone number (minimum 10 digits)"
+                                            oninput="this.value = this.value.replace(/[^0-9\-\(\)\s]/g, '')">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="contractor_license">License Number</label>
                                         <input type="text" class="form-control" id="contractor_license" name="contractor_license" 
-                                            value="{{ old('contractor_license', $contract->contractor_license ?? '') }}" required>
+                                            value="{{ old('contractor_license', $contract->contractor_license ?? '') }}" 
+                                            required pattern="[A-Za-z0-9\-]{4,}" 
+                                            title="License number must be at least 4 characters long and can contain letters, numbers, and hyphens">
                                     </div>
                                 </div>
                             </div>
@@ -85,7 +96,9 @@
                                     <div class="form-group">
                                         <label for="client_name">Client Name</label>
                                         <input type="text" class="form-control" id="client_name" name="client_name" 
-                                            value="{{ old('client_name', $contract->client_name ?? '') }}" required>
+                                            value="{{ old('client_name', $contract->client_name ?? '') }}" 
+                                            required pattern="[A-Za-z0-9\s\-\.']{2,}" 
+                                            title="Name must be at least 2 characters long and can contain letters, numbers, spaces, hyphens, and periods">
                                         <input type="hidden" id="client_id" name="client_id" 
                                             value="{{ old('client_id', $contract->client_id ?? '') }}">
                                     </div>
@@ -94,7 +107,9 @@
                                     <div class="form-group">
                                         <label for="client_address">Address</label>
                                         <input type="text" class="form-control" id="client_address" name="client_address" 
-                                            value="{{ old('client_address', $contract->client_address ?? '') }}" required>
+                                            value="{{ old('client_address', $contract->client_address ?? '') }}" 
+                                            required minlength="5" 
+                                            title="Please enter a valid address (minimum 5 characters)">
                                     </div>
                                 </div>
                             </div>
@@ -103,14 +118,19 @@
                                     <div class="form-group">
                                         <label for="client_email">Email</label>
                                         <input type="email" class="form-control" id="client_email" name="client_email" 
-                                            value="{{ old('client_email', $contract->client_email ?? '') }}" required>
+                                            value="{{ old('client_email', $contract->client_email ?? '') }}" 
+                                            required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$" 
+                                            title="Please enter a valid email address">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="client_phone">Phone Number</label>
                                         <input type="tel" class="form-control" id="client_phone" name="client_phone" 
-                                            value="{{ old('client_phone', $contract->client_phone ?? '') }}" required>
+                                            value="{{ old('client_phone', $contract->client_phone ?? '') }}" 
+                                            required pattern="[0-9\-\(\)\s]{10,}" 
+                                            title="Please enter a valid phone number (minimum 10 digits)"
+                                            oninput="this.value = this.value.replace(/[^0-9\-\(\)\s]/g, '')">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -143,22 +163,28 @@
                                     <div class="form-group">
                                         <label for="property_city">City</label>
                                         <input type="text" class="form-control" id="property_city" name="property_city" 
-                                            value="{{ old('property_city', $contract->property_city ?? '') }}" required>
+                                            value="{{ old('property_city', $contract->property_city ?? '') }}" 
+                                            required pattern="[A-Za-z\s\-']{2,}" 
+                                            title="City name must contain only letters, spaces, hyphens, and apostrophes">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="property_state">State</label>
                                         <input type="text" class="form-control" id="property_state" name="property_state" 
-                                            value="{{ old('property_state', $contract->property_state ?? '') }}" required>
+                                            value="{{ old('property_state', $contract->property_state ?? '') }}" 
+                                            required pattern="[A-Za-z\s\-]{2,}" 
+                                            title="State name must contain only letters, spaces, and hyphens">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label for="property_zip">ZIP Code</label>
+                                        <label for="property_zip">ZIP/Postal Code</label>
                                         <input type="text" class="form-control" id="property_zip" name="property_zip" 
-                                            value="{{ old('property_zip', $contract->property_zip ?? '') }}" required 
-                                            pattern="[0-9]{5}(-[0-9]{4})?" title="Five digit zip code">
+                                            value="{{ old('property_zip', $contract->property_zip ?? '') }}" 
+                                            required pattern="[0-9]{4,10}(-[0-9]{4})?" 
+                                            title="Please enter a valid postal code (4-10 digits)"
+                                            oninput="this.value = this.value.replace(/[^0-9\-]/g, '')">
                                     </div>
                                 </div>
                             </div>
@@ -178,7 +204,10 @@
                                     <div class="form-group">
                                         <label for="property_size">Property Size (sq ft)</label>
                                         <input type="number" class="form-control" id="property_size" name="property_size" 
-                                            value="{{ old('property_size', $contract->property_size ?? '') }}" min="0" step="1">
+                                            value="{{ old('property_size', $contract->property_size ?? '') }}" 
+                                            min="1" step="1" 
+                                            title="Please enter a valid property size (minimum 1 sq ft)"
+                                            oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                     </div>
                                 </div>
                             </div>
@@ -429,14 +458,38 @@
         padding: 1.5rem;
         border: 1px solid #dee2e6;
         border-radius: 0.25rem;
+        background-color: #fff;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     }
     .section-title {
         margin-bottom: 1.5rem;
         padding-bottom: 0.5rem;
         border-bottom: 2px solid #007bff;
+        color: #2c3e50;
+        font-weight: 600;
     }
     .form-group {
-        margin-bottom: 1rem;
+        margin-bottom: 1.25rem;
+    }
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #2c3e50;
+    }
+    .card {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .card-header {
+        border-bottom: 1px solid #edf2f7;
+    }
+    @media (max-width: 768px) {
+        .section-container {
+            padding: 1rem;
+        }
+        .card-body {
+            padding: 1rem;
+        }
     }
     /* Rich text editor styles */
     .tox-tinymce {
@@ -573,14 +626,14 @@ document.addEventListener('DOMContentLoaded', function() {
         height: 300,
         menubar: false,
         plugins: [
-            'advlist autolink lists link image charmap print preview anchor',
-            'searchreplace visualblocks code fullscreen',
-            'insertdatetime media table paste code help wordcount'
+            'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
+            'searchreplace', 'visualblocks', 'code', 'fullscreen',
+            'insertdatetime', 'table', 'wordcount'
         ],
-        toolbar: 'undo redo | formatselect | ' +
-            'bold italic backcolor | alignleft aligncenter ' +
-            'alignright alignjustify | bullist numlist outdent indent | ' +
-            'removeformat | help',
+        toolbar: 'undo redo | blocks | ' +
+            'bold italic | alignleft aligncenter ' +
+            'alignright alignjustify | bullist numlist | ' +
+            'removeformat',
         content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; }'
     });
 
@@ -757,10 +810,10 @@ document.addEventListener('DOMContentLoaded', function() {
             height: 200,
             menubar: false,
             plugins: [
-                'lists link paste help wordcount'
+                'lists', 'link', 'wordcount'
             ],
-            toolbar: 'undo redo | formatselect | bold italic | ' +
-                    'bullist numlist | removeformat | help',
+            toolbar: 'undo redo | blocks | bold italic | ' +
+                    'bullist numlist | removeformat',
             content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; }'
         });
     });
@@ -817,6 +870,66 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.addEventListener('resize', resizeSignaturePads);
     resizeSignaturePads();
+
+    // Add custom validation for phone numbers
+    function validatePhone(input) {
+        const phoneNumber = input.value.replace(/[^0-9]/g, '');
+        return phoneNumber.length >= 10;
+    }
+
+    // Add custom validation for email addresses
+    function validateEmail(input) {
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        return emailRegex.test(input.value);
+    }
+
+    // Update ZIP/postal code validation
+    function validateZip(input) {
+        const zipRegex = /^[0-9]{4,10}(-[0-9]{4})?$/;
+        return zipRegex.test(input.value);
+    }
+
+    document.getElementById('property_zip').addEventListener('input', function() {
+        if (!validateZip(this)) {
+            this.setCustomValidity('Please enter a valid postal code (minimum 4 digits)');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+
+    // Add event listeners for real-time validation
+    document.querySelectorAll('input[type="tel"]').forEach(input => {
+        input.addEventListener('input', function() {
+            if (!validatePhone(this)) {
+                this.setCustomValidity('Please enter a valid phone number (minimum 10 digits)');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    });
+
+    document.querySelectorAll('input[type="email"]').forEach(input => {
+        input.addEventListener('input', function() {
+            if (!validateEmail(this)) {
+                this.setCustomValidity('Please enter a valid email address');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+    });
+
+    // Format phone numbers as they are typed
+    document.querySelectorAll('input[type="tel"]').forEach(input => {
+        input.addEventListener('input', function() {
+            let cleaned = this.value.replace(/\D/g, '');
+            if (cleaned.length >= 10) {
+                cleaned = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+                if (cleaned) {
+                    this.value = '(' + cleaned[1] + ') ' + cleaned[2] + '-' + cleaned[3];
+                }
+            }
+        });
+    });
 });
 </script>
 @endpush

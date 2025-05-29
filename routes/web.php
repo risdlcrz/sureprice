@@ -15,6 +15,8 @@ use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\PartyController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\SupplierController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -52,10 +54,39 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/account-rejected', function () {
         return view('auth.account-rejected');
     })->name('account.rejected');
+
+    // Project Dashboard
+    Route::get('/project-dashboard', [ProjectController::class, 'dashboard'])->name('admin.project');
+
+    // Contract Routes - Protected by auth and admin middleware
+    Route::middleware(['admin'])->group(function () {
+        Route::resource('contracts', ContractController::class);
+        
+        // Supporting routes for contract form
+        Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
+        Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
+        Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
+    });
+
+    // Material Routes
+    Route::resource('materials', MaterialController::class);
+
+    // Supplier Routes
+    Route::resource('suppliers', SupplierController::class);
 });
 
+// ================== Email Verification Routes ==================
+// **Removed duplicate route /email/verify here**
+
+// Material and Supplier Routes
+Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
+Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
+
+// Client Search Route
+Route::get('/clients/search', [PartyController::class, 'search'])->name('clients.search');
+
 // Admin protected routes
-Route::middleware([AdminMiddleware::class])->group(function () {
+Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/dbadmin', [AdminController::class, 'dashboard'])->name('admin.dbadmin');
     Route::get('/admin/companies/pending', [AdminController::class, 'pending'])->name('admin.companies.pending');
     Route::post('/admin/companies/{company}/approve', [AdminController::class, 'approve'])->name('admin.companies.approve');
@@ -72,10 +103,6 @@ Route::middleware([AdminMiddleware::class])->group(function () {
         return view('admin.notification-center');
     })->name('admin.notification');
 
-    Route::get('/project-dashboard', function () {
-        return view('admin.project-dashboard');
-    })->name('admin.project');
-
     Route::get('/history-dashboard', function () {
         return view('admin.history-dashboard');
     })->name('admin.history');
@@ -88,27 +115,3 @@ Route::middleware([AdminMiddleware::class])->group(function () {
         return view('admin.inventory');
     })->name('admin.inventory');
 });
-
-// ================== Email Verification Routes ==================
-// **Removed duplicate route /email/verify here**
-
-// Contract Routes
-Route::resource('contracts', ContractController::class);
-
-// Material and Supplier Routes
-Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
-Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
-
-// Client Search Route
-Route::get('/clients/search', [PartyController::class, 'search'])->name('clients.search');
-
-// Contract routes
-Route::get('/contracts/create', [ContractController::class, 'create'])->name('contracts.create');
-Route::post('/contracts', [ContractController::class, 'store'])->name('contracts.store');
-Route::get('/contracts/{contract}/edit', [ContractController::class, 'edit'])->name('contracts.edit');
-Route::put('/contracts/{contract}', [ContractController::class, 'update'])->name('contracts.update');
-
-// API routes for contract form
-Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
-Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
-Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
