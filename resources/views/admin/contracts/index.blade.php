@@ -4,9 +4,14 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Contracts</h1>
-        <a href="{{ route('contracts.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> New Contract
-        </a>
+        <div class="btn-group">
+            <a href="{{ route('contracts.create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> New Contract
+            </a>
+            <a href="{{ route('contracts.index') }}" class="btn btn-secondary">
+                <i class="bi bi-list-ul"></i> View All
+            </a>
+        </div>
     </div>
 
     @if(session('success'))
@@ -69,6 +74,15 @@
                                            title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </a>
+                                        <form action="{{ route('contracts.destroy', $contract->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                    onclick="return confirm('Are you sure you want to delete this contract?')"
+                                                    title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>

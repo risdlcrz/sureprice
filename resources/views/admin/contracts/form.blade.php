@@ -438,6 +438,11 @@
     .form-group {
         margin-bottom: 1rem;
     }
+    /* Rich text editor styles */
+    .tox-tinymce {
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+    }
     .material-search-results {
         position: absolute;
         width: 100%;
@@ -562,7 +567,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Initialize TinyMCE for work description
+    // Initialize TinyMCE
     tinymce.init({
         selector: '#work_description',
         height: 300,
@@ -576,19 +581,6 @@ document.addEventListener('DOMContentLoaded', function() {
             'bold italic backcolor | alignleft aligncenter ' +
             'alignright alignjustify | bullist numlist outdent indent | ' +
             'removeformat | help',
-        content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; }'
-    });
-
-    // Initialize TinyMCE for special instructions
-    tinymce.init({
-        selector: '#special_instructions',
-        height: 200,
-        menubar: false,
-        plugins: [
-            'lists link paste help wordcount'
-        ],
-        toolbar: 'undo redo | formatselect | bold italic | ' +
-                'bullist numlist | removeformat | help',
         content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; }'
     });
 
@@ -827,4 +819,5 @@ document.addEventListener('DOMContentLoaded', function() {
     resizeSignaturePads();
 });
 </script>
-@endpush 
+@endpush
+@endsection 

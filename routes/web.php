@@ -97,7 +97,7 @@ Route::resource('contracts', ContractController::class);
 
 // Material and Supplier Routes
 Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
-Route::get('/materials/{material}/suppliers', [MaterialController::class, 'getSuppliers'])->name('materials.suppliers');
+Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
 
 // Client Search Route
 Route::get('/clients/search', [PartyController::class, 'search'])->name('clients.search');
