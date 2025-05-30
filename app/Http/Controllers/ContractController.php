@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Storage;
 
 class ContractController extends Controller
 {
+    public function __construct()
+    {
+        // No need for middleware here as routes are already protected
+    }
+
     public function index()
     {
         $contracts = Contract::with(['contractor', 'client', 'property'])
@@ -38,7 +43,7 @@ class ContractController extends Controller
 
     public function create()
     {
-        return view('admin.contract_form', [
+        return view('admin.contracts.form', [
             'edit_mode' => false,
             'contract' => null,
             'contractor' => null,
@@ -64,7 +69,7 @@ class ContractController extends Controller
             }
         ]);
 
-        return view('admin.contract_form', [
+        return view('admin.contracts.form', [
             'edit_mode' => true,
             'contract' => $contract,
             'contractor' => $contract->contractor,

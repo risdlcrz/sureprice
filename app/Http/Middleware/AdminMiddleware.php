@@ -11,16 +11,13 @@ class AdminMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         if (!Auth::check()) {
-            return redirect()->route('login.form');
+            return redirect()->route('login');
         }
 
         $user = Auth::user();
-        
-        if (!$user || $user->user_type !== 'admin') {
-            if ($user && $user->user_type === 'company') {
-                return redirect()->route('pending.approval');
-            }
-            return redirect()->route('login.form')->with('error', 'Admin privileges required');
+        if ($user->role !== 'admin') {
+            return redirect()->route('pending.approval')
+                ->with('error', 'You do not have permission to access this area.');
         }
 
         return $next($request);

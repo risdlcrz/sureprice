@@ -31,6 +31,15 @@ class Contract extends Model
         'total_amount' => 'decimal:2'
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($contract) {
+            $contract->contract_id = 'CNT-' . date('Y') . '-' . str_pad(static::count() + 1, 5, '0', STR_PAD_LEFT);
+        });
+    }
+
     public function contractor(): BelongsTo
     {
         return $this->belongsTo(Party::class, 'contractor_id');
