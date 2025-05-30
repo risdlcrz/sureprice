@@ -38,7 +38,7 @@ class ContractController extends Controller
 
     public function create()
     {
-        return view('admin.contracts.form', [
+        return view('admin.contract_form', [
             'edit_mode' => false,
             'contract' => null,
             'contractor' => null,
@@ -64,7 +64,7 @@ class ContractController extends Controller
             }
         ]);
 
-        return view('admin.contracts.form', [
+        return view('admin.contract_form', [
             'edit_mode' => true,
             'contract' => $contract,
             'contractor' => $contract->contractor,
