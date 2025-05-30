@@ -10,78 +10,151 @@ use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class ContractController extends Controller
 {
     public function __construct()
     {
+<<<<<<< HEAD
         // No need for middleware here as routes are already protected
+=======
+        $this->middleware('auth');
+        $this->middleware('admin');
+>>>>>>> 4b5c70f61c2ec44f89d856e84edc9911d93ebe3e
     }
 
     public function index()
     {
-        $contracts = Contract::with(['contractor', 'client', 'property'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        try {
+            if (!Auth::user()->isAdmin()) {
+                return redirect()->route('pending.approval')
+                    ->with('error', 'You do not have permission to access this area.');
+            }
 
-        return view('admin.contracts.index', compact('contracts'));
+            $contracts = Contract::with(['contractor', 'client', 'property'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
+
+            return view('admin.contracts.index', compact('contracts'));
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Error loading contracts: ' . $e->getMessage());
+        }
     }
 
     public function show(Contract $contract)
     {
-        $contract->load([
-            'contractor',
-            'client',
-            'property',
-            'items.material.suppliers' => function($query) {
-                $query->where('is_preferred', true);
+        try {
+            if (!Auth::user()->isAdmin()) {
+                return redirect()->route('pending.approval')
+                    ->with('error', 'You do not have permission to access this area.');
             }
-        ]);
 
-        return view('admin.contracts.show', compact('contract'));
+            $contract->load([
+                'contractor',
+                'client',
+                'property',
+                'items.material.suppliers' => function($query) {
+                    $query->where('is_preferred', true);
+                }
+            ]);
+
+            return view('admin.contracts.show', compact('contract'));
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Error loading contract: ' . $e->getMessage());
+        }
     }
 
     public function create()
     {
-        return view('admin.contracts.form', [
-            'edit_mode' => false,
-            'contract' => null,
-            'contractor' => null,
-            'client' => null,
-            'property' => null,
-            'items' => []
-        ]);
+        try {
+            if (!Auth::user()->isAdmin()) {
+                return redirect()->route('pending.approval')
+                    ->with('error', 'You do not have permission to access this area.');
+            }
+
+            return view('admin.contracts.form', [
+                'edit_mode' => false,
+                'contract' => null,
+                'contractor' => null,
+                'client' => null,
+                'property' => null,
+                'items' => []
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Error loading contract form: ' . $e->getMessage());
+        }
     }
 
     public function store(Request $request)
     {
+        if (!Auth::user()->isAdmin()) {
+            return redirect()->route('pending.approval')
+                ->with('error', 'You do not have permission to perform this action.');
+        }
+
         return $this->saveContract($request);
     }
 
     public function edit(Contract $contract)
     {
-        $contract->load([
-            'contractor',
-            'client',
-            'property',
-            'items.material.suppliers' => function($query) {
-                $query->where('is_preferred', true);
+        try {
+            if (!Auth::user()->isAdmin()) {
+                return redirect()->route('pending.approval')
+                    ->with('error', 'You do not have permission to access this area.');
             }
-        ]);
 
-        return view('admin.contracts.form', [
-            'edit_mode' => true,
-            'contract' => $contract,
-            'contractor' => $contract->contractor,
-            'client' => $contract->client,
-            'property' => $contract->property,
-            'items' => $contract->items
-        ]);
+            $contract->load([
+                'contractor',
+                'client',
+                'property',
+                'items.material.suppliers' => function($query) {
+                    $query->where('is_preferred', true);
+                }
+            ]);
+
+            return view('admin.contracts.form', [
+                'edit_mode' => true,
+                'contract' => $contract,
+                'contractor' => $contract->contractor,
+                'client' => $contract->client,
+                'property' => $contract->property,
+                'items' => $contract->items
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Error loading contract for editing: ' . $e->getMessage());
+        }
     }
 
     public function update(Request $request, Contract $contract)
     {
+        if (!Auth::user()->isAdmin()) {
+            return redirect()->route('pending.approval')
+                ->with('error', 'You do not have permission to perform this action.');
+        }
+
         return $this->saveContract($request, $contract);
+    }
+
+    public function destroy(Contract $contract)
+    {
+        try {
+            if (!Auth::user()->isAdmin()) {
+                return redirect()->route('pending.approval')
+                    ->with('error', 'You do not have permission to perform this action.');
+            }
+
+            $contract->delete();
+            return redirect()->route('contracts.index')
+                ->with('success', 'Contract deleted successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Error deleting contract: ' . $e->getMessage());
+        }
     }
 
     protected function saveContract(Request $request, Contract $contract = null)
