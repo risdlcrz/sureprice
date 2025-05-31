@@ -11,6 +11,14 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Controllers\CompanyDocumentController;
 use App\Http\Controllers\InformationManagementController;
+use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\ContractController;
+use App\Http\Controllers\PartyController;
+use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\ProcurementController;
+use App\Http\Controllers\PurchaseRequestController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -48,15 +56,46 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/account-rejected', function () {
         return view('auth.account-rejected');
     })->name('account.rejected');
+
+    // Project Dashboard
+    Route::get('/project-dashboard', [ProjectController::class, 'dashboard'])->name('admin.project');
+
+    // Contract Routes
+    Route::resource('contracts', ContractController::class);
+    
+    // Supporting routes for contract form
+    Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
+    Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
+    Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
+
+    // Material Routes
+    Route::resource('materials', MaterialController::class);
+
+    // Supplier Routes
+    Route::resource('suppliers', SupplierController::class);
 });
 
+// ================== Email Verification Routes ==================
+// **Removed duplicate route /email/verify here**
+
+// Material and Supplier Routes
+Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
+Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
+
+// Client Search Route
+Route::get('/clients/search', [PartyController::class, 'search'])->name('clients.search');
+
 // Admin protected routes
-Route::middleware([AdminMiddleware::class])->group(function () {
+Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/admin/dbadmin', [AdminController::class, 'dashboard'])->name('admin.dbadmin');
     Route::get('/admin/companies/pending', [AdminController::class, 'pending'])->name('admin.companies.pending');
     Route::post('/admin/companies/{company}/approve', [AdminController::class, 'approve'])->name('admin.companies.approve');
     Route::post('/admin/companies/{company}/reject', [AdminController::class, 'reject'])->name('admin.companies.reject');
     Route::get('/admin/companies/{company}', [AdminController::class, 'show'])->name('admin.companies.show');
+    
+    // Add procurement routes
+    Route::get('/admin/procurement', [ProcurementController::class, 'index'])->name('admin.procurement');
+    Route::resource('purchase-request', PurchaseRequestController::class);
     
     // Information Management Routes
     Route::resource('information-management', InformationManagementController::class);
@@ -67,10 +106,6 @@ Route::middleware([AdminMiddleware::class])->group(function () {
     Route::get('/notification-center', function () {
         return view('admin.notification-center');
     })->name('admin.notification');
-
-    Route::get('/project-dashboard', function () {
-        return view('admin.project-dashboard');
-    })->name('admin.project');
 
     Route::get('/history-dashboard', function () {
         return view('admin.history-dashboard');
@@ -84,6 +119,3 @@ Route::middleware([AdminMiddleware::class])->group(function () {
         return view('admin.inventory');
     })->name('admin.inventory');
 });
-
-// ================== Email Verification Routes ==================
-// **Removed duplicate route /email/verify here**
