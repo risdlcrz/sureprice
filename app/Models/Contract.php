@@ -18,6 +18,15 @@ class Contract extends Model
         'start_date',
         'end_date',
         'total_amount',
+        'budget_allocation',
+        'payment_method',
+        'payment_terms',
+        'bank_name',
+        'bank_account_name',
+        'bank_account_number',
+        'check_number',
+        'check_date',
+        'check_image',
         'jurisdiction',
         'contract_terms',
         'client_signature',
@@ -28,7 +37,9 @@ class Contract extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
-        'total_amount' => 'decimal:2'
+        'check_date' => 'date',
+        'total_amount' => 'decimal:2',
+        'budget_allocation' => 'decimal:2',
     ];
 
     protected static function boot()
@@ -36,7 +47,25 @@ class Contract extends Model
         parent::boot();
 
         static::creating(function ($contract) {
-            $contract->contract_id = 'CNT-' . date('Y') . '-' . str_pad(static::count() + 1, 5, '0', STR_PAD_LEFT);
+            // Get the current year
+            $year = date('Y');
+            
+            // Get the last contract number for this year
+            $lastContract = static::where('contract_id', 'like', "CT{$year}%")
+                ->orderBy('contract_id', 'desc')
+                ->first();
+
+            if ($lastContract) {
+                // Extract the number from the last contract ID and increment it
+                $lastNumber = intval(substr($lastContract->contract_id, -4));
+                $newNumber = $lastNumber + 1;
+            } else {
+                // If no contracts exist for this year, start with 0001
+                $newNumber = 1;
+            }
+
+            // Generate the new contract ID
+            $contract->contract_id = sprintf("CT%s%04d", $year, $newNumber);
         });
     }
 

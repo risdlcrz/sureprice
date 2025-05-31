@@ -11,17 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('suppliers', function (Blueprint $table) {
+        Schema::create('properties', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('company_name')->nullable();
-            $table->string('email');
-            $table->string('phone');
-            $table->string('address');
+            $table->string('street');
+            $table->string('unit_number')->nullable();
+            $table->string('barangay');
             $table->string('city');
             $table->string('state');
-            $table->string('postal_code');
-            $table->boolean('is_preferred')->default(false);
+            $table->string('postal');
+            $table->string('property_type')->nullable();
+            $table->decimal('property_size', 10, 2)->nullable();
             $table->timestamps();
         });
     }
@@ -31,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('suppliers');
+        Schema::dropIfExists('properties');
     }
 }; 

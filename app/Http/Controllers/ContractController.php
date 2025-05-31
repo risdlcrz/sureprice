@@ -10,6 +10,7 @@ use App\Models\Property;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use PDF;
 
 class ContractController extends Controller
 {
@@ -75,7 +76,9 @@ class ContractController extends Controller
             'contractor' => $contract->contractor,
             'client' => $contract->client,
             'property' => $contract->property,
-            'items' => $contract->items
+            'items' => $contract->items,
+            'existing_client_signature' => $contract->client_signature ? Storage::url($contract->client_signature) : null,
+            'existing_contractor_signature' => $contract->contractor_signature ? Storage::url($contract->contractor_signature) : null,
         ]);
     }
 
@@ -84,9 +87,59 @@ class ContractController extends Controller
         return $this->saveContract($request, $contract);
     }
 
+    public function download(Contract $contract)
+    {
+        $contract->load(['contractor', 'client', 'property', 'items.material.suppliers']);
+        
+        $pdf = PDF::loadView('admin.contracts.pdf', [
+            'contract' => $contract,
+            'contractor' => $contract->contractor,
+            'client' => $contract->client,
+            'property' => $contract->property,
+            'items' => $contract->items
+        ]);
+        
+        return $pdf->download('contract-' . $contract->id . '.pdf');
+    }
+
     protected function saveContract(Request $request, Contract $contract = null)
     {
         try {
+            // Validate the request
+            $validated = $request->validate([
+                'contractor_name' => 'required|string|min:2',
+                'contractor_email' => 'required|email',
+                'contractor_phone' => 'required|string|min:10',
+                'contractor_street' => 'required|string',
+                'contractor_unit' => 'nullable|string',
+                'contractor_barangay' => 'required|string',
+                'contractor_city' => 'required|string',
+                'contractor_state' => 'required|string',
+                'contractor_postal' => 'required|string',
+                
+                'client_name' => 'required|string|min:2',
+                'client_email' => 'required|email',
+                'client_phone' => 'required|string|min:10',
+                'client_street' => 'required|string',
+                'client_unit' => 'nullable|string',
+                'client_barangay' => 'required|string',
+                'client_city' => 'required|string',
+                'client_state' => 'required|string',
+                'client_postal' => 'required|string',
+                
+                'scope_of_work' => 'required|array',
+                'scope_description' => 'required|string',
+                'start_date' => 'required|date',
+                'end_date' => 'required|date|after:start_date',
+                'total_amount' => 'required|numeric|min:0',
+                'budget_allocation' => 'required|numeric|min:0',
+                'payment_method' => 'required|string',
+                'payment_terms' => 'required|string',
+                'bank_name' => 'required_if:payment_method,bank_transfer',
+                'bank_account_name' => 'required_if:payment_method,bank_transfer',
+                'bank_account_number' => 'required_if:payment_method,bank_transfer',
+            ]);
+
             DB::beginTransaction();
 
             // Save contractor
@@ -111,6 +164,12 @@ class ContractController extends Controller
                 'start_date' => $request->input('start_date'),
                 'end_date' => $request->input('end_date'),
                 'total_amount' => $request->input('total_amount'),
+                'budget_allocation' => $request->input('budget_allocation'),
+                'payment_method' => $request->input('payment_method'),
+                'payment_terms' => $request->input('payment_terms'),
+                'bank_name' => $request->input('bank_name'),
+                'bank_account_name' => $request->input('bank_account_name'),
+                'bank_account_number' => $request->input('bank_account_number'),
                 'jurisdiction' => $request->input('jurisdiction'),
                 'contract_terms' => $request->input('contract_paragraphs'),
                 'client_signature' => $signatures['client'],
@@ -133,8 +192,8 @@ class ContractController extends Controller
                 ->with('success', 'Contract saved successfully');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error saving contract: ' . $e->getMessage())
-                ->withInput();
+            return back()->withInput()
+                ->withErrors(['error' => 'Error saving contract: ' . $e->getMessage()]);
         }
     }
 
@@ -174,15 +233,23 @@ class ContractController extends Controller
     protected function handleSignatures(Request $request)
     {
         $signatures = [
-            'client' => $request->input('existing_client_signature', ''),
-            'contractor' => $request->input('existing_contractor_signature', '')
+            'client' => null,
+            'contractor' => null
         ];
 
         foreach (['client', 'contractor'] as $type) {
+            // Keep existing signature if checkbox is checked
+            if ($request->has("keep_{$type}_signature") && $request->input("keep_{$type}_signature")) {
+                $existingPath = str_replace('/storage/', '', $request->input("existing_{$type}_signature"));
+                $signatures[$type] = $existingPath;
+                continue;
+            }
+            
             // Handle file uploads
             if ($request->hasFile("{$type}_signature")) {
                 $path = $request->file("{$type}_signature")->store('signatures', 'public');
-                $signatures[$type] = Storage::url($path);
+                $signatures[$type] = $path;
+                continue;
             }
             
             // Handle canvas signatures
@@ -192,7 +259,7 @@ class ContractController extends Controller
                 $path = "signatures/{$filename}";
                 
                 Storage::disk('public')->put($path, $image_data);
-                $signatures[$type] = Storage::url($path);
+                $signatures[$type] = $path;
             }
         }
 
