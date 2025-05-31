@@ -24,6 +24,12 @@ class CompanyDocument extends Model
         'disk' => 'public'
     ];
 
+    protected $casts = [
+        'type' => 'string',
+        'disk' => 'string',
+        'size' => 'integer'
+    ];
+
     public function company()
     {
         return $this->belongsTo(Company::class);

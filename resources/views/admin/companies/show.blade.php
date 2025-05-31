@@ -101,12 +101,19 @@
                     @forelse($company->documents as $document)
                         <div class="mb-3">
                             <strong>{{ str_replace('_', ' ', $document->type) }}:</strong><br>
-                            <a href="{{ Storage::disk($document->disk)->url($document->path) }}" 
-                               class="btn btn-sm btn-outline-primary" 
-                               target="_blank">
-                                <i class="fas fa-download me-1"></i>
-                                View Document
-                            </a>
+                            @if(in_array($document->mime_type, ['image/jpeg', 'image/png', 'image/gif', 'image/jpg']))
+                                <img src="{{ $document->url }}" class="img-fluid mb-2" style="max-height: 200px; width: auto;" alt="{{ $document->type }}">
+                            @elseif($document->mime_type === 'application/pdf')
+                                <iframe src="{{ $document->url }}" style="width: 100%; height: 200px;" class="mb-2"></iframe>
+                            @endif
+                            <div>
+                                <a href="{{ $document->url }}" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   target="_blank">
+                                    <i class="fas fa-external-link-alt me-1"></i>
+                                    Open Full Document
+                                </a>
+                            </div>
                         </div>
                     @empty
                         <p class="text-muted">No documents uploaded.</p>
