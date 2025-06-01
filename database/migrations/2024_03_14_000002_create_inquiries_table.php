@@ -20,6 +20,20 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // Ensure materials table exists
+        if (!Schema::hasTable('materials')) {
+            Schema::create('materials', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->text('description')->nullable();
+                $table->string('unit');
+                $table->foreignId('category_id')->constrained()->onDelete('cascade');
+                $table->decimal('minimum_stock', 10, 2)->default(0);
+                $table->decimal('current_stock', 10, 2)->default(0);
+                $table->timestamps();
+            });
+        }
+
         Schema::create('inquiry_material', function (Blueprint $table) {
             $table->id();
             $table->foreignId('inquiry_id')->constrained()->onDelete('cascade');
@@ -33,6 +47,9 @@ return new class extends Migration
     public function down()
     {
         Schema::dropIfExists('inquiry_material');
+        if (Schema::hasTable('materials')) {
+            Schema::dropIfExists('materials');
+        }
         Schema::dropIfExists('inquiries');
     }
 }; 
