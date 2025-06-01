@@ -782,82 +782,77 @@
                         </div>
 
                         <!-- Signature Section -->
-                        <div class="section-container" id="signatureSection">
+                        <div class="section-container" id="signaturesSection">
                             <h5 class="section-title">Signatures</h5>
-                            <div class="row">
+                            
+                            <!-- Contractor Signature -->
+                            <div class="row mb-4">
                                 <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Contractor Signature</label>
-                                        @if(isset($existing_contractor_signature))
-                                            <div class="existing-signature mb-3">
-                                                <img src="{{ $existing_contractor_signature }}" alt="Existing Contractor Signature" class="img-fluid mb-2" style="max-height: 150px;">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="keep_contractor_signature" name="keep_contractor_signature" value="1" checked>
-                                                    <label class="form-check-label" for="keep_contractor_signature">
-                                                        Keep existing signature
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <input type="hidden" name="existing_contractor_signature" value="{{ $existing_contractor_signature }}">
-                                        @endif
-                                        <div class="signature-pad-container">
-                                            <canvas id="contractorSignature" class="signature-pad"></canvas>
-                                            <input type="hidden" name="contractor_signature" id="contractorSignatureData">
-                                        </div>
-                                        <div class="mt-2">
-                                            <button type="button" class="btn btn-sm btn-secondary clear-signature" data-pad="contractor">Clear</button>
-                                        </div>
+                                    <label>Contractor Signature</label>
+                                    <div class="signature-pad">
+                                        <canvas id="contractorSignaturePad"></canvas>
                                     </div>
+                                    <div class="signature-buttons">
+                                        <button type="button" class="btn btn-secondary btn-sm" id="clearContractorSignature">Clear</button>
+                                    </div>
+                                    @if(isset($existing_contractor_signature))
+                                        <div class="mt-2">
+                                            <img src="{{ $existing_contractor_signature }}" alt="Existing Contractor Signature" class="img-fluid" style="max-height: 100px;">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="keep_contractor_signature" id="keepContractorSignature" value="1">
+                                                <label class="form-check-label" for="keepContractorSignature">
+                                                    Keep existing signature
+                                                </label>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
+                                
+                                <!-- Client Signature -->
                                 <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Client Signature</label>
-                                        @if(isset($existing_client_signature))
-                                            <div class="existing-signature mb-3">
-                                                <img src="{{ $existing_client_signature }}" alt="Existing Client Signature" class="img-fluid mb-2" style="max-height: 150px;">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="keep_client_signature" name="keep_client_signature" value="1" checked>
-                                                    <label class="form-check-label" for="keep_client_signature">
-                                                        Keep existing signature
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <input type="hidden" name="existing_client_signature" value="{{ $existing_client_signature }}">
-                                        @endif
-                                        <div class="signature-pad-container">
-                                            <canvas id="clientSignature" class="signature-pad"></canvas>
-                                            <input type="hidden" name="client_signature" id="clientSignatureData">
-                                        </div>
-                                        <div class="mt-2">
-                                            <button type="button" class="btn btn-sm btn-secondary clear-signature" data-pad="client">Clear</button>
-                                        </div>
+                                    <label>Client Signature</label>
+                                    <div class="signature-pad">
+                                        <canvas id="clientSignaturePad"></canvas>
                                     </div>
+                                    <div class="signature-buttons">
+                                        <button type="button" class="btn btn-secondary btn-sm" id="clearClientSignature">Clear</button>
+                                    </div>
+                                    @if(isset($existing_client_signature))
+                                        <div class="mt-2">
+                                            <img src="{{ $existing_client_signature }}" alt="Existing Client Signature" class="img-fluid" style="max-height: 100px;">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="keep_client_signature" id="keepClientSignature" value="1">
+                                                <label class="form-check-label" for="keepClientSignature">
+                                                    Keep existing signature
+                                                </label>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
-                            <div class="row mt-3">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="contractor_name_signed">Contractor Name (Print)</label>
-                                        <input type="text" class="form-control" id="contractor_name_signed" name="contractor_name_signed" 
-                                            value="{{ old('contractor_name_signed', $contract->contractor_name ?? $contractor->name ?? '') }}" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="contractor_date_signed">Date Signed</label>
-                                        <input type="date" class="form-control" id="contractor_date_signed" name="contractor_date_signed" 
-                                            value="{{ old('contractor_date_signed', $contract->contractor_date_signed ?? date('Y-m-d')) }}" required>
-                                    </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="start_date">Start Date</label>
+                                    <input type="date" class="form-control @error('start_date') is-invalid @enderror" 
+                                        id="start_date" name="start_date" 
+                                        value="{{ old('start_date', $contract ? $contract->start_date->format('Y-m-d') : '') }}" required>
+                                    @error('start_date')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="client_name_signed">Client Name (Print)</label>
-                                        <input type="text" class="form-control" id="client_name_signed" name="client_name_signed" 
-                                            value="{{ old('client_name_signed', $contract->client_name ?? $client->name ?? '') }}" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="client_date_signed">Date Signed</label>
-                                        <input type="date" class="form-control" id="client_date_signed" name="client_date_signed" 
-                                            value="{{ old('client_date_signed', $contract->client_date_signed ?? date('Y-m-d')) }}" required>
-                                    </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="end_date">End Date</label>
+                                    <input type="date" class="form-control @error('end_date') is-invalid @enderror" 
+                                        id="end_date" name="end_date" 
+                                        value="{{ old('end_date', $contract ? $contract->end_date->format('Y-m-d') : '') }}" required>
+                                    @error('end_date')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
@@ -954,32 +949,73 @@
     .remove-item-btn {
         margin-top: 2rem;
     }
-    .signature-pad-container {
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        background-color: #fff;
-    }
     .signature-pad {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    .signature-pad canvas {
         width: 100%;
         height: 200px;
-        border-radius: 4px;
+    }
+    .signature-buttons {
+        margin-top: 10px;
     }
 </style>
 @endpush
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize signature pads
+    const contractorPad = new SignaturePad(document.getElementById('contractorSignaturePad'), {
+        backgroundColor: 'rgb(255, 255, 255)'
+    });
+    
+    const clientPad = new SignaturePad(document.getElementById('clientSignaturePad'), {
+        backgroundColor: 'rgb(255, 255, 255)'
+    });
+
+    // Clear signature buttons
+    document.getElementById('clearContractorSignature').addEventListener('click', function() {
+        contractorPad.clear();
+    });
+
+    document.getElementById('clearClientSignature').addEventListener('click', function() {
+        clientPad.clear();
+    });
+
+    // Form submission
+    document.getElementById('contractForm').addEventListener('submit', function(e) {
+        // Convert signatures to base64 images
+        if (!contractorPad.isEmpty()) {
+            const contractorSignatureInput = document.createElement('input');
+            contractorSignatureInput.type = 'hidden';
+            contractorSignatureInput.name = 'contractor_signature';
+            contractorSignatureInput.value = contractorPad.toDataURL();
+            this.appendChild(contractorSignatureInput);
+        }
+
+        if (!clientPad.isEmpty()) {
+            const clientSignatureInput = document.createElement('input');
+            clientSignatureInput.type = 'hidden';
+            clientSignatureInput.name = 'client_signature';
+            clientSignatureInput.value = clientPad.toDataURL();
+            this.appendChild(clientSignatureInput);
+        }
+    });
+
     // Initialize form validation
     const form = document.getElementById('contractForm');
     if (form) {
-    form.addEventListener('submit', function(event) {
-        if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-        form.classList.add('was-validated');
-    });
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
     }
 
     // Items and Materials Management
@@ -988,8 +1024,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (!itemsList || !addItemBtn) {
         console.error('Required elements not found');
-            return;
-        }
+        return;
+    }
 
     let itemCount = itemsList.querySelectorAll('.item-row').length;
 
@@ -997,7 +1033,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function getItemTemplate(index) {
         return `
             <div class="item-row mb-4" data-index="${index}">
-                        <div class="card">
+                <div class="card">
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-12 mb-3">
@@ -1075,9 +1111,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                     </div>
-                            </div>
-                        </div>
-                    `;
+                </div>
+            </div>
+        `;
     }
 
     // Add new item
@@ -1164,8 +1200,8 @@ document.addEventListener('DOMContentLoaded', function() {
         query = query.trim();
         if (query.length < 2) {
             resultsContainer.style.display = 'none';
-                return;
-            }
+            return;
+        }
 
         resultsContainer.innerHTML = '<div class="p-2">Searching...</div>';
         resultsContainer.style.display = 'block';
@@ -1177,32 +1213,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 return response.json();
             })
-                .then(data => {
+            .then(data => {
                 if (Array.isArray(data) && data.length > 0) {
                     resultsContainer.innerHTML = data.map(material => `
-                            <div class="material-result p-2 border-bottom" style="cursor: pointer;" 
-                                data-material='${JSON.stringify(material)}'>
-                                <strong>${material.name}</strong><br>
-                                <small>${material.description || ''} - ${material.unit}</small>
-                            </div>
-                        `).join('');
-                        
-                        // Add click handlers for results
+                        <div class="material-result p-2 border-bottom" style="cursor: pointer;" 
+                            data-material='${JSON.stringify(material)}'>
+                            <strong>${material.name}</strong><br>
+                            <small>${material.description || ''} - ${material.unit}</small>
+                        </div>
+                    `).join('');
+                    
+                    // Add click handlers for results
                     resultsContainer.querySelectorAll('.material-result').forEach(result => {
-                            result.addEventListener('click', () => selectMaterial(result));
-                        });
-                    } else {
+                        result.addEventListener('click', () => selectMaterial(result));
+                    });
+                } else {
                     resultsContainer.innerHTML = '<div class="p-2">No materials found</div>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error searching materials:', error);
+                }
+            })
+            .catch(error => {
+                console.error('Error searching materials:', error);
                 resultsContainer.innerHTML = '<div class="p-2 text-danger">Error searching materials</div>';
-                });
-        }
+            });
+    }
 
     // Select material from search results
-        function selectMaterial(resultElement) {
+    function selectMaterial(resultElement) {
         if (!resultElement) return;
 
         try {
@@ -1248,35 +1284,35 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!suppliersContainer) return;
 
         const itemIndex = item.dataset.index || Array.from(itemsList.children).indexOf(item);
-            
-            fetch(`/api/materials/${materialId}/suppliers`)
+        
+        fetch(`/api/materials/${materialId}/suppliers`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
                 return response.json();
             })
-                .then(suppliers => {
+            .then(suppliers => {
                 if (Array.isArray(suppliers) && suppliers.length > 0) {
                     suppliersContainer.innerHTML = suppliers.map(supplier => `
-                            <div class="form-check">
+                        <div class="form-check">
                             <input type="checkbox" class="form-check-input" 
                                 name="items[${itemIndex}][suppliers][]" 
                                 value="${supplier.id}">
                             <label class="form-check-label">
-                                    ${supplier.name} - ${supplier.price_range || 'Price not available'}
-                                </label>
-                            </div>
-                        `).join('');
-                    } else {
+                                ${supplier.name} - ${supplier.price_range || 'Price not available'}
+                            </label>
+                        </div>
+                    `).join('');
+                } else {
                     suppliersContainer.innerHTML = '<p class="text-muted">No suppliers available</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading suppliers:', error);
-                    suppliersContainer.innerHTML = '<p class="text-danger">Error loading suppliers</p>';
-                });
-        }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading suppliers:', error);
+                suppliersContainer.innerHTML = '<p class="text-danger">Error loading suppliers</p>';
+            });
+    }
 
     // Calculate total for an item
     function calculateTotal(item) {
@@ -1288,9 +1324,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!quantityInput || !priceInput || !totalInput) return;
 
-            const quantity = parseFloat(quantityInput.value) || 0;
-            const price = parseFloat(priceInput.value) || 0;
-            totalInput.value = (quantity * price).toFixed(2);
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        totalInput.value = (quantity * price).toFixed(2);
         updateGrandTotal();
     }
 
@@ -1304,29 +1340,35 @@ document.addEventListener('DOMContentLoaded', function() {
         totalAmountInput.value = total.toFixed(2);
     }
 
-    // Add styles for search results
-    const style = document.createElement('style');
-    style.textContent = `
-        .search-results {
-            position: absolute;
-            width: 100%;
-            max-height: 200px;
-            overflow-y: auto;
-            background: white;
-            border: 1px solid #dee2e6;
-            border-radius: 0.25rem;
-            z-index: 1000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .material-result:hover {
-            background-color: #f8f9fa;
-        }
-        .suppliers-container {
-            max-height: 150px;
-            overflow-y: auto;
-        }
-    `;
-    document.head.appendChild(style);
+    // Payment method toggle
+    const paymentMethodSelect = document.getElementById('payment_method');
+    const bankDetails = document.getElementById('bankDetails');
+    const checkDetails = document.getElementById('checkDetails');
+
+    if (paymentMethodSelect) {
+        paymentMethodSelect.addEventListener('change', function() {
+            if (bankDetails) bankDetails.style.display = this.value === 'bank_transfer' ? 'flex' : 'none';
+            if (checkDetails) checkDetails.style.display = this.value === 'check' ? 'flex' : 'none';
+        });
+
+        // Trigger change event on load to set initial state
+        paymentMethodSelect.dispatchEvent(new Event('change'));
+    }
+
+    // Same as client address checkbox
+    const sameAsClientCheckbox = document.getElementById('same_as_client');
+    if (sameAsClientCheckbox) {
+        sameAsClientCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                document.getElementById('property_street').value = document.getElementById('client_street').value;
+                document.getElementById('property_unit').value = document.getElementById('client_unit').value;
+                document.getElementById('property_barangay').value = document.getElementById('client_barangay').value;
+                document.getElementById('property_city').value = document.getElementById('client_city').value;
+                document.getElementById('property_state').value = document.getElementById('client_state').value;
+                document.getElementById('property_postal').value = document.getElementById('client_postal').value;
+            }
+        });
+    }
 });
 </script>
 @endpush

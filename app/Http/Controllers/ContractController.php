@@ -105,13 +105,12 @@ class ContractController extends Controller
     protected function saveContract(Request $request, Contract $contract = null)
     {
         try {
-            // Validate the request
+            // Validate the request with basic required fields
             $validated = $request->validate([
                 'contractor_name' => 'required|string|min:2',
                 'contractor_email' => 'required|email',
                 'contractor_phone' => 'required|string|min:10',
                 'contractor_street' => 'required|string',
-                'contractor_unit' => 'nullable|string',
                 'contractor_barangay' => 'required|string',
                 'contractor_city' => 'required|string',
                 'contractor_state' => 'required|string',
@@ -121,17 +120,16 @@ class ContractController extends Controller
                 'client_email' => 'required|email',
                 'client_phone' => 'required|string|min:10',
                 'client_street' => 'required|string',
-                'client_unit' => 'nullable|string',
                 'client_barangay' => 'required|string',
                 'client_city' => 'required|string',
                 'client_state' => 'required|string',
                 'client_postal' => 'required|string',
                 
-                'scope_of_work' => 'required|array',
-                'scope_description' => 'required|string',
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after:start_date',
                 'total_amount' => 'required|numeric|min:0',
+                'scope_of_work' => 'required|array|min:1',
+                'scope_description' => 'required|string',
                 'budget_allocation' => 'required|numeric|min:0',
                 'payment_method' => 'required|string',
                 'payment_terms' => 'required|string',
@@ -142,56 +140,134 @@ class ContractController extends Controller
 
             DB::beginTransaction();
 
-            // Save contractor
-            $contractor = $this->saveParty($request, 'contractor');
-            
-            // Save client
-            $client = $this->saveParty($request, 'client');
-            
-            // Save property
-            $property = $this->saveProperty($request);
-            
-            // Process signatures
-            $signatures = $this->handleSignatures($request);
-            
-            // Save contract
-            $contractData = [
-                'contractor_id' => $contractor->id,
-                'client_id' => $client->id,
-                'property_id' => $property->id,
-                'scope_of_work' => implode(', ', $request->input('scope_of_work', [])),
-                'scope_description' => $request->input('scope_description'),
-                'start_date' => $request->input('start_date'),
-                'end_date' => $request->input('end_date'),
-                'total_amount' => $request->input('total_amount'),
-                'budget_allocation' => $request->input('budget_allocation'),
-                'payment_method' => $request->input('payment_method'),
-                'payment_terms' => $request->input('payment_terms'),
-                'bank_name' => $request->input('bank_name'),
-                'bank_account_name' => $request->input('bank_account_name'),
-                'bank_account_number' => $request->input('bank_account_number'),
-                'jurisdiction' => $request->input('jurisdiction'),
-                'contract_terms' => $request->input('contract_paragraphs'),
-                'client_signature' => $signatures['client'],
-                'contractor_signature' => $signatures['contractor'],
-                'status' => 'draft'
-            ];
+            try {
+                // Save contractor with minimal required fields
+                $contractor = Party::updateOrCreate(
+                    ['email' => $request->contractor_email],
+                    [
+                        'type' => 'contractor',
+                        'entity_type' => 'person', // Default to person for contractor
+                        'name' => $request->contractor_name,
+                        'street' => $request->contractor_street,
+                        'barangay' => $request->contractor_barangay,
+                        'city' => $request->contractor_city,
+                        'state' => $request->contractor_state,
+                        'postal' => $request->contractor_postal,
+                        'email' => $request->contractor_email,
+                        'phone' => $request->contractor_phone
+                    ]
+                );
+                
+                // Save client with minimal required fields
+                $client = Party::updateOrCreate(
+                    ['email' => $request->client_email],
+                    [
+                        'type' => 'client',
+                        'entity_type' => $request->client_company ? 'company' : 'person',
+                        'name' => $request->client_name,
+                        'company_name' => $request->client_company,
+                        'street' => $request->client_street,
+                        'barangay' => $request->client_barangay,
+                        'city' => $request->client_city,
+                        'state' => $request->client_state,
+                        'postal' => $request->client_postal,
+                        'email' => $request->client_email,
+                        'phone' => $request->client_phone
+                    ]
+                );
+                
+                // Save property with basic info
+                $property = Property::create([
+                    'street' => $request->property_street ?? $request->client_street,
+                    'unit_number' => $request->property_unit ?? null,
+                    'barangay' => $request->property_barangay ?? $request->client_barangay,
+                    'city' => $request->property_city ?? $request->client_city,
+                    'state' => $request->property_state ?? $request->client_state,
+                    'postal' => $request->property_postal ?? $request->client_postal,
+                    'property_type' => $request->property_type ?? null,
+                    'property_size' => $request->property_size ?? null
+                ]);
+                
+                // Process signatures if present
+                $signatures = [
+                    'client' => null,
+                    'contractor' => null
+                ];
+                
+                if ($request->has('client_signature')) {
+                    $base64_image = $request->input('client_signature');
+                    if (strpos($base64_image, 'data:image') === 0) {
+                        list($type, $data) = explode(';', $base64_image);
+                        list(, $data) = explode(',', $data);
+                        $image_data = base64_decode($data);
+                        $filename = 'signatures/' . uniqid('client_') . '.png';
+                        if (Storage::disk('public')->put($filename, $image_data)) {
+                            $signatures['client'] = $filename;
+                        }
+                    }
+                } elseif ($contract && $contract->client_signature) {
+                    $signatures['client'] = $contract->client_signature;
+                }
+                
+                if ($request->has('contractor_signature')) {
+                    $base64_image = $request->input('contractor_signature');
+                    if (strpos($base64_image, 'data:image') === 0) {
+                        list($type, $data) = explode(';', $base64_image);
+                        list(, $data) = explode(',', $data);
+                        $image_data = base64_decode($data);
+                        $filename = 'signatures/' . uniqid('contractor_') . '.png';
+                        if (Storage::disk('public')->put($filename, $image_data)) {
+                            $signatures['contractor'] = $filename;
+                        }
+                    }
+                } elseif ($contract && $contract->contractor_signature) {
+                    $signatures['contractor'] = $contract->contractor_signature;
+                }
+                
+                // Save contract with minimal required fields
+                $contractData = [
+                    'contractor_id' => $contractor->id,
+                    'client_id' => $client->id,
+                    'property_id' => $property->id,
+                    'scope_of_work' => implode(', ', $request->scope_of_work),
+                    'scope_description' => $request->scope_description ?? '',
+                    'start_date' => $request->start_date ?? ($contract ? $contract->start_date : null),
+                    'end_date' => $request->end_date ?? ($contract ? $contract->end_date : null),
+                    'total_amount' => $request->total_amount,
+                    'budget_allocation' => $request->budget_allocation,
+                    'payment_method' => $request->payment_method,
+                    'payment_terms' => $request->payment_terms,
+                    'bank_name' => $request->bank_name,
+                    'bank_account_name' => $request->bank_account_name,
+                    'bank_account_number' => $request->bank_account_number,
+                    'jurisdiction' => $request->jurisdiction ?? $request->property_city . ', Philippines',
+                    'contract_terms' => $request->contract_terms ?? 'Standard terms and conditions apply',
+                    'client_signature' => $signatures['client'],
+                    'contractor_signature' => $signatures['contractor'],
+                    'status' => 'draft'
+                ];
 
-            if ($contract) {
-                $contract->update($contractData);
-            } else {
-                $contract = Contract::create($contractData);
+                if ($contract) {
+                    $contract->update($contractData);
+                } else {
+                    $contract = Contract::create($contractData);
+                }
+
+                // Save items if present
+                if ($request->has('items')) {
+                    $this->saveItems($request, $contract);
+                }
+
+                DB::commit();
+
+                return redirect()->route('contracts.show', $contract->id)
+                    ->with('success', 'Contract saved successfully');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
             }
-
-            // Save items
-            $this->saveItems($request, $contract);
-
-            DB::commit();
-
-            return redirect()->route('contracts.show', $contract->id)
-                ->with('success', 'Contract saved successfully');
         } catch (\Exception $e) {
-            DB::rollBack();
+            \Log::error('Contract save error: ' . $e->getMessage());
             return back()->withInput()
                 ->withErrors(['error' => 'Error saving contract: ' . $e->getMessage()]);
         }
@@ -240,26 +316,36 @@ class ContractController extends Controller
         foreach (['client', 'contractor'] as $type) {
             // Keep existing signature if checkbox is checked
             if ($request->has("keep_{$type}_signature") && $request->input("keep_{$type}_signature")) {
-                $existingPath = str_replace('/storage/', '', $request->input("existing_{$type}_signature"));
-                $signatures[$type] = $existingPath;
+                $existingPath = $request->input("existing_{$type}_signature");
+                if ($existingPath) {
+                    $signatures[$type] = str_replace('/storage/', '', $existingPath);
+                }
                 continue;
             }
             
-            // Handle file uploads
-            if ($request->hasFile("{$type}_signature")) {
-                $path = $request->file("{$type}_signature")->store('signatures', 'public');
-                $signatures[$type] = $path;
-                continue;
-            }
-            
-            // Handle canvas signatures
-            if ($request->filled("{$type}_signature_data")) {
-                $image_data = base64_decode(explode(',', $request->input("{$type}_signature_data"))[1]);
-                $filename = "{$type}_signature_" . time() . '.png';
-                $path = "signatures/{$filename}";
+            // Handle base64 signature data
+            if ($request->has("{$type}_signature")) {
+                $base64_image = $request->input("{$type}_signature");
                 
-                Storage::disk('public')->put($path, $image_data);
-                $signatures[$type] = $path;
+                // Check if this is a base64 image
+                if (strpos($base64_image, 'data:image') === 0) {
+                    // Extract the actual base64 data
+                    list($type, $data) = explode(';', $base64_image);
+                    list(, $data) = explode(',', $data);
+                    
+                    // Decode and save the image
+                    $image_data = base64_decode($data);
+                    $filename = 'signatures/' . uniqid($type . '_') . '.png';
+                    
+                    if (Storage::disk('public')->put($filename, $image_data)) {
+                        $signatures[$type] = $filename;
+                    }
+                }
+                // If it's a file upload
+                else if ($request->hasFile("{$type}_signature")) {
+                    $path = $request->file("{$type}_signature")->store('signatures', 'public');
+                    $signatures[$type] = $path;
+                }
             }
         }
 
