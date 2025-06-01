@@ -21,7 +21,7 @@ use App\Http\Controllers\ProcurementController;
 use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\QuotationController;
-use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\SupplierInvitationController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -89,10 +89,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/quotations/search', [QuotationController::class, 'search'])->name('quotations.search');
 
     // Invitation Routes
-    Route::resource('invitations', InvitationController::class);
-    Route::post('/api/invitations/{invitation}/resend', [InvitationController::class, 'resend']);
-    Route::post('/api/invitations/remove-attachment', [InvitationController::class, 'removeAttachment']);
-    Route::get('/api/invitations/search', [InvitationController::class, 'search'])->name('invitations.search');
+    Route::resource('supplier-invitations', SupplierInvitationController::class);
+    Route::post('/api/supplier-invitations/{invitation}/resend', [SupplierInvitationController::class, 'resend']);
+    Route::post('/api/supplier-invitations/remove-attachment', [SupplierInvitationController::class, 'removeAttachment']);
+    Route::get('/api/supplier-invitations/search', [SupplierInvitationController::class, 'search'])->name('supplier-invitations.search');
 
     // Supplier Routes
     Route::resource('suppliers', SupplierController::class);
