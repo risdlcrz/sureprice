@@ -15,18 +15,16 @@ class AdminSeeder extends Seeder
             [
                 'name' => 'Main Admin',
                 'username' => 'mainadmin',
-                'email' => 'admin1@example.com', // Changed to unique
+                'email' => 'admin1@example.com',
                 'password' => Hash::make('AdminPass123!'),
-                'user_type' => 'admin', // Matches your DB column
-                'email_verified_at' => now(),
+                'user_type' => 'admin'
             ],
             [
                 'name' => 'Backup Admin', 
                 'username' => 'backupadmin',
-                'email' => 'admin2@example.com', // Changed to unique
+                'email' => 'admin2@example.com',
                 'password' => Hash::make('AdminPass456!'),
-                'user_type' => 'admin', // Matches your DB column
-                'email_verified_at' => now(),
+                'user_type' => 'admin'
             ]
         ];
 
