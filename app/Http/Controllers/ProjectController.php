@@ -3,22 +3,39 @@
 namespace App\Http\Controllers;
 
 use App\Models\Contract;
+use App\Models\Inquiry;
+use App\Models\Quotation;
+use App\Models\Activity;
 use Illuminate\Http\Request;
 
 class ProjectController extends Controller
 {
     public function dashboard()
     {
-        // Get recent contracts
-        $recentContracts = Contract::with(['client'])
-            ->orderBy('created_at', 'desc')
+        $recentContracts = Contract::with('client')
+            ->latest()
             ->take(5)
             ->get();
 
-        // For now, we'll pass an empty array for activities
-        // You can implement activity logging later
-        $recentActivities = [];
+        $recentInquiries = Inquiry::with('project')
+            ->latest()
+            ->take(5)
+            ->get();
 
-        return view('admin.project-dashboard', compact('recentContracts', 'recentActivities'));
+        $recentQuotations = Quotation::with('project')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $recentActivities = Activity::latest()
+            ->take(5)
+            ->get();
+
+        return view('admin.project-dashboard', compact(
+            'recentContracts',
+            'recentInquiries',
+            'recentQuotations',
+            'recentActivities'
+        ));
     }
 } 

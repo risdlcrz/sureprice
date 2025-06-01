@@ -38,6 +38,34 @@
                 </div>
             </div>
 
+            <!-- Create Inquiry Card -->
+            <div class="col">
+                <div class="card h-100">
+                    <img src="{{ asset('images/new-inquiry.jpg') }}" class="card-img-top" alt="Create Inquiry">
+                    <div class="card-body">
+                        <h5 class="card-title">Create Inquiry</h5>
+                        <p class="card-text">Submit new material inquiries and track procurement requests.</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ route('inquiries.create') }}" class="btn btn-primary w-100">Create New Inquiry</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Inquiries Card -->
+            <div class="col">
+                <div class="card h-100">
+                    <img src="{{ asset('images/view-inquiries.jpg') }}" class="card-img-top" alt="View Inquiries">
+                    <div class="card-body">
+                        <h5 class="card-title">View Inquiries</h5>
+                        <p class="card-text">Monitor and manage material inquiries and their responses.</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ route('inquiries.index') }}" class="btn btn-secondary w-100">View All Inquiries</a>
+                    </div>
+                </div>
+            </div>
+
             <!-- Add Material Card -->
             <div class="col">
                 <div class="card h-100">
@@ -93,6 +121,34 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Create RFQ Card -->
+            <div class="col">
+                <div class="card h-100">
+                    <img src="{{ asset('images/new-quotation.jpg') }}" class="card-img-top" alt="Create RFQ">
+                    <div class="card-body">
+                        <h5 class="card-title">Create RFQ</h5>
+                        <p class="card-text">Create new requests for quotation and send to suppliers.</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ route('quotations.create') }}" class="btn btn-primary w-100">Create New RFQ</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View RFQs Card -->
+            <div class="col">
+                <div class="card h-100">
+                    <img src="{{ asset('images/view-quotations.jpg') }}" class="card-img-top" alt="View RFQs">
+                    <div class="card-body">
+                        <h5 class="card-title">View RFQs</h5>
+                        <p class="card-text">Track and manage requests for quotation and supplier responses.</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ route('quotations.index') }}" class="btn btn-secondary w-100">View All RFQs</a>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="row mt-4">
@@ -119,10 +175,58 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Recent Inquiries</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            @forelse($recentInquiries ?? [] as $inquiry)
+                            <a href="{{ route('inquiries.show', $inquiry->id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ $inquiry->subject }}</h6>
+                                    <small>{{ $inquiry->created_at->diffForHumans() }}</small>
+                                </div>
+                                <p class="mb-1">{{ Str::limit($inquiry->description, 50) }}</p>
+                                <small class="text-muted">Priority: {{ ucfirst($inquiry->priority) }}</small>
+                            </a>
+                            @empty
+                            <div class="list-group-item">
+                                <p class="mb-0">No recent inquiries</p>
+                            </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="col-md-6">
                 <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Recent RFQs</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group">
+                            @forelse($recentQuotations ?? [] as $quotation)
+                            <a href="{{ route('quotations.show', $quotation->id) }}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ $quotation->rfq_number }}</h6>
+                                    <small>{{ $quotation->created_at->diffForHumans() }}</small>
+                                </div>
+                                <p class="mb-1">{{ $quotation->project->name }}</p>
+                                <small class="text-muted">Status: {{ ucfirst($quotation->status) }}</small>
+                            </a>
+                            @empty
+                            <div class="list-group-item">
+                                <p class="mb-0">No recent RFQs</p>
+                            </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
                     <div class="card-header">
                         <h5 class="card-title mb-0">Recent Activities</h5>
                     </div>
@@ -141,10 +245,9 @@
                                 <p class="mb-0">No recent activities</p>
                             </div>
                             @endforelse
+                        </div>
                     </div>
                 </div>
-            </div>
-            </div>
             </div>
         </div>
     </div>

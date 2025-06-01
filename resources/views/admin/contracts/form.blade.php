@@ -494,7 +494,7 @@
                                     <div class="item-row mb-4" data-index="{{ $index }}">
                                         <div class="card">
                                             <div class="card-body">
-                                                <div class="row">
+                                            <div class="row">
                                                     <div class="col-md-12 mb-3">
                                                         <div class="form-group">
                                                             <label>Search Material</label>
@@ -512,85 +512,85 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="form-group">
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
                                                             <label>Material Name</label>
-                                                            <input type="text" class="form-control material-name" 
-                                                                name="items[{{ $index }}][material_name]" 
+                                                                <input type="text" class="form-control material-name" 
+                                                                    name="items[{{ $index }}][material_name]" 
                                                                 value="{{ optional($item->material)->name ?? '' }}" readonly required>
-                                                            <input type="hidden" class="material-id" 
-                                                                name="items[{{ $index }}][material_id]" 
+                                                                <input type="hidden" class="material-id" 
+                                                                    name="items[{{ $index }}][material_id]" 
                                                                 value="{{ optional($item->material)->id ?? '' }}">
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="form-group">
-                                                            <label>Unit</label>
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label>Unit</label>
                                                             <input type="text" class="form-control material-unit" 
-                                                                name="items[{{ $index }}][unit]" 
+                                                                    name="items[{{ $index }}][unit]" 
                                                                 value="{{ optional($item->material)->unit ?? '' }}" readonly required>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                <div class="row mt-3">
-                                                    <div class="col-md-4">
-                                                        <div class="form-group">
-                                                            <label>Quantity</label>
+                                                    <div class="row mt-3">
+                                                        <div class="col-md-4">
+                                                            <div class="form-group">
+                                                                <label>Quantity</label>
                                                             <input type="number" class="form-control quantity" 
-                                                                name="items[{{ $index }}][quantity]" 
+                                                                    name="items[{{ $index }}][quantity]" 
                                                                 value="{{ $item->quantity ?? '' }}" min="1" required>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <div class="form-group">
-                                                            <label>Unit Price</label>
+                                                        <div class="col-md-4">
+                                                            <div class="form-group">
+                                                                <label>Unit Price</label>
                                                             <input type="number" class="form-control unit-price" 
-                                                                name="items[{{ $index }}][unit_price]" 
+                                                                    name="items[{{ $index }}][unit_price]" 
                                                                 value="{{ $item->unit_price ?? '' }}" min="0" step="0.01" required>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <div class="form-group">
-                                                            <label>Total</label>
-                                                            <input type="text" class="form-control item-total" 
+                                                        <div class="col-md-4">
+                                                            <div class="form-group">
+                                                                <label>Total</label>
+                                                                <input type="text" class="form-control item-total" 
                                                                 value="{{ isset($item->quantity, $item->unit_price) ? number_format($item->quantity * $item->unit_price, 2) : '0.00' }}" 
                                                                 readonly>
+                                                            </div>
                                                         </div>
                                                     </div>
-                                                </div>
 
-                                                <div class="row mt-3">
+                                                    <div class="row mt-3">
                                                     <div class="col-md-11">
-                                                        <div class="form-group">
+                                                            <div class="form-group">
                                                             <label>Suppliers</label>
                                                             <div class="suppliers-container border rounded p-2" style="max-height: 100px; overflow-y: auto;">
                                                                 @if(isset($item->material) && isset($item->material->suppliers))
                                                                     @foreach($item->material->suppliers as $supplier)
-                                                                    <div class="form-check">
+                                                                        <div class="form-check">
                                                                         <input type="checkbox" class="form-check-input" 
-                                                                            name="items[{{ $index }}][suppliers][]" 
-                                                                            value="{{ $supplier->id }}"
+                                                                                name="items[{{ $index }}][suppliers][]" 
+                                                                                value="{{ $supplier->id }}" 
                                                                             {{ isset($item->supplier_id) && $item->supplier_id == $supplier->id ? 'checked' : '' }}>
                                                                         <label class="form-check-label">
-                                                                            {{ $supplier->name }} - {{ $supplier->price_range ?? 'Price not available' }}
-                                                                        </label>
-                                                                    </div>
+                                                                                {{ $supplier->name }} - {{ $supplier->price_range ?? 'Price not available' }}
+                                                                            </label>
+                                                                        </div>
                                                                     @endforeach
                                                                 @endif
-                                                            </div>
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-1">
+                                                </div>
+                                                <div class="col-md-1">
                                                         <button type="button" class="btn btn-danger remove-item">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
                                                     </div>
+                                                </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
                                     @endforeach
                                 @endif
                             </div>
@@ -973,13 +973,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize form validation
     const form = document.getElementById('contractForm');
     if (form) {
-        form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        });
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
     }
 
     // Items and Materials Management
@@ -988,8 +988,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (!itemsList || !addItemBtn) {
         console.error('Required elements not found');
-        return;
-    }
+            return;
+        }
 
     let itemCount = itemsList.querySelectorAll('.item-row').length;
 
@@ -997,7 +997,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function getItemTemplate(index) {
         return `
             <div class="item-row mb-4" data-index="${index}">
-                <div class="card">
+                        <div class="card">
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-12 mb-3">
@@ -1075,9 +1075,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        `;
+                            </div>
+                        </div>
+                    `;
     }
 
     // Add new item
@@ -1164,8 +1164,8 @@ document.addEventListener('DOMContentLoaded', function() {
         query = query.trim();
         if (query.length < 2) {
             resultsContainer.style.display = 'none';
-            return;
-        }
+                return;
+            }
 
         resultsContainer.innerHTML = '<div class="p-2">Searching...</div>';
         resultsContainer.style.display = 'block';
@@ -1177,32 +1177,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 return response.json();
             })
-            .then(data => {
+                .then(data => {
                 if (Array.isArray(data) && data.length > 0) {
                     resultsContainer.innerHTML = data.map(material => `
-                        <div class="material-result p-2 border-bottom" style="cursor: pointer;" 
-                            data-material='${JSON.stringify(material)}'>
-                            <strong>${material.name}</strong><br>
-                            <small>${material.description || ''} - ${material.unit}</small>
-                        </div>
-                    `).join('');
-
-                    // Add click handlers for results
+                            <div class="material-result p-2 border-bottom" style="cursor: pointer;" 
+                                data-material='${JSON.stringify(material)}'>
+                                <strong>${material.name}</strong><br>
+                                <small>${material.description || ''} - ${material.unit}</small>
+                            </div>
+                        `).join('');
+                        
+                        // Add click handlers for results
                     resultsContainer.querySelectorAll('.material-result').forEach(result => {
-                        result.addEventListener('click', () => selectMaterial(result));
-                    });
-                } else {
+                            result.addEventListener('click', () => selectMaterial(result));
+                        });
+                    } else {
                     resultsContainer.innerHTML = '<div class="p-2">No materials found</div>';
-                }
-            })
-            .catch(error => {
-                console.error('Error searching materials:', error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error searching materials:', error);
                 resultsContainer.innerHTML = '<div class="p-2 text-danger">Error searching materials</div>';
-            });
-    }
+                });
+        }
 
     // Select material from search results
-    function selectMaterial(resultElement) {
+        function selectMaterial(resultElement) {
         if (!resultElement) return;
 
         try {
@@ -1248,35 +1248,35 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!suppliersContainer) return;
 
         const itemIndex = item.dataset.index || Array.from(itemsList.children).indexOf(item);
-        
-        fetch(`/api/materials/${materialId}/suppliers`)
+            
+            fetch(`/api/materials/${materialId}/suppliers`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
                 return response.json();
             })
-            .then(suppliers => {
+                .then(suppliers => {
                 if (Array.isArray(suppliers) && suppliers.length > 0) {
                     suppliersContainer.innerHTML = suppliers.map(supplier => `
-                        <div class="form-check">
+                            <div class="form-check">
                             <input type="checkbox" class="form-check-input" 
                                 name="items[${itemIndex}][suppliers][]" 
                                 value="${supplier.id}">
                             <label class="form-check-label">
-                                ${supplier.name} - ${supplier.price_range || 'Price not available'}
-                            </label>
-                        </div>
-                    `).join('');
-                } else {
+                                    ${supplier.name} - ${supplier.price_range || 'Price not available'}
+                                </label>
+                            </div>
+                        `).join('');
+                    } else {
                     suppliersContainer.innerHTML = '<p class="text-muted">No suppliers available</p>';
-                }
-            })
-            .catch(error => {
-                console.error('Error loading suppliers:', error);
-                suppliersContainer.innerHTML = '<p class="text-danger">Error loading suppliers</p>';
-            });
-    }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading suppliers:', error);
+                    suppliersContainer.innerHTML = '<p class="text-danger">Error loading suppliers</p>';
+                });
+        }
 
     // Calculate total for an item
     function calculateTotal(item) {
@@ -1288,9 +1288,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!quantityInput || !priceInput || !totalInput) return;
 
-        const quantity = parseFloat(quantityInput.value) || 0;
-        const price = parseFloat(priceInput.value) || 0;
-        totalInput.value = (quantity * price).toFixed(2);
+            const quantity = parseFloat(quantityInput.value) || 0;
+            const price = parseFloat(priceInput.value) || 0;
+            totalInput.value = (quantity * price).toFixed(2);
         updateGrandTotal();
     }
 
