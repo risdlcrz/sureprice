@@ -486,167 +486,115 @@
                                     </button>
                                 </div>
                             </div>
+                            
+                            <!-- Items List Container -->
                             <div id="itemsList">
                                 @if(isset($items) && count($items) > 0)
                                     @foreach($items as $index => $item)
-                                        <div class="item-container mb-4 border p-3 rounded">
-                                            <div class="row">
-                                                <div class="col-md-11">
-                                                    <div class="row">
-                                                        <div class="col-md-6">
-                                                            <div class="form-group">
-                                                                <label>Material</label>
-                                                                <input type="text" class="form-control material-name" 
-                                                                    name="items[{{ $index }}][material_name]" 
-                                                                    value="{{ $item->material->name }}" required readonly>
-                                                                <input type="hidden" class="material-id" 
-                                                                    name="items[{{ $index }}][material_id]" 
-                                                                    value="{{ $item->material_id }}">
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <div class="form-group">
-                                                                <label>Unit</label>
-                                                                <input type="text" class="form-control item-unit" 
-                                                                    name="items[{{ $index }}][unit]" 
-                                                                    value="{{ $item->material->unit }}" required readonly>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row mt-3">
-                                                        <div class="col-md-4">
-                                                            <div class="form-group">
-                                                                <label>Quantity</label>
-                                                                <input type="number" class="form-control item-quantity" 
-                                                                    name="items[{{ $index }}][quantity]" 
-                                                                    value="{{ $item->quantity }}" min="1" required>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <div class="form-group">
-                                                                <label>Unit Price</label>
-                                                                <input type="number" class="form-control item-price" 
-                                                                    name="items[{{ $index }}][unit_price]" 
-                                                                    value="{{ $item->amount }}" min="0" step="0.01" required>
-                                                            </div>
-                                                        </div>
-                                                        <div class="col-md-4">
-                                                            <div class="form-group">
-                                                                <label>Total</label>
-                                                                <input type="text" class="form-control item-total" 
-                                                                    value="{{ number_format($item->total, 2) }}" readonly>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row mt-3">
-                                                        <div class="col-md-12">
-                                                            <div class="form-group">
-                                                                <label>Preferred Suppliers</label>
-                                                                <div class="suppliers-container">
-                                                                    @foreach($item->material->suppliers as $supplier)
-                                                                        <div class="form-check">
-                                                                            <input type="checkbox" class="form-check-input supplier-checkbox" 
-                                                                                name="items[{{ $index }}][suppliers][]" 
-                                                                                value="{{ $supplier->id }}" 
-                                                                                id="supplier_{{ $index }}_{{ $supplier->id }}"
-                                                                                {{ $item->supplier_id == $supplier->id ? 'checked' : '' }}>
-                                                                            <label class="form-check-label" for="supplier_{{ $index }}_{{ $supplier->id }}">
-                                                                                {{ $supplier->name }} - {{ $supplier->price_range ?? 'Price not available' }}
-                                                                            </label>
-                                                                        </div>
-                                                                    @endforeach
+                                    <div class="item-row mb-4" data-index="{{ $index }}">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-12 mb-3">
+                                                        <div class="form-group">
+                                                            <label>Search Material</label>
+                                                            <div class="input-group">
+                                                                <input type="text" class="form-control material-search" 
+                                                                    placeholder="Type to search materials...">
+                                                                <div class="input-group-append">
+                                                                    <button class="btn btn-outline-secondary search-btn" type="button">
+                                                                        <i class="fas fa-search"></i>
+                                                                    </button>
                                                                 </div>
                                                             </div>
+                                                            <div class="search-results mt-2 position-absolute" style="display: none; z-index: 1000; width: 95%;"></div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="col-md-1">
-                                                    <button type="button" class="btn btn-danger remove-item-btn">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
+
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label>Material Name</label>
+                                                            <input type="text" class="form-control material-name" 
+                                                                name="items[{{ $index }}][material_name]" 
+                                                                value="{{ optional($item->material)->name ?? '' }}" readonly required>
+                                                            <input type="hidden" class="material-id" 
+                                                                name="items[{{ $index }}][material_id]" 
+                                                                value="{{ optional($item->material)->id ?? '' }}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label>Unit</label>
+                                                            <input type="text" class="form-control material-unit" 
+                                                                name="items[{{ $index }}][unit]" 
+                                                                value="{{ optional($item->material)->unit ?? '' }}" readonly required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row mt-3">
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label>Quantity</label>
+                                                            <input type="number" class="form-control quantity" 
+                                                                name="items[{{ $index }}][quantity]" 
+                                                                value="{{ $item->quantity ?? '' }}" min="1" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label>Unit Price</label>
+                                                            <input type="number" class="form-control unit-price" 
+                                                                name="items[{{ $index }}][unit_price]" 
+                                                                value="{{ $item->unit_price ?? '' }}" min="0" step="0.01" required>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label>Total</label>
+                                                            <input type="text" class="form-control item-total" 
+                                                                value="{{ isset($item->quantity, $item->unit_price) ? number_format($item->quantity * $item->unit_price, 2) : '0.00' }}" 
+                                                                readonly>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row mt-3">
+                                                    <div class="col-md-11">
+                                                        <div class="form-group">
+                                                            <label>Suppliers</label>
+                                                            <div class="suppliers-container border rounded p-2" style="max-height: 100px; overflow-y: auto;">
+                                                                @if(isset($item->material) && isset($item->material->suppliers))
+                                                                    @foreach($item->material->suppliers as $supplier)
+                                                                    <div class="form-check">
+                                                                        <input type="checkbox" class="form-check-input" 
+                                                                            name="items[{{ $index }}][suppliers][]" 
+                                                                            value="{{ $supplier->id }}"
+                                                                            {{ isset($item->supplier_id) && $item->supplier_id == $supplier->id ? 'checked' : '' }}>
+                                                                        <label class="form-check-label">
+                                                                            {{ $supplier->name }} - {{ $supplier->price_range ?? 'Price not available' }}
+                                                                        </label>
+                                                                    </div>
+                                                                    @endforeach
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-1">
+                                                        <button type="button" class="btn btn-danger remove-item">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
                                     @endforeach
                                 @endif
                             </div>
                         </div>
-
-                        <!-- Item Template -->
-                        <template id="itemTemplate">
-                            <div class="item-container mb-4 border p-3 rounded">
-                                <div class="row">
-                                    <div class="col-md-11">
-                                        <div class="row">
-                                            <div class="col-md-12 mb-3">
-                                                <div class="form-group">
-                                                    <label>Material Search</label>
-                                                    <div class="input-group">
-                                                        <input type="text" class="form-control material-search" placeholder="Search materials...">
-                                                        <div class="input-group-append">
-                                                            <button class="btn btn-outline-secondary search-material-btn" type="button">
-                                                                <i class="fas fa-search"></i>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                    <div class="material-search-results mt-2" style="display: none;"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="form-group">
-                                                    <label>Material Name</label>
-                                                    <input type="text" class="form-control material-name" name="items[INDEX][material_name]" required readonly>
-                                                    <input type="hidden" class="material-id" name="items[INDEX][material_id]">
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="form-group">
-                                                    <label>Unit</label>
-                                                    <input type="text" class="form-control item-unit" name="items[INDEX][unit]" required readonly>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row mt-3">
-                                            <div class="col-md-4">
-                                                <div class="form-group">
-                                                    <label>Quantity</label>
-                                                    <input type="number" class="form-control item-quantity" name="items[INDEX][quantity]" min="1" required>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="form-group">
-                                                    <label>Unit Price</label>
-                                                    <input type="number" class="form-control item-price" name="items[INDEX][unit_price]" min="0" step="0.01" required>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="form-group">
-                                                    <label>Total</label>
-                                                    <input type="text" class="form-control item-total" readonly>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="row mt-3">
-                                            <div class="col-md-12">
-                                                <div class="form-group">
-                                                    <label>Preferred Suppliers</label>
-                                                    <div class="suppliers-container">
-                                                        <!-- Suppliers will be dynamically loaded here -->
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-1">
-                                        <button type="button" class="btn btn-danger remove-item-btn">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
 
                         <!-- Contract Clauses Section -->
                         <div class="section-container" id="clausesSection">
@@ -1024,281 +972,132 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize form validation
     const form = document.getElementById('contractForm');
-    form.addEventListener('submit', function(event) {
-        if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
-        }
-        form.classList.add('was-validated');
-    });
-
-    // Client search functionality
-    const clientSearchInput = document.getElementById('client_search');
-    const clientSearchResults = document.getElementById('clientSearchResults');
-    const searchClientBtn = document.getElementById('searchClientBtn');
-    let searchTimeout;
-
-    function performClientSearch() {
-        const searchTerm = clientSearchInput.value.trim();
-        if (searchTerm.length < 2) {
-            clientSearchResults.style.display = 'none';
-            return;
-        }
-
-        fetch(`{{ route('clients.search') }}?query=${encodeURIComponent(searchTerm)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.length > 0) {
-                    const resultsHtml = data.map(client => `
-                        <div class="client-result p-2 border-bottom" style="cursor: pointer;" 
-                             onclick="selectClient(${JSON.stringify(client).replace(/"/g, '&quot;')})">
-                            <strong>${client.name}</strong><br>
-                            <small>${client.email} | ${client.phone}</small>
-                        </div>
-                    `).join('');
-                    
-                    clientSearchResults.innerHTML = `
-                        <div class="card">
-                            <div class="card-body p-0">
-                                ${resultsHtml}
-                            </div>
-                        </div>
-                    `;
-                    clientSearchResults.style.display = 'block';
-                } else {
-                    clientSearchResults.innerHTML = '<div class="alert alert-info">No clients found</div>';
-                    clientSearchResults.style.display = 'block';
-                }
-            })
-            .catch(error => {
-                console.error('Error searching clients:', error);
-                clientSearchResults.innerHTML = '<div class="alert alert-danger">Error searching clients</div>';
-                clientSearchResults.style.display = 'block';
-            });
-    }
-
-    function selectClient(client) {
-        document.getElementById('client_id').value = client.id;
-        document.getElementById('client_name').value = client.name;
-        document.getElementById('client_email').value = client.email;
-        document.getElementById('client_phone').value = client.phone;
-        document.getElementById('client_address').value = client.address;
-        document.getElementById('client_type').value = client.type || 'individual';
-        
-        clientSearchResults.style.display = 'none';
-        clientSearchInput.value = '';
-    }
-
-    clientSearchInput.addEventListener('input', () => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(performClientSearch, 300);
-    });
-
-    searchClientBtn.addEventListener('click', performClientSearch);
-
-    // Close search results when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!clientSearchResults.contains(e.target) && e.target !== clientSearchInput && e.target !== searchClientBtn) {
-            clientSearchResults.style.display = 'none';
-        }
-    });
-
-    // Initialize TinyMCE
-    tinymce.init({
-        selector: '#work_description',
-        height: 300,
-        menubar: false,
-        plugins: [
-            'advlist', 'autolink', 'lists', 'link', 'charmap', 'preview',
-            'searchreplace', 'visualblocks', 'code', 'fullscreen',
-            'insertdatetime', 'table', 'wordcount'
-        ],
-        toolbar: 'undo redo | blocks | ' +
-            'bold italic | alignleft aligncenter ' +
-            'alignright alignjustify | bullist numlist | ' +
-            'removeformat',
-        content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; }'
-    });
-
-    // Date validation
-    const startDateInput = document.getElementById('start_date');
-    const completionDateInput = document.getElementById('completion_date');
-
-    startDateInput.addEventListener('change', validateDates);
-    completionDateInput.addEventListener('change', validateDates);
-
-    function validateDates() {
-        const startDate = new Date(startDateInput.value);
-        const completionDate = new Date(completionDateInput.value);
-        
-        if (completionDate < startDate) {
-            completionDateInput.setCustomValidity('Completion date must be after start date');
-        } else {
-            completionDateInput.setCustomValidity('');
-        }
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
     }
 
     // Items and Materials Management
     const itemsList = document.getElementById('itemsList');
-    const itemTemplate = document.getElementById('itemTemplate');
     const addItemBtn = document.getElementById('addItemBtn');
-    let itemCount = {{ isset($items) ? count($items) : 0 }};
+    
+    if (!itemsList || !addItemBtn) {
+        console.error('Required elements not found');
+        return;
+    }
 
+    let itemCount = itemsList.querySelectorAll('.item-row').length;
+
+    // Template for new item
+    function getItemTemplate(index) {
+        return `
+            <div class="item-row mb-4" data-index="${index}">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-group">
+                                    <label>Search Material</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control material-search" 
+                                            placeholder="Type to search materials...">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-secondary search-btn" type="button">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="search-results mt-2 position-absolute" style="display: none; z-index: 1000; width: 95%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Material Name</label>
+                                    <input type="text" class="form-control material-name" 
+                                        name="items[${index}][material_name]" readonly required>
+                                    <input type="hidden" class="material-id" 
+                                        name="items[${index}][material_id]">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>Unit</label>
+                                    <input type="text" class="form-control material-unit" 
+                                        name="items[${index}][unit]" readonly required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Quantity</label>
+                                    <input type="number" class="form-control quantity" 
+                                        name="items[${index}][quantity]" min="1" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Unit Price</label>
+                                    <input type="number" class="form-control unit-price" 
+                                        name="items[${index}][unit_price]" min="0" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label>Total</label>
+                                    <input type="text" class="form-control item-total" value="0.00" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-11">
+                                <div class="form-group">
+                                    <label>Suppliers</label>
+                                    <div class="suppliers-container border rounded p-2" style="max-height: 100px; overflow-y: auto;">
+                                        <!-- Suppliers will be loaded here -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-danger remove-item">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Add new item
     function addItem() {
-        const newItem = document.importNode(itemTemplate.content, true);
+        const newItemHtml = getItemTemplate(itemCount);
+        const tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newItemHtml;
+        const newItem = tempContainer.firstElementChild;
         
-        // Replace INDEX placeholder with actual index
-        newItem.querySelectorAll('[name*="INDEX"]').forEach(element => {
-            element.name = element.name.replace('INDEX', itemCount);
-        });
-
-        // Add event listeners for the new item
-        setupItemEventListeners(newItem.querySelector('.item-container'));
-        
-        itemsList.appendChild(newItem);
-        itemCount++;
-    }
-
-    function setupItemEventListeners(container) {
-        const searchInput = container.querySelector('.material-search');
-        const searchBtn = container.querySelector('.search-material-btn');
-        const searchResults = container.querySelector('.material-search-results');
-        const quantityInput = container.querySelector('.item-quantity');
-        const priceInput = container.querySelector('.item-price');
-        const totalInput = container.querySelector('.item-total');
-        const removeBtn = container.querySelector('.remove-item-btn');
-        let searchTimeout;
-
-        // Material search
-        function performMaterialSearch() {
-            const searchTerm = searchInput.value.trim();
-            if (searchTerm.length < 2) {
-                searchResults.style.display = 'none';
-                return;
-            }
-
-            // Show loading state
-            searchResults.innerHTML = '<div class="p-2">Searching...</div>';
-            searchResults.style.display = 'block';
-
-            fetch('/api/materials/search?query=' + encodeURIComponent(searchTerm))
-                .then(response => response.json())
-                .then(data => {
-                    if (data.length > 0) {
-                        const resultsHtml = data.map(material => `
-                            <div class="material-result p-2 border-bottom" style="cursor: pointer;" 
-                                data-material='${JSON.stringify(material)}'>
-                                <strong>${material.name}</strong><br>
-                                <small>${material.description || ''} - ${material.unit}</small>
-                            </div>
-                        `).join('');
-                        
-                        searchResults.innerHTML = resultsHtml;
-                        
-                        // Add click handlers for results
-                        searchResults.querySelectorAll('.material-result').forEach(result => {
-                            result.addEventListener('click', () => selectMaterial(result));
-                        });
-                    } else {
-                        searchResults.innerHTML = '<div class="p-2">No materials found</div>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error searching materials:', error);
-                    searchResults.innerHTML = '<div class="p-2 text-danger">Error searching materials</div>';
-                });
+        if (itemsList) {
+            itemsList.appendChild(newItem);
+            setupItemEventListeners(newItem);
+            itemCount++;
         }
-
-        function selectMaterial(resultElement) {
-            const material = JSON.parse(resultElement.dataset.material);
-            
-            container.querySelector('.material-id').value = material.id;
-            container.querySelector('.material-name').value = material.name;
-            container.querySelector('.item-unit').value = material.unit;
-            if (material.price) {
-                container.querySelector('.item-price').value = material.price;
-            }
-            
-            searchResults.style.display = 'none';
-            searchInput.value = '';
-
-            // Load suppliers for this material
-            loadSuppliers(material.id);
-            
-            // Calculate total
-            calculateTotal();
-        }
-
-        function loadSuppliers(materialId) {
-            const suppliersContainer = container.querySelector('.suppliers-container');
-            
-            fetch(`/api/materials/${materialId}/suppliers`)
-                .then(response => response.json())
-                .then(suppliers => {
-                    if (suppliers.length > 0) {
-                        const suppliersHtml = suppliers.map(supplier => `
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input supplier-checkbox" 
-                                    name="items[${itemCount}][suppliers][]" 
-                                    value="${supplier.id}" 
-                                    id="supplier_${itemCount}_${supplier.id}">
-                                <label class="form-check-label" for="supplier_${itemCount}_${supplier.id}">
-                                    ${supplier.name} - ${supplier.price_range || 'Price not available'}
-                                </label>
-                            </div>
-                        `).join('');
-                        suppliersContainer.innerHTML = suppliersHtml;
-                    } else {
-                        suppliersContainer.innerHTML = '<p class="text-muted">No suppliers available for this material</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading suppliers:', error);
-                    suppliersContainer.innerHTML = '<p class="text-danger">Error loading suppliers</p>';
-                });
-        }
-
-        function calculateTotal() {
-            const quantity = parseFloat(quantityInput.value) || 0;
-            const price = parseFloat(priceInput.value) || 0;
-            totalInput.value = (quantity * price).toFixed(2);
-            updateContractTotal();
-        }
-
-        // Event listeners
-        searchInput.addEventListener('input', () => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(performMaterialSearch, 300);
-        });
-
-        searchBtn.addEventListener('click', performMaterialSearch);
-
-        quantityInput.addEventListener('input', calculateTotal);
-        priceInput.addEventListener('input', calculateTotal);
-
-        removeBtn.addEventListener('click', () => {
-            container.remove();
-            updateContractTotal();
-        });
-
-        // Close search results when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!searchResults.contains(e.target) && e.target !== searchInput && e.target !== searchBtn) {
-                searchResults.style.display = 'none';
-            }
-        });
-    }
-
-    function updateContractTotal() {
-        let total = 0;
-        document.querySelectorAll('.item-total').forEach(input => {
-            total += parseFloat(input.value) || 0;
-        });
-        document.getElementById('total_amount').value = total.toFixed(2);
     }
 
     // Add event listener to the Add Item button
-    addItemBtn.addEventListener('click', addItem);
+    if (addItemBtn) {
+        addItemBtn.addEventListener('click', addItem);
+    }
 
     // Add initial item if none exists
     if (itemCount === 0) {
@@ -1306,230 +1105,228 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Setup event listeners for existing items
-    document.querySelectorAll('.item-container').forEach(container => {
-        setupItemEventListeners(container);
+    document.querySelectorAll('.item-row').forEach(item => {
+        setupItemEventListeners(item);
     });
 
-    // Initialize TinyMCE for contract clauses
-    ['payment_terms', 'warranty_terms', 'cancellation_terms', 'additional_terms'].forEach(id => {
-        tinymce.init({
-            selector: `#${id}`,
-            height: 200,
-            menubar: false,
-            plugins: [
-                'lists', 'link', 'wordcount'
-            ],
-            toolbar: 'undo redo | blocks | bold italic | ' +
-                    'bullist numlist | removeformat',
-            content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; }'
+    // Setup event listeners for an item
+    function setupItemEventListeners(item) {
+        if (!item) return;
+
+        const searchInput = item.querySelector('.material-search');
+        const searchBtn = item.querySelector('.search-btn');
+        const searchResults = item.querySelector('.search-results');
+        const quantityInput = item.querySelector('.quantity');
+        const priceInput = item.querySelector('.unit-price');
+        const removeBtn = item.querySelector('.remove-item');
+        
+        if (!searchInput || !searchResults || !quantityInput || !priceInput || !removeBtn) {
+            console.error('Required elements not found in item');
+            return;
+        }
+
+        let searchTimeout;
+
+        // Material search
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => searchMaterials(searchInput.value, searchResults), 300);
         });
-    });
 
-    // Initialize signature pads
-    const contractorPad = new SignaturePad(document.getElementById('contractorSignature'), {
-        backgroundColor: 'rgb(255, 255, 255)',
-        penColor: 'rgb(0, 0, 0)'
-    });
+        if (searchBtn) {
+            searchBtn.addEventListener('click', () => {
+                searchMaterials(searchInput.value, searchResults);
+            });
+        }
 
-    const clientPad = new SignaturePad(document.getElementById('clientSignature'), {
-        backgroundColor: 'rgb(255, 255, 255)',
-        penColor: 'rgb(0, 0, 0)'
-    });
+        // Calculate totals
+        quantityInput.addEventListener('input', () => calculateTotal(item));
+        priceInput.addEventListener('input', () => calculateTotal(item));
 
-    // Handle existing signatures
-    document.getElementById('keep_contractor_signature')?.addEventListener('change', function() {
-        const container = document.querySelector('#contractorSignature').closest('.signature-pad-container');
-        container.style.display = this.checked ? 'none' : 'block';
-    });
+        // Remove item
+        removeBtn.addEventListener('click', () => {
+            item.remove();
+            updateGrandTotal();
+        });
 
-    document.getElementById('keep_client_signature')?.addEventListener('change', function() {
-        const container = document.querySelector('#clientSignature').closest('.signature-pad-container');
-        container.style.display = this.checked ? 'none' : 'block';
-    });
-
-    // Initially hide signature pads if keeping existing signatures
-    if (document.getElementById('keep_contractor_signature')?.checked) {
-        document.querySelector('#contractorSignature').closest('.signature-pad-container').style.display = 'none';
-    }
-    if (document.getElementById('keep_client_signature')?.checked) {
-        document.querySelector('#clientSignature').closest('.signature-pad-container').style.display = 'none';
-    }
-
-    // Clear signature buttons
-    document.querySelectorAll('.clear-signature').forEach(button => {
-        button.addEventListener('click', () => {
-            const padType = button.dataset.pad;
-            if (padType === 'contractor') {
-                contractorPad.clear();
-                document.getElementById('contractorSignatureData').value = '';
-            } else {
-                clientPad.clear();
-                document.getElementById('clientSignatureData').value = '';
+        // Close search results when clicking outside
+        document.addEventListener('click', (e) => {
+            if (searchResults && !searchResults.contains(e.target) && e.target !== searchInput && e.target !== searchBtn) {
+                searchResults.style.display = 'none';
             }
         });
-    });
+    }
 
-    // Save signatures on form submit
-    document.getElementById('contractForm').addEventListener('submit', function(e) {
-        if (!document.getElementById('keep_contractor_signature')?.checked && !contractorPad.isEmpty()) {
-            document.getElementById('contractorSignatureData').value = contractorPad.toDataURL();
+    // Search materials
+    function searchMaterials(query, resultsContainer) {
+        if (!resultsContainer) return;
+
+        query = query.trim();
+        if (query.length < 2) {
+            resultsContainer.style.display = 'none';
+            return;
         }
-        if (!document.getElementById('keep_client_signature')?.checked && !clientPad.isEmpty()) {
-            document.getElementById('clientSignatureData').value = clientPad.toDataURL();
-        }
-    });
 
-    // Resize signature pads on window resize
-    function resizeSignaturePads() {
-        const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        ['contractorSignature', 'clientSignature'].forEach(id => {
-            const canvas = document.getElementById(id);
-            const container = canvas.parentElement;
-            
-            canvas.width = container.offsetWidth * ratio;
-            canvas.height = container.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-            canvas.style.width = "100%";
-            canvas.style.height = "200px";
-        });
-    }
+        resultsContainer.innerHTML = '<div class="p-2">Searching...</div>';
+        resultsContainer.style.display = 'block';
 
-    window.addEventListener('resize', resizeSignaturePads);
-    resizeSignaturePads();
-
-    // Add custom validation for phone numbers
-    function validatePhone(input) {
-        const phoneNumber = input.value.replace(/[^0-9]/g, '');
-        return phoneNumber.length >= 10;
-    }
-
-    // Add custom validation for email addresses
-    function validateEmail(input) {
-        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        return emailRegex.test(input.value);
-    }
-
-    // Update ZIP/postal code validation
-    function validateZip(input) {
-        const zipRegex = /^[0-9]{4,10}(-[0-9]{4})?$/;
-        return zipRegex.test(input.value);
-    }
-
-    document.getElementById('property_zip').addEventListener('input', function() {
-        if (!validateZip(this)) {
-            this.setCustomValidity('Please enter a valid postal code (minimum 4 digits)');
-        } else {
-            this.setCustomValidity('');
-        }
-    });
-
-    // Add event listeners for real-time validation
-    document.querySelectorAll('input[type="tel"]').forEach(input => {
-        input.addEventListener('input', function() {
-            if (!validatePhone(this)) {
-                this.setCustomValidity('Please enter a valid phone number (minimum 10 digits)');
-            } else {
-                this.setCustomValidity('');
-            }
-        });
-    });
-
-    document.querySelectorAll('input[type="email"]').forEach(input => {
-        input.addEventListener('input', function() {
-            if (!validateEmail(this)) {
-                this.setCustomValidity('Please enter a valid email address');
-            } else {
-                this.setCustomValidity('');
-            }
-        });
-    });
-
-    // Format phone numbers as they are typed
-    document.querySelectorAll('input[type="tel"]').forEach(input => {
-        input.addEventListener('input', function() {
-            let cleaned = this.value.replace(/\D/g, '');
-            if (cleaned.length >= 10) {
-                cleaned = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
-                if (cleaned) {
-                    this.value = '(' + cleaned[1] + ') ' + cleaned[2] + '-' + cleaned[3];
+        fetch(`/api/materials/search?query=${encodeURIComponent(query)}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
                 }
+                return response.json();
+            })
+            .then(data => {
+                if (Array.isArray(data) && data.length > 0) {
+                    resultsContainer.innerHTML = data.map(material => `
+                        <div class="material-result p-2 border-bottom" style="cursor: pointer;" 
+                            data-material='${JSON.stringify(material)}'>
+                            <strong>${material.name}</strong><br>
+                            <small>${material.description || ''} - ${material.unit}</small>
+                        </div>
+                    `).join('');
+
+                    // Add click handlers for results
+                    resultsContainer.querySelectorAll('.material-result').forEach(result => {
+                        result.addEventListener('click', () => selectMaterial(result));
+                    });
+                } else {
+                    resultsContainer.innerHTML = '<div class="p-2">No materials found</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error searching materials:', error);
+                resultsContainer.innerHTML = '<div class="p-2 text-danger">Error searching materials</div>';
+            });
+    }
+
+    // Select material from search results
+    function selectMaterial(resultElement) {
+        if (!resultElement) return;
+
+        try {
+            const material = JSON.parse(resultElement.dataset.material);
+            const item = resultElement.closest('.item-row');
+            
+            if (!item) return;
+
+            // Update material fields
+            const materialIdInput = item.querySelector('.material-id');
+            const materialNameInput = item.querySelector('.material-name');
+            const materialUnitInput = item.querySelector('.material-unit');
+            const priceInput = item.querySelector('.unit-price');
+            const searchInput = item.querySelector('.material-search');
+            const searchResults = item.querySelector('.search-results');
+
+            if (materialIdInput) materialIdInput.value = material.id;
+            if (materialNameInput) materialNameInput.value = material.name;
+            if (materialUnitInput) materialUnitInput.value = material.unit;
+            
+            // Set price if available
+            if (priceInput && material.price) {
+                priceInput.value = material.price;
+                calculateTotal(item);
             }
-        });
-    });
+            
+            // Clear search
+            if (searchInput) searchInput.value = '';
+            if (searchResults) searchResults.style.display = 'none';
 
-    // Handle payment method changes
-    const paymentMethod = document.getElementById('payment_method');
-    const bankDetails = document.getElementById('bankDetails');
-    const checkDetails = document.getElementById('checkDetails');
-
-    function togglePaymentDetails() {
-        if (paymentMethod.value === 'bank_transfer') {
-            bankDetails.style.display = 'flex';
-            checkDetails.style.display = 'none';
-            document.querySelectorAll('#bankDetails input').forEach(input => {
-                input.required = true;
-            });
-            document.querySelectorAll('#checkDetails input').forEach(input => {
-                input.required = false;
-            });
-        } else if (paymentMethod.value === 'check') {
-            bankDetails.style.display = 'none';
-            checkDetails.style.display = 'flex';
-            document.querySelectorAll('#bankDetails input').forEach(input => {
-                input.required = false;
-            });
-            document.querySelectorAll('#checkDetails input:not([type="file"])').forEach(input => {
-                input.required = true;
-            });
-        } else {
-            bankDetails.style.display = 'none';
-            checkDetails.style.display = 'none';
-            document.querySelectorAll('#bankDetails input, #checkDetails input').forEach(input => {
-                input.required = false;
-            });
+            // Load suppliers
+            loadSuppliers(material.id, item);
+        } catch (error) {
+            console.error('Error selecting material:', error);
         }
     }
-    
-    paymentMethod.addEventListener('change', togglePaymentDetails);
-    togglePaymentDetails(); // Run on page load
 
-    // Handle file input change
-    document.getElementById('check_image').addEventListener('change', function(e) {
-        const fileName = e.target.files[0]?.name || 'Choose file';
-        e.target.nextElementSibling.textContent = fileName;
-    });
+    // Load suppliers for a material
+    function loadSuppliers(materialId, item) {
+        if (!materialId || !item) return;
 
-    // Handle "Same as Client Address" checkbox
-    document.getElementById('same_as_client').addEventListener('change', function() {
-        if (this.checked) {
-            // Copy client address to property address
-            document.getElementById('property_street').value = document.getElementById('client_street').value;
-            document.getElementById('property_unit').value = document.getElementById('client_unit').value;
-            document.getElementById('property_barangay').value = document.getElementById('client_barangay').value;
-            document.getElementById('property_city').value = document.getElementById('client_city').value;
-            document.getElementById('property_state').value = document.getElementById('client_state').value;
-            document.getElementById('property_postal').value = document.getElementById('client_postal').value;
+        const suppliersContainer = item.querySelector('.suppliers-container');
+        if (!suppliersContainer) return;
 
-            // Disable property address fields
-            ['street', 'unit', 'barangay', 'city', 'state', 'postal'].forEach(field => {
-                document.getElementById(`property_${field}`).readOnly = true;
+        const itemIndex = item.dataset.index || Array.from(itemsList.children).indexOf(item);
+        
+        fetch(`/api/materials/${materialId}/suppliers`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(suppliers => {
+                if (Array.isArray(suppliers) && suppliers.length > 0) {
+                    suppliersContainer.innerHTML = suppliers.map(supplier => `
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" 
+                                name="items[${itemIndex}][suppliers][]" 
+                                value="${supplier.id}">
+                            <label class="form-check-label">
+                                ${supplier.name} - ${supplier.price_range || 'Price not available'}
+                            </label>
+                        </div>
+                    `).join('');
+                } else {
+                    suppliersContainer.innerHTML = '<p class="text-muted">No suppliers available</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading suppliers:', error);
+                suppliersContainer.innerHTML = '<p class="text-danger">Error loading suppliers</p>';
             });
-        } else {
-            // Enable property address fields
-            ['street', 'unit', 'barangay', 'city', 'state', 'postal'].forEach(field => {
-                document.getElementById(`property_${field}`).readOnly = false;
-            });
+    }
+
+    // Calculate total for an item
+    function calculateTotal(item) {
+        if (!item) return;
+
+        const quantityInput = item.querySelector('.quantity');
+        const priceInput = item.querySelector('.unit-price');
+        const totalInput = item.querySelector('.item-total');
+
+        if (!quantityInput || !priceInput || !totalInput) return;
+
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        totalInput.value = (quantity * price).toFixed(2);
+        updateGrandTotal();
+    }
+
+    // Update the grand total
+    function updateGrandTotal() {
+        const totalAmountInput = document.getElementById('total_amount');
+        if (!totalAmountInput) return;
+
+        const total = Array.from(document.querySelectorAll('.item-total'))
+            .reduce((sum, input) => sum + (parseFloat(input.value) || 0), 0);
+        totalAmountInput.value = total.toFixed(2);
+    }
+
+    // Add styles for search results
+    const style = document.createElement('style');
+    style.textContent = `
+        .search-results {
+            position: absolute;
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-    });
-
-    // Update property address when client address changes if checkbox is checked
-    ['street', 'unit', 'barangay', 'city', 'state', 'postal'].forEach(field => {
-        document.getElementById(`client_${field}`).addEventListener('input', function() {
-            if (document.getElementById('same_as_client').checked) {
-                document.getElementById(`property_${field}`).value = this.value;
-            }
-        });
-    });
+        .material-result:hover {
+            background-color: #f8f9fa;
+        }
+        .suppliers-container {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+    `;
+    document.head.appendChild(style);
 });
 </script>
 @endpush
