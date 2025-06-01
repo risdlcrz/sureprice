@@ -788,53 +788,53 @@
                             <!-- Contractor Signature -->
                             <div class="row mb-4">
                                 <div class="col-md-6">
-                                    <label>Contractor Signature</label>
+                                        <label>Contractor Signature</label>
                                     <div class="signature-pad">
                                         <canvas id="contractorSignaturePad"></canvas>
                                     </div>
                                     <div class="signature-buttons">
                                         <button type="button" class="btn btn-secondary btn-sm" id="clearContractorSignature">Clear</button>
                                     </div>
-                                    @if(isset($existing_contractor_signature))
+                                        @if(isset($existing_contractor_signature))
                                         <div class="mt-2">
                                             <img src="{{ $existing_contractor_signature }}" alt="Existing Contractor Signature" class="img-fluid" style="max-height: 100px;">
-                                            <div class="form-check">
+                                                <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" name="keep_contractor_signature" id="keepContractorSignature" value="1">
                                                 <label class="form-check-label" for="keepContractorSignature">
-                                                    Keep existing signature
-                                                </label>
+                                                        Keep existing signature
+                                                    </label>
+                                                </div>
                                             </div>
+                                        @endif
                                         </div>
-                                    @endif
-                                </div>
                                 
                                 <!-- Client Signature -->
                                 <div class="col-md-6">
-                                    <label>Client Signature</label>
+                                        <label>Client Signature</label>
                                     <div class="signature-pad">
                                         <canvas id="clientSignaturePad"></canvas>
                                     </div>
                                     <div class="signature-buttons">
                                         <button type="button" class="btn btn-secondary btn-sm" id="clearClientSignature">Clear</button>
                                     </div>
-                                    @if(isset($existing_client_signature))
+                                        @if(isset($existing_client_signature))
                                         <div class="mt-2">
                                             <img src="{{ $existing_client_signature }}" alt="Existing Client Signature" class="img-fluid" style="max-height: 100px;">
-                                            <div class="form-check">
+                                                <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" name="keep_client_signature" id="keepClientSignature" value="1">
                                                 <label class="form-check-label" for="keepClientSignature">
-                                                    Keep existing signature
-                                                </label>
+                                                        Keep existing signature
+                                                    </label>
+                                                </div>
                                             </div>
+                                        @endif
                                         </div>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
+                                        </div>
+                                    </div>
 
-                        <div class="row mt-3">
-                            <div class="col-md-6">
-                                <div class="form-group">
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="form-group">
                                     <label for="start_date">Start Date</label>
                                     <input type="date" class="form-control @error('start_date') is-invalid @enderror" 
                                         id="start_date" name="start_date" 
@@ -842,10 +842,10 @@
                                     @error('start_date')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
+                                <div class="col-md-6">
+                                    <div class="form-group">
                                     <label for="end_date">End Date</label>
                                     <input type="date" class="form-control @error('end_date') is-invalid @enderror" 
                                         id="end_date" name="end_date" 
@@ -1009,13 +1009,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize form validation
     const form = document.getElementById('contractForm');
     if (form) {
-        form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        });
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
     }
 
     // Items and Materials Management
@@ -1024,8 +1024,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (!itemsList || !addItemBtn) {
         console.error('Required elements not found');
-        return;
-    }
+            return;
+        }
 
     let itemCount = itemsList.querySelectorAll('.item-row').length;
 
@@ -1033,7 +1033,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function getItemTemplate(index) {
         return `
             <div class="item-row mb-4" data-index="${index}">
-                <div class="card">
+                        <div class="card">
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-12 mb-3">
@@ -1111,9 +1111,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        `;
+                            </div>
+                        </div>
+                    `;
     }
 
     // Add new item
@@ -1200,8 +1200,8 @@ document.addEventListener('DOMContentLoaded', function() {
         query = query.trim();
         if (query.length < 2) {
             resultsContainer.style.display = 'none';
-            return;
-        }
+                return;
+            }
 
         resultsContainer.innerHTML = '<div class="p-2">Searching...</div>';
         resultsContainer.style.display = 'block';
@@ -1213,32 +1213,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 return response.json();
             })
-            .then(data => {
+                .then(data => {
                 if (Array.isArray(data) && data.length > 0) {
                     resultsContainer.innerHTML = data.map(material => `
-                        <div class="material-result p-2 border-bottom" style="cursor: pointer;" 
-                            data-material='${JSON.stringify(material)}'>
-                            <strong>${material.name}</strong><br>
-                            <small>${material.description || ''} - ${material.unit}</small>
-                        </div>
-                    `).join('');
-                    
-                    // Add click handlers for results
+                            <div class="material-result p-2 border-bottom" style="cursor: pointer;" 
+                                data-material='${JSON.stringify(material)}'>
+                                <strong>${material.name}</strong><br>
+                                <small>${material.description || ''} - ${material.unit}</small>
+                            </div>
+                        `).join('');
+                        
+                        // Add click handlers for results
                     resultsContainer.querySelectorAll('.material-result').forEach(result => {
-                        result.addEventListener('click', () => selectMaterial(result));
-                    });
-                } else {
+                            result.addEventListener('click', () => selectMaterial(result));
+                        });
+                    } else {
                     resultsContainer.innerHTML = '<div class="p-2">No materials found</div>';
-                }
-            })
-            .catch(error => {
-                console.error('Error searching materials:', error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error searching materials:', error);
                 resultsContainer.innerHTML = '<div class="p-2 text-danger">Error searching materials</div>';
-            });
-    }
+                });
+        }
 
     // Select material from search results
-    function selectMaterial(resultElement) {
+        function selectMaterial(resultElement) {
         if (!resultElement) return;
 
         try {
@@ -1284,35 +1284,35 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!suppliersContainer) return;
 
         const itemIndex = item.dataset.index || Array.from(itemsList.children).indexOf(item);
-        
-        fetch(`/api/materials/${materialId}/suppliers`)
+            
+            fetch(`/api/materials/${materialId}/suppliers`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
                 return response.json();
             })
-            .then(suppliers => {
+                .then(suppliers => {
                 if (Array.isArray(suppliers) && suppliers.length > 0) {
                     suppliersContainer.innerHTML = suppliers.map(supplier => `
-                        <div class="form-check">
+                            <div class="form-check">
                             <input type="checkbox" class="form-check-input" 
                                 name="items[${itemIndex}][suppliers][]" 
                                 value="${supplier.id}">
                             <label class="form-check-label">
-                                ${supplier.name} - ${supplier.price_range || 'Price not available'}
-                            </label>
-                        </div>
-                    `).join('');
-                } else {
+                                    ${supplier.name} - ${supplier.price_range || 'Price not available'}
+                                </label>
+                            </div>
+                        `).join('');
+                    } else {
                     suppliersContainer.innerHTML = '<p class="text-muted">No suppliers available</p>';
-                }
-            })
-            .catch(error => {
-                console.error('Error loading suppliers:', error);
-                suppliersContainer.innerHTML = '<p class="text-danger">Error loading suppliers</p>';
-            });
-    }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading suppliers:', error);
+                    suppliersContainer.innerHTML = '<p class="text-danger">Error loading suppliers</p>';
+                });
+        }
 
     // Calculate total for an item
     function calculateTotal(item) {
@@ -1324,9 +1324,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!quantityInput || !priceInput || !totalInput) return;
 
-        const quantity = parseFloat(quantityInput.value) || 0;
-        const price = parseFloat(priceInput.value) || 0;
-        totalInput.value = (quantity * price).toFixed(2);
+            const quantity = parseFloat(quantityInput.value) || 0;
+            const price = parseFloat(priceInput.value) || 0;
+            totalInput.value = (quantity * price).toFixed(2);
         updateGrandTotal();
     }
 

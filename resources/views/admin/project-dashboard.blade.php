@@ -9,58 +9,7 @@
     <h1 class="text-center my-4">Project Dashboard</h1>
 
     <div class="container-fluid">
-        <!-- Budget Overview Section -->
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="card-title mb-0">Budget Overview</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="budget-stat">
-                                    <h6>Total Budget Allocated</h6>
-                                    <h3>₱{{ number_format($totalBudget ?? 0, 2) }}</h3>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="budget-stat">
-                                    <h6>Total Spent</h6>
-                                    <h3>₱{{ number_format($totalSpent ?? 0, 2) }}</h3>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="budget-stat">
-                                    <h6>Remaining Budget</h6>
-                                    <h3>₱{{ number_format(($totalBudget ?? 0) - ($totalSpent ?? 0), 2) }}</h3>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row mt-3">
-                            <div class="col-12">
-                                @php
-                                    $percentUsed = $totalBudget > 0 ? ($totalSpent / $totalBudget) * 100 : 0;
-                                    $statusClass = $percentUsed > 90 ? 'danger' : ($percentUsed > 70 ? 'warning' : 'success');
-                                @endphp
-                                <div class="progress" style="height: 25px;">
-                                    <div class="progress-bar bg-{{ $statusClass }}" 
-                                         role="progressbar" 
-                                         style="width: {{ min($percentUsed, 100) }}%"
-                                         aria-valuenow="{{ $percentUsed }}" 
-                                         aria-valuemin="0" 
-                                         aria-valuemax="100">
-                                        {{ number_format($percentUsed, 1) }}% Used
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row row-cols-1 row-cols-md-3 g-4">
+        <div class="row row-cols-1 row-cols-md-2 g-4">
             <!-- Create Contract Card -->
             <div class="col">
                 <div class="card h-100">
@@ -85,20 +34,6 @@
                     </div>
                     <div class="card-footer">
                         <a href="{{ route('contracts.index') }}" class="btn btn-secondary w-100">View All Contracts</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Budget Allocation Card -->
-            <div class="col">
-                <div class="card h-100">
-                    <img src="{{ asset('images/budget-allocation.jpg') }}" class="card-img-top" alt="Budget Allocation">
-                    <div class="card-body">
-                        <h5 class="card-title">Budget Allocation</h5>
-                        <p class="card-text">View and manage detailed budget allocation and expenditures.</p>
-                    </div>
-                    <div class="card-footer">
-                        <a href="{{ route('admin.budget-allocation') }}" class="btn btn-info w-100">View Budget Details</a>
                     </div>
                 </div>
             </div>
@@ -136,23 +71,6 @@
 
 @push('styles')
 <style>
-.budget-stat {
-    text-align: center;
-    padding: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 0.5rem;
-}
-
-.budget-stat h6 {
-    color: #6c757d;
-    margin-bottom: 0.5rem;
-}
-
-.budget-stat h3 {
-    color: #2c3e50;
-    margin: 0;
-}
-
 .progress {
     border-radius: 0.5rem;
 }
