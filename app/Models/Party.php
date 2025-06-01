@@ -15,6 +15,7 @@ class Party extends Model
         'name',
         'company_name',
         'street',
+        'barangay',
         'city',
         'state',
         'postal',
