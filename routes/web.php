@@ -22,6 +22,7 @@ use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\SupplierInvitationController;
+use App\Http\Controllers\BudgetAllocationController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -137,6 +138,20 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/analytics-dashboard', function () {
         return view('admin.analytics-dashboard');
     })->name('admin.analytics');
+
+    Route::get('/purchase-order', function () {
+        return view('admin.purchase-order');
+    })->name('admin.purchase-order');
+
+    Route::get('/budget-allocation', [BudgetAllocationController::class, 'index'])->name('admin.budget-allocation');
+
+    Route::get('/supplier-rankings', function () {
+        return view('admin.supplier-rankings');
+    })->name('admin.supplier-rankings');
+
+    Route::get('/price-analysis', function () {
+        return view('admin.price-analysis');
+    })->name('admin.price-analysis');
 
     Route::get('/inventory', function () {
         return view('admin.inventory');
