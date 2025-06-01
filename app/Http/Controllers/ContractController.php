@@ -157,7 +157,7 @@ class ContractController extends Controller
                         'phone' => $request->contractor_phone
                     ]
                 );
-                
+            
                 // Save client with minimal required fields
                 $client = Party::updateOrCreate(
                     ['email' => $request->client_email],
@@ -175,7 +175,7 @@ class ContractController extends Controller
                         'phone' => $request->client_phone
                     ]
                 );
-                
+            
                 // Save property with basic info
                 $property = Property::create([
                     'street' => $request->property_street ?? $request->client_street,
@@ -187,7 +187,7 @@ class ContractController extends Controller
                     'property_type' => $request->property_type ?? null,
                     'property_size' => $request->property_size ?? null
                 ]);
-                
+            
                 // Process signatures if present
                 $signatures = [
                     'client' => null,
@@ -225,10 +225,10 @@ class ContractController extends Controller
                 }
                 
                 // Save contract with minimal required fields
-                $contractData = [
-                    'contractor_id' => $contractor->id,
-                    'client_id' => $client->id,
-                    'property_id' => $property->id,
+            $contractData = [
+                'contractor_id' => $contractor->id,
+                'client_id' => $client->id,
+                'property_id' => $property->id,
                     'scope_of_work' => implode(', ', $request->scope_of_work),
                     'scope_description' => $request->scope_description ?? '',
                     'start_date' => $request->start_date ?? ($contract ? $contract->start_date : null),
@@ -242,28 +242,28 @@ class ContractController extends Controller
                     'bank_account_number' => $request->bank_account_number,
                     'jurisdiction' => $request->jurisdiction ?? $request->property_city . ', Philippines',
                     'contract_terms' => $request->contract_terms ?? 'Standard terms and conditions apply',
-                    'client_signature' => $signatures['client'],
-                    'contractor_signature' => $signatures['contractor'],
-                    'status' => 'draft'
-                ];
+                'client_signature' => $signatures['client'],
+                'contractor_signature' => $signatures['contractor'],
+                'status' => 'draft'
+            ];
 
-                if ($contract) {
-                    $contract->update($contractData);
-                } else {
-                    $contract = Contract::create($contractData);
-                }
+            if ($contract) {
+                $contract->update($contractData);
+            } else {
+                $contract = Contract::create($contractData);
+            }
 
                 // Save items if present
                 if ($request->has('items')) {
-                    $this->saveItems($request, $contract);
+            $this->saveItems($request, $contract);
                 }
 
-                DB::commit();
+            DB::commit();
 
-                return redirect()->route('contracts.show', $contract->id)
-                    ->with('success', 'Contract saved successfully');
-            } catch (\Exception $e) {
-                DB::rollBack();
+            return redirect()->route('contracts.show', $contract->id)
+                ->with('success', 'Contract saved successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
                 throw $e;
             }
         } catch (\Exception $e) {
@@ -319,7 +319,7 @@ class ContractController extends Controller
                 $existingPath = $request->input("existing_{$type}_signature");
                 if ($existingPath) {
                     $signatures[$type] = str_replace('/storage/', '', $existingPath);
-                }
+            }
                 continue;
             }
             
@@ -344,7 +344,7 @@ class ContractController extends Controller
                 // If it's a file upload
                 else if ($request->hasFile("{$type}_signature")) {
                     $path = $request->file("{$type}_signature")->store('signatures', 'public');
-                    $signatures[$type] = $path;
+                $signatures[$type] = $path;
                 }
             }
         }
