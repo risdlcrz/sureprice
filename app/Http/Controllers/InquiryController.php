@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Inquiry;
-use App\Models\Project;
+use App\Models\Contract;
 use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -12,23 +12,30 @@ class InquiryController extends Controller
 {
     public function index()
     {
-        $inquiries = Inquiry::with(['project', 'materials'])
+        $inquiries = Inquiry::with(['contract', 'materials'])
             ->latest()
             ->paginate(10);
-
-        return view('admin.inquiries.index', compact('inquiries'));
+            
+        $contracts = Contract::where('status', 'approved')
+            ->orderBy('contract_id')
+            ->get();
+        return view('admin.inquiries.index', compact('inquiries', 'contracts'));
     }
 
     public function create()
     {
-        $projects = Project::all();
-        return view('admin.inquiries.form', compact('projects'));
+        $contracts = Contract::with(['client', 'contractor'])
+            ->where('status', 'approved')
+            ->orderBy('contract_id')
+            ->get();
+        $materials = Material::orderBy('name')->get();
+        return view('admin.inquiries.form', compact('contracts', 'materials'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'project_id' => 'required|exists:projects,id',
+            'contract_id' => 'required|exists:contracts,id',
             'subject' => 'required|string|max:255',
             'description' => 'required|string',
             'priority' => 'required|in:low,medium,high,urgent',
@@ -42,7 +49,7 @@ class InquiryController extends Controller
         ]);
 
         $inquiry = Inquiry::create([
-            'project_id' => $validated['project_id'],
+            'contract_id' => $validated['contract_id'],
             'subject' => $validated['subject'],
             'description' => $validated['description'],
             'priority' => $validated['priority'],
@@ -74,21 +81,23 @@ class InquiryController extends Controller
 
     public function show(Inquiry $inquiry)
     {
-        $inquiry->load(['project', 'materials', 'attachments']);
+        $inquiry->load(['contract', 'materials', 'attachments']);
         return view('admin.inquiries.show', compact('inquiry'));
     }
 
     public function edit(Inquiry $inquiry)
     {
-        $projects = Project::all();
-        $inquiry->load(['project', 'materials', 'attachments']);
-        return view('admin.inquiries.form', compact('inquiry', 'projects'));
+        $contracts = Contract::where('status', 'approved')
+            ->orderBy('contract_id')
+            ->get();
+        $inquiry->load(['contract', 'materials', 'attachments']);
+        return view('admin.inquiries.form', compact('inquiry', 'contracts'));
     }
 
     public function update(Request $request, Inquiry $inquiry)
     {
         $validated = $request->validate([
-            'project_id' => 'required|exists:projects,id',
+            'contract_id' => 'required|exists:contracts,id',
             'subject' => 'required|string|max:255',
             'description' => 'required|string',
             'priority' => 'required|in:low,medium,high,urgent',
@@ -102,7 +111,7 @@ class InquiryController extends Controller
         ]);
 
         $inquiry->update([
-            'project_id' => $validated['project_id'],
+            'contract_id' => $validated['contract_id'],
             'subject' => $validated['subject'],
             'description' => $validated['description'],
             'priority' => $validated['priority'],
@@ -164,13 +173,20 @@ class InquiryController extends Controller
 
     public function search(Request $request)
     {
-        $query = $request->get('query');
+        $query = $request->get('q');
+        $contractId = $request->get('contract_id');
         
-        $materials = Material::where('name', 'like', "%{$query}%")
-            ->orWhere('description', 'like', "%{$query}%")
-            ->limit(10)
+        $inquiries = Inquiry::with(['contract', 'materials'])
+            ->when($query, function($q) use ($query) {
+                return $q->where('subject', 'like', "%{$query}%")
+                    ->orWhere('description', 'like', "%{$query}%");
+            })
+            ->when($contractId, function($q) use ($contractId) {
+                return $q->where('contract_id', $contractId);
+            })
+            ->latest()
             ->get();
-
-        return response()->json($materials);
+            
+        return response()->json($inquiries);
     }
 } 

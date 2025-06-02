@@ -299,6 +299,34 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
+                                        <label for="property_type">Property Type</label>
+                                        <select class="form-control @error('property_type') is-invalid @enderror" 
+                                            id="property_type" name="property_type" required>
+                                            <option value="">Select Type</option>
+                                            <option value="residential" {{ old('property_type', $property ? $property->property_type : '') == 'residential' ? 'selected' : '' }}>Residential</option>
+                                            <option value="commercial" {{ old('property_type', $property ? $property->property_type : '') == 'commercial' ? 'selected' : '' }}>Commercial</option>
+                                            <option value="industrial" {{ old('property_type', $property ? $property->property_type : '') == 'industrial' ? 'selected' : '' }}>Industrial</option>
+                                        </select>
+                                        @error('property_type')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="property_size">Property Size (sq ft)</label>
+                                        <input type="number" class="form-control @error('property_size') is-invalid @enderror" 
+                                            id="property_size" name="property_size" 
+                                            value="{{ old('property_size', $property ? $property->property_size : '') }}" min="0" step="1">
+                                        @error('property_size')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="form-group">
                                         <label for="property_street">Street Address</label>
                                         <input type="text" class="form-control @error('property_street') is-invalid @enderror" 
                                             id="property_street" name="property_street" 
@@ -469,6 +497,35 @@
                                         <textarea class="form-control @error('scope_description') is-invalid @enderror" 
                                             id="scope_description" name="scope_description" rows="6" required>{{ old('scope_description', $contract ? $contract->scope_description : '') }}</textarea>
                                         @error('scope_description')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Project Timeline -->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h6>Project Timeline</h6>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="start_date">Start Date</label>
+                                        <input type="date" class="form-control @error('start_date') is-invalid @enderror" 
+                                            id="start_date" name="start_date" 
+                                            value="{{ old('start_date', $contract ? $contract->start_date->format('Y-m-d') : '') }}" required>
+                                        @error('start_date')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="end_date">End Date</label>
+                                        <input type="date" class="form-control @error('end_date') is-invalid @enderror" 
+                                            id="end_date" name="end_date" 
+                                            value="{{ old('end_date', $contract ? $contract->end_date->format('Y-m-d') : '') }}" required>
+                                        @error('end_date')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -831,30 +888,6 @@
                                         </div>
                                         </div>
                                     </div>
-
-                            <div class="row mt-3">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                    <label for="start_date">Start Date</label>
-                                    <input type="date" class="form-control @error('start_date') is-invalid @enderror" 
-                                        id="start_date" name="start_date" 
-                                        value="{{ old('start_date', $contract ? $contract->start_date->format('Y-m-d') : '') }}" required>
-                                    @error('start_date')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                    <label for="end_date">End Date</label>
-                                    <input type="date" class="form-control @error('end_date') is-invalid @enderror" 
-                                        id="end_date" name="end_date" 
-                                        value="{{ old('end_date', $contract ? $contract->end_date->format('Y-m-d') : '') }}" required>
-                                    @error('end_date')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
                         </div>
 
                         <div class="form-group mt-4">

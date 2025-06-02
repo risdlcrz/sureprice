@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SupplierInvitation;
-use App\Models\Project;
+use App\Models\Contract;
 use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -14,7 +14,7 @@ class SupplierInvitationController extends Controller
 {
     public function index()
     {
-        $invitations = SupplierInvitation::with(['project', 'materials'])
+        $invitations = SupplierInvitation::with(['contract', 'materials'])
             ->latest()
             ->paginate(10);
 
@@ -23,15 +23,18 @@ class SupplierInvitationController extends Controller
 
     public function create()
     {
-        $projects = Project::all();
-        $materials = Material::all();
-        return view('admin.supplier-invitations.form', compact('projects', 'materials'));
+        $contracts = Contract::with(['client', 'contractor'])
+            ->where('status', 'approved')
+            ->orderBy('contract_id')
+            ->get();
+        $materials = Material::orderBy('name')->get();
+        return view('admin.supplier-invitations.form', compact('contracts', 'materials'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'project_id' => 'required|exists:projects,id',
+            'contract_id' => 'required|exists:contracts,id',
             'company_name' => 'required|string|max:255',
             'contact_name' => 'required|string|max:255',
             'email' => 'required|email',
@@ -43,7 +46,7 @@ class SupplierInvitationController extends Controller
         ]);
 
         $invitation = SupplierInvitation::create([
-            'project_id' => $validated['project_id'],
+            'contract_id' => $validated['contract_id'],
             'invitation_code' => 'INV-' . Str::random(8),
             'company_name' => $validated['company_name'],
             'contact_name' => $validated['contact_name'],
@@ -65,7 +68,7 @@ class SupplierInvitationController extends Controller
 
     public function show(SupplierInvitation $invitation)
     {
-        $invitation->load(['project', 'materials']);
+        $invitation->load(['contract', 'materials']);
         return view('admin.supplier-invitations.show', compact('invitation'));
     }
 
@@ -76,9 +79,11 @@ class SupplierInvitationController extends Controller
                 ->with('error', 'This invitation cannot be edited.');
         }
 
-        $projects = Project::all();
+        $contracts = Contract::where('status', 'approved')
+            ->orderBy('contract_id')
+            ->get();
         $materials = Material::all();
-        return view('admin.supplier-invitations.form', compact('invitation', 'projects', 'materials'));
+        return view('admin.supplier-invitations.form', compact('invitation', 'contracts', 'materials'));
     }
 
     public function update(Request $request, SupplierInvitation $invitation)
@@ -89,7 +94,7 @@ class SupplierInvitationController extends Controller
         }
 
         $validated = $request->validate([
-            'project_id' => 'required|exists:projects,id',
+            'contract_id' => 'required|exists:contracts,id',
             'company_name' => 'required|string|max:255',
             'contact_name' => 'required|string|max:255',
             'email' => 'required|email',
@@ -101,7 +106,7 @@ class SupplierInvitationController extends Controller
         ]);
 
         $invitation->update([
-            'project_id' => $validated['project_id'],
+            'contract_id' => $validated['contract_id'],
             'company_name' => $validated['company_name'],
             'contact_name' => $validated['contact_name'],
             'email' => $validated['email'],
@@ -172,5 +177,24 @@ class SupplierInvitationController extends Controller
 
         return redirect()->route('supplier.respond', $code)
             ->with('success', 'Thank you for your response.');
+    }
+
+    public function search(Request $request)
+    {
+        $query = $request->get('q');
+        $contractId = $request->get('contract_id');
+        
+        $invitations = SupplierInvitation::with(['contract', 'materials'])
+            ->when($query, function($q) use ($query) {
+                return $q->where('invitation_code', 'like', "%{$query}%")
+                    ->orWhere('notes', 'like', "%{$query}%");
+            })
+            ->when($contractId, function($q) use ($contractId) {
+                return $q->where('contract_id', $contractId);
+            })
+            ->latest()
+            ->get();
+            
+        return response()->json($invitations);
     }
 } 
