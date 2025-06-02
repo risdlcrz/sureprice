@@ -7,7 +7,6 @@
 
     <!-- Styles -->
     @vite(['resources/css/app.css', 'resources/css/infoman.css'])
-    <link href="{{ asset('css/app.css') }}" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
     
     <!-- Bootstrap CSS -->
@@ -71,7 +70,6 @@
     
     <!-- Scripts -->
     @vite(['resources/js/app.js', 'resources/js/info-man.js'])
-    <script src="{{ asset('js/app.js') }}"></script>
     
     <!-- TinyMCE -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.7.2/tinymce.min.js"></script>

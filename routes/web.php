@@ -1,5 +1,6 @@
 <?php
 
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
@@ -23,30 +24,38 @@ use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\SupplierInvitationController;
 
+
 // Home route redirect to login
 Route::get('/', function () {
     return redirect()->route('login.form');
 });
+
 
 // ================== Authentication Routes ==================
 Route::middleware('web')->group(function () {
     require __DIR__.'/auth.php';
 });
 
+
 // Show Login Form
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login.form');
+
 
 // Handle Login Submission
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login');
 
+
 // Handle Logout
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
 
 // ================== Registration Routes ==================
 Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
 
+
 // Removed employee registration route
 Route::post('/register/company', [RegisteredUserController::class, 'store'])->name('register.company');
+
 
 // Auth required routes
 Route::middleware(['auth'])->group(function () {
@@ -55,30 +64,36 @@ Route::middleware(['auth'])->group(function () {
         return view('auth.pending-approval');
     })->name('pending.approval');
 
+
     // Rejected account route
     Route::get('/account-rejected', function () {
         return view('auth.account-rejected');
     })->name('account.rejected');
 
+
     // Project Dashboard
     Route::get('/project-dashboard', [ProjectController::class, 'dashboard'])->name('admin.project');
+
 
     // Contract Routes
     Route::resource('contracts', ContractController::class);
     Route::get('contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
-    
+   
     // Supporting routes for contract form
     Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
     Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
     Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
 
+
     // Material Routes
     Route::resource('materials', MaterialController::class);
+
 
     // Inquiry Routes
     Route::resource('inquiries', InquiryController::class);
     Route::post('/api/inquiries/{inquiry}/remove-attachment', [InquiryController::class, 'removeAttachment']);
     Route::get('/api/inquiries/search', [InquiryController::class, 'search'])->name('inquiries.search');
+
 
     // Quotation Routes
     Route::resource('quotations', QuotationController::class);
@@ -88,25 +103,31 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/quotations/remove-attachment', [QuotationController::class, 'removeAttachment']);
     Route::get('/api/quotations/search', [QuotationController::class, 'search'])->name('quotations.search');
 
+
     // Invitation Routes
     Route::resource('supplier-invitations', SupplierInvitationController::class);
     Route::post('/api/supplier-invitations/{invitation}/resend', [SupplierInvitationController::class, 'resend']);
     Route::post('/api/supplier-invitations/remove-attachment', [SupplierInvitationController::class, 'removeAttachment']);
     Route::get('/api/supplier-invitations/search', [SupplierInvitationController::class, 'search'])->name('supplier-invitations.search');
 
+
     // Supplier Routes
     Route::resource('suppliers', SupplierController::class);
 });
 
+
 // ================== Email Verification Routes ==================
 // **Removed duplicate route /email/verify here**
+
 
 // Material and Supplier Routes
 Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
 Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
 
+
 // Client Search Route
 Route::get('/clients/search', [PartyController::class, 'search'])->name('clients.search');
+
 
 // Admin protected routes
 Route::middleware(['auth', AdminMiddleware::class])->group(function () {
@@ -115,30 +136,61 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::post('/admin/companies/{company}/approve', [AdminController::class, 'approve'])->name('admin.companies.approve');
     Route::post('/admin/companies/{company}/reject', [AdminController::class, 'reject'])->name('admin.companies.reject');
     Route::get('/admin/companies/{company}', [AdminController::class, 'show'])->name('admin.companies.show');
-    
+   
     // Add procurement routes
     Route::get('/admin/procurement', [ProcurementController::class, 'index'])->name('admin.procurement');
     Route::resource('purchase-request', PurchaseRequestController::class);
-    
+   
     // Information Management Routes
     Route::resource('information-management', InformationManagementController::class);
     Route::post('information-management/import', [InformationManagementController::class, 'import'])->name('information-management.import');
     Route::get('information-management/template/download', [InformationManagementController::class, 'template'])->name('information-management.template');
+
 
     // Other admin routes
     Route::get('/notification-center', function () {
         return view('admin.notification-center');
     })->name('admin.notification');
 
+
     Route::get('/history-dashboard', function () {
         return view('admin.history-dashboard');
     })->name('admin.history');
+
 
     Route::get('/analytics-dashboard', function () {
         return view('admin.analytics-dashboard');
     })->name('admin.analytics');
 
+
+    Route::get('/purchase-order', function () {
+        return view('admin.purchase-order');
+    })->name('admin.purchase-order');
+
+
+    Route::get('/budget-allocation', function () {
+        return view('admin.budget-allocation');
+    })->name('admin.budget-allocation');
+
+
+    Route::get('/supplier-rankings', [App\Http\Controllers\SupplierRankingController::class, 'index'])->name('supplier-rankings.index');
+    Route::post('/supplier-rankings', [App\Http\Controllers\SupplierRankingController::class, 'store'])->name('supplier-rankings.store');
+    Route::post('/supplier-rankings/import', [App\Http\Controllers\SupplierRankingController::class, 'import'])->name('supplier-rankings.import');
+    Route::get('/supplier-rankings/{supplier}', [App\Http\Controllers\SupplierRankingController::class, 'show'])->name('supplier-rankings.show');
+    Route::delete('/supplier-rankings/{supplier}', [App\Http\Controllers\SupplierRankingController::class, 'destroy'])->name('supplier-rankings.destroy');
+    Route::post('/supplier-rankings/{supplier}/evaluate', [App\Http\Controllers\SupplierRankingController::class, 'evaluate'])->name('supplier-rankings.evaluate');
+    Route::get('/supplier-rankings/{supplier}/edit', [App\Http\Controllers\SupplierRankingController::class, 'edit'])->name('supplier-rankings.edit');
+    Route::patch('/supplier-rankings/{supplier}', [App\Http\Controllers\SupplierRankingController::class, 'update'])->name('supplier-rankings.update');
+
+
+    Route::get('/price-analysis', function () {
+        return view('admin.price-analysis');
+    })->name('admin.price-analysis');
+
+
     Route::get('/inventory', function () {
         return view('admin.inventory');
     })->name('admin.inventory');
 });
+
+
