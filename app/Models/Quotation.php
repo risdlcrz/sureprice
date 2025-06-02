@@ -10,7 +10,7 @@ class Quotation extends Model
     use HasFactory;
 
     protected $fillable = [
-        'project_id',
+        'contract_id',
         'rfq_number',
         'due_date',
         'notes',
@@ -22,9 +22,9 @@ class Quotation extends Model
     ];
 
     // Relationships
-    public function project()
+    public function contract()
     {
-        return $this->belongsTo(Project::class);
+        return $this->belongsTo(Contract::class);
     }
 
     public function suppliers()

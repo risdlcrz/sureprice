@@ -8,9 +8,9 @@
     <div class="content">
         <div class="container">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1>Purchase Requests</h1>
-                <a href="{{ route('purchase-requests.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> New Purchase Request
+                <h1>Purchase Orders</h1>
+                <a href="{{ route('purchase-orders.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Purchase Order
                 </a>
             </div>
 
@@ -18,7 +18,7 @@
                 <div class="card-header">
                     <div class="row align-items-center">
                         <div class="col">
-                            <h5 class="mb-0">All Purchase Requests</h5>
+                            <h5 class="mb-0">All Purchase Orders</h5>
                         </div>
                         <div class="col-auto">
                             <select class="form-select" id="status-filter">
@@ -27,6 +27,7 @@
                                 <option value="pending">Pending</option>
                                 <option value="approved">Approved</option>
                                 <option value="rejected">Rejected</option>
+                                <option value="completed">Completed</option>
                             </select>
                         </div>
                     </div>
@@ -36,39 +37,39 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>PR Number</th>
+                                    <th>PO Number</th>
                                     <th>Contract</th>
-                                    <th>Department</th>
-                                    <th>Required Date</th>
+                                    <th>Supplier</th>
+                                    <th>Total Amount</th>
                                     <th>Status</th>
                                     <th>Created</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($purchaseRequests as $pr)
+                                @forelse($purchaseOrders as $po)
                                     <tr>
-                                        <td>{{ $pr->pr_number }}</td>
-                                        <td>{{ $pr->contract->contract_id }}</td>
-                                        <td>{{ $pr->department }}</td>
-                                        <td>{{ $pr->required_date->format('M d, Y') }}</td>
+                                        <td>{{ $po->po_number }}</td>
+                                        <td>{{ $po->contract->contract_id }}</td>
+                                        <td>{{ $po->supplier->company_name }}</td>
+                                        <td>₱{{ number_format($po->total_amount, 2) }}</td>
                                         <td>
-                                            <span class="badge bg-{{ $pr->status_color }}">
-                                                {{ ucfirst($pr->status) }}
+                                            <span class="badge bg-{{ $po->status_color }}">
+                                                {{ ucfirst($po->status) }}
                                             </span>
                                         </td>
-                                        <td>{{ $pr->created_at->format('M d, Y') }}</td>
+                                        <td>{{ $po->created_at->format('M d, Y') }}</td>
                                         <td>
-                                            <a href="{{ route('purchase-requests.show', $pr) }}" class="btn btn-sm btn-info">
+                                            <a href="{{ route('purchase-orders.show', $po) }}" class="btn btn-sm btn-info">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            @if(in_array($pr->status, ['draft', 'pending']))
-                                                <a href="{{ route('purchase-requests.edit', $pr) }}" class="btn btn-sm btn-primary">
+                                            @if(in_array($po->status, ['draft', 'pending']))
+                                                <a href="{{ route('purchase-orders.edit', $po) }}" class="btn btn-sm btn-primary">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                             @endif
-                                            @if($pr->status === 'draft')
-                                                <form action="{{ route('purchase-requests.destroy', $pr) }}" method="POST" class="d-inline">
+                                            @if($po->status === 'draft')
+                                                <form action="{{ route('purchase-orders.destroy', $po) }}" method="POST" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
@@ -80,7 +81,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="7" class="text-center">No purchase requests found</td>
+                                        <td colspan="7" class="text-center">No purchase orders found</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -89,9 +90,9 @@
 
                     <div class="d-flex justify-content-between align-items-center mt-4">
                         <div>
-                            Showing {{ $purchaseRequests->firstItem() ?? 0 }} to {{ $purchaseRequests->lastItem() ?? 0 }} of {{ $purchaseRequests->total() ?? 0 }} purchase requests
+                            Showing {{ $purchaseOrders->firstItem() ?? 0 }} to {{ $purchaseOrders->lastItem() ?? 0 }} of {{ $purchaseOrders->total() ?? 0 }} purchase orders
                         </div>
-                        {{ $purchaseRequests->links() }}
+                        {{ $purchaseOrders->links() }}
                     </div>
                 </div>
             </div>

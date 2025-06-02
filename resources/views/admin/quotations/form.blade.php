@@ -21,18 +21,18 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="project_id">Project</label>
-                                        <select class="form-control @error('project_id') is-invalid @enderror" 
-                                            id="project_id" name="project_id" required>
-                                            <option value="">Select Project</option>
-                                            @foreach($projects as $project)
-                                                <option value="{{ $project->id }}" 
-                                                    {{ old('project_id', $quotation->project_id ?? '') == $project->id ? 'selected' : '' }}>
-                                                    {{ $project->name }}
+                                        <label for="contract_id">Contract</label>
+                                        <select class="form-control @error('contract_id') is-invalid @enderror" 
+                                            id="contract_id" name="contract_id" required>
+                                            <option value="">Select Contract</option>
+                                            @foreach($contracts as $contract)
+                                                <option value="{{ $contract->id }}" 
+                                                    {{ old('contract_id', $quotation->contract_id ?? '') == $contract->id ? 'selected' : '' }}>
+                                                    {{ $contract->contract_id }}
                                                 </option>
                                             @endforeach
                                         </select>
-                                        @error('project_id')
+                                        @error('contract_id')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>

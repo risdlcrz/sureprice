@@ -16,19 +16,19 @@
                             @method('PUT')
                         @endif
 
-                        <!-- Project Selection -->
+                        <!-- Contract Selection -->
                         <div class="mb-4">
-                            <label for="project_id" class="form-label">Project</label>
-                            <select name="project_id" id="project_id" class="form-control @error('project_id') is-invalid @enderror" required>
-                                <option value="">Select Project</option>
-                                @foreach($projects as $project)
-                                    <option value="{{ $project->id }}" 
-                                            {{ old('project_id', isset($invitation) ? $invitation->project_id : '') == $project->id ? 'selected' : '' }}>
-                                        {{ $project->name }}
+                            <label for="contract_id" class="form-label">Contract</label>
+                            <select name="contract_id" id="contract_id" class="form-control @error('contract_id') is-invalid @enderror" required>
+                                <option value="">Select Contract</option>
+                                @foreach($contracts as $contract)
+                                    <option value="{{ $contract->id }}" 
+                                            {{ old('contract_id', $invitation->contract_id ?? '') == $contract->id ? 'selected' : '' }}>
+                                        {{ $contract->contract_id }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('project_id')
+                            @error('contract_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

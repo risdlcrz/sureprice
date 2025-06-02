@@ -190,9 +190,9 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group">
-                                        <label for="project_name">Project Name</label>
-                                        <input type="text" class="form-control" id="project_name" name="project_name" 
-                                            value="{{ old('project_name', $contract->project_name ?? '') }}" required>
+                                        <label for="contract_name">Contract Name</label>
+                                        <input type="text" class="form-control" id="contract_name" name="contract_name" 
+                                            value="{{ old('contract_name', $contract->contract_name ?? '') }}" required>
                                     </div>
                                 </div>
                             </div>

@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('inquiries', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('project_id')->constrained()->onDelete('cascade');
+            $table->foreignId('contract_id')->constrained()->onDelete('cascade');
             $table->string('subject');
             $table->text('description');
             $table->enum('priority', ['low', 'medium', 'high', 'urgent']);

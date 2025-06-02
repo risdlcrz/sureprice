@@ -35,7 +35,7 @@
 
     <div class="w-100 d-flex flex-column align-items-center mt-2 mobile-nav-buttons">
       <a href="{{ route('admin.dbadmin') }}" class="btn"><i class="fas fa-home me-2"></i>Dashboard</a>
-      <a href="{{ route('admin.project') }}" class="btn"><i class="fas fa-file-circle-check"></i>Project Approval</a>
+      <a href="{{ route('admin.contract') }}" class="btn"><i class="fas fa-file-circle-check"></i>Contract Approval</a>
       <a href="{{ route('admin.procurement') }}" class="btn"><i class="fas fa-truck-ramp-box"></i>Procurement Request</a>
     </div>
   </div>
@@ -59,7 +59,7 @@
 
     <div class="nav-buttons">
       <a href="{{ route('admin.dbadmin') }}" class="btn"><i class="fas fa-home"></i>Dashboard</a>
-      <a href="{{ route('admin.project') }}" class="btn"><i class="fas fa-file-circle-check"></i>Project Approval</a>
+      <a href="{{ route('admin.contract') }}" class="btn"><i class="fas fa-file-circle-check"></i>Contract Approval</a>
       <a href="{{ route('admin.procurement') }}" class="btn"><i class="fas fa-truck-ramp-box"></i>Procurement Request</a>
     </div>
 

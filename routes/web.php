@@ -23,6 +23,7 @@ use App\Http\Controllers\InquiryController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\SupplierInvitationController;
 use App\Http\Controllers\BudgetAllocationController;
+use App\Http\Controllers\PurchaseOrderController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -64,6 +65,9 @@ Route::middleware(['auth'])->group(function () {
     // Project Dashboard
     Route::get('/project-dashboard', [ProjectController::class, 'dashboard'])->name('admin.project');
 
+    // Contract Dashboard
+    Route::get('/contract-dashboard', [ContractController::class, 'dashboard'])->name('admin.contract');
+
     // Contract Routes
     Route::resource('contracts', ContractController::class);
     Route::get('contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
@@ -99,6 +103,18 @@ Route::middleware(['auth'])->group(function () {
 
     // Supplier Routes
     Route::resource('suppliers', SupplierController::class);
+
+    // Purchase Requests
+    Route::resource('purchase-requests', PurchaseRequestController::class);
+    Route::post('purchase-requests/{purchaseRequest}/status', [PurchaseRequestController::class, 'updateStatus'])->name('purchase-requests.update-status');
+    Route::get('/api/purchase-requests/{purchaseRequest}/items', [PurchaseRequestController::class, 'getItems'])->name('api.purchase-requests.items');
+
+    // Purchase Orders
+    Route::resource('purchase-orders', PurchaseOrderController::class);
+    Route::post('purchase-orders/{purchaseOrder}/status', [PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
+
+    // Add procurement routes
+    Route::get('/admin/procurement', [ProcurementController::class, 'index'])->name('admin.procurement');
 });
 
 // ================== Email Verification Routes ==================
@@ -109,7 +125,7 @@ Route::get('/materials/search', [MaterialController::class, 'search'])->name('ma
 Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
 
 // Client Search Route
-Route::get('/clients/search', [PartyController::class, 'search'])->name('clients.search');
+Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
 
 // Admin protected routes
 Route::middleware(['auth', AdminMiddleware::class])->group(function () {
@@ -118,10 +134,6 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::post('/admin/companies/{company}/approve', [AdminController::class, 'approve'])->name('admin.companies.approve');
     Route::post('/admin/companies/{company}/reject', [AdminController::class, 'reject'])->name('admin.companies.reject');
     Route::get('/admin/companies/{company}', [AdminController::class, 'show'])->name('admin.companies.show');
-    
-    // Add procurement routes
-    Route::get('/admin/procurement', [ProcurementController::class, 'index'])->name('admin.procurement');
-    Route::resource('purchase-request', PurchaseRequestController::class);
     
     // Information Management Routes
     Route::resource('information-management', InformationManagementController::class);

@@ -18,92 +18,89 @@
                             <h5 class="card-title">Purchase Requests</h5>
                             <p class="card-text">Create and manage purchase requests for materials and supplies.</p>
                         </div>
-                        <div class="card-footer">
-                            <a href="{{ route('purchase-request.create') }}" class="btn btn-primary w-100">Create Purchase Request</a>
+                        <div class="card-footer d-flex gap-2">
+                            <a href="{{ route('purchase-requests.create') }}" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-plus"></i> New Request
+                            </a>
+                            <a href="{{ route('purchase-requests.index') }}" class="btn btn-secondary flex-grow-1">
+                                <i class="fas fa-list"></i> View All
+                            </a>
                         </div>
                     </div>
                 </div>
 
-                <!-- Create Inquiry Card -->
+                <!-- Purchase Orders Card -->
                 <div class="col">
                     <div class="card h-100">
-                        <img src="{{ asset('images/new-inquiry.jpg') }}" class="card-img-top" alt="Create Inquiry">
+                        <img src="{{ asset('images/purchase-order.jpg') }}" class="card-img-top" alt="Purchase Orders">
                         <div class="card-body">
-                            <h5 class="card-title">Create Inquiry</h5>
-                            <p class="card-text">Submit new material inquiries and track procurement requests.</p>
+                            <h5 class="card-title">Purchase Orders</h5>
+                            <p class="card-text">Create and manage purchase orders from approved purchase requests.</p>
                         </div>
-                        <div class="card-footer">
-                            <a href="{{ route('inquiries.create') }}" class="btn btn-primary w-100">Create New Inquiry</a>
+                        <div class="card-footer d-flex gap-2">
+                            <a href="{{ route('purchase-orders.create') }}" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-plus"></i> New Order
+                            </a>
+                            <a href="{{ route('purchase-orders.index') }}" class="btn btn-secondary flex-grow-1">
+                                <i class="fas fa-list"></i> View All
+                            </a>
                         </div>
                     </div>
                 </div>
 
-                <!-- View Inquiries Card -->
+                <!-- Inquiries Card -->
                 <div class="col">
                     <div class="card h-100">
-                        <img src="{{ asset('images/view-inquiries.jpg') }}" class="card-img-top" alt="View Inquiries">
+                        <img src="{{ asset('images/new-inquiry.jpg') }}" class="card-img-top" alt="Inquiries">
                         <div class="card-body">
-                            <h5 class="card-title">View Inquiries</h5>
-                            <p class="card-text">Monitor and manage material inquiries and their responses.</p>
+                            <h5 class="card-title">Inquiries</h5>
+                            <p class="card-text">Submit and track material inquiries and procurement requests.</p>
                         </div>
-                        <div class="card-footer">
-                            <a href="{{ route('inquiries.index') }}" class="btn btn-secondary w-100">View All Inquiries</a>
+                        <div class="card-footer d-flex gap-2">
+                            <a href="{{ route('inquiries.create') }}" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-plus"></i> New Inquiry
+                            </a>
+                            <a href="{{ route('inquiries.index') }}" class="btn btn-secondary flex-grow-1">
+                                <i class="fas fa-list"></i> View All
+                            </a>
                         </div>
                     </div>
                 </div>
 
-                <!-- Create RFQ Card -->
+                <!-- Quotations (RFQ) Card -->
                 <div class="col">
                     <div class="card h-100">
-                        <img src="{{ asset('images/new-quotation.jpg') }}" class="card-img-top" alt="Create RFQ">
+                        <img src="{{ asset('images/new-quotation.jpg') }}" class="card-img-top" alt="Quotations">
                         <div class="card-body">
-                            <h5 class="card-title">Create RFQ</h5>
-                            <p class="card-text">Create new requests for quotation and send to suppliers.</p>
+                            <h5 class="card-title">Quotations (RFQ)</h5>
+                            <p class="card-text">Create and manage requests for quotation and supplier responses.</p>
                         </div>
-                        <div class="card-footer">
-                            <a href="{{ route('quotations.create') }}" class="btn btn-primary w-100">Create New RFQ</a>
+                        <div class="card-footer d-flex gap-2">
+                            <a href="{{ route('quotations.create') }}" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-plus"></i> New RFQ
+                            </a>
+                            <a href="{{ route('quotations.index') }}" class="btn btn-secondary flex-grow-1">
+                                <i class="fas fa-list"></i> View All
+                            </a>
                         </div>
                     </div>
                 </div>
 
-                <!-- View RFQs Card -->
+                <!-- Supplier Invitations Card -->
                 <div class="col">
                     <div class="card h-100">
-                        <img src="{{ asset('images/view-quotations.jpg') }}" class="card-img-top" alt="View RFQs">
+                        <img src="{{ asset('images/new-invitation.jpg') }}" class="card-img-top" alt="Supplier Invitations">
                         <div class="card-body">
-                            <h5 class="card-title">View RFQs</h5>
-                            <p class="card-text">Track and manage requests for quotation and supplier responses.</p>
+                            <h5 class="card-title">Supplier Invitations</h5>
+                            <p class="card-text">Create and manage supplier invitations for bidding opportunities.</p>
                         </div>
-                        <div class="card-footer">
-                            <a href="{{ route('quotations.index') }}" class="btn btn-secondary w-100">View All RFQs</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Create Invitation Card -->
-                <div class="col">
-                    <div class="card h-100">
-                        <img src="{{ asset('images/new-invitation.jpg') }}" class="card-img-top" alt="Create Invitation">
-                        <div class="card-body">
-                            <h5 class="card-title">Create Invitation</h5>
-                            <p class="card-text">Create new supplier invitations for bidding opportunities.</p>
-                        </div>
-                        <div class="card-footer">
-                            <a href="{{ route('supplier-invitations.create') }}" class="btn btn-primary w-100">Create New Invitation</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- View Invitations Card -->
-                <div class="col">
-                    <div class="card h-100">
-                        <img src="{{ asset('images/view-invitations.jpg') }}" class="card-img-top" alt="View Invitations">
-                        <div class="card-body">
-                            <h5 class="card-title">View Invitations</h5>
-                            <p class="card-text">Track and manage supplier invitations and their responses.</p>
-                        </div>
-                        <div class="card-footer">
-                            <a href="{{ route('supplier-invitations.index') }}" class="btn btn-secondary w-100">View All Invitations</a>
+                        <div class="card-footer d-flex gap-2">
+                            <a href="{{ route('supplier-invitations.create') }}" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-plus"></i> New Invite
+                            </a>
+                            <a href="{{ route('supplier-invitations.index') }}" class="btn btn-secondary flex-grow-1">
+                                <i class="fas fa-list"></i> View All
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -114,24 +111,34 @@
                         <img src="{{ asset('images/materials.jpg') }}" class="card-img-top" alt="Materials Management">
                         <div class="card-body">
                             <h5 class="card-title">Materials Management</h5>
-                            <p class="card-text">View and manage materials inventory and specifications.</p>
+                            <p class="card-text">Manage materials inventory, specifications, and pricing information.</p>
                         </div>
-                        <div class="card-footer">
-                            <a href="{{ route('materials.index') }}" class="btn btn-secondary w-100">Manage Materials</a>
+                        <div class="card-footer d-flex gap-2">
+                            <a href="{{ route('materials.create') }}" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-plus"></i> New Material
+                            </a>
+                            <a href="{{ route('materials.index') }}" class="btn btn-secondary flex-grow-1">
+                                <i class="fas fa-list"></i> View All
+                            </a>
                         </div>
                     </div>
                 </div>
 
-                <!-- Suppliers Card -->
+                <!-- Suppliers Management Card -->
                 <div class="col">
                     <div class="card h-100">
                         <img src="{{ asset('images/suppliers.jpg') }}" class="card-img-top" alt="Suppliers">
                         <div class="card-body">
-                            <h5 class="card-title">Suppliers</h5>
-                            <p class="card-text">Manage supplier information and relationships.</p>
+                            <h5 class="card-title">Suppliers Management</h5>
+                            <p class="card-text">Manage supplier information, relationships, and performance tracking.</p>
                         </div>
-                        <div class="card-footer">
-                            <a href="{{ route('suppliers.index') }}" class="btn btn-secondary w-100">Manage Suppliers</a>
+                        <div class="card-footer d-flex gap-2">
+                            <a href="{{ route('suppliers.create') }}" class="btn btn-primary flex-grow-1">
+                                <i class="fas fa-plus"></i> New Supplier
+                            </a>
+                            <a href="{{ route('suppliers.index') }}" class="btn btn-secondary flex-grow-1">
+                                <i class="fas fa-list"></i> View All
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -167,21 +174,24 @@
                 <div class="col-md-4">
                     <div class="card">
                         <div class="card-header">
-                            <h5 class="card-title mb-0">Recent RFQs</h5>
+                            <h5 class="card-title mb-0">Recent Purchase Orders</h5>
                         </div>
                         <div class="card-body">
                             <div class="list-group">
-                                @forelse($recentQuotations ?? [] as $quotation)
-                                <a href="{{ route('quotations.show', $quotation->id) }}" class="list-group-item list-group-item-action">
+                                @forelse($recentPurchaseOrders ?? [] as $purchaseOrder)
+                                <a href="{{ route('purchase-orders.show', $purchaseOrder->id) }}" class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1">{{ $quotation->rfq_number }}</h6>
-                                        <small>{{ $quotation->created_at->diffForHumans() }}</small>
+                                        <h6 class="mb-1">{{ $purchaseOrder->po_number }}</h6>
+                                        <small>{{ $purchaseOrder->created_at->diffForHumans() }}</small>
                                     </div>
-                                    <p class="mb-1">Status: {{ ucfirst($quotation->status) }}</p>
+                                    <p class="mb-1">
+                                        Supplier: {{ $purchaseOrder->supplier->name }}<br>
+                                        Status: <span class="badge bg-{{ $purchaseOrder->status_color }}">{{ ucfirst($purchaseOrder->status) }}</span>
+                                    </p>
                                 </a>
                                 @empty
                                 <div class="list-group-item">
-                                    <p class="mb-0">No recent RFQs</p>
+                                    <p class="mb-0">No recent purchase orders</p>
                                 </div>
                                 @endforelse
                             </div>
@@ -192,24 +202,24 @@
                 <div class="col-md-4">
                     <div class="card">
                         <div class="card-header">
-                            <h5 class="card-title mb-0">Recent Invitations</h5>
+                            <h5 class="card-title mb-0">Recent Purchase Requests</h5>
                         </div>
                         <div class="card-body">
                             <div class="list-group">
-                                @forelse($recentInvitations ?? [] as $invitation)
-                                <a href="{{ route('supplier-invitations.show', $invitation->id) }}" class="list-group-item list-group-item-action">
+                                @forelse($recentPurchaseRequests ?? [] as $pr)
+                                <a href="{{ route('purchase-requests.show', $pr->id) }}" class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1">{{ $invitation->company_name }}</h6>
-                                        <small>{{ $invitation->created_at->diffForHumans() }}</small>
+                                        <h6 class="mb-1">{{ $pr->pr_number }}</h6>
+                                        <small>{{ $pr->created_at->diffForHumans() }}</small>
                                     </div>
                                     <p class="mb-1">
-                                        Project: {{ $invitation->project->name }}<br>
-                                        Status: {{ ucfirst($invitation->status) }}
+                                        Department: {{ $pr->department }}<br>
+                                        Status: <span class="badge bg-{{ $pr->status_color }}">{{ ucfirst($pr->status) }}</span>
                                     </p>
                                 </a>
                                 @empty
                                 <div class="list-group-item">
-                                    <p class="mb-0">No recent invitations</p>
+                                    <p class="mb-0">No recent purchase requests</p>
                                 </div>
                                 @endforelse
                             </div>
@@ -236,9 +246,20 @@
         .card-footer {
             background: none;
             border-top: none;
+            padding: 1rem;
         }
         .btn {
-            margin-right: 5px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .list-group-item {
+            transition: background-color 0.2s;
+        }
+        .list-group-item:hover {
+            background-color: rgba(0,0,0,0.02);
         }
     </style>
     @endpush
