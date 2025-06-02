@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Quotation;
-use App\Models\Project;
+use App\Models\Contract;
 use App\Models\Material;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
@@ -14,24 +14,31 @@ class QuotationController extends Controller
 {
     public function index()
     {
-        $quotations = Quotation::with(['project', 'suppliers', 'materials'])
+        $quotations = Quotation::with(['contract', 'suppliers', 'materials'])
             ->latest()
             ->paginate(10);
 
-        $projects = Project::all();
-        return view('admin.quotations.index', compact('quotations', 'projects'));
+        $contracts = Contract::where('status', 'approved')
+            ->orderBy('contract_id')
+            ->get();
+        return view('admin.quotations.index', compact('quotations', 'contracts'));
     }
 
     public function create()
     {
-        $projects = Project::all();
-        return view('admin.quotations.form', compact('projects'));
+        $contracts = Contract::with(['client', 'contractor'])
+            ->where('status', 'approved')
+            ->orderBy('contract_id')
+            ->get();
+        $materials = Material::orderBy('name')->get();
+        $suppliers = Supplier::orderBy('name')->get();
+        return view('admin.quotations.form', compact('contracts', 'materials', 'suppliers'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'project_id' => 'required|exists:projects,id',
+            'contract_id' => 'required|exists:contracts,id',
             'due_date' => 'required|date|after:today',
             'suppliers' => 'required|array',
             'suppliers.*' => 'exists:suppliers,id',
@@ -46,7 +53,7 @@ class QuotationController extends Controller
         ]);
 
         $quotation = Quotation::create([
-            'project_id' => $validated['project_id'],
+            'contract_id' => $validated['contract_id'],
             'due_date' => $validated['due_date'],
             'notes' => $validated['notes'],
             'status' => 'draft',
@@ -84,7 +91,7 @@ class QuotationController extends Controller
 
     public function show(Quotation $quotation)
     {
-        $quotation->load(['project', 'suppliers', 'materials', 'attachments']);
+        $quotation->load(['contract', 'suppliers', 'materials', 'attachments']);
         return view('admin.quotations.show', compact('quotation'));
     }
 
@@ -95,9 +102,11 @@ class QuotationController extends Controller
                 ->with('error', 'This RFQ cannot be edited.');
         }
 
-        $projects = Project::all();
-        $quotation->load(['project', 'suppliers', 'materials', 'attachments']);
-        return view('admin.quotations.form', compact('quotation', 'projects'));
+        $contracts = Contract::where('status', 'approved')
+            ->orderBy('contract_id')
+            ->get();
+        $quotation->load(['contract', 'suppliers', 'materials', 'attachments']);
+        return view('admin.quotations.form', compact('quotation', 'contracts'));
     }
 
     public function update(Request $request, Quotation $quotation)
@@ -108,7 +117,7 @@ class QuotationController extends Controller
         }
 
         $validated = $request->validate([
-            'project_id' => 'required|exists:projects,id',
+            'contract_id' => 'required|exists:contracts,id',
             'due_date' => 'required|date|after:today',
             'suppliers' => 'required|array',
             'suppliers.*' => 'exists:suppliers,id',
@@ -123,7 +132,7 @@ class QuotationController extends Controller
         ]);
 
         $quotation->update([
-            'project_id' => $validated['project_id'],
+            'contract_id' => $validated['contract_id'],
             'due_date' => $validated['due_date'],
             'notes' => $validated['notes']
         ]);
@@ -236,13 +245,20 @@ class QuotationController extends Controller
 
     public function search(Request $request)
     {
-        $query = $request->get('query');
+        $query = $request->get('q');
+        $contractId = $request->get('contract_id');
         
-        $materials = Material::where('name', 'like', "%{$query}%")
-            ->orWhere('description', 'like', "%{$query}%")
-            ->limit(10)
+        $quotations = Quotation::with(['contract', 'suppliers', 'materials'])
+            ->when($query, function($q) use ($query) {
+                return $q->where('rfq_number', 'like', "%{$query}%")
+                    ->orWhere('notes', 'like', "%{$query}%");
+            })
+            ->when($contractId, function($q) use ($contractId) {
+                return $q->where('contract_id', $contractId);
+            })
+            ->latest()
             ->get();
-
-        return response()->json($materials);
+            
+        return response()->json($quotations);
     }
 } 

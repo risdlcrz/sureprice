@@ -7,6 +7,7 @@ use App\Models\Material;
 use App\Models\Supplier;
 use App\Models\Party;
 use App\Models\Property;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -22,6 +23,9 @@ class ContractController extends Controller
     public function index()
     {
         $contracts = Contract::with(['contractor', 'client', 'property'])
+            ->when(request('status'), function($query, $status) {
+                return $query->where('status', $status);
+            })
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
@@ -260,10 +264,9 @@ class ContractController extends Controller
 
             DB::commit();
 
-            return redirect()->route('contracts.show', $contract->id)
-                ->with('success', 'Contract saved successfully');
-        } catch (\Exception $e) {
-            DB::rollBack();
+            return redirect()->route('contracts.show', $contract->id);
+            } catch (\Exception $e) {
+                DB::rollBack();
                 throw $e;
             }
         } catch (\Exception $e) {
@@ -375,5 +378,147 @@ class ContractController extends Controller
                 'total' => $quantities[$index] * $amounts[$index]
             ]);
         }
+    }
+
+    public function destroy(Contract $contract)
+    {
+        try {
+            DB::beginTransaction();
+            
+            // Delete associated signatures if they exist
+            if ($contract->client_signature) {
+                Storage::disk('public')->delete($contract->client_signature);
+            }
+            if ($contract->contractor_signature) {
+                Storage::disk('public')->delete($contract->contractor_signature);
+            }
+            
+            // Delete the contract and its relationships
+            $contract->items()->delete();
+            $contract->delete();
+            
+            DB::commit();
+            
+            return redirect()->route('contracts.index')
+                ->with('success', 'Contract deleted successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('contracts.index')
+                ->with('error', 'Error deleting contract: ' . $e->getMessage());
+        }
+    }
+
+    public function updateStatus(Contract $contract, Request $request)
+    {
+        try {
+            $request->validate([
+                'status' => 'required|in:draft,approved,rejected'
+            ]);
+
+            $contract->status = $request->status;
+            $contract->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Contract status updated successfully',
+                'status' => ucfirst($contract->status)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating contract status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function timeline()
+    {
+        $contracts = Contract::with(['client', 'contractor'])
+            ->get()
+            ->map(function($contract) {
+                return [
+                    'id' => $contract->id,
+                    'contract_id' => $contract->contract_id,
+                    'title' => $contract->client->name . ' - ' . $contract->contract_id,
+                    'start' => $contract->start_date->format('Y-m-d'),
+                    'end' => $contract->end_date->format('Y-m-d'),
+                    'backgroundColor' => match($contract->status) {
+                        'draft' => '#ffc107',     // warning
+                        'approved' => '#198754',   // success
+                        'rejected' => '#dc3545',   // danger
+                        default => '#6c757d'       // secondary
+                    },
+                    'borderColor' => match($contract->status) {
+                        'draft' => '#ffc107',
+                        'approved' => '#198754',
+                        'rejected' => '#dc3545',
+                        default => '#6c757d'
+                    },
+                    'extendedProps' => [
+                        'client' => $contract->client->name,
+                        'contractor' => $contract->contractor->name,
+                        'scope' => $contract->scope_of_work,
+                        'budget' => $contract->budget_allocation,
+                        'status' => $contract->status,
+                        'contract_id' => $contract->contract_id
+                    ]
+                ];
+            });
+
+        return response()->json($contracts);
+    }
+
+    public function projectTimeline()
+    {
+        $contracts = Contract::with(['client', 'contractor', 'project'])
+            ->orderBy('start_date')
+            ->get();
+            
+        $projects = Project::with(['contracts', 'inquiries', 'quotations', 'purchaseRequests'])
+            ->orderBy('name')
+            ->get();
+            
+        return view('admin.project-timeline', compact('contracts', 'projects'));
+    }
+
+    public function search(Request $request)
+    {
+        $term = $request->get('term');
+        
+        if (empty($term) || strlen($term) < 2) {
+            return response()->json([]);
+        }
+
+        $contracts = Contract::with(['client', 'contractor'])
+            ->where(function ($query) use ($term) {
+                $query->where('contract_id', 'like', "%{$term}%")
+                    ->orWhere('scope_of_work', 'like', "%{$term}%")
+                    ->orWhereHas('client', function ($q) use ($term) {
+                        $q->where(DB::raw("CONCAT(name, ' ', COALESCE(company_name, ''))"), 'like', "%{$term}%");
+                    })
+                    ->orWhereHas('contractor', function ($q) use ($term) {
+                        $q->where(DB::raw("CONCAT(name, ' ', COALESCE(company_name, ''))"), 'like', "%{$term}%");
+                    });
+            })
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function ($contract) {
+                return [
+                    'id' => $contract->id,
+                    'contract_id' => $contract->contract_id,
+                    'client_name' => $contract->client->name,
+                    'client_company' => $contract->client->company_name,
+                    'contractor_name' => $contract->contractor->name,
+                    'contractor_company' => $contract->contractor->company_name,
+                    'start_date' => $contract->start_date,
+                    'end_date' => $contract->end_date,
+                    'status' => $contract->status,
+                    'budget_allocation' => $contract->budget_allocation,
+                    'scope_of_work' => $contract->scope_of_work
+                ];
+            });
+
+        return response()->json($contracts);
     }
 } 

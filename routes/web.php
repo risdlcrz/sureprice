@@ -67,6 +67,8 @@ Route::middleware(['auth'])->group(function () {
     // Contract Routes
     Route::resource('contracts', ContractController::class);
     Route::get('contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
+    Route::patch('contracts/{contract}/status', [ContractController::class, 'updateStatus'])->name('contracts.updateStatus');
+    Route::get('/project-timeline', [ContractController::class, 'projectTimeline'])->name('project.timeline');
     
     // Supporting routes for contract form
     Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');

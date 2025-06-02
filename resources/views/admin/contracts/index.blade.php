@@ -4,9 +4,25 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Contracts</h1>
+        <div>
+            <div class="btn-group me-2">
+                <a href="{{ route('contracts.index') }}" class="btn btn-outline-secondary {{ !request('status') ? 'active' : '' }}">
+                    All
+                </a>
+                <a href="{{ route('contracts.index', ['status' => 'draft']) }}" class="btn btn-outline-secondary {{ request('status') === 'draft' ? 'active' : '' }}">
+                    Draft
+                </a>
+                <a href="{{ route('contracts.index', ['status' => 'approved']) }}" class="btn btn-outline-secondary {{ request('status') === 'approved' ? 'active' : '' }}">
+                    Approved
+                </a>
+                <a href="{{ route('contracts.index', ['status' => 'rejected']) }}" class="btn btn-outline-secondary {{ request('status') === 'rejected' ? 'active' : '' }}">
+                    Rejected
+                </a>
+            </div>
         <a href="{{ route('contracts.create') }}" class="btn btn-primary">
             <i class="bi bi-plus-lg"></i> New Contract
         </a>
+        </div>
     </div>
 
     @if(session('success'))
@@ -14,6 +30,45 @@
             {{ session('success') }}
         </div>
     @endif
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Delete Contract</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete this contract? This action cannot be undone.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Update Modal -->
+    <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="statusModalLabel">Update Contract Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to change the status of this contract?</p>
+                    <div class="btn-group w-100">
+                        <button type="button" class="btn btn-outline-secondary status-btn" data-status="draft">Draft</button>
+                        <button type="button" class="btn btn-outline-success status-btn" data-status="approved">Approve</button>
+                        <button type="button" class="btn btn-outline-danger status-btn" data-status="rejected">Reject</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="card">
         <div class="card-body">
@@ -26,7 +81,7 @@
                             <th>Contractor</th>
                             <th>Start Date</th>
                             <th>End Date</th>
-                            <th>Total Amount</th>
+                            <th>Budget Allocation</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -51,11 +106,13 @@
                                 </td>
                                 <td>{{ $contract->start_date->format('M d, Y') }}</td>
                                 <td>{{ $contract->end_date->format('M d, Y') }}</td>
-                                <td>${{ number_format($contract->total_amount, 2) }}</td>
+                                <td>₱{{ number_format($contract->budget_allocation, 2) }}</td>
                                 <td>
-                                    <span class="badge bg-{{ $contract->status === 'draft' ? 'warning' : ($contract->status === 'approved' ? 'success' : 'secondary') }}">
+                                    <button type="button" 
+                                            class="btn btn-sm status-badge {{ $contract->status === 'draft' ? 'btn-warning' : ($contract->status === 'approved' ? 'btn-success' : 'btn-secondary') }}"
+                                            onclick="showStatusModal({{ $contract->id }})">
                                         {{ ucfirst($contract->status) }}
-                                    </span>
+                                    </button>
                                 </td>
                                 <td>
                                     <div class="btn-group">
@@ -69,16 +126,20 @@
                                            title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </a>
-                                        <form action="{{ route('contracts.destroy', $contract->id) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" 
-                                                    onclick="return confirm('Are you sure you want to delete this contract?')"
-                                                    title="Delete">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger" 
+                                                title="Delete"
+                                                onclick="confirmDelete({{ $contract->id }})">
                                                 <i class="bi bi-trash"></i>
                                             </button>
-                                        </form>
                                     </div>
+                                    <form id="delete-form-{{ $contract->id }}" 
+                                          action="{{ route('contracts.destroy', $contract->id) }}" 
+                                          method="POST" 
+                                          style="display: none;">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
                                 </td>
                             </tr>
                         @empty
@@ -105,6 +166,68 @@
     .badge {
         font-size: 0.875rem;
     }
+    .status-badge {
+        cursor: pointer;
+    }
+    .status-badge:hover {
+        opacity: 0.8;
+    }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+let currentContractId = null;
+const statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
+
+function showStatusModal(contractId) {
+    currentContractId = contractId;
+    statusModal.show();
+}
+
+document.querySelectorAll('.status-btn').forEach(button => {
+    button.addEventListener('click', function() {
+        const status = this.dataset.status;
+        updateStatus(currentContractId, status);
+    });
+});
+
+function updateStatus(contractId, status) {
+    fetch(`/contracts/${contractId}/status`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ status: status })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error updating status: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating status');
+    });
+}
+
+let deleteForm = null;
+
+function confirmDelete(contractId) {
+    deleteForm = document.getElementById('delete-form-' + contractId);
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+
+document.getElementById('confirmDelete').addEventListener('click', function() {
+    if (deleteForm) {
+        deleteForm.submit();
+    }
+});
+</script>
 @endpush
 @endsection 
