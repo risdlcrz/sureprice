@@ -19,8 +19,8 @@
                         </div>
                     @else
                         <div class="mb-4">
-                            <h5>Project Details</h5>
-                            <p><strong>Project:</strong> {{ $invitation->project->name }}</p>
+                            <h5>Contract Details</h5>
+                            <p><strong>Contract:</strong> {{ $invitation->contract->contract_id }}</p>
                             <p><strong>Due Date:</strong> {{ $invitation->due_date->format('M d, Y') }}</p>
                         </div>
 

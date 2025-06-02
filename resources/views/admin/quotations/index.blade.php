@@ -37,11 +37,11 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="project">Project</label>
-                                <select class="form-control" id="project">
-                                    <option value="">All Projects</option>
-                                    @foreach($projects as $project)
-                                        <option value="{{ $project->id }}">{{ $project->name }}</option>
+                                <label for="contract">Contract</label>
+                                <select class="form-control" id="contract">
+                                    <option value="">All Contracts</option>
+                                    @foreach($contracts as $contract)
+                                        <option value="{{ $contract->id }}">{{ $contract->contract_id }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -293,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let searchTimeout;
     const search = document.getElementById('search');
     const status = document.getElementById('status');
-    const project = document.getElementById('project');
+    const contract = document.getElementById('contract');
     const perPage = document.getElementById('perPage');
 
     function updateQuotations() {
@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const params = new URLSearchParams({
                 search: search.value,
                 status: status.value,
-                project: project.value,
+                contract: contract.value,
                 per_page: perPage.value
             });
 
@@ -312,14 +312,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     search.addEventListener('input', updateQuotations);
     status.addEventListener('change', updateQuotations);
-    project.addEventListener('change', updateQuotations);
+    contract.addEventListener('change', updateQuotations);
     perPage.addEventListener('change', updateQuotations);
 
     // Set initial values from URL params
     const urlParams = new URLSearchParams(window.location.search);
     search.value = urlParams.get('search') || '';
     status.value = urlParams.get('status') || '';
-    project.value = urlParams.get('project') || '';
+    contract.value = urlParams.get('contract') || '';
     perPage.value = urlParams.get('per_page') || '10';
 
     // Send quotation functionality

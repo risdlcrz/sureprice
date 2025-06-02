@@ -78,7 +78,7 @@
                                 @foreach($inquiries as $inquiry)
                                 <tr>
                                     <td>{{ $inquiry->id }}</td>
-                                    <td>{{ $inquiry->project->name }}</td>
+                                    <td>{{ $inquiry->contract->contract_id }}</td>
                                     <td>
                                         <div>
                                             <strong>{{ $inquiry->subject }}</strong>

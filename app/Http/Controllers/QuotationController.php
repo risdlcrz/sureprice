@@ -31,7 +31,7 @@ class QuotationController extends Controller
             ->orderBy('contract_id')
             ->get();
         $materials = Material::orderBy('name')->get();
-        $suppliers = Supplier::orderBy('name')->get();
+        $suppliers = Supplier::orderBy('company_name')->get();
         return view('admin.quotations.form', compact('contracts', 'materials', 'suppliers'));
     }
 

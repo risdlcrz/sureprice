@@ -21,11 +21,11 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="name">Company Name</label>
-                                        <input type="text" class="form-control @error('name') is-invalid @enderror" 
-                                            id="name" name="name" 
-                                            value="{{ old('name', $supplier->name ?? '') }}" required>
-                                        @error('name')
+                                        <label for="company_name">Company Name</label>
+                                        <input type="text" class="form-control @error('company_name') is-invalid @enderror" 
+                                            id="company_name" name="company_name" 
+                                            value="{{ old('company_name', $supplier->company_name ?? '') }}" required>
+                                        @error('company_name')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -69,16 +69,15 @@
                             </div>
                         </div>
 
-                        <!-- Address Information -->
+                        <!-- Address and Additional Information -->
                         <div class="section-container mt-4">
-                            <h5 class="section-title">Address Information</h5>
+                            <h5 class="section-title">Address and Additional Information</h5>
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group">
-                                        <label for="address">Street Address</label>
-                                        <input type="text" class="form-control @error('address') is-invalid @enderror" 
-                                            id="address" name="address" 
-                                            value="{{ old('address', $supplier->address ?? '') }}" required>
+                                        <label for="address">Complete Address</label>
+                                        <textarea class="form-control @error('address') is-invalid @enderror" 
+                                            id="address" name="address" rows="3" required>{{ old('address', $supplier->address ?? '') }}</textarea>
                                         @error('address')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -87,35 +86,41 @@
                             </div>
 
                             <div class="row mt-3">
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="city">City</label>
-                                        <input type="text" class="form-control @error('city') is-invalid @enderror" 
-                                            id="city" name="city" 
-                                            value="{{ old('city', $supplier->city ?? '') }}" required>
-                                        @error('city')
+                                        <label for="tax_number">Tax Number</label>
+                                        <input type="text" class="form-control @error('tax_number') is-invalid @enderror" 
+                                            id="tax_number" name="tax_number" 
+                                            value="{{ old('tax_number', $supplier->tax_number ?? '') }}">
+                                        @error('tax_number')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="state">State/Province</label>
-                                        <input type="text" class="form-control @error('state') is-invalid @enderror" 
-                                            id="state" name="state" 
-                                            value="{{ old('state', $supplier->state ?? '') }}" required>
-                                        @error('state')
+                                        <label for="registration_number">Registration Number</label>
+                                        <input type="text" class="form-control @error('registration_number') is-invalid @enderror" 
+                                            id="registration_number" name="registration_number" 
+                                            value="{{ old('registration_number', $supplier->registration_number ?? '') }}">
+                                        @error('registration_number')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
                                 </div>
-                                <div class="col-md-4">
+                            </div>
+
+                            <div class="row mt-3">
+                                <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="postal_code">Postal Code</label>
-                                        <input type="text" class="form-control @error('postal_code') is-invalid @enderror" 
-                                            id="postal_code" name="postal_code" 
-                                            value="{{ old('postal_code', $supplier->postal_code ?? '') }}" required>
-                                        @error('postal_code')
+                                        <label for="status">Status</label>
+                                        <select class="form-control @error('status') is-invalid @enderror" 
+                                            id="status" name="status" required>
+                                            <option value="active" {{ old('status', $supplier->status ?? '') == 'active' ? 'selected' : '' }}>Active</option>
+                                            <option value="inactive" {{ old('status', $supplier->status ?? '') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                            <option value="pending" {{ old('status', $supplier->status ?? '') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                        </select>
+                                        @error('status')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -152,18 +157,19 @@
                                             <div class="row align-items-center">
                                                 <div class="col-md-4">
                                                     <strong>{{ $material->name }}</strong>
+                                                    <input type="hidden" name="materials[{{ $material->id }}][id]" value="{{ $material->id }}">
                                                 </div>
                                                 <div class="col-md-3">
                                                     <input type="number" class="form-control form-control-sm" 
                                                         name="materials[{{ $material->id }}][price]" 
                                                         value="{{ $material->pivot->price }}" 
-                                                        placeholder="Price" step="0.01" min="0">
+                                                        placeholder="Price" step="0.01" min="0" required>
                                                 </div>
                                                 <div class="col-md-4">
                                                     <input type="text" class="form-control form-control-sm" 
-                                                        name="materials[{{ $material->id }}][notes]" 
-                                                        value="{{ $material->pivot->notes }}" 
-                                                        placeholder="Notes">
+                                                        name="materials[{{ $material->id }}][lead_time]" 
+                                                        value="{{ $material->pivot->lead_time }}" 
+                                                        placeholder="Lead Time">
                                                 </div>
                                                 <div class="col-md-1">
                                                     <button type="button" class="btn btn-danger btn-sm remove-material">
@@ -266,9 +272,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        materialSearchResults.innerHTML = '<div class="p-2">Searching...</div>';
-        materialSearchResults.style.display = 'block';
-
         fetch(`/api/materials/search?query=${encodeURIComponent(query)}`)
             .then(response => response.json())
             .then(data => {
@@ -276,27 +279,28 @@ document.addEventListener('DOMContentLoaded', function() {
                     materialSearchResults.innerHTML = data.map(material => `
                         <div class="material-result" data-material='${JSON.stringify(material)}'>
                             <strong>${material.name}</strong><br>
-                            <small>${material.description || ''} - ${material.unit}</small>
+                            <small>${material.description || ''}</small>
                         </div>
                     `).join('');
 
-                    // Add click handlers
                     materialSearchResults.querySelectorAll('.material-result').forEach(result => {
                         result.addEventListener('click', () => addMaterial(JSON.parse(result.dataset.material)));
                     });
+                    materialSearchResults.style.display = 'block';
                 } else {
                     materialSearchResults.innerHTML = '<div class="p-2">No materials found</div>';
+                    materialSearchResults.style.display = 'block';
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 materialSearchResults.innerHTML = '<div class="p-2 text-danger">Error searching materials</div>';
+                materialSearchResults.style.display = 'block';
             });
     }
 
     function addMaterial(material) {
-        // Check if material already exists
-        if (document.querySelector(`input[name="materials[${material.id}][price]"]`)) {
+        if (document.querySelector(`input[name="materials[${material.id}][id]"]`)) {
             alert('This material is already added');
             return;
         }
@@ -307,17 +311,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="row align-items-center">
                         <div class="col-md-4">
                             <strong>${material.name}</strong>
+                            <input type="hidden" name="materials[${material.id}][id]" value="${material.id}">
                         </div>
                         <div class="col-md-3">
                             <input type="number" class="form-control form-control-sm" 
                                 name="materials[${material.id}][price]" 
-                                value="${material.base_price || ''}" 
                                 placeholder="Price" step="0.01" min="0" required>
                         </div>
                         <div class="col-md-4">
                             <input type="text" class="form-control form-control-sm" 
-                                name="materials[${material.id}][notes]" 
-                                placeholder="Notes">
+                                name="materials[${material.id}][lead_time]" 
+                                placeholder="Lead Time">
                         </div>
                         <div class="col-md-1">
                             <button type="button" class="btn btn-danger btn-sm remove-material">
@@ -333,7 +337,6 @@ document.addEventListener('DOMContentLoaded', function() {
         materialSearch.value = '';
         materialSearchResults.style.display = 'none';
 
-        // Add remove functionality to the new material
         const newMaterial = selectedMaterials.lastElementChild;
         newMaterial.querySelector('.remove-material').addEventListener('click', function() {
             newMaterial.remove();

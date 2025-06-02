@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Contract;
 use App\Models\PurchaseRequest;
+use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -24,7 +25,8 @@ class PurchaseRequestController extends Controller
             ->where('status', 'approved')
             ->orderBy('contract_id')
             ->get();
-        return view('admin.purchase-requests.form', compact('contracts'));
+        $materials = Material::orderBy('name')->get();
+        return view('admin.purchase-requests.form', compact('contracts', 'materials'));
     }
 
     public function store(Request $request)
@@ -71,7 +73,7 @@ class PurchaseRequestController extends Controller
             }
         }
 
-        return redirect()->route('purchase-request.index')
+        return redirect()->route('purchase-requests.index')
             ->with('success', 'Purchase request created successfully');
     }
 
@@ -87,8 +89,9 @@ class PurchaseRequestController extends Controller
             ->where('status', 'approved')
             ->orderBy('contract_id')
             ->get();
+        $materials = Material::orderBy('name')->get();
         $purchaseRequest->load(['contract', 'items.material', 'attachments']);
-        return view('admin.purchase-requests.form', compact('purchaseRequest', 'contracts'));
+        return view('admin.purchase-requests.form', compact('purchaseRequest', 'contracts', 'materials'));
     }
 
     public function update(Request $request, PurchaseRequest $purchaseRequest)
@@ -134,14 +137,19 @@ class PurchaseRequestController extends Controller
             }
         }
 
-        return redirect()->route('purchase-request.index')
+        return redirect()->route('purchase-requests.index')
             ->with('success', 'Purchase request updated successfully');
     }
 
     public function destroy(PurchaseRequest $purchaseRequest)
     {
         $purchaseRequest->delete();
-        return redirect()->route('purchase-request.index')
+        return redirect()->route('purchase-requests.index')
             ->with('success', 'Purchase request deleted successfully');
+    }
+
+    public function getItems(PurchaseRequest $purchaseRequest)
+    {
+        return response()->json($purchaseRequest->items()->with('material')->get());
     }
 } 

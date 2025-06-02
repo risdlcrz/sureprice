@@ -18,14 +18,14 @@
                             <div class="form-group">
                                 <label for="search">Search</label>
                                 <input type="text" class="form-control" id="search" 
-                                    placeholder="Search by name, contact person, or email...">
+                                    placeholder="Search by company name, contact person, or email...">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="form-group">
                                 <label for="sort">Sort By</label>
                                 <select class="form-control" id="sort">
-                                    <option value="name">Company Name</option>
+                                    <option value="company_name">Company Name</option>
                                     <option value="contact_person">Contact Person</option>
                                     <option value="materials_count">Number of Materials</option>
                                     <option value="created_at">Date Added</option>
@@ -53,7 +53,7 @@
                                     <th>Company Name</th>
                                     <th>Contact Person</th>
                                     <th>Contact Info</th>
-                                    <th>Location</th>
+                                    <th>Address</th>
                                     <th>Materials</th>
                                     <th>Actions</th>
                                 </tr>
@@ -62,7 +62,7 @@
                                 @foreach($suppliers as $supplier)
                                 <tr>
                                     <td>
-                                        <strong>{{ $supplier->name }}</strong>
+                                        <strong>{{ $supplier->company_name }}</strong>
                                     </td>
                                     <td>{{ $supplier->contact_person }}</td>
                                     <td>
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set initial values from URL params
     const urlParams = new URLSearchParams(window.location.search);
     search.value = urlParams.get('search') || '';
-    sort.value = urlParams.get('sort') || 'name';
+    sort.value = urlParams.get('sort') || 'company_name';
     perPage.value = urlParams.get('per_page') || '10';
 
     // Delete supplier functionality

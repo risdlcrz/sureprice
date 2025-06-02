@@ -474,11 +474,11 @@ class ContractController extends Controller
             ->orderBy('start_date')
             ->get();
             
-        $projects = Project::with(['contracts', 'inquiries', 'quotations', 'purchaseRequests'])
-            ->orderBy('name')
+        $allContracts = Contract::with(['client', 'contractor'])
+            ->orderBy('contract_id')
             ->get();
             
-        return view('admin.project-timeline', compact('contracts', 'projects'));
+        return view('admin.project-timeline', compact('contracts', 'allContracts'));
     }
 
     public function search(Request $request)

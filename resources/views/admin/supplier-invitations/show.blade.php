@@ -28,12 +28,12 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <!-- Project Information -->
+                        <!-- Contract Information -->
                         <div class="col-md-6 mb-4">
-                            <h5 class="mb-3">Project Information</h5>
+                            <h5 class="mb-3">Contract Information</h5>
                             <div class="card bg-light">
                                 <div class="card-body">
-                                    <p class="mb-1"><strong>Project Name:</strong> {{ $invitation->project->name }}</p>
+                                    <p class="mb-1"><strong>Contract Name:</strong> {{ $invitation->contract->contract_id }}</p>
                                     <p class="mb-1"><strong>Invitation Code:</strong> {{ $invitation->invitation_code }}</p>
                                     <p class="mb-1">
                                         <strong>Status:</strong>

@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('purchase_requests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('project_id')->constrained()->onDelete('cascade');
+            $table->foreignId('contract_id')->constrained()->onDelete('cascade');
             $table->string('pr_number')->unique();
             $table->foreignId('requester_id')->constrained('users')->onDelete('cascade');
             $table->string('department');
