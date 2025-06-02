@@ -16,52 +16,79 @@
         }
 
         .content {
-            margin-left: 250px;
             padding: 20px;
+            background-color: #f4f4f4;
+            margin-left: 250px;
             flex-grow: 1;
         }
 
         h1 {
             color: #333;
+            font-weight: 600;
+            margin-bottom: 2rem;
         }
 
         .top-controls {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
+            justify-content: flex-end;
+            margin-bottom: 2rem;
+        }
+
+        .top-controls .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-controls .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .top-controls .btn i {
+            margin-right: 8px;
+        }
+
+        .row {
+            margin: 0 -10px;
+        }
+
+        .col {
+            padding: 10px;
         }
 
         .card {
-            background-color: #fff;
+            border: none;
+            border-radius: 15px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
+            transition: all 0.3s ease;
             overflow: hidden;
-            margin-bottom: 20px;
-            transition: transform 0.3s, box-shadow 0.3s;
+            height: 100%;
             cursor: pointer;
         }
 
         .card:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
 
-        .card img {
-            width: 100%;
+        .card-img-top {
             height: 200px;
             object-fit: cover;
         }
 
         .card-body {
-            padding: 15px;
+            padding: 1.5rem;
         }
 
         .card-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0;
+            text-align: center;
         }
 
         @media (max-width: 768px) {
@@ -77,17 +104,31 @@
 
             .content {
                 margin-left: 0;
+                padding: 15px;
             }
 
             .top-controls {
                 flex-direction: column;
-                align-items: flex-start;
-                gap: 10px;
+                align-items: stretch;
             }
 
-            .card-columns {
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
+            .top-controls .btn {
+                margin-bottom: 10px;
+            }
+
+            .card-img-top {
+                height: 150px;
+            }
+
+            .card-title {
+                font-size: 1.1rem;
+            }
+
+            .row {
+                margin: 0 -5px;
+            }
+
+            .col {
+                padding: 5px;
             }
         }

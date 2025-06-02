@@ -7,6 +7,9 @@ use App\Models\Inquiry;
 use App\Models\Quotation;
 use App\Models\Activity;
 use App\Models\Transaction;
+use App\Models\PurchaseOrder;
+use App\Models\PurchaseRequest;
+use App\Models\SupplierInvitation;
 use Illuminate\Http\Request;
 
 class ProjectController extends Controller
@@ -25,6 +28,17 @@ class ProjectController extends Controller
         // Calculate total spent from transactions
         $totalSpent = Transaction::sum('amount');
 
+        // Get procurement-related data
+        $recentPurchaseOrders = PurchaseOrder::with(['contract', 'supplier'])
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $recentPurchaseRequests = PurchaseRequest::with('contract')
+            ->latest()
+            ->take(5)
+            ->get();
+
         $recentInquiries = Inquiry::with('project')
             ->latest()
             ->take(5)
@@ -41,6 +55,8 @@ class ProjectController extends Controller
 
         return view('admin.project-dashboard', compact(
             'recentContracts',
+            'recentPurchaseOrders',
+            'recentPurchaseRequests',
             'recentInquiries',
             'recentQuotations',
             'recentActivities',

@@ -1,22 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="sidebar">
-        @include('include.header_project')
-    </div>
+    <h1 class="text-center my-4">Project Approval</h1>
 
-    <div class="content">
-        <h1 class="text-center my-4">Project Approval</h1>
-
-        <div class="container">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Project Approval Requests</h5>
-                </div>
-                <div class="card-body">
-                    <!-- Add your project approval form or list here -->
-                    <p class="text-center">Project approval functionality will be implemented here.</p>
-                </div>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Project Approval Requests</h5>
+            </div>
+            <div class="card-body">
+                <!-- Add your project approval form or list here -->
+                <p class="text-center">Project approval functionality will be implemented here.</p>
             </div>
         </div>
     </div>
