@@ -194,19 +194,19 @@ document.querySelectorAll('.status-btn').forEach(button => {
 
 function updateStatus(contractId, status) {
     fetch(`/contracts/${contractId}/status`, {
-        method: 'PATCH',
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
         },
-        body: JSON.stringify({ status: status })
+        body: JSON.stringify({ status: status, _method: 'PATCH' })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             location.reload();
         } else {
-            alert('Error updating status: ' + data.message);
+            alert('Error updating status: ' + (data.message || 'Unknown error'));
         }
     })
     .catch(error => {

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SupplierInvitationMail;
+use App\Models\Category;
 
 class SupplierInvitationController extends Controller
 {
@@ -28,7 +29,8 @@ class SupplierInvitationController extends Controller
             ->orderBy('contract_id')
             ->get();
         $materials = Material::orderBy('name')->get();
-        return view('admin.supplier-invitations.form', compact('contracts', 'materials'));
+        $suppliers = \App\Models\Supplier::orderBy('company_name')->get();
+        return view('admin.supplier-invitations.form', compact('contracts', 'materials', 'suppliers'));
     }
 
     public function store(Request $request)
@@ -83,7 +85,8 @@ class SupplierInvitationController extends Controller
             ->orderBy('contract_id')
             ->get();
         $materials = Material::all();
-        return view('admin.supplier-invitations.form', compact('invitation', 'contracts', 'materials'));
+        $suppliers = \App\Models\Supplier::orderBy('company_name')->get();
+        return view('admin.supplier-invitations.form', compact('invitation', 'contracts', 'materials', 'suppliers'));
     }
 
     public function update(Request $request, SupplierInvitation $invitation)

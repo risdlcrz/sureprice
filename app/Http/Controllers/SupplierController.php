@@ -3,15 +3,45 @@
 namespace App\Http\Controllers;
 
 use App\Models\Supplier;
+use App\Models\Material;
+use App\Models\Category;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $suppliers = Supplier::with('materials')
-            ->orderBy('company_name')
-            ->paginate(10);
+        $query = Supplier::with(['materials.category']);
+
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('company_name', 'like', "%$search%")
+                  ->orWhere('contact_person', 'like', "%$search%")
+                  ->orWhere('email', 'like', "%$search%") ;
+            });
+        }
+
+        // Sort
+        $sort = $request->input('sort', 'company_name');
+        $allowedSorts = ['company_name', 'contact_person', 'materials_count', 'created_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'company_name';
+        }
+        if ($sort === 'materials_count') {
+            $query->withCount('materials')->orderBy('materials_count', 'desc');
+        } else {
+            $query->withCount('materials')->orderBy($sort);
+        }
+
+        // Per page
+        $perPage = (int) $request->input('per_page', 10);
+        if (!in_array($perPage, [10, 25, 50, 100])) {
+            $perPage = 10;
+        }
+
+        $suppliers = $query->paginate($perPage)->appends($request->all());
 
         return view('admin.suppliers.index', compact('suppliers'));
     }
@@ -31,10 +61,26 @@ class SupplierController extends Controller
             'address' => 'required|string|max:255',
             'tax_number' => 'nullable|string|max:50',
             'registration_number' => 'nullable|string|max:50',
-            'status' => 'required|in:active,inactive,pending'
+            'status' => 'required|in:active,inactive,pending',
+            'materials' => 'nullable|array',
+            'materials.*.price' => 'required|numeric|min:0',
+            'materials.*.lead_time' => 'required|integer|min:0'
         ]);
 
-        Supplier::create($validated);
+        $supplier = Supplier::create($validated);
+
+        // Handle materials
+        if ($request->has('materials')) {
+            $materials = collect($request->input('materials'))->map(function ($item, $materialId) {
+                return [
+                    'material_id' => $materialId,
+                    'price' => $item['price'],
+                    'lead_time' => $item['lead_time']
+                ];
+            })->toArray();
+
+            $supplier->materials()->attach($materials);
+        }
 
         return redirect()->route('suppliers.index')
             ->with('success', 'Supplier created successfully');
@@ -55,10 +101,28 @@ class SupplierController extends Controller
             'address' => 'required|string|max:255',
             'tax_number' => 'nullable|string|max:50',
             'registration_number' => 'nullable|string|max:50',
-            'status' => 'required|in:active,inactive,pending'
+            'status' => 'required|in:active,inactive,pending',
+            'materials' => 'nullable|array',
+            'materials.*.price' => 'required|numeric|min:0',
+            'materials.*.lead_time' => 'required|integer|min:0'
         ]);
 
         $supplier->update($validated);
+
+        // Handle materials
+        if ($request->has('materials')) {
+            $materials = collect($request->input('materials'))->map(function ($item, $materialId) {
+                return [
+                    'material_id' => $materialId,
+                    'price' => $item['price'],
+                    'lead_time' => $item['lead_time']
+                ];
+            })->toArray();
+
+            $supplier->materials()->sync($materials);
+        } else {
+            $supplier->materials()->detach();
+        }
 
         return redirect()->route('suppliers.index')
             ->with('success', 'Supplier updated successfully');
@@ -81,5 +145,11 @@ class SupplierController extends Controller
             ->orWhere('email', 'like', "%{$query}%")
             ->limit(10)
             ->get();
+    }
+
+    public function show(Supplier $supplier)
+    {
+        $supplier->load(['materials.category']);
+        return view('admin.suppliers.show', compact('supplier'));
     }
 } 

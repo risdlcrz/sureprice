@@ -110,6 +110,22 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="row mt-3">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="suppliers">Suppliers</label>
+                                        <select class="form-control @error('suppliers') is-invalid @enderror" id="suppliers" name="suppliers[]" multiple>
+                                            @foreach($suppliers ?? [] as $supplier)
+                                                <option value="{{ $supplier->id }}">{{ $supplier->company_name ?? $supplier->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('suppliers')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Specifications -->
@@ -175,6 +191,7 @@
 </div>
 
 @push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
     .section-container {
         margin-bottom: 2rem;
@@ -195,9 +212,18 @@
 @endpush
 
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize form validation
+$(document).ready(function() {
+    // Initialize Select2 for suppliers
+    $('#suppliers').select2({
+        placeholder: 'Select suppliers',
+        allowClear: true,
+        width: '100%'
+    });
+
+    // Form validation
     const form = document.getElementById('materialForm');
     if (form) {
         form.addEventListener('submit', function(event) {

@@ -131,13 +131,14 @@
                         <!-- Materials Section -->
                         <div class="section-container mt-4">
                             <h5 class="section-title">Materials</h5>
+                            
+                            <!-- Material Search -->
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <div class="form-group">
-                                        <label>Search and Add Materials</label>
+                                        <label for="materialSearch">Search Materials</label>
                                         <div class="input-group">
-                                            <input type="text" class="form-control" id="materialSearch" 
-                                                placeholder="Search for materials...">
+                                            <input type="text" class="form-control" id="materialSearch" placeholder="Search by name or code...">
                                             <div class="input-group-append">
                                                 <button class="btn btn-outline-secondary" type="button" id="searchMaterialBtn">
                                                     <i class="fas fa-search"></i>
@@ -149,38 +150,48 @@
                                 </div>
                             </div>
 
-                            <div id="selectedMaterials">
-                                @if(isset($supplier) && $supplier->materials)
-                                    @foreach($supplier->materials as $material)
-                                    <div class="material-item card mb-2">
-                                        <div class="card-body py-2">
-                                            <div class="row align-items-center">
-                                                <div class="col-md-4">
-                                                    <strong>{{ $material->name }}</strong>
-                                                    <input type="hidden" name="materials[{{ $material->id }}][id]" value="{{ $material->id }}">
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <input type="number" class="form-control form-control-sm" 
-                                                        name="materials[{{ $material->id }}][price]" 
-                                                        value="{{ $material->pivot->price }}" 
-                                                        placeholder="Price" step="0.01" min="0" required>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <input type="text" class="form-control form-control-sm" 
-                                                        name="materials[{{ $material->id }}][lead_time]" 
-                                                        value="{{ $material->pivot->lead_time }}" 
-                                                        placeholder="Lead Time">
-                                                </div>
-                                                <div class="col-md-1">
-                                                    <button type="button" class="btn btn-danger btn-sm remove-material">
+                            <!-- Selected Materials Table -->
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="selectedMaterialsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Code</th>
+                                            <th>Name</th>
+                                            <th>Category</th>
+                                            <th>Unit</th>
+                                            <th>Price</th>
+                                            <th>Lead Time (days)</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if(isset($supplier))
+                                            @foreach($supplier->materials as $material)
+                                            <tr data-material-id="{{ $material->id }}">
+                                                <td>{{ $material->code }}</td>
+                                                <td>{{ $material->name }}</td>
+                                                <td>{{ $material->category->name }}</td>
+                                                <td>{{ $material->unit }}</td>
+                                                <td>
+                                                    <input type="number" class="form-control form-control-sm material-price" 
+                                                           name="materials[{{ $material->id }}][price]" 
+                                                           value="{{ $material->pivot->price }}" step="0.01" required>
+                                                </td>
+                                                <td>
+                                                    <input type="number" class="form-control form-control-sm material-lead-time" 
+                                                           name="materials[{{ $material->id }}][lead_time]" 
+                                                           value="{{ $material->pivot->lead_time }}" required>
+                                                </td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-danger remove-material">
                                                         <i class="fas fa-times"></i>
                                                     </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    @endforeach
-                                @endif
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        @endif
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
@@ -253,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const materialSearch = document.getElementById('materialSearch');
     const searchMaterialBtn = document.getElementById('searchMaterialBtn');
     const materialSearchResults = document.getElementById('materialSearchResults');
-    const selectedMaterials = document.getElementById('selectedMaterials');
+    const selectedMaterialsTable = document.getElementById('selectedMaterialsTable').getElementsByTagName('tbody')[0];
     let searchTimeout;
 
     if (materialSearch && searchMaterialBtn && materialSearchResults) {
@@ -278,82 +289,65 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.length > 0) {
                     materialSearchResults.innerHTML = data.map(material => `
                         <div class="material-result" data-material='${JSON.stringify(material)}'>
-                            <strong>${material.name}</strong><br>
-                            <small>${material.description || ''}</small>
+                            <strong>${material.name}</strong> (${material.code})<br>
+                            <small>${material.category ? material.category.name : 'No Category'} - ${material.unit}</small>
                         </div>
                     `).join('');
-
-                    materialSearchResults.querySelectorAll('.material-result').forEach(result => {
-                        result.addEventListener('click', () => addMaterial(JSON.parse(result.dataset.material)));
-                    });
                     materialSearchResults.style.display = 'block';
                 } else {
                     materialSearchResults.innerHTML = '<div class="p-2">No materials found</div>';
                     materialSearchResults.style.display = 'block';
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
+            .catch(() => {
                 materialSearchResults.innerHTML = '<div class="p-2 text-danger">Error searching materials</div>';
                 materialSearchResults.style.display = 'block';
             });
     }
 
-    function addMaterial(material) {
-        if (document.querySelector(`input[name="materials[${material.id}][id]"]`)) {
+    // Handle material selection
+    materialSearchResults.addEventListener('click', function(e) {
+        const materialResult = e.target.closest('.material-result');
+        if (!materialResult) return;
+
+        const material = JSON.parse(materialResult.dataset.material);
+        if (document.querySelector(`tr[data-material-id="${material.id}"]`)) {
             alert('This material is already added');
             return;
         }
 
-        const materialHtml = `
-            <div class="material-item card mb-2">
-                <div class="card-body py-2">
-                    <div class="row align-items-center">
-                        <div class="col-md-4">
-                            <strong>${material.name}</strong>
-                            <input type="hidden" name="materials[${material.id}][id]" value="${material.id}">
-                        </div>
-                        <div class="col-md-3">
-                            <input type="number" class="form-control form-control-sm" 
-                                name="materials[${material.id}][price]" 
-                                placeholder="Price" step="0.01" min="0" required>
-                        </div>
-                        <div class="col-md-4">
-                            <input type="text" class="form-control form-control-sm" 
-                                name="materials[${material.id}][lead_time]" 
-                                placeholder="Lead Time">
-                        </div>
-                        <div class="col-md-1">
-                            <button type="button" class="btn btn-danger btn-sm remove-material">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        const row = document.createElement('tr');
+        row.dataset.materialId = material.id;
+        row.innerHTML = `
+            <td>${material.code}</td>
+            <td>${material.name}</td>
+            <td>${material.category.name}</td>
+            <td>${material.unit}</td>
+            <td>
+                <input type="number" class="form-control form-control-sm material-price" 
+                       name="materials[${material.id}][price]" 
+                       value="${material.base_price}" step="0.01" required>
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm material-lead-time" 
+                       name="materials[${material.id}][lead_time]" 
+                       value="0" required>
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-danger remove-material">
+                    <i class="fas fa-times"></i>
+                </button>
+            </td>
         `;
-
-        selectedMaterials.insertAdjacentHTML('beforeend', materialHtml);
-        materialSearch.value = '';
+        selectedMaterialsTable.appendChild(row);
         materialSearchResults.style.display = 'none';
-
-        const newMaterial = selectedMaterials.lastElementChild;
-        newMaterial.querySelector('.remove-material').addEventListener('click', function() {
-            newMaterial.remove();
-        });
-    }
-
-    // Add remove functionality to existing materials
-    document.querySelectorAll('.remove-material').forEach(button => {
-        button.addEventListener('click', function() {
-            this.closest('.material-item').remove();
-        });
+        materialSearch.value = '';
     });
 
-    // Close search results when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!materialSearchResults.contains(e.target) && e.target !== materialSearch && e.target !== searchMaterialBtn) {
-            materialSearchResults.style.display = 'none';
+    // Handle material removal
+    selectedMaterialsTable.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-material')) {
+            e.target.closest('tr').remove();
         }
     });
 });

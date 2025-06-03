@@ -56,6 +56,11 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="col-md-12 mt-2">
+                            <a href="{{ route('materials.index') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </a>
+                        </div>
                     </div>
 
                     <!-- Materials Table -->
@@ -93,12 +98,12 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>{{ ucfirst($material->category) }}</td>
+                                    <td>{{ $material->category->name ?? '' }}</td>
                                     <td>{{ $material->unit }}</td>
                                     <td>₱{{ number_format($material->base_price, 2) }}</td>
                                     <td>
-                                        <span class="badge badge-info">
-                                            {{ $material->suppliers_count ?? 0 }} suppliers
+                                        <span class="badge badge-light text-dark font-weight-bold suppliers-badge">
+                                            {{ ($material->suppliers_count ?? ($material->suppliers ? $material->suppliers->count() : 0)) ?: 0 }} suppliers
                                         </span>
                                     </td>
                                     <td>
@@ -227,6 +232,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     .btn-group .btn {
         margin-right: 2px;
+    }
+    .suppliers-badge {
+        min-width: 70px;
+        display: inline-block;
+        text-align: center;
     }
 </style>
 @endpush

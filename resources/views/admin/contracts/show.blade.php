@@ -287,13 +287,13 @@
 @push('scripts')
 <script>
 function updateStatus(status) {
-    fetch(`/contracts/{{ $contract->id }}/status`, {
-        method: 'PATCH',
+    fetch("{{ url('contracts/' . $contract->id . '/status') }}", {
+        method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').content
         },
-        body: JSON.stringify({ status: status })
+        body: JSON.stringify({ status: status, _method: 'PATCH' })
     })
     .then(response => response.json())
     .then(data => {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -28,7 +29,9 @@ class PurchaseOrderController extends Controller
             ->with(['contract', 'materials'])
             ->get();
 
-        return view('admin.purchase-orders.create', compact('purchaseRequests'));
+        $suppliers = Supplier::all();
+
+        return view('admin.purchase-orders.create', compact('purchaseRequests', 'suppliers'));
     }
 
     public function store(Request $request)
@@ -197,9 +200,15 @@ class PurchaseOrderController extends Controller
 
         $purchaseOrder->update(['status' => $request->status]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Purchase Order status updated successfully'
-        ]);
+        // If AJAX, return JSON. Otherwise, redirect with flash message.
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Purchase Order status updated successfully'
+            ]);
+        }
+
+        return redirect()->route('purchase-orders.show', $purchaseOrder)
+            ->with('success', 'Purchase Order status updated successfully');
     }
 } 

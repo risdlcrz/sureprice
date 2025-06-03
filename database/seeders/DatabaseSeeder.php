@@ -14,7 +14,8 @@ class DatabaseSeeder extends Seeder
 
     // Add your admin seeder
     $this->call([
-        AdminSeeder::class
+        AdminSeeder::class,
+        MaterialSeeder::class,
     ]);
 }
 }

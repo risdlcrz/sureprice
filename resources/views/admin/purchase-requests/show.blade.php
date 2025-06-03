@@ -84,7 +84,11 @@
                                 <thead>
                                     <tr>
                                         <th>Material</th>
+                                        <th>Description</th>
                                         <th>Quantity</th>
+                                        <th>Unit</th>
+                                        <th>Estimated Unit Price</th>
+                                        <th>Total Amount</th>
                                         <th>Specifications</th>
                                     </tr>
                                 </thead>
@@ -92,7 +96,11 @@
                                     @foreach($purchaseRequest->items as $item)
                                         <tr>
                                             <td>{{ $item->material->name }}</td>
+                                            <td>{{ $item->description }}</td>
                                             <td>{{ $item->quantity }}</td>
+                                            <td>{{ $item->unit }}</td>
+                                            <td>{{ number_format($item->estimated_unit_price, 2) }}</td>
+                                            <td>{{ number_format($item->total_amount, 2) }}</td>
                                             <td>{{ $item->specifications ?? 'N/A' }}</td>
                                         </tr>
                                     @endforeach
@@ -148,12 +156,26 @@
                             <div class="mt-1">{{ $purchaseRequest->updated_at->format('F d, Y H:i:s') }}</div>
                         </div>
 
-                        @if($purchaseRequest->status === 'draft')
-                            <form action="{{ route('purchase-requests.update-status', $purchaseRequest) }}" method="POST">
+                        @if(!in_array($purchaseRequest->status, ['approved', 'rejected']))
+                            <form action="{{ route('purchase-requests.update-status', $purchaseRequest) }}" method="POST" class="d-flex flex-column gap-2">
                                 @csrf
-                                <input type="hidden" name="status" value="pending">
-                                <button type="submit" class="btn btn-primary w-100">
-                                    Submit for Approval
+                                <input type="hidden" name="status" value="approved">
+                                <button type="submit" class="btn btn-success w-100 mb-2">
+                                    <i class="fas fa-check"></i> Approve
+                                </button>
+                            </form>
+                            <form action="{{ route('purchase-requests.update-status', $purchaseRequest) }}" method="POST" class="d-flex flex-column gap-2">
+                                @csrf
+                                <input type="hidden" name="status" value="draft">
+                                <button type="submit" class="btn btn-secondary w-100 mb-2">
+                                    <i class="fas fa-file-alt"></i> Mark as Draft
+                                </button>
+                            </form>
+                            <form action="{{ route('purchase-requests.update-status', $purchaseRequest) }}" method="POST" class="d-flex flex-column gap-2">
+                                @csrf
+                                <input type="hidden" name="status" value="rejected">
+                                <button type="submit" class="btn btn-danger w-100">
+                                    <i class="fas fa-times"></i> Reject
                                 </button>
                             </form>
                         @endif

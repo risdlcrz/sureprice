@@ -42,6 +42,13 @@ class PurchaseRequest extends Model
         return $this->hasMany(PurchaseRequestItem::class);
     }
 
+    public function materials()
+    {
+        return $this->belongsToMany(Material::class, 'purchase_request_items', 'purchase_request_id', 'material_id')
+            ->withPivot(['quantity', 'unit', 'description', 'estimated_unit_price', 'total_amount', 'notes'])
+            ->withTimestamps();
+    }
+
     public function attachments(): HasMany
     {
         return $this->hasMany(PurchaseRequestAttachment::class);

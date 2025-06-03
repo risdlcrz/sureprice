@@ -28,7 +28,7 @@
                                     @foreach($contracts as $contract)
                                         <option value="{{ $contract->id }}" 
                                             {{ (old('contract_id', $purchaseRequest->contract_id ?? '') == $contract->id) ? 'selected' : '' }}>
-                                            {{ $contract->contract_id }}
+                                            {{ $contract->contract_id }} - Client: {{ $contract->client->company_name ?? $contract->client->name ?? '' }} | Contractor: {{ $contract->contractor->company_name ?? $contract->contractor->name ?? '' }} | Status: {{ ucfirst($contract->status) }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -87,41 +87,47 @@
                                     @foreach($purchaseRequest->items as $index => $item)
                                         <div class="item-row mb-4">
                                             <div class="row">
-                                                <div class="col-md-4">
-                                                    <div class="form-group">
+                                                <div class="col-md-2">
                                                         <label>Material</label>
                                                         <select class="form-select" name="items[{{ $index }}][material_id]" required>
                                                             <option value="">Select Material</option>
                                                             @foreach($materials ?? [] as $material)
                                                                 <option value="{{ $material->id }}" 
-                                                                    {{ $item->material_id == $material->id ? 'selected' : '' }}>
+                                                                data-description="{{ $material->description }}"
+                                                                data-unit="{{ $material->unit }}"
+                                                                data-price="{{ $material->base_price }}"
+                                                                data-specifications="{{ $material->specifications }}">
                                                                     {{ $material->name }}
                                                                 </option>
                                                             @endforeach
                                                         </select>
                                                     </div>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <div class="form-group">
-                                                        <label>Quantity</label>
-                                                        <input type="number" class="form-control" 
-                                                               name="items[{{ $index }}][quantity]" 
-                                                               value="{{ $item->quantity }}" min="0.01" step="0.01" required>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <div class="form-group">
-                                                        <label>Specifications</label>
-                                                        <input type="text" class="form-control" 
-                                                               name="items[{{ $index }}][specifications]" 
-                                                               value="{{ $item->specifications }}">
-                                                    </div>
+                                                <div class="col-md-2">
+                                                    <label>Description</label>
+                                                    <input type="text" class="form-control" name="items[{{ $index }}][description]" value="{{ $item->description }}" required>
                                                 </div>
                                                 <div class="col-md-1">
-                                                    <label class="d-block">&nbsp;</label>
-                                                    <button type="button" class="btn btn-danger remove-item">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
+                                                    <label>Qty</label>
+                                                    <input type="number" class="form-control item-quantity" name="items[{{ $index }}][quantity]" value="{{ $item->quantity }}" min="0.01" step="0.01" required>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <label>Unit</label>
+                                                    <input type="text" class="form-control" name="items[{{ $index }}][unit]" value="{{ $item->unit }}" required>
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label>Unit Price</label>
+                                                    <input type="number" class="form-control item-unit-price" name="items[{{ $index }}][estimated_unit_price]" value="{{ $item->estimated_unit_price }}" min="0.01" step="0.01" required>
+                                                    </div>
+                                                <div class="col-md-2">
+                                                    <label>Total</label>
+                                                    <input type="number" class="form-control item-total" name="items[{{ $index }}][total_amount]" value="{{ $item->total_amount }}" readonly required>
+                                                </div>
+                                                <div class="col-md-2">
+                                                        <label>Specifications</label>
+                                                    <input type="text" class="form-control" name="items[{{ $index }}][specifications]" value="{{ $item->specifications }}">
+                                                </div>
+                                                <div class="col-md-1 d-flex align-items-end">
+                                                    <button type="button" class="btn btn-danger remove-item"><i class="fas fa-trash"></i></button>
                                                 </div>
                                             </div>
                                         </div>
@@ -188,36 +194,47 @@
         const template = `
             <div class="item-row mb-4">
                 <div class="row">
-                    <div class="col-md-4">
-                        <div class="form-group">
+                    <div class="col-md-2">
                             <label>Material</label>
-                            <select class="form-select" name="items[\${itemIndex}][material_id]" required>
+                        <select class="form-select" name="items[${itemIndex}][material_id]" required>
                                 <option value="">Select Material</option>
                                 @foreach($materials ?? [] as $material)
-                                    <option value="{{ $material->id }}">{{ $material->name }}</option>
+                                <option value="{{ $material->id }}"
+                                    data-description="{{ $material->description }}"
+                                    data-unit="{{ $material->unit }}"
+                                    data-price="{{ $material->base_price }}"
+                                    data-specifications="{{ $material->specifications }}">
+                                    {{ $material->name }}
+                                </option>
                                 @endforeach
                             </select>
-                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Quantity</label>
-                            <input type="number" class="form-control" 
-                                   name="items[\${itemIndex}][quantity]" min="0.01" step="0.01" required>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label>Specifications</label>
-                            <input type="text" class="form-control" 
-                                   name="items[\${itemIndex}][specifications]">
-                        </div>
+                    <div class="col-md-2">
+                        <label>Description</label>
+                        <input type="text" class="form-control" name="items[${itemIndex}][description]" required>
                     </div>
                     <div class="col-md-1">
-                        <label class="d-block">&nbsp;</label>
-                        <button type="button" class="btn btn-danger remove-item">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <label>Qty</label>
+                        <input type="number" class="form-control item-quantity" name="items[${itemIndex}][quantity]" min="0.01" step="0.01" required>
+                    </div>
+                    <div class="col-md-1">
+                        <label>Unit</label>
+                        <input type="text" class="form-control" name="items[${itemIndex}][unit]" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Unit Price</label>
+                        <input type="number" class="form-control item-unit-price" name="items[${itemIndex}][estimated_unit_price]" min="0.01" step="0.01" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Total</label>
+                        <input type="number" class="form-control item-total" name="items[${itemIndex}][total_amount]" readonly required>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Specifications</label>
+                        <input type="text" class="form-control" name="items[${itemIndex}][specifications]">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="button" class="btn btn-danger remove-item"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
             </div>
@@ -268,6 +285,30 @@
                 });
             }
         });
+    });
+
+    document.getElementById('items-container').addEventListener('input', function(e) {
+        if (e.target.classList.contains('item-quantity') || e.target.classList.contains('item-unit-price')) {
+            const row = e.target.closest('.item-row');
+            const quantity = parseFloat(row.querySelector('.item-quantity').value) || 0;
+            const unitPrice = parseFloat(row.querySelector('.item-unit-price').value) || 0;
+            row.querySelector('.item-total').value = (quantity * unitPrice).toFixed(2);
+        }
+    });
+
+    document.getElementById('items-container').addEventListener('change', function(e) {
+        if (e.target.matches('select[name^="items"][name$="[material_id]"]')) {
+            const row = e.target.closest('.item-row');
+            const option = e.target.selectedOptions[0];
+            if (option) {
+                row.querySelector('input[name$="[description]"]').value = option.dataset.description || '';
+                row.querySelector('input[name$="[unit]"]').value = option.dataset.unit || '';
+                row.querySelector('input[name$="[estimated_unit_price]"]').value = option.dataset.price || '';
+                if (row.querySelector('input[name$="[specifications]"]')) {
+                    row.querySelector('input[name$="[specifications]"]').value = option.dataset.specifications || '';
+                }
+            }
+        }
     });
 </script>
 @endpush 

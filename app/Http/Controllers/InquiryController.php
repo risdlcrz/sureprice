@@ -12,13 +12,38 @@ class InquiryController extends Controller
 {
     public function index()
     {
-        $inquiries = Inquiry::with(['contract', 'materials'])
-            ->latest()
-            ->paginate(10);
+        $query = Inquiry::with(['contract', 'materials']);
+
+        // Search filter
+        if ($search = request('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('subject', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('department', 'like', "%{$search}%")
+                  ->orWhereHas('contract', function($q) use ($search) {
+                      $q->where('contract_id', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Priority filter
+        if ($priority = request('priority')) {
+            $query->where('priority', $priority);
+        }
+
+        // Status filter
+        if ($status = request('status')) {
+            $query->where('status', $status);
+        }
+
+        // Per page filter
+        $perPage = request('per_page', 10);
+        $inquiries = $query->latest()->paginate($perPage);
             
         $contracts = Contract::where('status', 'approved')
             ->orderBy('contract_id')
             ->get();
+
         return view('admin.inquiries.index', compact('inquiries', 'contracts'));
     }
 

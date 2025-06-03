@@ -33,10 +33,19 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
         });
+
+        Schema::create('purchase_request_attachments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('purchase_request_id')->constrained()->onDelete('cascade');
+            $table->string('path');
+            $table->string('original_name');
+            $table->timestamps();
+        });
     }
 
     public function down()
     {
+        Schema::dropIfExists('purchase_request_attachments');
         Schema::dropIfExists('purchase_request_items');
         Schema::dropIfExists('purchase_requests');
     }
