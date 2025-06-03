@@ -121,39 +121,8 @@ class SupplierRankingController extends Controller
         try {
             DB::beginTransaction();
 
-            $supplier->fill($request->only([
-                'company',
-                'supplier_type',
-                'business_reg_no',
-                'contact_person',
-                'designation',
-                'email',
-                'mobile_number',
-                'telephone_number',
-                'street',
-                'city',
-                'province',
-                'zip_code',
-                'payment_terms',
-                'vat_registered',
-                'use_sureprice',
-                'bank_name',
-                'account_name',
-                'account_number'
-            ]));
-            $supplier->vat_registered = $request->input('vat_registered') === 'Yes';
-            $supplier->use_sureprice = $request->input('use_sureprice') === 'Yes';
+            $supplier->fill($request->all());
             $supplier->save();
-
-            // Update materials
-            $supplier->materials()->delete();
-            if ($request->has('materials')) {
-                foreach ($request->materials as $material) {
-                    $supplier->materials()->create([
-                        'material_name' => $material
-                    ]);
-                }
-            }
 
             // Handle file uploads
             $this->handleFileUploads($supplier, $request);
@@ -277,12 +246,6 @@ class SupplierRankingController extends Controller
                 ->withInput()
                 ->with('show_evaluate_modal', true);
         }
-    }
-
-    public function edit(Supplier $supplier)
-    {
-        $supplier->load(['materials', 'evaluations']);
-        return view('admin.supplier-edit', compact('supplier'));
     }
 
     private function handleFileUploads($supplier, $request)

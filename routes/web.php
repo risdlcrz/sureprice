@@ -78,7 +78,7 @@ Route::middleware(['auth'])->group(function () {
     // Contract Routes
     Route::resource('contracts', ContractController::class);
     Route::get('contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
-   
+    
     // Supporting routes for contract form
     Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
     Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
@@ -136,11 +136,11 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::post('/admin/companies/{company}/approve', [AdminController::class, 'approve'])->name('admin.companies.approve');
     Route::post('/admin/companies/{company}/reject', [AdminController::class, 'reject'])->name('admin.companies.reject');
     Route::get('/admin/companies/{company}', [AdminController::class, 'show'])->name('admin.companies.show');
-   
+    
     // Add procurement routes
     Route::get('/admin/procurement', [ProcurementController::class, 'index'])->name('admin.procurement');
     Route::resource('purchase-request', PurchaseRequestController::class);
-   
+    
     // Information Management Routes
     Route::resource('information-management', InformationManagementController::class);
     Route::post('information-management/import', [InformationManagementController::class, 'import'])->name('information-management.import');
