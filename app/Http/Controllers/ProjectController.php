@@ -39,12 +39,12 @@ class ProjectController extends Controller
             ->take(5)
             ->get();
 
-        $recentInquiries = Inquiry::with('project')
+        $recentInquiries = Inquiry::with('contract')
             ->latest()
             ->take(5)
             ->get();
 
-        $recentQuotations = Quotation::with('project')
+        $recentQuotations = Quotation::with('contract')
             ->latest()
             ->take(5)
             ->get();

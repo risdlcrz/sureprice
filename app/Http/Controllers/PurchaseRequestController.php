@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Contract;
 use App\Models\PurchaseRequest;
 use App\Models\Material;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -26,7 +27,8 @@ class PurchaseRequestController extends Controller
             ->orderBy('contract_id')
             ->get();
         $materials = Material::orderBy('name')->get();
-        return view('admin.purchase-requests.form', compact('contracts', 'materials'));
+        $suppliers = Supplier::all();
+        return view('admin.purchase-requests.form', compact('contracts', 'materials', 'suppliers'));
     }
 
     public function store(Request $request)
@@ -40,13 +42,26 @@ class PurchaseRequestController extends Controller
             'items.*.material_id' => 'required|exists:materials,id',
             'items.*.quantity' => 'required|numeric|min:1',
             'items.*.specifications' => 'nullable|string',
+            'items.*.description' => 'required|string',
+            'items.*.unit' => 'required|string',
+            'items.*.estimated_unit_price' => 'required|numeric|min:0',
+            'items.*.total_amount' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
             'attachments.*' => 'nullable|file|max:10240'
         ]);
 
+        // Get the last PR number
+        $lastPR = \App\Models\PurchaseRequest::orderBy('id', 'desc')->first();
+        if ($lastPR && preg_match('/pr-(\\d+)/i', $lastPR->pr_number, $matches)) {
+            $nextNumber = intval($matches[1]) + 1;
+        } else {
+            $nextNumber = 1;
+        }
+        $prNumber = 'pr-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
         $purchaseRequest = PurchaseRequest::create([
             'contract_id' => $validated['contract_id'],
-            'pr_number' => 'PR-' . Str::random(8),
+            'pr_number' => $prNumber,
             'requester_id' => auth()->id(),
             'department' => $validated['department'],
             'required_date' => $validated['required_date'],
@@ -58,8 +73,12 @@ class PurchaseRequestController extends Controller
         foreach ($validated['items'] as $item) {
             $purchaseRequest->items()->create([
                 'material_id' => $item['material_id'],
+                'description' => $item['description'],
                 'quantity' => $item['quantity'],
-                'specifications' => $item['specifications'] ?? null
+                'unit' => $item['unit'],
+                'estimated_unit_price' => $item['estimated_unit_price'],
+                'total_amount' => $item['total_amount'],
+                'notes' => $item['notes'] ?? null
             ]);
         }
 
@@ -105,6 +124,10 @@ class PurchaseRequestController extends Controller
             'items.*.material_id' => 'required|exists:materials,id',
             'items.*.quantity' => 'required|numeric|min:1',
             'items.*.specifications' => 'nullable|string',
+            'items.*.description' => 'required|string',
+            'items.*.unit' => 'required|string',
+            'items.*.estimated_unit_price' => 'required|numeric|min:0',
+            'items.*.total_amount' => 'required|numeric|min:0',
             'notes' => 'nullable|string',
             'attachments.*' => 'nullable|file|max:10240'
         ]);
@@ -122,8 +145,12 @@ class PurchaseRequestController extends Controller
         foreach ($validated['items'] as $item) {
             $purchaseRequest->items()->create([
                 'material_id' => $item['material_id'],
+                'description' => $item['description'],
                 'quantity' => $item['quantity'],
-                'specifications' => $item['specifications'] ?? null
+                'unit' => $item['unit'],
+                'estimated_unit_price' => $item['estimated_unit_price'],
+                'total_amount' => $item['total_amount'],
+                'notes' => $item['notes'] ?? null
             ]);
         }
 
@@ -151,5 +178,18 @@ class PurchaseRequestController extends Controller
     public function getItems(PurchaseRequest $purchaseRequest)
     {
         return response()->json($purchaseRequest->items()->with('material')->get());
+    }
+
+    public function updateStatus(Request $request, PurchaseRequest $purchaseRequest)
+    {
+        $request->validate([
+            'status' => 'required|in:draft,approved,rejected'
+        ]);
+
+        $purchaseRequest->status = $request->status;
+        $purchaseRequest->save();
+
+        return redirect()->route('purchase-requests.show', $purchaseRequest)
+            ->with('success', 'Purchase request status updated to ' . ucfirst($request->status));
     }
 } 

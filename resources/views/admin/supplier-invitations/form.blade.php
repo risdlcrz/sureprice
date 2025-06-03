@@ -33,66 +33,75 @@
                             @enderror
                         </div>
 
-                        <!-- Company Information -->
+                        <!-- Supplier Selection -->
+                        <div class="mb-4">
+                            <label for="supplier_id" class="form-label">Supplier</label>
+                            <select name="supplier_id" id="supplier_id" class="form-control @error('supplier_id') is-invalid @enderror" required>
+                                <option value="">Select Supplier</option>
+                                @foreach($suppliers as $supplier)
+                                    <option value="{{ $supplier->id }}" 
+                                        data-company-name="{{ $supplier->company_name }}"
+                                        data-contact-name="{{ $supplier->contact_person }}"
+                                        data-email="{{ $supplier->email }}"
+                                        data-phone="{{ $supplier->phone }}"
+                                        {{ old('supplier_id', $invitation->supplier_id ?? '') == $supplier->id ? 'selected' : '' }}>
+                                        {{ $supplier->company_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('supplier_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Company Information (auto-filled) -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="company_name" class="form-label">Company Name</label>
                                     <input type="text" 
-                                           class="form-control @error('company_name') is-invalid @enderror" 
+                                           class="form-control" 
                                            id="company_name" 
                                            name="company_name" 
                                            value="{{ old('company_name', isset($invitation) ? $invitation->company_name : '') }}" 
-                                           required>
-                                    @error('company_name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                           readonly>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="contact_name" class="form-label">Contact Person</label>
                                     <input type="text" 
-                                           class="form-control @error('contact_name') is-invalid @enderror" 
+                                           class="form-control" 
                                            id="contact_name" 
                                            name="contact_name" 
                                            value="{{ old('contact_name', isset($invitation) ? $invitation->contact_name : '') }}" 
-                                           required>
-                                    @error('contact_name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                           readonly>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Contact Information -->
+                        <!-- Contact Information (auto-filled) -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="email" class="form-label">Email</label>
                                     <input type="email" 
-                                           class="form-control @error('email') is-invalid @enderror" 
+                                           class="form-control" 
                                            id="email" 
                                            name="email" 
                                            value="{{ old('email', isset($invitation) ? $invitation->email : '') }}" 
-                                           required>
-                                    @error('email')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                           readonly>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="phone" class="form-label">Phone</label>
                                     <input type="text" 
-                                           class="form-control @error('phone') is-invalid @enderror" 
+                                           class="form-control" 
                                            id="phone" 
                                            name="phone" 
                                            value="{{ old('phone', isset($invitation) ? $invitation->phone : '') }}" 
-                                           required>
-                                    @error('phone')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                           readonly>
                                 </div>
                             </div>
                         </div>
@@ -166,4 +175,30 @@
         </div>
     </div>
 </div>
-@endsection 
+@endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const supplierSelect = document.getElementById('supplier_id');
+    const companyNameInput = document.getElementById('company_name');
+    const contactNameInput = document.getElementById('contact_name');
+    const emailInput = document.getElementById('email');
+    const phoneInput = document.getElementById('phone');
+
+    supplierSelect.addEventListener('change', function() {
+        const selected = this.options[this.selectedIndex];
+        companyNameInput.value = selected.getAttribute('data-company-name') || '';
+        contactNameInput.value = selected.getAttribute('data-contact-name') || '';
+        emailInput.value = selected.getAttribute('data-email') || '';
+        phoneInput.value = selected.getAttribute('data-phone') || '';
+    });
+
+    // If editing, trigger change to auto-fill fields
+    if (supplierSelect.value) {
+        const event = new Event('change');
+        supplierSelect.dispatchEvent(event);
+    }
+});
+</script>
+@endpush 

@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ContractController;
+use App\Http\Controllers\PurchaseRequestController;
+use App\Http\Controllers\MaterialController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,9 +16,19 @@ use App\Http\Controllers\ContractController;
 |
 */
 
+Route::get('/materials/search', [MaterialController::class, 'search']);
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/contracts/timeline', [ContractController::class, 'timeline']);
     Route::get('/contracts/search', [ContractController::class, 'search']);
+    Route::get('/materials/test', [MaterialController::class, 'test']);
+    Route::get('/categories/test', function() {
+        $categories = \App\Models\Category::all();
+        return response()->json([
+            'count' => $categories->count(),
+            'categories' => $categories
+        ]);
+    });
 });
 
 Route::middleware([
@@ -27,5 +39,7 @@ Route::middleware([
         return view('dashboard');
     })->name('dashboard');
 });
+
+Route::get('purchase-requests/{purchaseRequest}/items', [PurchaseRequestController::class, 'getItems']);
 
 require __DIR__.'/auth.php'; 

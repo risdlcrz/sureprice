@@ -120,10 +120,6 @@ Route::middleware(['auth'])->group(function () {
 // ================== Email Verification Routes ==================
 // **Removed duplicate route /email/verify here**
 
-// Material and Supplier Routes
-Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
-Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
-
 // Client Search Route
 Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
 

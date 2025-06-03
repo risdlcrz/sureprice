@@ -13,51 +13,36 @@
                 </div>
                 <div class="card-body">
                     <!-- Search and Filters -->
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="search">Search</label>
-                                <input type="text" class="form-control" id="search" 
-                                    placeholder="Search by subject, project, or department...">
-                            </div>
+                    <form method="GET" action="{{ route('inquiries.index') }}" class="row mb-3 align-items-end" id="filterForm">
+                        <div class="col-md-3 mb-2 mb-md-0">
+                            <input type="text" name="search" class="form-control filter-input" placeholder="Search by subject, project, or department..." value="{{ request('search') }}">
+                        </div>
+                        <div class="col-md-2 mb-2 mb-md-0">
+                            <select name="priority" class="form-control filter-input">
+                                <option value="">All Priorities</option>
+                                <option value="low" {{ request('priority') == 'low' ? 'selected' : '' }}>Low</option>
+                                <option value="medium" {{ request('priority') == 'medium' ? 'selected' : '' }}>Medium</option>
+                                <option value="high" {{ request('priority') == 'high' ? 'selected' : '' }}>High</option>
+                                <option value="urgent" {{ request('priority') == 'urgent' ? 'selected' : '' }}>Urgent</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-2 mb-md-0">
+                            <select name="status" class="form-control filter-input">
+                                <option value="">All Statuses</option>
+                                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                                <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-2 mb-md-0">
+                            <input type="number" name="per_page" class="form-control filter-input" placeholder="Per Page" value="{{ request('per_page', 10) }}" min="1" max="100">
                         </div>
                         <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="priority">Priority</label>
-                                <select class="form-control" id="priority">
-                                    <option value="">All Priorities</option>
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                    <option value="urgent">Urgent</option>
-                                </select>
-                            </div>
+                            <a href="{{ route('inquiries.index') }}" class="btn btn-secondary w-100">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </a>
                         </div>
-                        <div class="col-md-3">
-                            <div class="form-group">
-                                <label for="status">Status</label>
-                                <select class="form-control" id="status">
-                                    <option value="">All Statuses</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="approved">Approved</option>
-                                    <option value="rejected">Rejected</option>
-                                    <option value="in_progress">In Progress</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-2">
-                            <div class="form-group">
-                                <label for="perPage">Per Page</label>
-                                <select class="form-control" id="perPage">
-                                    <option value="10">10</option>
-                                    <option value="25">25</option>
-                                    <option value="50">50</option>
-                                    <option value="100">100</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+                    </form>
 
                     <!-- Inquiries Table -->
                     <div class="table-responsive">
@@ -78,7 +63,7 @@
                                 @foreach($inquiries as $inquiry)
                                 <tr>
                                     <td>{{ $inquiry->id }}</td>
-                                    <td>{{ $inquiry->contract->contract_id }}</td>
+                                    <td>{{ $inquiry->contract->contract_id ?? 'N/A' }}</td>
                                     <td>
                                         <div>
                                             <strong>{{ $inquiry->subject }}</strong>
@@ -90,49 +75,46 @@
                                     </td>
                                     <td>{{ $inquiry->department }}</td>
                                     <td>
-                                        <span class="badge badge-{{ $inquiry->priority_color }}">
+                                        <span class="badge badge-priority">
                                             {{ ucfirst($inquiry->priority) }}
                                         </span>
                                     </td>
                                     <td>{{ $inquiry->required_date->format('M d, Y') }}</td>
                                     <td>
-                                        <span class="badge badge-{{ $inquiry->status_color }}">
+                                        <span class="badge badge-status">
                                             {{ ucfirst($inquiry->status) }}
                                         </span>
                                     </td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <a href="{{ route('inquiries.show', $inquiry->id) }}" 
-                                                class="btn btn-sm btn-info" 
-                                                title="View">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            @if($inquiry->status == 'pending')
-                                            <a href="{{ route('inquiries.edit', $inquiry->id) }}" 
-                                                class="btn btn-sm btn-primary" 
-                                                title="Edit">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <button type="button" 
-                                                class="btn btn-sm btn-success approve-inquiry" 
-                                                data-id="{{ $inquiry->id }}"
-                                                title="Approve">
+                                    <td class="text-nowrap">
+                                        <a href="{{ route('inquiries.show', $inquiry->id) }}" class="btn btn-info btn-sm" title="View Inquiry" data-bs-toggle="tooltip">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('inquiries.edit', $inquiry->id) }}" class="btn btn-primary btn-sm" title="Edit Inquiry" data-bs-toggle="tooltip">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <form action="{{ route('inquiries.update', $inquiry->id) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Approve this inquiry?');">
+                                            @csrf
+                                            @method('PUT')
+                                            <input type="hidden" name="status" value="approved">
+                                            <button type="submit" class="btn btn-success btn-sm" title="Approve" data-bs-toggle="tooltip">
                                                 <i class="fas fa-check"></i>
                                             </button>
-                                            <button type="button" 
-                                                class="btn btn-sm btn-warning reject-inquiry" 
-                                                data-id="{{ $inquiry->id }}"
-                                                title="Reject">
+                                        </form>
+                                        <form action="{{ route('inquiries.update', $inquiry->id) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Reject this inquiry?');">
+                                            @csrf
+                                            @method('PUT')
+                                            <input type="hidden" name="status" value="rejected">
+                                            <button type="submit" class="btn btn-warning btn-sm" title="Reject" data-bs-toggle="tooltip">
                                                 <i class="fas fa-times"></i>
                                             </button>
-                                            @endif
-                                            <button type="button" 
-                                                class="btn btn-sm btn-danger delete-inquiry" 
-                                                data-id="{{ $inquiry->id }}"
-                                                title="Delete">
+                                        </form>
+                                        <form action="{{ route('inquiries.destroy', $inquiry->id) }}" method="POST" class="d-inline-block" onsubmit="return confirm('Delete this inquiry? This cannot be undone.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete" data-bs-toggle="tooltip">
                                                 <i class="fas fa-trash"></i>
                                             </button>
-                                        </div>
+                                        </form>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -209,44 +191,17 @@
     .table td {
         vertical-align: middle;
     }
+    .table tbody tr {
+        background-color: #f6f6f6;
+    }
     .badge {
         font-size: 0.9em;
+        padding: 0.5em 0.75em;
+        border-radius: 0.5em;
     }
-    .badge-low {
-        background-color: #28a745;
-        color: white;
-    }
-    .badge-medium {
-        background-color: #ffc107;
-        color: black;
-    }
-    .badge-high {
-        background-color: #fd7e14;
-        color: white;
-    }
-    .badge-urgent {
-        background-color: #dc3545;
-        color: white;
-    }
-    .badge-pending {
-        background-color: #6c757d;
-        color: white;
-    }
-    .badge-approved {
-        background-color: #28a745;
-        color: white;
-    }
-    .badge-rejected {
-        background-color: #dc3545;
-        color: white;
-    }
-    .badge-in_progress {
-        background-color: #17a2b8;
-        color: white;
-    }
-    .badge-completed {
-        background-color: #007bff;
-        color: white;
+    .badge-priority, .badge-status {
+        background-color: #6c757d !important;
+        color: #fff !important;
     }
     .btn-group .btn {
         margin-right: 2px;
@@ -257,107 +212,28 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Search and filter functionality
-    let searchTimeout;
-    const search = document.getElementById('search');
-    const priority = document.getElementById('priority');
-    const status = document.getElementById('status');
-    const perPage = document.getElementById('perPage');
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 
-    function updateInquiries() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            const params = new URLSearchParams({
-                search: search.value,
-                priority: priority.value,
-                status: status.value,
-                per_page: perPage.value
-            });
-
-            window.location.href = `${window.location.pathname}?${params.toString()}`;
-        }, 500);
-    }
-
-    search.addEventListener('input', updateInquiries);
-    priority.addEventListener('change', updateInquiries);
-    status.addEventListener('change', updateInquiries);
-    perPage.addEventListener('change', updateInquiries);
-
-    // Set initial values from URL params
-    const urlParams = new URLSearchParams(window.location.search);
-    search.value = urlParams.get('search') || '';
-    priority.value = urlParams.get('priority') || '';
-    status.value = urlParams.get('status') || '';
-    perPage.value = urlParams.get('per_page') || '10';
-
-    // Status change functionality
-    const statusModal = document.getElementById('statusModal');
-    const statusForm = document.getElementById('statusForm');
-    const statusNote = document.getElementById('statusNote');
-    const confirmStatus = document.getElementById('confirmStatus');
-    let currentAction = '';
-    let currentInquiryId = '';
-
-    function showStatusModal(inquiryId, action) {
-        currentInquiryId = inquiryId;
-        currentAction = action;
-        statusNote.value = '';
-        $(statusModal).modal('show');
-    }
-
-    document.querySelectorAll('.approve-inquiry').forEach(btn => {
-        btn.addEventListener('click', function() {
-            showStatusModal(this.dataset.id, 'approve');
+    // Auto-submit form when filters change
+    const filterInputs = document.querySelectorAll('.filter-input');
+    filterInputs.forEach(input => {
+        input.addEventListener('change', () => {
+            document.getElementById('filterForm').submit();
         });
     });
 
-    document.querySelectorAll('.reject-inquiry').forEach(btn => {
-        btn.addEventListener('click', function() {
-            showStatusModal(this.dataset.id, 'reject');
-        });
-    });
-
-    confirmStatus.addEventListener('click', function() {
-        if (!statusForm.checkValidity()) {
-            statusForm.reportValidity();
-            return;
-        }
-
-        fetch(`/api/inquiries/${currentInquiryId}/${currentAction}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({
-                note: statusNote.value
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                window.location.reload();
-            } else {
-                alert('Failed to update status');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error updating status');
-        });
-    });
-
-    // Delete inquiry functionality
-    const deleteModal = document.getElementById('deleteModal');
-    const deleteForm = document.getElementById('deleteForm');
-    const deleteBtns = document.querySelectorAll('.delete-inquiry');
-
-    deleteBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const inquiryId = this.dataset.id;
-            deleteForm.action = `/inquiries/${inquiryId}`;
-            $(deleteModal).modal('show');
-        });
+    // Add debounce to search input
+    const searchInput = document.querySelector('input[name="search"]');
+    let timeout = null;
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            document.getElementById('filterForm').submit();
+        }, 500); // Wait 500ms after user stops typing
     });
 });
 </script>

@@ -13,16 +13,20 @@ class Material extends Model
 
     protected $fillable = [
         'name',
+        'code',
         'description',
         'unit',
         'category_id',
+        'base_price',
+        'specifications',
         'minimum_stock',
         'current_stock'
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
-        'stock' => 'decimal:2'
+        'base_price' => 'decimal:2',
+        'minimum_stock' => 'decimal:2',
+        'current_stock' => 'decimal:2'
     ];
 
     public function category()
@@ -54,5 +58,10 @@ class Material extends Model
     public function contractItems(): HasMany
     {
         return $this->hasMany(ContractItem::class);
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(MaterialImage::class);
     }
 } 

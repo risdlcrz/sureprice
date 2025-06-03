@@ -78,15 +78,23 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="badge badge-info">
+                                        <span class="badge badge-secondary text-dark">
                                             {{ $supplier->materials_count ?? 0 }} materials
                                         </span>
                                         @if($supplier->materials && $supplier->materials->count() > 0)
                                             <div class="mt-1">
                                                 <small class="text-muted">
+                                                    {{ $supplier->materials->take(3)->pluck('name')->implode(', ') }}
+                                                    @if($supplier->materials->count() > 3)
+                                                        +{{ $supplier->materials->count() - 3 }} more
+                                                    @endif
+                                                </small>
+                                            </div>
+                                            <div class="mt-1">
+                                                <small class="text-muted">
                                                     Top categories: 
-                                                    {{ $supplier->materials->groupBy('category')->take(2)->map(function($items) {
-                                                        return ucfirst($items->first()->category);
+                                                    {{ $supplier->materials->groupBy('category.name')->take(2)->map(function($items, $cat) {
+                                                        return $cat;
                                                     })->implode(', ') }}
                                                 </small>
                                             </div>
