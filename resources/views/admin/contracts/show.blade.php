@@ -222,61 +222,80 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                <table class="table table-bordered">
+                        <table class="table table-bordered">
                             <thead>
                                 <tr>
-                                    <th>Material</th>
-                                    <th>Supplier</th>
-                                    <th>Quantity</th>
-                            <th>Unit Price</th>
-                                    <th>Total</th>
+                                    <th>Purchase Order Linked</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($contract->items as $item)
+                                @forelse($contract->items as $item)
                                     <tr>
-                                        <td>{{ $item->material->name }}</td>
-                                <td>{{ $item->supplier ? $item->supplier->name : 'N/A' }}</td>
-                                <td>{{ $item->quantity }} {{ $item->material->unit }}</td>
-                                <td>₱{{ number_format($item->amount, 2) }}</td>
-                                <td>₱{{ number_format($item->total, 2) }}</td>
+                                        <td>
+                                            <div class="mb-2">
+                                                @if($contract->purchaseOrder)
+                                                    <div><strong>PO ID:</strong> 
+                                                        <a href="{{ route('purchase-orders.show', $contract->purchaseOrder->id) }}" target="_blank">
+                                                            {{ $contract->purchaseOrder->po_number }} (ID: {{ $contract->purchaseOrder->id }})
+                                                        </a>
+                                                    </div>
+                                                    <div><strong>Supplier:</strong> 
+                                                        {{ $contract->purchaseOrder->supplier->company_name ?? $contract->purchaseOrder->supplier->name ?? 'N/A' }}
+                                                    </div>
+                                                @else
+                                                    <div><strong>PO ID:</strong> N/A</div>
+                                                    <div><strong>Supplier:</strong> 
+                                                        {{ $item->supplier->company_name ?? $item->supplier->name ?? $item->supplier_name ?? 'N/A' }}
+                                                    </div>
+                                                @endif
+                                                <div><strong>Quantity:</strong> {{ number_format($item->quantity, 2) }} {{ $item->material_unit }}</div>
+                                                <div><strong>Unit Price:</strong> {{ number_format($item->amount, 2) }}</div>
+                                                <div><strong>Total:</strong> {{ number_format($item->total, 2) }}</div>
+                                            </div>
+                                        </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="1" class="text-center">No items found.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
+                    </div>
                 </div>
             </div>
-        </div>
 
     <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Signatures</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
+        <div class="card-header">
+            <h5 class="mb-0">Signatures</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 text-center">
                     <h6>Contractor's Signature</h6>
                     @if($contract->contractor_signature)
                         <img src="{{ Storage::url($contract->contractor_signature) }}" 
-                            alt="Contractor Signature" 
-                            class="img-fluid mb-3" 
-                            style="max-height: 100px; border: 1px solid #ddd; padding: 10px;">
-                        <p class="text-muted">Signed by: {{ $contract->contractor->name }}</p>
-                            @else
-                        <p class="text-muted">Not yet signed</p>
-                            @endif
-                        </div>
-                        <div class="col-md-6">
+                             alt="Contractor's Signature" 
+                             class="img-fluid mb-2" 
+                             style="max-height: 100px;">
+                        <p class="mb-0">{{ $contract->contractor->name }}</p>
+                        <small class="text-muted">Contractor</small>
+                    @else
+                        <p class="text-muted">No signature provided</p>
+                    @endif
+                </div>
+                <div class="col-md-6 text-center">
                     <h6>Client's Signature</h6>
                     @if($contract->client_signature)
                         <img src="{{ Storage::url($contract->client_signature) }}" 
-                            alt="Client Signature" 
-                            class="img-fluid mb-3" 
-                            style="max-height: 100px; border: 1px solid #ddd; padding: 10px;">
-                        <p class="text-muted">Signed by: {{ $contract->client->name }}</p>
-                            @else
-                        <p class="text-muted">Not yet signed</p>
-                            @endif
+                             alt="Client's Signature" 
+                             class="img-fluid mb-2" 
+                             style="max-height: 100px;">
+                        <p class="mb-0">{{ $contract->client->name }}</p>
+                        <small class="text-muted">Client</small>
+                    @else
+                        <p class="text-muted">No signature provided</p>
+                    @endif
                 </div>
             </div>
         </div>
@@ -287,15 +306,49 @@
 @push('scripts')
 <script>
 function updateStatus(status) {
+    // Get the CSRF token from the meta tag
+    const token = document.querySelector('meta[name="csrf-token"]');
+    if (!token) {
+        console.error('CSRF token meta tag not found');
+        alert('Error: CSRF token not found. Please refresh the page and try again.');
+        return;
+    }
+
+    const csrfToken = token.getAttribute('content');
+    if (!csrfToken) {
+        console.error('CSRF token is empty');
+        alert('Error: CSRF token is empty. Please refresh the page and try again.');
+        return;
+    }
+
+    console.log('Updating contract status:', {
+        status: status,
+        url: "{{ url('contracts/' . $contract->id . '/status') }}",
+        token: csrfToken.substring(0, 8) + '...' // Log only first 8 chars for security
+    });
+    
     fetch("{{ url('contracts/' . $contract->id . '/status') }}", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').content
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
         },
-        body: JSON.stringify({ status: status, _method: 'PATCH' })
+        body: JSON.stringify({ 
+            status: status, 
+            _method: 'PATCH' 
+        }),
+        credentials: 'same-origin'
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 419) {
+                throw new Error('CSRF token mismatch. Please refresh the page and try again.');
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             // Show success message
@@ -303,33 +356,17 @@ function updateStatus(status) {
             alert.style.display = 'block';
             setTimeout(() => {
                 alert.style.display = 'none';
-            }, 3000);
-
-            // Update button states
-            document.querySelectorAll('.btn-group .btn').forEach(btn => {
-                if (btn.textContent.trim().toLowerCase() === status) {
-                    btn.classList.remove('btn-outline-warning', 'btn-outline-success', 'btn-outline-danger');
-                    btn.classList.add(
-                        status === 'draft' ? 'btn-warning' : 
-                        status === 'approved' ? 'btn-success' : 
-                        'btn-danger'
-                    );
-                } else {
-                    btn.classList.remove('btn-warning', 'btn-success', 'btn-danger');
-                    btn.classList.add(
-                        btn.textContent.trim().toLowerCase() === 'draft' ? 'btn-outline-warning' :
-                        btn.textContent.trim().toLowerCase() === 'approve' ? 'btn-outline-success' :
-                        'btn-outline-danger'
-                    );
-                }
-            });
+                // Reload the page to reflect the new status
+                window.location.reload();
+            }, 1000);
         } else {
-            alert('Error updating status: ' + data.message);
+            console.error('Error updating status:', data);
+            alert('Error updating status: ' + (data.message || 'Unknown error'));
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error updating status');
+        alert('Error updating status: ' + error.message);
     });
 }
 

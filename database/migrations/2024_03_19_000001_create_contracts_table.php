@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('client_signature')->nullable();
             $table->string('contractor_signature')->nullable();
             $table->string('status')->default('draft');
+            $table->unsignedBigInteger('purchase_order_id')->nullable();
             $table->timestamps();
         });
     }

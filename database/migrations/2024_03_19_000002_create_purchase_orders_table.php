@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('po_number')->unique();
             $table->foreignId('purchase_request_id')->constrained();
-            $table->foreignId('contract_id')->constrained();
+            $table->unsignedBigInteger('contract_id')->nullable();
             $table->foreignId('supplier_id')->constrained();
             $table->decimal('total_amount', 10, 2);
             $table->string('status')->default('draft');

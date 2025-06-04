@@ -110,6 +110,12 @@
                                 <td>{{ $item->email }}</td>
                                 <td class="actions">
                                     <div class="d-flex justify-content-end gap-2">
+                                        <a href="#" class="btn btn-sm btn-info" 
+                                           data-bs-toggle="modal" 
+                                           data-bs-target="#viewModal{{ $item->id }}"
+                                           title="View">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
                                         <a href="{{ route('information-management.edit', $item->id) }}" 
                                            class="btn btn-sm btn-primary" title="Edit">
                                             <i class="fas fa-edit"></i>
@@ -190,6 +196,93 @@
     </div>
 </div>
 
+@if($type === 'employee')
+    @foreach($items as $item)
+        <!-- View Employee Modal -->
+        <div class="modal fade" id="viewModal{{ $item->id }}" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Employee Information</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6 class="text-primary">Personal Information</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <th width="40%">Full Name</th>
+                                                <td>{{ $item->first_name }} {{ $item->last_name }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Username</th>
+                                                <td>{{ $item->username }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Email</th>
+                                                <td>{{ $item->email }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Role</th>
+                                                <td>
+                                                    <span class="role-badge role-{{ strtolower($item->role) }}">
+                                                        {{ ucfirst($item->role) }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6 class="text-primary">Activity Information</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <th width="40%">Last Login</th>
+                                                <td>{{ $item->last_login_at ? $item->last_login_at->diffForHumans() : 'Never' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Email Verified</th>
+                                                <td>
+                                                    @if($item->email_verified_at)
+                                                        <span class="text-success">
+                                                            <i class="fas fa-check-circle"></i> Verified
+                                                        </span>
+                                                    @else
+                                                        <span class="text-danger">
+                                                            <i class="fas fa-times-circle"></i> Not Verified
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Created At</th>
+                                                <td>{{ $item->created_at->format('M d, Y H:i A') }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Updated At</th>
+                                                <td>{{ $item->updated_at->format('M d, Y H:i A') }}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endforeach
+@endif
+
 @if($type === 'company')
     @foreach($items as $company)
         @if($company->status === 'pending')
@@ -220,4 +313,35 @@
         @endif
     @endforeach
 @endif
+
+@push('styles')
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: none;
+    margin-bottom: 1rem;
+}
+
+.role-badge {
+    padding: 0.25em 0.5em;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+    font-weight: 600;
+}
+
+.role-procurement {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.role-warehousing {
+    background-color: #198754;
+    color: white;
+}
+
+.modal-body .table th {
+    background-color: #f8f9fa;
+}
+</style>
+@endpush
 @endsection

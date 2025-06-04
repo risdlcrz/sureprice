@@ -81,6 +81,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Material Routes
     Route::resource('materials', MaterialController::class);
+    Route::get('/api/materials/search', [MaterialController::class, 'apiSearch'])->name('api.materials.search');
 
     // Inquiry Routes
     Route::resource('inquiries', InquiryController::class);
@@ -94,6 +95,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/quotations/{quotation}/reject', [QuotationController::class, 'reject']);
     Route::post('/api/quotations/remove-attachment', [QuotationController::class, 'removeAttachment']);
     Route::get('/api/quotations/search', [QuotationController::class, 'search'])->name('quotations.search');
+    Route::get('/quotations/attachment/{attachment}/download', [QuotationController::class, 'downloadAttachment'])->name('quotations.attachment.download');
+    Route::get('/quotations/response/attachment/{attachment}/download', [QuotationController::class, 'downloadResponseAttachment'])->name('quotations.response.attachment.download');
 
     // Invitation Routes
     Route::resource('supplier-invitations', SupplierInvitationController::class);
@@ -112,6 +115,7 @@ Route::middleware(['auth'])->group(function () {
     // Purchase Orders
     Route::resource('purchase-orders', PurchaseOrderController::class);
     Route::post('purchase-orders/{purchaseOrder}/status', [PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
+    Route::get('purchase-orders/{id}/json', [App\Http\Controllers\PurchaseOrderController::class, 'showJson'])->name('purchase-orders.json');
 
     // Add procurement routes
     Route::get('/admin/procurement', [ProcurementController::class, 'index'])->name('admin.procurement');
@@ -120,8 +124,8 @@ Route::middleware(['auth'])->group(function () {
 // ================== Email Verification Routes ==================
 // **Removed duplicate route /email/verify here**
 
-// Client Search Route
-Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
+// Remove duplicate client search route
+// Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
 
 // Admin protected routes
 Route::middleware(['auth', AdminMiddleware::class])->group(function () {
@@ -167,3 +171,9 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
         return view('admin.inventory');
     })->name('admin.inventory');
 });
+
+// Password Change Routes
+Route::get('/change-password', [App\Http\Controllers\Auth\ChangePasswordController::class, 'showChangeForm'])
+    ->name('change.password.form');
+Route::post('/change-password', [App\Http\Controllers\Auth\ChangePasswordController::class, 'update'])
+    ->name('change.password.update');

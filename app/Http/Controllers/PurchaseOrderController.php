@@ -111,7 +111,10 @@ class PurchaseOrderController extends Controller
         }
 
         $purchaseOrder->load(['purchaseRequest', 'contract', 'supplier', 'items.material']);
-        return view('admin.purchase-orders.edit', compact('purchaseOrder'));
+        $materials = \App\Models\Material::orderBy('name')->get();
+        $suppliers = \App\Models\Supplier::all();
+        $purchaseRequests = \App\Models\PurchaseRequest::where('status', 'approved')->get();
+        return view('admin.purchase-orders.edit', compact('purchaseOrder', 'materials', 'suppliers', 'purchaseRequests'));
     }
 
     public function update(Request $request, PurchaseOrder $purchaseOrder)
@@ -210,5 +213,14 @@ class PurchaseOrderController extends Controller
 
         return redirect()->route('purchase-orders.show', $purchaseOrder)
             ->with('success', 'Purchase Order status updated successfully');
+    }
+
+    /**
+     * Return purchase order details as JSON for contract prefill
+     */
+    public function showJson($id)
+    {
+        $po = \App\Models\PurchaseOrder::with(['supplier', 'items.material'])->findOrFail($id);
+        return response()->json($po);
     }
 } 

@@ -44,10 +44,7 @@ class ProjectController extends Controller
             ->take(5)
             ->get();
 
-        $recentQuotations = Quotation::with('contract')
-            ->latest()
-            ->take(5)
-            ->get();
+            $recentQuotations = Quotation::with('purchaseRequest.contract')->latest()->take(5)->get();
 
         $recentActivities = Activity::latest()
             ->take(5)

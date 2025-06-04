@@ -29,6 +29,8 @@ class Material extends Model
         'current_stock' => 'decimal:2'
     ];
 
+    protected $with = ['category'];
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -63,5 +65,34 @@ class Material extends Model
     public function images(): HasMany
     {
         return $this->hasMany(MaterialImage::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($material) {
+            if (empty($material->code)) {
+                $material->code = static::generateUniqueCode();
+            }
+        });
+    }
+
+    protected static function generateUniqueCode()
+    {
+        $prefix = 'MAT';
+        $year = date('y');
+        $lastMaterial = static::where('code', 'like', "{$prefix}{$year}%")
+            ->orderBy('code', 'desc')
+            ->first();
+
+        if ($lastMaterial) {
+            $lastNumber = (int) substr($lastMaterial->code, -4);
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+
+        return sprintf("%s%s%04d", $prefix, $year, $newNumber);
     }
 } 

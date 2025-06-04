@@ -30,7 +30,10 @@
                                         <option value="{{ $pr->id }}" 
                                             {{ (old('purchase_request_id', $purchaseOrder->purchase_request_id ?? '') == $pr->id) ? 'selected' : '' }}
                                             data-contract-id="{{ $pr->contract_id }}">
-                                            {{ $pr->pr_number }} - {{ $pr->contract->contract_id }}
+                                            {{ $pr->pr_number }}
+                                            @if($pr->contract)
+                                                - Contract: {{ $pr->contract->contract_id }}
+                                            @endif
                                         </option>
                                     @endforeach
                                 </select>

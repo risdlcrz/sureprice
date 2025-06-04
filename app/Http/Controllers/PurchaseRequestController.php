@@ -11,12 +11,40 @@ use Illuminate\Support\Str;
 
 class PurchaseRequestController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $purchaseRequests = PurchaseRequest::with(['contract', 'requester'])
-            ->latest()
-            ->paginate(10);
-            
+        $query = PurchaseRequest::with(['contract', 'requester']);
+
+        // Handle clear filter
+        if ($request->has('clear')) {
+            return redirect()->route('purchase-requests.index');
+        }
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('pr_number', 'like', "%$search%")
+                  ->orWhere('department', 'like', "%$search%")
+                  ->orWhere('purpose', 'like', "%$search%")
+                  ->orWhereHas('contract', function($q2) use ($search) {
+                      $q2->where('contract_id', 'like', "%$search%")
+                         ->orWhere('status', 'like', "%$search%")
+                         ->orWhereHas('client', function($q3) use ($search) {
+                             $q3->where('company_name', 'like', "%$search%")
+                                ->orWhere('name', 'like', "%$search%")
+                         ;});
+                  });
+            });
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        $purchaseRequests = $query->latest()->paginate(10)->withQueryString();
+
         return view('admin.purchase-requests.index', compact('purchaseRequests'));
     }
 
@@ -34,7 +62,7 @@ class PurchaseRequestController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'contract_id' => 'required|exists:contracts,id',
+            'contract_id' => 'nullable|exists:contracts,id',
             'department' => 'required|string|max:255',
             'required_date' => 'required|date|after:today',
             'purpose' => 'required|string',
@@ -60,7 +88,7 @@ class PurchaseRequestController extends Controller
         $prNumber = 'pr-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
 
         $purchaseRequest = PurchaseRequest::create([
-            'contract_id' => $validated['contract_id'],
+            'contract_id' => $validated['contract_id'] ?? null,
             'pr_number' => $prNumber,
             'requester_id' => auth()->id(),
             'department' => $validated['department'],
@@ -78,6 +106,7 @@ class PurchaseRequestController extends Controller
                 'unit' => $item['unit'],
                 'estimated_unit_price' => $item['estimated_unit_price'],
                 'total_amount' => $item['total_amount'],
+                'specifications' => $item['specifications'] ?? null,
                 'notes' => $item['notes'] ?? null
             ]);
         }
@@ -116,7 +145,7 @@ class PurchaseRequestController extends Controller
     public function update(Request $request, PurchaseRequest $purchaseRequest)
     {
         $validated = $request->validate([
-            'contract_id' => 'required|exists:contracts,id',
+            'contract_id' => 'nullable|exists:contracts,id',
             'department' => 'required|string|max:255',
             'required_date' => 'required|date|after:today',
             'purpose' => 'required|string',
@@ -133,7 +162,7 @@ class PurchaseRequestController extends Controller
         ]);
 
         $purchaseRequest->update([
-            'contract_id' => $validated['contract_id'],
+            'contract_id' => $validated['contract_id'] ?? null,
             'department' => $validated['department'],
             'required_date' => $validated['required_date'],
             'purpose' => $validated['purpose'],
@@ -150,6 +179,7 @@ class PurchaseRequestController extends Controller
                 'unit' => $item['unit'],
                 'estimated_unit_price' => $item['estimated_unit_price'],
                 'total_amount' => $item['total_amount'],
+                'specifications' => $item['specifications'] ?? null,
                 'notes' => $item['notes'] ?? null
             ]);
         }

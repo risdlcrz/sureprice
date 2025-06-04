@@ -15,6 +15,29 @@
                             @method('PUT')
                         @endif
 
+                        <!-- Purchase Order Selection -->
+                        <div class="section-container mt-4">
+                            <h5 class="section-title">Link to Purchase Order</h5>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="purchase_order_id">Purchase Order</label>
+                                        <select class="form-control @error('purchase_order_id') is-invalid @enderror" id="purchase_order_id" name="purchase_order_id">
+                                            <option value="">Select Purchase Order</option>
+                                            @foreach($purchaseOrders as $po)
+                                                <option value="{{ $po->id }}" {{ old('purchase_order_id', $contract->purchase_order_id ?? '') == $po->id ? 'selected' : '' }}>
+                                                    {{ $po->po_number }} - {{ $po->supplier->company_name ?? 'No Supplier' }} (₱{{ number_format($po->total_amount, 2) }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('purchase_order_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Contractor Information Section -->
                         <div class="section-container" id="contractorSection">
                             <h5 class="section-title">Contractor Information</h5>
@@ -554,17 +577,16 @@
                                             <div class="row">
                                                     <div class="col-md-12 mb-3">
                                                         <div class="form-group">
-                                                            <label>Search Material</label>
+                                                            <label>Material Search</label>
                                                             <div class="input-group">
-                                                                <input type="text" class="form-control material-search" 
-                                                                    placeholder="Type to search materials...">
+                                                                <input type="text" class="form-control material-search" placeholder="Search materials...">
                                                                 <div class="input-group-append">
                                                                     <button class="btn btn-outline-secondary search-btn" type="button">
                                                                         <i class="fas fa-search"></i>
                                                                     </button>
                                                                 </div>
                                                             </div>
-                                                            <div class="search-results mt-2 position-absolute" style="display: none; z-index: 1000; width: 95%;"></div>
+                                                            <div class="search-results mt-2" style="position: absolute; z-index: 1000; width: 95%; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 300px; overflow-y: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -573,20 +595,14 @@
                                                         <div class="col-md-6">
                                                             <div class="form-group">
                                                             <label>Material Name</label>
-                                                                <input type="text" class="form-control material-name" 
-                                                                    name="items[{{ $index }}][material_name]" 
-                                                                value="{{ optional($item->material)->name ?? '' }}" readonly required>
-                                                                <input type="hidden" class="material-id" 
-                                                                    name="items[{{ $index }}][material_id]" 
-                                                                value="{{ optional($item->material)->id ?? '' }}">
+                                                                <input type="text" class="form-control material-name" readonly>
+                                                                <input type="hidden" class="material-id" name="item_material_id[]">
                                                             </div>
                                                         </div>
                                                         <div class="col-md-6">
                                                             <div class="form-group">
                                                                 <label>Unit</label>
-                                                            <input type="text" class="form-control material-unit" 
-                                                                    name="items[{{ $index }}][unit]" 
-                                                                value="{{ optional($item->material)->unit ?? '' }}" readonly required>
+                                                                <input type="text" class="form-control material-unit" name="item_material_unit[]" readonly>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -595,17 +611,17 @@
                                                         <div class="col-md-4">
                                                             <div class="form-group">
                                                                 <label>Quantity</label>
-                                                            <input type="number" class="form-control quantity" 
-                                                                    name="items[{{ $index }}][quantity]" 
-                                                                value="{{ $item->quantity ?? '' }}" min="1" required>
+                                                            <input type="number" class="form-control item-quantity" 
+                                                                    name="item_quantity[]" 
+                                                                value="{{ $item->quantity ?? '' }}" min="0.01" step="0.01" required>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4">
                                                             <div class="form-group">
                                                                 <label>Unit Price</label>
-                                                            <input type="number" class="form-control unit-price" 
-                                                                    name="items[{{ $index }}][unit_price]" 
-                                                                value="{{ $item->unit_price ?? '' }}" min="0" step="0.01" required>
+                                                            <input type="number" class="form-control item-price" 
+                                                                    name="item_amount[]" 
+                                                                value="{{ $item->unit_price ?? '' }}" min="0.01" step="0.01" required>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4">
@@ -627,7 +643,7 @@
                                                                     @foreach($item->material->suppliers as $supplier)
                                                                         <div class="form-check">
                                                                         <input type="checkbox" class="form-check-input" 
-                                                                                name="items[{{ $index }}][suppliers][]" 
+                                                                                name="item_supplier_id[]" 
                                                                                 value="{{ $supplier->id }}" 
                                                                             {{ isset($item->supplier_id) && $item->supplier_id == $supplier->id ? 'checked' : '' }}>
                                                                         <label class="form-check-label">
@@ -994,6 +1010,61 @@
     .signature-buttons {
         margin-top: 10px;
     }
+    /* Material search styles */
+    .search-results {
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 5px;
+    }
+    
+    .material-result {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    
+    .material-result:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .material-result:last-child {
+        border-bottom: none;
+    }
+    
+    .material-result strong {
+        color: #2c3e50;
+    }
+    
+    .material-result .text-muted {
+        color: #6c757d;
+    }
+    
+    .material-result .text-primary {
+        color: #007bff;
+    }
+    
+    .hover-bg-light:hover {
+        background-color: #f8f9fa !important;
+    }
+    
+    /* Fix search results positioning */
+    .form-group {
+        position: relative;
+    }
+    
+    .search-results {
+        position: absolute;
+        z-index: 1050;
+        width: 95%;
+        left: 0;
+        right: 0;
+        margin: 2px auto;
+    }
 </style>
 @endpush
 
@@ -1066,22 +1137,21 @@ document.addEventListener('DOMContentLoaded', function() {
     function getItemTemplate(index) {
         return `
             <div class="item-row mb-4" data-index="${index}">
-                        <div class="card">
+                <div class="card">
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-12 mb-3">
                                 <div class="form-group">
-                                    <label>Search Material</label>
+                                    <label>Material Search</label>
                                     <div class="input-group">
-                                        <input type="text" class="form-control material-search" 
-                                            placeholder="Type to search materials...">
+                                        <input type="text" class="form-control material-search" placeholder="Search materials...">
                                         <div class="input-group-append">
                                             <button class="btn btn-outline-secondary search-btn" type="button">
                                                 <i class="fas fa-search"></i>
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="search-results mt-2 position-absolute" style="display: none; z-index: 1000; width: 95%;"></div>
+                                    <div class="search-results mt-2" style="position: absolute; z-index: 1000; width: 95%; background: white; border: 1px solid #ddd; border-radius: 4px; max-height: 300px; overflow-y: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"></div>
                                 </div>
                             </div>
                         </div>
@@ -1090,40 +1160,35 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Material Name</label>
-                                    <input type="text" class="form-control material-name" 
-                                        name="items[${index}][material_name]" readonly required>
-                                    <input type="hidden" class="material-id" 
-                                        name="items[${index}][material_id]">
+                                    <input type="text" class="form-control material-name" readonly>
+                                    <input type="hidden" class="material-id" name="item_material_id[]">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label>Unit</label>
-                                    <input type="text" class="form-control material-unit" 
-                                        name="items[${index}][unit]" readonly required>
+                                    <input type="text" class="form-control material-unit" name="item_material_unit[]" readonly>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="row mt-3">
+                        <div class="row">
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Quantity</label>
-                                    <input type="number" class="form-control quantity" 
-                                        name="items[${index}][quantity]" min="1" required>
+                                    <input type="number" class="form-control item-quantity" name="item_quantity[]" min="0.01" step="0.01" required>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Unit Price</label>
-                                    <input type="number" class="form-control unit-price" 
-                                        name="items[${index}][unit_price]" min="0" step="0.01" required>
+                                    <input type="number" class="form-control item-price" name="item_amount[]" min="0.01" step="0.01" required>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label>Total</label>
-                                    <input type="text" class="form-control item-total" value="0.00" readonly>
+                                    <input type="text" class="form-control item-total" readonly>
                                 </div>
                             </div>
                         </div>
@@ -1135,6 +1200,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div class="suppliers-container border rounded p-2" style="max-height: 100px; overflow-y: auto;">
                                         <!-- Suppliers will be loaded here -->
                                     </div>
+                                    <input type="hidden" name="item_supplier_id[]" class="supplier-id">
+                                    <input type="hidden" name="item_supplier_name[]" class="supplier-name">
                                 </div>
                             </div>
                             <div class="col-md-1">
@@ -1144,9 +1211,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                     </div>
-                            </div>
-                        </div>
-                    `;
+                </div>
+            </div>
+        `;
     }
 
     // Add new item
@@ -1185,8 +1252,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const searchInput = item.querySelector('.material-search');
         const searchBtn = item.querySelector('.search-btn');
         const searchResults = item.querySelector('.search-results');
-        const quantityInput = item.querySelector('.quantity');
-        const priceInput = item.querySelector('.unit-price');
+        const quantityInput = item.querySelector('.item-quantity');
+        const priceInput = item.querySelector('.item-price');
         const removeBtn = item.querySelector('.remove-item');
         
         if (!searchInput || !searchResults || !quantityInput || !priceInput || !removeBtn) {
@@ -1196,12 +1263,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
         let searchTimeout;
 
-        // Material search
+        // Show all materials when focusing on the search input
+        searchInput.addEventListener('focus', () => {
+            searchMaterials('', searchResults);
+        });
+
+        // Material search on input
         searchInput.addEventListener('input', () => {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => searchMaterials(searchInput.value, searchResults), 300);
         });
 
+        // Search button click handler
         if (searchBtn) {
             searchBtn.addEventListener('click', () => {
                 searchMaterials(searchInput.value, searchResults);
@@ -1230,48 +1303,64 @@ document.addEventListener('DOMContentLoaded', function() {
     function searchMaterials(query, resultsContainer) {
         if (!resultsContainer) return;
 
-        query = query.trim();
-        if (query.length < 2) {
-            resultsContainer.style.display = 'none';
-                return;
-            }
-
         resultsContainer.innerHTML = '<div class="p-2">Searching...</div>';
         resultsContainer.style.display = 'block';
 
-        fetch(`/api/materials/search?query=${encodeURIComponent(query)}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-                .then(data => {
-                if (Array.isArray(data) && data.length > 0) {
-                    resultsContainer.innerHTML = data.map(material => `
-                            <div class="material-result p-2 border-bottom" style="cursor: pointer;" 
-                                data-material='${JSON.stringify(material)}'>
-                                <strong>${material.name}</strong><br>
-                                <small>${material.description || ''} - ${material.unit}</small>
+        // Always fetch materials, whether query is empty or not
+        fetch(`{{ route('materials.search') }}?query=${encodeURIComponent(query)}`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (Array.isArray(data) && data.length > 0) {
+                resultsContainer.innerHTML = data.map(material => {
+                    const supplierInfo = material.suppliers && material.suppliers.length > 0 
+                        ? `<div class="mt-1 text-muted">
+                            <small><strong>Suppliers:</strong><br>
+                            ${material.suppliers.map(supplier => 
+                                `${supplier.company_name || supplier.name} - ₱${supplier.pivot?.price || 'Price not available'}`
+                            ).join('<br>')}
+                            </small>
+                           </div>`
+                        : '<div class="mt-1"><small class="text-muted">No suppliers available</small></div>';
+
+                    return `
+                        <div class="material-result p-2 border-bottom hover-bg-light" style="cursor: pointer;" 
+                            data-material='${JSON.stringify(material)}'>
+                            <div>
+                                <strong>${material.name}</strong> ${material.code ? `(${material.code})` : ''}<br>
+                                <small class="text-muted">${material.description || ''} - ${material.unit}</small>
+                                <div><small class="text-primary">Base Price: ₱${material.base_price || '0.00'}</small></div>
                             </div>
-                        `).join('');
-                        
-                        // Add click handlers for results
-                    resultsContainer.querySelectorAll('.material-result').forEach(result => {
-                            result.addEventListener('click', () => selectMaterial(result));
-                        });
-                    } else {
-                    resultsContainer.innerHTML = '<div class="p-2">No materials found</div>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error searching materials:', error);
-                resultsContainer.innerHTML = '<div class="p-2 text-danger">Error searching materials</div>';
+                            ${supplierInfo}
+                        </div>
+                    `;
+                }).join('');
+                    
+                // Add click handlers for results
+                resultsContainer.querySelectorAll('.material-result').forEach(result => {
+                    result.addEventListener('click', () => selectMaterial(result));
                 });
-        }
+            } else {
+                resultsContainer.innerHTML = '<div class="p-2">No materials found</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error searching materials:', error);
+            resultsContainer.innerHTML = '<div class="p-2 text-danger">Error searching materials</div>';
+        });
+    }
 
     // Select material from search results
-        function selectMaterial(resultElement) {
+    function selectMaterial(resultElement) {
         if (!resultElement) return;
 
         try {
@@ -1284,17 +1373,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const materialIdInput = item.querySelector('.material-id');
             const materialNameInput = item.querySelector('.material-name');
             const materialUnitInput = item.querySelector('.material-unit');
-            const priceInput = item.querySelector('.unit-price');
+            const priceInput = item.querySelector('.item-price');
             const searchInput = item.querySelector('.material-search');
             const searchResults = item.querySelector('.search-results');
+            const suppliersContainer = item.querySelector('.suppliers-container');
+            const supplierIdInput = item.querySelector('.supplier-id');
 
             if (materialIdInput) materialIdInput.value = material.id;
             if (materialNameInput) materialNameInput.value = material.name;
             if (materialUnitInput) materialUnitInput.value = material.unit;
             
-            // Set price if available
-            if (priceInput && material.price) {
-                priceInput.value = material.price;
+            // Set base price from material
+            if (priceInput) {
+                priceInput.value = material.base_price || 0;
                 calculateTotal(item);
             }
             
@@ -1302,64 +1393,75 @@ document.addEventListener('DOMContentLoaded', function() {
             if (searchInput) searchInput.value = '';
             if (searchResults) searchResults.style.display = 'none';
 
-            // Load suppliers
-            loadSuppliers(material.id, item);
+            // Update suppliers list
+            if (suppliersContainer && material.suppliers) {
+                if (material.suppliers.length > 0) {
+                    suppliersContainer.innerHTML = material.suppliers.map(supplier => `
+                        <div class="form-check">
+                            <input type="radio" class="form-check-input supplier-radio" 
+                                name="item_supplier_id[]" 
+                                value="${supplier.id}" 
+                                data-price="${supplier.pivot?.price || material.base_price}"
+                                data-supplier-name="${supplier.company_name || supplier.name}">
+                            <label class="form-check-label">
+                                ${supplier.company_name || supplier.name} - ₱${supplier.pivot?.price || 'Price not available'}
+                            </label>
+                        </div>
+                    `).join('');
+
+                    // Add event listeners to supplier radio buttons
+                    const supplierRadios = suppliersContainer.querySelectorAll('.supplier-radio');
+                    supplierRadios.forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            if (this.checked) {
+                                const supplierIdInput = item.querySelector('.supplier-id');
+                                const supplierNameInput = item.querySelector('.supplier-name');
+                                
+                                if (supplierIdInput) {
+                                    supplierIdInput.value = this.value;
+                                }
+                                
+                                if (!supplierNameInput) {
+                                    const newSupplierNameInput = document.createElement('input');
+                                    newSupplierNameInput.type = 'hidden';
+                                    newSupplierNameInput.name = 'item_supplier_name[]';
+                                    newSupplierNameInput.className = 'supplier-name';
+                                    newSupplierNameInput.value = this.dataset.supplierName;
+                                    item.appendChild(newSupplierNameInput);
+                                } else {
+                                    supplierNameInput.value = this.dataset.supplierName;
+                                }
+                                
+                                // Update price if available
+                                if (this.dataset.price && priceInput) {
+                                    priceInput.value = this.dataset.price;
+                                    calculateTotal(item);
+                                }
+                            }
+                        });
+                    });
+                } else {
+                    suppliersContainer.innerHTML = '<div class="alert alert-warning">No suppliers available for this material</div>';
+                }
+            }
         } catch (error) {
             console.error('Error selecting material:', error);
         }
     }
 
-    // Load suppliers for a material
-    function loadSuppliers(materialId, item) {
-        if (!materialId || !item) return;
-
-        const suppliersContainer = item.querySelector('.suppliers-container');
-        if (!suppliersContainer) return;
-
-        const itemIndex = item.dataset.index || Array.from(itemsList.children).indexOf(item);
-            
-            fetch(`/api/materials/${materialId}/suppliers`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-                .then(suppliers => {
-                if (Array.isArray(suppliers) && suppliers.length > 0) {
-                    suppliersContainer.innerHTML = suppliers.map(supplier => `
-                            <div class="form-check">
-                            <input type="checkbox" class="form-check-input" 
-                                name="items[${itemIndex}][suppliers][]" 
-                                value="${supplier.id}">
-                            <label class="form-check-label">
-                                    ${supplier.name} - ${supplier.price_range || 'Price not available'}
-                                </label>
-                            </div>
-                        `).join('');
-                    } else {
-                    suppliersContainer.innerHTML = '<p class="text-muted">No suppliers available</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading suppliers:', error);
-                    suppliersContainer.innerHTML = '<p class="text-danger">Error loading suppliers</p>';
-                });
-        }
-
     // Calculate total for an item
     function calculateTotal(item) {
         if (!item) return;
 
-        const quantityInput = item.querySelector('.quantity');
-        const priceInput = item.querySelector('.unit-price');
+        const quantityInput = item.querySelector('.item-quantity');
+        const priceInput = item.querySelector('.item-price');
         const totalInput = item.querySelector('.item-total');
 
         if (!quantityInput || !priceInput || !totalInput) return;
 
-            const quantity = parseFloat(quantityInput.value) || 0;
-            const price = parseFloat(priceInput.value) || 0;
-            totalInput.value = (quantity * price).toFixed(2);
+        const quantity = parseFloat(quantityInput.value) || 0;
+        const price = parseFloat(priceInput.value) || 0;
+        totalInput.value = (quantity * price).toFixed(2);
         updateGrandTotal();
     }
 
@@ -1400,6 +1502,60 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('property_state').value = document.getElementById('client_state').value;
                 document.getElementById('property_postal').value = document.getElementById('client_postal').value;
             }
+        });
+    }
+
+    // Prefill contract fields from selected Purchase Order
+    const poSelect = document.getElementById('purchase_order_id');
+    const poJsonUrl = "{{ url('purchase-orders') }}";
+    if (poSelect) {
+        poSelect.addEventListener('change', function() {
+            const poId = this.value;
+            if (!poId) return;
+            fetch(`${poJsonUrl}/${poId}/json`)
+                .then(res => res.json())
+                .then(po => {
+                    // Prefill contractor fields
+                    if (po.supplier) {
+                        document.getElementById('contractor_name').value = po.supplier.company_name || po.supplier.name || '';
+                        document.getElementById('contractor_email').value = po.supplier.email || '';
+                        document.getElementById('contractor_phone').value = po.supplier.phone || '';
+                        document.getElementById('contractor_street').value = po.supplier.street || '';
+                        document.getElementById('contractor_barangay').value = po.supplier.barangay || '';
+                        document.getElementById('contractor_city').value = po.supplier.city || '';
+                        document.getElementById('contractor_state').value = po.supplier.state || '';
+                        document.getElementById('contractor_postal').value = po.supplier.postal || '';
+                    }
+                    // Prefill items
+                    if (Array.isArray(po.items) && po.items.length > 0) {
+                        document.querySelectorAll('.item-row').forEach(row => row.remove());
+                        itemCount = 0;
+                        po.items.forEach((item, idx) => {
+                            addItem();
+                            const itemRow = itemsList.querySelectorAll('.item-row')[idx];
+                            if (!itemRow) return;
+                            itemRow.querySelector('.material-id').value = item.material_id;
+                            itemRow.querySelector('.material-name').value = item.material ? item.material.name : '';
+                            itemRow.querySelector('.material-unit').value = item.material ? item.material.unit : '';
+                            itemRow.querySelector('.item-quantity').value = item.quantity;
+                            itemRow.querySelector('.item-price').value = item.unit_price || item.price || 0;
+                            itemRow.querySelector('.item-total').value = (item.quantity * (item.unit_price || item.price || 0)).toFixed(2);
+                            // Set supplier as read-only field
+                            const suppliersContainer = itemRow.querySelector('.suppliers-container');
+                            if (suppliersContainer && po.supplier) {
+                                suppliersContainer.innerHTML = `<input type='text' class='form-control' value='${po.supplier.company_name || po.supplier.name}' readonly>` +
+                                    `<input type='hidden' name='item_supplier_id[]' value='${po.supplier.id}'>`;
+                            }
+                        });
+                        updateGrandTotal();
+                    }
+                    if (po.total_amount) {
+                        document.getElementById('total_amount').value = po.total_amount;
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching PO details:', err);
+                });
         });
     }
 });

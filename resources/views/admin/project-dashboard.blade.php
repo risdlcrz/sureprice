@@ -199,13 +199,32 @@
                     <img src="{{ asset('images/new-invitation.jpg') }}" class="card-img-top" alt="Supplier Invitations">
                     <div class="card-body">
                         <h5 class="card-title">Supplier Invitations</h5>
-                        <p class="card-text">Create and manage supplier invitations for bidding opportunities.</p>
+                        <p class="card-text">Invite and manage supplier registrations and qualifications.</p>
                     </div>
                     <div class="card-footer d-flex gap-2">
                         <a href="{{ route('supplier-invitations.create') }}" class="btn btn-primary flex-grow-1">
-                            <i class="fas fa-plus"></i> New Invite
+                            <i class="fas fa-plus"></i> New Invitation
                         </a>
                         <a href="{{ route('supplier-invitations.index') }}" class="btn btn-secondary flex-grow-1">
+                            <i class="fas fa-list"></i> View All
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quotation Management Card -->
+            <div class="col">
+                <div class="card h-100">
+                    <img src="{{ asset('images/quotation.jpg') }}" class="card-img-top" alt="Quotation Management">
+                    <div class="card-body">
+                        <h5 class="card-title">Quotation Management</h5>
+                        <p class="card-text">Create and manage RFQs, compare supplier quotations, and track responses.</p>
+                    </div>
+                    <div class="card-footer d-flex gap-2">
+                        <a href="{{ route('quotations.create') }}" class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-plus"></i> New RFQ
+                        </a>
+                        <a href="{{ route('quotations.index') }}" class="btn btn-secondary flex-grow-1">
                             <i class="fas fa-list"></i> View All
                         </a>
                     </div>

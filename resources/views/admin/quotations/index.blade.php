@@ -37,11 +37,11 @@
                         </div>
                         <div class="col-md-3">
                             <div class="form-group">
-                                <label for="contract">Contract</label>
-                                <select class="form-control" id="contract">
-                                    <option value="">All Contracts</option>
-                                    @foreach($contracts as $contract)
-                                        <option value="{{ $contract->id }}">{{ $contract->contract_id }}</option>
+                                <label for="purchase_request">Purchase Request</label>
+                                <select class="form-control" id="purchase_request">
+                                    <option value="">All Purchase Requests</option>
+                                    @foreach($purchaseRequests as $pr)
+                                        <option value="{{ $pr->id }}">PR-{{ $pr->id }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -70,6 +70,8 @@
                                     <th>Materials</th>
                                     <th>Due Date</th>
                                     <th>Status</th>
+                                    <th>Awarded Supplier</th>
+                                    <th>Awarded Amount</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -79,26 +81,42 @@
                                     <td>{{ $quotation->rfq_number }}</td>
                                     <td>
                                         <div>
-                                            <strong>{{ $quotation->project->name }}</strong><br>
-                                            <small class="text-muted">{{ $quotation->project->client_name }}</small>
+                                            <strong>PR-{{ $quotation->purchaseRequest->id }}</strong><br>
+                                            <small class="text-muted">{{ $quotation->purchaseRequest->department }}</small>
                                         </div>
                                     </td>
                                     <td>
                                         <div>
-                                            {{ $quotation->suppliers_count }} suppliers<br>
+                                            {{ $quotation->suppliers->count() }} suppliers<br>
                                             <small class="text-muted">
-                                                {{ $quotation->responded_suppliers_count }} responded
+                                                <span
+                                                    @if($quotation->responses->count() > 0)
+                                                        data-toggle="tooltip"
+                                                        title="{{ $quotation->responses->map(function($r) { return $r->supplier->company_name; })->implode(', ') }}"
+                                                    @endif
+                                                >
+                                                    {{ $quotation->responses->count() }} responded
+                                                </span>
                                             </small>
                                         </div>
                                     </td>
                                     <td>
                                         <div>
-                                            {{ $quotation->materials_count }} materials<br>
+                                            {{ $quotation->purchaseRequest->items->count() }} materials<br>
                                             <small class="text-muted">
-                                                Top categories: 
-                                                {{ $quotation->materials->groupBy('category')->take(2)->map(function($items) {
-                                                    return ucfirst($items->first()->category);
-                                                })->implode(', ') }}
+                                                Top categories: {{
+                                                    $quotation->purchaseRequest->items
+                                                        ->pluck('material')
+                                                        ->filter()
+                                                        ->pluck('category')
+                                                        ->filter()
+                                                        ->unique()
+                                                        ->take(2)
+                                                        ->map(function($cat) {
+                                                            return is_object($cat) && isset($cat->name) ? $cat->name : (is_string($cat) ? $cat : '');
+                                                        })
+                                                        ->implode(', ')
+                                                }}
                                             </small>
                                         </div>
                                     </td>
@@ -112,6 +130,20 @@
                                         <span class="badge badge-{{ $quotation->status_color }}">
                                             {{ ucfirst($quotation->status) }}
                                         </span>
+                                    </td>
+                                    <td>
+                                        @if($quotation->awarded_supplier_id)
+                                            {{ optional($quotation->suppliers->find($quotation->awarded_supplier_id))->company_name ?? 'N/A' }}
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($quotation->awarded_amount)
+                                            ₱{{ number_format($quotation->awarded_amount, 2) }}
+                                        @else
+                                            —
+                                        @endif
                                     </td>
                                     <td>
                                         <div class="btn-group">
@@ -176,78 +208,6 @@
     </div>
 </div>
 
-<!-- Send Confirmation Modal -->
-<div class="modal fade" id="sendModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Send Request for Quotation</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to send this RFQ to all selected suppliers?</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmSend">Send</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Status Change Modal -->
-<div class="modal fade" id="statusModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Change RFQ Status</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="statusForm">
-                    <div class="form-group">
-                        <label for="statusNote">Note</label>
-                        <textarea class="form-control" id="statusNote" rows="3" required></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmStatus">Confirm</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Delete RFQ</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this RFQ? This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <form id="deleteForm" method="POST" style="display: inline-block;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 @push('styles')
 <style>
     .table td {
@@ -286,14 +246,84 @@
 </style>
 @endpush
 
+<!-- Send Confirmation Modal -->
+<div class="modal fade" id="sendModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Send Request for Quotation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to send this RFQ to all selected suppliers?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmSend">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Change Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change RFQ Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="statusForm">
+                    <div class="form-group">
+                        <label for="statusNote">Note</label>
+                        <textarea class="form-control" id="statusNote" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmStatus">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete RFQ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this RFQ? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline-block;">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
+<!-- jQuery (required for Bootstrap 4 modals) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Bootstrap JS (if not already included) -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Search and filter functionality
     let searchTimeout;
     const search = document.getElementById('search');
     const status = document.getElementById('status');
-    const contract = document.getElementById('contract');
+    const purchaseRequest = document.getElementById('purchase_request');
     const perPage = document.getElementById('perPage');
 
     function updateQuotations() {
@@ -302,7 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const params = new URLSearchParams({
                 search: search.value,
                 status: status.value,
-                contract: contract.value,
+                purchase_request: purchaseRequest.value,
                 per_page: perPage.value
             });
 
@@ -312,14 +342,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     search.addEventListener('input', updateQuotations);
     status.addEventListener('change', updateQuotations);
-    contract.addEventListener('change', updateQuotations);
+    purchaseRequest.addEventListener('change', updateQuotations);
     perPage.addEventListener('change', updateQuotations);
 
     // Set initial values from URL params
     const urlParams = new URLSearchParams(window.location.search);
     search.value = urlParams.get('search') || '';
     status.value = urlParams.get('status') || '';
-    contract.value = urlParams.get('contract') || '';
+    purchaseRequest.value = urlParams.get('purchase_request') || '';
     perPage.value = urlParams.get('per_page') || '10';
 
     // Send quotation functionality
@@ -335,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     confirmSend.addEventListener('click', function() {
-        fetch(`/api/quotations/${currentQuotationId}/send`, {
+        fetch(`api/quotations/${currentQuotationId}/send`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

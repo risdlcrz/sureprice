@@ -26,7 +26,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <p><strong>PO Number:</strong> {{ $purchaseOrder->po_number }}</p>
-                                <p><strong>Contract:</strong> {{ $purchaseOrder->contract->contract_id }}</p>
+                                <p><strong>Contract:</strong> {{ $purchaseOrder->contract->contract_id ?? 'N/A' }}</p>
                                 <p><strong>Purchase Request:</strong> {{ $purchaseOrder->purchaseRequest->pr_number }}</p>
                                 <p><strong>Supplier:</strong> {{ $purchaseOrder->supplier->company_name }}</p>
                             </div>
@@ -74,7 +74,7 @@
                                             <td>{{ number_format($item->quantity, 2) }} {{ $item->material->unit }}</td>
                                             <td>₱{{ number_format($item->unit_price, 2) }}</td>
                                             <td>₱{{ number_format($item->total_price, 2) }}</td>
-                                            <td>{{ $item->specifications ?? 'N/A' }}</td>
+                                            <td>{{ $item->specifications }}</td>
                                         </tr>
                                     @endforeach
                                     <tr>

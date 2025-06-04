@@ -17,7 +17,8 @@ class PurchaseRequestItem extends Model
         'unit',
         'estimated_unit_price',
         'total_amount',
-        'notes'
+        'notes',
+        'specifications'
     ];
 
     protected $casts = [

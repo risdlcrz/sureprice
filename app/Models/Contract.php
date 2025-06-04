@@ -31,7 +31,8 @@ class Contract extends Model
         'contract_terms',
         'client_signature',
         'contractor_signature',
-        'status'
+        'status',
+        'purchase_order_id'
     ];
 
     protected $casts = [
@@ -87,5 +88,20 @@ class Contract extends Model
     public function items(): HasMany
     {
         return $this->hasMany(ContractItem::class);
+    }
+
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    public function purchaseOrders(): HasMany
+    {
+        return $this->hasMany(PurchaseOrder::class);
+    }
+
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
     }
 } 

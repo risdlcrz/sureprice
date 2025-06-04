@@ -4,17 +4,22 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Transaction extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'contract_id',
         'date',
         'description',
         'amount',
-        'category',
-        'contract_id'
+        'type',
+        'status',
+        'payment_method',
+        'reference_number',
+        'notes'
     ];
 
     protected $casts = [
@@ -22,7 +27,11 @@ class Transaction extends Model
         'amount' => 'decimal:2'
     ];
 
-    public function contract()
+    protected $dates = [
+        'date'
+    ];
+
+    public function contract(): BelongsTo
     {
         return $this->belongsTo(Contract::class);
     }
