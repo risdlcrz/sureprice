@@ -89,5 +89,11 @@
             mobileMenu.classList.toggle('active');
         }
     </script>
+
+    @auth
+        @if(Auth::user()->user_type === 'admin')
+            {{-- Removed Transactions link from navbar --}}
+        @endif
+    @endauth
 </body>
 </html>

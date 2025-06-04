@@ -282,7 +282,7 @@ class BudgetAllocationController extends Controller
 
         // Calculate totals from POs
         foreach ($contract->purchaseOrders as $po) {
-            $supplierName = optional($po->supplier)->name ?? 'Unknown Supplier';
+            $supplierName = optional($po->supplier)->company_name ?? $po->supplier_name ?? 'Unknown Supplier';
             if (!isset($supplierTotals[$supplierName])) {
                 $supplierTotals[$supplierName] = 0;
             }
@@ -291,7 +291,7 @@ class BudgetAllocationController extends Controller
 
         // Calculate totals from contract items
         foreach ($contract->items as $item) {
-            $supplierName = optional($item->supplier)->name ?? 'Unknown Supplier';
+            $supplierName = optional($item->supplier)->company_name ?? $item->supplier_name ?? 'Unknown Supplier';
             if (!isset($supplierTotals[$supplierName])) {
                 $supplierTotals[$supplierName] = 0;
             }

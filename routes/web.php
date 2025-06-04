@@ -117,6 +117,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('purchase-orders/{purchaseOrder}/status', [PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
     Route::get('purchase-orders/{id}/json', [App\Http\Controllers\PurchaseOrderController::class, 'showJson'])->name('purchase-orders.json');
 
+    // Transaction Routes
+    Route::resource('transactions', \App\Http\Controllers\TransactionController::class);
+
     // Add procurement routes
     Route::get('/admin/procurement', [ProcurementController::class, 'index'])->name('admin.procurement');
 });
@@ -170,6 +173,8 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/inventory', function () {
         return view('admin.inventory');
     })->name('admin.inventory');
+    
+    Route::get('/admin/transactions', [App\Http\Controllers\TransactionController::class, 'index'])->name('admin.transactions');
 });
 
 // Password Change Routes

@@ -3,6 +3,8 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Models\PurchaseRequestItem;
+use App\Models\Material;
 
 return new class extends Migration
 {
@@ -25,6 +27,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('purchase_request_id')->constrained()->onDelete('cascade');
             $table->foreignId('material_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('supplier_id')->nullable()->constrained()->onDelete('set null');
             $table->string('description');
             $table->decimal('quantity', 10, 2);
             $table->string('unit');

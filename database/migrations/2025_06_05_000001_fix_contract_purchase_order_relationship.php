@@ -18,10 +18,10 @@ return new class extends Migration
         // Make sure contract_id in purchase_orders is properly set up
         Schema::table('purchase_orders', function (Blueprint $table) {
             // In case the foreign key doesn't exist
-            $table->foreign('contract_id')
-                  ->references('id')
-                  ->on('contracts')
-                  ->onDelete('set null');
+            // $table->foreign('contract_id')
+            //       ->references('id')
+            //       ->on('contracts')
+            //       ->onDelete('set null');
         });
     }
 

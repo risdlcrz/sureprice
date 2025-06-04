@@ -26,7 +26,7 @@ class PurchaseOrderController extends Controller
     {
         $purchaseRequests = PurchaseRequest::where('status', 'approved')
             ->whereDoesntHave('purchaseOrder')
-            ->with(['contract', 'materials'])
+            ->with(['contract', 'items.supplier', 'materials'])
             ->get();
 
         $suppliers = Supplier::all();

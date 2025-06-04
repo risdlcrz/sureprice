@@ -81,8 +81,11 @@
                                             {{ $selectedContract->start_date->format('M d, Y') }} - 
                                             {{ $selectedContract->end_date->format('M d, Y') }}
                                         </h5>
-                                        <p class="text-muted mb-1">Days Remaining</p>
-                                        <h5>{{ number_format(now()->diffInDays($selectedContract->end_date)) }} days</h5>
+                                        @php
+                                            $projectDuration = $selectedContract->start_date->diffInDays($selectedContract->end_date, false) + 1;
+                                        @endphp
+                                        <p class="text-muted mb-1">Project Duration</p>
+                                        <h5>{{ $projectDuration }} days</h5>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -141,7 +144,7 @@
                                                 <td>
                                                     <div class="d-flex align-items-center">
                                                         <i class="fas fa-building me-2 text-success"></i>
-                                                        {{ optional($item->supplier)->name ?? 'N/A' }}
+                                                        {{ optional($item->supplier)->company_name ?? $item->supplier_name ?? 'N/A' }}
                                                     </div>
                                                 </td>
                                                 <td>

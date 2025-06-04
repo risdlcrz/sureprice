@@ -99,8 +99,18 @@ class PurchaseRequestController extends Controller
         ]);
 
         foreach ($validated['items'] as $item) {
+            $supplierId = $item['supplier_id'] ?? null;
+            if (!$supplierId) {
+                $material = Material::find($item['material_id']);
+                $supplier = $material
+                    ? ($material->suppliers()->wherePivot('is_preferred', true)->first() ?? $material->suppliers()->first())
+                    : null;
+                $supplierId = $supplier ? $supplier->id : null;
+            }
+
             $purchaseRequest->items()->create([
                 'material_id' => $item['material_id'],
+                'supplier_id' => $supplierId,
                 'description' => $item['description'],
                 'quantity' => $item['quantity'],
                 'unit' => $item['unit'],
@@ -172,8 +182,19 @@ class PurchaseRequestController extends Controller
         // Sync items
         $purchaseRequest->items()->delete();
         foreach ($validated['items'] as $item) {
+            $supplierId = $item['supplier_id'] ?? null;
+            if (!$supplierId) {
+                // Auto-select preferred supplier or first supplier for the material
+                $material = Material::find($item['material_id']);
+                $supplier = $material
+                    ? ($material->suppliers()->wherePivot('is_preferred', true)->first() ?? $material->suppliers()->first())
+                    : null;
+                $supplierId = $supplier ? $supplier->id : null;
+            }
+
             $purchaseRequest->items()->create([
                 'material_id' => $item['material_id'],
+                'supplier_id' => $supplierId,
                 'description' => $item['description'],
                 'quantity' => $item['quantity'],
                 'unit' => $item['unit'],

@@ -44,6 +44,7 @@
                                     <option value="">Select Purchase Request</option>
                                     @foreach($purchaseRequests as $pr)
                                         <option value="{{ $pr->id }}" 
+                                            data-supplier-id="{{ $pr->supplier_id }}"
                                             {{ old('purchase_request_id') == $pr->id ? 'selected' : '' }}
                                             data-contract-id="{{ $pr->contract_id }}">
                                             {{ $pr->pr_number }}
@@ -131,6 +132,9 @@
                         @enderror
                     </div>
 
+                    <div id="supplier-display" style="display:none; font-weight: bold; color: #0a58ca; margin-bottom: 10px;"></div>
+                    <div id="multi-supplier-warning" class="alert alert-warning" style="display:none;"></div>
+
                     <div id="supplier-details" style="display:none; max-width: 350px; margin-top: 1rem; border: 1px solid #ddd; border-radius: 6px; background: #f8f9fa; padding: 0.5rem 1rem; font-size: 0.95em;">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <h6 style="margin: 0; font-weight: 600;">Supplier Details</h6>
@@ -156,16 +160,92 @@
 <script>
     const apiBase = "{{ url('api') }}";
     const suppliers = @json($suppliers ?? []);
+    const purchaseRequests = @json($purchaseRequests);
+
+    function getSupplierNameById(id) {
+        const supplier = suppliers.find(s => s.id == id);
+        return supplier ? supplier.company_name : '';
+    }
 
     document.getElementById('purchase_request_id').addEventListener('change', function() {
         const purchaseRequestId = this.value;
+        const selectedPR = purchaseRequests.find(pr => pr.id == purchaseRequestId);
+        let supplierId = null;
+        let supplierName = '';
+        let allSameSupplier = true;
+        let firstSupplierId = null;
+        let hasSupplier = false;
+        let itemSuppliers = [];
+
+        if (selectedPR && selectedPR.items && selectedPR.items.length > 0) {
+            selectedPR.items.forEach((item, idx) => {
+                if (item.supplier_id) {
+                    hasSupplier = true;
+                    itemSuppliers.push(item.supplier_id);
+                    if (firstSupplierId === null) firstSupplierId = item.supplier_id;
+                    if (item.supplier_id != firstSupplierId) allSameSupplier = false;
+                }
+            });
+            if (allSameSupplier && hasSupplier) {
+                supplierId = firstSupplierId;
+                supplierName = getSupplierNameById(supplierId);
+            }
+        }
+
+        const supplierSelect = document.getElementById('supplier_id');
+        const supplierDisplay = document.getElementById('supplier-display');
+        const warningDisplay = document.getElementById('multi-supplier-warning');
+        const submitBtn = document.querySelector('button[type="submit"]');
+        let hiddenSupplierInput = document.getElementById('hidden-supplier-id');
+
+        if (allSameSupplier && supplierId) {
+            supplierSelect.value = supplierId;
+            supplierSelect.setAttribute('disabled', 'disabled');
+            if (!hiddenSupplierInput) {
+                hiddenSupplierInput = document.createElement('input');
+                hiddenSupplierInput.type = 'hidden';
+                hiddenSupplierInput.name = 'supplier_id';
+                hiddenSupplierInput.id = 'hidden-supplier-id';
+                supplierSelect.parentNode.appendChild(hiddenSupplierInput);
+            }
+            hiddenSupplierInput.value = supplierId;
+            if (supplierDisplay) {
+                supplierDisplay.textContent = 'Supplier: ' + supplierName;
+                supplierDisplay.style.display = 'block';
+            }
+            if (warningDisplay) warningDisplay.style.display = 'none';
+            if (submitBtn) submitBtn.disabled = false;
+        } else if (itemSuppliers.length > 0 && !allSameSupplier) {
+            supplierSelect.value = '';
+            supplierSelect.setAttribute('disabled', 'disabled');
+            if (hiddenSupplierInput) hiddenSupplierInput.remove();
+            if (supplierDisplay) {
+                supplierDisplay.textContent = '';
+                supplierDisplay.style.display = 'none';
+            }
+            if (warningDisplay) {
+                warningDisplay.style.display = 'block';
+                warningDisplay.textContent = 'This Purchase Request contains items from multiple suppliers. Please create separate Purchase Orders for each supplier.';
+            }
+            if (submitBtn) submitBtn.disabled = true;
+        } else {
+            supplierSelect.value = '';
+            supplierSelect.removeAttribute('disabled');
+            if (hiddenSupplierInput) hiddenSupplierInput.remove();
+            if (supplierDisplay) {
+                supplierDisplay.textContent = '';
+                supplierDisplay.style.display = 'none';
+            }
+            if (warningDisplay) warningDisplay.style.display = 'none';
+            if (submitBtn) submitBtn.disabled = false;
+        }
+
         if (purchaseRequestId) {
             fetch(`${apiBase}/purchase-requests/${purchaseRequestId}/items`)
                 .then(response => response.json())
                 .then(data => {
                     const container = document.getElementById('items-container');
                     container.innerHTML = '';
-
                     data.forEach((item, index) => {
                         container.innerHTML += `
                             <div class="row mb-3">
@@ -197,8 +277,6 @@
                     console.error('Error:', error);
                     alert('Error loading purchase request items');
                 });
-        } else {
-            document.getElementById('items-container').innerHTML = '';
         }
     });
 

@@ -12,6 +12,7 @@ class PurchaseRequestItem extends Model
     protected $fillable = [
         'purchase_request_id',
         'material_id',
+        'supplier_id',
         'description',
         'quantity',
         'unit',
@@ -36,6 +37,11 @@ class PurchaseRequestItem extends Model
     public function material()
     {
         return $this->belongsTo(Material::class);
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
     }
 
     // Mutators
