@@ -13,8 +13,8 @@
             <ul class="navbar-nav me-auto">
                 @auth
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('supplier-rankings*') ? 'active' : '' }}" 
-                           href="{{ route('supplier-rankings.index') }}">
+                        <a class="nav-link {{ request()->routeIs('admin.supplier-rankings*') ? 'active' : '' }}" 
+                           href="{{ route('admin.supplier-rankings') }}">
                             <i class="fas fa-trophy me-1"></i> Rankings
                         </a>
                     </li>

@@ -153,11 +153,11 @@ class SupplierController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('supplier-rankings')->with('success', 'Supplier added successfully!');
+            return redirect()->route('admin.supplier-rankings')->with('success', 'Supplier added successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('supplier-rankings')
+            return redirect()->route('admin.supplier-rankings')
                 ->with('error', 'Failed to add supplier: ' . $e->getMessage());
         }
     }
@@ -244,11 +244,11 @@ class SupplierController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('supplier-rankings')->with('success', 'Supplier updated successfully!');
+            return redirect()->route('admin.supplier-rankings')->with('success', 'Supplier updated successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('supplier-rankings')
+            return redirect()->route('admin.supplier-rankings')
                 ->with('error', 'Failed to update supplier: ' . $e->getMessage());
         }
     }
@@ -281,64 +281,48 @@ class SupplierController extends Controller
             $supplier->delete();
 
             DB::commit();
-            return redirect()->route('supplier-rankings')->with('success', 'Supplier deleted successfully!');
+            return redirect()->route('admin.supplier-rankings')->with('success', 'Supplier deleted successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('supplier-rankings')
+            return redirect()->route('admin.supplier-rankings')
                 ->with('error', 'Failed to delete supplier: ' . $e->getMessage());
         }
     }
 
     public function evaluate(Request $request, Supplier $supplier)
     {
-        $validated = $request->validate([
-            'engagement_score' => 'required|numeric|min:0.5|max:5',
-            'delivery_score' => 'required|numeric|min:0.5|max:5',
-            'performance_score' => 'required|numeric|min:0.5|max:5',
-            'quality_score' => 'required|numeric|min:0.5|max:5',
-            'cost_score' => 'required|numeric|min:0.5|max:5',
-            'sustainability_score' => 'required|numeric|min:0.5|max:5'
-        ]);
-
         try {
             DB::beginTransaction();
 
-            $weights = [
-                'engagement' => 0.15,
-                'delivery' => 0.20,
-                'performance' => 0.20,
-                'quality' => 0.20,
-                'cost' => 0.15,
-                'sustainability' => 0.10
-            ];
+            $validated = $request->validate([
+                'engagement_score' => 'required|numeric|min:1|max:5',
+                'delivery_speed_score' => 'required|numeric|min:1|max:5',
+                'performance_score' => 'required|numeric|min:1|max:5',
+                'quality_score' => 'required|numeric|min:1|max:5',
+                'cost_variance_score' => 'required|numeric|min:1|max:5',
+                'sustainability_score' => 'required|numeric|min:1|max:5',
+                'comments' => 'nullable|string'
+            ]);
 
-            $final_score = (
-                $weights['engagement'] * $validated['engagement_score'] +
-                $weights['delivery'] * $validated['delivery_score'] +
-                $weights['performance'] * $validated['performance_score'] +
-                $weights['quality'] * $validated['quality_score'] +
-                $weights['cost'] * $validated['cost_score'] +
-                $weights['sustainability'] * $validated['sustainability_score']
-            ) / 5;
-
-            $supplier->evaluations()->create([
+            $evaluation = SupplierEvaluation::create([
+                'supplier_id' => $supplier->id,
+                'evaluation_date' => now(),
                 'engagement_score' => $validated['engagement_score'],
-                'delivery_speed_score' => $validated['delivery_score'],
+                'delivery_speed_score' => $validated['delivery_speed_score'],
                 'performance_score' => $validated['performance_score'],
                 'quality_score' => $validated['quality_score'],
-                'cost_variance_score' => $validated['cost_score'],
+                'cost_variance_score' => $validated['cost_variance_score'],
                 'sustainability_score' => $validated['sustainability_score'],
-                'final_score' => $final_score,
-                'evaluation_date' => now()
+                'comments' => $validated['comments']
             ]);
 
             DB::commit();
-            return redirect()->route('supplier-rankings')->with('success', 'Supplier evaluation submitted successfully!');
+            return redirect()->route('admin.supplier-rankings')->with('success', 'Supplier evaluation submitted successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('supplier-rankings')
+            return redirect()->route('admin.supplier-rankings')
                 ->with('error', 'Failed to submit evaluation: ' . $e->getMessage());
         }
     }
@@ -605,7 +589,7 @@ class SupplierController extends Controller
             
             if ($imported > 0) {
                 DB::commit();
-                return redirect()->route('supplier-rankings')
+                return redirect()->route('admin.supplier-rankings')
                     ->with('success', "Imported $imported suppliers successfully." . 
                            ($skipped > 0 ? " Skipped $skipped invalid entries." : ""))
                     ->with('import_errors', $errors);
@@ -615,7 +599,7 @@ class SupplierController extends Controller
             
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('supplier-rankings')
+            return redirect()->route('admin.supplier-rankings')
                 ->with('error', "Error importing file: " . $e->getMessage())
                 ->with('import_errors', $errors ?? []);
         }

@@ -105,7 +105,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/supplier-invitations/search', [SupplierInvitationController::class, 'search'])->name('supplier-invitations.search');
 
     // Supplier Routes
-    Route::resource('suppliers', SupplierController::class);
+    Route::prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {
+        Route::get('/', [SupplierController::class, 'index'])->name('index');
+        Route::post('/', [SupplierController::class, 'store'])->name('store');
+        Route::get('/{supplier}', [SupplierController::class, 'show'])->name('show');
+        Route::put('/{supplier}', [SupplierController::class, 'update'])->name('update');
+        Route::delete('/{supplier}', [SupplierController::class, 'destroy'])->name('destroy');
+        Route::post('/import', [SupplierController::class, 'import'])->name('import');
+        Route::get('/template/download', [SupplierController::class, 'downloadTemplate'])->name('template');
+    });
 
     // Purchase Requests
     Route::resource('purchase-requests', PurchaseRequestController::class);
@@ -159,10 +167,8 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
 
     Route::get('/budget-allocation', [BudgetAllocationController::class, 'index'])->name('admin.budget-allocation');
 
-    Route::get('/supplier-rankings', [SupplierController::class, 'index'])->name('supplier-rankings');
-    Route::post('/supplier-rankings', [SupplierController::class, 'store'])->name('supplier-rankings.store');
-    Route::post('/suppliers/import', [SupplierController::class, 'import'])->name('admin.suppliers.import');
-    Route::get('/suppliers/template/download', [SupplierController::class, 'downloadTemplate'])->name('admin.suppliers.template');
+    Route::get('/admin/supplier-rankings', [SupplierController::class, 'index'])->name('admin.supplier-rankings');
+    Route::post('/admin/supplier-rankings', [SupplierController::class, 'store'])->name('admin.supplier-rankings.store');
 
     Route::get('/price-analysis', function () {
         return view('admin.price-analysis');

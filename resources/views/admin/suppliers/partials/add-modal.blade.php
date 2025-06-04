@@ -8,7 +8,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" action="{{ route('supplier-rankings.store') }}" enctype="multipart/form-data">
+            <form method="POST" action="{{ route('admin.suppliers.store') }}" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
                     <div class="row g-4">

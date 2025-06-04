@@ -7,9 +7,14 @@
             <div class="card shadow">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h4 class="card-title mb-0">Suppliers</h4>
-                    <a href="{{ route('suppliers.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add New Supplier
-                    </a>
+                    <div>
+                        <button type="button" class="btn btn-secondary mr-2" data-toggle="modal" data-target="#importModal">
+                            <i class="fas fa-file-import"></i> Import Suppliers
+                        </button>
+                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addSupplierModal">
+                            <i class="fas fa-plus"></i> Add New Supplier
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <!-- Search and Filters -->
@@ -102,12 +107,12 @@
                                     </td>
                                     <td>
                                         <div class="btn-group">
-                                            <a href="{{ route('suppliers.show', $supplier->id) }}" 
+                                            <a href="{{ route('admin.suppliers.show', $supplier->id) }}" 
                                                 class="btn btn-sm btn-info" 
                                                 title="View">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{{ route('suppliers.edit', $supplier->id) }}" 
+                                            <a href="{{ route('admin.suppliers.edit', $supplier->id) }}" 
                                                 class="btn btn-sm btn-primary" 
                                                 title="Edit">
                                                 <i class="fas fa-edit"></i>
@@ -164,6 +169,96 @@
     </div>
 </div>
 
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import Suppliers</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form action="{{ route('admin.suppliers.import') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="import_file">Select Excel File</label>
+                        <input type="file" class="form-control-file" id="import_file" name="import_file" required>
+                        <small class="form-text text-muted">
+                            Please download the template file first to ensure correct formatting.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="{{ route('admin.suppliers.template') }}" class="btn btn-secondary">
+                        <i class="fas fa-download"></i> Download Template
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Supplier Modal -->
+<div class="modal fade" id="addSupplierModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Supplier</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form action="{{ route('admin.suppliers.store') }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="company_name">Company Name</label>
+                        <input type="text" class="form-control" id="company_name" name="company_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact_person">Contact Person</label>
+                        <input type="text" class="form-control" id="contact_person" name="contact_person" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="2" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="city">City</label>
+                                <input type="text" class="form-control" id="city" name="city" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="state">State</label>
+                                <input type="text" class="form-control" id="state" name="state" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Supplier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -204,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
     deleteBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             const supplierId = this.dataset.id;
-            deleteForm.action = `/suppliers/${supplierId}`;
+            deleteForm.action = `/admin/suppliers/${supplierId}`;
             $(deleteModal).modal('show');
         });
     });
