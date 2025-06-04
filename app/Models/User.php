@@ -16,9 +16,11 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'username',
         'password',
+        'role',
         'user_type',
+        'force_password_change',
         'email_verified_at',
-        'last_login_at',
+        'last_login_at'
     ];
 
     protected $hidden = [
@@ -28,6 +30,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'force_password_change' => 'boolean',
         'last_login_at' => 'datetime',
     ];
 
@@ -48,7 +51,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return match ($this->user_type) {
             'employee' => $this->employee?->first_name . ' ' . $this->employee?->last_name,
             'company' => $this->company?->company_name,
-            default => $this->name,
+            default => $this->first_name . ' ' . $this->last_name,
         };
     }
 }

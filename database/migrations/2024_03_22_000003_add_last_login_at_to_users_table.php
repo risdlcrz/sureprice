@@ -6,20 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->enum('user_type', ['admin', 'employee', 'company'])->default('company');
             $table->timestamp('last_login_at')->nullable();
-            $table->string('name')->nullable()->change();
         });
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['user_type', 'last_login_at']);
-            $table->string('name')->nullable(false)->change();
+            $table->dropColumn('last_login_at');
         });
     }
-};
+}; 

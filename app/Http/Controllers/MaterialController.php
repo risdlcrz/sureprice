@@ -142,22 +142,50 @@ class MaterialController extends Controller
 
     public function search(Request $request)
     {
-        $query = $request->get('query', '');
-        
-        $materials = Material::with('category')
-            ->when($query, function($q) use ($query) {
-                return $q->where('name', 'like', "%{$query}%")
-                    ->orWhere('code', 'like', "%{$query}%");
+        try {
+            $query = $request->get('query', '');
+            
+            $materials = Material::with(['category', 'suppliers' => function($query) {
+                $query->select('suppliers.*')
+                      ->withPivot('price', 'lead_time');
+            }])
+            ->select('materials.id', 'materials.name', 'materials.code', 'materials.description', 'materials.unit', 'materials.base_price', 'materials.category_id')
+            ->when($query !== 'all' && !empty($query), function($q) use ($query) {
+                return $q->where('materials.name', 'like', "%{$query}%")
+                        ->orWhere('materials.code', 'like', "%{$query}%");
             })
-            ->limit(10)
+            ->orderBy('materials.name')
+            ->limit(20)
             ->get();
 
-        return response()->json($materials);
+            return response()->json($materials);
+        } catch (\Exception $e) {
+            \Log::error('Material search error: ' . $e->getMessage());
+            return response()->json(['error' => 'An error occurred while searching materials'], 500);
+        }
     }
 
     public function show(Material $material)
     {
         $material->load(['category', 'suppliers', 'images']);
         return view('admin.materials.show', compact('material'));
+    }
+
+    public function apiSearch(Request $request)
+    {
+        $query = $request->get('query', '');
+        
+        $materials = Material::with('category')
+            ->select('id', 'name', 'code', 'description', 'unit', 'base_price', 'category_id')
+            ->when(!empty($query), function($q) use ($query) {
+                return $q->where('name', 'like', "%{$query}%")
+                    ->orWhere('code', 'like', "%{$query}%")
+                    ->orWhere('description', 'like', "%{$query}%");
+            })
+            ->orderBy('name')
+            ->limit(10)
+            ->get();
+
+        return response()->json($materials);
     }
 }

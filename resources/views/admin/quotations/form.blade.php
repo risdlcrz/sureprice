@@ -17,22 +17,23 @@
 
                         <!-- Project Information -->
                         <div class="section-container">
-                            <h5 class="section-title">Project Information</h5>
+                            <h5 class="section-title">Purchase Request Information</h5>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="contract_id">Contract</label>
-                                        <select class="form-control @error('contract_id') is-invalid @enderror" 
-                                            id="contract_id" name="contract_id" required>
-                                            <option value="">Select Contract</option>
-                                            @foreach($contracts as $contract)
-                                                <option value="{{ $contract->id }}" 
-                                                    {{ old('contract_id', $quotation->contract_id ?? '') == $contract->id ? 'selected' : '' }}>
-                                                    {{ $contract->contract_id }}
+                                        <label for="purchase_request_id">Purchase Request</label>
+                                        <select class="form-control @error('purchase_request_id') is-invalid @enderror" 
+                                            id="purchase_request_id" name="purchase_request_id" required>
+                                            <option value="">Select Purchase Request</option>
+                                            @foreach($purchaseRequests as $pr)
+                                                <option value="{{ $pr->id }}" 
+                                                    {{ old('purchase_request_id', $quotation->purchase_request_id ?? '') == $pr->id ? 'selected' : '' }}
+                                                    data-materials='@json($pr->items)'>
+                                                    PR-{{ $pr->id }} ({{ $pr->department }})
                                                 </option>
                                             @endforeach
                                         </select>
-                                        @error('contract_id')
+                                        @error('purchase_request_id')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -57,43 +58,35 @@
                             <div class="row mb-3">
                                 <div class="col-md-12">
                                     <div class="form-group">
-                                        <label>Search and Add Suppliers</label>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" id="supplierSearch" 
-                                                placeholder="Search for suppliers...">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-outline-secondary" type="button" id="searchSupplierBtn">
-                                                    <i class="fas fa-search"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div id="supplierSearchResults" class="mt-2" style="display: none;"></div>
+                                        <label for="suppliers">Suppliers</label>
+                                        <select class="form-control" id="suppliers" name="suppliers[]" multiple required>
+                                            @foreach($suppliers ?? [] as $supplier)
+                                                <option value="{{ $supplier->id }}"
+                                                    @if(isset($quotation) && $quotation->suppliers->contains($supplier->id)) selected @endif>
+                                                    {{ $supplier->company_name ?? $supplier->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
                                     </div>
                                 </div>
                             </div>
-
-                            <div id="selectedSuppliers">
+                            <div id="selectedSuppliersNotes">
                                 @if(isset($quotation) && $quotation->suppliers)
                                     @foreach($quotation->suppliers as $supplier)
-                                    <div class="supplier-item card mb-2">
+                                    <div class="supplier-notes-item card mb-2" data-supplier-id="{{ $supplier->id }}">
                                         <div class="card-body py-2">
                                             <div class="row align-items-center">
                                                 <div class="col-md-6">
-                                                    <strong>{{ $supplier->name }}</strong>
+                                                    <strong>{{ $supplier->company_name }}</strong>
                                                     <input type="hidden" name="suppliers[]" value="{{ $supplier->id }}">
                                                     <br>
                                                     <small class="text-muted">{{ $supplier->email }} | {{ $supplier->phone }}</small>
                                                 </div>
-                                                <div class="col-md-5">
+                                                <div class="col-md-6">
                                                     <input type="text" class="form-control form-control-sm" 
                                                         name="supplier_notes[{{ $supplier->id }}]" 
                                                         value="{{ $supplier->pivot->notes ?? '' }}" 
                                                         placeholder="Notes for this supplier">
-                                                </div>
-                                                <div class="col-md-1">
-                                                    <button type="button" class="btn btn-danger btn-sm remove-supplier">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -103,64 +96,83 @@
                             </div>
                         </div>
 
-                        <!-- Materials Needed -->
+                        <!-- Materials from Purchase Request -->
                         <div class="section-container mt-4">
-                            <h5 class="section-title">Materials Needed</h5>
-                            <div class="row mb-3">
-                                <div class="col-md-12">
+                            <h5 class="section-title">Materials from Purchase Request</h5>
+                            <div id="prMaterials" class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Material</th>
+                                            <th>Quantity</th>
+                                            <th>Unit</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if(isset($quotation))
+                                            @foreach($quotation->purchaseRequest->items as $item)
+                                            <tr>
+                                                <td>{{ $item->material->name }}</td>
+                                                <td>{{ $item->quantity }}</td>
+                                                <td>{{ $item->material->unit }}</td>
+                                                <td>
+                                                    @if(isset($item->total_amount))
+                                                        {{ $item->total_amount }}
+                                                    @elseif(isset($item->quantity) && isset($item->estimated_unit_price))
+                                                        {{ number_format($item->quantity * $item->estimated_unit_price, 2) }}
+                                                    @else
+                                                        &mdash;
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                            @endforeach
+                                        @endif
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Terms and Conditions -->
+                        <div class="section-container mt-4">
+                            <h5 class="section-title">Terms and Conditions</h5>
+                            <div class="row">
+                                <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>Search and Add Materials</label>
-                                        <div class="input-group">
-                                            <input type="text" class="form-control" id="materialSearch" 
-                                                placeholder="Search for materials...">
-                                            <div class="input-group-append">
-                                                <button class="btn btn-outline-secondary" type="button" id="searchMaterialBtn">
-                                                    <i class="fas fa-search"></i>
-                                                </button>
+                                        <label for="payment_terms">Payment Terms</label>
+                                        <input type="text" class="form-control @error('payment_terms') is-invalid @enderror" 
+                                            id="payment_terms" name="payment_terms" 
+                                            value="{{ old('payment_terms', $quotation->payment_terms ?? '') }}"
+                                            placeholder="e.g., Net 30, COD">
+                                        @error('payment_terms')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
                                             </div>
                                         </div>
-                                        <div id="materialSearchResults" class="mt-2" style="display: none;"></div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="delivery_terms">Delivery Terms</label>
+                                        <input type="text" class="form-control @error('delivery_terms') is-invalid @enderror" 
+                                            id="delivery_terms" name="delivery_terms" 
+                                            value="{{ old('delivery_terms', $quotation->delivery_terms ?? '') }}"
+                                            placeholder="e.g., FOB Destination">
+                                        @error('delivery_terms')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
                                     </div>
                                 </div>
-                            </div>
-
-                            <div id="selectedMaterials">
-                                @if(isset($quotation) && $quotation->materials)
-                                    @foreach($quotation->materials as $material)
-                                    <div class="material-item card mb-2">
-                                        <div class="card-body py-2">
-                                            <div class="row align-items-center">
                                                 <div class="col-md-4">
-                                                    <strong>{{ $material->name }}</strong>
-                                                    <input type="hidden" name="materials[{{ $material->id }}][id]" value="{{ $material->id }}">
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <input type="number" class="form-control form-control-sm" 
-                                                        name="materials[{{ $material->id }}][quantity]" 
-                                                        value="{{ $material->pivot->quantity }}" 
-                                                        placeholder="Quantity" min="1" required>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <input type="text" class="form-control form-control-sm" 
-                                                        value="{{ $material->unit }}" 
-                                                        readonly>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <input type="text" class="form-control form-control-sm" 
-                                                        name="materials[{{ $material->id }}][specifications]" 
-                                                        value="{{ $material->pivot->specifications }}" 
-                                                        placeholder="Specifications">
-                                                </div>
-                                                <div class="col-md-1">
-                                                    <button type="button" class="btn btn-danger btn-sm remove-material">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div class="form-group">
+                                        <label for="validity_period">Validity Period</label>
+                                        <input type="text" class="form-control @error('validity_period') is-invalid @enderror" 
+                                            id="validity_period" name="validity_period" 
+                                            value="{{ old('validity_period', $quotation->validity_period ?? '') }}"
+                                            placeholder="e.g., 30 days">
+                                        @error('validity_period')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
                                     </div>
-                                    @endforeach
-                                @endif
+                                </div>
                             </div>
                         </div>
 
@@ -172,7 +184,8 @@
                                     <div class="form-group">
                                         <label for="notes">Notes and Special Instructions</label>
                                         <textarea class="form-control @error('notes') is-invalid @enderror" 
-                                            id="notes" name="notes" rows="4">{{ old('notes', $quotation->notes ?? '') }}</textarea>
+                                            id="notes" name="notes" rows="4"
+                                            placeholder="Enter any additional notes or special instructions for suppliers">{{ old('notes', $quotation->notes ?? '') }}</textarea>
                                         @error('notes')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -190,38 +203,83 @@
                                         <label for="attachments">Upload Files</label>
                                         <input type="file" class="form-control-file @error('attachments') is-invalid @enderror" 
                                             id="attachments" name="attachments[]" multiple>
+                                        <small class="form-text text-muted">
+                                            You can upload multiple files. Maximum size per file: 10MB.
+                                            Supported formats: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG
+                                        </small>
                                         @error('attachments')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
                                 </div>
                             </div>
-                            @if(isset($quotation) && $quotation->attachments)
+
+                            @if(isset($quotation) && $quotation->attachments->count() > 0)
                             <div class="row mt-3">
                                 <div class="col-md-12">
-                                    <div class="existing-attachments">
+                                    <h6>Current Attachments</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>File Name</th>
+                                                    <th>Size</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
                                         @foreach($quotation->attachments as $attachment)
-                                        <div class="attachment-item d-inline-block position-relative m-2">
-                                            <div class="card">
-                                                <div class="card-body p-2">
-                                                    <i class="fas fa-file mr-2"></i>
-                                                    <span>{{ $attachment->original_name }}</span>
-                                                    <button type="button" class="btn btn-danger btn-sm ml-2"
-                                                        onclick="removeAttachment('{{ $attachment->id }}')">
-                                                        <i class="fas fa-times"></i>
+                                                <tr>
+                                                    <td>{{ $attachment->original_name }}</td>
+                                                    <td>{{ $attachment->formatted_size }}</td>
+                                                    <td>
+                                                        <div class="btn-group">
+                                                            <a href="{{ route('quotations.attachment.download', $attachment->id) }}" 
+                                                                class="btn btn-sm btn-info">
+                                                                <i class="fas fa-download"></i>
+                                                            </a>
+                                                            <button type="button" 
+                                                                class="btn btn-sm btn-danger remove-attachment"
+                                                                data-quotation="{{ $quotation->id }}"
+                                                                data-attachment="{{ $attachment->id }}">
+                                                                <i class="fas fa-trash"></i>
                                                     </button>
                                                 </div>
-                                            </div>
-                                        </div>
+                                                    </td>
+                                                </tr>
                                         @endforeach
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             </div>
                             @endif
                         </div>
 
-                        <div class="form-group mt-4">
-                            <button type="submit" class="btn btn-primary">Submit RFQ</button>
+                        <!-- Add after the supplier selection, only if editing and status is approved or being approved -->
+                        @if(isset($quotation) && ($quotation->status === 'approved' || $quotation->status === 'responded'))
+                            <div class="mb-3">
+                                <label for="awarded_supplier_id" class="form-label">Awarded Supplier</label>
+                                <select name="awarded_supplier_id" id="awarded_supplier_id" class="form-select">
+                                    <option value="">Select supplier</option>
+                                    @foreach($suppliers as $supplier)
+                                        <option value="{{ $supplier->id }}" @if(old('awarded_supplier_id', $quotation->awarded_supplier_id ?? null) == $supplier->id) selected @endif>
+                                            {{ $supplier->company_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="awarded_amount" class="form-label">Awarded Amount</label>
+                                <input type="number" step="0.01" name="awarded_amount" id="awarded_amount" class="form-control" value="{{ old('awarded_amount', $quotation->awarded_amount ?? '') }}">
+                            </div>
+                        @endif
+
+                        <!-- Form Actions -->
+                        <div class="form-actions mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                {{ isset($quotation) ? 'Update' : 'Create' }} RFQ
+                            </button>
                             <a href="{{ route('quotations.index') }}" class="btn btn-secondary">Cancel</a>
                         </div>
                     </form>
@@ -271,288 +329,177 @@
         background-color: #f8f9fa;
     }
 </style>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 @endpush
 
 @push('scripts')
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize form validation
-    const form = document.getElementById('quotationForm');
-    if (form) {
-        form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-
-            // Check if at least one supplier is selected
-            const suppliers = document.querySelectorAll('input[name="suppliers[]"]');
-            if (suppliers.length === 0) {
-                event.preventDefault();
-                alert('Please select at least one supplier');
-                return;
-            }
-
-            // Check if at least one material is selected
-            const materials = document.querySelectorAll('input[name^="materials["][name$="][id]"]');
-            if (materials.length === 0) {
-                event.preventDefault();
-                alert('Please select at least one material');
-                return;
-            }
-        });
-    }
-
-    // Supplier search functionality
-    const supplierSearch = document.getElementById('supplierSearch');
-    const searchSupplierBtn = document.getElementById('searchSupplierBtn');
-    const supplierSearchResults = document.getElementById('supplierSearchResults');
-    const selectedSuppliers = document.getElementById('selectedSuppliers');
-    let supplierSearchTimeout;
-
-    if (supplierSearch && searchSupplierBtn && supplierSearchResults) {
-        supplierSearch.addEventListener('input', () => {
-            clearTimeout(supplierSearchTimeout);
-            supplierSearchTimeout = setTimeout(searchSuppliers, 300);
-        });
-
-        searchSupplierBtn.addEventListener('click', searchSuppliers);
-    }
-
-    function searchSuppliers() {
-        const query = supplierSearch.value.trim();
-        if (query.length < 2) {
-            supplierSearchResults.style.display = 'none';
-            return;
-        }
-
-        supplierSearchResults.innerHTML = '<div class="p-2">Searching...</div>';
-        supplierSearchResults.style.display = 'block';
-
-        fetch(`/api/suppliers/search?query=${encodeURIComponent(query)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.length > 0) {
-                    supplierSearchResults.innerHTML = data.map(supplier => `
-                        <div class="supplier-result" data-supplier='${JSON.stringify(supplier)}'>
-                            <strong>${supplier.name}</strong><br>
-                            <small>${supplier.email} | ${supplier.phone}</small>
-                        </div>
-                    `).join('');
-
-                    // Add click handlers
-                    supplierSearchResults.querySelectorAll('.supplier-result').forEach(result => {
-                        result.addEventListener('click', () => addSupplier(JSON.parse(result.dataset.supplier)));
-                    });
-                } else {
-                    supplierSearchResults.innerHTML = '<div class="p-2">No suppliers found</div>';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                supplierSearchResults.innerHTML = '<div class="p-2 text-danger">Error searching suppliers</div>';
-            });
-    }
-
-    function addSupplier(supplier) {
-        // Check if supplier already exists
-        if (document.querySelector(`input[name="suppliers[]"][value="${supplier.id}"]`)) {
-            alert('This supplier is already added');
-            return;
-        }
-
-        const supplierHtml = `
-            <div class="supplier-item card mb-2">
+$(document).ready(function() {
+    $('#suppliers').select2({
+        placeholder: 'Select suppliers',
+        allowClear: true,
+        width: '100%'
+    });
+    // Show notes field for each selected supplier
+    $('#suppliers').on('change', function() {
+        const selected = $(this).val() || [];
+        const allSuppliers = @json($suppliers);
+        const notesDiv = $('#selectedSuppliersNotes');
+        notesDiv.html('');
+        selected.forEach(function(supplierId) {
+            const supplier = allSuppliers.find(s => s.id == supplierId);
+            if (!supplier) return;
+            notesDiv.append(`
+                <div class="supplier-notes-item card mb-2" data-supplier-id="${supplier.id}">
                 <div class="card-body py-2">
                     <div class="row align-items-center">
                         <div class="col-md-6">
-                            <strong>${supplier.name}</strong>
+                                <strong>${supplier.company_name ?? supplier.name}</strong>
                             <input type="hidden" name="suppliers[]" value="${supplier.id}">
                             <br>
-                            <small class="text-muted">${supplier.email} | ${supplier.phone}</small>
+                                <small class="text-muted">${supplier.email} | ${supplier.phone ?? ''}</small>
                         </div>
-                        <div class="col-md-5">
+                            <div class="col-md-6">
                             <input type="text" class="form-control form-control-sm" 
                                 name="supplier_notes[${supplier.id}]" 
                                 placeholder="Notes for this supplier">
                         </div>
-                        <div class="col-md-1">
-                            <button type="button" class="btn btn-danger btn-sm remove-supplier">
-                                <i class="fas fa-times"></i>
-                            </button>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
-
-        selectedSuppliers.insertAdjacentHTML('beforeend', supplierHtml);
-        supplierSearch.value = '';
-        supplierSearchResults.style.display = 'none';
-
-        // Add remove functionality to the new supplier
-        const newSupplier = selectedSuppliers.lastElementChild;
-        newSupplier.querySelector('.remove-supplier').addEventListener('click', function() {
-            newSupplier.remove();
-        });
-    }
-
-    // Material search functionality
-    const materialSearch = document.getElementById('materialSearch');
-    const searchMaterialBtn = document.getElementById('searchMaterialBtn');
-    const materialSearchResults = document.getElementById('materialSearchResults');
-    const selectedMaterials = document.getElementById('selectedMaterials');
-    let materialSearchTimeout;
-
-    if (materialSearch && searchMaterialBtn && materialSearchResults) {
-        materialSearch.addEventListener('input', () => {
-            clearTimeout(materialSearchTimeout);
-            materialSearchTimeout = setTimeout(searchMaterials, 300);
-        });
-
-        searchMaterialBtn.addEventListener('click', searchMaterials);
-    }
-
-    function searchMaterials() {
-        const query = materialSearch.value.trim();
-        if (query.length < 2) {
-            materialSearchResults.style.display = 'none';
-            return;
-        }
-
-        materialSearchResults.innerHTML = '<div class="p-2">Searching...</div>';
-        materialSearchResults.style.display = 'block';
-
-        fetch(`/api/materials/search?query=${encodeURIComponent(query)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.length > 0) {
-                    materialSearchResults.innerHTML = data.map(material => `
-                        <div class="material-result" data-material='${JSON.stringify(material)}'>
-                            <strong>${material.name}</strong><br>
-                            <small>${material.description || ''} - ${material.unit}</small>
-                        </div>
-                    `).join('');
-
-                    // Add click handlers
-                    materialSearchResults.querySelectorAll('.material-result').forEach(result => {
-                        result.addEventListener('click', () => addMaterial(JSON.parse(result.dataset.material)));
-                    });
-                } else {
-                    materialSearchResults.innerHTML = '<div class="p-2">No materials found</div>';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                materialSearchResults.innerHTML = '<div class="p-2 text-danger">Error searching materials</div>';
-            });
-    }
-
-    function addMaterial(material) {
-        // Check if material already exists
-        if (document.querySelector(`input[name="materials[${material.id}][id]"]`)) {
-            alert('This material is already added');
-            return;
-        }
-
-        const materialHtml = `
-            <div class="material-item card mb-2">
-                <div class="card-body py-2">
-                    <div class="row align-items-center">
-                        <div class="col-md-4">
-                            <strong>${material.name}</strong>
-                            <input type="hidden" name="materials[${material.id}][id]" value="${material.id}">
-                        </div>
-                        <div class="col-md-2">
-                            <input type="number" class="form-control form-control-sm" 
-                                name="materials[${material.id}][quantity]" 
-                                placeholder="Quantity" min="1" required>
-                        </div>
-                        <div class="col-md-2">
-                            <input type="text" class="form-control form-control-sm" 
-                                value="${material.unit}" 
-                                readonly>
-                        </div>
-                        <div class="col-md-3">
-                            <input type="text" class="form-control form-control-sm" 
-                                name="materials[${material.id}][specifications]" 
-                                placeholder="Specifications">
-                        </div>
-                        <div class="col-md-1">
-                            <button type="button" class="btn btn-danger btn-sm remove-material">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        selectedMaterials.insertAdjacentHTML('beforeend', materialHtml);
-        materialSearch.value = '';
-        materialSearchResults.style.display = 'none';
-
-        // Add remove functionality to the new material
-        const newMaterial = selectedMaterials.lastElementChild;
-        newMaterial.querySelector('.remove-material').addEventListener('click', function() {
-            newMaterial.remove();
-        });
-    }
-
-    // Add remove functionality to existing suppliers and materials
-    document.querySelectorAll('.remove-supplier').forEach(button => {
-        button.addEventListener('click', function() {
-            this.closest('.supplier-item').remove();
+            `);
         });
     });
+    // Trigger change on page load if editing
+    $('#suppliers').trigger('change');
+});
 
-    document.querySelectorAll('.remove-material').forEach(button => {
-        button.addEventListener('click', function() {
-            this.closest('.material-item').remove();
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle Purchase Request Selection
+    const prSelect = document.getElementById('purchase_request_id');
+    const prMaterialsTable = document.querySelector('#prMaterials tbody');
+
+    prSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const materials = JSON.parse(selectedOption.dataset.materials || '[]');
+        
+        prMaterialsTable.innerHTML = materials.map(item => `
+            <tr>
+                <td>${item.material.name}</td>
+                <td>${item.quantity}</td>
+                <td>${item.material.unit}</td>
+                <td>
+                    ${typeof item.total_amount !== 'undefined' ? item.total_amount : (typeof item.quantity !== 'undefined' && typeof item.estimated_unit_price !== 'undefined' ? (item.quantity * item.estimated_unit_price).toFixed(2) : '')}
+                </td>
+            </tr>
+        `).join('');
     });
 
-    // Close search results when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!supplierSearchResults.contains(e.target) && e.target !== supplierSearch && e.target !== searchSupplierBtn) {
-            supplierSearchResults.style.display = 'none';
-        }
-        if (!materialSearchResults.contains(e.target) && e.target !== materialSearch && e.target !== searchMaterialBtn) {
-            materialSearchResults.style.display = 'none';
+    // Remove supplier search input event handler and debounce
+    // Only use the button click handler below
+
+    // Add supplier when selected from search results (handled in button click handler)
+    // Remove supplier
+    const selectedSuppliers = document.getElementById('selectedSuppliers');
+    selectedSuppliers.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-supplier')) {
+            e.target.closest('.supplier-item').remove();
         }
     });
 
-    // Attachment removal function
-    window.removeAttachment = function(attachmentId) {
-        if (confirm('Are you sure you want to remove this attachment?')) {
-            fetch(`/api/quotations/remove-attachment`, {
+    // Remove attachment
+    document.querySelectorAll('.remove-attachment').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (!confirm('Are you sure you want to remove this attachment?')) return;
+
+            const quotationId = this.dataset.quotation;
+            const attachmentId = this.dataset.attachment;
+
+            fetch('/api/quotations/remove-attachment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify({
-                    quotation_id: '{{ $quotation->id ?? "" }}',
+                    quotation_id: quotationId,
                     attachment_id: attachmentId
                 })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    const attachmentElement = document.querySelector(`[onclick="removeAttachment('${attachmentId}')"]`).closest('.attachment-item');
-                    attachmentElement.remove();
+                    this.closest('tr').remove();
                 } else {
                     alert('Failed to remove attachment');
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error removing attachment');
             });
-        }
-    };
+        });
+    });
 });
+
+document.getElementById('searchSupplierBtn').addEventListener('click', function() {
+    const query = document.getElementById('supplierSearch').value;
+    fetch(`/api/suppliers/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            const resultsDiv = document.getElementById('supplierSearchResults');
+            resultsDiv.innerHTML = '';
+            if (data.length === 0) {
+                resultsDiv.innerHTML = '<div class="alert alert-warning">No suppliers found.</div>';
+            } else {
+                data.forEach(supplier => {
+                    const div = document.createElement('div');
+                    div.className = 'list-group-item list-group-item-action';
+                    div.style.cursor = 'pointer';
+                    div.innerHTML = `<strong>${supplier.company_name}</strong> <br>
+                        <small>${supplier.email} | ${supplier.phone || ''}</small>`;
+                    div.onclick = function() {
+                        addSupplierToList(supplier);
+                        resultsDiv.style.display = 'none';
+                    };
+                    resultsDiv.appendChild(div);
+                });
+            }
+            resultsDiv.style.display = 'block';
+        });
+});
+
+function addSupplierToList(supplier) {
+    // Prevent duplicates
+    if (document.querySelector(`#selectedSuppliers input[value='${supplier.id}']`)) return;
+    const container = document.getElementById('selectedSuppliers');
+    const card = document.createElement('div');
+    card.className = 'supplier-item card mb-2';
+    card.innerHTML = `
+        <div class="card-body py-2">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <strong>${supplier.company_name}</strong>
+                    <input type="hidden" name="suppliers[]" value="${supplier.id}">
+                    <br>
+                    <small class="text-muted">${supplier.email} | ${supplier.phone || ''}</small>
+                </div>
+                <div class="col-md-5">
+                    <input type="text" class="form-control form-control-sm"
+                        name="supplier_notes[${supplier.id}]"
+                        placeholder="Notes for this supplier">
+                </div>
+                <div class="col-md-1">
+                    <button type="button" class="btn btn-danger btn-sm remove-supplier">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    card.querySelector('.remove-supplier').onclick = function() {
+        card.remove();
+    };
+    container.appendChild(card);
+}
 </script>
 @endpush
 @endsection 

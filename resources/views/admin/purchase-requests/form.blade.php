@@ -21,10 +21,10 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group mb-3">
-                                <label for="contract_id">Contract</label>
+                                <label for="contract_id">Contract <span class="text-muted">(Optional)</span></label>
                                 <select class="form-select @error('contract_id') is-invalid @enderror" 
-                                        id="contract_id" name="contract_id" required>
-                                    <option value="">Select Contract</option>
+                                        id="contract_id" name="contract_id">
+                                    <option value="">Select Contract (Optional)</option>
                                     @foreach($contracts as $contract)
                                         <option value="{{ $contract->id }}" 
                                             {{ (old('contract_id', $purchaseRequest->contract_id ?? '') == $contract->id) ? 'selected' : '' }}>
@@ -92,11 +92,12 @@
                                                         <select class="form-select" name="items[{{ $index }}][material_id]" required>
                                                             <option value="">Select Material</option>
                                                             @foreach($materials ?? [] as $material)
-                                                                <option value="{{ $material->id }}" 
-                                                                data-description="{{ $material->description }}"
-                                                                data-unit="{{ $material->unit }}"
-                                                                data-price="{{ $material->base_price }}"
-                                                                data-specifications="{{ $material->specifications }}">
+                                                                <option value="{{ $material->id }}"
+                                                                    data-description="{{ $material->description }}"
+                                                                    data-unit="{{ $material->unit }}"
+                                                                    data-price="{{ $material->base_price }}"
+                                                                    data-specifications="{{ $material->specifications }}"
+                                                                    {{ (isset($item) && $item->material_id == $material->id) ? 'selected' : '' }}>
                                                                     {{ $material->name }}
                                                                 </option>
                                                             @endforeach
@@ -203,7 +204,8 @@
                                     data-description="{{ $material->description }}"
                                     data-unit="{{ $material->unit }}"
                                     data-price="{{ $material->base_price }}"
-                                    data-specifications="{{ $material->specifications }}">
+                                    data-specifications="{{ $material->specifications }}"
+                                    {{ (isset($item) && $item->material_id == $material->id) ? 'selected' : '' }}>
                                     {{ $material->name }}
                                 </option>
                                 @endforeach

@@ -36,7 +36,7 @@
                                 <strong>Contract:</strong>
                             </div>
                             <div class="col-md-8">
-                                {{ $purchaseRequest->contract->contract_id }}
+                                {{ $purchaseRequest->contract->contract_id ?? 'N/A' }}
                             </div>
                         </div>
                         <div class="row mb-3">
@@ -101,7 +101,7 @@
                                             <td>{{ $item->unit }}</td>
                                             <td>{{ number_format($item->estimated_unit_price, 2) }}</td>
                                             <td>{{ number_format($item->total_amount, 2) }}</td>
-                                            <td>{{ $item->specifications ?? 'N/A' }}</td>
+                                            <td>{{ !empty($item->specifications) ? $item->specifications : 'N/A' }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

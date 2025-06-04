@@ -3,75 +3,119 @@
 namespace App\Http\Controllers;
 
 use App\Models\Quotation;
-use App\Models\Contract;
+use App\Models\PurchaseRequest;
 use App\Models\Material;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Models\QuotationAttachment;
+use App\Models\QuotationResponseAttachment;
 
 class QuotationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $quotations = Quotation::with(['contract', 'suppliers', 'materials'])
-            ->latest()
-            ->paginate(10);
+        $query = Quotation::with(['purchaseRequest', 'suppliers', 'materials']);
 
-        $contracts = Contract::where('status', 'approved')
-            ->orderBy('contract_id')
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('rfq_number', 'like', "%$search%")
+                  ->orWhere('notes', 'like', "%$search%")
+                  ->orWhereHas('purchaseRequest', function($q2) use ($search) {
+                      $q2->where('department', 'like', "%$search%")
+                         ->orWhere('purpose', 'like', "%$search%")
+                         ->orWhere('pr_number', 'like', "%$search%") ;
+                  })
+                  ->orWhereHas('suppliers', function($q3) use ($search) {
+                      $q3->where('company_name', 'like', "%$search%")
+                         ->orWhere('contact_person', 'like', "%$search%")
+                         ->orWhere('email', 'like', "%$search%") ;
+                  })
+                  ->orWhereHas('materials', function($q4) use ($search) {
+                      $q4->where('name', 'like', "%$search%")
+                         ->orWhere('description', 'like', "%$search%") ;
+                  });
+            });
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        // Purchase Request filter
+        if ($request->filled('purchase_request')) {
+            $query->where('purchase_request_id', $request->input('purchase_request'));
+        }
+
+        // Per page
+        $perPage = (int) $request->input('per_page', 10);
+        if (!in_array($perPage, [10, 25, 50, 100])) {
+            $perPage = 10;
+        }
+
+        $quotations = $query->latest()->paginate($perPage)->appends($request->all());
+
+        $purchaseRequests = PurchaseRequest::where('status', 'approved')
+            ->orderBy('id')
             ->get();
-        return view('admin.quotations.index', compact('quotations', 'contracts'));
+
+        return view('admin.quotations.index', compact('quotations', 'purchaseRequests'));
     }
 
     public function create()
     {
-        $contracts = Contract::with(['client', 'contractor'])
+        $purchaseRequests = PurchaseRequest::with(['items.material'])
             ->where('status', 'approved')
-            ->orderBy('contract_id')
+            ->orderBy('id')
             ->get();
-        $materials = Material::orderBy('name')->get();
         $suppliers = Supplier::orderBy('company_name')->get();
-        return view('admin.quotations.form', compact('contracts', 'materials', 'suppliers'));
+        return view('admin.quotations.form', compact('purchaseRequests', 'suppliers'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'contract_id' => 'required|exists:contracts,id',
+            'purchase_request_id' => 'required|exists:purchase_requests,id',
             'due_date' => 'required|date|after:today',
             'suppliers' => 'required|array',
             'suppliers.*' => 'exists:suppliers,id',
             'supplier_notes' => 'array',
             'supplier_notes.*' => 'nullable|string',
-            'materials' => 'required|array',
-            'materials.*.id' => 'required|exists:materials,id',
-            'materials.*.quantity' => 'required|numeric|min:1',
-            'materials.*.specifications' => 'nullable|string',
             'notes' => 'nullable|string',
+            'payment_terms' => 'nullable|string',
+            'delivery_terms' => 'nullable|string',
+            'validity_period' => 'nullable|string',
             'attachments.*' => 'nullable|file|max:10240'
         ]);
 
+        // Generate sequential RFQ number
+        $lastQuotation = Quotation::orderByDesc('id')->first();
+        if ($lastQuotation && preg_match('/RFQ-(\\d+)/i', $lastQuotation->rfq_number, $matches)) {
+            $nextNumber = intval($matches[1]) + 1;
+        } else {
+            $nextNumber = 1;
+        }
+        $rfqNumber = 'RFQ-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
         $quotation = Quotation::create([
-            'contract_id' => $validated['contract_id'],
+            'purchase_request_id' => $validated['purchase_request_id'],
             'due_date' => $validated['due_date'],
             'notes' => $validated['notes'],
+            'payment_terms' => $validated['payment_terms'],
+            'delivery_terms' => $validated['delivery_terms'],
+            'validity_period' => $validated['validity_period'],
             'status' => 'draft',
-            'rfq_number' => 'RFQ-' . Str::random(8)
+            'rfq_number' => $rfqNumber
         ]);
 
         // Attach suppliers with notes
         foreach ($validated['suppliers'] as $supplierId) {
             $quotation->suppliers()->attach($supplierId, [
                 'notes' => $validated['supplier_notes'][$supplierId] ?? null
-            ]);
-        }
-
-        // Attach materials with specifications
-        foreach ($validated['materials'] as $materialData) {
-            $quotation->materials()->attach($materialData['id'], [
-                'quantity' => $materialData['quantity'],
-                'specifications' => $materialData['specifications'] ?? null
             ]);
         }
 
@@ -85,13 +129,19 @@ class QuotationController extends Controller
             }
         }
 
+        // Set total_amount from PR items
+        $purchaseRequest = PurchaseRequest::with('items')->find($validated['purchase_request_id']);
+        $totalAmount = $purchaseRequest->items->sum('total_amount');
+        $quotation->total_amount = $totalAmount;
+        $quotation->save();
+
         return redirect()->route('quotations.index')
             ->with('success', 'RFQ created successfully.');
     }
 
     public function show(Quotation $quotation)
     {
-        $quotation->load(['contract', 'suppliers', 'materials', 'attachments']);
+        $quotation->load(['purchaseRequest', 'suppliers', 'responses.items', 'responses.attachments']);
         return view('admin.quotations.show', compact('quotation'));
     }
 
@@ -102,11 +152,13 @@ class QuotationController extends Controller
                 ->with('error', 'This RFQ cannot be edited.');
         }
 
-        $contracts = Contract::where('status', 'approved')
-            ->orderBy('contract_id')
+        $purchaseRequests = PurchaseRequest::with(['items.material'])
+            ->where('status', 'approved')
+            ->orderBy('id')
             ->get();
-        $quotation->load(['contract', 'suppliers', 'materials', 'attachments']);
-        return view('admin.quotations.form', compact('quotation', 'contracts'));
+        $suppliers = Supplier::orderBy('company_name')->get();
+        $quotation->load(['purchaseRequest', 'suppliers', 'responses.items', 'responses.attachments']);
+        return view('admin.quotations.form', compact('quotation', 'purchaseRequests', 'suppliers'));
     }
 
     public function update(Request $request, Quotation $quotation)
@@ -117,24 +169,26 @@ class QuotationController extends Controller
         }
 
         $validated = $request->validate([
-            'contract_id' => 'required|exists:contracts,id',
+            'purchase_request_id' => 'required|exists:purchase_requests,id',
             'due_date' => 'required|date|after:today',
             'suppliers' => 'required|array',
             'suppliers.*' => 'exists:suppliers,id',
             'supplier_notes' => 'array',
             'supplier_notes.*' => 'nullable|string',
-            'materials' => 'required|array',
-            'materials.*.id' => 'required|exists:materials,id',
-            'materials.*.quantity' => 'required|numeric|min:1',
-            'materials.*.specifications' => 'nullable|string',
             'notes' => 'nullable|string',
+            'payment_terms' => 'nullable|string',
+            'delivery_terms' => 'nullable|string',
+            'validity_period' => 'nullable|string',
             'attachments.*' => 'nullable|file|max:10240'
         ]);
 
         $quotation->update([
-            'contract_id' => $validated['contract_id'],
+            'purchase_request_id' => $validated['purchase_request_id'],
             'due_date' => $validated['due_date'],
-            'notes' => $validated['notes']
+            'notes' => $validated['notes'],
+            'payment_terms' => $validated['payment_terms'],
+            'delivery_terms' => $validated['delivery_terms'],
+            'validity_period' => $validated['validity_period']
         ]);
 
         // Sync suppliers with notes
@@ -146,16 +200,6 @@ class QuotationController extends Controller
         }
         $quotation->suppliers()->sync($supplierSync);
 
-        // Sync materials with specifications
-        $materialSync = [];
-        foreach ($validated['materials'] as $materialData) {
-            $materialSync[$materialData['id']] = [
-                'quantity' => $materialData['quantity'],
-                'specifications' => $materialData['specifications'] ?? null
-            ];
-        }
-        $quotation->materials()->sync($materialSync);
-
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = $file->store('quotations/' . $quotation->id);
@@ -165,6 +209,12 @@ class QuotationController extends Controller
                 ]);
             }
         }
+
+        // Set total_amount from PR items
+        $purchaseRequest = PurchaseRequest::with('items')->find($validated['purchase_request_id']);
+        $totalAmount = $purchaseRequest->items->sum('total_amount');
+        $quotation->total_amount = $totalAmount;
+        $quotation->save();
 
         return redirect()->route('quotations.index')
             ->with('success', 'RFQ updated successfully.');
@@ -199,7 +249,7 @@ class QuotationController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function approve(Quotation $quotation)
+    public function approve(Request $request, Quotation $quotation)
     {
         if ($quotation->status !== 'responded') {
             return response()->json([
@@ -208,7 +258,16 @@ class QuotationController extends Controller
             ]);
         }
 
-        $quotation->update(['status' => 'approved']);
+        $validated = $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'amount' => 'required|numeric|min:0',
+        ]);
+
+        $quotation->update([
+            'status' => 'approved',
+            'awarded_supplier_id' => $validated['supplier_id'],
+            'awarded_amount' => $validated['amount'],
+        ]);
 
         return response()->json(['success' => true]);
     }
@@ -246,19 +305,31 @@ class QuotationController extends Controller
     public function search(Request $request)
     {
         $query = $request->get('q');
-        $contractId = $request->get('contract_id');
+        $purchaseRequestId = $request->get('purchase_request_id');
         
-        $quotations = Quotation::with(['contract', 'suppliers', 'materials'])
+        $quotations = Quotation::with(['purchaseRequest', 'suppliers', 'materials'])
             ->when($query, function($q) use ($query) {
                 return $q->where('rfq_number', 'like', "%{$query}%")
                     ->orWhere('notes', 'like', "%{$query}%");
             })
-            ->when($contractId, function($q) use ($contractId) {
-                return $q->where('contract_id', $contractId);
+            ->when($purchaseRequestId, function($q) use ($purchaseRequestId) {
+                return $q->where('purchase_request_id', $purchaseRequestId);
             })
             ->latest()
             ->get();
             
         return response()->json($quotations);
+    }
+
+    public function downloadAttachment($id)
+    {
+        $attachment = QuotationAttachment::findOrFail($id);
+        return Storage::download($attachment->path, $attachment->original_name);
+    }
+
+    public function downloadResponseAttachment($id)
+    {
+        $attachment = QuotationResponseAttachment::findOrFail($id);
+        return Storage::download($attachment->path, $attachment->file_name);
     }
 } 

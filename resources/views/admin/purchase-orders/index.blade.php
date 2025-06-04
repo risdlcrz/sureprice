@@ -45,7 +45,7 @@
                             @forelse($purchaseOrders as $po)
                                 <tr>
                                     <td>{{ $po->po_number }}</td>
-                                    <td>{{ $po->contract->contract_id }}</td>
+                                    <td>{{ $po->contract->contract_id ?? 'N/A' }}</td>
                                     <td>{{ $po->supplier->company_name }}</td>
                                     <td>₱{{ number_format($po->total_amount, 2) }}</td>
                                     <td>

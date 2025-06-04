@@ -14,6 +14,27 @@
                 <form action="{{ route('purchase-orders.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
+                    @if(session('error'))
+                        <div class="alert alert-danger">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+                    @if(session('success'))
+                        <div class="alert alert-success">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group mb-3">
@@ -25,7 +46,10 @@
                                         <option value="{{ $pr->id }}" 
                                             {{ old('purchase_request_id') == $pr->id ? 'selected' : '' }}
                                             data-contract-id="{{ $pr->contract_id }}">
-                                            {{ $pr->pr_number }} - {{ $pr->contract->contract_id }}
+                                            {{ $pr->pr_number }}
+                                            @if($pr->contract)
+                                                - {{ $pr->contract->contract_id }}
+                                            @endif
                                         </option>
                                     @endforeach
                                 </select>
@@ -208,6 +232,10 @@
         supplierDetailsVisible = !supplierDetailsVisible;
         infoDiv.style.display = supplierDetailsVisible ? 'block' : 'none';
         toggleBtn.textContent = supplierDetailsVisible ? 'Hide' : 'Show';
+    });
+
+    document.querySelector('form').addEventListener('submit', function(e) {
+        alert('Form is trying to submit!');
     });
 </script>
 @endpush 

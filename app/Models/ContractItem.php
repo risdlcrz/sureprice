@@ -10,7 +10,10 @@ class ContractItem extends Model
     protected $fillable = [
         'contract_id',
         'material_id',
+        'material_name',
+        'material_unit',
         'supplier_id',
+        'supplier_name',
         'quantity',
         'amount',
         'total'

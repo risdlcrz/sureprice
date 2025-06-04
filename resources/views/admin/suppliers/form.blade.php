@@ -138,14 +138,14 @@
                                     <div class="form-group">
                                         <label for="materialSearch">Search Materials</label>
                                         <div class="input-group">
-                                            <input type="text" class="form-control" id="materialSearch" placeholder="Search by name or code...">
+                                            <input type="text" class="form-control" id="materialSearch" placeholder="Type to search materials...">
                                             <div class="input-group-append">
                                                 <button class="btn btn-outline-secondary" type="button" id="searchMaterialBtn">
                                                     <i class="fas fa-search"></i>
                                                 </button>
                                             </div>
                                         </div>
-                                        <div id="materialSearchResults" class="mt-2" style="display: none;"></div>
+                                        <div id="materialSearchResults" class="search-results" style="display: none;"></div>
                                     </div>
                                 </div>
                             </div>
@@ -223,24 +223,25 @@
         color: #2c3e50;
         font-weight: 600;
     }
-    #materialSearchResults {
-        position: absolute;
-        width: 100%;
-        max-height: 200px;
+    .search-results {
+        max-height: 300px;
         overflow-y: auto;
         background: white;
         border: 1px solid #dee2e6;
         border-radius: 0.25rem;
-        z-index: 1000;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: absolute;
+        z-index: 1000;
+        width: 97%;
     }
     .material-result {
-        padding: 0.5rem;
-        cursor: pointer;
-        border-bottom: 1px solid #dee2e6;
+        transition: background-color 0.2s;
     }
     .material-result:hover {
         background-color: #f8f9fa;
+    }
+    .hover-bg-light:hover {
+        background-color: #f8f9fa !important;
     }
 </style>
 @endpush
@@ -248,7 +249,131 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize form validation
+    const materialSearch = document.getElementById('materialSearch');
+    const materialSearchResults = document.getElementById('materialSearchResults');
+    const selectedMaterialsTable = document.getElementById('selectedMaterialsTable').getElementsByTagName('tbody')[0];
+    let searchTimeout;
+
+    // Material search
+    materialSearch.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        // Always show results, even with empty query
+        materialSearchResults.innerHTML = '<div class="p-2">Searching...</div>';
+        materialSearchResults.style.display = 'block';
+
+        searchTimeout = setTimeout(() => {
+            // Use the materials.search route
+            fetch(`{{ route('materials.search') }}?query=${encodeURIComponent(query)}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(materials => {
+                console.log('Search results:', materials); // Debug log
+                
+                if (Array.isArray(materials) && materials.length > 0) {
+                    const html = materials.map(material => `
+                        <div class="material-result p-2 border-bottom hover-bg-light" style="cursor: pointer;" 
+                             data-id="${material.id}"
+                             data-name="${material.name}"
+                             data-code="${material.code || ''}"
+                             data-unit="${material.unit}"
+                             data-category="${material.category ? material.category.name : ''}"
+                             data-base-price="${material.base_price || 0}">
+                            <div>
+                                <strong>${material.name}</strong> ${material.code ? `(${material.code})` : ''}
+                                <br>
+                                <small class="text-muted">
+                                    ${material.category ? material.category.name : 'No Category'} | ${material.unit}
+                                    ${material.base_price ? ` | Base Price: ₱${material.base_price}` : ''}
+                                </small>
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    materialSearchResults.innerHTML = html;
+                } else {
+                    materialSearchResults.innerHTML = '<div class="p-2">No materials found</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Search Error:', error);
+                materialSearchResults.innerHTML = `<div class="p-2 text-danger">Error searching materials: ${error.message}</div>`;
+            });
+        }, 300);
+    });
+
+    // Add material when clicked
+    materialSearchResults.addEventListener('click', function(e) {
+        const materialResult = e.target.closest('.material-result');
+        if (!materialResult) return;
+
+        const materialId = materialResult.dataset.id;
+        if (document.querySelector(`tr[data-material-id="${materialId}"]`)) {
+            alert('This material is already added');
+            return;
+        }
+
+        const row = document.createElement('tr');
+        row.dataset.materialId = materialId;
+        row.innerHTML = `
+            <td>${materialResult.dataset.code}</td>
+            <td>${materialResult.dataset.name}</td>
+            <td>${materialResult.dataset.category}</td>
+            <td>${materialResult.dataset.unit}</td>
+            <td>
+                <input type="number" class="form-control form-control-sm material-price" 
+                       name="materials[${materialId}][price]" 
+                       value="${materialResult.dataset.basePrice}" step="0.01" required>
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm material-lead-time" 
+                       name="materials[${materialId}][lead_time]" 
+                       value="0" required>
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-danger remove-material">
+                    <i class="fas fa-times"></i>
+                </button>
+            </td>
+        `;
+
+        selectedMaterialsTable.appendChild(row);
+        materialSearch.value = '';
+        materialSearchResults.style.display = 'none';
+    });
+
+    // Remove material when clicked
+    selectedMaterialsTable.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-material')) {
+            e.target.closest('tr').remove();
+        }
+    });
+
+    // Hide search results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!materialSearch.contains(e.target) && !materialSearchResults.contains(e.target)) {
+            materialSearchResults.style.display = 'none';
+        }
+    });
+
+    // Show search results on focus
+    materialSearch.addEventListener('focus', function() {
+        if (this.value.trim() !== '') {
+            materialSearchResults.style.display = 'block';
+        }
+    });
+
+    // Form validation
     const form = document.getElementById('supplierForm');
     if (form) {
         form.addEventListener('submit', function(event) {
@@ -259,97 +384,6 @@ document.addEventListener('DOMContentLoaded', function() {
             form.classList.add('was-validated');
         });
     }
-
-    // Material search functionality
-    const materialSearch = document.getElementById('materialSearch');
-    const searchMaterialBtn = document.getElementById('searchMaterialBtn');
-    const materialSearchResults = document.getElementById('materialSearchResults');
-    const selectedMaterialsTable = document.getElementById('selectedMaterialsTable').getElementsByTagName('tbody')[0];
-    let searchTimeout;
-
-    if (materialSearch && searchMaterialBtn && materialSearchResults) {
-        materialSearch.addEventListener('input', () => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(searchMaterials, 300);
-        });
-
-        searchMaterialBtn.addEventListener('click', searchMaterials);
-    }
-
-    function searchMaterials() {
-        const query = materialSearch.value.trim();
-        if (query.length < 2) {
-            materialSearchResults.style.display = 'none';
-            return;
-        }
-
-        fetch(`/api/materials/search?query=${encodeURIComponent(query)}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.length > 0) {
-                    materialSearchResults.innerHTML = data.map(material => `
-                        <div class="material-result" data-material='${JSON.stringify(material)}'>
-                            <strong>${material.name}</strong> (${material.code})<br>
-                            <small>${material.category ? material.category.name : 'No Category'} - ${material.unit}</small>
-                        </div>
-                    `).join('');
-                    materialSearchResults.style.display = 'block';
-                } else {
-                    materialSearchResults.innerHTML = '<div class="p-2">No materials found</div>';
-                    materialSearchResults.style.display = 'block';
-                }
-            })
-            .catch(() => {
-                materialSearchResults.innerHTML = '<div class="p-2 text-danger">Error searching materials</div>';
-                materialSearchResults.style.display = 'block';
-            });
-    }
-
-    // Handle material selection
-    materialSearchResults.addEventListener('click', function(e) {
-        const materialResult = e.target.closest('.material-result');
-        if (!materialResult) return;
-
-        const material = JSON.parse(materialResult.dataset.material);
-        if (document.querySelector(`tr[data-material-id="${material.id}"]`)) {
-            alert('This material is already added');
-            return;
-        }
-
-        const row = document.createElement('tr');
-        row.dataset.materialId = material.id;
-        row.innerHTML = `
-            <td>${material.code}</td>
-            <td>${material.name}</td>
-            <td>${material.category.name}</td>
-            <td>${material.unit}</td>
-            <td>
-                <input type="number" class="form-control form-control-sm material-price" 
-                       name="materials[${material.id}][price]" 
-                       value="${material.base_price}" step="0.01" required>
-            </td>
-            <td>
-                <input type="number" class="form-control form-control-sm material-lead-time" 
-                       name="materials[${material.id}][lead_time]" 
-                       value="0" required>
-            </td>
-            <td>
-                <button type="button" class="btn btn-sm btn-danger remove-material">
-                    <i class="fas fa-times"></i>
-                </button>
-            </td>
-        `;
-        selectedMaterialsTable.appendChild(row);
-        materialSearchResults.style.display = 'none';
-        materialSearch.value = '';
-    });
-
-    // Handle material removal
-    selectedMaterialsTable.addEventListener('click', function(e) {
-        if (e.target.closest('.remove-material')) {
-            e.target.closest('tr').remove();
-        }
-    });
 });
 </script>
 @endpush

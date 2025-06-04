@@ -38,9 +38,10 @@ class ContractController extends Controller
             'contractor',
             'client',
             'property',
-            'items.material.suppliers' => function($query) {
-                $query->where('is_preferred', true);
-            }
+            'items.material',
+            'items.supplier',
+            'purchaseOrder',
+            'purchaseOrder.supplier'
         ]);
 
         return view('admin.contracts.show', compact('contract'));
@@ -48,13 +49,18 @@ class ContractController extends Controller
 
     public function create()
     {
+        $purchaseOrders = \App\Models\PurchaseOrder::where('status', 'approved')
+            ->whereNull('contract_id')
+            ->orWhere('contract_id', 0)
+            ->get();
         return view('admin.contracts.form', [
             'edit_mode' => false,
             'contract' => null,
             'contractor' => null,
             'client' => null,
             'property' => null,
-            'items' => []
+            'items' => [],
+            'purchaseOrders' => $purchaseOrders
         ]);
     }
 
@@ -65,13 +71,18 @@ class ContractController extends Controller
 
     public function edit(Contract $contract)
     {
+        $purchaseOrders = \App\Models\PurchaseOrder::where('status', 'approved')
+            ->where(function($q) use ($contract) {
+                $q->whereNull('contract_id')
+                  ->orWhere('contract_id', 0)
+                  ->orWhere('id', $contract->purchase_order_id);
+            })
+            ->get();
         $contract->load([
             'contractor',
             'client',
             'property',
-            'items.material.suppliers' => function($query) {
-                $query->where('is_preferred', true);
-            }
+            'items.material.suppliers'
         ]);
 
         return view('admin.contracts.form', [
@@ -83,6 +94,7 @@ class ContractController extends Controller
             'items' => $contract->items,
             'existing_client_signature' => $contract->client_signature ? Storage::url($contract->client_signature) : null,
             'existing_contractor_signature' => $contract->contractor_signature ? Storage::url($contract->contractor_signature) : null,
+            'purchaseOrders' => $purchaseOrders
         ]);
     }
 
@@ -140,6 +152,16 @@ class ContractController extends Controller
                 'bank_name' => 'required_if:payment_method,bank_transfer',
                 'bank_account_name' => 'required_if:payment_method,bank_transfer',
                 'bank_account_number' => 'required_if:payment_method,bank_transfer',
+                'purchase_order_id' => 'nullable|exists:purchase_orders,id',
+
+                // Contract items validation - making them optional
+                'item_material_id' => 'nullable|array',
+                'item_material_id.*' => 'nullable|exists:materials,id',
+                'item_supplier_id.*' => 'nullable|exists:suppliers,id',
+                'item_quantity' => 'nullable|array',
+                'item_quantity.*' => 'nullable|numeric|min:0.01',
+                'item_amount' => 'nullable|array',
+                'item_amount.*' => 'nullable|numeric|min:0.01',
             ]);
 
             DB::beginTransaction();
@@ -233,22 +255,23 @@ class ContractController extends Controller
                 'contractor_id' => $contractor->id,
                 'client_id' => $client->id,
                 'property_id' => $property->id,
-                    'scope_of_work' => implode(', ', $request->scope_of_work),
-                    'scope_description' => $request->scope_description ?? '',
-                    'start_date' => $request->start_date ?? ($contract ? $contract->start_date : null),
-                    'end_date' => $request->end_date ?? ($contract ? $contract->end_date : null),
-                    'total_amount' => $request->total_amount,
-                    'budget_allocation' => $request->budget_allocation,
-                    'payment_method' => $request->payment_method,
-                    'payment_terms' => $request->payment_terms,
-                    'bank_name' => $request->bank_name,
-                    'bank_account_name' => $request->bank_account_name,
-                    'bank_account_number' => $request->bank_account_number,
-                    'jurisdiction' => $request->jurisdiction ?? $request->property_city . ', Philippines',
-                    'contract_terms' => $request->contract_terms ?? 'Standard terms and conditions apply',
+                'scope_of_work' => implode(', ', $request->scope_of_work),
+                'scope_description' => $request->scope_description ?? '',
+                'start_date' => $request->start_date ?? ($contract ? $contract->start_date : null),
+                'end_date' => $request->end_date ?? ($contract ? $contract->end_date : null),
+                'total_amount' => $request->total_amount,
+                'budget_allocation' => $request->budget_allocation,
+                'payment_method' => $request->payment_method,
+                'payment_terms' => $request->payment_terms,
+                'bank_name' => $request->bank_name,
+                'bank_account_name' => $request->bank_account_name,
+                'bank_account_number' => $request->bank_account_number,
+                'jurisdiction' => $request->jurisdiction ?? $request->property_city . ', Philippines',
+                'contract_terms' => $request->contract_terms ?? 'Standard terms and conditions apply',
                 'client_signature' => $signatures['client'],
                 'contractor_signature' => $signatures['contractor'],
-                'status' => 'draft'
+                'status' => 'draft',
+                'purchase_order_id' => $request->purchase_order_id
             ];
 
             if ($contract) {
@@ -258,8 +281,8 @@ class ContractController extends Controller
             }
 
                 // Save items if present
-                if ($request->has('items')) {
-            $this->saveItems($request, $contract);
+                if ($request->has('item_material_id')) {
+                    $this->saveItems($request, $contract);
                 }
 
             DB::commit();
@@ -366,17 +389,30 @@ class ContractController extends Controller
         $quantities = $request->input('item_quantity', []);
         $amounts = $request->input('item_amount', []);
         $supplierIds = $request->input('item_supplier_id', []);
+        $supplierNames = $request->input('item_supplier_name', []);
 
         foreach ($materials as $index => $materialId) {
             if (!$materialId) continue;
 
-            $contract->items()->create([
-                'material_id' => $materialId,
-                'supplier_id' => $supplierIds[$index] ?? null,
-                'quantity' => $quantities[$index],
-                'amount' => $amounts[$index],
-                'total' => $quantities[$index] * $amounts[$index]
-            ]);
+            // Get material and supplier details
+            $material = Material::find($materialId);
+            $supplier = null;
+            if (!empty($supplierIds[$index])) {
+                $supplier = Supplier::find($supplierIds[$index]);
+            }
+
+            if ($material) {
+                $contract->items()->create([
+                    'material_id' => $materialId,
+                    'material_name' => $material->name,
+                    'material_unit' => $material->unit,
+                    'supplier_id' => $supplierIds[$index] ?? null,
+                    'supplier_name' => $supplierNames[$index] ?? ($supplier ? $supplier->name : null),
+                    'quantity' => $quantities[$index],
+                    'amount' => $amounts[$index],
+                    'total' => $quantities[$index] * $amounts[$index]
+                ]);
+            }
         }
     }
 
