@@ -24,7 +24,7 @@ return new class extends Migration
             // $table->dropForeign(['contract_id']); // Removed to prevent error if FK does not exist
             // Make contract_id nullable and add the foreign key back as optional
             $table->foreignId('contract_id')->nullable()->change();
-            $table->foreign('contract_id')->references('id')->on('contracts')->onDelete('set null');
+            // $table->foreign('contract_id')->references('id')->on('contracts')->onDelete('set null');
         });
     }
 
@@ -48,7 +48,7 @@ return new class extends Migration
             
             // Make contract_id required again
             $table->foreignId('contract_id')->nullable(false)->change();
-            $table->foreign('contract_id')->references('id')->on('contracts')->onDelete('cascade');
+            // $table->foreign('contract_id')->references('id')->on('contracts')->onDelete('cascade');
         });
     }
 };

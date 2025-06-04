@@ -84,6 +84,7 @@
                                 <thead>
                                     <tr>
                                         <th>Material</th>
+                                        <th>Supplier</th>
                                         <th>Description</th>
                                         <th>Quantity</th>
                                         <th>Unit</th>
@@ -96,6 +97,7 @@
                                     @foreach($purchaseRequest->items as $item)
                                         <tr>
                                             <td>{{ $item->material->name }}</td>
+                                            <td>{{ optional($item->supplier)->company_name ?? 'N/A' }}</td>
                                             <td>{{ $item->description }}</td>
                                             <td>{{ $item->quantity }}</td>
                                             <td>{{ $item->unit }}</td>

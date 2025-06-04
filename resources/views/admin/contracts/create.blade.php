@@ -301,7 +301,10 @@
                                                     <div class="form-group">
                                                         <label>Preferred Suppliers</label>
                                                         <div class="suppliers-container">
-                                                            <!-- Suppliers will be dynamically loaded here -->
+                                                            <select name="item_supplier_id[]" class="supplier-select" required>
+                                                                <option value="">Select Supplier</option>
+                                                                <!-- Options will be dynamically loaded based on material selection -->
+                                                            </select>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -631,6 +634,23 @@ document.addEventListener('DOMContentLoaded', function() {
         itemCount++;
     }
 
+    function loadSuppliersForItem(materialId, supplierSelect) {
+        supplierSelect.innerHTML = '<option value="">Loading...</option>';
+        fetch(`/materials/${materialId}/suppliers`)
+            .then(response => response.json())
+            .then(suppliers => {
+                if (suppliers.length > 0) {
+                    supplierSelect.innerHTML = '<option value="">Select Supplier</option>' +
+                        suppliers.map(supplier => `<option value="${supplier.id}">${supplier.company_name}</option>`).join('');
+                } else {
+                    supplierSelect.innerHTML = '<option value="">No suppliers available</option>';
+                }
+            })
+            .catch(() => {
+                supplierSelect.innerHTML = '<option value="">Error loading suppliers</option>';
+            });
+    }
+
     function setupItemEventListeners(itemElement) {
         const container = itemElement.querySelector('.item-container');
         const searchInput = container.querySelector('.material-search');
@@ -690,36 +710,7 @@ document.addEventListener('DOMContentLoaded', function() {
             searchInput.value = '';
 
             // Load suppliers for this material
-            loadSuppliers(material.id, itemContainer);
-        }
-
-        function loadSuppliers(materialId, itemContainer) {
-            const suppliersContainer = itemContainer.querySelector('.suppliers-container');
-            
-            fetch(`/materials/${materialId}/suppliers`)
-                .then(response => response.json())
-                .then(suppliers => {
-                    if (suppliers.length > 0) {
-                        const suppliersHtml = suppliers.map(supplier => `
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input supplier-checkbox" 
-                                    name="items[${itemCount}][suppliers][]" 
-                                    value="${supplier.id}" 
-                                    id="supplier_${itemCount}_${supplier.id}">
-                                <label class="form-check-label" for="supplier_${itemCount}_${supplier.id}">
-                                    ${supplier.name} - ${supplier.price_range || 'Price not available'}
-                                </label>
-                            </div>
-                        `).join('');
-                        suppliersContainer.innerHTML = suppliersHtml;
-                    } else {
-                        suppliersContainer.innerHTML = '<p class="text-muted">No suppliers available for this material</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading suppliers:', error);
-                    suppliersContainer.innerHTML = '<p class="text-danger">Error loading suppliers</p>';
-                });
+            loadSuppliersForItem(material.id, itemContainer.querySelector('.supplier-select'));
         }
 
         function calculateTotal() {

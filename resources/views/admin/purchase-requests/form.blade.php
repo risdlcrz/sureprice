@@ -89,7 +89,7 @@
                                             <div class="row">
                                                 <div class="col-md-2">
                                                         <label>Material</label>
-                                                        <select class="form-select" name="items[{{ $index }}][material_id]" required>
+                                                        <select class="form-select material-select" name="items[{{ $index }}][material_id]" required>
                                                             <option value="">Select Material</option>
                                                             @foreach($materials ?? [] as $material)
                                                                 <option value="{{ $material->id }}"
@@ -97,11 +97,14 @@
                                                                     data-unit="{{ $material->unit }}"
                                                                     data-price="{{ $material->base_price }}"
                                                                     data-specifications="{{ $material->specifications }}"
+                                                                    data-suppliers='@json($material->suppliers->map(fn($s) => ["id"=>$s->id,"name"=>$s->company_name,"is_preferred"=>$s->pivot->is_preferred??false]))'
                                                                     {{ (isset($item) && $item->material_id == $material->id) ? 'selected' : '' }}>
                                                                     {{ $material->name }}
                                                                 </option>
                                                             @endforeach
                                                         </select>
+                                                        <input type="hidden" name="items[{{ $index }}][supplier_id]" class="supplier-id" />
+                                                        <div class="supplier-name text-info small mt-1"></div>
                                                     </div>
                                                 <div class="col-md-2">
                                                     <label>Description</label>
@@ -197,7 +200,7 @@
                 <div class="row">
                     <div class="col-md-2">
                             <label>Material</label>
-                        <select class="form-select" name="items[${itemIndex}][material_id]" required>
+                        <select class="form-select material-select" name="items[${itemIndex}][material_id]" required>
                                 <option value="">Select Material</option>
                                 @foreach($materials ?? [] as $material)
                                 <option value="{{ $material->id }}"
@@ -205,11 +208,14 @@
                                     data-unit="{{ $material->unit }}"
                                     data-price="{{ $material->base_price }}"
                                     data-specifications="{{ $material->specifications }}"
-                                    {{ (isset($item) && $item->material_id == $material->id) ? 'selected' : '' }}>
+                                    data-suppliers='@json($material->suppliers->map(fn($s) => ["id"=>$s->id,"name"=>$s->company_name,"is_preferred"=>$s->pivot->is_preferred??false]))'
+                                >
                                     {{ $material->name }}
                                 </option>
                                 @endforeach
                             </select>
+                            <input type="hidden" name="items[${itemIndex}][supplier_id]" class="supplier-id" />
+                            <div class="supplier-name text-info small mt-1"></div>
                     </div>
                     <div class="col-md-2">
                         <label>Description</label>
@@ -308,6 +314,19 @@
                 row.querySelector('input[name$="[estimated_unit_price]"]').value = option.dataset.price || '';
                 if (row.querySelector('input[name$="[specifications]"]')) {
                     row.querySelector('input[name$="[specifications]"]').value = option.dataset.specifications || '';
+                }
+                // Auto supplier fill-in
+                const suppliers = JSON.parse(option.getAttribute('data-suppliers') || '[]');
+                let preferred = suppliers.find(s => s.is_preferred);
+                if (!preferred && suppliers.length > 0) preferred = suppliers[0];
+                const supplierIdInput = row.querySelector('.supplier-id');
+                const supplierNameDiv = row.querySelector('.supplier-name');
+                if (preferred) {
+                    supplierIdInput.value = preferred.id;
+                    supplierNameDiv.textContent = 'Supplier: ' + preferred.name;
+                } else {
+                    supplierIdInput.value = '';
+                    supplierNameDiv.textContent = 'No supplier found';
                 }
             }
         }

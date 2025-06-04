@@ -397,6 +397,11 @@ class ContractController extends Controller
             // Get material and supplier details
             $material = Material::find($materialId);
             $supplier = null;
+            // Fallback: if supplier_id is not set, auto-select preferred or first supplier
+            if (empty($supplierIds[$index]) && $material) {
+                $preferredSupplier = $material->suppliers()->wherePivot('is_preferred', true)->first() ?? $material->suppliers()->first();
+                $supplierIds[$index] = $preferredSupplier ? $preferredSupplier->id : null;
+            }
             if (!empty($supplierIds[$index])) {
                 $supplier = Supplier::find($supplierIds[$index]);
             }

@@ -34,6 +34,9 @@
     <a href="{{ route('admin.inventory') }}" class="btn">
         <i class="fas fa-boxes"></i>Inventory
     </a>
+    <a href="{{ route('admin.transactions') }}" class="btn">
+        <i class="fas fa-money-check-alt"></i>Transactions
+    </a>
 </div>
 
 <!-- Logout Button -->
