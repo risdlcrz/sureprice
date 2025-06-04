@@ -23,6 +23,7 @@ class SupplierEvaluation extends Model
     ];
 
     protected $casts = [
+        'evaluation_date' => 'datetime',
         'engagement_score' => 'float',
         'delivery_speed_score' => 'float',
         'performance_score' => 'float',
@@ -30,7 +31,6 @@ class SupplierEvaluation extends Model
         'cost_variance_score' => 'float',
         'sustainability_score' => 'float',
         'final_score' => 'float',
-        'evaluation_date' => 'datetime',
         'delivery_ontime_ratio' => 'float',
         'defect_ratio' => 'float',
         'cost_variance_ratio' => 'float'

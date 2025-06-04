@@ -13,8 +13,6 @@ class Supplier extends Model
 
     protected $fillable = [
         'company',
-        'materials',
-        'price',
         'contact_person',
         'designation',
         'email',
@@ -31,26 +29,30 @@ class Supplier extends Model
         'bank_name',
         'account_name',
         'account_number',
-        'dti_sec_registration_path',
-        'accreditation_docs_path',
-        'mayors_permit_path',
-        'valid_id_path',
-        'company_profile_path',
-        'price_list_path'
+        'materials',
+        'price',
+        'status'
     ];
 
     protected $casts = [
-        'price' => 'float',
-        'years_operation' => 'integer',
         'vat_registered' => 'boolean',
-        'use_sureprice' => 'boolean'
+        'use_sureprice' => 'boolean',
+        'status' => 'string'
     ];
 
-    public function materials(): BelongsToMany
+    public function materials(): HasMany
     {
-        return $this->belongsToMany(Material::class)
-            ->withPivot(['price', 'lead_time'])
-            ->withTimestamps();
+        return $this->hasMany(SupplierMaterial::class);
+    }
+
+    public function evaluations(): HasMany
+    {
+        return $this->hasMany(SupplierEvaluation::class);
+    }
+
+    public function latestEvaluation()
+    {
+        return $this->hasOne(SupplierEvaluation::class)->latest();
     }
 
     public function contractItems(): HasMany
@@ -68,11 +70,6 @@ class Supplier extends Model
     public function attachments()
     {
         return $this->morphMany(Attachment::class, 'attachable');
-    }
-
-    public function evaluations(): HasMany
-    {
-        return $this->hasMany(SupplierEvaluation::class);
     }
 
     public function metrics(): HasMany

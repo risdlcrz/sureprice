@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+<!-- Add Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <div class="container py-4">
     <!-- Error Messages -->
     @if(session('error'))
@@ -12,7 +15,8 @@
 
     <!-- Success Messages -->
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show">
+        <div class="alert alert-success beautiful-alert alert-dismissible fade show" id="successAlert">
+            <i class="fas fa-check-circle me-2"></i>
             {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
@@ -75,7 +79,13 @@
     <!-- Rankings Chart -->
     <div class="card mb-4">
         <div class="card-body">
-            <h4 class="card-title mb-4">Supplier {{ $validCategories[$category] }} Rankings</h4>
+            <h4 class="card-title mb-4">
+                Supplier 
+                {{ (isset($category) && isset($validCategories) && is_array($validCategories) && array_key_exists($category, $validCategories)) 
+                    ? $validCategories[$category] 
+                    : 'Overall' 
+                }} Rankings
+            </h4>
             <div class="chart-container">
                 <canvas id="rankingsChart"></canvas>
             </div>
