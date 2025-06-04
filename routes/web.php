@@ -159,9 +159,10 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
 
     Route::get('/budget-allocation', [BudgetAllocationController::class, 'index'])->name('admin.budget-allocation');
 
-    Route::get('/supplier-rankings', function () {
-        return view('admin.supplier-rankings');
-    })->name('admin.supplier-rankings');
+    Route::get('/supplier-rankings', [SupplierController::class, 'index'])->name('supplier-rankings');
+    Route::post('/supplier-rankings', [SupplierController::class, 'store'])->name('supplier-rankings.store');
+    Route::post('/suppliers/import', [SupplierController::class, 'import'])->name('admin.suppliers.import');
+    Route::get('/suppliers/template/download', [SupplierController::class, 'downloadTemplate'])->name('admin.suppliers.template');
 
     Route::get('/price-analysis', function () {
         return view('admin.price-analysis');
