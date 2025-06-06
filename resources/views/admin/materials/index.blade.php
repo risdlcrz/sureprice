@@ -11,9 +11,9 @@
                         <button type="button" class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#bulkSrpModal">
                             <i class="fas fa-tags"></i> Set SRP Prices
                         </button>
-                        <a href="{{ route('materials.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Add New Material
-                        </a>
+                    <a href="{{ route('materials.create') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Material
+                    </a>
                     </div>
                 </div>
                 <div class="card-body">
@@ -129,7 +129,7 @@
                                             data-bs-target="#supplierPricesModal">
                                             <span class="badge bg-secondary">
                                                 {{ $material->suppliers->count() }}
-                                            </span>
+                                        </span>
                                             View Suppliers
                                         </button>
                                     </td>

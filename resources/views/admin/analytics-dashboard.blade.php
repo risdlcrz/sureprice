@@ -27,11 +27,11 @@
             <a href="{{ route('admin.budget-allocation') }}" class="text-decoration-none">
                 <div class="card h-100">
                     <img src="{{ asset('images/budget.jpg') }}" class="card-img-top" alt="Budget">
-                    <div class="card-body">
-                        <h5 class="card-title">Budget Allocation and Expenditures</h5>
+            <div class="card-body">
+                <h5 class="card-title">Budget Allocation and Expenditures</h5>
                         <p class="card-text">Monitor budget allocations and track expenditures.</p>
                     </div>
-                </div>
+            </div>
             </a>
         </div>
 
@@ -40,8 +40,8 @@
             <a href="{{ route('admin.supplier-rankings') }}" class="text-decoration-none">
                 <div class="card h-100">
                     <img src="{{ asset('images/suppliers.jpg') }}" class="card-img-top" alt="Suppliers">
-                    <div class="card-body">
-                        <h5 class="card-title">Supplier Ranking and Performance</h5>
+            <div class="card-body">
+                <h5 class="card-title">Supplier Ranking and Performance</h5>
                         <p class="card-text">Evaluate and compare supplier performance metrics.</p>
                     </div>
                 </div>
@@ -57,7 +57,7 @@
                         <h5 class="card-title">Price Trend Analysis</h5>
                         <p class="card-text">Analyze price trends and market fluctuations.</p>
                     </div>
-                </div>
+            </div>
             </a>
         </div>
     </div>
@@ -69,7 +69,7 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">Recent Analytics Overview</h5>
                 </div>
-                <div class="card-body">
+            <div class="card-body">
                     <!-- Add your analytics overview content here -->
                 </div>
             </div>
