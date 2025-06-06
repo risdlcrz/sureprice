@@ -18,6 +18,7 @@ class Material extends Model
         'unit',
         'category_id',
         'base_price',
+        'srp_price',
         'specifications',
         'minimum_stock',
         'current_stock'
@@ -25,6 +26,7 @@ class Material extends Model
 
     protected $casts = [
         'base_price' => 'decimal:2',
+        'srp_price' => 'decimal:2',
         'minimum_stock' => 'decimal:2',
         'current_stock' => 'decimal:2'
     ];

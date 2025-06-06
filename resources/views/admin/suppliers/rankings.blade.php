@@ -151,86 +151,122 @@
                     </div>
                     <input type="hidden" name="supplier_id" id="supplier_id">
                     
-                    <div class="row mb-3">
+                    <!-- Star Rating Fields -->
+                    <div class="row mb-4">
                         <div class="col-md-6">
-                            <label for="delivery_speed_score" class="form-label">Delivery Speed Score (0-5)</label>
-                            <input type="number" class="form-control" id="delivery_speed_score" name="delivery_speed_score" 
-                                   min="0" max="5" step="0.1" required>
+                            <label class="form-label d-block">Delivery Speed Score</label>
+                            <div class="rating">
+                                @for($i = 5; $i >= 1; $i--)
+                                <input type="radio" id="delivery_speed_{{ $i }}" name="delivery_speed_score" value="{{ $i }}" />
+                                <label for="delivery_speed_{{ $i }}">
+                                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                </label>
+                                @endfor
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="quality_score" class="form-label">Quality Score (0-5)</label>
-                            <input type="number" class="form-control" id="quality_score" name="quality_score" 
-                                   min="0" max="5" step="0.1" required>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="cost_variance_score" class="form-label">Cost Variance Score (0-5)</label>
-                            <input type="number" class="form-control" id="cost_variance_score" name="cost_variance_score" 
-                                   min="0" max="5" step="0.1" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="performance_score" class="form-label">Performance Score (0-5)</label>
-                            <input type="number" class="form-control" id="performance_score" name="performance_score" 
-                                   min="0" max="5" step="0.1" required>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="engagement_score" class="form-label">Engagement Score (0-5)</label>
-                            <input type="number" class="form-control" id="engagement_score" name="engagement_score" 
-                                   min="0" max="5" step="0.1" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="sustainability_score" class="form-label">Sustainability Score (0-5)</label>
-                            <input type="number" class="form-control" id="sustainability_score" name="sustainability_score" 
-                                   min="0" max="5" step="0.1" required>
+                            <label class="form-label d-block">Quality Score</label>
+                            <div class="rating">
+                                @for($i = 5; $i >= 1; $i--)
+                                <input type="radio" id="quality_{{ $i }}" name="quality_score" value="{{ $i }}" />
+                                <label for="quality_{{ $i }}">
+                                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                </label>
+                                @endfor
+                            </div>
                         </div>
                     </div>
 
-                    <hr>
-
-                    <h6>Metrics</h6>
-                    <div class="row mb-3">
+                    <div class="row mb-4">
                         <div class="col-md-6">
-                            <label for="ontime_deliveries" class="form-label">On-time Deliveries</label>
-                            <input type="number" class="form-control" id="ontime_deliveries" name="ontime_deliveries" 
-                                   min="0" required>
+                            <label class="form-label d-block">Cost Variance Score</label>
+                            <div class="rating">
+                                @for($i = 5; $i >= 1; $i--)
+                                <input type="radio" id="cost_{{ $i }}" name="cost_variance_score" value="{{ $i }}" />
+                                <label for="cost_{{ $i }}">
+                                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                </label>
+                                @endfor
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="total_deliveries" class="form-label">Total Deliveries</label>
-                            <input type="number" class="form-control" id="total_deliveries" name="total_deliveries" 
-                                   min="0" required>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="defective_units" class="form-label">Defective Units</label>
-                            <input type="number" class="form-control" id="defective_units" name="defective_units" 
-                                   min="0" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="total_units" class="form-label">Total Units</label>
-                            <input type="number" class="form-control" id="total_units" name="total_units" 
-                                   min="0" required>
+                            <label class="form-label d-block">Performance Score</label>
+                            <div class="rating">
+                                @for($i = 5; $i >= 1; $i--)
+                                <input type="radio" id="performance_{{ $i }}" name="performance_score" value="{{ $i }}" />
+                                <label for="performance_{{ $i }}">
+                                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                </label>
+                                @endfor
+                            </div>
                         </div>
                     </div>
 
-                    <div class="row mb-3">
+                    <div class="row mb-4">
                         <div class="col-md-6">
-                            <label for="actual_cost" class="form-label">Actual Cost</label>
-                            <input type="number" class="form-control" id="actual_cost" name="actual_cost" 
-                                   min="0" step="0.01" required>
+                            <label class="form-label d-block">Engagement Score</label>
+                            <div class="rating">
+                                @for($i = 5; $i >= 1; $i--)
+                                <input type="radio" id="engagement_{{ $i }}" name="engagement_score" value="{{ $i }}" />
+                                <label for="engagement_{{ $i }}">
+                                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                </label>
+                                @endfor
+                            </div>
                         </div>
                         <div class="col-md-6">
-                            <label for="estimated_cost" class="form-label">Estimated Cost</label>
-                            <input type="number" class="form-control" id="estimated_cost" name="estimated_cost" 
-                                   min="0" step="0.01" required>
+                            <label class="form-label d-block">Sustainability Score</label>
+                            <div class="rating">
+                                @for($i = 5; $i >= 1; $i--)
+                                <input type="radio" id="sustainability_{{ $i }}" name="sustainability_score" value="{{ $i }}" />
+                                <label for="sustainability_{{ $i }}">
+                                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                </label>
+                                @endfor
+                            </div>
                         </div>
                     </div>
+
+                    <!-- Metrics Section -->
+                    <div class="metrics-section">
+                        <h6 class="metrics-title">Purchase Order Metrics</h6>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <div class="metric-value" id="ontime_deliveries_display">0</div>
+                                <div class="metric-label">On-time Deliveries</div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="metric-value" id="total_deliveries_display">0</div>
+                                <div class="metric-label">Total Deliveries</div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="metric-value" id="defective_units_display">0</div>
+                                <div class="metric-label">Defective Units</div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="metric-value" id="total_units_display">0</div>
+                                <div class="metric-label">Total Units</div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="metric-value" id="actual_cost_display">₱0.00</div>
+                                <div class="metric-label">Actual Cost</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="metric-value" id="estimated_cost_display">₱0.00</div>
+                                <div class="metric-label">Estimated Cost</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden Metrics Fields -->
+                    <input type="hidden" name="ontime_deliveries" id="ontime_deliveries">
+                    <input type="hidden" name="total_deliveries" id="total_deliveries">
+                    <input type="hidden" name="defective_units" id="defective_units">
+                    <input type="hidden" name="total_units" id="total_units">
+                    <input type="hidden" name="actual_cost" id="actual_cost">
+                    <input type="hidden" name="estimated_cost" id="estimated_cost">
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -310,28 +346,42 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('supplier_id').value = supplierId;
 
         try {
-            const response = await fetch(`/admin/suppliers/${supplierId}/latest-evaluation`);
-            const data = await response.json();
+            // Load evaluation data
+            const evalResponse = await fetch(`/admin/suppliers/${supplierId}/latest-evaluation`);
+            const evalData = await evalResponse.json();
 
-            if (data.evaluation) {
-                document.getElementById('delivery_speed_score').value = data.evaluation.delivery_speed_score;
-                document.getElementById('quality_score').value = data.evaluation.quality_score;
-                document.getElementById('cost_variance_score').value = data.evaluation.cost_variance_score;
-                document.getElementById('engagement_score').value = data.evaluation.engagement_score;
-                document.getElementById('performance_score').value = data.evaluation.performance_score;
-                document.getElementById('sustainability_score').value = data.evaluation.sustainability_score;
+            // Set star ratings
+            if (evalData.evaluation) {
+                document.querySelector(`input[name="delivery_speed_score"][value="${Math.round(evalData.evaluation.delivery_speed_score)}"]`)?.checked = true;
+                document.querySelector(`input[name="quality_score"][value="${Math.round(evalData.evaluation.quality_score)}"]`)?.checked = true;
+                document.querySelector(`input[name="cost_variance_score"][value="${Math.round(evalData.evaluation.cost_variance_score)}"]`)?.checked = true;
+                document.querySelector(`input[name="performance_score"][value="${Math.round(evalData.evaluation.performance_score)}"]`)?.checked = true;
+                document.querySelector(`input[name="engagement_score"][value="${Math.round(evalData.evaluation.engagement_score)}"]`)?.checked = true;
+                document.querySelector(`input[name="sustainability_score"][value="${Math.round(evalData.evaluation.sustainability_score)}"]`)?.checked = true;
             }
 
-            if (data.metrics) {
-                document.getElementById('total_deliveries').value = data.metrics.total_deliveries;
-                document.getElementById('ontime_deliveries').value = data.metrics.ontime_deliveries;
-                document.getElementById('total_units').value = data.metrics.total_units;
-                document.getElementById('defective_units').value = data.metrics.defective_units;
-                document.getElementById('estimated_cost').value = data.metrics.estimated_cost;
-                document.getElementById('actual_cost').value = data.metrics.actual_cost;
-            }
+            // Load purchase order metrics
+            const metricsResponse = await fetch(`/admin/suppliers/${supplierId}/purchase-order-metrics`);
+            const metricsData = await metricsResponse.json();
+
+            // Update metrics display and hidden fields
+            document.getElementById('ontime_deliveries_display').textContent = metricsData.ontime_deliveries;
+            document.getElementById('total_deliveries_display').textContent = metricsData.total_deliveries;
+            document.getElementById('defective_units_display').textContent = metricsData.defective_units;
+            document.getElementById('total_units_display').textContent = metricsData.total_units;
+            document.getElementById('actual_cost_display').textContent = `₱${metricsData.actual_cost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('estimated_cost_display').textContent = `₱${metricsData.estimated_cost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+            // Set hidden fields
+            document.getElementById('ontime_deliveries').value = metricsData.ontime_deliveries;
+            document.getElementById('total_deliveries').value = metricsData.total_deliveries;
+            document.getElementById('defective_units').value = metricsData.defective_units;
+            document.getElementById('total_units').value = metricsData.total_units;
+            document.getElementById('actual_cost').value = metricsData.actual_cost;
+            document.getElementById('estimated_cost').value = metricsData.estimated_cost;
+
         } catch (error) {
-            console.error('Error loading evaluation data:', error);
+            console.error('Error loading data:', error);
         }
     });
 
@@ -352,35 +402,35 @@ document.addEventListener('DOMContentLoaded', function() {
             spinner.classList.remove('d-none');
             successMessage.classList.add('d-none');
             
-            // Save evaluation
-            const evalResponse = await fetch(`/admin/suppliers/${supplierId}/evaluations`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                }
-            });
+            // Save evaluation and metrics in parallel
+            const [evalResponse, metricsResponse] = await Promise.all([
+                fetch(`/admin/suppliers/${supplierId}/evaluations`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                }),
+                fetch(`/admin/suppliers/${supplierId}/metrics`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                })
+            ]);
             
+            // Check if both requests were successful
             if (!evalResponse.ok) throw new Error('Failed to save evaluation');
-
-            // Save metrics
-            const metricsResponse = await fetch(`/admin/suppliers/${supplierId}/metrics`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                }
-            });
-            
             if (!metricsResponse.ok) throw new Error('Failed to save metrics');
 
             // Show success message
             successMessage.classList.remove('d-none');
             
-            // Reload page after a short delay
+            // Reload page after a delay to ensure server processing is complete
             setTimeout(() => {
                 window.location.reload();
-            }, 1500);
+            }, 2500);
 
         } catch (error) {
             console.error('Error:', error);
@@ -410,6 +460,67 @@ document.addEventListener('DOMContentLoaded', function() {
         margin-top: 1rem;
         padding-top: 1rem;
     }
+}
+
+.rating {
+    display: inline-flex;
+    flex-direction: row-reverse;
+    gap: 0.3rem;
+    --stroke: #666;
+    --fill: #ffc73a;
+}
+
+.rating input {
+    appearance: unset;
+}
+
+.rating label {
+    cursor: pointer;
+}
+
+.rating svg {
+    width: 2rem;
+    height: 2rem;
+    overflow: visible;
+    fill: transparent;
+    stroke: var(--stroke);
+    stroke-linejoin: bevel;
+    stroke-width: 2px;
+    transition: 0.2s;
+}
+
+.rating input:checked ~ label svg {
+    fill: var(--fill);
+    stroke: var(--fill);
+}
+
+.rating input:hover ~ label svg {
+    fill: var(--fill);
+    stroke: var(--fill);
+}
+
+.metrics-section {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+}
+
+.metrics-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: #495057;
+}
+
+.metric-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: #6c757d;
 }
 </style>
 @endpush 

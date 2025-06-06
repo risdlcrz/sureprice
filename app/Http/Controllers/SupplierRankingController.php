@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Illuminate\Support\Facades\DB;
 
 class SupplierRankingController extends Controller
 {
@@ -40,18 +41,36 @@ class SupplierRankingController extends Controller
 
     public function storeEvaluation(Request $request, Supplier $supplier)
     {
-        $validated = $request->validate([
-            'delivery_speed_score' => 'required|numeric|min:0|max:5',
-            'quality_score' => 'required|numeric|min:0|max:5',
-            'cost_variance_score' => 'required|numeric|min:0|max:5',
-            'engagement_score' => 'required|numeric|min:0|max:5',
-            'performance_score' => 'required|numeric|min:0|max:5',
-            'sustainability_score' => 'required|numeric|min:0|max:5',
+        $request->validate([
+            'ratings' => 'required|array',
+            'ratings.*' => 'required|numeric|min:0.5|max:5|multiple_of:0.5',
+            'comments' => 'nullable|string|max:1000'
         ]);
 
-        $supplier->evaluations()->create($validated);
+        try {
+            DB::beginTransaction();
 
-        return response()->json(['message' => 'Evaluation stored successfully']);
+            $evaluation = $supplier->evaluations()->create([
+                'evaluator_id' => auth()->id(),
+                'evaluation_date' => now(),
+                'ratings' => $request->ratings,
+                'comments' => $request->comments,
+                'average_rating' => collect($request->ratings)->avg()
+            ]);
+
+            // Update supplier's average rating
+            $supplier->update([
+                'average_rating' => $supplier->evaluations()->avg('average_rating')
+            ]);
+
+            DB::commit();
+
+            return back()->with('success', 'Evaluation submitted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error storing supplier evaluation: ' . $e->getMessage());
+            return back()->with('error', 'Failed to submit evaluation. Please try again.');
+        }
     }
 
     public function updateMetrics(Request $request, Supplier $supplier)
@@ -103,5 +122,33 @@ class SupplierRankingController extends Controller
             'evaluation' => $evaluation,
             'metrics' => $metrics
         ]);
+    }
+
+    public function getPurchaseOrderMetrics(Supplier $supplier)
+    {
+        $metrics = $supplier->purchaseOrders()
+            ->where('is_completed', true)
+            ->selectRaw('
+                COUNT(*) as total_deliveries,
+                SUM(CASE WHEN is_on_time = 1 THEN 1 ELSE 0 END) as ontime_deliveries,
+                SUM(total_units) as total_units,
+                SUM(defective_units) as defective_units,
+                SUM(estimated_cost) as estimated_cost,
+                SUM(actual_cost) as actual_cost
+            ')
+            ->first();
+
+        if (!$metrics) {
+            return response()->json([
+                'total_deliveries' => 0,
+                'ontime_deliveries' => 0,
+                'total_units' => 0,
+                'defective_units' => 0,
+                'estimated_cost' => 0,
+                'actual_cost' => 0
+            ]);
+        }
+
+        return response()->json($metrics);
     }
 } 
