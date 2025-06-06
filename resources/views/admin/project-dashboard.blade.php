@@ -289,7 +289,7 @@
                                     <small>{{ $contract->created_at->diffForHumans() }}</small>
                                 </div>
                                 <p class="mb-1">{{ $contract->client_name }}</p>
-                                <small class="text-muted">Budget: ₱{{ number_format($contract->budget_allocation, 2) }}</small>
+                                <small class="text-muted">Total Amount: ₱{{ number_format($contract->total_amount, 2) }}</small>
                             </a>
                             @empty
                             <div class="list-group-item">
@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <strong>Start:</strong> ${formatDate(contract.start)}<br>
             <strong>End:</strong> ${formatDate(contract.end)}<br>
             <strong>Client:</strong> ${contract.extendedProps.client}<br>
-            <strong>Budget:</strong> ₱${new Intl.NumberFormat().format(contract.extendedProps.budget)}
+            <strong>Total Amount:</strong> ₱${new Intl.NumberFormat().format(contract.extendedProps.total_amount)}
         `;
         
         contractStatus.textContent = contract.extendedProps.status.toUpperCase();

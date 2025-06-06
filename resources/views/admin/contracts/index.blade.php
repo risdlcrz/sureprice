@@ -81,7 +81,9 @@
                             <th>Contractor</th>
                             <th>Start Date</th>
                             <th>End Date</th>
-                            <th>Budget Allocation</th>
+                            <th>Materials Cost</th>
+                            <th>Labor Cost</th>
+                            <th>Total Amount</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -106,7 +108,9 @@
                                 </td>
                                 <td>{{ $contract->start_date->format('M d, Y') }}</td>
                                 <td>{{ $contract->end_date->format('M d, Y') }}</td>
-                                <td>₱{{ number_format($contract->budget_allocation, 2) }}</td>
+                                <td>₱{{ number_format($contract->total_amount - $contract->labor_cost, 2) }}</td>
+                                <td>₱{{ number_format($contract->labor_cost, 2) }}</td>
+                                <td>₱{{ number_format($contract->total_amount, 2) }}</td>
                                 <td>
                                     <button type="button" 
                                             class="btn btn-sm status-badge {{ $contract->status === 'draft' ? 'btn-warning' : ($contract->status === 'approved' ? 'btn-success' : 'btn-secondary') }}"

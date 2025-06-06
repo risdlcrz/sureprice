@@ -18,7 +18,9 @@ class Contract extends Model
         'start_date',
         'end_date',
         'total_amount',
-        'budget_allocation',
+        'base_labor_rate',
+        'labor_cost',
+        'materials_cost',
         'payment_method',
         'payment_terms',
         'bank_name',
@@ -40,7 +42,9 @@ class Contract extends Model
         'end_date' => 'date',
         'check_date' => 'date',
         'total_amount' => 'decimal:2',
-        'budget_allocation' => 'decimal:2',
+        'base_labor_rate' => 'decimal:2',
+        'labor_cost' => 'decimal:2',
+        'materials_cost' => 'decimal:2'
     ];
 
     protected static function boot()

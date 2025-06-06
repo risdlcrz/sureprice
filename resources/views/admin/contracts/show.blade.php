@@ -300,6 +300,28 @@
             </div>
         </div>
     </div>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Cost Breakdown</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <p><strong>Materials Cost:</strong></p>
+                    <h5>₱{{ number_format($contract->total_amount - $contract->labor_cost, 2) }}</h5>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Labor Cost:</strong></p>
+                    <h5>₱{{ number_format($contract->labor_cost, 2) }}</h5>
+                </div>
+                <div class="col-md-4">
+                    <p><strong>Total Amount:</strong></p>
+                    <h5>₱{{ number_format($contract->total_amount, 2) }}</h5>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
 

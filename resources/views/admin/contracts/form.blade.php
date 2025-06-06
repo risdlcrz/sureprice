@@ -515,27 +515,41 @@
                             </div>
                         </div>
 
-                        <!-- Estimated Timeline -->
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                    <div class="card bg-light">
-                                        <div class="card-body">
-                                            <h6 class="card-title">Estimated Timeline</h6>
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <span class="text-muted">Total Estimated Days:</span>
-                                                    <span class="h4 mb-0 ms-2" id="totalEstimatedDays">0</span>
+                        <!-- Timeline Section -->
+                        <div class="section-container" id="timelineSection">
+                            <h5 class="section-title">Project Timeline</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="start_date">Start Date</label>
+                                        <input type="date" class="form-control @error('start_date') is-invalid @enderror" 
+                                            id="start_date" name="start_date" 
+                                            value="{{ old('start_date', $contract ? $contract->start_date?->format('Y-m-d') : '') }}" 
+                                            required>
+                                        @error('start_date')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
                                 </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="end_date">End Date</label>
+                                        <input type="date" class="form-control @error('end_date') is-invalid @enderror" 
+                                            id="end_date" name="end_date" 
+                                            value="{{ old('end_date', $contract ? $contract->end_date?->format('Y-m-d') : '') }}" 
+                                            required>
+                                        @error('end_date')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Scope Materials Summary -->
-                    <div class="row mt-4">
-                        <div class="col-12">
-                                <div class="card">
+                        <!-- Scope Materials Summary -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                    <div class="card">
                                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0">Required Materials by Scope</h6>
                                                                 </div>
@@ -639,6 +653,7 @@
                                             @enderror
                                         </div>
                                     </div>
+                                    <input type="hidden" id="labor_cost" name="labor_cost" value="{{ old('labor_cost', $contract ? $contract->labor_cost : 0) }}">
                                 </div>
                             </div>
 
@@ -776,99 +791,6 @@
                                     </div>
                         </div>
 
-                        <!-- Timeline and Labor Section -->
-                        <div class="section-container" id="timelineSection">
-                            <h5 class="section-title">Project Timeline & Labor</h5>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="start_date">Start Date</label>
-                                        <input type="date" class="form-control @error('start_date') is-invalid @enderror" 
-                                            id="start_date" name="start_date" 
-                                            value="{{ old('start_date', $contract ? $contract->start_date?->format('Y-m-d') : '') }}" 
-                                            required
-                                            onchange="updateEndDate()">
-                                        @error('start_date')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-                        </div>
-                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="end_date">End Date</label>
-                                        <input type="date" class="form-control @error('end_date') is-invalid @enderror" 
-                                            id="end_date" name="end_date" 
-                                            value="{{ old('end_date', $contract ? $contract->end_date?->format('Y-m-d') : '') }}" 
-                                            required>
-                                        @error('end_date')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
-        </div>
-    </div>
-</div>
-
-                            <!-- Labor Costs -->
-                            <div class="row mt-4">
-                                <div class="col-12">
-                <div class="card">
-                                        <div class="card-header bg-white">
-                                            <h6 class="mb-0">Labor Costs</h6>
-                                        </div>
-                    <div class="card-body">
-                        <div class="row">
-                                                <div class="col-md-6">
-                                <div class="form-group">
-                                                        <label for="workers_count">Number of Workers</label>
-                                                        <input type="number" class="form-control @error('workers_count') is-invalid @enderror"
-                                                            id="workers_count" name="workers_count"
-                                                            value="{{ old('workers_count', $contract ? $contract->workers_count : '') }}"
-                                                            min="1" step="1" required
-                                                            onchange="calculateLaborCost()">
-                                                        @error('workers_count')
-                                                            <div class="invalid-feedback">{{ $message }}</div>
-                                                        @enderror
-                                        </div>
-                                    </div>
-                                                <div class="col-md-6">
-                                                    <div class="form-group">
-                                                        <label for="daily_rate">Daily Rate per Worker</label>
-                                                        <div class="input-group">
-                                                            <span class="input-group-text">₱</span>
-                                                            <input type="number" class="form-control @error('daily_rate') is-invalid @enderror"
-                                                                id="daily_rate" name="daily_rate"
-                                                                value="{{ old('daily_rate', $contract ? $contract->daily_rate : '500') }}"
-                                                                min="0" step="0.01" required
-                                                                onchange="calculateLaborCost()">
-                                </div>
-                                                        @error('daily_rate')
-                                                            <div class="invalid-feedback">{{ $message }}</div>
-                                                        @enderror
-                            </div>
-                        </div>
-                                            </div>
-                                            <div class="row mt-3">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                                        <label>Working Days</label>
-                                                        <input type="number" class="form-control" id="working_days" readonly>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                                        <label>Total Labor Cost</label>
-                                                        <div class="input-group">
-                                                            <span class="input-group-text">₱</span>
-                                                            <input type="number" class="form-control" id="total_labor_cost" name="total_labor_cost" readonly>
-                                </div>
-                            </div>
-                        </div>
-                                </div>
-                            </div>
-                                </div>
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="form-group mt-4">
                             <button type="submit" class="btn btn-primary">Save Contract</button>
                             <a href="{{ route('contracts.index') }}" class="btn btn-secondary">Cancel</a>
@@ -897,12 +819,20 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Update initial calculations
     updateGrandTotal();
-    updateTimeline();
     
     // Initialize date fields
     const startDateInput = document.getElementById('start_date');
     if (startDateInput) {
-        startDateInput.addEventListener('change', updateEndDate);
+        startDateInput.addEventListener('change', function() {
+            const endDateInput = document.getElementById('end_date');
+            if (endDateInput && this.value) {
+                // Set end date to 30 days after start date by default
+                const startDate = new Date(this.value);
+                const endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 30);
+                endDateInput.value = endDate.toISOString().split('T')[0];
+            }
+        });
     }
 
     // Add room button click handler
@@ -1270,16 +1200,11 @@ function updateRoomCalculations(element) {
     
     let materialsList = [];
     let totalMaterialsCost = 0;
-    let totalLaborCost = 0;
-    let totalTimeframe = 0;
     
     // Calculate materials and costs for each selected scope
     selectedScopes.forEach(scope => {
         if (scopeMaterials[scope]) {
             const scopeData = scopeMaterials[scope];
-            
-            // Add timeframe instead of taking maximum
-            totalTimeframe += scopeData.timeframe;
             
             // Calculate materials
             scopeData.materials.forEach(material => {
@@ -1292,8 +1217,7 @@ function updateRoomCalculations(element) {
                     quantity: qty,
                     unit: material.unit,
                     basePrice: material.basePrice,
-                    total: totalPrice,
-                    timeframe: scopeData.timeframe
+                    total: totalPrice
                 });
                 
                 totalMaterialsCost += totalPrice;
@@ -1301,15 +1225,9 @@ function updateRoomCalculations(element) {
         }
     });
     
-    // Calculate labor cost based on total timeframe
-    const workersCount = parseInt(document.getElementById('workers_count')?.value) || 1;
-    const dailyRate = parseFloat(document.getElementById('daily_rate')?.value) || 500;
-    totalLaborCost = workersCount * dailyRate * totalTimeframe;
-    
     // Update room summary
     roomRow.querySelector('.room-materials-cost').textContent = `₱${totalMaterialsCost.toFixed(2)}`;
-    roomRow.querySelector('.room-labor-cost').textContent = `₱${totalLaborCost.toFixed(2)}`;
-    roomRow.querySelector('.room-total-cost').textContent = `₱${(totalMaterialsCost + totalLaborCost).toFixed(2)}`;
+    roomRow.querySelector('.room-total-cost').textContent = `₱${totalMaterialsCost.toFixed(2)}`;
     
     // Update materials table
     const materialsTableBody = document.getElementById('scopeMaterialsTable').querySelector('tbody');
@@ -1336,29 +1254,52 @@ function updateRoomCalculations(element) {
     }
     
     updateGrandTotal();
-    updateTimeline();
 }
 
 function updateGrandTotal() {
     let totalArea = 0;
     let totalMaterials = 0;
-    let totalLabor = 0;
+    let laborCost = 0;
+    
+    // Get property type multiplier
+    const propertyType = document.getElementById('property_type').value;
+    const laborRateMultiplier = {
+        'residential': 1,
+        'commercial': 1.5,
+        'industrial': 2
+    }[propertyType] || 1;
+    
+    // Base labor rate per square meter
+    const baseLaborRate = 500; // ₱500 per square meter
     
     document.querySelectorAll('.room-row').forEach(room => {
-        totalArea += parseFloat(room.querySelector('.room-area').textContent) || 0;
+        const area = parseFloat(room.querySelector('.room-area').textContent) || 0;
+        totalArea += area;
         totalMaterials += parseFloat(room.querySelector('.room-materials-cost').textContent.replace('₱', '')) || 0;
-        totalLabor += parseFloat(room.querySelector('.room-labor-cost').textContent.replace('₱', '')) || 0;
+        
+        // Calculate labor cost for this room
+        const roomLaborCost = area * baseLaborRate * laborRateMultiplier;
+        laborCost += roomLaborCost;
+        
+        // Update room labor cost display
+        room.querySelector('.room-labor-cost').textContent = `₱${roomLaborCost.toFixed(2)}`;
+        room.querySelector('.room-total-cost').textContent = `₱${(roomLaborCost + parseFloat(room.querySelector('.room-materials-cost').textContent.replace('₱', ''))).toFixed(2)}`;
     });
     
+    // Update grand total displays
     document.getElementById('grandTotalArea').textContent = `${totalArea.toFixed(2)} sq m`;
     document.getElementById('grandTotalMaterials').textContent = `₱${totalMaterials.toFixed(2)}`;
-    document.getElementById('grandTotalLabor').textContent = `₱${totalLabor.toFixed(2)}`;
-    document.getElementById('grandTotal').textContent = `₱${(totalMaterials + totalLabor).toFixed(2)}`;
+    document.getElementById('grandTotalLabor').textContent = `₱${laborCost.toFixed(2)}`;
+    document.getElementById('grandTotal').textContent = `₱${(totalMaterials + laborCost).toFixed(2)}`;
     
-    // Update the total contract amount
+    // Update the total contract amount and labor cost fields
     const totalAmount = document.getElementById('total_amount');
+    const laborCostInput = document.getElementById('labor_cost');
     if (totalAmount) {
-        totalAmount.value = (totalMaterials + totalLabor).toFixed(2);
+        totalAmount.value = (totalMaterials + laborCost).toFixed(2);
+    }
+    if (laborCostInput) {
+        laborCostInput.value = laborCost.toFixed(2);
     }
 }
 
@@ -1477,66 +1418,48 @@ const scopeMaterials = {
     }
 };
 
-function updateTimeline() {
-    let totalTimeframe = 0;
-    
-    // Sum up timeframes from all rooms
-    document.querySelectorAll('.room-row').forEach(room => {
-        const selectedScopes = Array.from(room.querySelectorAll('.scope-checkbox:checked'))
-            .map(checkbox => checkbox.value);
-        
-        // Add up timeframes for all selected scopes
-        selectedScopes.forEach(scope => {
-            if (scopeMaterials[scope]) {
-                totalTimeframe += scopeMaterials[scope].timeframe;
-            }
-        });
-    });
-    
-    // Update the total estimated days display
-    document.getElementById('totalEstimatedDays').textContent = totalTimeframe;
-    
-    // Update the end date if start date is set
-    updateEndDate();
-    
-    // Update working days input
-    const workingDaysInput = document.getElementById('working_days');
-    if (workingDaysInput) {
-        workingDaysInput.value = totalTimeframe;
-    }
-}
+// Add property type change listener
+document.getElementById('property_type')?.addEventListener('change', updateGrandTotal);
 
-function updateEndDate() {
+function updateProjectTimeline() {
     const startDateInput = document.getElementById('start_date');
-    const endDateInput = document.getElementById('end_date');
-    const totalDays = parseInt(document.getElementById('totalEstimatedDays').textContent) || 0;
+    if (!startDateInput || !startDateInput.value) return;
+
+    // Calculate total project days based on selected scopes
+    let totalDays = 0;
+    document.querySelectorAll('.room-row').forEach(room => {
+        let roomDays = 0;
+        room.querySelectorAll('.scope-checkbox:checked').forEach(scope => {
+            roomDays += parseInt(scope.dataset.timeframe) || 0;
+        });
+        totalDays = Math.max(totalDays, roomDays);
+    });
+
+    // Set end date
+    const startDate = new Date(startDateInput.value);
+    const endDate = new Date(startDate);
+    endDate.setDate(startDate.getDate() + (totalDays - 1)); // Subtract 1 because start date counts as day 1
     
-    if (startDateInput && endDateInput && startDateInput.value) {
-        const startDate = new Date(startDateInput.value);
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + totalDays);
-        
-        // Format the date as YYYY-MM-DD
-        const endDateStr = endDate.toISOString().split('T')[0];
-        endDateInput.value = endDateStr;
+    const endDateInput = document.getElementById('end_date');
+    if (endDateInput) {
+        endDateInput.value = endDate.toISOString().split('T')[0];
     }
 }
 
-// Update working days display when timeline changes
+// Add event listeners for timeline updates
 document.addEventListener('DOMContentLoaded', function() {
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'characterData' && mutation.target.id === 'totalEstimatedDays') {
-                document.getElementById('working_days').value = mutation.target.textContent;
-                calculateLaborCost();
-            }
+    const startDateInput = document.getElementById('start_date');
+    if (startDateInput) {
+        startDateInput.addEventListener('change', updateProjectTimeline);
+    }
+
+    // Update timeline when scopes are changed
+    document.querySelectorAll('.scope-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateRoomCalculations(this);
+            updateProjectTimeline();
         });
     });
-
-    const totalEstimatedDays = document.getElementById('totalEstimatedDays');
-    if (totalEstimatedDays) {
-        observer.observe(totalEstimatedDays, { characterData: true, subtree: true });
-    }
 });
 </script>
 @endpush
