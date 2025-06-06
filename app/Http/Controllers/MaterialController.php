@@ -66,9 +66,10 @@ class MaterialController extends Controller
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:materials',
             'description' => 'nullable|string',
-            'category' => 'required|string|in:construction,electrical,plumbing,finishing,tools,other',
+            'category' => 'required|string|in:construction-materials,electrical-supplies,plumbing-materials,windows-and-doors,tools-and-hardware,paint-and-coatings,safety-equipment,insulation-materials,structural-materials',
             'unit' => 'required|string|max:50',
             'base_price' => 'required|numeric|min:0',
+            'srp_price' => 'required|numeric|min:0',
             'specifications' => 'nullable|string',
             'images.*' => 'nullable|image|max:2048',
             'suppliers' => 'nullable|array',
@@ -88,6 +89,7 @@ class MaterialController extends Controller
             'description' => $validated['description'],
             'unit' => $validated['unit'],
             'base_price' => $validated['base_price'],
+            'srp_price' => $validated['srp_price'],
             'specifications' => $validated['specifications'],
             'category_id' => $category->id,
             'minimum_stock' => 0,
@@ -187,5 +189,44 @@ class MaterialController extends Controller
             ->get();
 
         return response()->json($materials);
+    }
+
+    public function updateSrpPrices(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'materials' => 'required|array',
+                'materials.*.id' => 'required|exists:materials,id',
+                'materials.*.srp_price' => 'required|numeric|min:0'
+            ]);
+
+            DB::beginTransaction();
+
+            foreach ($validated['materials'] as $material) {
+                Material::where('id', $material['id'])
+                    ->update(['srp_price' => $material['srp_price']]);
+            }
+
+            DB::commit();
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error updating SRP prices: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to update SRP prices'], 500);
+        }
+    }
+
+    public function suppliers(Material $material)
+    {
+        $material->load(['suppliers' => function($query) {
+            $query->select('suppliers.id', 'suppliers.company_name')
+                  ->withPivot(['price', 'lead_time', 'updated_at']);
+        }]);
+
+        return response()->json([
+            'base_price' => $material->base_price,
+            'suppliers' => $material->suppliers
+        ]);
     }
 }

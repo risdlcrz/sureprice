@@ -109,6 +109,23 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="srp_price">SRP Price</label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">₱</span>
+                                            </div>
+                                            <input type="number" class="form-control @error('srp_price') is-invalid @enderror" 
+                                                id="srp_price" name="srp_price" step="0.01" min="0"
+                                                value="{{ old('srp_price', $material->srp_price ?? '') }}" required>
+                                            @error('srp_price')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                        <small class="form-text text-muted">Suggested Retail Price for cost comparison</small>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="row mt-3">

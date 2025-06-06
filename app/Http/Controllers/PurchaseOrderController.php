@@ -223,4 +223,69 @@ class PurchaseOrderController extends Controller
         $po = \App\Models\PurchaseOrder::with(['supplier', 'items.material'])->findOrFail($id);
         return response()->json($po);
     }
+
+    public function complete(Request $request, PurchaseOrder $purchaseOrder)
+    {
+        if ($purchaseOrder->status !== 'approved') {
+            return response()->json(['error' => 'Only approved purchase orders can be completed'], 422);
+        }
+
+        $validated = $request->validate([
+            'delivery_date' => 'required|date',
+            'is_on_time' => 'required|boolean',
+            'total_units' => 'required|integer|min:0',
+            'defective_units' => 'required|integer|min:0',
+            'quality_notes' => 'nullable|string'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Calculate costs based on SRP and quoted prices
+            $estimatedCost = $purchaseOrder->calculateEstimatedCost();
+            $actualCost = $purchaseOrder->calculateActualCost();
+
+            $purchaseOrder->update([
+                'delivery_date' => $validated['delivery_date'],
+                'is_delivered' => true,
+                'is_on_time' => $validated['is_on_time'],
+                'total_units' => $validated['total_units'],
+                'defective_units' => $validated['defective_units'],
+                'quality_notes' => $validated['quality_notes'],
+                'estimated_cost' => $estimatedCost,
+                'actual_cost' => $actualCost,
+                'is_completed' => true,
+                'status' => 'completed'
+            ]);
+
+            // Update supplier metrics
+            $supplier = $purchaseOrder->supplier;
+            $metrics = $supplier->metrics()->firstOrCreate([]);
+            
+            // Update delivery metrics
+            $metrics->total_deliveries++;
+            if ($validated['is_on_time']) {
+                $metrics->ontime_deliveries++;
+            }
+
+            // Update quality metrics
+            $metrics->total_units += $validated['total_units'];
+            $metrics->defective_units += $validated['defective_units'];
+
+            // Update cost metrics
+            $metrics->total_orders++;
+            if ($actualCost <= $estimatedCost) {
+                $metrics->within_budget_orders++;
+            }
+
+            $metrics->save();
+
+            DB::commit();
+            return response()->json(['success' => true]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to complete purchase order: ' . $e->getMessage()], 500);
+        }
+    }
 } 

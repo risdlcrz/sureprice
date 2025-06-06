@@ -84,6 +84,8 @@ Route::middleware(['auth'])->group(function () {
     // Material Routes
     Route::resource('materials', MaterialController::class);
     Route::get('/api/materials/search', [MaterialController::class, 'apiSearch'])->name('api.materials.search');
+    Route::post('/materials/update-srp', [MaterialController::class, 'updateSrpPrices'])->name('materials.update-srp');
+    Route::get('/api/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('api.materials.suppliers');
 
     // Inquiry Routes
     Route::resource('inquiries', InquiryController::class);
@@ -118,6 +120,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('purchase-orders', PurchaseOrderController::class);
     Route::post('purchase-orders/{purchaseOrder}/status', [PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
     Route::get('purchase-orders/{id}/json', [App\Http\Controllers\PurchaseOrderController::class, 'showJson'])->name('purchase-orders.json');
+    Route::patch('purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete'])->name('purchase-orders.complete');
 
     // Transaction Routes
     Route::resource('transactions', \App\Http\Controllers\TransactionController::class);
@@ -194,3 +197,5 @@ Route::post('/change-password', [App\Http\Controllers\Auth\ChangePasswordControl
 // Supplier Evaluation Routes
 Route::get('/admin/suppliers/{supplier}/latest-evaluation', [SupplierRankingController::class, 'getLatestEvaluation'])
     ->name('admin.suppliers.latest-evaluation');
+Route::get('/admin/suppliers/{supplier}/purchase-order-metrics', [SupplierRankingController::class, 'getPurchaseOrderMetrics'])
+    ->name('admin.suppliers.purchase-order-metrics');

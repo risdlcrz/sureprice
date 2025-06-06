@@ -7,9 +7,14 @@
             <div class="card shadow">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h4 class="card-title mb-0">Materials</h4>
-                    <a href="{{ route('materials.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add New Material
-                    </a>
+                    <div>
+                        <button type="button" class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#bulkSrpModal">
+                            <i class="fas fa-tags"></i> Set SRP Prices
+                        </button>
+                        <a href="{{ route('materials.create') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add New Material
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <!-- Search and Filters -->
@@ -25,12 +30,15 @@
                                 <label for="category">Category</label>
                                 <select class="form-control" id="category">
                                     <option value="">All Categories</option>
-                                    <option value="construction">Construction</option>
-                                    <option value="electrical">Electrical</option>
-                                    <option value="plumbing">Plumbing</option>
-                                    <option value="finishing">Finishing</option>
-                                    <option value="tools">Tools</option>
-                                    <option value="other">Other</option>
+                                    <option value="construction-materials">Construction Materials</option>
+                                    <option value="electrical-supplies">Electrical Supplies</option>
+                                    <option value="plumbing-materials">Plumbing Materials</option>
+                                    <option value="windows-and-doors">Windows and Doors</option>
+                                    <option value="tools-and-hardware">Tools and Hardware</option>
+                                    <option value="paint-and-coatings">Paint and Coatings</option>
+                                    <option value="safety-equipment">Safety Equipment</option>
+                                    <option value="insulation-materials">Insulation Materials</option>
+                                    <option value="structural-materials">Structural Materials</option>
                                 </select>
                             </div>
                         </div>
@@ -73,6 +81,7 @@
                                     <th>Category</th>
                                     <th>Unit</th>
                                     <th>Base Price</th>
+                                    <th>SRP</th>
                                     <th>Suppliers</th>
                                     <th>Actions</th>
                                 </tr>
@@ -102,9 +111,27 @@
                                     <td>{{ $material->unit }}</td>
                                     <td>₱{{ number_format($material->base_price, 2) }}</td>
                                     <td>
-                                        <span class="badge badge-light text-dark font-weight-bold suppliers-badge">
-                                            {{ ($material->suppliers_count ?? ($material->suppliers ? $material->suppliers->count() : 0)) ?: 0 }} suppliers
-                                        </span>
+                                        <div class="d-flex align-items-center">
+                                            ₱{{ number_format($material->srp_price, 2) }}
+                                            @php
+                                                $markup = $material->base_price > 0 
+                                                    ? (($material->srp_price - $material->base_price) / $material->base_price * 100) 
+                                                    : 0;
+                                            @endphp
+                                            <small class="ms-2 text-muted">({{ number_format($markup, 1) }}%)</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button type="button" 
+                                            class="btn btn-sm btn-outline-info view-suppliers" 
+                                            data-material-id="{{ $material->id }}"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#supplierPricesModal">
+                                            <span class="badge bg-secondary">
+                                                {{ $material->suppliers->count() }}
+                                            </span>
+                                            View Suppliers
+                                        </button>
                                     </td>
                                     <td>
                                         <div class="btn-group">
@@ -170,6 +197,113 @@
     </div>
 </div>
 
+<!-- Bulk SRP Update Modal -->
+<div class="modal fade" id="bulkSrpModal" tabindex="-1" aria-labelledby="bulkSrpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkSrpModalLabel">Set SRP Prices</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Add search field -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="srpSearchInput" placeholder="Search materials...">
+                            <button class="btn btn-outline-secondary" type="button" id="clearSrpSearch">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Unit</th>
+                                <th>Base Price</th>
+                                <th>SRP Price</th>
+                                <th>Markup %</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($materials as $material)
+                                <tr>
+                                    <td>{{ $material->code }}</td>
+                                    <td>{{ $material->name }}</td>
+                                    <td>{{ $material->category->name }}</td>
+                                    <td>{{ $material->unit }}</td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">₱</span>
+                                            <input type="number" class="form-control base-price" 
+                                                value="{{ $material->base_price }}" readonly>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">₱</span>
+                                            <input type="number" class="form-control srp-price" 
+                                                data-material-id="{{ $material->id }}"
+                                                value="{{ $material->srp_price }}" step="0.01" min="0">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" class="form-control markup-percent" 
+                                                value="{{ $material->base_price > 0 ? (($material->srp_price - $material->base_price) / $material->base_price * 100) : 0 }}"
+                                                step="0.01">
+                                            <span class="input-group-text">%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveSrpPrices">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Supplier Prices Modal -->
+<div class="modal fade" id="supplierPricesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Supplier Prices</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Supplier</th>
+                                <th>Price</th>
+                                <th>Lead Time</th>
+                                <th>Last Updated</th>
+                                <th>Variance</th>
+                            </tr>
+                        </thead>
+                        <tbody id="supplierPricesBody">
+                            <!-- Will be populated via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -218,6 +352,134 @@ document.addEventListener('DOMContentLoaded', function() {
             $(deleteModal).modal('show');
         });
     });
+
+    // Handle markup percentage changes
+    document.querySelectorAll('.markup-percent').forEach(input => {
+        input.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const basePrice = parseFloat(row.querySelector('.base-price').value) || 0;
+            const markup = parseFloat(this.value) || 0;
+            const srpPrice = basePrice * (1 + markup/100);
+            row.querySelector('.srp-price').value = srpPrice.toFixed(2);
+        });
+    });
+
+    // Handle SRP price changes
+    document.querySelectorAll('.srp-price').forEach(input => {
+        input.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const basePrice = parseFloat(row.querySelector('.base-price').value) || 0;
+            const srpPrice = parseFloat(this.value) || 0;
+            const markup = basePrice > 0 ? ((srpPrice - basePrice) / basePrice * 100) : 0;
+            row.querySelector('.markup-percent').value = markup.toFixed(2);
+        });
+    });
+
+    // Save SRP prices
+    document.getElementById('saveSrpPrices').addEventListener('click', async function() {
+        const updates = [];
+        document.querySelectorAll('.srp-price').forEach(input => {
+            updates.push({
+                id: input.dataset.materialId,
+                srp_price: input.value
+            });
+        });
+
+        try {
+            const response = await fetch('/materials/update-srp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ materials: updates })
+            });
+
+            if (!response.ok) throw new Error('Failed to update SRP prices');
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('bulkSrpModal'));
+            modal.hide();
+            window.location.reload();
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to update SRP prices. Please try again.');
+        }
+    });
+
+    // Add SRP search functionality
+    const srpSearchInput = document.getElementById('srpSearchInput');
+    const clearSrpSearch = document.getElementById('clearSrpSearch');
+    const srpTableRows = document.querySelectorAll('#bulkSrpModal tbody tr');
+
+    srpSearchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        srpTableRows.forEach(row => {
+            const code = row.cells[0].textContent.toLowerCase();
+            const name = row.cells[1].textContent.toLowerCase();
+            const category = row.cells[2].textContent.toLowerCase();
+            
+            if (code.includes(searchTerm) || name.includes(searchTerm) || category.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+
+    clearSrpSearch.addEventListener('click', function() {
+        srpSearchInput.value = '';
+        srpTableRows.forEach(row => row.style.display = '');
+    });
+
+    // Add supplier prices modal functionality
+    const viewSupplierButtons = document.querySelectorAll('.view-suppliers');
+
+    viewSupplierButtons.forEach(button => {
+        button.addEventListener('click', async function() {
+            const materialId = this.dataset.materialId;
+            try {
+                const response = await fetch(`/api/materials/${materialId}/suppliers`);
+                const data = await response.json();
+                
+                const tbody = document.getElementById('supplierPricesBody');
+                tbody.innerHTML = '';
+                
+                data.suppliers.forEach(supplier => {
+                    const variance = calculateVariance(supplier.pivot.price, data.base_price);
+                    const row = `
+                        <tr>
+                            <td>${supplier.company_name}</td>
+                            <td>₱${parseFloat(supplier.pivot.price).toFixed(2)}</td>
+                            <td>${supplier.pivot.lead_time || 'N/A'}</td>
+                            <td>${new Date(supplier.pivot.updated_at).toLocaleDateString()}</td>
+                            <td>
+                                <span class="badge ${variance.class}">
+                                    ${variance.percentage}%
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+            } catch (error) {
+                console.error('Error fetching supplier prices:', error);
+            }
+        });
+    });
+
+    function calculateVariance(supplierPrice, basePrice) {
+        if (!basePrice || basePrice === 0) return { percentage: 0, class: 'bg-secondary' };
+        
+        const variance = ((supplierPrice - basePrice) / basePrice) * 100;
+        const formattedVariance = variance.toFixed(2);
+        
+        return {
+            percentage: formattedVariance,
+            class: variance < 0 ? 'bg-success' : variance > 0 ? 'bg-danger' : 'bg-secondary'
+        };
+    }
 });
 </script>
 @endpush
@@ -237,6 +499,15 @@ document.addEventListener('DOMContentLoaded', function() {
         min-width: 70px;
         display: inline-block;
         text-align: center;
+    }
+    .badge.bg-success {
+        background-color: #28a745 !important;
+    }
+    .badge.bg-danger {
+        background-color: #dc3545 !important;
+    }
+    .badge.bg-secondary {
+        background-color: #6c757d !important;
     }
 </style>
 @endpush
