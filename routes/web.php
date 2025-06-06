@@ -24,6 +24,8 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\SupplierInvitationController;
 use App\Http\Controllers\BudgetAllocationController;
 use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\SupplierRankingController;
+use App\Http\Controllers\AnalyticsController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -122,6 +124,15 @@ Route::middleware(['auth'])->group(function () {
 
     // Add procurement routes
     Route::get('/admin/procurement', [ProcurementController::class, 'index'])->name('admin.procurement');
+
+    // Supplier Rankings Routes
+    Route::prefix('admin/suppliers')->name('suppliers.')->middleware(['auth'])->group(function () {
+        Route::get('rankings', [AnalyticsController::class, 'supplierRankings'])->name('rankings');
+        Route::get('template/download', [SupplierRankingController::class, 'downloadTemplate'])->name('template.download');
+        Route::get('materials/template/download', [SupplierRankingController::class, 'downloadMaterialsTemplate'])->name('materials.template.download');
+        Route::post('{supplier}/evaluations', [SupplierRankingController::class, 'storeEvaluation'])->name('evaluations.store');
+        Route::post('{supplier}/metrics', [SupplierRankingController::class, 'updateMetrics'])->name('metrics.update');
+    });
 });
 
 // ================== Email Verification Routes ==================
@@ -152,19 +163,16 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
         return view('admin.history-dashboard');
     })->name('admin.history');
 
-    Route::get('/analytics-dashboard', function () {
-        return view('admin.analytics-dashboard');
-    })->name('admin.analytics');
+    Route::get('/analytics-dashboard', [AnalyticsController::class, 'index'])->name('admin.analytics');
+
+    Route::get('/supplier-rankings', [AnalyticsController::class, 'supplierRankings'])->name('admin.supplier-rankings');
+    Route::get('/supplier-rankings/top', [AnalyticsController::class, 'getTopSuppliers'])->name('admin.supplier-rankings.top');
 
     Route::get('/purchase-order', function () {
         return view('admin.purchase-order');
     })->name('admin.purchase-order');
 
     Route::get('/budget-allocation', [BudgetAllocationController::class, 'index'])->name('admin.budget-allocation');
-
-    Route::get('/supplier-rankings', function () {
-        return view('admin.supplier-rankings');
-    })->name('admin.supplier-rankings');
 
     Route::get('/price-analysis', function () {
         return view('admin.price-analysis');
@@ -182,3 +190,7 @@ Route::get('/change-password', [App\Http\Controllers\Auth\ChangePasswordControll
     ->name('change.password.form');
 Route::post('/change-password', [App\Http\Controllers\Auth\ChangePasswordController::class, 'update'])
     ->name('change.password.update');
+
+// Supplier Evaluation Routes
+Route::get('/admin/suppliers/{supplier}/latest-evaluation', [SupplierRankingController::class, 'getLatestEvaluation'])
+    ->name('admin.suppliers.latest-evaluation');

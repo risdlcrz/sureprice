@@ -58,4 +58,14 @@ class Supplier extends Model
             'pending' => 'warning'
         ][$this->status] ?? 'secondary';
     }
+
+    public function evaluations()
+    {
+        return $this->hasMany(SupplierEvaluation::class);
+    }
+
+    public function metrics()
+    {
+        return $this->hasOne(SupplierMetrics::class);
+    }
 } 
