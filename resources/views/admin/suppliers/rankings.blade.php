@@ -151,78 +151,132 @@
                     </div>
                     <input type="hidden" name="supplier_id" id="supplier_id">
                     
-                    <!-- Star Rating Fields -->
+                    <!-- Rating Fields -->
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <label class="form-label d-block">Delivery Speed Score</label>
-                            <div class="rating">
-                                @for($i = 5; $i >= 1; $i--)
-                                <input type="radio" id="delivery_speed_{{ $i }}" name="delivery_speed_score" value="{{ $i }}" />
-                                <label for="delivery_speed_{{ $i }}">
-                                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                                </label>
-                                @endfor
+                            <label class="form-label">Delivery Speed Score</label>
+                            <div class="score-input">
+                                <input type="number" 
+                                    class="form-control form-control-sm" 
+                                    min="0" 
+                                    max="5" 
+                                    step="0.5" 
+                                    value="0.0"
+                                    name="delivery_speed_score">
+                                <div class="score-controls">
+                                    <button type="button" class="btn-increment" data-action="increment">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </button>
+                                    <button type="button" class="btn-increment" data-action="decrement">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label d-block">Quality Score</label>
-                            <div class="rating">
-                                @for($i = 5; $i >= 1; $i--)
-                                <input type="radio" id="quality_{{ $i }}" name="quality_score" value="{{ $i }}" />
-                                <label for="quality_{{ $i }}">
-                                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                                </label>
-                                @endfor
+                            <label class="form-label">Quality Score</label>
+                            <div class="score-input">
+                                <input type="number" 
+                                    class="form-control form-control-sm" 
+                                    min="0" 
+                                    max="5" 
+                                    step="0.5" 
+                                    value="0.0"
+                                    name="quality_score">
+                                <div class="score-controls">
+                                    <button type="button" class="btn-increment" data-action="increment">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </button>
+                                    <button type="button" class="btn-increment" data-action="decrement">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <label class="form-label d-block">Cost Variance Score</label>
-                            <div class="rating">
-                                @for($i = 5; $i >= 1; $i--)
-                                <input type="radio" id="cost_{{ $i }}" name="cost_variance_score" value="{{ $i }}" />
-                                <label for="cost_{{ $i }}">
-                                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                                </label>
-                                @endfor
+                            <label class="form-label">Cost Variance Score</label>
+                            <div class="score-input">
+                                <input type="number" 
+                                    class="form-control form-control-sm" 
+                                    min="0" 
+                                    max="5" 
+                                    step="0.5" 
+                                    value="0.0"
+                                    name="cost_variance_score">
+                                <div class="score-controls">
+                                    <button type="button" class="btn-increment" data-action="increment">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </button>
+                                    <button type="button" class="btn-increment" data-action="decrement">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label d-block">Performance Score</label>
-                            <div class="rating">
-                                @for($i = 5; $i >= 1; $i--)
-                                <input type="radio" id="performance_{{ $i }}" name="performance_score" value="{{ $i }}" />
-                                <label for="performance_{{ $i }}">
-                                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                                </label>
-                                @endfor
+                            <label class="form-label">Performance Score</label>
+                            <div class="score-input">
+                                <input type="number" 
+                                    class="form-control form-control-sm" 
+                                    min="0" 
+                                    max="5" 
+                                    step="0.5" 
+                                    value="0.0"
+                                    name="performance_score">
+                                <div class="score-controls">
+                                    <button type="button" class="btn-increment" data-action="increment">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </button>
+                                    <button type="button" class="btn-increment" data-action="decrement">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <label class="form-label d-block">Engagement Score</label>
-                            <div class="rating">
-                                @for($i = 5; $i >= 1; $i--)
-                                <input type="radio" id="engagement_{{ $i }}" name="engagement_score" value="{{ $i }}" />
-                                <label for="engagement_{{ $i }}">
-                                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                                </label>
-                                @endfor
+                            <label class="form-label">Engagement Score</label>
+                            <div class="score-input">
+                                <input type="number" 
+                                    class="form-control form-control-sm" 
+                                    min="0" 
+                                    max="5" 
+                                    step="0.5" 
+                                    value="0.0"
+                                    name="engagement_score">
+                                <div class="score-controls">
+                                    <button type="button" class="btn-increment" data-action="increment">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </button>
+                                    <button type="button" class="btn-increment" data-action="decrement">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label d-block">Sustainability Score</label>
-                            <div class="rating">
-                                @for($i = 5; $i >= 1; $i--)
-                                <input type="radio" id="sustainability_{{ $i }}" name="sustainability_score" value="{{ $i }}" />
-                                <label for="sustainability_{{ $i }}">
-                                    <svg viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                                </label>
-                                @endfor
+                            <label class="form-label">Sustainability Score</label>
+                            <div class="score-input">
+                                <input type="number" 
+                                    class="form-control form-control-sm" 
+                                    min="0" 
+                                    max="5" 
+                                    step="0.5" 
+                                    value="0.0"
+                                    name="sustainability_score">
+                                <div class="score-controls">
+                                    <button type="button" class="btn-increment" data-action="increment">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </button>
+                                    <button type="button" class="btn-increment" data-action="decrement">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -339,6 +393,44 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
+    // Handle score inputs
+    const scoreInputs = document.querySelectorAll('.score-input');
+    
+    scoreInputs.forEach(container => {
+        const input = container.querySelector('input[type="number"]');
+        const incrementBtns = container.querySelectorAll('.btn-increment');
+        
+        // Handle input changes
+        input.addEventListener('change', function() {
+            let value = parseFloat(this.value);
+            
+            // Enforce min/max bounds
+            if (value < 0) value = 0;
+            if (value > 5) value = 5;
+            
+            // Round to nearest 0.5
+            value = Math.round(value * 2) / 2;
+            
+            // Update input value
+            this.value = value.toFixed(1);
+        });
+
+        // Handle increment/decrement buttons
+        incrementBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                let value = parseFloat(input.value);
+                if (this.dataset.action === 'increment') {
+                    value = Math.min(5, value + 0.5);
+                } else {
+                    value = Math.max(0, value - 0.5);
+                }
+                input.value = value.toFixed(1);
+                input.dispatchEvent(new Event('change'));
+            });
+        });
+    });
+
+    // Load existing ratings when modal opens
     const evaluationModal = document.getElementById('evaluationModal');
     evaluationModal.addEventListener('show.bs.modal', async function(event) {
         const button = event.relatedTarget;
@@ -346,99 +438,65 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('supplier_id').value = supplierId;
 
         try {
-            // Load evaluation data
-            const evalResponse = await fetch(`/admin/suppliers/${supplierId}/latest-evaluation`);
-            const evalData = await evalResponse.json();
+            const response = await fetch(`/admin/suppliers/${supplierId}/latest-evaluation`);
+            const data = await response.json();
 
-            // Set star ratings
-            if (evalData.evaluation) {
-                document.querySelector(`input[name="delivery_speed_score"][value="${Math.round(evalData.evaluation.delivery_speed_score)}"]`)?.checked = true;
-                document.querySelector(`input[name="quality_score"][value="${Math.round(evalData.evaluation.quality_score)}"]`)?.checked = true;
-                document.querySelector(`input[name="cost_variance_score"][value="${Math.round(evalData.evaluation.cost_variance_score)}"]`)?.checked = true;
-                document.querySelector(`input[name="performance_score"][value="${Math.round(evalData.evaluation.performance_score)}"]`)?.checked = true;
-                document.querySelector(`input[name="engagement_score"][value="${Math.round(evalData.evaluation.engagement_score)}"]`)?.checked = true;
-                document.querySelector(`input[name="sustainability_score"][value="${Math.round(evalData.evaluation.sustainability_score)}"]`)?.checked = true;
+            if (data.evaluation) {
+                Object.entries(data.evaluation).forEach(([key, value]) => {
+                    if (key.endsWith('_score')) {
+                        const input = document.querySelector(`[name="${key}"]`);
+                        if (input) {
+                            input.value = value.toFixed(1);
+                            input.dispatchEvent(new Event('change'));
+                        }
+                    }
+                });
             }
 
-            // Load purchase order metrics
+            // Update metrics display
             const metricsResponse = await fetch(`/admin/suppliers/${supplierId}/purchase-order-metrics`);
             const metricsData = await metricsResponse.json();
-
-            // Update metrics display and hidden fields
+            
             document.getElementById('ontime_deliveries_display').textContent = metricsData.ontime_deliveries;
             document.getElementById('total_deliveries_display').textContent = metricsData.total_deliveries;
             document.getElementById('defective_units_display').textContent = metricsData.defective_units;
             document.getElementById('total_units_display').textContent = metricsData.total_units;
             document.getElementById('actual_cost_display').textContent = `₱${metricsData.actual_cost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             document.getElementById('estimated_cost_display').textContent = `₱${metricsData.estimated_cost.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-
-            // Set hidden fields
-            document.getElementById('ontime_deliveries').value = metricsData.ontime_deliveries;
-            document.getElementById('total_deliveries').value = metricsData.total_deliveries;
-            document.getElementById('defective_units').value = metricsData.defective_units;
-            document.getElementById('total_units').value = metricsData.total_units;
-            document.getElementById('actual_cost').value = metricsData.actual_cost;
-            document.getElementById('estimated_cost').value = metricsData.estimated_cost;
-
         } catch (error) {
             console.error('Error loading data:', error);
         }
     });
 
+    // Handle form submission
     const evaluationForm = document.getElementById('evaluationForm');
-    const saveButton = document.getElementById('saveButton');
-    const spinner = saveButton.querySelector('.spinner-border');
-    const successMessage = document.getElementById('successMessage');
-
     evaluationForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
+        const formData = new FormData(this);
         const supplierId = document.getElementById('supplier_id').value;
-        const formData = new FormData(evaluationForm);
         
         try {
-            // Show loading state
-            saveButton.disabled = true;
-            spinner.classList.remove('d-none');
-            successMessage.classList.add('d-none');
-            
-            // Save evaluation and metrics in parallel
-            const [evalResponse, metricsResponse] = await Promise.all([
-                fetch(`/admin/suppliers/${supplierId}/evaluations`, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    }
-                }),
-                fetch(`/admin/suppliers/${supplierId}/metrics`, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    }
-                })
-            ]);
-            
-            // Check if both requests were successful
-            if (!evalResponse.ok) throw new Error('Failed to save evaluation');
-            if (!metricsResponse.ok) throw new Error('Failed to save metrics');
+            const response = await fetch(`/admin/suppliers/${supplierId}/evaluations`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
 
-            // Show success message
-            successMessage.classList.remove('d-none');
-            
-            // Reload page after a delay to ensure server processing is complete
-            setTimeout(() => {
-                window.location.reload();
-            }, 2500);
-
+            if (response.ok) {
+                const successMessage = document.getElementById('successMessage');
+                successMessage.classList.remove('d-none');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                throw new Error('Failed to save evaluation');
+            }
         } catch (error) {
             console.error('Error:', error);
             alert('Failed to save evaluation. Please try again.');
-        } finally {
-            // Reset loading state
-            saveButton.disabled = false;
-            spinner.classList.add('d-none');
         }
     });
 });
@@ -462,41 +520,52 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 }
 
-.rating {
-    display: inline-flex;
-    flex-direction: row-reverse;
-    gap: 0.3rem;
-    --stroke: #666;
-    --fill: #ffc73a;
+.score-input {
+    position: relative;
+    width: 100px;
 }
 
-.rating input {
-    appearance: unset;
+.score-input input {
+    width: 100%;
+    padding-right: 20px;
+    text-align: center;
 }
 
-.rating label {
+.score-controls {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    width: 20px;
+}
+
+.btn-increment {
+    border: none;
+    background: none;
+    padding: 0;
+    height: 50%;
+    font-size: 10px;
+    color: #666;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.rating svg {
-    width: 2rem;
-    height: 2rem;
-    overflow: visible;
-    fill: transparent;
-    stroke: var(--stroke);
-    stroke-linejoin: bevel;
-    stroke-width: 2px;
-    transition: 0.2s;
+.btn-increment:hover {
+    color: #000;
 }
 
-.rating input:checked ~ label svg {
-    fill: var(--fill);
-    stroke: var(--fill);
+/* Hide default number input spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
-
-.rating input:hover ~ label svg {
-    fill: var(--fill);
-    stroke: var(--fill);
+input[type="number"] {
+    -moz-appearance: textfield;
 }
 
 .metrics-section {

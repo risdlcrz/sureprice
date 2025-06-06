@@ -213,19 +213,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusFilter = document.getElementById('status-filter');
     if (statusFilter) {
         statusFilter.addEventListener('change', function() {
-            const status = this.value;
-            const url = new URL(window.location.href);
-            if (status) {
-                url.searchParams.set('status', status);
-            } else {
-                url.searchParams.delete('status');
-            }
-            window.location.href = url.toString();
-        });
+        const status = this.value;
+        const url = new URL(window.location.href);
+        if (status) {
+            url.searchParams.set('status', status);
+        } else {
+            url.searchParams.delete('status');
+        }
+        window.location.href = url.toString();
+    });
 
-        // Set the current status in the filter
-        const currentStatus = new URLSearchParams(window.location.search).get('status');
-        if (currentStatus) {
+    // Set the current status in the filter
+    const currentStatus = new URLSearchParams(window.location.search).get('status');
+    if (currentStatus) {
             statusFilter.value = currentStatus;
         }
     }
