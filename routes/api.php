@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\MaterialController;
+use Illuminate\Http\Request;
+use App\Models\Material;
+use App\Models\Supplier;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,5 +44,35 @@ Route::middleware([
 });
 
 Route::get('purchase-requests/{purchaseRequest}/items', [PurchaseRequestController::class, 'getItems']);
+
+Route::middleware('api')->group(function () {
+    Route::get('/materials/suppliers', function (Request $request) {
+        try {
+            $materialName = $request->query('name');
+            
+            if (empty($materialName)) {
+                return response()->json([]);
+            }
+            
+            // Find the material by name
+            $material = Material::where('name', 'like', '%' . $materialName . '%')->first();
+            
+            if (!$material) {
+                return response()->json([]);
+            }
+            
+            // Get suppliers for this material, prioritizing preferred suppliers
+            $suppliers = $material->suppliers()
+                ->orderBy('material_supplier.is_preferred', 'desc')
+                ->select('suppliers.id', 'suppliers.name')
+                ->get();
+            
+            return response()->json($suppliers);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching suppliers: ' . $e->getMessage());
+            return response()->json([], 500);
+        }
+    });
+});
 
 require __DIR__.'/auth.php'; 

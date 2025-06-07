@@ -4,7 +4,7 @@
 
 
 <div class="content">
-    <h1 class="text-center my-4">Budget Allocation and Expenditures</h1>
+    <h1 class="text-center my-4">Project Budget and Expenditures</h1>
 
     <div class="container-fluid">
         <!-- Contract Selection with Quick Stats -->
@@ -92,8 +92,8 @@
                                     <div class="border-start border-4 border-info ps-3">
                                         <p class="text-muted mb-1">Total Contract Value</p>
                                         <h5 class="mb-3">₱{{ number_format($selectedContract->total_amount, 2) }}</h5>
-                                        <p class="text-muted mb-1">Budget Allocation</p>
-                                        <h5>₱{{ number_format($selectedContract->budget_allocation ?? $selectedContract->total_amount, 2) }}</h5>
+                                        <p class="text-muted mb-1">Available Budget</p>
+                                        <h5>₱{{ number_format($selectedContract->total_amount - $totalSpent, 2) }}</h5>
                                     </div>
                                 </div>
                             </div>
@@ -129,7 +129,7 @@
                                             <th>Quantity</th>
                                             <th>Unit Price</th>
                                             <th>Total</th>
-                                            <th>% of Budget</th>
+                                            <th>% of Contract</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -180,145 +180,59 @@
                 </div>
             </div>
 
-            <!-- Charts Row -->
+            <!-- Budget Overview -->
             <div class="row mb-4">
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h4 class="mb-0">Spending Trends</h4>
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-outline-primary active" onclick="toggleChartView('monthly')">Monthly</button>
-                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleChartView('weekly')">Weekly</button>
-                                </div>
-                            </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5 class="mb-0">Budget Overview</h5>
                         </div>
                         <div class="card-body">
-                            <div style="height: 300px;">
-                                <canvas id="spendingChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Transactions -->
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h4 class="mb-0">Recent Transactions</h4>
-                                <span class="badge bg-primary">Last {{ $recentTransactions->count() }} transactions</span>
-                            </div>
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="list-group list-group-flush">
-                                @forelse($recentTransactions as $transaction)
-                                    <div class="list-group-item">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas {{ $transaction->type === 'purchase_order' ? 'fa-shopping-cart' : 'fa-exchange-alt' }} me-2 
-                                                              text-{{ $transaction->type === 'purchase_order' ? 'primary' : 'success' }}"></i>
-                                                    <div>
-                                                        <div class="fw-bold">{{ Carbon\Carbon::parse($transaction->date)->format('M d, Y') }}</div>
-                                                        <small class="text-muted">{{ $transaction->description }}</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="text-end">
-                                                <div class="fw-bold text-{{ $transaction->amount > 10000 ? 'danger' : 'success' }}">
-                                                    ₱{{ number_format($transaction->amount, 2) }}
-                                                </div>
-                                                @if($transaction->type === 'purchase_order')
-                                                    <span class="badge bg-info">Purchase Order</span>
-                                                @endif
-                                            </div>
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <canvas id="budgetDonut" width="200" height="200"></canvas>
+                                </div>
+                                <div class="col-md-6">
+                                    @php
+                                        $totalBudget = $selectedContract->total_amount;
+                                        $remaining = max(0, $totalBudget - $totalSpent);
+                                        $percentUsed = $totalBudget > 0 ? ($totalSpent / $totalBudget) * 100 : 0;
+                                    @endphp
+                                    <h6 class="mb-3">Budget Status</h6>
+                                    <div class="progress mb-3" style="height: 10px;">
+                                        <div class="progress-bar bg-{{ $percentUsed > 90 ? 'danger' : ($percentUsed > 70 ? 'warning' : 'success') }}"
+                                             role="progressbar"
+                                             style="width: {{ min(100, $percentUsed) }}%">
                                         </div>
                                     </div>
-                                @empty
-                                    <div class="list-group-item text-center">No recent transactions found.</div>
-                                @endforelse
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Bottom Row -->
-            <div class="row">
-                <div class="col-md-8 mb-4">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h4 class="mb-0">Cost Distribution</h4>
-                                <div class="btn-group">
-                                    <button type="button" class="btn btn-sm btn-outline-primary active" onclick="toggleBreakdownView('category')">By Category</button>
-                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="toggleBreakdownView('supplier')">By Supplier</button>
+                                    <p class="mb-1">
+                                        <strong>Total Budget:</strong><br>
+                                        ₱{{ number_format($totalBudget, 2) }}
+                                    </p>
+                                    <p class="mb-1">
+                                        <strong>Total Spent:</strong><br>
+                                        ₱{{ number_format($totalSpent, 2) }}
+                                    </p>
+                                    <p class="mb-1">
+                                        <strong>Remaining:</strong><br>
+                                        ₱{{ number_format($remaining, 2) }}
+                                    </p>
+                                    <p class="mb-0">
+                                        <strong>Utilization:</strong><br>
+                                        {{ number_format($percentUsed, 1) }}%
+                                    </p>
                                 </div>
                             </div>
-                        </div>
-                        <div class="card-body">
-                            <div style="height: 300px;">
-                                <canvas id="costBreakdownChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Budget Overview -->
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h4 class="mb-0">Budget Overview</h4>
-                        </div>
-                        <div class="card-body">
-                            @php
-                                $percentUsed = $totalBudget > 0 ? round(($totalSpent / $totalBudget) * 100, 1) : 0;
-                                $remaining = $totalBudget - $totalSpent;
-                                $statusClass = $remaining < 0 ? 'danger' : ($percentUsed > 80 ? 'warning' : 'success');
-                            @endphp
-
-                            <div class="text-center mb-4">
-                                <div class="position-relative d-inline-block">
-                                    <canvas id="budgetDonut" width="150" height="150"></canvas>
-                                    <div class="position-absolute top-50 start-50 translate-middle">
-                                        <h3 class="mb-0">{{ number_format($percentUsed, 1) }}%</h3>
-                                        <small class="text-muted">Used</small>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row g-3 mb-4">
-                                <div class="col-6">
-                                    <div class="border-start border-4 border-primary ps-3">
-                                        <small class="text-muted">Total Budget</small>
-                                        <h5 class="mb-0">₱{{ number_format($totalBudget, 2) }}</h5>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="border-start border-4 border-success ps-3">
-                                        <small class="text-muted">Spent</small>
-                                        <h5 class="mb-0">₱{{ number_format($totalSpent, 2) }}</h5>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="border-start border-4 border-info ps-3">
-                                        <small class="text-muted">Remaining</small>
-                                        <h5 class="mb-0">₱{{ number_format($remaining, 2) }}</h5>
-                                    </div>
-                                </div>
-                            </div>
-
-                            @if($remaining < 0)
-                                <div class="alert alert-danger d-flex align-items-center">
+                            @if($percentUsed > 90)
+                                <div class="alert alert-danger d-flex align-items-center mt-3">
                                     <i class="fas fa-exclamation-triangle me-2"></i>
                                     <div>
-                                        <strong>Budget Exceeded!</strong><br>
-                                        Over by ₱{{ number_format(abs($remaining), 2) }}
+                                        <strong>Critical Budget Alert!</strong><br>
+                                        Budget is nearly depleted
                                     </div>
                                 </div>
                             @elseif($percentUsed > 80)
-                                <div class="alert alert-warning d-flex align-items-center">
+                                <div class="alert alert-warning d-flex align-items-center mt-3">
                                     <i class="fas fa-exclamation-circle me-2"></i>
                                     <div>
                                         <strong>Budget Alert!</strong><br>
@@ -326,7 +240,7 @@
                                     </div>
                                 </div>
                             @else
-                                <div class="alert alert-success d-flex align-items-center">
+                                <div class="alert alert-success d-flex align-items-center mt-3">
                                     <i class="fas fa-check-circle me-2"></i>
                                     <div>
                                         <strong>On Track!</strong><br>
@@ -389,224 +303,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
-
-        // Chart configurations
-        let spendingChart = null;
-        let breakdownChart = null;
-        let currentSpendingView = 'monthly';
-        let currentBreakdownView = 'category';
-
-        // Monthly data
-        const monthlyData = {
-            labels: @json($monthlyData->labels),
-            values: @json($monthlyData->values)
-        };
-
-        // Weekly data
-        const weeklyData = {
-            labels: @json($weeklyData->labels),
-            values: @json($weeklyData->values)
-        };
-
-        // Category breakdown data
-        const categoryData = {
-            labels: @json($categoryData->labels),
-            values: @json($categoryData->values)
-        };
-
-        // Supplier breakdown data
-        const supplierData = {
-            labels: @json($supplierData->labels),
-            values: @json($supplierData->values)
-        };
-
-        // Initialize spending chart
-        function initSpendingChart(type = 'monthly') {
-            const ctx = document.getElementById('spendingChart').getContext('2d');
-            const data = type === 'monthly' ? monthlyData : weeklyData;
-
-            if (spendingChart) {
-                spendingChart.destroy();
-            }
-
-            spendingChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.labels,
-                    datasets: [{
-                        label: type === 'monthly' ? 'Monthly Spending' : 'Weekly Spending',
-                        data: data.values,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                        tension: 0.4,
-                        fill: true,
-                        pointBackgroundColor: 'rgba(75, 192, 192, 1)',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                drawBorder: false
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return '₱' + value.toLocaleString(undefined, {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2
-                                    });
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 12,
-                            titleColor: '#fff',
-                            titleFont: {
-                                size: 14,
-                                weight: 'bold'
-                            },
-                            bodyFont: {
-                                size: 13
-                            },
-                            callbacks: {
-                                label: function(context) {
-                                    return '₱' + context.raw.toLocaleString(undefined, {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2
-                                    });
-                                }
-                            }
-                        },
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-        }
-
-        // Initialize breakdown chart
-        function initBreakdownChart(type = 'category') {
-            const ctx = document.getElementById('costBreakdownChart').getContext('2d');
-            const data = type === 'category' ? categoryData : supplierData;
-
-            if (breakdownChart) {
-                breakdownChart.destroy();
-            }
-
-            breakdownChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: data.labels,
-                    datasets: [{
-                        data: data.values,
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.8)',
-                            'rgba(54, 162, 235, 0.8)',
-                            'rgba(255, 206, 86, 0.8)',
-                            'rgba(75, 192, 192, 0.8)',
-                            'rgba(153, 102, 255, 0.8)',
-                            'rgba(255, 159, 64, 0.8)'
-                        ],
-                        borderColor: '#fff',
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '65%',
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                padding: 20,
-                                usePointStyle: true,
-                                pointStyle: 'circle',
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                            padding: 12,
-                            titleColor: '#fff',
-                            titleFont: {
-                                size: 14,
-                                weight: 'bold'
-                            },
-                            bodyFont: {
-                                size: 13
-                            },
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.raw;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = ((value / total) * 100).toFixed(1);
-                                    return `${context.label}: ₱${value.toLocaleString(undefined, {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2
-                                    })} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        // Initialize both charts
-        initSpendingChart();
-        initBreakdownChart();
-
-        // Toggle spending chart view
-        window.toggleChartView = function(type) {
-            if (currentSpendingView !== type) {
-                currentSpendingView = type;
-                initSpendingChart(type);
-                
-                // Update button states
-                document.querySelectorAll('.btn-group button').forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.textContent.toLowerCase().includes(type)) {
-                        btn.classList.add('active');
-                    }
-                });
-            }
-        };
-
-        // Toggle breakdown chart view
-        window.toggleBreakdownView = function(type) {
-            if (currentBreakdownView !== type) {
-                currentBreakdownView = type;
-                initBreakdownChart(type);
-                
-                // Update button states
-                const buttons = document.querySelectorAll('.card-header .btn-group button');
-                buttons.forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.textContent.toLowerCase().includes(type)) {
-                        btn.classList.add('active');
-                    }
-                });
-            }
-        };
     @endif
 });
 </script>

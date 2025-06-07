@@ -59,7 +59,7 @@ class BudgetAllocationController extends Controller
 
         if ($selectedContract) {
             // Calculate budget metrics
-            $totalBudget = (float)($selectedContract->budget_allocation ?? $selectedContract->total_amount);
+            $totalBudget = (float)$selectedContract->total_amount;
             
             // Calculate total spent from POs and transactions
             $approvedPOTotal = $selectedContract->purchaseOrders

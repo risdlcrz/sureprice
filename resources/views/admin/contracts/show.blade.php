@@ -73,21 +73,19 @@
     </form>
 
     <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Contract Information</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
+        <div class="card-header">
+            <h5 class="mb-0">Contract Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
                 <div class="col-md-6">
                     <p><strong>Contract ID:</strong> {{ $contract->contract_id }}</p>
                     <p><strong>Start Date:</strong> {{ $contract->start_date->format('F d, Y') }}</p>
                     <p><strong>End Date:</strong> {{ $contract->end_date->format('F d, Y') }}</p>
-                        </div>
+                </div>
                 <div class="col-md-6">
                     <p><strong>Status:</strong> <span class="badge bg-{{ $contract->status === 'draft' ? 'warning' : 'success' }}">{{ ucfirst($contract->status) }}</span></p>
                     <p><strong>Total Amount:</strong> ₱{{ number_format($contract->total_amount, 2) }}</p>
-                    <p><strong>Budget Allocation:</strong> ₱{{ number_format($contract->budget_allocation, 2) }}</p>
-                </div>
                 </div>
             </div>
         </div>
