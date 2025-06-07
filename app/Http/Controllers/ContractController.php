@@ -50,8 +50,10 @@ class ContractController extends Controller
     public function create()
     {
         $purchaseOrders = \App\Models\PurchaseOrder::where('status', 'approved')
-            ->whereNull('contract_id')
-            ->orWhere('contract_id', 0)
+            ->where(function($query) {
+                $query->whereNull('contract_id')
+                    ->orWhere('contract_id', 0);
+            })
             ->get();
         return view('admin.contracts.form', [
             'edit_mode' => false,
@@ -72,10 +74,10 @@ class ContractController extends Controller
     public function edit(Contract $contract)
     {
         $purchaseOrders = \App\Models\PurchaseOrder::where('status', 'approved')
-            ->where(function($q) use ($contract) {
-                $q->whereNull('contract_id')
-                  ->orWhere('contract_id', 0)
-                  ->orWhere('id', $contract->purchase_order_id);
+            ->where(function($query) use ($contract) {
+                $query->whereNull('contract_id')
+                    ->orWhere('contract_id', 0)
+                    ->orWhere('id', $contract->purchase_order_id);
             })
             ->get();
         $contract->load([
@@ -144,7 +146,6 @@ class ContractController extends Controller
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after:start_date',
                 'total_amount' => 'required|numeric|min:0',
-                'base_labor_rate' => 'required|numeric|min:0',
                 'labor_cost' => 'required|numeric|min:0',
                 'materials_cost' => 'required|numeric|min:0',
                 'scope_of_work' => 'required|array|min:1',
@@ -156,14 +157,17 @@ class ContractController extends Controller
                 'bank_account_number' => 'required_if:payment_method,bank_transfer',
                 'purchase_order_id' => 'nullable|exists:purchase_orders,id',
 
-                // Contract items validation - making them optional
-                'item_material_id' => 'nullable|array',
-                'item_material_id.*' => 'nullable|exists:materials,id',
-                'item_supplier_id.*' => 'nullable|exists:suppliers,id',
-                'item_quantity' => 'nullable|array',
-                'item_quantity.*' => 'nullable|numeric|min:0.01',
-                'item_amount' => 'nullable|array',
-                'item_amount.*' => 'nullable|numeric|min:0.01',
+                // Contract items validation
+                'item_material_name' => 'required|array',
+                'item_material_name.*' => 'required|string',
+                'item_quantity' => 'required|array',
+                'item_quantity.*' => 'required|numeric|min:0.01',
+                'item_amount' => 'required|array',
+                'item_amount.*' => 'required|numeric|min:0.01',
+                'item_supplier_id' => 'nullable|array',
+                'item_supplier_id.*' => 'nullable',
+                'item_unit' => 'required|array',
+                'item_unit.*' => 'required|string',
             ]);
 
             DB::beginTransaction();
@@ -174,7 +178,7 @@ class ContractController extends Controller
                     ['email' => $request->contractor_email],
                     [
                         'type' => 'contractor',
-                        'entity_type' => 'person', // Default to person for contractor
+                        'entity_type' => 'person',
                         'name' => $request->contractor_name,
                         'street' => $request->contractor_street,
                         'barangay' => $request->contractor_barangay,
@@ -253,45 +257,113 @@ class ContractController extends Controller
                 }
                 
                 // Save contract with minimal required fields
-            $contractData = [
-                'contractor_id' => $contractor->id,
-                'client_id' => $client->id,
-                'property_id' => $property->id,
-                'scope_of_work' => implode(', ', $request->scope_of_work),
-                'scope_description' => $request->scope_description ?? '',
-                'start_date' => $request->start_date ?? ($contract ? $contract->start_date : null),
-                'end_date' => $request->end_date ?? ($contract ? $contract->end_date : null),
-                'total_amount' => $request->total_amount,
-                'base_labor_rate' => $request->base_labor_rate,
-                'labor_cost' => $request->labor_cost,
-                'materials_cost' => $request->materials_cost,
-                'payment_method' => $request->payment_method,
-                'payment_terms' => $request->payment_terms,
-                'bank_name' => $request->bank_name,
-                'bank_account_name' => $request->bank_account_name,
-                'bank_account_number' => $request->bank_account_number,
-                'jurisdiction' => $request->jurisdiction ?? $request->property_city . ', Philippines',
-                'contract_terms' => $request->contract_terms ?? 'Standard terms and conditions apply',
-                'client_signature' => $signatures['client'],
-                'contractor_signature' => $signatures['contractor'],
-                'status' => 'draft',
-                'purchase_order_id' => $request->purchase_order_id
-            ];
+                $contractData = [
+                    'contractor_id' => $contractor->id,
+                    'client_id' => $client->id,
+                    'property_id' => $property->id,
+                    'scope_of_work' => implode(', ', $request->scope_of_work),
+                    'scope_description' => $request->scope_description ?? '',
+                    'start_date' => $request->start_date ?? ($contract ? $contract->start_date : null),
+                    'end_date' => $request->end_date ?? ($contract ? $contract->end_date : null),
+                    'total_amount' => $request->total_amount,
+                    'labor_cost' => $request->labor_cost,
+                    'materials_cost' => $request->materials_cost,
+                    'payment_method' => $request->payment_method,
+                    'payment_terms' => $request->payment_terms,
+                    'bank_name' => $request->bank_name,
+                    'bank_account_name' => $request->bank_account_name,
+                    'bank_account_number' => $request->bank_account_number,
+                    'jurisdiction' => $request->jurisdiction ?? $request->property_city . ', Philippines',
+                    'contract_terms' => $request->contract_terms ?? 'Standard terms and conditions apply',
+                    'client_signature' => $signatures['client'],
+                    'contractor_signature' => $signatures['contractor'],
+                    'status' => 'draft',
+                    'purchase_order_id' => $request->purchase_order_id
+                ];
 
-            if ($contract) {
-                $contract->update($contractData);
-            } else {
-                $contract = Contract::create($contractData);
-            }
-
-                // Save items if present
-                if ($request->has('item_material_id')) {
-                    $this->saveItems($request, $contract);
+                if ($contract) {
+                    $contract->update($contractData);
+                } else {
+                    $contract = Contract::create($contractData);
                 }
 
-            DB::commit();
+                // If there's no purchase order, create a purchase request with the contract items
+                if (!$request->purchase_order_id) {
+                    // Generate PR number (format: PR-YYYYMMDD-XXXX)
+                    $date = now()->format('Ymd');
+                    $lastPR = \App\Models\PurchaseRequest::where('pr_number', 'like', "PR-{$date}-%")
+                        ->orderBy('pr_number', 'desc')
+                        ->first();
+                    
+                    $sequence = '0001';
+                    if ($lastPR) {
+                        $lastSequence = intval(substr($lastPR->pr_number, -4));
+                        $sequence = str_pad($lastSequence + 1, 4, '0', STR_PAD_LEFT);
+                    }
+                    
+                    $prNumber = "PR-{$date}-{$sequence}";
+                    
+                    $purchaseRequest = \App\Models\PurchaseRequest::create([
+                        'contract_id' => $contract->id,
+                        'pr_number' => $prNumber,
+                        'status' => 'pending',
+                        'requester_id' => auth()->id(),
+                        'department' => 'Procurement',
+                        'required_date' => $request->start_date,
+                        'purpose' => 'Materials procurement for Contract ' . $contract->id,
+                        'notes' => 'Automatically generated from contract ' . $contract->id,
+                        'total_amount' => $request->materials_cost
+                    ]);
 
-            return redirect()->route('contracts.show', $contract->id);
+                    // Create purchase request items from the materials list
+                    $materialNames = $request->item_material_name;
+                    $quantities = $request->item_quantity;
+                    $amounts = $request->item_amount;
+                    $supplierIds = $request->item_supplier_id ?? [];
+                    $units = $request->item_unit;
+
+                    foreach ($materialNames as $index => $materialName) {
+                        // Determine category based on material name
+                        $categoryId = $this->determineMaterialCategory($materialName);
+
+                        // Find or create the material
+                        $material = \App\Models\Material::firstOrCreate(
+                            ['name' => $materialName],
+                            [
+                                'unit' => $units[$index],
+                                'code' => 'MAT' . str_pad(rand(1, 99999), 6, '0', STR_PAD_LEFT),
+                                'category_id' => $categoryId
+                            ]
+                        );
+
+                        // Create the purchase request item
+                        $purchaseRequest->items()->create([
+                            'material_id' => $material->id,
+                            'supplier_id' => isset($supplierIds[$index]) ? $supplierIds[$index] : null,
+                            'description' => $materialName,
+                            'quantity' => $quantities[$index],
+                            'unit' => $units[$index],
+                            'estimated_unit_price' => $amounts[$index],
+                            'total_amount' => $quantities[$index] * $amounts[$index],
+                            'notes' => 'From contract ' . $contract->id
+                        ]);
+
+                        // Create contract item
+                        $contract->items()->create([
+                            'material_id' => $material->id,
+                            'material_name' => $materialName,
+                            'unit' => $units[$index] ?? 'pcs',
+                            'supplier_id' => isset($supplierIds[$index]) ? $supplierIds[$index] : null,
+                            'quantity' => $quantities[$index],
+                            'amount' => $amounts[$index],
+                            'total' => $quantities[$index] * $amounts[$index]
+                        ]);
+                    }
+                }
+
+                DB::commit();
+
+                return redirect()->route('contracts.show', $contract->id);
             } catch (\Exception $e) {
                 DB::rollBack();
                 throw $e;
@@ -394,6 +466,7 @@ class ContractController extends Controller
         $amounts = $request->input('item_amount', []);
         $supplierIds = $request->input('item_supplier_id', []);
         $supplierNames = $request->input('item_supplier_name', []);
+        $units = $request->input('item_unit', []);
 
         foreach ($materials as $index => $materialId) {
             if (!$materialId) continue;
@@ -411,10 +484,13 @@ class ContractController extends Controller
             }
 
             if ($material) {
+                // Ensure we have a unit value, with fallbacks
+                $unit = $units[$index] ?? $material->unit ?? 'pcs';
+                
                 $contract->items()->create([
                     'material_id' => $materialId,
                     'material_name' => $material->name,
-                    'material_unit' => $material->unit,
+                    'unit' => $unit,
                     'supplier_id' => $supplierIds[$index] ?? null,
                     'supplier_name' => $supplierNames[$index] ?? ($supplier ? $supplier->name : null),
                     'quantity' => $quantities[$index],
@@ -565,5 +641,58 @@ class ContractController extends Controller
             });
 
         return response()->json($contracts);
+    }
+
+    protected function determineMaterialCategory($materialName)
+    {
+        $materialName = strtolower($materialName);
+        
+        // Construction materials
+        if (str_contains($materialName, 'concrete') || 
+            str_contains($materialName, 'cement') || 
+            str_contains($materialName, 'steel') ||
+            str_contains($materialName, 'wood') ||
+            str_contains($materialName, 'lumber') ||
+            str_contains($materialName, 'drywall') ||
+            str_contains($materialName, 'structural')) {
+            return \App\Models\Category::where('slug', 'construction')->first()->id;
+        }
+        
+        // Electrical materials
+        if (str_contains($materialName, 'wire') || 
+            str_contains($materialName, 'electrical') || 
+            str_contains($materialName, 'socket') ||
+            str_contains($materialName, 'switch') ||
+            str_contains($materialName, 'circuit')) {
+            return \App\Models\Category::where('slug', 'electrical')->first()->id;
+        }
+        
+        // Plumbing materials
+        if (str_contains($materialName, 'pipe') || 
+            str_contains($materialName, 'plumbing') || 
+            str_contains($materialName, 'valve') ||
+            str_contains($materialName, 'fitting')) {
+            return \App\Models\Category::where('slug', 'plumbing')->first()->id;
+        }
+        
+        // Finishing materials
+        if (str_contains($materialName, 'paint') || 
+            str_contains($materialName, 'tile') || 
+            str_contains($materialName, 'finish') ||
+            str_contains($materialName, 'ceiling') ||
+            str_contains($materialName, 'floor')) {
+            return \App\Models\Category::where('slug', 'finishing')->first()->id;
+        }
+        
+        // Tools and equipment
+        if (str_contains($materialName, 'tool') || 
+            str_contains($materialName, 'equipment') || 
+            str_contains($materialName, 'machine') ||
+            str_contains($materialName, 'safety')) {
+            return \App\Models\Category::where('slug', 'tools')->first()->id;
+        }
+        
+        // Default to 'Other' category
+        return \App\Models\Category::where('slug', 'other')->first()->id;
     }
 } 

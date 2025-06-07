@@ -30,6 +30,12 @@ return new class extends Migration
                     'contract_items.supplier_name' => DB::raw('suppliers.name')
                 ]);
         }
+
+        Schema::table('contract_items', function (Blueprint $table) {
+            if (!Schema::hasColumn('contract_items', 'material_unit')) {
+                $table->string('material_unit')->after('material_name');
+            }
+        });
     }
 
     /**
@@ -38,5 +44,11 @@ return new class extends Migration
     public function down(): void
     {
         // No columns to drop since none were added in this migration
+
+        Schema::table('contract_items', function (Blueprint $table) {
+            if (Schema::hasColumn('contract_items', 'material_unit')) {
+                $table->dropColumn('material_unit');
+            }
+        });
     }
 }; 

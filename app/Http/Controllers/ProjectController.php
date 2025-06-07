@@ -23,7 +23,7 @@ class ProjectController extends Controller
             ->get();
 
         // Calculate total budget from all contracts
-        $totalBudget = Contract::sum('budget_allocation');
+        $totalBudget = Contract::sum('total_amount');
 
         // Calculate total spent from transactions
         $totalSpent = Transaction::sum('amount');
@@ -44,7 +44,7 @@ class ProjectController extends Controller
             ->take(5)
             ->get();
 
-            $recentQuotations = Quotation::with('purchaseRequest.contract')->latest()->take(5)->get();
+        $recentQuotations = Quotation::with('purchaseRequest.contract')->latest()->take(5)->get();
 
         $recentActivities = Activity::latest()
             ->take(5)

@@ -73,7 +73,6 @@ $contractData = $contracts->mapWithKeys(function($c) {
     $spent = $c->transactions->sum('amount') ?? 0;
     return [$c->id => [
         'total' => (float)$c->total_amount,
-        'budget' => (float)$c->budget_allocation,
         'spent' => (float)$spent,
         'remaining' => (float)$c->total_amount - (float)$spent
     ]];
@@ -90,7 +89,6 @@ $contractData = $contracts->mapWithKeys(function($c) {
             infoDiv.style.display = '';
             infoDiv.innerHTML =
                 `<strong>Total Contract Value:</strong> ₱${parseFloat(contractData[contractId].total).toLocaleString(undefined, {minimumFractionDigits:2})}<br>` +
-                `<strong>Budget Allocation:</strong> ₱${parseFloat(contractData[contractId].budget).toLocaleString(undefined, {minimumFractionDigits:2})}<br>` +
                 `<strong>Already Spent:</strong> ₱${parseFloat(contractData[contractId].spent).toLocaleString(undefined, {minimumFractionDigits:2})}<br>` +
                 `<strong>Remaining Balance:</strong> ₱${parseFloat(contractData[contractId].remaining).toLocaleString(undefined, {minimumFractionDigits:2})}`;
         } else {
