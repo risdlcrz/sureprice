@@ -25,7 +25,7 @@
         <!-- Mobile Top Header -->
         <div class="mobile-topbar d-md-none d-flex">
             <div class="d-flex align-items-center gap-2">
-                <img src="{{ asset('images/gdc_logo.png') }}" alt="Logo" style="height: 40px;">
+                <img src="{{ Vite::asset('resources/images/gdc_logo.png') }}" alt="Logo" style="height: 40px;">
                 <strong>GEOCON</strong>
             </div>
             <button class="btn btn-success" onclick="toggleMobileMenu()">
@@ -36,14 +36,11 @@
         <!-- Mobile Fullscreen Menu -->
         <div class="mobile-menu" id="mobileMenu">
             <div class="logo-close-container d-flex justify-content-between align-items-start w-100 mb-4">
-                <div class="text-start d-flex flex-column align-items-center">
-                    <img src="{{ asset('images/gdc_logo.png') }}" alt="Logo" style="height: 100px;">
-                    <div style="font-size: 35px; font-weight: bold;">GEOCON</div>
-                </div>
                 <button class="close-btn-mobile" onclick="toggleMobileMenu()">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
+
 
             <div class="w-100 d-flex flex-column align-items-center mt-2 mobile-nav-buttons">
                 @if(request()->is('admin/project*'))

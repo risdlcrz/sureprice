@@ -321,6 +321,12 @@
     border: none;
     margin-bottom: 1rem;
 }
+.content {
+    margin-left: 150px;
+    padding: 20px;
+    flex-grow: 1;
+    transition: margin-left 0.3s ease;
+}
 
 .role-badge {
     padding: 0.25em 0.5em;
@@ -342,6 +348,8 @@
 .modal-body .table th {
     background-color: #f8f9fa;
 }
+
+
 </style>
 @endpush
 @endsection
