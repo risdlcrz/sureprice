@@ -97,6 +97,7 @@ body {
     color: white;
     margin-top: 10px;
     opacity: 0.9;
+    margin-left: 25px;
 }
 
 .nav-buttons {
@@ -156,7 +157,39 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Mobile Styles */
+.logout-container {
+    margin-top: auto;
+    width: 100%;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.logout-container .btn {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 15px;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #02912d;
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.logout-container .btn:hover {
+    background-color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+
 .mobile-topbar {
     display: none;
     position: fixed;
@@ -189,6 +222,10 @@ body {
     padding: 30px 20px;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
 }
 
 .mobile-menu.active {
@@ -233,6 +270,8 @@ body {
     padding: 10px;
     cursor: pointer;
     transition: transform 0.2s ease;
+    align-self: flex-end;
+    margin-left: 400px;
 }
 
 .close-btn-mobile:hover {
@@ -255,13 +294,5 @@ body {
 
     .mobile-menu {
         display: flex;
-    }
-
-    .mobile-menu .logo-title-container {
-        margin-bottom: 30px;
-    }
-
-    .mobile-menu .nav-buttons {
-        margin-top: 20px;
     }
 }

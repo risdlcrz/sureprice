@@ -1,73 +1,18 @@
 @extends('layouts.app')
 
-@push('styles')
-<link href='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/main.min.css' rel='stylesheet' />
-<link href='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/main.min.css' rel='stylesheet' />
-<style>
-.progress {
-    border-radius: 0.5rem;
-}
 
-.progress-bar {
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-.calendar-card {
-    min-height: 600px;
-}
-
-#calendar {
-    height: 100%;
-}
-
-.project-search {
-    margin-bottom: 1rem;
-}
-
-.card {
-    transition: transform 0.2s;
-    cursor: pointer;
-}
-.card:hover {
-    transform: translateY(-5px);
-}
-.card-img-top {
-    height: 200px;
-    object-fit: cover;
-}
-.card-footer {
-    background: none;
-    border-top: none;
-    padding: 1rem;
-}
-.btn {
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-.list-group-item {
-    transition: background-color 0.2s;
-}
-.list-group-item:hover {
-    background-color: rgba(0,0,0,0.02);
-}
-</style>
-@endpush
 
 @section('content')
     <h1 class="text-center my-4">Project & Procurement Dashboard</h1>
 
-    <div class="container-fluid">
+    <div class="container-fluid ">
         <!-- Project Management Section -->
         <h2 class="mb-4">Project Management</h2>
         <div class="row row-cols-1 row-cols-md-3 g-4">
             <!-- Create Contract Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/new-contract.jpg') }}" class="card-img-top" alt="Create Contract">
+                    <img src="{{ Vite::asset('resources/images/ppimage1.jpg') }}" class="card-img-top" alt="Create Contract">
                     <div class="card-body">
                         <h5 class="card-title">Create Contract</h5>
                         <p class="card-text">Start a new contract and set up initial terms and conditions.</p>
@@ -81,7 +26,7 @@
             <!-- View Contracts Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/view-contracts.jpg') }}" class="card-img-top" alt="View Contracts">
+                    <img src="{{ Vite::asset('resources/images/ppimage2.jpg') }}" class="card-img-top" alt="View Contracts">
                     <div class="card-body">
                         <h5 class="card-title">View Contracts</h5>
                         <p class="card-text">Access and manage existing contracts, track status and approvals.</p>
@@ -95,7 +40,7 @@
             <!-- Project Timeline Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/timeline.jpg') }}" class="card-img-top" alt="Project Timeline">
+                    <img src="{{ Vite::asset('resources/images/ppimage3.jpg') }}" class="card-img-top" alt="Project Timeline">
                     <div class="card-body">
                         <h5 class="card-title">Project Timeline</h5>
                         <p class="card-text">View and manage project schedules and timelines.</p>
@@ -139,7 +84,7 @@
             <!-- Purchase Requests Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/purchase-request.jpg') }}" class="card-img-top" alt="Purchase Requests">
+                    <img src="{{ Vite::asset('resources/images/ppimage5.jpg') }}" class="card-img-top" alt="Purchase Requests">
                     <div class="card-body">
                         <h5 class="card-title">Purchase Requests</h5>
                         <p class="card-text">Create and manage purchase requests for materials and supplies.</p>
@@ -158,7 +103,7 @@
             <!-- Purchase Orders Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/purchase-order.jpg') }}" class="card-img-top" alt="Purchase Orders">
+                    <img src="{{ Vite::asset('resources/images/ppimage4.jpg') }}" class="card-img-top" alt="Purchase Orders">
                     <div class="card-body">
                         <h5 class="card-title">Purchase Orders</h5>
                         <p class="card-text">Create and manage purchase orders from approved purchase requests.</p>
@@ -177,7 +122,7 @@
             <!-- Inquiries Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/new-inquiry.jpg') }}" class="card-img-top" alt="Inquiries">
+                    <img src="{{ Vite::asset('resources/images/ppimage6.jpg') }}" class="card-img-top" alt="Inquiries">
                     <div class="card-body">
                         <h5 class="card-title">Inquiries</h5>
                         <p class="card-text">Submit and track material inquiries and procurement requests.</p>
@@ -196,7 +141,7 @@
             <!-- Supplier Invitations Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/new-invitation.jpg') }}" class="card-img-top" alt="Supplier Invitations">
+                    <img src="{{ Vite::asset('resources/images/ppimage7.jpg') }}" class="card-img-top" alt="Supplier Invitations">
                     <div class="card-body">
                         <h5 class="card-title">Supplier Invitations</h5>
                         <p class="card-text">Invite and manage supplier registrations and qualifications.</p>
@@ -215,7 +160,7 @@
             <!-- Quotation Management Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/quotation.jpg') }}" class="card-img-top" alt="Quotation Management">
+                    <img src="{{ Vite::asset('resources/images/ppimage8.jpg') }}" class="card-img-top" alt="Quotation Management">
                     <div class="card-body">
                         <h5 class="card-title">Quotation Management</h5>
                         <p class="card-text">Create and manage RFQs, compare supplier quotations, and track responses.</p>
@@ -234,7 +179,7 @@
             <!-- Materials Management Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/materials.jpg') }}" class="card-img-top" alt="Materials Management">
+                    <img src="{{ Vite::asset('resources/images/ppimage9.jpg') }}" class="card-img-top" alt="Materials Management">
                     <div class="card-body">
                         <h5 class="card-title">Materials Management</h5>
                         <p class="card-text">Manage materials inventory, specifications, and pricing information.</p>
@@ -253,7 +198,7 @@
             <!-- Suppliers Management Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/suppliers.jpg') }}" class="card-img-top" alt="Suppliers">
+                    <img src="{{ Vite::asset('resources/images/ppimage10.png') }}" class="card-img-top" alt="Suppliers">
                     <div class="card-body">
                         <h5 class="card-title">Suppliers Management</h5>
                         <p class="card-text">Manage supplier information, relationships, and performance tracking.</p>
@@ -358,6 +303,83 @@
             </div>
         </div>
     </div>
+
+    @push('styles')
+<link href='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/main.min.css' rel='stylesheet' />
+<link href='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/main.min.css' rel='stylesheet' />
+<style>
+.progress {
+    border-radius: 0.5rem;
+}
+
+.progress-bar {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.calendar-card {
+    min-height: 600px;
+}
+
+#calendar {
+    height: 100%;
+}
+
+.project-search {
+    margin-bottom: 1rem;
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    height: 100%;
+    cursor: pointer;
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+.card-img-top {
+    height: 200px;
+    object-fit: cover;
+}
+
+.card-body {
+    padding: 1.5rem;
+ }
+
+.card-footer {
+    background: none;
+    border-top: none;
+    padding: 1rem;
+}
+
+.card-title {
+    color: #333;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0;
+    text-align: center;
+}
+
+.btn {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+.list-group-item {
+    transition: background-color 0.2s;
+}
+.list-group-item:hover {
+    background-color: rgba(0,0,0,0.02);
+}
+</style>
+@endpush
 
 @push('scripts')
 <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/main.min.js'></script>
