@@ -28,6 +28,7 @@
             <a href="{{ route('contracts.download', $contract->id) }}" class="btn btn-success">
                 <i class="bi bi-download"></i> Download PDF
             </a>
+            <button type="button" class="btn btn-success" id="generatePurchaseRequest"><i class="fas fa-file-invoice"></i> Generate Purchase Request</button>
             <button type="button" class="btn btn-danger" onclick="showDeleteModal()">
                 <i class="bi bi-trash"></i> Delete Contract
             </button>
@@ -324,6 +325,7 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 function updateStatus(status) {
     // Get the CSRF token from the meta tag
@@ -398,5 +400,37 @@ function showDeleteModal() {
 function submitDelete() {
     document.getElementById('delete-form').submit();
 }
+
+document.getElementById('generatePurchaseRequest')?.addEventListener('click', function() {
+    // Gather contract_id
+    const contractId = '{{ $contract->id }}';
+    fetch("{{ route('purchase-requests.generate-from-contract') }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+        },
+        body: JSON.stringify({
+            contract_id: contractId,
+            items: [] // You can enhance this to send breakdown items if available
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Purchase Request Generated!',
+                html: `PR <b>${data.pr_number}</b> for CT <b>${data.contract_number}</b> generated as draft.<br><a href='/purchase-requests/${data.pr_id}'>View Purchase Request</a>`,
+                confirmButtonText: 'OK'
+            });
+        } else {
+            Swal.fire({ icon: 'error', title: 'Failed to generate PR.' });
+        }
+    })
+    .catch(() => {
+        Swal.fire({ icon: 'error', title: 'Failed to generate PR.' });
+    });
+});
 </script>
 @endpush 

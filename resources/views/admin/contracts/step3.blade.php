@@ -164,9 +164,36 @@
                                     <div class="col-md-12">
                                         <div class="form-group">
                                             <label for="payment_terms">Payment Terms</label>
-                                            <textarea class="form-control" id="payment_terms" name="payment_terms" rows="4" required>{{ old('payment_terms', session('contract_step3.payment_terms', "1. Initial deposit of 30% upon contract signing\n2. 40% upon completion of 50% of work\n3. Remaining 30% upon final inspection and completion")) }}</textarea>
-                                        </div>
-                                    </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="payment_type" id="payAllIn" value="pay_all_in" checked>
+                                                <label class="form-check-label" for="payAllIn">Pay All In</label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="payment_type" id="installmentPlan" value="installment">
+                                                <label class="form-check-label" for="installmentPlan">Installment Plan</label>
+                                            </div>
+                                            <div id="installmentOptions" style="display: none;">
+                                                <div class="mb-2">
+                                                    <label for="downpayment">Downpayment:</label>
+                                                    <select class="form-control" id="downpayment">
+                                                        <option value="10">10%</option>
+                                                        <option value="20">20%</option>
+                                                        <option value="30">30%</option>
+                                                        <option value="40">40%</option>
+                                                        <option value="50">50%</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label for="installmentPeriod">Installment Period (months):</label>
+                                                    <select class="form-control" id="installmentPeriod">
+                                                        <option value="3">3 months</option>
+                                                        <option value="6">6 months</option>
+                                                        <option value="12">12 months</option>
+                                                        <option value="24">24 months</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" id="payment_terms" name="payment_terms" value="{{ old('payment_terms', session('contract_step3.payment_terms', 'Pay All In')) }}">
                                 </div>
                                 <div class="row">
                                     <div class="col-md-12">
@@ -222,6 +249,9 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Add a hidden input to store project duration in months -->
+                            <input type="hidden" id="projectDurationMonths" value="{{ $projectDurationMonths ?? 0 }}">
 
                             <div class="form-group mt-4">
                                 <a href="{{ route('contracts.step2') }}" class="btn btn-secondary">Previous Step</a>
@@ -291,6 +321,62 @@ document.addEventListener('DOMContentLoaded', function() {
 
         form.classList.add('was-validated');
     });
+
+    const payAllIn = document.getElementById('payAllIn');
+    const installmentPlan = document.getElementById('installmentPlan');
+    const installmentOptions = document.getElementById('installmentOptions');
+    const downpayment = document.getElementById('downpayment');
+    const installmentPeriod = document.getElementById('installmentPeriod');
+    const paymentTermsInput = document.getElementById('payment_terms');
+
+    function updatePaymentTerms() {
+        if (payAllIn.checked) {
+            paymentTermsInput.value = 'Pay All In';
+        } else {
+            const dp = downpayment.value;
+            const period = installmentPeriod.value;
+            paymentTermsInput.value = `Installment Plan: ${dp}% downpayment, ${period} months installment`;
+        }
+    }
+
+    payAllIn.addEventListener('change', function() {
+        installmentOptions.style.display = this.checked ? 'none' : 'block';
+        updatePaymentTerms();
+    });
+
+    installmentPlan.addEventListener('change', function() {
+        installmentOptions.style.display = this.checked ? 'block' : 'none';
+        updatePaymentTerms();
+    });
+
+    downpayment.addEventListener('change', updatePaymentTerms);
+    installmentPeriod.addEventListener('change', updatePaymentTerms);
+
+    // Initial update
+    updatePaymentTerms();
+
+    // Update the JavaScript logic to calculate project duration in months based on start_date and end_date from step 2
+    const startDate = new Date(document.getElementById('start_date').value);
+    const endDate = new Date(document.getElementById('end_date').value);
+    const projectDurationMonths = (endDate - startDate) / (1000 * 60 * 60 * 24 * 30); // Approximate months
+    document.getElementById('projectDurationMonths').value = projectDurationMonths;
+
+    if (projectDurationMonths < 3) {
+        installmentOptions.style.display = 'none';
+        paymentTermsInput.value = 'Pay at the completion of project';
+    } else {
+        installmentOptions.style.display = 'block';
+        const options = installmentPeriod.options;
+        if (projectDurationMonths < 6) {
+            for (let i = options.length - 1; i > 1; i--) {
+                installmentPeriod.remove(i);
+            }
+        } else if (projectDurationMonths < 12) {
+            for (let i = options.length - 1; i > 2; i--) {
+                installmentPeriod.remove(i);
+            }
+        }
+    }
 });
 </script>
 @endpush 

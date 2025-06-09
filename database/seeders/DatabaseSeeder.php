@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
     // Add your admin seeder
     $this->call([
         AdminSeeder::class,
+        ScopeTypeSeeder::class,
     ]);
 }
 }

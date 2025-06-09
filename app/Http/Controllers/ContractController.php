@@ -54,6 +54,11 @@ class ContractController extends Controller
         return view('admin.contracts.step1');
     }
 
+    public function step1()
+    {
+        return view('admin.contracts.step1');
+    }
+
     public function storeStep1(Request $request)
     {
         $validated = $request->validate([
