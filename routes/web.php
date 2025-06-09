@@ -26,6 +26,7 @@ use App\Http\Controllers\BudgetAllocationController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\SupplierRankingController;
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\InventoryController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -71,10 +72,20 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/contract-dashboard', [ContractController::class, 'dashboard'])->name('admin.contract');
 
     // Contract Routes
-    Route::resource('contracts', ContractController::class);
-    Route::get('contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
-    Route::patch('contracts/{contract}/status', [ContractController::class, 'updateStatus'])->name('contracts.updateStatus');
-    Route::get('/project-timeline', [ContractController::class, 'projectTimeline'])->name('project.timeline');
+    Route::prefix('contracts')->name('contracts.')->group(function () {
+        Route::get('/', [ContractController::class, 'index'])->name('index');
+        Route::get('/create', [ContractController::class, 'create'])->name('create');
+        Route::post('/step1', [ContractController::class, 'storeStep1'])->name('store.step1');
+        Route::get('/step2', [ContractController::class, 'step2'])->name('step2');
+        Route::post('/step2', [ContractController::class, 'storeStep2'])->name('store.step2');
+        Route::get('/step3', [ContractController::class, 'step3'])->name('step3');
+        Route::post('/step3', [ContractController::class, 'storeStep3'])->name('store.step3');
+        Route::get('/step4', [ContractController::class, 'step4'])->name('step4');
+        Route::post('/', [ContractController::class, 'store'])->name('store');
+        Route::get('/{contract}', [ContractController::class, 'show'])->name('show');
+        Route::get('/{contract}/download', [ContractController::class, 'download'])->name('download');
+        Route::patch('/{contract}/status', [ContractController::class, 'updateStatus'])->name('updateStatus');
+    });
     
     // Supporting routes for contract form
     Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
@@ -136,6 +147,17 @@ Route::middleware(['auth'])->group(function () {
         Route::post('{supplier}/evaluations', [SupplierRankingController::class, 'storeEvaluation'])->name('evaluations.store');
         Route::post('{supplier}/metrics', [SupplierRankingController::class, 'updateMetrics'])->name('metrics.update');
     });
+
+    // Inventory Management Routes
+    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
+    Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
+    Route::get('/inventory/{inventory}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
+    Route::put('/inventory/{inventory}', [InventoryController::class, 'update'])->name('inventory.update');
+    Route::delete('/inventory/{inventory}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
+    Route::post('/inventory/{inventory}/adjust-stock', [InventoryController::class, 'adjustStock'])->name('inventory.adjust-stock');
+    Route::get('/inventory/low-stock', [InventoryController::class, 'lowStock'])->name('inventory.low-stock');
+    Route::get('/inventory/expiring', [InventoryController::class, 'expiring'])->name('inventory.expiring');
 });
 
 // ================== Email Verification Routes ==================
@@ -181,9 +203,7 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
         return view('admin.price-analysis');
     })->name('admin.price-analysis');
 
-    Route::get('/inventory', function () {
-        return view('admin.inventory');
-    })->name('admin.inventory');
+    Route::get('/inventory', [InventoryController::class, 'index'])->name('admin.inventory');
     
     Route::get('/admin/transactions', [App\Http\Controllers\TransactionController::class, 'index'])->name('admin.transactions');
 });
@@ -199,3 +219,6 @@ Route::get('/admin/suppliers/{supplier}/latest-evaluation', [SupplierRankingCont
     ->name('admin.suppliers.latest-evaluation');
 Route::get('/admin/suppliers/{supplier}/purchase-order-metrics', [SupplierRankingController::class, 'getPurchaseOrderMetrics'])
     ->name('admin.suppliers.purchase-order-metrics');
+
+// Project Timeline Route
+Route::get('/project-timeline', [ContractController::class, 'projectTimeline'])->name('project.timeline');

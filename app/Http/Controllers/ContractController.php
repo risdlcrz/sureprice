@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use PDF;
+use App\Models\Client;
+use App\Models\Contractor;
 
 class ContractController extends Controller
 {
@@ -49,26 +51,225 @@ class ContractController extends Controller
 
     public function create()
     {
-        $purchaseOrders = \App\Models\PurchaseOrder::where('status', 'approved')
-            ->where(function($query) {
-                $query->whereNull('contract_id')
-                    ->orWhere('contract_id', 0);
-            })
-            ->get();
-        return view('admin.contracts.form', [
-            'edit_mode' => false,
-            'contract' => null,
-            'contractor' => null,
-            'client' => null,
-            'property' => null,
-            'items' => [],
-            'purchaseOrders' => $purchaseOrders
+        return view('admin.contracts.step1');
+    }
+
+    public function storeStep1(Request $request)
+    {
+        $validated = $request->validate([
+            'contractor_name' => 'required|string|max:255',
+            'contractor_company' => 'nullable|string|max:255',
+            'contractor_email' => 'required|email|max:255',
+            'contractor_phone' => 'required|string|max:20',
+            'contractor_street' => 'required|string|max:255',
+            'contractor_barangay' => 'required|string|max:255',
+            'contractor_city' => 'required|string|max:255',
+            'contractor_state' => 'required|string|max:255',
+            'contractor_postal' => 'required|string|max:20',
+            
+            'client_name' => 'required|string|max:255',
+            'client_company' => 'nullable|string|max:255',
+            'client_email' => 'required|email|max:255',
+            'client_phone' => 'required|string|max:20',
+            'client_street' => 'required|string|max:255',
+            'client_unit' => 'nullable|string|max:255',
+            'client_barangay' => 'required|string|max:255',
+            'client_city' => 'required|string|max:255',
+            'client_state' => 'required|string|max:255',
+            'client_postal' => 'required|string|max:20',
+            
+            'property_type' => 'required|string|in:residential,commercial,industrial',
+            'property_street' => 'required|string|max:255',
+            'property_unit' => 'nullable|string|max:255',
+            'property_barangay' => 'required|string|max:255',
+            'property_city' => 'required|string|max:255',
+            'property_state' => 'required|string|max:255',
+            'property_postal' => 'required|string|max:20',
         ]);
+
+        // Store in session
+        session(['contract_step1' => $validated]);
+
+        return redirect()->route('contracts.step2');
+    }
+
+    public function step2()
+    {
+        if (!session()->has('contract_step1')) {
+            return redirect()->route('contracts.create');
+        }
+
+        return view('admin.contracts.step2');
+    }
+
+    public function storeStep2(Request $request)
+    {
+        $validated = $request->validate([
+            'rooms' => 'required|array',
+            'rooms.*.name' => 'required|string|max:255',
+            'rooms.*.length' => 'required|numeric|min:0.1',
+            'rooms.*.width' => 'required|numeric|min:0.1',
+            'rooms.*.area' => 'required|numeric|min:0',
+            'rooms.*.scope' => 'required|array',
+            'rooms.*.scope.*' => 'required|string|exists:scope_types,code',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
+        ]);
+
+        // Store in session
+        session(['contract_step2' => $validated]);
+
+        return redirect()->route('contracts.step3');
+    }
+
+    public function step3()
+    {
+        if (!session()->has('contract_step2')) {
+            return redirect()->route('contracts.create');
+        }
+
+        return view('admin.contracts.step3');
+    }
+
+    public function storeStep3(Request $request)
+    {
+        $validated = $request->validate([
+            'payment_terms' => 'required|string',
+            'warranty_terms' => 'required|string',
+            'cancellation_terms' => 'required|string',
+            'additional_terms' => 'nullable|string',
+            'contractor_signature' => 'required|string',
+            'client_signature' => 'required|string',
+        ]);
+
+        // Store in session
+        session(['contract_step3' => $validated]);
+
+        return redirect()->route('contracts.step4');
+    }
+
+    public function step4()
+    {
+        if (!session()->has('contract_step3')) {
+            return redirect()->route('contracts.create');
+        }
+
+        return view('admin.contracts.step4');
     }
 
     public function store(Request $request)
     {
-        return $this->saveContract($request);
+        $validated = $request->validate([
+            'payment_method' => 'required|string|in:cash,check,bank_transfer',
+            'bank_name' => 'required_if:payment_method,bank_transfer|nullable|string|max:255',
+            'bank_account_name' => 'required_if:payment_method,bank_transfer|nullable|string|max:255',
+            'bank_account_number' => 'required_if:payment_method,bank_transfer|nullable|string|max:255',
+            'check_number' => 'required_if:payment_method,check|nullable|string|max:255',
+            'check_date' => 'required_if:payment_method,check|nullable|date',
+            'total_amount' => 'required|numeric|min:0',
+            'labor_cost' => 'required|numeric|min:0',
+            'materials_cost' => 'required|numeric|min:0',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Get all session data
+            $step1 = session('contract_step1');
+            $step2 = session('contract_step2');
+            $step3 = session('contract_step3');
+
+            // Create or update contractor
+            $contractor = Contractor::updateOrCreate(
+                ['email' => $step1['contractor_email']],
+                [
+                    'name' => $step1['contractor_name'],
+                    'company_name' => $step1['contractor_company'],
+                    'phone' => $step1['contractor_phone'],
+                    'street' => $step1['contractor_street'],
+                    'barangay' => $step1['contractor_barangay'],
+                    'city' => $step1['contractor_city'],
+                    'state' => $step1['contractor_state'],
+                    'postal' => $step1['contractor_postal'],
+                ]
+            );
+
+            // Create or update client
+            $client = Client::updateOrCreate(
+                ['email' => $step1['client_email']],
+                [
+                    'name' => $step1['client_name'],
+                    'company_name' => $step1['client_company'],
+                    'phone' => $step1['client_phone'],
+                    'street' => $step1['client_street'],
+                    'unit' => $step1['client_unit'],
+                    'barangay' => $step1['client_barangay'],
+                    'city' => $step1['client_city'],
+                    'state' => $step1['client_state'],
+                    'postal' => $step1['client_postal'],
+                ]
+            );
+
+            // Create or update property
+            $property = Property::create([
+                'property_type' => $step1['property_type'],
+                'street' => $step1['property_street'],
+                'unit' => $step1['property_unit'],
+                'barangay' => $step1['property_barangay'],
+                'city' => $step1['property_city'],
+                'state' => $step1['property_state'],
+                'postal' => $step1['property_postal'],
+            ]);
+
+            // Create contract
+            $contract = Contract::create([
+                'contractor_id' => $contractor->id,
+                'client_id' => $client->id,
+                'property_id' => $property->id,
+                'start_date' => $step2['start_date'],
+                'end_date' => $step2['end_date'],
+                'payment_terms' => $step3['payment_terms'],
+                'warranty_terms' => $step3['warranty_terms'],
+                'cancellation_terms' => $step3['cancellation_terms'],
+                'additional_terms' => $step3['additional_terms'],
+                'contractor_signature' => $step3['contractor_signature'],
+                'client_signature' => $step3['client_signature'],
+                'payment_method' => $validated['payment_method'],
+                'bank_name' => $validated['bank_name'],
+                'bank_account_name' => $validated['bank_account_name'],
+                'bank_account_number' => $validated['bank_account_number'],
+                'check_number' => $validated['check_number'],
+                'check_date' => $validated['check_date'],
+                'total_amount' => $validated['total_amount'],
+                'labor_cost' => $validated['labor_cost'],
+                'materials_cost' => $validated['materials_cost'],
+                'status' => 'pending',
+            ]);
+
+            // Create rooms and their scopes
+            foreach ($step2['rooms'] as $roomData) {
+                $room = $contract->rooms()->create([
+                    'name' => $roomData['name'],
+                    'length' => $roomData['length'],
+                    'width' => $roomData['width'],
+                    'area' => $roomData['area'],
+                ]);
+
+                $room->scopes()->attach($roomData['scope']);
+            }
+
+            DB::commit();
+
+            // Clear session data
+            session()->forget(['contract_step1', 'contract_step2', 'contract_step3']);
+
+            return redirect()->route('contracts.show', $contract)
+                ->with('success', 'Contract created successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error creating contract: ' . $e->getMessage());
+        }
     }
 
     public function edit(Contract $contract)
@@ -591,15 +792,11 @@ class ContractController extends Controller
 
     public function projectTimeline()
     {
-        $contracts = Contract::with(['client', 'contractor', 'project'])
-            ->orderBy('start_date')
+        $contracts = Contract::with(['client', 'contractor'])
+            ->orderBy('start_date', 'desc')
             ->get();
-            
-        $allContracts = Contract::with(['client', 'contractor'])
-            ->orderBy('contract_id')
-            ->get();
-            
-        return view('admin.project-timeline', compact('contracts', 'allContracts'));
+
+        return view('admin.contracts.timeline', compact('contracts'));
     }
 
     public function search(Request $request)
