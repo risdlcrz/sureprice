@@ -243,4 +243,61 @@ class PurchaseRequestController extends Controller
         return redirect()->route('purchase-requests.show', $purchaseRequest)
             ->with('success', 'Purchase request status updated to ' . ucfirst($request->status));
     }
+
+    public function generateFromContract(Request $request)
+    {
+        $data = $request->validate([
+            'contract_id' => 'required|integer|exists:contracts,id',
+            'items' => 'required|array',
+            'items.*.name' => 'required|string',
+            'items.*.unit' => 'required|string',
+            'items.*.unitCost' => 'required|numeric',
+            'items.*.quantity' => 'required|numeric',
+            'items.*.totalCost' => 'required|numeric',
+        ]);
+
+        // Generate PR number (e.g., PR-YYYYMMDD-XXXX)
+        $date = now()->format('Ymd');
+        $lastPR = \App\Models\PurchaseRequest::where('pr_number', 'like', "PR-{$date}-%")
+            ->orderBy('pr_number', 'desc')
+            ->first();
+        $sequence = '0001';
+        if ($lastPR) {
+            $lastSequence = intval(substr($lastPR->pr_number, -4));
+            $sequence = str_pad($lastSequence + 1, 4, '0', STR_PAD_LEFT);
+        }
+        $prNumber = "PR-{$date}-{$sequence}";
+
+        $contract = \App\Models\Contract::findOrFail($data['contract_id']);
+
+        $purchaseRequest = \App\Models\PurchaseRequest::create([
+            'contract_id' => $contract->id,
+            'pr_number' => $prNumber,
+            'status' => 'draft',
+            'requester_id' => auth()->id() ?? 1,
+            'department' => 'Procurement',
+            'required_date' => $contract->start_date ?? now()->addWeek(),
+            'purpose' => 'Materials procurement for Contract ' . ($contract->contract_id ?? $contract->id),
+            'notes' => 'Automatically generated from contract ' . ($contract->contract_id ?? $contract->id),
+        ]);
+
+        foreach ($data['items'] as $item) {
+            $purchaseRequest->items()->create([
+                'description' => $item['name'],
+                'quantity' => $item['quantity'],
+                'unit' => $item['unit'],
+                'estimated_unit_price' => $item['unitCost'],
+                'total_amount' => $item['totalCost'],
+            ]);
+        }
+
+        $contractNumber = $contract->contract_id ?? $contract->id;
+
+        return response()->json([
+            'success' => true,
+            'pr_number' => $prNumber,
+            'contract_number' => $contractNumber,
+            'pr_id' => $purchaseRequest->id,
+        ]);
+    }
 } 

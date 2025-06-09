@@ -75,6 +75,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('contracts')->name('contracts.')->group(function () {
         Route::get('/', [ContractController::class, 'index'])->name('index');
         Route::get('/create', [ContractController::class, 'create'])->name('create');
+        Route::get('/step1', [ContractController::class, 'step1'])->name('step1');
         Route::post('/step1', [ContractController::class, 'storeStep1'])->name('store.step1');
         Route::get('/step2', [ContractController::class, 'step2'])->name('step2');
         Route::post('/step2', [ContractController::class, 'storeStep2'])->name('store.step2');
@@ -126,6 +127,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('purchase-requests', PurchaseRequestController::class);
     Route::post('purchase-requests/{purchaseRequest}/status', [PurchaseRequestController::class, 'updateStatus'])->name('purchase-requests.update-status');
     Route::get('/api/purchase-requests/{purchaseRequest}/items', [PurchaseRequestController::class, 'getItems'])->name('api.purchase-requests.items');
+    Route::post('/purchase-requests/generate-from-contract', [App\Http\Controllers\PurchaseRequestController::class, 'generateFromContract'])->name('purchase-requests.generate-from-contract');
 
     // Purchase Orders
     Route::resource('purchase-orders', PurchaseOrderController::class);
