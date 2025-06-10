@@ -186,10 +186,10 @@
                             </div>
                         </div>
 
-                        <form method="POST" action="{{ route('contracts.store.step2') }}" id="step2Form">
+                        <form method="POST" action="{{ route('contracts.store.step2') }}" id="step2Form" novalidate>
                             @csrf
-                            <input type="hidden" id="contract_id" value="{{ $contract->id ?? (session('contract_step1.contract_id') ?? '') }}">
-
+                            <input type="hidden" name="contract_id" value="{{ $contract->id ?? (session('contract_step1.contract_id') ?? '') }}">
+                            
                             <!-- Room/Area Details -->
                             <div class="section-container" id="roomSection">
                                 <h5 class="section-title">Room/Area Details</h5>
@@ -207,6 +207,12 @@
                                     <!-- Rooms will be added here dynamically -->
                                 </div>
                                 
+                                <!-- Hidden fields for form submission -->
+                                <input type="hidden" name="total_materials" id="total_materials" value="{{ session('contract_step2.total_materials', 0) }}">
+                                <input type="hidden" name="total_labor" id="total_labor" value="{{ session('contract_step2.total_labor', 0) }}">
+                                <input type="hidden" name="grand_total" id="grand_total" value="{{ session('contract_step2.grand_total', 0) }}">
+                                <input type="hidden" name="total_area" id="total_area" value="{{ session('contract_step2.total_area', 0) }}">
+                                
                                 <!-- Grand Total Summary -->
                                 <div class="card mt-4">
                                     <div class="card-header bg-primary text-white">
@@ -216,19 +222,19 @@
                                         <div class="row">
                                             <div class="col-md-3">
                                                 <p class="mb-1">Total Floor Area:</p>
-                                                <h5 id="grandTotalArea">0 sq m</h5>
+                                                <h5 id="grandTotalArea">{{ number_format(session('contract_step2.total_area', 0), 2) }} sq m</h5>
                                             </div>
                                             <div class="col-md-3">
                                                 <p class="mb-1">Total Materials Cost:</p>
-                                                <h5 id="grandTotalMaterials">₱0.00</h5>
+                                                <h5 id="grandTotalMaterials">₱{{ number_format(session('contract_step2.total_materials', 0), 2) }}</h5>
                                             </div>
                                             <div class="col-md-3">
                                                 <p class="mb-1">Total Labor Cost:</p>
-                                                <h5 id="grandTotalLabor">₱0.00</h5>
+                                                <h5 id="grandTotalLabor">₱{{ number_format(session('contract_step2.total_labor', 0), 2) }}</h5>
                                             </div>
                                             <div class="col-md-3">
                                                 <p class="mb-1">Grand Total:</p>
-                                                <h5 id="grandTotal">₱0.00</h5>
+                                                <h5 id="grandTotal">₱{{ number_format(session('contract_step2.grand_total', 0), 2) }}</h5>
                                             </div>
                                         </div>
                                     </div>
@@ -279,25 +285,15 @@
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="start_date">Start Date</label>
-                                            <input type="date" class="form-control @error('start_date') is-invalid @enderror" 
-                                                id="start_date" name="start_date" 
-                                                value="{{ old('start_date', session('contract_step2.start_date')) }}" 
-                                                required>
-                                            @error('start_date')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
+                                            <input type="date" class="form-control" id="start_date" name="start_date" 
+                                                value="{{ old('start_date', session('contract_step2.start_date')) }}" required>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="end_date">End Date</label>
-                                            <input type="date" class="form-control @error('end_date') is-invalid @enderror" 
-                                                id="end_date" name="end_date" 
-                                                value="{{ old('end_date', session('contract_step2.end_date')) }}" 
-                                                required>
-                                            @error('end_date')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
+                                            <input type="date" class="form-control" id="end_date" name="end_date" 
+                                                value="{{ old('end_date', session('contract_step2.end_date')) }}" required>
                                         </div>
                                     </div>
                                 </div>
@@ -306,6 +302,7 @@
                             <div class="form-group mt-4">
                                 <a href="{{ route('contracts.step1') }}" class="btn btn-secondary">Previous Step</a>
                                 <button type="submit" class="btn btn-primary">Next Step</button>
+                                <a href="{{ route('contracts.clear-session') }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel? All entered data will be lost.')">Cancel</a>
                             </div>
                         </form>
                     </div>
@@ -318,7 +315,6 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
 // Scope materials and their costs
 const scopeMaterials = {
@@ -587,43 +583,159 @@ const scopeMaterials = {
     }
 };
 
-let roomCounter = 0;
+// Store the initial session data
+const initialSessionData = @json(session('contract_step2', []));
 
 document.addEventListener('DOMContentLoaded', function() {
-    createRoomRow();
-    
+    // Initialize form with any saved data
+    initializeForm();
+
+    // Add event listeners
     document.getElementById('addRoomBtn')?.addEventListener('click', createRoomRow);
     document.getElementById('applyToAllBtn')?.addEventListener('click', applyScopesToAll);
-
-    document.getElementById('step2Form')?.addEventListener('submit', function(e) {
-        if (!this.checkValidity()) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        this.classList.add('was-validated');
-    });
-
-    document.getElementById('roomDetails')?.addEventListener('change', function(e) {
+    
+    // Form change handler for auto-saving
+    document.getElementById('step2Form')?.addEventListener('change', function(e) {
         if (e.target.classList.contains('room-dimension')) {
             calculateRoomArea(e.target);
+        } else if (e.target.classList.contains('scope-checkbox')) {
+            updateRoomCalculations(e.target.closest('.room-row'));
         }
-        if (e.target.classList.contains('scope-checkbox')) {
-            updateRoomCalculations(e.target);
-            updateProjectTimeline();
-        }
+        
+        updateGrandTotal();
+        updateBreakdownTable();
+        updateProjectTimeline();
+        
+        // Auto-save form data
+        saveFormData();
     });
 
-    const startDateInput = document.getElementById('start_date');
-    if (startDateInput) {
-        startDateInput.addEventListener('change', updateProjectTimeline);
-    }
+    // Form submit handler
+    document.getElementById('step2Form')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate form
+        if (!this.checkValidity()) {
+            e.stopPropagation();
+            this.classList.add('was-validated');
+            return false;
+        }
+        
+        // Submit the form
+        this.submit();
+    });
+
+    // Initialize date fields
+    document.getElementById('start_date')?.addEventListener('change', function() {
+        updateProjectTimeline();
+        saveFormData();
+    });
 });
 
+function initializeForm() {
+    // Clear existing rooms first
+    document.getElementById('roomDetails').innerHTML = '';
+
+    // Check if we have session data to restore
+    if (initialSessionData.rooms && Object.keys(initialSessionData.rooms).length > 0) {
+        // Restore each room from session data
+        Object.entries(initialSessionData.rooms).forEach(([roomId, room]) => {
+            createRoomRow();
+            const roomRow = document.querySelector('.room-row:last-child');
+            
+            // Populate room details
+            roomRow.querySelector('input[name$="[name]"]').value = room.name || '';
+            roomRow.querySelector('input[name$="[length]"]').value = room.length || '';
+            roomRow.querySelector('input[name$="[width]"]').value = room.width || '';
+            roomRow.querySelector('input[name$="[area]"]').value = room.area || '';
+            
+            // Set scopes if they exist
+            if (room.scope && Array.isArray(room.scope)) {
+                room.scope.forEach(scope => {
+                    const checkbox = roomRow.querySelector(`input[type="checkbox"][value="${scope}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            // Trigger calculations
+            updateRoomCalculations(roomRow);
+        });
+    } else {
+        // Create a default room if no session data exists
+        createRoomRow();
+    }
+
+    // Restore timeline data
+    if (initialSessionData.start_date) {
+        document.getElementById('start_date').value = initialSessionData.start_date;
+    }
+    
+    if (initialSessionData.end_date) {
+        document.getElementById('end_date').value = initialSessionData.end_date;
+    }
+
+    // Update all calculations
+    updateGrandTotal();
+    updateBreakdownTable();
+    updateProjectTimeline();
+}
+
+function saveFormData() {
+    const formData = new FormData(document.getElementById('step2Form'));
+    
+    // Add room data
+    const rooms = {};
+    document.querySelectorAll('.room-row').forEach(roomRow => {
+        const roomId = roomRow.dataset.roomId;
+        const name = roomRow.querySelector('input[name$="[name]"]').value;
+        const length = roomRow.querySelector('input[name$="[length]"]').value;
+        const width = roomRow.querySelector('input[name$="[width]"]').value;
+        const area = roomRow.querySelector('input[name$="[area]"]').value;
+        const materialsCost = roomRow.querySelector('.materials-cost-hidden').value;
+        const laborCost = roomRow.querySelector('.labor-cost-hidden').value;
+        
+        // Get selected scopes
+        const scopes = Array.from(roomRow.querySelectorAll('.scope-checkbox:checked'))
+            .map(checkbox => checkbox.value);
+        
+        rooms[roomId] = {
+            name,
+            length,
+            width,
+            area,
+            materials_cost: materialsCost,
+            labor_cost: laborCost,
+            scope: scopes
+        };
+    });
+    
+    formData.append('rooms', JSON.stringify(rooms));
+    
+    // Add totals
+    formData.append('total_materials', document.getElementById('total_materials').value);
+    formData.append('total_labor', document.getElementById('total_labor').value);
+    formData.append('grand_total', document.getElementById('grand_total').value);
+    formData.append('total_area', document.getElementById('total_area').value);
+    
+    fetch('{{ route("contracts.save.step2") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    }).catch(error => {
+        console.error('Error saving form data:', error);
+    });
+}
+
 function createRoomRow() {
-    roomCounter++;
     const roomContainer = document.createElement('div');
     roomContainer.className = 'room-row mb-4';
-    roomContainer.dataset.roomId = roomCounter;
+    
+    // Generate a unique ID for this room
+    const roomId = Date.now();
+    roomContainer.dataset.roomId = roomId;
 
     // Group scopes by category
     const scopesByCategory = {};
@@ -634,58 +746,63 @@ function createRoomRow() {
         scopesByCategory[scope.category].push({ key, ...scope });
     });
 
-    const html = `
+    roomContainer.innerHTML = `
         <div class="row">
             <div class="col-md-3">
                 <div class="form-group">
                     <label class="form-label">Room/Area Name</label>
-                    <input type="text" class="form-control" name="rooms[${roomCounter}][name]" required>
+                    <input type="text" class="form-control" name="rooms[${roomId}][name]" required>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="form-group">
                     <label class="form-label">Length (m)</label>
-                    <input type="number" class="form-control room-dimension" name="rooms[${roomCounter}][length]" step="0.01" min="0.01" required>
+                    <input type="number" class="form-control room-dimension" name="rooms[${roomId}][length]" step="0.01" min="0.01" required>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="form-group">
                     <label class="form-label">Width (m)</label>
-                    <input type="number" class="form-control room-dimension" name="rooms[${roomCounter}][width]" step="0.01" min="0.01" required>
+                    <input type="number" class="form-control room-dimension" name="rooms[${roomId}][width]" step="0.01" min="0.01" required>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="form-group">
                     <label class="form-label">Area (sq m)</label>
-                    <input type="number" class="form-control" name="rooms[${roomCounter}][area]" readonly>
+                    <input type="number" class="form-control" name="rooms[${roomId}][area]" readonly>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="form-group">
-                    <label class="form-label">&nbsp;</label>
+                    <label class="form-label visually-hidden">Remove Room</label>
                     <button type="button" class="btn btn-danger d-block" onclick="removeRoom(this)">
                         <i class="fas fa-trash"></i> Remove Room
                     </button>
                 </div>
             </div>
         </div>
+
+        <!-- Hidden cost fields -->
+        <input type="hidden" name="rooms[${roomId}][materials_cost]" class="materials-cost-hidden" value="0">
+        <input type="hidden" name="rooms[${roomId}][labor_cost]" class="labor-cost-hidden" value="0">
+
         <div class="row mt-3">
             <div class="col-12">
                 <h6 class="mb-3">Scope of Work</h6>
-                <div class="accordion" id="scopeAccordion${roomCounter}">
+                <div class="accordion" id="scopeAccordion${roomId}">
                     ${Object.entries(scopesByCategory).map(([category, scopes], categoryIndex) => `
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button class="accordion-button ${categoryIndex > 0 ? 'collapsed' : ''}" type="button" 
                                     data-bs-toggle="collapse" 
-                                    data-bs-target="#category${roomCounter}${categoryIndex}"
+                                    data-bs-target="#category${roomId}${categoryIndex}"
                                     aria-expanded="${categoryIndex === 0}">
                                     ${category}
                                 </button>
                             </h2>
-                            <div id="category${roomCounter}${categoryIndex}" 
+                            <div id="category${roomId}${categoryIndex}" 
                                 class="accordion-collapse collapse ${categoryIndex === 0 ? 'show' : ''}"
-                                data-bs-parent="#scopeAccordion${roomCounter}">
+                                data-bs-parent="#scopeAccordion${roomId}">
                                 <div class="accordion-body">
                                     <div class="row">
                                         ${scopes.map(scope => `
@@ -693,10 +810,10 @@ function createRoomRow() {
                                                 <div class="scope-item mb-4">
                                                     <div class="form-check">
                                                         <input type="checkbox" class="form-check-input scope-checkbox" 
-                                                            name="rooms[${roomCounter}][scope][]" 
+                                                            name="rooms[${roomId}][scope][]" 
                                                             value="${scope.key}" 
-                                                            id="scope_${scope.key}_${roomCounter}">
-                                                        <label class="form-check-label" for="scope_${scope.key}_${roomCounter}">
+                                                            id="scope_${scope.key}_${roomId}">
+                                                        <label class="form-check-label" for="scope_${scope.key}_${roomId}">
                                                             <strong>${scope.name}</strong>
                                                             <span class="badge bg-info ms-2">${scope.estimatedDays} days</span>
                                                         </label>
@@ -728,19 +845,19 @@ function createRoomRow() {
         </div>
         <div class="room-summary mt-3">
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <p class="mb-1">Materials Cost:</p>
                     <h6 class="materials-cost">₱0.00</h6>
                 </div>
-                <div class="col-md-3">
-                    <p class="mb-1">Estimated Time:</p>
-                    <h6 class="estimated-time">0 days</h6>
+                <div class="col-md-4">
+                    <p class="mb-1">Labor Cost:</p>
+                    <h6 class="labor-cost">₱0.00</h6>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <p class="mb-1">Total Cost:</p>
                     <h6 class="total-cost">₱0.00</h6>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <p class="mb-1">Estimated Time:</p>
                     <h6 class="estimated-time">0 days</h6>
                 </div>
@@ -748,8 +865,21 @@ function createRoomRow() {
         </div>
     `;
 
-    roomContainer.innerHTML = html;
     document.getElementById('roomDetails').appendChild(roomContainer);
+
+    // Add event listeners for the new room
+    const dimensionInputs = roomContainer.querySelectorAll('.room-dimension');
+    dimensionInputs.forEach(input => {
+        input.addEventListener('input', () => calculateRoomArea(input));
+    });
+
+    const scopeCheckboxes = roomContainer.querySelectorAll('.scope-checkbox');
+    scopeCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => updateRoomCalculations(roomContainer));
+    });
+
+    // Initialize calculations
+    updateRoomCalculations(roomContainer);
 }
 
 function removeRoom(button) {
@@ -757,6 +887,7 @@ function removeRoom(button) {
     roomRow.remove();
     updateGrandTotal();
     updateProjectTimeline();
+    saveFormData();
 }
 
 function calculateRoomArea(input) {
@@ -768,37 +899,50 @@ function calculateRoomArea(input) {
     if (lengthInput.value && widthInput.value) {
         const area = parseFloat(lengthInput.value) * parseFloat(widthInput.value);
         areaInput.value = area.toFixed(2);
-        updateRoomCalculations(roomRow.querySelector('.scope-checkbox'));
+        updateRoomCalculations(roomRow);
+        saveFormData();
     }
 }
 
-function updateRoomCalculations(element) {
-    const roomRow = element.closest('.room-row');
+function updateRoomCalculations(roomRow) {
     const area = parseFloat(roomRow.querySelector('input[name$="[area]"]').value) || 0;
     let materialsCost = 0;
     let laborCost = 0;
     let estimatedDays = 0;
 
+    const selectedScopes = Array.from(roomRow.querySelectorAll('.scope-checkbox:checked'))
+        .map(checkbox => checkbox.value);
+    
     // Calculate costs based on selected scopes
-    roomRow.querySelectorAll('.scope-checkbox:checked').forEach(checkbox => {
-        const scope = scopeMaterials[checkbox.value];
+    selectedScopes.forEach(scopeKey => {
+        const scope = scopeMaterials[scopeKey];
         if (scope) {
             // Add materials cost
             scope.materials.forEach(material => {
-                materialsCost += material.isPerArea ? material.cost * area : material.cost;
+                let quantity = material.isPerArea ? (area / (material.coverage || 1)) : 1;
+                quantity = Math.ceil(quantity * 100) / 100; // Round up to 2 decimals
+                materialsCost += material.cost * quantity;
             });
-            // Add labor cost
+
+            // Add labor cost based on area
             laborCost += scope.labor * area;
+            
             // Add estimated days
             estimatedDays += scope.estimatedDays;
         }
     });
 
-    // Update room summary
+    // Update room summary displays
     roomRow.querySelector('.materials-cost').textContent = `₱${materialsCost.toFixed(2)}`;
+    roomRow.querySelector('.labor-cost').textContent = `₱${laborCost.toFixed(2)}`;
     roomRow.querySelector('.total-cost').textContent = `₱${(materialsCost + laborCost).toFixed(2)}`;
     roomRow.querySelector('.estimated-time').textContent = `${estimatedDays} days`;
 
+    // Update hidden fields for this room
+    roomRow.querySelector('.materials-cost-hidden').value = materialsCost.toFixed(2);
+    roomRow.querySelector('.labor-cost-hidden').value = laborCost.toFixed(2);
+
+    // Update grand totals
     updateGrandTotal();
     updateBreakdownTable();
 }
@@ -809,42 +953,58 @@ function updateGrandTotal() {
     let totalLabor = 0;
 
     document.querySelectorAll('.room-row').forEach(room => {
+        // Get area
         const area = parseFloat(room.querySelector('input[name$="[area]"]').value) || 0;
         totalArea += area;
-        totalMaterials += parseFloat(room.querySelector('.materials-cost').textContent.replace('₱', '')) || 0;
-        // Calculate labor cost for this room
-        room.querySelectorAll('.scope-checkbox:checked').forEach(checkbox => {
-            const scope = scopeMaterials[checkbox.value];
-            if (scope) {
-                totalLabor += scope.labor * area;
-            }
-        });
+
+        // Get costs from hidden fields
+        const materialsCost = parseFloat(room.querySelector('.materials-cost-hidden').value) || 0;
+        const laborCost = parseFloat(room.querySelector('.labor-cost-hidden').value) || 0;
+        
+        totalMaterials += materialsCost;
+        totalLabor += laborCost;
     });
 
+    // Update display
     document.getElementById('grandTotalArea').textContent = `${totalArea.toFixed(2)} sq m`;
     document.getElementById('grandTotalMaterials').textContent = `₱${totalMaterials.toFixed(2)}`;
     document.getElementById('grandTotalLabor').textContent = `₱${totalLabor.toFixed(2)}`;
     document.getElementById('grandTotal').textContent = `₱${(totalMaterials + totalLabor).toFixed(2)}`;
-    updateBreakdownTable();
+
+    // Update hidden fields
+    document.getElementById('total_area').value = totalArea.toFixed(2);
+    document.getElementById('total_materials').value = totalMaterials.toFixed(2);
+    document.getElementById('total_labor').value = totalLabor.toFixed(2);
+    document.getElementById('grand_total').value = (totalMaterials + totalLabor).toFixed(2);
+
+    // Update project timeline
+    updateProjectTimeline();
 }
 
 function updateProjectTimeline() {
-    const startDate = document.getElementById('start_date').value;
-    if (!startDate) return;
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
 
+    if (!startDateInput || !startDateInput.value) return;
+
+    // Calculate total project days based on selected scopes
     let totalDays = 0;
     document.querySelectorAll('.room-row').forEach(room => {
+        let roomDays = 0;
         room.querySelectorAll('.scope-checkbox:checked').forEach(checkbox => {
             const scope = scopeMaterials[checkbox.value];
-            if (scope) {
-                totalDays += scope.estimatedDays;
-            }
+            if (scope) roomDays += scope.estimatedDays;
         });
+        totalDays = Math.max(totalDays, roomDays);
     });
 
+    const startDate = new Date(startDateInput.value);
     const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + totalDays);
-    document.getElementById('end_date').value = endDate.toISOString().split('T')[0];
+    endDate.setDate(startDate.getDate() + totalDays);
+    
+    if (endDateInput) {
+        endDateInput.value = endDate.toISOString().split('T')[0];
+    }
 }
 
 function applyScopesToAll() {
@@ -853,20 +1013,22 @@ function applyScopesToAll() {
 
     // Get the scope selections from the first room
     const firstRoom = rooms[0];
-    const selectedScopes = Array.from(firstRoom.querySelectorAll('.scope-checkbox:checked')).map(cb => cb.value);
+    const selectedScopes = Array.from(firstRoom.querySelectorAll('.scope-checkbox:checked'))
+        .map(checkbox => checkbox.value);
 
     // Apply to all other rooms
     rooms.forEach((room, index) => {
-        if (index === 0) return; // Skip the first room
+        if (index === 0) return; // Skip first room
         
         room.querySelectorAll('.scope-checkbox').forEach(checkbox => {
             checkbox.checked = selectedScopes.includes(checkbox.value);
         });
-        updateRoomCalculations(room.querySelector('.scope-checkbox'));
+        updateRoomCalculations(room);
     });
+    
+    saveFormData();
 }
 
-// Add this function to update the breakdown table
 function updateBreakdownTable() {
     const tableBody = document.getElementById('breakdownTableBody');
     tableBody.innerHTML = '';
@@ -878,7 +1040,7 @@ function updateBreakdownTable() {
 
     document.querySelectorAll('.room-row').forEach(room => {
         const area = parseFloat(room.querySelector('input[name$="[area]"]').value) || 0;
-        const roomName = room.querySelector('input[name$="[name]"]').value;
+        const roomName = room.querySelector('input[name$="[name]"]').value || `Room ${room.dataset.roomId}`;
 
         room.querySelectorAll('.scope-checkbox:checked').forEach(checkbox => {
             const scope = scopeMaterials[checkbox.value];
@@ -887,6 +1049,7 @@ function updateBreakdownTable() {
                 scope.materials.forEach(material => {
                     const key = `${material.name}-${material.unit}`;
                     let quantity, totalCost;
+                    
                     if (material.isPerArea && material.coverage) {
                         quantity = area / material.coverage;
                         quantity = Math.ceil(quantity * 100) / 100; // round up to 2 decimals
@@ -898,6 +1061,7 @@ function updateBreakdownTable() {
                         quantity = 1;
                         totalCost = material.cost;
                     }
+                    
                     if (materialsMap.has(key)) {
                         const existing = materialsMap.get(key);
                         existing.quantity += quantity;
@@ -917,6 +1081,7 @@ function updateBreakdownTable() {
                         });
                     }
                 });
+                
                 // Add labor cost
                 totalLaborCost += scope.labor * area;
             }
@@ -950,7 +1115,6 @@ function updateBreakdownTable() {
     document.getElementById('breakdownGrandTotal').textContent = `₱${(totalMaterialsCost + totalLaborCost).toFixed(2)}`;
 }
 
-// Add this function to show material details
 function showMaterialDetails(materialName, rooms) {
     const roomList = rooms.join(', ');
     Swal.fire({
@@ -966,4 +1130,4 @@ function showMaterialDetails(materialName, rooms) {
     });
 }
 </script>
-@endpush 
+@endpush

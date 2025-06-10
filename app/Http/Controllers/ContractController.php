@@ -12,14 +12,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use PDF;
-use App\Models\Client;
-use App\Models\Contractor;
 
 class ContractController extends Controller
 {
     public function __construct()
     {
         // No need for middleware here as routes are already protected
+    }
+
+    public function clearContractSession()
+    {
+        session()->forget(['contract_step1', 'contract_step2', 'contract_step3']);
+        return redirect()->route('contracts.index')->with('success', 'Contract creation cancelled. All data has been cleared.');
     }
 
     public function index()
@@ -116,15 +120,50 @@ class ContractController extends Controller
             'rooms.*.width' => 'required|numeric|min:0.1',
             'rooms.*.area' => 'required|numeric|min:0',
             'rooms.*.scope' => 'required|array',
-            'rooms.*.scope.*' => 'required|string|exists:scope_types,code',
+            'rooms.*.scope.*' => 'required|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
+            'total_materials' => 'required|numeric|min:0',
+            'total_labor' => 'required|numeric|min:0',
+            'grand_total' => 'required|numeric|min:0',
         ]);
 
-        // Store in session
-        session(['contract_step2' => $validated]);
+        // Store all data in session
+        session([
+            'contract_step2' => [
+                'rooms' => $validated['rooms'],
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date'],
+                'total_materials' => $validated['total_materials'],
+                'total_labor' => $validated['total_labor'],
+                'grand_total' => $validated['grand_total'],
+                'total_amount' => $validated['grand_total'],
+                'labor_cost' => $validated['total_labor'],
+                'materials_cost' => $validated['total_materials']
+            ]
+        ]);
 
         return redirect()->route('contracts.step3');
+    }
+
+    public function saveStep2(Request $request)
+    {
+        // Store the current state in session without validation
+        session([
+            'contract_step2' => [
+                'rooms' => $request->input('rooms', []),
+                'start_date' => $request->input('start_date'),
+                'end_date' => $request->input('end_date'),
+                'total_materials' => $request->input('total_materials', 0),
+                'total_labor' => $request->input('total_labor', 0),
+                'grand_total' => $request->input('grand_total', 0),
+                'total_amount' => $request->input('grand_total', 0),
+                'labor_cost' => $request->input('total_labor', 0),
+                'materials_cost' => $request->input('total_materials', 0)
+            ]
+        ]);
+
+        return response()->json(['success' => true]);
     }
 
     public function step3()
@@ -176,6 +215,9 @@ class ContractController extends Controller
             'materials_cost' => 'required|numeric|min:0',
         ]);
 
+        // Store in session before transaction (for persistence if validation fails or user goes back)
+        session(['contract_step4' => $validated]);
+
         try {
             DB::beginTransaction();
 
@@ -183,11 +225,14 @@ class ContractController extends Controller
             $step1 = session('contract_step1');
             $step2 = session('contract_step2');
             $step3 = session('contract_step3');
+            $step4 = session('contract_step4'); // Retrieve step4 data from session
 
             // Create or update contractor
-            $contractor = Contractor::updateOrCreate(
-                ['email' => $step1['contractor_email']],
+            $contractor = Party::updateOrCreate(
+                ['email' => $step1['contractor_email'], 'type' => 'contractor'],
                 [
+                    'type' => 'contractor',
+                    'entity_type' => $step1['contractor_company'] ? 'company' : 'person',
                     'name' => $step1['contractor_name'],
                     'company_name' => $step1['contractor_company'],
                     'phone' => $step1['contractor_phone'],
@@ -196,13 +241,16 @@ class ContractController extends Controller
                     'city' => $step1['contractor_city'],
                     'state' => $step1['contractor_state'],
                     'postal' => $step1['contractor_postal'],
+                    'email' => $step1['contractor_email'],
                 ]
             );
 
             // Create or update client
-            $client = Client::updateOrCreate(
-                ['email' => $step1['client_email']],
+            $client = Party::updateOrCreate(
+                ['email' => $step1['client_email'], 'type' => 'client'],
                 [
+                    'type' => 'client',
+                    'entity_type' => $step1['client_company'] ? 'company' : 'person',
                     'name' => $step1['client_name'],
                     'company_name' => $step1['client_company'],
                     'phone' => $step1['client_phone'],
@@ -212,6 +260,7 @@ class ContractController extends Controller
                     'city' => $step1['client_city'],
                     'state' => $step1['client_state'],
                     'postal' => $step1['client_postal'],
+                    'email' => $step1['client_email'],
                 ]
             );
 
@@ -266,7 +315,7 @@ class ContractController extends Controller
             DB::commit();
 
             // Clear session data
-            session()->forget(['contract_step1', 'contract_step2', 'contract_step3']);
+            session()->forget(['contract_step1', 'contract_step2', 'contract_step3', 'contract_step4']);
 
             return redirect()->route('contracts.show', $contract)
                 ->with('success', 'Contract created successfully.');
@@ -381,24 +430,25 @@ class ContractController extends Controller
             try {
                 // Save contractor with minimal required fields
                 $contractor = Party::updateOrCreate(
-                    ['email' => $request->contractor_email],
+                    ['email' => $request->contractor_email, 'type' => 'contractor'],
                     [
                         'type' => 'contractor',
-                        'entity_type' => 'person',
+                        'entity_type' => $request->contractor_company ? 'company' : 'person',
                         'name' => $request->contractor_name,
+                        'company_name' => $request->contractor_company,
+                        'phone' => $request->contractor_phone,
                         'street' => $request->contractor_street,
                         'barangay' => $request->contractor_barangay,
                         'city' => $request->contractor_city,
                         'state' => $request->contractor_state,
                         'postal' => $request->contractor_postal,
                         'email' => $request->contractor_email,
-                        'phone' => $request->contractor_phone
                     ]
                 );
             
                 // Save client with minimal required fields
                 $client = Party::updateOrCreate(
-                    ['email' => $request->client_email],
+                    ['email' => $request->client_email, 'type' => 'client'],
                     [
                         'type' => 'client',
                         'entity_type' => $request->client_company ? 'company' : 'person',
@@ -416,14 +466,14 @@ class ContractController extends Controller
             
                 // Save property with basic info
                 $property = Property::create([
-                    'street' => $request->property_street ?? $request->client_street,
-                    'unit_number' => $request->property_unit ?? null,
-                    'barangay' => $request->property_barangay ?? $request->client_barangay,
-                    'city' => $request->property_city ?? $request->client_city,
-                    'state' => $request->property_state ?? $request->client_state,
-                    'postal' => $request->property_postal ?? $request->client_postal,
-                    'property_type' => $request->property_type ?? null,
-                    'property_size' => $request->property_size ?? null
+                    'street' => $request->input('property_street') ?? $request->client_street,
+                    'unit_number' => $request->input('property_unit') ?? null,
+                    'barangay' => $request->input('property_barangay') ?? $request->client_barangay,
+                    'city' => $request->input('property_city') ?? $request->client_city,
+                    'state' => $request->input('property_state') ?? $request->client_state,
+                    'postal' => $request->input('property_postal') ?? $request->client_postal,
+                    'property_type' => $request->input('property_type') ?? null,
+                    'property_size' => $request->input('property_size') ?? null
                 ]);
             
                 // Process signatures if present
