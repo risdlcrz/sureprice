@@ -20,7 +20,7 @@
                 <option value="">Select Contract</option>
                 @foreach($contracts as $contract)
                     <option value="{{ $contract->id }}" {{ old('contract_id', $contract_id ?? '') == $contract->id ? 'selected' : '' }}>
-                        {{ $contract->contract_id }}
+                        {{ $contract->contract_number }}
                     </option>
                 @endforeach
             </select>

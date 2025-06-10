@@ -107,8 +107,9 @@ class ContractController extends Controller
         if (!session()->has('contract_step1')) {
             return redirect()->route('contracts.create');
         }
-
-        return view('admin.contracts.step2');
+        // Fetch all scope types with their related materials
+        $scopeTypes = \App\Models\ScopeType::with('materials')->get();
+        return view('admin.contracts.step2', compact('scopeTypes'));
     }
 
     public function storeStep2(Request $request)
@@ -213,6 +214,7 @@ class ContractController extends Controller
 
     public function store(Request $request)
     {
+        \Log::info('ContractController@store called', ['request' => $request->all()]);
         $validated = $request->validate([
             'payment_method' => 'required|string|in:cash,check,bank_transfer',
             'bank_name' => 'required_if:payment_method,bank_transfer|nullable|string|max:255',
@@ -220,9 +222,6 @@ class ContractController extends Controller
             'bank_account_number' => 'required_if:payment_method,bank_transfer|nullable|string|max:255',
             'check_number' => 'required_if:payment_method,check|nullable|string|max:255',
             'check_date' => 'required_if:payment_method,check|nullable|date',
-            'total_amount' => 'required|numeric|min:0',
-            'labor_cost' => 'required|numeric|min:0',
-            'materials_cost' => 'required|numeric|min:0',
         ]);
 
         // Store in session before transaction (for persistence if validation fails or user goes back)
@@ -235,7 +234,18 @@ class ContractController extends Controller
             $step1 = session('contract_step1');
             $step2 = session('contract_step2');
             $step3 = session('contract_step3');
-            $step4 = session('contract_step4'); // Retrieve step4 data from session
+            $step4 = session('contract_step4');
+            $editingId = session('editing_contract_id');
+
+            // Verify all required contract data is present
+            if (!$step1 || !$step2 || !$step3) {
+                throw new \Exception('Missing required contract data. Please complete all steps.');
+            }
+
+            // Add the financial values from step2 to the validated data
+            $validated['total_amount'] = $step2['total_amount'];
+            $validated['labor_cost'] = $step2['labor_cost'];
+            $validated['materials_cost'] = $step2['materials_cost'];
 
             // Create or update contractor
             $contractor = Party::updateOrCreate(
@@ -275,6 +285,20 @@ class ContractController extends Controller
             );
 
             // Create or update property
+            if ($editingId) {
+                $contract = Contract::findOrFail($editingId);
+                $property = $contract->property;
+                if ($property) {
+                    $property->update([
+                        'property_type' => $step1['property_type'],
+                        'street' => $step1['property_street'],
+                        'unit' => $step1['property_unit'],
+                        'barangay' => $step1['property_barangay'],
+                        'city' => $step1['property_city'],
+                        'state' => $step1['property_state'],
+                        'postal' => $step1['property_postal'],
+                    ]);
+                } else {
             $property = Property::create([
                 'property_type' => $step1['property_type'],
                 'street' => $step1['property_street'],
@@ -284,12 +308,25 @@ class ContractController extends Controller
                 'state' => $step1['property_state'],
                 'postal' => $step1['property_postal'],
             ]);
+                }
+            } else {
+                $property = Property::create([
+                    'property_type' => $step1['property_type'],
+                    'street' => $step1['property_street'],
+                    'unit' => $step1['property_unit'],
+                    'barangay' => $step1['property_barangay'],
+                    'city' => $step1['property_city'],
+                    'state' => $step1['property_state'],
+                    'postal' => $step1['property_postal'],
+                ]);
+            }
 
-            // Create contract
-            $contract = Contract::create([
+            // Prepare contract data
+            $contractData = [
                 'contractor_id' => $contractor->id,
                 'client_id' => $client->id,
                 'property_id' => $property->id,
+                'title' => 'Contract for ' . $client->name,
                 'start_date' => $step2['start_date'],
                 'end_date' => $step2['end_date'],
                 'payment_terms' => $step3['payment_terms'],
@@ -308,7 +345,17 @@ class ContractController extends Controller
                 'labor_cost' => $validated['labor_cost'],
                 'materials_cost' => $validated['materials_cost'],
                 'status' => 'pending',
-            ]);
+            ];
+
+            // If editing, update the contract; else, create new
+            if ($editingId) {
+                $contract = Contract::findOrFail($editingId);
+                $contract->update($contractData);
+                // Remove old rooms and scopes, then re-create
+                $contract->rooms()->delete();
+            } else {
+                $contract = Contract::create($contractData);
+            }
 
             // Create rooms and their scopes
             foreach ($step2['rooms'] as $roomData) {
@@ -318,51 +365,149 @@ class ContractController extends Controller
                     'width' => $roomData['width'],
                     'area' => $roomData['area'],
                 ]);
+                $scopeTypeIds = $roomData['scope'] ?? [];
+                $room->scopeTypes()->attach($scopeTypeIds);
 
-                $room->scopes()->attach($roomData['scope']);
+                // For each scope in this room, add contract items from DB
+                foreach ($scopeTypeIds as $scopeId) {
+                    $scopeType = \App\Models\ScopeType::find($scopeId);
+                    if (!$scopeType) continue;
+                    foreach ($scopeType->materials as $material) {
+                        $contract->items()->create([
+                            'material_id' => $material->id,
+                            'material_name' => $material->name,
+                            'unit' => $material->unit,
+                            'quantity' => 1, // Default to 1, can be improved
+                            'amount' => $material->base_price ?? 0,
+                            'total' => $material->base_price ?? 0,
+                            'room_id' => $room->id,
+                            'scope_type_id' => $scopeId,
+                        ]);
+                    }
+                }
             }
 
             DB::commit();
 
             // Clear session data
-            session()->forget(['contract_step1', 'contract_step2', 'contract_step3', 'contract_step4']);
+            session()->forget(['contract_step1', 'contract_step2', 'contract_step3', 'contract_step4', 'editing_contract_id']);
 
-            return redirect()->route('contracts.show', $contract)
-                ->with('success', 'Contract created successfully.');
+            $redirectUrl = route('contracts.show', $contract);
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $editingId ? 'Contract updated successfully.' : 'Contract created successfully.',
+                    'redirect' => $redirectUrl
+                ]);
+            }
+
+            return redirect($redirectUrl)->with('success', $editingId ? 'Contract updated successfully.' : 'Contract created successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Contract creation error: ' . $e->getMessage());
+            
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error creating contract: ' . $e->getMessage()
+                ], 422);
+            }
+
             return back()->with('error', 'Error creating contract: ' . $e->getMessage());
         }
     }
 
     public function edit(Contract $contract)
     {
-        $purchaseOrders = \App\Models\PurchaseOrder::where('status', 'approved')
-            ->where(function($query) use ($contract) {
-                $query->whereNull('contract_id')
-                    ->orWhere('contract_id', 0)
-                    ->orWhere('id', $contract->purchase_order_id);
-            })
-            ->get();
-        $contract->load([
-            'contractor',
-            'client',
-            'property',
-            'items.material.suppliers'
-        ]);
+        // Load related data
+        $contract->load(['contractor', 'client', 'property', 'rooms.scopeTypes']);
 
-        return view('admin.contracts.form', [
-            'edit_mode' => true,
-            'contract' => $contract,
-            'contractor' => $contract->contractor,
-            'client' => $contract->client,
-            'property' => $contract->property,
-            'items' => $contract->items,
-            'existing_client_signature' => $contract->client_signature ? Storage::url($contract->client_signature) : null,
-            'existing_contractor_signature' => $contract->contractor_signature ? Storage::url($contract->contractor_signature) : null,
-            'purchaseOrders' => $purchaseOrders
-        ]);
+        // Step 1: Contractor, Client, Property
+        $step1 = [
+            'contractor_name' => $contract->contractor->name ?? '',
+            'contractor_company' => $contract->contractor->company_name ?? '',
+            'contractor_email' => $contract->contractor->email ?? '',
+            'contractor_phone' => $contract->contractor->phone ?? '',
+            'contractor_street' => $contract->contractor->street ?? '',
+            'contractor_barangay' => $contract->contractor->barangay ?? '',
+            'contractor_city' => $contract->contractor->city ?? '',
+            'contractor_state' => $contract->contractor->state ?? '',
+            'contractor_postal' => $contract->contractor->postal ?? '',
+            'client_name' => $contract->client->name ?? '',
+            'client_company' => $contract->client->company_name ?? '',
+            'client_email' => $contract->client->email ?? '',
+            'client_phone' => $contract->client->phone ?? '',
+            'client_street' => $contract->client->street ?? '',
+            'client_unit' => $contract->client->unit ?? '',
+            'client_barangay' => $contract->client->barangay ?? '',
+            'client_city' => $contract->client->city ?? '',
+            'client_state' => $contract->client->state ?? '',
+            'client_postal' => $contract->client->postal ?? '',
+            'property_type' => $contract->property->property_type ?? '',
+            'property_street' => $contract->property->street ?? '',
+            'property_unit' => $contract->property->unit ?? '',
+            'property_barangay' => $contract->property->barangay ?? '',
+            'property_city' => $contract->property->city ?? '',
+            'property_state' => $contract->property->state ?? '',
+            'property_postal' => $contract->property->postal ?? '',
+        ];
+        session(['contract_step1' => $step1]);
+
+        // Step 2: Rooms, Dates, Totals
+        $rooms = [];
+        foreach ($contract->rooms as $room) {
+            $rooms[] = [
+                'name' => $room->name,
+                'length' => $room->length,
+                'width' => $room->width,
+                'area' => $room->area,
+                'scope' => $room->scopeTypes->pluck('name')->toArray(),
+                'materials_cost' => $room->materials_cost ?? 0,
+                'labor_cost' => $room->labor_cost ?? 0,
+            ];
+        }
+        $step2 = [
+            'rooms' => $rooms,
+            'start_date' => $contract->start_date ? $contract->start_date->format('Y-m-d') : '',
+            'end_date' => $contract->end_date ? $contract->end_date->format('Y-m-d') : '',
+            'total_materials' => $contract->materials_cost ?? 0,
+            'total_labor' => $contract->labor_cost ?? 0,
+            'grand_total' => $contract->total_amount ?? 0,
+            'total_amount' => $contract->total_amount ?? 0,
+            'labor_cost' => $contract->labor_cost ?? 0,
+            'materials_cost' => $contract->materials_cost ?? 0,
+        ];
+        session(['contract_step2' => $step2]);
+
+        // Step 3: Terms & Signatures
+        $step3 = [
+            'payment_terms' => $contract->payment_terms ?? '',
+            'warranty_terms' => $contract->warranty_terms ?? '',
+            'cancellation_terms' => $contract->cancellation_terms ?? '',
+            'additional_terms' => $contract->additional_terms ?? '',
+            'contractor_signature' => $contract->contractor_signature ?? '',
+            'client_signature' => $contract->client_signature ?? '',
+        ];
+        session(['contract_step3' => $step3]);
+
+        // Step 4: Payment details
+        $step4 = [
+            'payment_method' => $contract->payment_method ?? '',
+            'bank_name' => $contract->bank_name ?? '',
+            'bank_account_name' => $contract->bank_account_name ?? '',
+            'bank_account_number' => $contract->bank_account_number ?? '',
+            'check_number' => $contract->check_number ?? '',
+            'check_date' => $contract->check_date ? $contract->check_date->format('Y-m-d') : '',
+        ];
+        session(['contract_step4' => $step4]);
+
+        // Store contract ID to indicate edit mode
+        session(['editing_contract_id' => $contract->id]);
+
+        // Redirect to step1
+        return redirect()->route('contracts.step1');
     }
 
     public function update(Request $request, Contract $contract)
@@ -387,6 +532,7 @@ class ContractController extends Controller
 
     protected function saveContract(Request $request, Contract $contract = null)
     {
+        \Log::info('ContractController@saveContract called', ['request' => $request->all()]);
         try {
             // Validate the request with basic required fields
             $validated = $request->validate([
@@ -527,6 +673,7 @@ class ContractController extends Controller
                     'contractor_id' => $contractor->id,
                     'client_id' => $client->id,
                     'property_id' => $property->id,
+                    'title' => 'Contract for ' . $client->name,
                     'scope_of_work' => implode(', ', $request->scope_of_work),
                     'scope_description' => $request->scope_description ?? '',
                     'start_date' => $request->start_date ?? ($contract ? $contract->start_date : null),
@@ -546,6 +693,8 @@ class ContractController extends Controller
                     'status' => 'draft',
                     'purchase_order_id' => $request->purchase_order_id
                 ];
+
+                \Log::info('Creating contract in saveContract', $contractData);
 
                 if ($contract) {
                     $contract->update($contractData);

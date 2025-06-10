@@ -69,6 +69,11 @@ class Material extends Model
         return $this->hasMany(MaterialImage::class);
     }
 
+    public function scopeTypes()
+    {
+        return $this->belongsToMany(ScopeType::class, 'scope_type_material');
+    }
+
     protected static function boot()
     {
         parent::boot();

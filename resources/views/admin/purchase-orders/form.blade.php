@@ -32,7 +32,7 @@
                                             data-contract-id="{{ $pr->contract_id }}">
                                             {{ $pr->pr_number }}
                                             @if($pr->contract)
-                                                - Contract: {{ $pr->contract->contract_id }}
+                                                - Contract: {{ $pr->contract->contract_number }}
                                             @endif
                                         </option>
                                     @endforeach
