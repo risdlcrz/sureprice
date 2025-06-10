@@ -75,10 +75,12 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('contracts')->name('contracts.')->group(function () {
         Route::get('/', [ContractController::class, 'index'])->name('index');
         Route::get('/create', [ContractController::class, 'create'])->name('create');
+        Route::get('/clear-session', [ContractController::class, 'clearContractSession'])->name('clear-session');
         Route::get('/step1', [ContractController::class, 'step1'])->name('step1');
         Route::post('/step1', [ContractController::class, 'storeStep1'])->name('store.step1');
         Route::get('/step2', [ContractController::class, 'step2'])->name('step2');
         Route::post('/step2', [ContractController::class, 'storeStep2'])->name('store.step2');
+        Route::post('/step2/save', [ContractController::class, 'saveStep2'])->name('save.step2');
         Route::get('/step3', [ContractController::class, 'step3'])->name('step3');
         Route::post('/step3', [ContractController::class, 'storeStep3'])->name('store.step3');
         Route::get('/step4', [ContractController::class, 'step4'])->name('step4');

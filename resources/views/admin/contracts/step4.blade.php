@@ -180,23 +180,63 @@
                                     <div class="col-md-6">
                                         <div class="review-item">
                                             <span class="review-label">Contractor:</span>
-                                            <span class="review-value">{{ session('contract_step1.contractor_name') }}</span>
+                                            <span class="review-value">{{ session('contract_step1.contractor_name', 'Not provided') }}</span>
                                         </div>
+                                        <div class="review-item">
+                                            <span class="review-label">Contractor Email:</span>
+                                            <span class="review-value">{{ session('contract_step1.contractor_email', 'Not provided') }}</span>
+                                        </div>
+                                        <div class="review-item">
+                                            <span class="review-label">Contractor Phone:</span>
+                                            <span class="review-value">{{ session('contract_step1.contractor_phone', 'Not provided') }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
                                         <div class="review-item">
                                             <span class="review-label">Client:</span>
-                                            <span class="review-value">{{ session('contract_step1.client_name') }}</span>
+                                            <span class="review-value">{{ session('contract_step1.client_name', 'Not provided') }}</span>
                                         </div>
                                         <div class="review-item">
+                                            <span class="review-label">Client Email:</span>
+                                            <span class="review-value">{{ session('contract_step1.client_email', 'Not provided') }}</span>
+                                        </div>
+                                        <div class="review-item">
+                                            <span class="review-label">Client Phone:</span>
+                                            <span class="review-value">{{ session('contract_step1.client_phone', 'Not provided') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <div class="review-item">
                                             <span class="review-label">Property Type:</span>
-                                            <span class="review-value">{{ ucfirst(session('contract_step1.property_type')) }}</span>
+                                            <span class="review-value">{{ ucfirst(session('contract_step1.property_type', 'Not provided')) }}</span>
+                                        </div>
+                                        <div class="review-item">
+                                            <span class="review-label">Property Address:</span>
+                                            <span class="review-value">
+                                                {{ session('contract_step1.property_street', '') }}
+                                                {{ session('contract_step1.property_city', '') }}
+                                                {{ session('contract_step1.property_state', '') }}
+                                            </span>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="review-item">
                                             <span class="review-label">Project Timeline:</span>
                                             <span class="review-value">
-                                                {{ \Carbon\Carbon::parse(session('contract_step2.start_date'))->format('M d, Y') }} to 
-                                                {{ \Carbon\Carbon::parse(session('contract_step2.end_date'))->format('M d, Y') }}
+                                                @if(session('contract_step2.start_date'))
+                                                    {{ \Carbon\Carbon::parse(session('contract_step2.start_date'))->format('M d, Y') }} to 
+                                                    {{ \Carbon\Carbon::parse(session('contract_step2.end_date'))->format('M d, Y') }}
+                                                @else
+                                                    Not provided
+                                                @endif
+                                            </span>
+                                        </div>
+                                        <div class="review-item">
+                                            <span class="review-label">Total Contract Amount:</span>
+                                            <span class="review-value">
+                                                ₱{{ number_format(session('contract_step2.total_amount', 0), 2) }}
                                             </span>
                                         </div>
                                     </div>
@@ -206,6 +246,7 @@
                             <!-- Scope & Materials Review -->
                             <div class="review-section">
                                 <h6>Scope & Materials</h6>
+                                @if(session('contract_step2.rooms') && count(session('contract_step2.rooms')) > 0)
                                 <div class="table-responsive">
                                     <table class="table table-sm">
                                         <thead>
@@ -219,23 +260,36 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach(session('contract_step2.rooms', []) as $room)
+                                            @foreach(session('contract_step2.rooms') as $room)
                                             <tr>
-                                                <td>{{ $room['name'] }}</td>
-                                                <td>{{ number_format($room['area'], 2) }} sq m</td>
+                                                <td>{{ $room['name'] ?? 'Unnamed Room' }}</td>
+                                                <td>{{ number_format($room['area'] ?? 0, 2) }} sq m</td>
                                                 <td>
-                                                    @foreach($room['scope'] as $scope)
-                                                        {{ $scope }}<br>
-                                                    @endforeach
+                                                    @if(isset($room['scope']) && is_array($room['scope']))
+                                                        @foreach($room['scope'] as $scope)
+                                                            {{ $scope }}<br>
+                                                        @endforeach
+                                                    @else
+                                                        No scopes selected
+                                                    @endif
                                                 </td>
                                                 <td>₱{{ number_format($room['materials_cost'] ?? 0, 2) }}</td>
                                                 <td>₱{{ number_format($room['labor_cost'] ?? 0, 2) }}</td>
                                                 <td>₱{{ number_format(($room['materials_cost'] ?? 0) + ($room['labor_cost'] ?? 0), 2) }}</td>
                                             </tr>
                                             @endforeach
+                                            <tr class="table-secondary">
+                                                <td colspan="3" class="text-end"><strong>Grand Total:</strong></td>
+                                                <td>₱{{ number_format(session('contract_step2.materials_cost', 0), 2) }}</td>
+                                                <td>₱{{ number_format(session('contract_step2.labor_cost', 0), 2) }}</td>
+                                                <td>₱{{ number_format(session('contract_step2.total_amount', 0), 2) }}</td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
+                                @else
+                                <div class="alert alert-warning">No room/scope information found</div>
+                                @endif
                             </div>
 
                             <!-- Terms Review -->
@@ -246,7 +300,7 @@
                                         <div class="review-item">
                                             <span class="review-label">Payment Terms:</span>
                                             <div class="review-value">
-                                                {!! nl2br(e(session('contract_step3.payment_terms'))) !!}
+                                                {!! nl2br(e(session('contract_step3.payment_terms', 'No payment terms provided'))) !!}
                                             </div>
                                         </div>
                                     </div>
@@ -254,7 +308,25 @@
                                         <div class="review-item">
                                             <span class="review-label">Warranty Terms:</span>
                                             <div class="review-value">
-                                                {!! nl2br(e(session('contract_step3.warranty_terms'))) !!}
+                                                {!! nl2br(e(session('contract_step3.warranty_terms', 'No warranty terms provided'))) !!}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <div class="review-item">
+                                            <span class="review-label">Cancellation Terms:</span>
+                                            <div class="review-value">
+                                                {!! nl2br(e(session('contract_step3.cancellation_terms', 'No cancellation terms provided'))) !!}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="review-item">
+                                            <span class="review-label">Additional Terms:</span>
+                                            <div class="review-value">
+                                                {!! nl2br(e(session('contract_step3.additional_terms', 'No additional terms provided'))) !!}
                                             </div>
                                         </div>
                                     </div>
@@ -275,9 +347,9 @@
                                             <select class="form-control @error('payment_method') is-invalid @enderror" 
                                                 id="payment_method" name="payment_method" required>
                                                 <option value="">Select Payment Method</option>
-                                                <option value="cash" {{ old('payment_method') == 'cash' ? 'selected' : '' }}>Cash</option>
-                                                <option value="check" {{ old('payment_method') == 'check' ? 'selected' : '' }}>Check</option>
-                                                <option value="bank_transfer" {{ old('payment_method') == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                                                <option value="cash" {{ old('payment_method', session('contract_step4.payment_method')) == 'cash' ? 'selected' : '' }}>Cash</option>
+                                                <option value="check" {{ old('payment_method', session('contract_step4.payment_method')) == 'check' ? 'selected' : '' }}>Check</option>
+                                                <option value="bank_transfer" {{ old('payment_method', session('contract_step4.payment_method')) == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
                                             </select>
                                             @error('payment_method')
                                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -287,13 +359,13 @@
                                 </div>
 
                                 <!-- Bank Transfer Details -->
-                                <div id="bankDetails" class="row mt-3" style="display: none;">
+                                <div class="row g-3" id="bankDetails" style="display: none;">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="bank_name">Bank Name</label>
                                             <input type="text" class="form-control @error('bank_name') is-invalid @enderror" 
                                                 id="bank_name" name="bank_name" 
-                                                value="{{ old('bank_name') }}">
+                                                value="{{ old('bank_name', session('contract_step4.bank_name', '')) }}">
                                             @error('bank_name')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -304,7 +376,7 @@
                                             <label for="bank_account_name">Account Name</label>
                                             <input type="text" class="form-control @error('bank_account_name') is-invalid @enderror" 
                                                 id="bank_account_name" name="bank_account_name" 
-                                                value="{{ old('bank_account_name') }}">
+                                                value="{{ old('bank_account_name', session('contract_step4.bank_account_name', '')) }}">
                                             @error('bank_account_name')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -315,7 +387,7 @@
                                             <label for="bank_account_number">Account Number</label>
                                             <input type="text" class="form-control @error('bank_account_number') is-invalid @enderror" 
                                                 id="bank_account_number" name="bank_account_number" 
-                                                value="{{ old('bank_account_number') }}">
+                                                value="{{ old('bank_account_number', session('contract_step4.bank_account_number', '')) }}">
                                             @error('bank_account_number')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -324,13 +396,13 @@
                                 </div>
 
                                 <!-- Check Details -->
-                                <div id="checkDetails" class="row mt-3" style="display: none;">
+                                <div class="row g-3 mt-0" id="checkDetails" style="display: none;">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="check_number">Check Number</label>
                                             <input type="text" class="form-control @error('check_number') is-invalid @enderror" 
                                                 id="check_number" name="check_number" 
-                                                value="{{ old('check_number') }}">
+                                                value="{{ old('check_number', session('contract_step4.check_number', '')) }}">
                                             @error('check_number')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -341,7 +413,7 @@
                                             <label for="check_date">Check Date</label>
                                             <input type="date" class="form-control @error('check_date') is-invalid @enderror" 
                                                 id="check_date" name="check_date" 
-                                                value="{{ old('check_date') }}">
+                                                value="{{ old('check_date', session('contract_step4.check_date', '')) }}">
                                             @error('check_date')
                                                 <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
@@ -349,15 +421,19 @@
                                     </div>
                                 </div>
 
-                                <!-- Hidden fields for costs -->
-                                <input type="hidden" id="total_amount" name="total_amount" value="{{ session('contract_step2.total_amount') }}">
-                                <input type="hidden" id="labor_cost" name="labor_cost" value="{{ session('contract_step2.labor_cost') }}">
-                                <input type="hidden" id="materials_cost" name="materials_cost" value="{{ session('contract_step2.materials_cost') }}">
+                                <!-- Hidden fields for contract data -->
+                                <input type="hidden" name="contract_data" value="{{ json_encode([
+                                    'step1' => session('contract_step1', []),
+                                    'step2' => session('contract_step2', []),
+                                    'step3' => session('contract_step3', []),
+                                    'step4' => session('contract_step4', [])
+                                ]) }}">
                             </div>
 
                             <div class="form-group mt-4">
                                 <a href="{{ route('contracts.step3') }}" class="btn btn-secondary">Previous Step</a>
                                 <button type="submit" class="btn btn-primary">Create Contract</button>
+                                <a href="{{ route('contracts.clear-session') }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel? All entered data will be lost.')">Cancel</a>
                             </div>
                         </form>
                     </div>
@@ -397,4 +473,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-@endpush 
+@endpush

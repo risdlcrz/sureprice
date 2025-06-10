@@ -156,6 +156,10 @@
 
                         <form method="POST" action="{{ route('contracts.store.step3') }}" id="step3Form">
                             @csrf
+                            
+                            <!-- Hidden fields for signatures -->
+                            <input type="hidden" name="contractor_signature" id="contractor_signature">
+                            <input type="hidden" name="client_signature" id="client_signature">
 
                             <!-- Contract Clauses Section -->
                             <div class="section-container" id="clausesSection">
@@ -193,7 +197,22 @@
                                                     </select>
                                                 </div>
                                             </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="payment_type" id="progressPayment" value="progress_payment">
+                                                <label class="form-check-label" for="progressPayment">Progress Payment</label>
+                                            </div>
+                                            <div id="progressPaymentOptions" style="display: none;">
+                                                <div class="mb-2">
+                                                    <label for="progressPaymentType">Payment Schedule:</label>
+                                                    <select class="form-control" id="progressPaymentType">
+                                                        <option value="70_completion">Payment after 70% completion</option>
+                                                        <option value="completion">Payment after completion</option>
+                                                    </select>
+                                                </div>
+                                            </div>
                                             <input type="hidden" id="payment_terms" name="payment_terms" value="{{ old('payment_terms', session('contract_step3.payment_terms', 'Pay All In')) }}">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-12">
@@ -256,6 +275,7 @@
                             <div class="form-group mt-4">
                                 <a href="{{ route('contracts.step2') }}" class="btn btn-secondary">Previous Step</a>
                                 <button type="submit" class="btn btn-primary">Next Step</button>
+                                <a href="{{ route('contracts.clear-session') }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel? All entered data will be lost.')">Cancel</a>
                             </div>
                         </form>
                     </div>
@@ -298,85 +318,99 @@ document.addEventListener('DOMContentLoaded', function() {
         resizeCanvas(); // Initial setup
     }
 
-    // Form validation
+    // Payment terms handling
+    const payAllIn = document.getElementById('payAllIn');
+    const installmentPlan = document.getElementById('installmentPlan');
+    const progressPayment = document.getElementById('progressPayment');
+    const installmentOptions = document.getElementById('installmentOptions');
+    const progressPaymentOptions = document.getElementById('progressPaymentOptions');
+    const downpayment = document.getElementById('downpayment');
+    const installmentPeriod = document.getElementById('installmentPeriod');
+    const progressPaymentType = document.getElementById('progressPaymentType');
+    const paymentTermsInput = document.getElementById('payment_terms');
+
+    // Calculate project duration in months
+    const startDate = new Date('{{ session('contract_step2.start_date') }}');
+    const endDate = new Date('{{ session('contract_step2.end_date') }}');
+    const projectDurationMonths = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24 * 30));
+
+    function updatePaymentTerms() {
+        if (payAllIn.checked) {
+            paymentTermsInput.value = 'Pay All In';
+            installmentOptions.style.display = 'none';
+            progressPaymentOptions.style.display = 'none';
+        } else if (installmentPlan.checked) {
+            const dp = downpayment.value;
+            const period = installmentPeriod.value;
+            paymentTermsInput.value = `Installment Plan: ${dp}% downpayment, ${period} months installment`;
+            installmentOptions.style.display = 'block';
+            progressPaymentOptions.style.display = 'none';
+        } else if (progressPayment.checked) {
+            const type = progressPaymentType.value;
+            paymentTermsInput.value = type === '70_completion' ? 
+                'Progress Payment: Payment after 70% completion' : 
+                'Progress Payment: Payment after completion';
+            installmentOptions.style.display = 'none';
+            progressPaymentOptions.style.display = 'block';
+        }
+    }
+
+    // Show/hide appropriate payment options based on project duration
+    if (projectDurationMonths <= 1) {
+        // For projects 1 month or less, only show progress payment options
+        installmentPlan.parentElement.style.display = 'none';
+        installmentOptions.style.display = 'none';
+        progressPayment.checked = true;
+        progressPaymentOptions.style.display = 'block';
+        updatePaymentTerms();
+    } else {
+        // For longer projects, show all options
+        installmentPlan.parentElement.style.display = 'block';
+    }
+
+    payAllIn.addEventListener('change', updatePaymentTerms);
+    installmentPlan.addEventListener('change', updatePaymentTerms);
+    progressPayment.addEventListener('change', updatePaymentTerms);
+    downpayment.addEventListener('change', updatePaymentTerms);
+    installmentPeriod.addEventListener('change', updatePaymentTerms);
+    progressPaymentType.addEventListener('change', updatePaymentTerms);
+
+    // Form validation and submission
     const form = document.getElementById('step3Form');
     form.addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent default submission
+
         if (!form.checkValidity()) {
-            e.preventDefault();
             e.stopPropagation();
+            form.classList.add('was-validated');
+            return;
         }
 
         // Check if signatures are provided
         if (window.contractorPad && window.contractorPad.isEmpty()) {
-            e.preventDefault();
             alert('Please provide contractor signature');
             return;
         }
 
         if (window.clientPad && window.clientPad.isEmpty()) {
-            e.preventDefault();
             alert('Please provide client signature');
             return;
         }
 
-        form.classList.add('was-validated');
+        // Get signature data
+        const contractorSignature = window.contractorPad.toDataURL();
+        const clientSignature = window.clientPad.toDataURL();
+
+        // Set signature values in hidden fields
+        document.getElementById('contractor_signature').value = contractorSignature;
+        document.getElementById('client_signature').value = clientSignature;
+
+        // Submit the form
+        form.submit();
     });
-
-    const payAllIn = document.getElementById('payAllIn');
-    const installmentPlan = document.getElementById('installmentPlan');
-    const installmentOptions = document.getElementById('installmentOptions');
-    const downpayment = document.getElementById('downpayment');
-    const installmentPeriod = document.getElementById('installmentPeriod');
-    const paymentTermsInput = document.getElementById('payment_terms');
-
-    function updatePaymentTerms() {
-        if (payAllIn.checked) {
-            paymentTermsInput.value = 'Pay All In';
-        } else {
-            const dp = downpayment.value;
-            const period = installmentPeriod.value;
-            paymentTermsInput.value = `Installment Plan: ${dp}% downpayment, ${period} months installment`;
-        }
-    }
-
-    payAllIn.addEventListener('change', function() {
-        installmentOptions.style.display = this.checked ? 'none' : 'block';
-        updatePaymentTerms();
-    });
-
-    installmentPlan.addEventListener('change', function() {
-        installmentOptions.style.display = this.checked ? 'block' : 'none';
-        updatePaymentTerms();
-    });
-
-    downpayment.addEventListener('change', updatePaymentTerms);
-    installmentPeriod.addEventListener('change', updatePaymentTerms);
 
     // Initial update
     updatePaymentTerms();
-
-    // Update the JavaScript logic to calculate project duration in months based on start_date and end_date from step 2
-    const startDate = new Date(document.getElementById('start_date').value);
-    const endDate = new Date(document.getElementById('end_date').value);
-    const projectDurationMonths = (endDate - startDate) / (1000 * 60 * 60 * 24 * 30); // Approximate months
-    document.getElementById('projectDurationMonths').value = projectDurationMonths;
-
-    if (projectDurationMonths < 3) {
-        installmentOptions.style.display = 'none';
-        paymentTermsInput.value = 'Pay at the completion of project';
-    } else {
-        installmentOptions.style.display = 'block';
-        const options = installmentPeriod.options;
-        if (projectDurationMonths < 6) {
-            for (let i = options.length - 1; i > 1; i--) {
-                installmentPeriod.remove(i);
-            }
-        } else if (projectDurationMonths < 12) {
-            for (let i = options.length - 1; i > 2; i--) {
-                installmentPeriod.remove(i);
-            }
-        }
-    }
 });
 </script>
 @endpush 
