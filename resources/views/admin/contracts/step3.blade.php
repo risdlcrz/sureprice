@@ -335,6 +335,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressPaymentType = document.getElementById('progressPaymentType');
     const paymentTermsInput = document.getElementById('payment_terms');
 
+    // Initialize payment type from session
+    const savedPaymentTerms = paymentTermsInput.value;
+    if (savedPaymentTerms) {
+        if (savedPaymentTerms.startsWith('Installment Plan:')) {
+            installmentPlan.checked = true;
+            // Extract values from saved payment terms
+            const match = savedPaymentTerms.match(/(\d+)% downpayment, (\d+) months/);
+            if (match) {
+                downpayment.value = match[1];
+                installmentPeriod.value = match[2];
+            }
+            installmentOptions.style.display = 'block';
+            progressPaymentOptions.style.display = 'none';
+        } else if (savedPaymentTerms.startsWith('Progress Payment:')) {
+            progressPayment.checked = true;
+            // Set progress payment type
+            if (savedPaymentTerms.includes('70% completion')) {
+                progressPaymentType.value = '70_completion';
+            } else {
+                progressPaymentType.value = 'completion';
+            }
+            installmentOptions.style.display = 'none';
+            progressPaymentOptions.style.display = 'block';
+        } else {
+            payAllIn.checked = true;
+            installmentOptions.style.display = 'none';
+            progressPaymentOptions.style.display = 'none';
+        }
+    }
+
     function updatePaymentTerms() {
         if (payAllIn.checked) {
             paymentTermsInput.value = 'Pay All In';
@@ -362,9 +392,6 @@ document.addEventListener('DOMContentLoaded', function() {
     downpayment.addEventListener('change', updatePaymentTerms);
     installmentPeriod.addEventListener('change', updatePaymentTerms);
     progressPaymentType.addEventListener('change', updatePaymentTerms);
-
-    // Initial update
-    updatePaymentTerms();
 
     // Initialize signature pads
     const contractorCanvas = document.getElementById('contractorSignaturePad');

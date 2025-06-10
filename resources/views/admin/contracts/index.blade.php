@@ -91,7 +91,7 @@
                     <tbody>
                         @forelse($contracts as $contract)
                             <tr>
-                                <td>{{ $contract->contract_id }}</td>
+                                <td>{{ $contract->contract_number }}</td>
                                 <td>
                                     {{ $contract->client->name }}
                                     @if($contract->client->company_name)

@@ -437,6 +437,11 @@
                                     'step3' => session('contract_step3', []),
                                     'step4' => session('contract_step4', [])
                                 ]) }}">
+
+                                <!-- Hidden fields for financial data -->
+                                <input type="hidden" name="total_amount" value="{{ session('contract_step2.total_amount', 0) }}">
+                                <input type="hidden" name="labor_cost" value="{{ session('contract_step2.labor_cost', 0) }}">
+                                <input type="hidden" name="materials_cost" value="{{ session('contract_step2.materials_cost', 0) }}">
                             </div>
 
                             <div class="form-group mt-4">
@@ -460,26 +465,146 @@ document.addEventListener('DOMContentLoaded', function() {
     const paymentMethod = document.getElementById('payment_method');
     const bankDetails = document.getElementById('bankDetails');
     const checkDetails = document.getElementById('checkDetails');
+    const form = document.getElementById('step4Form');
 
     if (paymentMethod) {
         paymentMethod.addEventListener('change', function() {
             bankDetails.style.display = this.value === 'bank_transfer' ? 'flex' : 'none';
             checkDetails.style.display = this.value === 'check' ? 'flex' : 'none';
+
+            // Reset validation classes when payment method changes
+            if (this.value !== 'bank_transfer') {
+                document.querySelectorAll('#bankDetails input').forEach(input => {
+                    input.required = false;
+                    input.classList.remove('is-invalid');
+                });
+            }
+            if (this.value !== 'check') {
+                document.querySelectorAll('#checkDetails input').forEach(input => {
+                    input.required = false;
+                    input.classList.remove('is-invalid');
+                });
+            }
+
+            // Set required fields based on payment method
+            if (this.value === 'bank_transfer') {
+                document.getElementById('bank_name').required = true;
+                document.getElementById('bank_account_name').required = true;
+                document.getElementById('bank_account_number').required = true;
+            } else if (this.value === 'check') {
+                document.getElementById('check_number').required = true;
+                document.getElementById('check_date').required = true;
+            }
         });
         
         // Initialize on page load
         paymentMethod.dispatchEvent(new Event('change'));
     }
 
-    // Form validation
-    const form = document.getElementById('step4Form');
-    form.addEventListener('submit', function(e) {
-        if (!form.checkValidity()) {
+    // Form validation and submission
+    if (form) {
+        form.addEventListener('submit', function(e) {
             e.preventDefault();
-            e.stopPropagation();
-        }
-        form.classList.add('was-validated');
-    });
+            
+            // Reset any previous error messages
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+            
+            let isValid = true;
+            
+            // Validate payment method selection
+            if (!paymentMethod.value) {
+                isValid = false;
+                paymentMethod.classList.add('is-invalid');
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                feedback.textContent = 'Please select a payment method';
+                paymentMethod.parentNode.appendChild(feedback);
+            }
+            
+            // Validate bank transfer fields
+            if (paymentMethod.value === 'bank_transfer') {
+                ['bank_name', 'bank_account_name', 'bank_account_number'].forEach(field => {
+                    const input = document.getElementById(field);
+                    if (!input.value.trim()) {
+                        isValid = false;
+                        input.classList.add('is-invalid');
+                        const feedback = document.createElement('div');
+                        feedback.className = 'invalid-feedback';
+                        feedback.textContent = 'This field is required';
+                        input.parentNode.appendChild(feedback);
+                    }
+                });
+            }
+            
+            // Validate check fields
+            if (paymentMethod.value === 'check') {
+                ['check_number', 'check_date'].forEach(field => {
+                    const input = document.getElementById(field);
+                    if (!input.value.trim()) {
+                        isValid = false;
+                        input.classList.add('is-invalid');
+                        const feedback = document.createElement('div');
+                        feedback.className = 'invalid-feedback';
+                        feedback.textContent = 'This field is required';
+                        input.parentNode.appendChild(feedback);
+                    }
+                });
+            }
+            
+            // If all validations pass, submit the form
+            if (isValid) {
+                console.log('Form is valid, submitting...');
+                
+                // Get form data
+                const formData = new FormData(form);
+                
+                // Add header to request JSON response
+                formData.append('_accept', 'application/json');
+                
+                // Submit form using fetch
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                        return;
+                    }
+                    
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.message || 'Error creating contract');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        window.location.href = data.redirect;
+                    } else {
+                        throw new Error(data.message || 'Error creating contract');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Create error alert
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-danger mt-3';
+                    alertDiv.textContent = error.message || 'An error occurred while creating the contract';
+                    form.insertBefore(alertDiv, form.firstChild);
+                });
+            } else {
+                console.log('Form validation failed');
+            }
+        });
+    }
 });
 </script>
 @endpush

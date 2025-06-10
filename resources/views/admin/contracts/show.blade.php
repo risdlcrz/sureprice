@@ -80,7 +80,7 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <p><strong>Contract ID:</strong> {{ $contract->contract_id }}</p>
+                    <p><strong>Contract ID:</strong> {{ $contract->contract_number }}</p>
                     <p><strong>Start Date:</strong> {{ $contract->start_date->format('F d, Y') }}</p>
                     <p><strong>End Date:</strong> {{ $contract->end_date->format('F d, Y') }}</p>
                 </div>
@@ -206,8 +206,26 @@
             </div>
             <div class="row">
                 <div class="col-md-12">
-                    <h6>Work Categories</h6>
-                    <p>{{ $contract->scope_of_work }}</p>
+                    <h6>Rooms & Work Categories</h6>
+                    @if($contract->rooms && $contract->rooms->count())
+                        <ul class="list-group mb-3">
+                            @foreach($contract->rooms as $room)
+                                <li class="list-group-item">
+                                    <strong>{{ $room->name }}</strong>
+                                    <span class="text-muted"> ({{ $room->length }}m x {{ $room->width }}m, Area: {{ $room->area }} m²)</span>
+                                    <br>
+                                    <span>Scopes:</span>
+                                    <ul>
+                                        @foreach($room->scopeTypes as $scope)
+                                            <li>{{ $scope->name }}</li>
+                                        @endforeach
+                                    </ul>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p class="text-muted">No rooms or scopes defined for this contract.</p>
+                    @endif
                     <h6>Description</h6>
                     <p>{{ $contract->scope_description }}</p>
                 </div>
@@ -216,53 +234,40 @@
     </div>
 
     <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Contract Items</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Purchase Order Linked</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($contract->items as $item)
-                                    <tr>
-                                        <td>
-                                            <div class="mb-2">
-                                                @if($contract->purchaseOrder)
-                                                    <div><strong>PO ID:</strong> 
-                                                        <a href="{{ route('purchase-orders.show', $contract->purchaseOrder->id) }}" target="_blank">
-                                                            {{ $contract->purchaseOrder->po_number }} (ID: {{ $contract->purchaseOrder->id }})
-                                                        </a>
-                                                    </div>
-                                                    <div><strong>Supplier:</strong> 
-                                                        {{ $contract->purchaseOrder->supplier->company_name ?? $contract->purchaseOrder->supplier->name ?? 'N/A' }}
-                                                    </div>
-                                                @else
-                                                    <div><strong>PO ID:</strong> N/A</div>
-                                                    <div><strong>Supplier:</strong> 
-                                                        {{ $item->supplier->company_name ?? $item->supplier->name ?? $item->supplier_name ?? 'N/A' }}
-                                                    </div>
-                                                @endif
-                                                <div><strong>Quantity:</strong> {{ number_format($item->quantity, 2) }} {{ $item->material_unit }}</div>
-                                                <div><strong>Unit Price:</strong> {{ number_format($item->amount, 2) }}</div>
-                                                <div><strong>Total:</strong> {{ number_format($item->total, 2) }}</div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="1" class="text-center">No items found.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+        <div class="card-header">
+            <h5 class="mb-0">Contract Items</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="contractItemsTable" class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Unit</th>
+                            <th>Unit Cost</th>
+                            <th>Quantity</th>
+                            <th>Total Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($contract->items as $item)
+                            <tr>
+                                <td data-item-name>{{ $item->description ?? $item->material->name ?? 'N/A' }}</td>
+                                <td data-item-unit>{{ $item->material_unit ?? $item->unit ?? 'N/A' }}</td>
+                                <td data-item-unit-cost>{{ number_format($item->amount, 2) }}</td>
+                                <td data-item-quantity>{{ number_format($item->quantity, 2) }}</td>
+                                <td data-item-total-cost>{{ number_format($item->total, 2) }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center">No items found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
+        </div>
+    </div>
 
     <div class="card mb-4">
         <div class="card-header">
@@ -404,6 +409,25 @@ function submitDelete() {
 document.getElementById('generatePurchaseRequest')?.addEventListener('click', function() {
     // Gather contract_id
     const contractId = '{{ $contract->id }}';
+    // Gather items from the contract items table
+    const items = [];
+    document.querySelectorAll('#contractItemsTable tbody tr').forEach(row => {
+        // Only process rows with item data (skip empty or summary rows)
+        const nameCell = row.querySelector('td[data-item-name]');
+        if (!nameCell) return;
+        const name = nameCell.textContent.trim();
+        const unit = row.querySelector('td[data-item-unit]')?.textContent.trim() || '';
+        const unitCost = parseFloat(row.querySelector('td[data-item-unit-cost]')?.textContent.replace(/[^\d.]/g, '') || 0);
+        const quantity = parseFloat(row.querySelector('td[data-item-quantity]')?.textContent.replace(/[^\d.]/g, '') || 0);
+        const totalCost = parseFloat(row.querySelector('td[data-item-total-cost]')?.textContent.replace(/[^\d.]/g, '') || 0);
+        if (name && unit && !isNaN(unitCost) && !isNaN(quantity) && !isNaN(totalCost)) {
+            items.push({ name, unit, unitCost, quantity, totalCost });
+        }
+    });
+    if (items.length === 0) {
+        Swal.fire({ icon: 'error', title: 'No contract items found to generate PR.' });
+        return;
+    }
     fetch("{{ route('purchase-requests.generate-from-contract') }}", {
         method: 'POST',
         headers: {
@@ -412,7 +436,7 @@ document.getElementById('generatePurchaseRequest')?.addEventListener('click', fu
         },
         body: JSON.stringify({
             contract_id: contractId,
-            items: [] // You can enhance this to send breakdown items if available
+            items: items
         })
     })
     .then(response => response.json())

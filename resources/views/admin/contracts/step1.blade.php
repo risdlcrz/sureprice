@@ -242,6 +242,14 @@
                                     </div>
                                 </div>
                                 <div class="row g-3 mt-2">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label for="client_unit">Unit/Floor/Building (Optional)</label>
+                                            <input type="text" class="form-control" id="client_unit" name="client_unit" value="{{ old('client_unit', session('contract_step1.client_unit')) }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-2">
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <label for="client_barangay">Barangay</label>

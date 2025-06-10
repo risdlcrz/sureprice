@@ -9,10 +9,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Contract extends Model
 {
     protected $fillable = [
-        'contract_id',
+        'contract_number',
         'contractor_id',
         'client_id',
         'property_id',
+        'title',
         'scope_of_work',
         'scope_description',
         'start_date',
@@ -56,21 +57,29 @@ class Contract extends Model
             $year = date('Y');
             
             // Get the last contract number for this year
-            $lastContract = static::where('contract_id', 'like', "CT{$year}%")
-                ->orderBy('contract_id', 'desc')
+            $lastContract = static::where('contract_number', 'like', "CT{$year}%")
+                ->orderBy('contract_number', 'desc')
                 ->first();
 
             if ($lastContract) {
-                // Extract the number from the last contract ID and increment it
-                $lastNumber = intval(substr($lastContract->contract_id, -4));
+                // Extract the number from the last contract number and increment it
+                $lastNumber = intval(substr($lastContract->contract_number, -4));
                 $newNumber = $lastNumber + 1;
             } else {
                 // If no contracts exist for this year, start with 0001
                 $newNumber = 1;
             }
 
-            // Generate the new contract ID
-            $contract->contract_id = sprintf("CT%s%04d", $year, $newNumber);
+            // Generate the new contract number
+            $contract->contract_number = sprintf("CT%s%04d", $year, $newNumber);
+        });
+
+        static::booted(function () {
+            static::creating(function ($contract) {
+                if (empty($contract->title)) {
+                    $contract->title = 'Contract for ' . ($contract->client->name ?? 'Unknown Client');
+                }
+            });
         });
     }
 
@@ -107,5 +116,10 @@ class Contract extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function rooms()
+    {
+        return $this->hasMany(Room::class);
     }
 } 

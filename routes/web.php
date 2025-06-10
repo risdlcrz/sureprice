@@ -227,3 +227,5 @@ Route::get('/admin/suppliers/{supplier}/purchase-order-metrics', [SupplierRankin
 
 // Project Timeline Route
 Route::get('/project-timeline', [ContractController::class, 'projectTimeline'])->name('project.timeline');
+
+Route::resource('contracts', \App\Http\Controllers\ContractController::class);

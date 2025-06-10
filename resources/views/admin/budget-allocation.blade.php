@@ -18,7 +18,7 @@
                                 <select name="contract_id" id="contract_id" class="form-select" onchange="this.form.submit()">
                                     @foreach($contracts as $contract)
                                         <option value="{{ $contract->id }}" {{ $selectedContract && $selectedContract->id == $contract->id ? 'selected' : '' }}>
-                                            {{ $contract->contract_id }} - {{ optional($contract->client)->name }} (₱{{ number_format($contract->total_amount, 2) }})
+                                            {{ $contract->contract_number }} - {{ optional($contract->client)->name }} (₱{{ number_format($contract->total_amount, 2) }})
                                         </option>
                                     @endforeach
                                 </select>
@@ -69,7 +69,7 @@
                                 <div class="col-md-4">
                                     <div class="border-start border-4 border-primary ps-3">
                                         <p class="text-muted mb-1">Contract ID</p>
-                                        <h5 class="mb-3">{{ $selectedContract->contract_id }}</h5>
+                                        <h5 class="mb-3">{{ $selectedContract->contract_number }}</h5>
                                         <p class="text-muted mb-1">Client</p>
                                         <h5>{{ optional($selectedContract->client)->name }}</h5>
                                     </div>

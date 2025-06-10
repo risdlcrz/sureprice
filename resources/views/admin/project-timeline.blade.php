@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="row g-3">
                 <div class="col-md-6">
                     <div class="mb-2">
-                        <div class="label">Contract ID</div>
+                        <div class="label">Contract Number</div>
                         <div class="value">${contract.title}</div>
                     </div>
                     <div class="mb-2">
