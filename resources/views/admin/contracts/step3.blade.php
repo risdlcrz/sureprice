@@ -154,6 +154,18 @@
                             </div>
                         </div>
 
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                <ul>
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <div id="formErrorMessage" class="alert alert-danger d-none"></div>
+
                         <form method="POST" action="{{ route('contracts.store.step3') }}" id="step3Form">
                             @csrf
                             
@@ -179,7 +191,7 @@
                                             <div id="installmentOptions" style="display: none;">
                                                 <div class="mb-2">
                                                     <label for="downpayment">Downpayment:</label>
-                                                    <select class="form-control" id="downpayment">
+                                                    <select class="form-control" id="downpayment" name="downpayment">
                                                         <option value="10">10%</option>
                                                         <option value="20">20%</option>
                                                         <option value="30">30%</option>
@@ -189,7 +201,7 @@
                                                 </div>
                                                 <div class="mb-2">
                                                     <label for="installmentPeriod">Installment Period (months):</label>
-                                                    <select class="form-control" id="installmentPeriod">
+                                                    <select class="form-control" id="installmentPeriod" name="installmentPeriod">
                                                         <option value="3">3 months</option>
                                                         <option value="6">6 months</option>
                                                         <option value="12">12 months</option>
@@ -204,7 +216,7 @@
                                             <div id="progressPaymentOptions" style="display: none;">
                                                 <div class="mb-2">
                                                     <label for="progressPaymentType">Payment Schedule:</label>
-                                                    <select class="form-control" id="progressPaymentType">
+                                                    <select class="form-control" id="progressPaymentType" name="progressPaymentType">
                                                         <option value="70_completion">Payment after 70% completion</option>
                                                         <option value="completion">Payment after completion</option>
                                                     </select>
@@ -254,6 +266,17 @@
                                         <div class="signature-buttons">
                                             <button type="button" class="btn btn-secondary btn-sm" id="clearContractorSignature">Clear</button>
                                         </div>
+                                        @if(session('contract_step3.contractor_signature'))
+                                        <div class="mt-2">
+                                            <img src="{{ session('contract_step3.contractor_signature') }}" alt="Saved Contractor Signature" class="img-fluid" style="max-height: 100px;">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="keep_contractor_signature" id="keepContractorSignature" value="1" checked>
+                                                <label class="form-check-label" for="keepContractorSignature">
+                                                    Keep saved signature
+                                                </label>
+                                            </div>
+                                        </div>
+                                        @endif
                                     </div>
                                 
                                     <!-- Client Signature -->
@@ -265,6 +288,17 @@
                                         <div class="signature-buttons">
                                             <button type="button" class="btn btn-secondary btn-sm" id="clearClientSignature">Clear</button>
                                         </div>
+                                        @if(session('contract_step3.client_signature'))
+                                        <div class="mt-2">
+                                            <img src="{{ session('contract_step3.client_signature') }}" alt="Saved Client Signature" class="img-fluid" style="max-height: 100px;">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="keep_client_signature" id="keepClientSignature" value="1" checked>
+                                                <label class="form-check-label" for="keepClientSignature">
+                                                    Keep saved signature
+                                                </label>
+                                            </div>
+                                        </div>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -290,34 +324,6 @@
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize signature pads
-    const contractorCanvas = document.getElementById('contractorSignaturePad');
-    const clientCanvas = document.getElementById('clientSignaturePad');
-    
-    if (contractorCanvas && clientCanvas) {
-        window.contractorPad = new SignaturePad(contractorCanvas);
-        window.clientPad = new SignaturePad(clientCanvas);
-
-        // Clear signature buttons
-        document.getElementById('clearContractorSignature')?.addEventListener('click', () => window.contractorPad.clear());
-        document.getElementById('clearClientSignature')?.addEventListener('click', () => window.clientPad.clear());
-
-        // Handle canvas resize
-        function resizeCanvas() {
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            [contractorCanvas, clientCanvas].forEach(canvas => {
-                canvas.width = canvas.offsetWidth * ratio;
-                canvas.height = canvas.offsetHeight * ratio;
-                canvas.getContext("2d").scale(ratio, ratio);
-            });
-            if (window.contractorPad) window.contractorPad.clear();
-            if (window.clientPad) window.clientPad.clear();
-        }
-
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas(); // Initial setup
-    }
-
     // Payment terms handling
     const payAllIn = document.getElementById('payAllIn');
     const installmentPlan = document.getElementById('installmentPlan');
@@ -328,11 +334,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const installmentPeriod = document.getElementById('installmentPeriod');
     const progressPaymentType = document.getElementById('progressPaymentType');
     const paymentTermsInput = document.getElementById('payment_terms');
-
-    // Calculate project duration in months
-    const startDate = new Date('{{ session('contract_step2.start_date') }}');
-    const endDate = new Date('{{ session('contract_step2.end_date') }}');
-    const projectDurationMonths = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24 * 30));
 
     function updatePaymentTerms() {
         if (payAllIn.checked) {
@@ -355,19 +356,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Show/hide appropriate payment options based on project duration
-    if (projectDurationMonths <= 1) {
-        // For projects 1 month or less, only show progress payment options
-        installmentPlan.parentElement.style.display = 'none';
-        installmentOptions.style.display = 'none';
-        progressPayment.checked = true;
-        progressPaymentOptions.style.display = 'block';
-        updatePaymentTerms();
-    } else {
-        // For longer projects, show all options
-        installmentPlan.parentElement.style.display = 'block';
-    }
-
     payAllIn.addEventListener('change', updatePaymentTerms);
     installmentPlan.addEventListener('change', updatePaymentTerms);
     progressPayment.addEventListener('change', updatePaymentTerms);
@@ -375,42 +363,128 @@ document.addEventListener('DOMContentLoaded', function() {
     installmentPeriod.addEventListener('change', updatePaymentTerms);
     progressPaymentType.addEventListener('change', updatePaymentTerms);
 
+    // Initial update
+    updatePaymentTerms();
+
+    // Initialize signature pads
+    const contractorCanvas = document.getElementById('contractorSignaturePad');
+    const clientCanvas = document.getElementById('clientSignaturePad');
+    
+    if (contractorCanvas && clientCanvas) {
+        window.contractorPad = new SignaturePad(contractorCanvas);
+        window.clientPad = new SignaturePad(clientCanvas);
+
+        // Clear signature buttons
+        document.getElementById('clearContractorSignature')?.addEventListener('click', () => {
+            window.contractorPad.clear();
+            document.getElementById('keepContractorSignature').checked = false;
+        });
+        
+        document.getElementById('clearClientSignature')?.addEventListener('click', () => {
+            window.clientPad.clear();
+            document.getElementById('keepClientSignature').checked = false;
+        });
+
+        // Handle canvas resize
+        function resizeCanvas() {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            [contractorCanvas, clientCanvas].forEach(canvas => {
+                canvas.width = canvas.offsetWidth * ratio;
+                canvas.height = canvas.offsetHeight * ratio;
+                canvas.getContext("2d").scale(ratio, ratio);
+            });
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas(); // Initial setup
+
+        // Auto-save signatures when drawn
+        contractorCanvas.addEventListener('mouseup', () => {
+            if (!window.contractorPad.isEmpty()) {
+                saveSignature('contractor', window.contractorPad.toDataURL());
+            }
+        });
+
+        clientCanvas.addEventListener('mouseup', () => {
+            if (!window.clientPad.isEmpty()) {
+                saveSignature('client', window.clientPad.toDataURL());
+            }
+        });
+    }
+
+    // Function to save signature to session
+    function saveSignature(type, dataURL) {
+        fetch('{{ route("contracts.contracts.save.signature") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                type: type,
+                signature: dataURL
+            })
+        });
+    }
+
     // Form validation and submission
     const form = document.getElementById('step3Form');
     form.addEventListener('submit', function(e) {
-        e.preventDefault(); // Prevent default submission
+        e.preventDefault();
+        let errorMessage = '';
+        const errorDiv = document.getElementById('formErrorMessage');
+        errorDiv.classList.add('d-none');
+        errorDiv.textContent = '';
+        console.log('Form submit triggered');
 
         if (!form.checkValidity()) {
             e.stopPropagation();
             form.classList.add('was-validated');
+            errorMessage = 'Please fill in all required fields.';
+            errorDiv.textContent = errorMessage;
+            errorDiv.classList.remove('d-none');
+            console.log('Form validation failed');
             return;
         }
 
-        // Check if signatures are provided
-        if (window.contractorPad && window.contractorPad.isEmpty()) {
-            alert('Please provide contractor signature');
+        // Check if signatures are provided or kept
+        const keepContractorSignature = document.getElementById('keepContractorSignature')?.checked;
+        const keepClientSignature = document.getElementById('keepClientSignature')?.checked;
+        console.log('keepContractorSignature:', keepContractorSignature, 'keepClientSignature:', keepClientSignature);
+
+        // Always set hidden fields before submit
+        if (keepContractorSignature) {
+            document.getElementById('contractor_signature').value = @json(session('contract_step3.contractor_signature')) || '';
+        } else if (window.contractorPad && !window.contractorPad.isEmpty()) {
+            document.getElementById('contractor_signature').value = window.contractorPad.toDataURL();
+        }
+
+        if (keepClientSignature) {
+            document.getElementById('client_signature').value = @json(session('contract_step3.client_signature')) || '';
+        } else if (window.clientPad && !window.clientPad.isEmpty()) {
+            document.getElementById('client_signature').value = window.clientPad.toDataURL();
+        }
+
+        if (!document.getElementById('contractor_signature').value) {
+            errorMessage = 'Please provide contractor signature.';
+            errorDiv.textContent = errorMessage;
+            errorDiv.classList.remove('d-none');
+            console.log('Contractor signature missing');
             return;
         }
 
-        if (window.clientPad && window.clientPad.isEmpty()) {
-            alert('Please provide client signature');
+        if (!document.getElementById('client_signature').value) {
+            errorMessage = 'Please provide client signature.';
+            errorDiv.textContent = errorMessage;
+            errorDiv.classList.remove('d-none');
+            console.log('Client signature missing');
             return;
         }
-
-        // Get signature data
-        const contractorSignature = window.contractorPad.toDataURL();
-        const clientSignature = window.clientPad.toDataURL();
-
-        // Set signature values in hidden fields
-        document.getElementById('contractor_signature').value = contractorSignature;
-        document.getElementById('client_signature').value = clientSignature;
 
         // Submit the form
+        console.log('All validations passed, submitting form');
         form.submit();
     });
-
-    // Initial update
-    updatePaymentTerms();
 });
 </script>
 @endpush 

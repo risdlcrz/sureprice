@@ -717,7 +717,7 @@ function saveFormData() {
     formData.append('grand_total', document.getElementById('grand_total').value);
     formData.append('total_area', document.getElementById('total_area').value);
     
-    fetch('{{ route("contracts.save.step2") }}', {
+    fetch('{{ route("contracts.contracts.save.signature") }}', {
         method: 'POST',
         body: formData,
         headers: {
