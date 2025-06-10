@@ -88,6 +88,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{contract}', [ContractController::class, 'show'])->name('show');
         Route::get('/{contract}/download', [ContractController::class, 'download'])->name('download');
         Route::patch('/{contract}/status', [ContractController::class, 'updateStatus'])->name('updateStatus');
+        Route::post('/save-signature', [ContractController::class, 'saveSignature'])->name('contracts.save.signature');
     });
     
     // Supporting routes for contract form

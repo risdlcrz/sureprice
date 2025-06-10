@@ -121,6 +121,8 @@ class ContractController extends Controller
             'rooms.*.area' => 'required|numeric|min:0',
             'rooms.*.scope' => 'required|array',
             'rooms.*.scope.*' => 'required|string',
+            'rooms.*.materials_cost' => 'nullable|numeric|min:0',
+            'rooms.*.labor_cost' => 'nullable|numeric|min:0',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'total_materials' => 'required|numeric|min:0',
@@ -128,10 +130,18 @@ class ContractController extends Controller
             'grand_total' => 'required|numeric|min:0',
         ]);
 
+        // Ensure per-room costs are present and numeric
+        $rooms = [];
+        foreach ($validated['rooms'] as $room) {
+            $room['materials_cost'] = isset($room['materials_cost']) ? (float)$room['materials_cost'] : 0.0;
+            $room['labor_cost'] = isset($room['labor_cost']) ? (float)$room['labor_cost'] : 0.0;
+            $rooms[] = $room;
+        }
+
         // Store all data in session
         session([
             'contract_step2' => [
-                'rooms' => $validated['rooms'],
+                'rooms' => $rooms,
                 'start_date' => $validated['start_date'],
                 'end_date' => $validated['end_date'],
                 'total_materials' => $validated['total_materials'],
@@ -946,5 +956,19 @@ class ContractController extends Controller
         
         // Default to 'Other' category
         return \App\Models\Category::where('slug', 'other')->first()->id;
+    }
+
+    public function saveSignature(Request $request)
+    {
+        $type = $request->input('type');
+        $signature = $request->input('signature');
+        
+        if ($type === 'contractor') {
+            session(['contract_step3.contractor_signature' => $signature]);
+        } else if ($type === 'client') {
+            session(['contract_step3.client_signature' => $signature]);
+        }
+        
+        return response()->json(['success' => true]);
     }
 } 
