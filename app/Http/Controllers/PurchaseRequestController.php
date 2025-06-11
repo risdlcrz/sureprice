@@ -2,302 +2,224 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Contract;
 use App\Models\PurchaseRequest;
 use App\Models\Material;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class PurchaseRequestController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $query = PurchaseRequest::with(['contract', 'requester']);
-
-        // Handle clear filter
-        if ($request->has('clear')) {
-            return redirect()->route('purchase-requests.index');
-        }
-
-        // Search functionality
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->where(function($q) use ($search) {
-                $q->where('pr_number', 'like', "%$search%")
-                  ->orWhere('department', 'like', "%$search%")
-                  ->orWhere('purpose', 'like', "%$search%")
-                  ->orWhereHas('contract', function($q2) use ($search) {
-                      $q2->where('contract_id', 'like', "%$search%")
-                         ->orWhere('status', 'like', "%$search%")
-                         ->orWhereHas('client', function($q3) use ($search) {
-                             $q3->where('company_name', 'like', "%$search%")
-                                ->orWhere('name', 'like', "%$search%")
-                         ;});
-                  });
-            });
-        }
-
-        // Status filter
-        if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
-        }
-
-        $purchaseRequests = $query->latest()->paginate(10)->withQueryString();
+        $purchaseRequests = PurchaseRequest::with(['contract', 'requestedBy', 'items.material', 'items.supplier'])
+            ->latest()
+            ->paginate(10);
 
         return view('admin.purchase-requests.index', compact('purchaseRequests'));
     }
 
     public function create()
     {
-        $contracts = Contract::with(['client', 'contractor'])
-            ->where('status', 'approved')
-            ->orderBy('contract_id')
-            ->get();
-        $materials = Material::orderBy('name')->get();
-        $suppliers = Supplier::all();
-        return view('admin.purchase-requests.form', compact('contracts', 'materials', 'suppliers'));
+        $materials = Material::with(['suppliers' => function($query) {
+            $query->orderBy('price');
+        }])->get();
+        
+        $suppliers = Supplier::orderBy('company_name')->get();
+        $contracts = \App\Models\Contract::with('client')->orderBy('created_at', 'desc')->get();
+        $projects = \App\Models\Project::orderBy('created_at', 'desc')->get();
+        
+        return view('admin.purchase-requests.create', compact('materials', 'suppliers', 'contracts', 'projects'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'contract_id' => 'nullable|exists:contracts,id',
-            'department' => 'required|string|max:255',
-            'required_date' => 'required|date|after:today',
-            'purpose' => 'required|string',
-            'items' => 'required|array',
+            'is_project_related' => 'required|boolean',
+            'contract_id' => 'required_if:is_project_related,true|exists:contracts,id',
+            'project_id' => 'required_if:is_project_related,true|exists:projects,id',
+            'notes' => 'nullable|string',
+            'items' => 'required|array|min:1',
             'items.*.material_id' => 'required|exists:materials,id',
-            'items.*.quantity' => 'required|numeric|min:1',
-            'items.*.specifications' => 'nullable|string',
+            'items.*.supplier_id' => 'nullable|exists:suppliers,id',
             'items.*.description' => 'required|string',
+            'items.*.quantity' => 'required|numeric|min:0',
             'items.*.unit' => 'required|string',
             'items.*.estimated_unit_price' => 'required|numeric|min:0',
-            'items.*.total_amount' => 'required|numeric|min:0',
-            'notes' => 'nullable|string',
-            'attachments.*' => 'nullable|file|max:10240'
+            'items.*.notes' => 'nullable|string',
+            'items.*.preferred_brand' => 'nullable|string',
+            'items.*.preferred_supplier_id' => 'nullable|exists:suppliers,id'
         ]);
 
-        // Get the last PR number
-        $lastPR = \App\Models\PurchaseRequest::orderBy('id', 'desc')->first();
-        if ($lastPR && preg_match('/pr-(\\d+)/i', $lastPR->pr_number, $matches)) {
-            $nextNumber = intval($matches[1]) + 1;
-        } else {
-            $nextNumber = 1;
-        }
-        $prNumber = 'pr-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+        DB::beginTransaction();
+        try {
+            $purchaseRequest = new PurchaseRequest([
+                'request_number' => 'PR-' . str_pad(PurchaseRequest::count() + 1, 6, '0', STR_PAD_LEFT),
+                'contract_id' => $validated['is_project_related'] ? $validated['contract_id'] : null,
+                'project_id' => $validated['is_project_related'] ? $validated['project_id'] : null,
+                'requested_by' => auth()->id(),
+                'status' => 'pending',
+                'is_project_related' => $validated['is_project_related'],
+                'notes' => $validated['notes']
+            ]);
 
-        $purchaseRequest = PurchaseRequest::create([
-            'contract_id' => $validated['contract_id'] ?? null,
-            'pr_number' => $prNumber,
-            'requester_id' => auth()->id(),
-            'department' => $validated['department'],
-            'required_date' => $validated['required_date'],
-            'purpose' => $validated['purpose'],
-            'notes' => $validated['notes'] ?? null,
-            'status' => 'draft'
-        ]);
+            $totalAmount = 0;
 
         foreach ($validated['items'] as $item) {
-            $supplierId = $item['supplier_id'] ?? null;
-            if (!$supplierId) {
-                $material = Material::find($item['material_id']);
-                $supplier = $material
-                    ? ($material->suppliers()->wherePivot('is_preferred', true)->first() ?? $material->suppliers()->first())
-                    : null;
-                $supplierId = $supplier ? $supplier->id : null;
-            }
-
             $purchaseRequest->items()->create([
                 'material_id' => $item['material_id'],
-                'supplier_id' => $supplierId,
+                    'supplier_id' => $item['supplier_id'] ?? null,
                 'description' => $item['description'],
                 'quantity' => $item['quantity'],
                 'unit' => $item['unit'],
                 'estimated_unit_price' => $item['estimated_unit_price'],
-                'total_amount' => $item['total_amount'],
-                'specifications' => $item['specifications'] ?? null,
-                'notes' => $item['notes'] ?? null
-            ]);
-        }
-
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('purchase-requests/' . $purchaseRequest->id);
-                $purchaseRequest->attachments()->create([
-                    'path' => $path,
-                    'original_name' => $file->getClientOriginalName()
+                    'total_amount' => $item['quantity'] * $item['estimated_unit_price'],
+                    'notes' => $item['notes'] ?? null,
+                    'preferred_brand' => $item['preferred_brand'] ?? null,
+                    'preferred_supplier_id' => $item['preferred_supplier_id'] ?? null
                 ]);
-            }
-        }
 
-        return redirect()->route('purchase-requests.index')
-            ->with('success', 'Purchase request created successfully');
+                $totalAmount += $item['quantity'] * $item['estimated_unit_price'];
+            }
+
+            $purchaseRequest->total_amount = $totalAmount;
+            $purchaseRequest->save();
+
+            DB::commit();
+
+            return redirect()->route('purchase-requests.show', $purchaseRequest)
+                ->with('success', 'Purchase request created successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error creating purchase request: ' . $e->getMessage());
+        }
     }
 
     public function show(PurchaseRequest $purchaseRequest)
     {
-        $purchaseRequest->load(['contract', 'requester', 'items.material', 'attachments']);
+        $purchaseRequest->load(['contract', 'requestedBy', 'items.material', 'items.supplier', 'items.preferredSupplier']);
         return view('admin.purchase-requests.show', compact('purchaseRequest'));
     }
 
     public function edit(PurchaseRequest $purchaseRequest)
     {
-        $contracts = Contract::with(['client', 'contractor'])
-            ->where('status', 'approved')
-            ->orderBy('contract_id')
-            ->get();
-        $materials = Material::orderBy('name')->get();
-        $purchaseRequest->load(['contract', 'items.material', 'attachments']);
-        return view('admin.purchase-requests.form', compact('purchaseRequest', 'contracts', 'materials'));
+        if ($purchaseRequest->status !== 'pending') {
+            return back()->with('error', 'Cannot edit a purchase request that is not pending.');
+        }
+
+        $purchaseRequest->load(['items.material', 'items.supplier']);
+        $materials = Material::with(['suppliers' => function($query) {
+            $query->orderBy('price');
+        }])->get();
+        
+        $suppliers = Supplier::orderBy('company_name')->get();
+
+        return view('admin.purchase-requests.edit', compact('purchaseRequest', 'materials', 'suppliers'));
     }
 
     public function update(Request $request, PurchaseRequest $purchaseRequest)
     {
+        if ($purchaseRequest->status !== 'pending') {
+            return back()->with('error', 'Cannot update a purchase request that is not pending.');
+        }
+
         $validated = $request->validate([
-            'contract_id' => 'nullable|exists:contracts,id',
-            'department' => 'required|string|max:255',
-            'required_date' => 'required|date|after:today',
-            'purpose' => 'required|string',
-            'items' => 'required|array',
+            'notes' => 'nullable|string',
+            'items' => 'required|array|min:1',
             'items.*.material_id' => 'required|exists:materials,id',
-            'items.*.quantity' => 'required|numeric|min:1',
-            'items.*.specifications' => 'nullable|string',
+            'items.*.supplier_id' => 'nullable|exists:suppliers,id',
             'items.*.description' => 'required|string',
+            'items.*.quantity' => 'required|numeric|min:0',
             'items.*.unit' => 'required|string',
             'items.*.estimated_unit_price' => 'required|numeric|min:0',
-            'items.*.total_amount' => 'required|numeric|min:0',
-            'notes' => 'nullable|string',
-            'attachments.*' => 'nullable|file|max:10240'
+            'items.*.notes' => 'nullable|string',
+            'items.*.preferred_brand' => 'nullable|string',
+            'items.*.preferred_supplier_id' => 'nullable|exists:suppliers,id'
         ]);
 
+        DB::beginTransaction();
+        try {
         $purchaseRequest->update([
-            'contract_id' => $validated['contract_id'] ?? null,
-            'department' => $validated['department'],
-            'required_date' => $validated['required_date'],
-            'purpose' => $validated['purpose'],
-            'notes' => $validated['notes'] ?? null
-        ]);
+                'notes' => $validated['notes']
+            ]);
 
-        // Sync items
+            // Delete existing items
         $purchaseRequest->items()->delete();
-        foreach ($validated['items'] as $item) {
-            $supplierId = $item['supplier_id'] ?? null;
-            if (!$supplierId) {
-                // Auto-select preferred supplier or first supplier for the material
-                $material = Material::find($item['material_id']);
-                $supplier = $material
-                    ? ($material->suppliers()->wherePivot('is_preferred', true)->first() ?? $material->suppliers()->first())
-                    : null;
-                $supplierId = $supplier ? $supplier->id : null;
-            }
 
+            $totalAmount = 0;
+
+            // Create new items
+        foreach ($validated['items'] as $item) {
             $purchaseRequest->items()->create([
                 'material_id' => $item['material_id'],
-                'supplier_id' => $supplierId,
+                    'supplier_id' => $item['supplier_id'] ?? null,
                 'description' => $item['description'],
                 'quantity' => $item['quantity'],
                 'unit' => $item['unit'],
                 'estimated_unit_price' => $item['estimated_unit_price'],
-                'total_amount' => $item['total_amount'],
-                'specifications' => $item['specifications'] ?? null,
-                'notes' => $item['notes'] ?? null
-            ]);
-        }
-
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('purchase-requests/' . $purchaseRequest->id);
-                $purchaseRequest->attachments()->create([
-                    'path' => $path,
-                    'original_name' => $file->getClientOriginalName()
+                    'total_amount' => $item['quantity'] * $item['estimated_unit_price'],
+                    'notes' => $item['notes'] ?? null,
+                    'preferred_brand' => $item['preferred_brand'] ?? null,
+                    'preferred_supplier_id' => $item['preferred_supplier_id'] ?? null
                 ]);
-            }
-        }
 
-        return redirect()->route('purchase-requests.index')
-            ->with('success', 'Purchase request updated successfully');
+                $totalAmount += $item['quantity'] * $item['estimated_unit_price'];
+            }
+
+            $purchaseRequest->update(['total_amount' => $totalAmount]);
+
+            DB::commit();
+
+            return redirect()->route('purchase-requests.show', $purchaseRequest)
+                ->with('success', 'Purchase request updated successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error updating purchase request: ' . $e->getMessage());
+        }
     }
 
     public function destroy(PurchaseRequest $purchaseRequest)
     {
+        if ($purchaseRequest->status !== 'pending') {
+            return back()->with('error', 'Cannot delete a purchase request that is not pending.');
+        }
+
+        try {
         $purchaseRequest->delete();
         return redirect()->route('purchase-requests.index')
-            ->with('success', 'Purchase request deleted successfully');
-    }
-
-    public function getItems(PurchaseRequest $purchaseRequest)
-    {
-        return response()->json($purchaseRequest->items()->with('material')->get());
-    }
-
-    public function updateStatus(Request $request, PurchaseRequest $purchaseRequest)
-    {
-        $request->validate([
-            'status' => 'required|in:draft,approved,rejected'
-        ]);
-
-        $purchaseRequest->status = $request->status;
-        $purchaseRequest->save();
-
-        return redirect()->route('purchase-requests.show', $purchaseRequest)
-            ->with('success', 'Purchase request status updated to ' . ucfirst($request->status));
-    }
-
-    public function generateFromContract(Request $request)
-    {
-        $data = $request->validate([
-            'contract_id' => 'required|integer|exists:contracts,id',
-            'items' => 'required|array',
-            'items.*.name' => 'required|string',
-            'items.*.unit' => 'required|string',
-            'items.*.unitCost' => 'required|numeric',
-            'items.*.quantity' => 'required|numeric',
-            'items.*.totalCost' => 'required|numeric',
-        ]);
-
-        // Generate PR number (e.g., PR-YYYYMMDD-XXXX)
-        $date = now()->format('Ymd');
-        $lastPR = \App\Models\PurchaseRequest::where('pr_number', 'like', "PR-{$date}-%")
-            ->orderBy('pr_number', 'desc')
-            ->first();
-        $sequence = '0001';
-        if ($lastPR) {
-            $lastSequence = intval(substr($lastPR->pr_number, -4));
-            $sequence = str_pad($lastSequence + 1, 4, '0', STR_PAD_LEFT);
+                ->with('success', 'Purchase request deleted successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error deleting purchase request: ' . $e->getMessage());
         }
-        $prNumber = "PR-{$date}-{$sequence}";
+    }
 
-        $contract = \App\Models\Contract::findOrFail($data['contract_id']);
-
-        $purchaseRequest = \App\Models\PurchaseRequest::create([
-            'contract_id' => $contract->id,
-            'pr_number' => $prNumber,
-            'status' => 'draft',
-            'requester_id' => auth()->id() ?? 1,
-            'department' => 'Procurement',
-            'required_date' => $contract->start_date ?? now()->addWeek(),
-            'purpose' => 'Materials procurement for Contract ' . ($contract->contract_id ?? $contract->id),
-            'notes' => 'Automatically generated from contract ' . ($contract->contract_id ?? $contract->id),
-        ]);
-
-        foreach ($data['items'] as $item) {
-            $purchaseRequest->items()->create([
-                'description' => $item['name'],
-                'quantity' => $item['quantity'],
-                'unit' => $item['unit'],
-                'estimated_unit_price' => $item['unitCost'],
-                'total_amount' => $item['totalCost'],
-            ]);
+    public function approve(PurchaseRequest $purchaseRequest)
+    {
+        if ($purchaseRequest->status !== 'pending') {
+            return back()->with('error', 'Cannot approve a purchase request that is not pending.');
         }
 
-        $contractNumber = $contract->contract_id ?? $contract->id;
+        try {
+            $purchaseRequest->update(['status' => 'approved']);
+            return back()->with('success', 'Purchase request approved successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error approving purchase request: ' . $e->getMessage());
+        }
+    }
 
-        return response()->json([
-            'success' => true,
-            'pr_number' => $prNumber,
-            'contract_number' => $contractNumber,
-            'pr_id' => $purchaseRequest->id,
-        ]);
+    public function reject(PurchaseRequest $purchaseRequest)
+    {
+        if ($purchaseRequest->status !== 'pending') {
+            return back()->with('error', 'Cannot reject a purchase request that is not pending.');
+        }
+
+        try {
+            $purchaseRequest->update(['status' => 'rejected']);
+            return back()->with('success', 'Purchase request rejected successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error rejecting purchase request: ' . $e->getMessage());
+        }
     }
 } 

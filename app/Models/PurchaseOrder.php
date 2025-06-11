@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Contract;
 
 class PurchaseOrder extends Model
 {
@@ -14,35 +15,28 @@ class PurchaseOrder extends Model
     protected $fillable = [
         'po_number',
         'purchase_request_id',
-        'contract_id',
         'supplier_id',
-        'total_amount',
+        'ordered_by',
+        'approved_by',
         'status',
-        'delivery_date',
+        'order_date',
+        'expected_delivery_date',
+        'total_amount',
         'payment_terms',
-        'shipping_terms',
-        'notes',
-        'is_delivered',
-        'is_on_time',
-        'total_units',
-        'defective_units',
-        'estimated_cost',
-        'actual_cost',
-        'quality_notes',
-        'is_completed'
+        'delivery_terms',
+        'notes'
     ];
 
     protected $casts = [
-        'order_date' => 'datetime',
-        'delivery_date' => 'datetime',
-        'is_delivered' => 'boolean',
-        'is_on_time' => 'boolean',
-        'total_units' => 'integer',
-        'defective_units' => 'integer',
-        'estimated_cost' => 'decimal:2',
-        'actual_cost' => 'decimal:2',
-        'is_completed' => 'boolean'
+        'order_date' => 'date',
+        'expected_delivery_date' => 'date',
+        'total_amount' => 'decimal:2'
     ];
+
+    public function purchaseRequest(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseRequest::class);
+    }
 
     public function supplier(): BelongsTo
     {
@@ -54,57 +48,37 @@ class PurchaseOrder extends Model
         return $this->hasMany(PurchaseOrderItem::class);
     }
 
-    public function contract(): BelongsTo
+    public function deliveries(): HasMany
     {
-        return $this->belongsTo(Contract::class);
+        return $this->hasMany(Delivery::class);
     }
 
-    public function purchaseRequest(): BelongsTo
+    public function orderedBy(): BelongsTo
     {
-        return $this->belongsTo(PurchaseRequest::class);
+        return $this->belongsTo(User::class, 'ordered_by');
     }
 
-    public function quotation(): BelongsTo
+    public function approvedBy(): BelongsTo
     {
-        return $this->belongsTo(Quotation::class);
+        return $this->belongsTo(User::class, 'approved_by');
     }
 
-    public function getDeliveryStatusAttribute()
+    public function contract()
     {
-        if (!$this->is_delivered) {
-            return 'Pending';
-        }
-        return $this->is_on_time ? 'On Time' : 'Delayed';
+        return $this->belongsTo(Contract::class, 'contract_id');
     }
 
-    public function getDefectRateAttribute()
+    public function getStatusColorAttribute()
     {
-        if ($this->total_units == 0) {
-            return 0;
-        }
-        return ($this->defective_units / $this->total_units) * 100;
-    }
-
-    public function getCostVarianceAttribute()
-    {
-        if ($this->estimated_cost == 0) {
-            return 0;
-        }
-        return (($this->actual_cost - $this->estimated_cost) / $this->estimated_cost) * 100;
-    }
-
-    public function calculateEstimatedCost()
-    {
-        return $this->items->sum(function ($item) {
-            $material = $item->material;
-            return $item->quantity * $material->srp_price;
-        });
-    }
-
-    public function calculateActualCost()
-    {
-        return $this->items->sum(function ($item) {
-            return $item->quantity * $item->unit_price;
-        });
+        return [
+            'draft' => 'secondary',
+            'pending' => 'warning',
+            'approved' => 'success',
+            'rejected' => 'danger',
+            'cancelled' => 'secondary',
+            'in_progress' => 'info',
+            'completed' => 'success',
+            'partially_delivered' => 'warning'
+        ][$this->status] ?? 'secondary';
     }
 } 

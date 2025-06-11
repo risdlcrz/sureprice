@@ -12,18 +12,19 @@ class PurchaseRequest extends Model
     use HasFactory;
 
     protected $fillable = [
+        'request_number',
         'contract_id',
-        'pr_number',
-        'requester_id',
-        'department',
-        'required_date',
-        'purpose',
+        'requested_by',
         'status',
-        'notes'
+        'total_amount',
+        'notes',
+        'is_project_related',
+        'project_id'
     ];
 
     protected $casts = [
-        'required_date' => 'date'
+        'total_amount' => 'decimal:2',
+        'is_project_related' => 'boolean'
     ];
 
     // Relationships
@@ -32,9 +33,9 @@ class PurchaseRequest extends Model
         return $this->belongsTo(Contract::class);
     }
 
-    public function requester(): BelongsTo
+    public function project(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'requester_id');
+        return $this->belongsTo(Project::class);
     }
 
     public function items(): HasMany
@@ -54,20 +55,24 @@ class PurchaseRequest extends Model
         return $this->hasMany(PurchaseRequestAttachment::class);
     }
 
-    public function purchaseOrder()
+    public function purchaseOrder(): HasMany
     {
-        return $this->hasOne(PurchaseOrder::class);
+        return $this->hasMany(PurchaseOrder::class);
+    }
+
+    public function requestedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'requested_by');
     }
 
     // Accessors
-    public function getStatusColorAttribute(): string
+    public function getStatusColorAttribute()
     {
-        return match($this->status) {
-            'draft' => 'secondary',
+        return [
             'pending' => 'warning',
             'approved' => 'success',
             'rejected' => 'danger',
-            default => 'primary',
-        };
+            'cancelled' => 'secondary'
+        ][$this->status] ?? 'secondary';
     }
 } 

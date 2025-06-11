@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PurchaseRequestItem extends Model
 {
@@ -19,7 +20,8 @@ class PurchaseRequestItem extends Model
         'estimated_unit_price',
         'total_amount',
         'notes',
-        'specifications'
+        'preferred_brand',
+        'preferred_supplier_id'
     ];
 
     protected $casts = [
@@ -29,19 +31,24 @@ class PurchaseRequestItem extends Model
     ];
 
     // Relationships
-    public function purchaseRequest()
+    public function purchaseRequest(): BelongsTo
     {
         return $this->belongsTo(PurchaseRequest::class);
     }
 
-    public function material()
+    public function material(): BelongsTo
     {
         return $this->belongsTo(Material::class);
     }
 
-    public function supplier()
+    public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function preferredSupplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class, 'preferred_supplier_id');
     }
 
     // Mutators

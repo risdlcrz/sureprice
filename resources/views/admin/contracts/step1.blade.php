@@ -136,6 +136,14 @@
                             <!-- Contractor Information Section -->
                             <div class="section-container mb-4">
                                 <h5 class="section-title">Contractor Information</h5>
+                                <div class="form-group mb-3">
+                                    <x-search-select
+                                        name="contractor_search"
+                                        label="Search Contractor (optional)"
+                                        :url="route('search.contractors')"
+                                        id="contractor_search"
+                                    />
+                                </div>
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <div class="form-group">
@@ -205,6 +213,14 @@
                             <!-- Client Information Section -->
                             <div class="section-container mb-4">
                                 <h5 class="section-title">Client Information</h5>
+                                <div class="form-group mb-3">
+                                    <x-search-select
+                                        name="client_search"
+                                        label="Search Client (optional)"
+                                        :url="route('search.clients')"
+                                        id="client_search"
+                                    />
+                                </div>
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <div class="form-group">
@@ -282,6 +298,12 @@
                             <!-- Property Information Section -->
                             <div class="section-container mb-4">
                                 <h5 class="section-title">Property Information</h5>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" value="1" id="same_as_client_address">
+                                    <label class="form-check-label" for="same_as_client_address">
+                                        Same as Client Address
+                                    </label>
+                                </div>
                                 <div class="row g-3">
                                     <div class="col-md-12">
                                         <div class="form-group">
@@ -363,6 +385,61 @@ document.addEventListener('DOMContentLoaded', function() {
             e.stopPropagation();
         }
         form.classList.add('was-validated');
+    });
+
+    function autofillContractorFields(data) {
+        document.getElementById('contractor_name').value = data.name || '';
+        document.getElementById('contractor_company').value = data.company_name || '';
+        document.getElementById('contractor_email').value = data.email || '';
+        document.getElementById('contractor_phone').value = data.phone || '';
+        document.getElementById('contractor_street').value = data.street || '';
+        document.getElementById('contractor_barangay').value = data.barangay || '';
+        document.getElementById('contractor_city').value = data.city || '';
+        document.getElementById('contractor_postal').value = data.postal || '';
+        document.getElementById('contractor_state').value = data.state || '';
+    }
+    function autofillClientFields(data) {
+        document.getElementById('client_name').value = data.name || '';
+        document.getElementById('client_company').value = data.company_name || '';
+        document.getElementById('client_email').value = data.email || '';
+        document.getElementById('client_phone').value = data.phone || '';
+        document.getElementById('client_street').value = data.street || '';
+        document.getElementById('client_unit').value = data.unit || '';
+        document.getElementById('client_barangay').value = data.barangay || '';
+        document.getElementById('client_city').value = data.city || '';
+        document.getElementById('client_postal').value = data.postal || '';
+        document.getElementById('client_state').value = data.state || '';
+    }
+    document.getElementById('contractor_search').addEventListener('change', function(e) {
+        var userId = this.value;
+        if (userId) {
+            fetch('/api/users/' + userId)
+                .then(response => response.json())
+                .then(data => autofillContractorFields(data));
+        } else {
+            autofillContractorFields({});
+        }
+    });
+    document.getElementById('client_search').addEventListener('change', function(e) {
+        var userId = this.value;
+        if (userId) {
+            fetch('/api/users/' + userId)
+                .then(response => response.json())
+                .then(data => autofillClientFields(data));
+        } else {
+            autofillClientFields({});
+        }
+    });
+
+    document.getElementById('same_as_client_address').addEventListener('change', function() {
+        if (this.checked) {
+            document.getElementById('property_street').value = document.getElementById('client_street').value;
+            document.getElementById('property_unit').value = document.getElementById('client_unit').value;
+            document.getElementById('property_barangay').value = document.getElementById('client_barangay').value;
+            document.getElementById('property_city').value = document.getElementById('client_city').value;
+            document.getElementById('property_state').value = document.getElementById('client_state').value;
+            document.getElementById('property_postal').value = document.getElementById('client_postal').value;
+        }
     });
 });
 </script>
