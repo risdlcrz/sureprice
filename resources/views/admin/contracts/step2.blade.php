@@ -429,20 +429,14 @@ initializeForm();
 
 function initializeForm() {
     console.log('Restoring sessionData:', sessionData);
+    // Clear existing rooms first
     document.getElementById('roomDetails').innerHTML = '';
 
-    // Convert object to array if needed
-    let roomsArr = [];
-    if (Array.isArray(sessionData.rooms)) {
-        roomsArr = sessionData.rooms;
-    } else if (sessionData.rooms && typeof sessionData.rooms === 'object') {
-        roomsArr = Object.values(sessionData.rooms);
-    }
-
-    if (roomsArr.length > 0) {
-        roomsArr.forEach((room, idx) => {
+    // If we have session data, use it to initialize the form
+    if (sessionData.rooms && Array.isArray(sessionData.rooms)) {
+        sessionData.rooms.forEach((room, idx) => {
             const roomId = getRoomId(room, idx);
-            room.id = roomId;
+            room.id = roomId; // Save back for future saves
             const roomContainer = document.createElement('div');
             roomContainer.className = 'room-row mb-4';
             roomContainer.dataset.roomId = roomId;

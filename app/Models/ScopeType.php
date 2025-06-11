@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class ScopeType extends Model
 {
@@ -12,7 +13,6 @@ class ScopeType extends Model
         'category',
         'estimated_days',
         'labor_rate',
-        'materials',
         'items',
         'labor_type',
         'minimum_labor_cost',
@@ -22,7 +22,6 @@ class ScopeType extends Model
 
     protected $casts = [
         'items' => 'array',
-        'materials' => 'array',
         'labor_rate' => 'decimal:2',
         'estimated_days' => 'integer',
         'labor_type' => 'string',
@@ -31,8 +30,14 @@ class ScopeType extends Model
         'labor_hours_per_unit' => 'decimal:2'
     ];
 
-    public function materials()
+    public function materials(): BelongsToMany
     {
-        return $this->belongsToMany(Material::class, 'scope_type_material');
+        return $this->belongsToMany(Material::class, 'scope_type_material')
+                    ->withTimestamps();
+    }
+
+    public function rooms(): BelongsToMany
+    {
+        return $this->belongsToMany(Room::class, 'room_scope_type');
     }
 }

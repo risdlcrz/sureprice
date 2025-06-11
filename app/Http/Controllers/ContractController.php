@@ -153,19 +153,12 @@ class ContractController extends Controller
 
     public function step2()
     {
-        // Get scope types with materials
-        $scopeTypes = \App\Models\ScopeType::all()->map(function($scope) {
-            // Ensure materials is properly decoded from JSON
-            if (is_string($scope->materials)) {
-                try {
-                    $scope->materials = json_decode($scope->materials, true);
-                } catch (\Exception $e) {
-                    \Log::error('Error decoding materials JSON for scope ' . $scope->id . ': ' . $e->getMessage());
-                    $scope->materials = [];
-                }
-            }
-            return $scope;
-        });
+        // Get scope types with materials through relationship
+        $scopeTypes = \App\Models\ScopeType::with(['materials' => function($query) {
+            $query->with(['suppliers' => function($q) {
+                $q->wherePivot('is_preferred', true);
+            }]);
+        }])->get();
 
         // Get session data if it exists
         $sessionData = session('contract_step2', []);
@@ -429,7 +422,11 @@ class ContractController extends Controller
                 'client_id' => $client->id,
                 'property_id' => $property->id,
                 'title' => 'Contract for ' . $client->name,
-                'scope_of_work' => session('contract_step2.rooms')[0]['scope'] ?? 'General Construction Work',
+                'scope_of_work' => collect(session('contract_step2.rooms'))->first()['scope'] ? 
+                    \App\Models\ScopeType::whereIn('id', collect(session('contract_step2.rooms'))->first()['scope'])
+                        ->pluck('name')
+                        ->implode(', ') : 
+                    'General Construction Work',
                 'scope_description' => 'Construction work as per agreed specifications',
                 'start_date' => session('contract_step2.start_date'),
                 'end_date' => session('contract_step2.end_date'),
@@ -441,52 +438,73 @@ class ContractController extends Controller
                 'bank_name' => session('contract_step3.bank_name'),
                 'bank_account_name' => session('contract_step3.bank_account_name'),
                 'bank_account_number' => session('contract_step3.bank_account_number'),
+                'contractor_signature' => session('contract_step3.contractor_signature'),
+                'client_signature' => session('contract_step3.client_signature'),
                 'status' => 'draft'
             ]);
 
             // Create rooms and their scopes
-            foreach (session('contract_step2.rooms', []) as $roomData) {
+            $totalEstimatedDays = 0;
+            foreach (session('contract_step2.rooms', []) as $roomId => $roomData) {
+                // Calculate estimated days for this room
+                $roomEstimatedDays = 0;
+                if (!empty($roomData['scope'])) {
+                    $roomEstimatedDays = (int)\App\Models\ScopeType::whereIn('id', $roomData['scope'])
+                        ->sum('estimated_days');
+                }
+
                 $room = $contract->rooms()->create([
                     'name' => $roomData['name'],
                     'length' => $roomData['length'],
                     'width' => $roomData['width'],
                     'area' => $roomData['area'],
                     'materials_cost' => $roomData['materials_cost'] ?? 0,
-                    'labor_cost' => $roomData['labor_cost'] ?? 0
+                    'labor_cost' => $roomData['labor_cost'] ?? 0,
+                    'estimated_days' => $roomEstimatedDays
                 ]);
 
                 if (!empty($roomData['scope'])) {
                     $room->scopeTypes()->attach($roomData['scope']);
                 }
+
+                // Update total estimated days (use max since some work can be done in parallel)
+                $totalEstimatedDays = max($totalEstimatedDays, $roomEstimatedDays);
             }
+
+            // Update contract end date and estimated days
+            $contract->estimated_days = $totalEstimatedDays;
+            $contract->end_date = \Carbon\Carbon::parse($contract->start_date)->addDays((int)$totalEstimatedDays);
+            $contract->save();
 
             // Create contract items
             foreach ($contract->rooms as $room) {
+                $room->load(['scopeTypes' => function($query) {
+                    $query->with(['materials' => function($q) {
+                        $q->with(['suppliers' => function($sq) {
+                            $sq->wherePivot('is_preferred', true);
+                        }]);
+                    }]);
+                }]);
+
                 foreach ($room->scopeTypes as $scope) {
-                    $materials = is_string($scope->materials) ? json_decode($scope->materials, true) : $scope->materials;
-                    
-                    if (!is_array($materials)) continue;
-
-                    foreach ($materials as $material) {
-                        if (!is_array($material)) continue;
-
+                    foreach ($scope->materials as $material) {
                         // Get the price from either srp_price or base_price
-                        $price = floatval($material['srp_price'] ?? $material['base_price'] ?? 0);
+                        $price = floatval($material->srp_price ?? $material->base_price ?? 0);
                         $quantity = 1;
                         
                         // Calculate quantity based on area if needed
-                        if ($material['is_per_area'] ?? false) {
-                            $coverage = floatval($material['coverage_rate'] ?? 1);
+                        if ($material->is_per_area) {
+                            $coverage = floatval($material->coverage_rate ?? 1);
                             $quantity = ceil($room->area / $coverage);
                         }
 
                         // Apply waste factor
-                        $wasteFactor = floatval($material['waste_factor'] ?? 1.1);
+                        $wasteFactor = floatval($material->waste_factor ?? 1.1);
                         $quantity = ceil($quantity * $wasteFactor);
 
                         // Check for bulk pricing
-                        if (!empty($material['bulk_pricing'])) {
-                            $bulkPricing = is_array($material['bulk_pricing']) ? $material['bulk_pricing'] : json_decode($material['bulk_pricing'], true);
+                        if ($material->bulk_pricing) {
+                            $bulkPricing = is_array($material->bulk_pricing) ? $material->bulk_pricing : json_decode($material->bulk_pricing, true);
                             if (is_array($bulkPricing)) {
                                 foreach ($bulkPricing as $tier) {
                                     if ($quantity >= ($tier['min_quantity'] ?? 0)) {
@@ -496,11 +514,16 @@ class ContractController extends Controller
                             }
                         }
 
-                        // Create the contract item with calculated values
+                        // Get preferred supplier if exists
+                        $supplier = $material->suppliers->first();
+
+                        // Create contract item
                         $contract->items()->create([
-                            'material_id' => $material['id'] ?? null,
-                            'material_name' => $material['name'] ?? 'Unnamed Material',
-                            'unit' => $material['unit'] ?? 'pcs',
+                            'material_id' => $material->id,
+                            'material_name' => $material->name,
+                            'unit' => $material->unit ?? 'pcs',
+                            'supplier_id' => $supplier ? $supplier->id : null,
+                            'supplier_name' => $supplier ? $supplier->company_name : null,
                             'quantity' => $quantity,
                             'amount' => $price,
                             'total' => $quantity * $price

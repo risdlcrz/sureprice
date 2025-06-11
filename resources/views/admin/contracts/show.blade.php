@@ -194,8 +194,18 @@
             <div class="row mb-3">
                 <div class="col-md-12">
                     <h6>Project Timeline</h6>
-                    <p><strong>Start Date:</strong> {{ $contract->start_date->format('F d, Y') }}</p>
-                    <p><strong>End Date:</strong> {{ $contract->end_date->format('F d, Y') }}</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="review-item">
+                                <span class="review-label">Project Timeline:</span>
+                                <span class="review-value">
+                                    {{ \Carbon\Carbon::parse($contract->start_date)->format('M d, Y') }} to 
+                                    {{ \Carbon\Carbon::parse($contract->end_date)->format('M d, Y') }}
+                                    ({{ $contract->estimated_days }} days)
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="row">

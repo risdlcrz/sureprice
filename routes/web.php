@@ -109,6 +109,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/materials/search', [MaterialController::class, 'apiSearch'])->name('api.materials.search');
     Route::post('/materials/update-srp', [MaterialController::class, 'updateSrpPrices'])->name('materials.update-srp');
     Route::get('/api/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('api.materials.suppliers');
+    Route::get('/api/materials/all', [MaterialController::class, 'getAllMaterials'])->name('api.materials.all');
 
     // Inquiry Routes
     Route::resource('inquiries', InquiryController::class);
