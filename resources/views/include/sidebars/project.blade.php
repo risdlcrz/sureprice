@@ -32,6 +32,11 @@
     <a href="{{ route('admin.procurement-request') }}" class="btn {{ request()->routeIs('admin.procurement-request') ? 'active' : '' }}">
         <i class="fas fa-clipboard-list"></i>Procurement Request
     </a>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('payments.index') }}">
+            <i class="fas fa-money-check-alt"></i> Payments
+        </a>
+    </li>
 </div>
 
 <!-- Logout Button -->

@@ -35,6 +35,11 @@
     <a href="{{ route('admin.price-analysis') }}" class="btn {{ request()->routeIs('admin.price-analysis') ? 'active' : '' }}">
         <i class="fas fa-chart-line"></i>Price Analysis
     </a>
+    <li class="nav-item">
+        <a class="nav-link" href="{{ route('payments.index') }}">
+            <i class="fas fa-money-check-alt"></i> Payments
+        </a>
+    </li>
 </div>
 
 <!-- Logout Button -->
