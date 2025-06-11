@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Contract extends Model
 {
@@ -85,12 +86,12 @@ class Contract extends Model
 
     public function contractor(): BelongsTo
     {
-        return $this->belongsTo(Party::class, 'contractor_id');
+        return $this->belongsTo(User::class, 'contractor_id');
     }
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(Party::class, 'client_id');
+        return $this->belongsTo(User::class, 'client_id');
     }
 
     public function property(): BelongsTo
@@ -118,8 +119,155 @@ class Contract extends Model
         return $this->hasMany(Transaction::class);
     }
 
-    public function rooms()
+    public function rooms(): HasMany
     {
         return $this->hasMany(Room::class);
+    }
+
+    public function purchaseRequests(): HasMany
+    {
+        return $this->hasMany(PurchaseRequest::class);
+    }
+
+    public function scopeTypes(): BelongsToMany
+    {
+        return $this->belongsToMany(ScopeType::class, 'contract_scope_type');
+    }
+
+    public function getStatusColorAttribute()
+    {
+        return [
+            'draft' => 'secondary',
+            'pending' => 'warning',
+            'approved' => 'success',
+            'rejected' => 'danger',
+            'cancelled' => 'secondary',
+            'in_progress' => 'info',
+            'completed' => 'success'
+        ][$this->status] ?? 'secondary';
+    }
+
+    public function generatePurchaseRequest()
+    {
+        $purchaseRequest = new PurchaseRequest([
+            'request_number' => 'PR-' . str_pad($this->id, 6, '0', STR_PAD_LEFT),
+            'contract_id' => $this->id,
+            'requested_by' => auth()->id(),
+            'status' => 'pending',
+            'is_project_related' => true,
+            'notes' => 'Auto-generated from contract ' . $this->contract_number
+        ]);
+
+        $totalAmount = 0;
+
+        foreach ($this->items as $item) {
+            $purchaseRequest->items()->create([
+                'material_id' => $item->material_id,
+                'description' => $item->material_name,
+                'quantity' => $item->quantity,
+                'unit' => $item->unit,
+                'estimated_unit_price' => $item->amount,
+                'total_amount' => $item->total,
+                'notes' => 'From contract item'
+            ]);
+
+            $totalAmount += $item->total;
+        }
+
+        $purchaseRequest->total_amount = $totalAmount;
+        $purchaseRequest->save();
+
+        return $purchaseRequest;
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function generatePayments()
+    {
+        $paymentSchedule = json_decode($this->payment_schedule, true);
+        if (!$paymentSchedule) {
+            return;
+        }
+
+        foreach ($paymentSchedule as $schedule) {
+            $dueDate = now()->addDays($schedule['days']);
+            $amount = $this->total_amount * ($schedule['percentage'] / 100);
+
+            Payment::create([
+                'payment_number' => Payment::generatePaymentNumber(),
+                'contract_id' => $this->id,
+                'amount' => $amount,
+                'payment_method' => $this->payment_method,
+                'payment_type' => $schedule['type'] ?? 'regular',
+                'status' => 'pending',
+                'due_date' => $dueDate,
+                'created_by' => auth()->id()
+            ]);
+        }
+    }
+
+    public function getTotalPaidAttribute()
+    {
+        return $this->payments()
+            ->where('status', 'paid')
+            ->sum('amount');
+    }
+
+    public function getTotalPendingAttribute()
+    {
+        return $this->payments()
+            ->where('status', 'pending')
+            ->sum('amount');
+    }
+
+    public function getNextPaymentDueAttribute()
+    {
+        return $this->payments()
+            ->where('status', 'pending')
+            ->orderBy('due_date')
+            ->first();
+    }
+
+    public function getOverduePaymentsAttribute()
+    {
+        return $this->payments()
+            ->where('status', 'pending')
+            ->where('due_date', '<', now())
+            ->get();
+    }
+
+    public function tasks()
+    {
+        return $this->hasMany(ProjectTask::class);
+    }
+
+    public function generateTasks()
+    {
+        // Generate tasks based on rooms and scope types
+        foreach ($this->rooms as $room) {
+            foreach ($room->scopeTypes as $scopeType) {
+                // Calculate task duration based on scope type complexity
+                $duration = $scopeType->estimated_days ?? 7; // Default to 7 days if not specified
+                $startDate = $this->start_date;
+                $endDate = $startDate->copy()->addDays($duration);
+
+                ProjectTask::create([
+                    'contract_id' => $this->id,
+                    'room_id' => $room->id,
+                    'scope_type_id' => $scopeType->id,
+                    'title' => "{$scopeType->name} in {$room->name}",
+                    'description' => "Complete {$scopeType->name} work in {$room->name}",
+                    'start_date' => $startDate,
+                    'end_date' => $endDate,
+                    'status' => 'pending',
+                    'progress' => 0,
+                    'priority' => 'medium',
+                    'created_by' => auth()->id()
+                ]);
+            }
+        }
     }
 } 

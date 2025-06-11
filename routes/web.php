@@ -27,6 +27,7 @@ use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\SupplierRankingController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\SearchController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -161,6 +162,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/inventory/{inventory}', [InventoryController::class, 'update'])->name('inventory.update');
     Route::delete('/inventory/{inventory}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
     Route::post('/inventory/{inventory}/adjust-stock', [InventoryController::class, 'adjustStock'])->name('inventory.adjust-stock');
+    Route::post('/inventory/import-from-scope', [InventoryController::class, 'importFromScope'])->name('inventory.import-from-scope');
     Route::get('/inventory/low-stock', [InventoryController::class, 'lowStock'])->name('inventory.low-stock');
     Route::get('/inventory/expiring', [InventoryController::class, 'expiring'])->name('inventory.expiring');
 });
@@ -229,3 +231,15 @@ Route::get('/admin/suppliers/{supplier}/purchase-order-metrics', [SupplierRankin
 Route::get('/project-timeline', [ContractController::class, 'projectTimeline'])->name('project.timeline');
 
 Route::resource('contracts', \App\Http\Controllers\ContractController::class);
+
+// Search Routes
+Route::prefix('search')->group(function () {
+    Route::get('users', [SearchController::class, 'users'])->name('search.users');
+    Route::get('contractors', [SearchController::class, 'contractors'])->name('search.contractors');
+    Route::get('clients', [SearchController::class, 'clients'])->name('search.clients');
+    Route::get('properties', [SearchController::class, 'properties'])->name('search.properties');
+    Route::get('materials', [SearchController::class, 'materials'])->name('search.materials');
+    Route::get('suppliers', [SearchController::class, 'suppliers'])->name('search.suppliers');
+    Route::get('scope-types', [SearchController::class, 'scopeTypes'])->name('search.scope-types');
+    Route::get('contracts', [SearchController::class, 'contracts'])->name('search.contracts');
+});

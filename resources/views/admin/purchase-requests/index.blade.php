@@ -1,112 +1,220 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Purchase Requests</h1>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Purchase Requests</h3>
+                    <div class="card-tools">
             <a href="{{ route('purchase-requests.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> New Purchase Request
             </a>
         </div>
+                </div>
+                <div class="card-body">
+                    @if(session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ session('success') }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    @endif
+                    @if(session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ session('error') }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    @endif
 
-        <div class="card">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">All Purchase Requests</h5>
-                <form method="GET" action="{{ route('purchase-requests.index') }}" class="row mb-0 align-items-end w-100" id="filterForm">
-                    <div class="col-md-3 mb-2 mb-md-0">
-                        <input type="text" name="search" class="form-control filter-input" placeholder="Search PR number, department, contract, etc..." value="{{ request('search') }}">
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h3>{{ $purchaseRequests->where('status', 'pending')->count() }}</h3>
+                                    <p>Pending Requests</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="small-box bg-success">
+                                <div class="inner">
+                                    <h3>{{ $purchaseRequests->where('status', 'approved')->count() }}</h3>
+                                    <p>Approved Requests</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="small-box bg-warning">
+                                <div class="inner">
+                                    <h3>{{ $purchaseRequests->where('status', 'rejected')->count() }}</h3>
+                                    <p>Rejected Requests</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-times"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="small-box bg-primary">
+                                <div class="inner">
+                                    <h3>{{ $purchaseRequests->where('is_project_related', true)->count() }}</h3>
+                                    <p>Project Related</p>
+                                </div>
+                                <div class="icon">
+                                    <i class="fas fa-project-diagram"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-2 mb-2 mb-md-0">
-                        <select name="status" class="form-control filter-input" onchange="this.form.submit()">
-                            <option value="">All Statuses</option>
-                            <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
-                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                            <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                        </select>
+
+                    <!-- Search and Filter -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input type="text" id="searchInput" class="form-control" placeholder="Search purchase requests...">
+                                <div class="input-group-append">
+                                    <button class="btn btn-default">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-right">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default" data-toggle="dropdown">
+                                    <i class="fas fa-filter"></i> Filter
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <a class="dropdown-item" href="{{ route('purchase-requests.index', ['status' => 'pending']) }}">Pending</a>
+                                    <a class="dropdown-item" href="{{ route('purchase-requests.index', ['status' => 'approved']) }}">Approved</a>
+                                    <a class="dropdown-item" href="{{ route('purchase-requests.index', ['status' => 'rejected']) }}">Rejected</a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="{{ route('purchase-requests.index', ['type' => 'project']) }}">Project Related</a>
+                                    <a class="dropdown-item" href="{{ route('purchase-requests.index', ['type' => 'standalone']) }}">Standalone</a>
                     </div>
-                    <div class="col-md-2 mb-2 mb-md-0">
-                        <input type="number" name="per_page" class="form-control filter-input" placeholder="Per Page" value="{{ request('per_page', 10) }}" min="1" max="100">
                     </div>
-                    <div class="col-md-3 mb-2 mb-md-0">
-                        <!-- Placeholder for future filter options -->
                     </div>
-                    <div class="col-md-2 mb-2 mb-md-0 d-flex justify-content-end">
-                        <a href="{{ route('purchase-requests.index', ['clear' => 1]) }}" class="btn btn-secondary w-100">
-                            <i class="fas fa-times"></i> Clear Filters
-                        </a>
                     </div>
-                </form>
-            </div>
-            <div class="card-body">
+
+                    <!-- Purchase Requests Table -->
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                        <table class="table table-bordered table-hover" id="purchaseRequestsTable">
                         <thead>
                             <tr>
-                                <th>PR Number</th>
-                                <th>Contract</th>
-                                <th>Department</th>
-                                <th>Required Date</th>
+                                    <th>Request #</th>
+                                    <th>Project/Contract</th>
+                                    <th>Requested By</th>
+                                    <th>Total Amount</th>
                                 <th>Status</th>
-                                <th>Created</th>
+                                    <th>Created Date</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($purchaseRequests as $pr)
+                                @foreach($purchaseRequests as $request)
                                 <tr>
-                                    <td>{{ $pr->pr_number }}</td>
-                                    <td>{{ $pr->contract->contract_id ?? 'N/A' }}</td>
-                                    <td>{{ $pr->department }}</td>
-                                    <td>{{ $pr->required_date->format('M d, Y') }}</td>
+                                    <td>{{ $request->request_number }}</td>
                                     <td>
-                                        <span class="badge bg-{{ $pr->status_color }}">
-                                            {{ ucfirst($pr->status) }}
+                                        @if($request->is_project_related)
+                                            @if($request->contract)
+                                                <a href="{{ route('contracts.show', $request->contract) }}">
+                                                    {{ $request->contract->contract_id }}
+                                                </a>
+                                            @elseif($request->project)
+                                                <a href="{{ route('projects.show', $request->project) }}">
+                                                    {{ $request->project->name }}
+                                                </a>
+                                            @endif
+                                        @else
+                                            <span class="text-muted">Standalone</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $request->requestedBy->name }}</td>
+                                    <td>{{ number_format($request->total_amount, 2) }}</td>
+                                    <td>
+                                        <span class="badge badge-{{ $request->status === 'pending' ? 'warning' : ($request->status === 'approved' ? 'success' : 'danger') }}">
+                                            {{ ucfirst($request->status) }}
                                         </span>
                                     </td>
-                                    <td>{{ $pr->created_at->format('M d, Y') }}</td>
+                                    <td>{{ $request->created_at->format('M d, Y') }}</td>
                                     <td>
-                                        <a href="{{ route('purchase-requests.show', $pr) }}" class="btn btn-sm btn-info">
+                                        <div class="btn-group">
+                                            <a href="{{ route('purchase-requests.show', $request) }}" class="btn btn-sm btn-info">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        @if(in_array($pr->status, ['draft', 'pending']))
-                                            <a href="{{ route('purchase-requests.edit', $pr) }}" class="btn btn-sm btn-primary">
+                                            @if($request->status === 'pending')
+                                                <a href="{{ route('purchase-requests.edit', $request) }}" class="btn btn-sm btn-primary">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                        @endif
-                                        @if($pr->status === 'draft')
-                                            <form action="{{ route('purchase-requests.destroy', $pr) }}" method="POST" class="d-inline">
+                                                <form action="{{ route('purchase-requests.destroy', $request) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this request?')">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
                                         @endif
+                                            @if($request->status === 'pending' && auth()->user()->can('approve-purchase-requests'))
+                                                <form action="{{ route('purchase-requests.approve', $request) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Are you sure you want to approve this request?')">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                </form>
+                                                <form action="{{ route('purchase-requests.reject', $request) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to reject this request?')">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="text-center">No purchase requests found</td>
-                                </tr>
-                            @endforelse
+                                @endforeach
                         </tbody>
                     </table>
                 </div>
 
-                <div class="d-flex justify-content-between align-items-center mt-4">
-                    <div>
-                        Showing {{ $purchaseRequests->firstItem() ?? 0 }} to {{ $purchaseRequests->lastItem() ?? 0 }} of {{ $purchaseRequests->total() ?? 0 }} purchase requests
+                    <!-- Pagination -->
+                    <div class="mt-4">
+                        {{ $purchaseRequests->links() }}
                     </div>
-                    {{ $purchaseRequests->links() }}
                 </div>
             </div>
         </div>
     </div>
-@endsection
+</div>
 
 @push('scripts')
 <script>
-    // No extra JS needed, form submits on status change or search
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const input = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#purchaseRequestsTable tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(input) ? '' : 'none';
+            });
+        });
+    }
+});
 </script>
 @endpush 
+@endsection 
