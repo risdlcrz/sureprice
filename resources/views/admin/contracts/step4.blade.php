@@ -449,18 +449,17 @@
                                                     <tr>
                                                         <th>Payment Stage</th>
                                                         <th>Milestone Date</th>
-                                                        <th>Payment Due Date</th>
-                                                        <th>Amount (₱)</th>
+                                                        <th>Due Date</th>
+                                                        <th>Amount</th>
                                                         <th>Status</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <!-- Will be populated dynamically -->
                                                 </tbody>
                                                 <tfoot>
                                                     <tr>
                                                         <td colspan="3" class="text-end"><strong>Total:</strong></td>
-                                                        <td><strong id="totalAmount">₱0.00</strong></td>
+                                                        <td id="totalAmount">₱0.00</td>
                                                         <td></td>
                                                     </tr>
                                                 </tfoot>
@@ -470,23 +469,16 @@
                                 </div>
                             </div>
 
-                            <!-- Hidden fields for contract data -->
-                            <input type="hidden" name="contract_data" value="{{ json_encode([
-                                'step1' => session('contract_step1', []),
-                                'step2' => session('contract_step2', []),
-                                'step3' => session('contract_step3', []),
-                                'step4' => session('contract_step4', [])
-                            ]) }}">
-
-                            <!-- Hidden fields for financial data -->
-                            <input type="hidden" name="total_amount" value="{{ session('contract_step2.total_amount', 0) }}">
-                            <input type="hidden" name="labor_cost" value="{{ session('contract_step2.labor_cost', 0) }}">
-                            <input type="hidden" name="materials_cost" value="{{ session('contract_step2.materials_cost', 0) }}">
-
-                            <div class="form-group mt-4">
-                                <a href="{{ route('contracts.step3') }}" class="btn btn-secondary">Previous Step</a>
-                                <button type="submit" class="btn btn-primary">Create Contract</button>
-                                <a href="{{ route('contracts.clear-session') }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel? All entered data will be lost.')">Cancel</a>
+                            <!-- Form Buttons -->
+                            <div class="section-container mt-4">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="d-flex justify-content-between">
+                                            <a href="{{ route('contracts.step3') }}" class="btn btn-secondary">Back</a>
+                                            <button type="submit" class="btn btn-primary" onclick="return validateForm()">Create Contract</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -713,6 +705,35 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .catch(error => console.error('Error saving data:', error));
     });
+
+    // Form validation
+    window.validateForm = function() {
+        // Get the payment schedule
+        const paymentSchedule = document.getElementById('payment_schedule').value;
+        if (!paymentSchedule) {
+            alert('Please wait for the payment schedule to be generated.');
+            return false;
+        }
+
+        // Validate payment method details
+        const paymentMethod = document.getElementById('payment_method').value;
+        if (paymentMethod === 'bank_transfer') {
+            if (!document.getElementById('bank_name').value ||
+                !document.getElementById('bank_account_name').value ||
+                !document.getElementById('bank_account_number').value) {
+                alert('Please fill in all bank transfer details.');
+                return false;
+            }
+        } else if (paymentMethod === 'check') {
+            if (!document.getElementById('check_number').value ||
+                !document.getElementById('check_date').value) {
+                alert('Please fill in all check details.');
+                return false;
+            }
+        }
+
+        return true;
+    };
 });
 </script>
 @endpush

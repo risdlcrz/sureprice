@@ -187,22 +187,39 @@ class Contract extends Model
 
     public function generatePayments()
     {
+        \Log::info('Generating payments for contract: ' . $this->id);
+        \Log::info('Payment schedule: ' . $this->payment_schedule);
+        
         $paymentSchedule = json_decode($this->payment_schedule, true);
         if (!$paymentSchedule) {
+            \Log::error('Invalid payment schedule format for contract: ' . $this->id);
             return;
         }
 
         foreach ($paymentSchedule as $schedule) {
-            Payment::create([
-                'payment_number' => Payment::generatePaymentNumber(),
-                'contract_id' => $this->id,
-                'amount' => $schedule['amount'],
-                'payment_method' => $this->payment_method,
-                'payment_type' => $this->getPaymentType($schedule['stage']),
-                'status' => 'pending',
-                'due_date' => $schedule['due_date'],
-                'created_by' => auth()->id()
-            ]);
+            try {
+                Payment::create([
+                    'payment_number' => Payment::generatePaymentNumber(),
+                    'payable_type' => Contract::class,
+                    'payable_id' => $this->id,
+                    'contract_id' => $this->id,
+                    'amount' => $schedule['amount'],
+                    'payment_method' => $this->payment_method,
+                    'payment_type' => $this->getPaymentType($schedule['stage']),
+                    'status' => 'pending',
+                    'due_date' => $schedule['due_date'],
+                    'created_by' => auth()->id() ?? 1
+                ]);
+                \Log::info('Created payment for contract: ' . $this->id, [
+                    'amount' => $schedule['amount'],
+                    'due_date' => $schedule['due_date']
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error creating payment for contract: ' . $this->id, [
+                    'error' => $e->getMessage(),
+                    'schedule' => $schedule
+                ]);
+            }
         }
     }
 

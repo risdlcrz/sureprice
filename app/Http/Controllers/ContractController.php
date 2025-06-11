@@ -8,6 +8,7 @@ use App\Models\Supplier;
 use App\Models\Party;
 use App\Models\Property;
 use App\Models\Project;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -1151,12 +1152,113 @@ class ContractController extends Controller
 
             DB::beginTransaction();
 
+            $oldStatus = $contract->status;
             $contract->status = $request->status;
             $contract->save();
 
+            \Log::info('Contract status updated', [
+                'contract_id' => $contract->id,
+                'old_status' => $oldStatus,
+                'new_status' => $request->status,
+                'payment_terms' => $contract->payment_terms,
+                'total_amount' => $contract->total_amount
+            ]);
+
             // Generate payments when contract is approved
             if ($request->status === 'approved') {
-                $contract->generatePayments();
+                \Log::info('Attempting to generate payments');
+                
+                // Generate payment schedule based on payment terms
+                $paymentSchedule = [];
+                
+                if (strpos($contract->payment_terms, 'Pay All In') !== false) {
+                    // Single payment at project completion
+                    $paymentSchedule[] = [
+                        'stage' => 'Full Payment',
+                        'amount' => $contract->total_amount,
+                        'due_date' => $contract->end_date->format('Y-m-d')
+                    ];
+                }
+                else if (strpos($contract->payment_terms, 'Progress Payment') !== false) {
+                    // Progress payment with advance payment and retention
+                    $advancePayment = $contract->total_amount * 0.15; // 15% advance payment
+                    $retention = $contract->total_amount * 0.10; // 10% retention
+                    $progressPayment = $contract->total_amount - $advancePayment - $retention;
+                    
+                    // Add advance payment (due at start)
+                    $paymentSchedule[] = [
+                        'stage' => 'Advance Payment (15%)',
+                        'amount' => $advancePayment,
+                        'due_date' => $contract->start_date->format('Y-m-d')
+                    ];
+                    
+                    // Add progress payment (due at completion)
+                    $paymentSchedule[] = [
+                        'stage' => 'Progress Payment (75%)',
+                        'amount' => $progressPayment,
+                        'due_date' => $contract->end_date->format('Y-m-d')
+                    ];
+                    
+                    // Add retention (due 30 days after completion)
+                    $retentionDueDate = $contract->end_date->copy()->addDays(30);
+                    $paymentSchedule[] = [
+                        'stage' => 'Retention (10%)',
+                        'amount' => $retention,
+                        'due_date' => $retentionDueDate->format('Y-m-d')
+                    ];
+                }
+                else if (strpos($contract->payment_terms, 'Installment') !== false) {
+                    // Parse installment terms (e.g., "30% downpayment, 6 months")
+                    if (preg_match('/(\d+)% downpayment, (\d+) months/', $contract->payment_terms, $matches)) {
+                        $downpaymentPercent = intval($matches[1]);
+                        $months = intval($matches[2]);
+                        
+                        $downpayment = ($contract->total_amount * $downpaymentPercent) / 100;
+                        $remainingAmount = $contract->total_amount - $downpayment;
+                        $monthlyPayment = $remainingAmount / $months;
+                        
+                        // Add downpayment
+                        $paymentSchedule[] = [
+                            'stage' => "Downpayment ({$downpaymentPercent}%)",
+                            'amount' => $downpayment,
+                            'due_date' => $contract->start_date->format('Y-m-d')
+                        ];
+                        
+                        // Add monthly installments
+                        $installmentDate = $contract->start_date->copy();
+                        for ($i = 1; $i <= $months; $i++) {
+                            $installmentDate->addMonth();
+                            $paymentSchedule[] = [
+                                'stage' => "Installment {$i}",
+                                'amount' => $monthlyPayment,
+                                'due_date' => $installmentDate->format('Y-m-d')
+                            ];
+                        }
+                    }
+                }
+                
+                \Log::info('Generated payment schedule:', $paymentSchedule);
+                
+                // Create payment records
+                foreach ($paymentSchedule as $schedule) {
+                    try {
+                        Payment::create([
+                            'payment_number' => Payment::generatePaymentNumber(),
+                            'payable_type' => Contract::class,
+                            'payable_id' => $contract->id,
+                            'contract_id' => $contract->id,
+                            'amount' => $schedule['amount'],
+                            'payment_method' => $contract->payment_method,
+                            'payment_type' => $schedule['stage'],
+                            'status' => 'pending',
+                            'due_date' => $schedule['due_date'],
+                            'created_by' => auth()->id() ?? 1
+                        ]);
+                    } catch (\Exception $e) {
+                        \Log::error('Error creating payment: ' . $e->getMessage());
+                        throw $e;
+                    }
+                }
             }
 
             DB::commit();
@@ -1168,6 +1270,7 @@ class ContractController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Error updating contract status: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating contract status: ' . $e->getMessage()
