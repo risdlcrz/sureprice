@@ -398,8 +398,15 @@ function saveFormData() {
         end_date: formData.get('end_date'),
         total_materials: formData.get('total_materials'),
         total_labor: formData.get('total_labor'),
-        grand_total: formData.get('grand_total')
+        grand_total: formData.get('grand_total'),
+        total_amount: formData.get('grand_total'),
+        labor_cost: formData.get('total_labor'),
+        materials_cost: formData.get('total_materials')
     };
+
+    // Log the data being saved
+    console.log('Saving form data:', data);
+
     document.querySelectorAll('.room-row').forEach((room, idx) => {
         const roomId = room.dataset.roomId;
         const roomData = {
@@ -414,6 +421,10 @@ function saveFormData() {
         };
         data.rooms.push(roomData);
     });
+
+    // Log the complete data being sent
+    console.log('Sending data to server:', data);
+
     return fetch('{{ route("contracts.save.step2") }}', {
         method: 'POST',
         headers: {
@@ -421,6 +432,15 @@ function saveFormData() {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
         },
         body: JSON.stringify(data)
+    }).then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    }).then(data => {
+        console.log('Data saved successfully:', data);
+    }).catch(error => {
+        console.error('Error saving data:', error);
     });
 }
 
@@ -433,8 +453,13 @@ function initializeForm() {
     document.getElementById('roomDetails').innerHTML = '';
 
     // If we have session data, use it to initialize the form
-    if (sessionData.rooms && Array.isArray(sessionData.rooms)) {
-        sessionData.rooms.forEach((room, idx) => {
+    if (sessionData.rooms && (Array.isArray(sessionData.rooms) || typeof sessionData.rooms === 'object')) {
+        // Convert to array if it's an object
+        const roomsArray = Array.isArray(sessionData.rooms) ? 
+            sessionData.rooms : 
+            Object.entries(sessionData.rooms).map(([id, room]) => ({...room, id}));
+
+        roomsArray.forEach((room, idx) => {
             const roomId = getRoomId(room, idx);
             room.id = roomId; // Save back for future saves
             const roomContainer = document.createElement('div');
