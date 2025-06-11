@@ -172,7 +172,7 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <p><strong>Payment Method:</strong> {{ ucfirst($contract->payment_method) }}</p>
+                    <p><strong>Payment Method:</strong> {{ ucfirst(str_replace('_', ' ', $contract->payment_method)) }}</p>
                     <p><strong>Payment Terms:</strong><br>{{ $contract->payment_terms }}</p>
                 </div>
                 <div class="col-md-6">
@@ -180,6 +180,13 @@
                         <p><strong>Bank Name:</strong> {{ $contract->bank_name }}</p>
                         <p><strong>Account Name:</strong> {{ $contract->bank_account_name }}</p>
                         <p><strong>Account Number:</strong> {{ $contract->bank_account_number }}</p>
+                    @elseif($contract->payment_method === 'check')
+                        <p><strong>Check Number:</strong> {{ $contract->check_number }}</p>
+                        <p><strong>Check Date:</strong> 
+                            {{ $contract->check_date ? \Carbon\Carbon::parse($contract->check_date)->format('F d, Y') : '' }}
+                        </p>
+                    @else
+                        <p><strong>Cash Payment</strong></p>
                     @endif
                 </div>
             </div>
