@@ -13,14 +13,12 @@ return new class extends Migration
     {
         Schema::create('rooms', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('contract_id');
+            $table->foreignId('contract_id')->constrained()->onDelete('cascade');
             $table->string('name');
-            $table->decimal('length', 8, 2)->nullable();
-            $table->decimal('width', 8, 2)->nullable();
-            $table->decimal('area', 10, 2)->nullable();
+            $table->decimal('length', 10, 2);
+            $table->decimal('width', 10, 2);
+            $table->decimal('area', 10, 2);
             $table->timestamps();
-
-            $table->foreign('contract_id')->references('id')->on('contracts')->onDelete('cascade');
         });
     }
 
@@ -31,4 +29,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('rooms');
     }
-};
+}; 

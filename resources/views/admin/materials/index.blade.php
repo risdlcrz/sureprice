@@ -230,38 +230,8 @@
                                 <th>Markup %</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            @foreach($materials as $material)
-                                <tr>
-                                    <td>{{ $material->code }}</td>
-                                    <td>{{ $material->name }}</td>
-                                    <td>{{ $material->category->name }}</td>
-                                    <td>{{ $material->unit }}</td>
-                                    <td>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">₱</span>
-                                            <input type="number" class="form-control base-price" 
-                                                value="{{ $material->base_price }}" readonly>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text">₱</span>
-                                            <input type="number" class="form-control srp-price" 
-                                                data-material-id="{{ $material->id }}"
-                                                value="{{ $material->srp_price }}" step="0.01" min="0">
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="input-group input-group-sm">
-                                            <input type="number" class="form-control markup-percent" 
-                                                value="{{ $material->base_price > 0 ? (($material->srp_price - $material->base_price) / $material->base_price * 100) : 0 }}"
-                                                step="0.01">
-                                            <span class="input-group-text">%</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
+                        <tbody id="srpTableBody">
+                            <!-- Will be populated via JavaScript -->
                         </tbody>
                     </table>
                 </div>
@@ -353,69 +323,142 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Handle markup percentage changes
-    document.querySelectorAll('.markup-percent').forEach(input => {
-        input.addEventListener('change', function() {
-            const row = this.closest('tr');
-            const basePrice = parseFloat(row.querySelector('.base-price').value) || 0;
-            const markup = parseFloat(this.value) || 0;
-            const srpPrice = basePrice * (1 + markup/100);
-            row.querySelector('.srp-price').value = srpPrice.toFixed(2);
-        });
+    // Load all materials when opening the SRP modal
+    const bulkSrpModal = document.getElementById('bulkSrpModal');
+    bulkSrpModal.addEventListener('show.bs.modal', async function() {
+        try {
+            const response = await fetch('{{ route("api.materials.all") }}');
+            const materials = await response.json();
+            
+            const tbody = document.getElementById('srpTableBody');
+            tbody.innerHTML = '';
+            
+            materials.forEach(material => {
+                const markup = material.base_price > 0 ? 
+                    ((material.srp_price - material.base_price) / material.base_price * 100) : 0;
+                
+                const row = `
+                    <tr>
+                        <td>${material.code}</td>
+                        <td>${material.name}</td>
+                        <td>${material.category ? material.category.name : ''}</td>
+                        <td>${material.unit}</td>
+                        <td>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">₱</span>
+                                <input type="number" class="form-control base-price" 
+                                    value="${material.base_price}" readonly>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">₱</span>
+                                <input type="number" class="form-control srp-price" 
+                                    data-material-id="${material.id}"
+                                    value="${material.srp_price}"
+                                    step="0.01"
+                                    min="0">
+                            </div>
+                        </td>
+                        <td>
+                            <div class="input-group input-group-sm">
+                                <input type="number" class="form-control markup-percent" 
+                                    value="${markup.toFixed(2)}"
+                                    step="0.01">
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+
+            // Reattach event listeners for the newly created inputs
+            attachSrpEventListeners();
+        } catch (error) {
+            console.error('Error loading materials:', error);
+            alert('Failed to load materials. Please try again.');
+        }
     });
 
-    // Handle SRP price changes
-    document.querySelectorAll('.srp-price').forEach(input => {
-        input.addEventListener('change', function() {
-            const row = this.closest('tr');
-            const basePrice = parseFloat(row.querySelector('.base-price').value) || 0;
-            const srpPrice = parseFloat(this.value) || 0;
-            const markup = basePrice > 0 ? ((srpPrice - basePrice) / basePrice * 100) : 0;
-            row.querySelector('.markup-percent').value = markup.toFixed(2);
+    function attachSrpEventListeners() {
+        // Handle markup percentage changes
+        document.querySelectorAll('.markup-percent').forEach(input => {
+            input.addEventListener('change', function() {
+                const row = this.closest('tr');
+                const basePrice = parseFloat(row.querySelector('.base-price').value) || 0;
+                const markup = parseFloat(this.value) || 0;
+                const srpPrice = basePrice * (1 + markup/100);
+                row.querySelector('.srp-price').value = srpPrice.toFixed(2);
+            });
         });
-    });
+
+        // Handle SRP price changes
+        document.querySelectorAll('.srp-price').forEach(input => {
+            input.addEventListener('change', function() {
+                const row = this.closest('tr');
+                const basePrice = parseFloat(row.querySelector('.base-price').value) || 0;
+                const srpPrice = parseFloat(this.value) || 0;
+                const markup = basePrice > 0 ? ((srpPrice - basePrice) / basePrice * 100) : 0;
+                row.querySelector('.markup-percent').value = markup.toFixed(2);
+            });
+        });
+    }
 
     // Save SRP prices
     document.getElementById('saveSrpPrices').addEventListener('click', async function() {
         const updates = [];
         document.querySelectorAll('.srp-price').forEach(input => {
-            updates.push({
-                id: input.dataset.materialId,
-                srp_price: input.value
-            });
+            const id = input.dataset.materialId;
+            const srp_price = input.value;
+            if (id && srp_price) {
+                updates.push({ id, srp_price });
+            }
         });
 
+        if (updates.length === 0) {
+            alert('No materials to update');
+            return;
+        }
+
         try {
-            const response = await fetch('/materials/update-srp', {
+            const response = await fetch('{{ route("materials.update-srp") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
                 body: JSON.stringify({ materials: updates })
             });
 
-            if (!response.ok) throw new Error('Failed to update SRP prices');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to update SRP prices');
+            }
 
             const modal = bootstrap.Modal.getInstance(document.getElementById('bulkSrpModal'));
             modal.hide();
+            
+            // Show success message
+            alert('SRP prices updated successfully');
             window.location.reload();
 
         } catch (error) {
             console.error('Error:', error);
-            alert('Failed to update SRP prices. Please try again.');
+            alert(error.message || 'Failed to update SRP prices. Please try again.');
         }
     });
 
     // Add SRP search functionality
     const srpSearchInput = document.getElementById('srpSearchInput');
     const clearSrpSearch = document.getElementById('clearSrpSearch');
-    const srpTableRows = document.querySelectorAll('#bulkSrpModal tbody tr');
 
     srpSearchInput.addEventListener('input', function() {
         const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('#srpTableBody tr');
         
-        srpTableRows.forEach(row => {
+        rows.forEach(row => {
             const code = row.cells[0].textContent.toLowerCase();
             const name = row.cells[1].textContent.toLowerCase();
             const category = row.cells[2].textContent.toLowerCase();
@@ -430,7 +473,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     clearSrpSearch.addEventListener('click', function() {
         srpSearchInput.value = '';
-        srpTableRows.forEach(row => row.style.display = '');
+        const rows = document.querySelectorAll('#srpTableBody tr');
+        rows.forEach(row => row.style.display = '');
     });
 
     // Add supplier prices modal functionality

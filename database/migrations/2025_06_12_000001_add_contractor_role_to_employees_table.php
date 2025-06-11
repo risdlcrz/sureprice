@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up()
     {
-        // MySQL only: alter enum to add 'contractor'
+        // Modify the enum to include contractor
         DB::statement("ALTER TABLE employees MODIFY role ENUM('procurement','warehousing','contractor') NOT NULL");
     }
 

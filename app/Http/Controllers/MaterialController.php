@@ -124,14 +124,23 @@ class MaterialController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'unit' => 'required|string|max:50',
-            'price' => 'required|numeric|min:0',
-            'stock' => 'required|numeric|min:0'
+            'base_price' => 'required|numeric|min:0',
+            'srp_price' => 'required|numeric|min:0',
+            'specifications' => 'nullable|string'
         ]);
 
-        $material->update($validated);
+        try {
+            DB::beginTransaction();
+            $material->update($validated);
+            DB::commit();
 
-        return redirect()->route('materials.index')
-            ->with('success', 'Material updated successfully');
+            return redirect()->route('materials.index')
+                ->with('success', 'Material updated successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error updating material: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Failed to update material. Please try again.'])->withInput();
+        }
     }
 
     public function destroy(Material $material)
@@ -203,17 +212,30 @@ class MaterialController extends Controller
             DB::beginTransaction();
 
             foreach ($validated['materials'] as $material) {
-                Material::where('id', $material['id'])
-                    ->update(['srp_price' => $material['srp_price']]);
+                $materialModel = Material::findOrFail($material['id']);
+                $materialModel->update([
+                    'srp_price' => $material['srp_price']
+                ]);
             }
 
             DB::commit();
-
-            return response()->json(['success' => true]);
+            return response()->json([
+                'success' => true,
+                'message' => 'SRP prices updated successfully'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Error updating SRP prices: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to update SRP prices'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update SRP prices: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -228,5 +250,15 @@ class MaterialController extends Controller
             'base_price' => $material->base_price,
             'suppliers' => $material->suppliers
         ]);
+    }
+
+    public function getAllMaterials()
+    {
+        $materials = Material::with(['category'])
+            ->select('id', 'code', 'name', 'unit', 'base_price', 'srp_price', 'category_id')
+            ->orderBy('name')
+            ->get();
+
+        return response()->json($materials);
     }
 }
