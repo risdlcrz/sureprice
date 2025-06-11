@@ -56,90 +56,145 @@ class MaterialController extends Controller
 
     public function create()
     {
-        $suppliers = \App\Models\Supplier::orderBy('company_name')->get();
-        return view('admin.materials.form', compact('suppliers'));
+        $suppliers = \App\Models\Supplier::all();
+        $scopeTypes = \App\Models\ScopeType::orderBy('name')->get();
+        return view('admin.materials.form', compact('suppliers', 'scopeTypes'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:50|unique:materials',
+            'code' => 'required|string|max:50|unique:materials,code',
             'description' => 'nullable|string',
-            'category' => 'required|string|in:construction-materials,electrical-supplies,plumbing-materials,windows-and-doors,tools-and-hardware,paint-and-coatings,safety-equipment,insulation-materials,structural-materials',
-            'unit' => 'required|string|max:50',
+            'category' => 'required|string',
+            'unit' => 'required|string',
             'base_price' => 'required|numeric|min:0',
             'srp_price' => 'required|numeric|min:0',
             'specifications' => 'nullable|string',
-            'images.*' => 'nullable|image|max:2048',
             'suppliers' => 'nullable|array',
             'suppliers.*' => 'exists:suppliers,id',
+            'scope_types' => 'nullable|array',
+            'scope_types.*' => 'exists:scope_types,id',
+            'images.*' => 'nullable|image|max:2048'
         ]);
 
-        // Get the category ID based on the slug
-        $category = DB::table('categories')->where('slug', $validated['category'])->first();
-        if (!$category) {
-            return back()->withErrors(['category' => 'Invalid category selected'])->withInput();
-        }
+        try {
+            DB::beginTransaction();
 
-        // Create the material
-        $material = Material::create([
-            'name' => $validated['name'],
-            'code' => $validated['code'],
-            'description' => $validated['description'],
-            'unit' => $validated['unit'],
-            'base_price' => $validated['base_price'],
-            'srp_price' => $validated['srp_price'],
-            'specifications' => $validated['specifications'],
-            'category_id' => $category->id,
-            'minimum_stock' => 0,
-            'current_stock' => 0
-        ]);
+            // Get or create the category
+            $category = \App\Models\Category::firstOrCreate(
+                ['slug' => $validated['category']],
+                ['name' => ucfirst($validated['category'])]
+            );
 
-        // Attach suppliers if any
-        if (!empty($validated['suppliers'])) {
-            $material->suppliers()->sync($validated['suppliers']);
-        }
+            $material = Material::create([
+                'name' => $validated['name'],
+                'code' => $validated['code'],
+                'description' => $validated['description'],
+                'category_id' => $category->id,
+                'unit' => $validated['unit'],
+                'base_price' => $validated['base_price'],
+                'srp_price' => $validated['srp_price'],
+                'specifications' => $validated['specifications']
+            ]);
 
-        // Handle image uploads
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                $path = $image->store('materials', 'public');
-                $material->images()->create(['path' => $path]);
+            // Handle image uploads
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store('materials', 'public');
+                    $material->images()->create(['path' => $path]);
+                }
             }
-        }
 
-        return redirect()->route('materials.index')
-            ->with('success', 'Material created successfully');
+            // Attach suppliers if any
+            if (!empty($validated['suppliers'])) {
+                $material->suppliers()->attach($validated['suppliers']);
+            }
+
+            // Attach scope types if any
+            if (!empty($validated['scope_types'])) {
+                $material->scopeTypes()->attach($validated['scope_types']);
+            }
+
+            DB::commit();
+
+            return redirect()->route('materials.index')
+                ->with('success', 'Material created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error creating material: ' . $e->getMessage());
+            return back()->with('error', 'Error creating material: ' . $e->getMessage())->withInput();
+        }
     }
 
     public function edit(Material $material)
     {
-        return view('admin.materials.form', compact('material'));
+        $suppliers = \App\Models\Supplier::all();
+        $scopeTypes = \App\Models\ScopeType::orderBy('name')->get();
+        return view('admin.materials.form', compact('material', 'suppliers', 'scopeTypes'));
     }
 
     public function update(Request $request, Material $material)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:materials,code,' . $material->id,
             'description' => 'nullable|string',
-            'unit' => 'required|string|max:50',
+            'category' => 'required|string',
+            'unit' => 'required|string',
             'base_price' => 'required|numeric|min:0',
             'srp_price' => 'required|numeric|min:0',
-            'specifications' => 'nullable|string'
+            'specifications' => 'nullable|string',
+            'suppliers' => 'nullable|array',
+            'suppliers.*' => 'exists:suppliers,id',
+            'scope_types' => 'nullable|array',
+            'scope_types.*' => 'exists:scope_types,id',
+            'images.*' => 'nullable|image|max:2048'
         ]);
 
         try {
             DB::beginTransaction();
-            $material->update($validated);
+
+            // Get or create the category
+            $category = \App\Models\Category::firstOrCreate(
+                ['slug' => $validated['category']],
+                ['name' => ucfirst($validated['category'])]
+            );
+
+            $material->update([
+                'name' => $validated['name'],
+                'code' => $validated['code'],
+                'description' => $validated['description'],
+                'category_id' => $category->id,
+                'unit' => $validated['unit'],
+                'base_price' => $validated['base_price'],
+                'srp_price' => $validated['srp_price'],
+                'specifications' => $validated['specifications']
+            ]);
+
+            // Handle image uploads
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store('materials', 'public');
+                    $material->images()->create(['path' => $path]);
+                }
+            }
+
+            // Sync suppliers
+            $material->suppliers()->sync($validated['suppliers'] ?? []);
+
+            // Sync scope types
+            $material->scopeTypes()->sync($validated['scope_types'] ?? []);
+
             DB::commit();
 
             return redirect()->route('materials.index')
-                ->with('success', 'Material updated successfully');
+                ->with('success', 'Material updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Error updating material: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Failed to update material. Please try again.'])->withInput();
+            return back()->with('error', 'Error updating material: ' . $e->getMessage())->withInput();
         }
     }
 
