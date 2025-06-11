@@ -11,7 +11,7 @@ class ContractItem extends Model
         'contract_id',
         'material_id',
         'material_name',
-        'material_unit',
+        'unit',
         'supplier_id',
         'supplier_name',
         'quantity',

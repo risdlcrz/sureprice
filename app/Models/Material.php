@@ -21,14 +21,24 @@ class Material extends Model
         'srp_price',
         'specifications',
         'minimum_stock',
-        'current_stock'
+        'current_stock',
+        'is_per_area',
+        'coverage_rate',
+        'waste_factor',
+        'minimum_quantity',
+        'bulk_pricing'
     ];
 
     protected $casts = [
         'base_price' => 'decimal:2',
         'srp_price' => 'decimal:2',
         'minimum_stock' => 'decimal:2',
-        'current_stock' => 'decimal:2'
+        'current_stock' => 'decimal:2',
+        'is_per_area' => 'boolean',
+        'coverage_rate' => 'decimal:2',
+        'waste_factor' => 'decimal:2',
+        'minimum_quantity' => 'decimal:2',
+        'bulk_pricing' => 'array'
     ];
 
     protected $with = ['category'];
@@ -67,6 +77,11 @@ class Material extends Model
     public function images(): HasMany
     {
         return $this->hasMany(MaterialImage::class);
+    }
+
+    public function inventory(): HasMany
+    {
+        return $this->hasMany(Inventory::class);
     }
 
     public function scopeTypes()

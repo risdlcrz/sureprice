@@ -14,8 +14,15 @@ class Employee extends Model
         'username',
         'first_name',
         'last_name',
-        'email', // Add this
+        'email',
         'role',
+        'company_name',
+        'street',
+        'barangay',
+        'city',
+        'state',
+        'postal',
+        'phone',
     ];
 
     public function user()

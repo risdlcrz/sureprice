@@ -86,12 +86,12 @@ class Contract extends Model
 
     public function contractor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'contractor_id');
+        return $this->belongsTo(Party::class, 'contractor_id');
     }
 
     public function client(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'client_id');
+        return $this->belongsTo(Party::class, 'client_id');
     }
 
     public function property(): BelongsTo

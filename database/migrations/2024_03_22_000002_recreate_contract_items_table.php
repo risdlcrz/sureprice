@@ -16,9 +16,9 @@ return new class extends Migration
         Schema::create('contract_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('contract_id')->constrained()->onDelete('cascade');
-            $table->foreignId('material_id')->constrained();
+            $table->foreignId('material_id')->nullable()->constrained();
             $table->string('material_name');
-            $table->string('material_unit');
+            $table->string('unit');
             $table->foreignId('supplier_id')->nullable()->constrained();
             $table->string('supplier_name')->nullable();
             $table->decimal('quantity', 10, 2);

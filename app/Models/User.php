@@ -54,4 +54,10 @@ class User extends Authenticatable implements MustVerifyEmail
             default => $this->first_name . ' ' . $this->last_name,
         };
     }
+
+    // Scope for filtering by role
+    public function scopeRole($query, $role)
+    {
+        return $query->where('role', $role);
+    }
 }

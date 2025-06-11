@@ -18,7 +18,7 @@ public function up()
         $table->string('first_name');
         $table->string('last_name');
         $table->string('email');
-        $table->enum('role', ['procurement', 'warehousing']);
+        $table->enum('role', ['procurement', 'warehousing', 'contractor']);
         $table->timestamps();
     });
 }

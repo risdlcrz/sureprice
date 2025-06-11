@@ -10,7 +10,6 @@ class Party extends Model
     use HasFactory;
 
     protected $fillable = [
-        'type',
         'entity_type',
         'name',
         'company_name',
@@ -44,7 +43,7 @@ class Party extends Model
      */
     public function scopeContractors($query)
     {
-        return $query->where('type', 'contractor');
+        return $query->where('entity_type', 'contractor');
     }
 
     /**
@@ -52,6 +51,6 @@ class Party extends Model
      */
     public function scopeClients($query)
     {
-        return $query->where('type', 'client');
+        return $query->where('entity_type', 'client');
     }
 } 

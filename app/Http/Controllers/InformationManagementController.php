@@ -64,17 +64,28 @@ class InformationManagementController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $rules = [
             'username' => ['required', 'string', 'max:255', 'unique:users'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'in:procurement,warehousing'],
+            'role' => ['required', 'in:procurement,warehousing,contractor'],
+        ];
+        // Contractor-specific validation
+        if ($request->role === 'contractor') {
+            $rules = array_merge($rules, [
+                'company_name' => ['nullable', 'string', 'max:255'],
+                'phone' => ['required', 'string', 'max:255'],
+                'street' => ['required', 'string', 'max:255'],
+                'barangay' => ['required', 'string', 'max:255'],
+                'city' => ['required', 'string', 'max:255'],
+                'state' => ['required', 'string', 'max:255'],
+                'postal' => ['required', 'string', 'max:255'],
         ]);
-
+        }
+        $request->validate($rules);
         DB::beginTransaction();
-
         try {
             $user = User::create([
                 'username' => $request->username,
@@ -82,17 +93,28 @@ class InformationManagementController extends Controller
                 'password' => Hash::make($request->password),
                 'user_type' => 'employee',
                 'name' => $request->first_name . ' ' . $request->last_name,
+                'role' => $request->role,
             ]);
-
-            Employee::create([
+            $employeeData = [
                 'user_id' => $user->id,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'email' => $request->email,
                 'username' => $request->username,
                 'role' => $request->role,
+            ];
+            if ($request->role === 'contractor') {
+                $employeeData = array_merge($employeeData, [
+                    'company_name' => $request->company_name,
+                    'phone' => $request->phone,
+                    'street' => $request->street,
+                    'barangay' => $request->barangay,
+                    'city' => $request->city,
+                    'state' => $request->state,
+                    'postal' => $request->postal,
             ]);
-
+            }
+            Employee::create($employeeData);
             DB::commit();
             return redirect()->route('information-management.index')
                            ->with('success', 'Employee created successfully');
@@ -111,32 +133,63 @@ class InformationManagementController extends Controller
     public function update(Request $request, $id)
     {
         $employee = Employee::findOrFail($id);
-
-        $request->validate([
+        $rules = [
             'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $employee->user_id],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $employee->user_id],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'in:procurement,warehousing'],
+            'role' => ['required', 'in:procurement,warehousing,contractor'],
+        ];
+        if ($request->role === 'contractor') {
+            $rules = array_merge($rules, [
+                'company_name' => ['nullable', 'string', 'max:255'],
+                'phone' => ['required', 'string', 'max:255'],
+                'street' => ['required', 'string', 'max:255'],
+                'barangay' => ['required', 'string', 'max:255'],
+                'city' => ['required', 'string', 'max:255'],
+                'state' => ['required', 'string', 'max:255'],
+                'postal' => ['required', 'string', 'max:255'],
         ]);
-
+        }
+        $request->validate($rules);
         DB::beginTransaction();
-
         try {
             $employee->user->update([
                 'username' => $request->username,
                 'email' => $request->email,
                 'name' => $request->first_name . ' ' . $request->last_name,
+                'role' => $request->role,
             ]);
-
-            $employee->update([
+            $employeeData = [
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'email' => $request->email,
                 'username' => $request->username,
                 'role' => $request->role,
-            ]);
-
+            ];
+            if ($request->role === 'contractor') {
+                $employeeData = array_merge($employeeData, [
+                    'company_name' => $request->company_name,
+                    'phone' => $request->phone,
+                    'street' => $request->street,
+                    'barangay' => $request->barangay,
+                    'city' => $request->city,
+                    'state' => $request->state,
+                    'postal' => $request->postal,
+                ]);
+            } else {
+                // Clear contractor fields if role is not contractor
+                $employeeData = array_merge($employeeData, [
+                    'company_name' => null,
+                    'phone' => null,
+                    'street' => null,
+                    'barangay' => null,
+                    'city' => null,
+                    'state' => null,
+                    'postal' => null,
+                ]);
+            }
+            $employee->update($employeeData);
             DB::commit();
             return redirect()->route('information-management.index')
                            ->with('success', 'Employee updated successfully');
@@ -187,6 +240,7 @@ class InformationManagementController extends Controller
                     'username' => $row[3],
                     'password' => Hash::make($row[4]), // You might want to generate random passwords
                     'user_type' => 'employee',
+                    'role' => $row[5],
                 ]);
 
                 // Create employee

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Room extends Model
 {
     protected $fillable = [
-        'contract_id', 'name', 'length', 'width', 'area'
+        'contract_id', 'name', 'length', 'width', 'area', 'materials_cost', 'labor_cost'
     ];
 
     public function contract()

@@ -307,7 +307,7 @@
                             <input type="hidden" id="projectDurationMonths" value="{{ $projectDurationMonths ?? 0 }}">
 
                             <div class="form-group mt-4">
-                                <a href="{{ route('contracts.step2') }}" class="btn btn-secondary">Previous Step</a>
+                                <button type="button" class="btn btn-secondary nav-btn" onclick="handlePreviousStep()">Previous Step</button>
                                 <button type="submit" class="btn btn-primary">Next Step</button>
                                 <a href="{{ route('contracts.clear-session') }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel? All entered data will be lost.')">Cancel</a>
                             </div>
@@ -335,63 +335,116 @@ document.addEventListener('DOMContentLoaded', function() {
     const progressPaymentType = document.getElementById('progressPaymentType');
     const paymentTermsInput = document.getElementById('payment_terms');
 
-    // Initialize payment type from session
+    // Immediately show/hide options based on selection
+    function toggleOptions() {
+        if (payAllIn.checked) {
+            installmentOptions.style.display = 'none';
+            progressPaymentOptions.style.display = 'none';
+        } else if (installmentPlan.checked) {
+            installmentOptions.style.display = 'block';
+            progressPaymentOptions.style.display = 'none';
+        } else if (progressPayment.checked) {
+            installmentOptions.style.display = 'none';
+            progressPaymentOptions.style.display = 'block';
+        }
+    }
+
+    function updatePaymentTerms() {
+        let terms = '';
+        if (payAllIn.checked) {
+            terms = 'Pay All In';
+        } else if (installmentPlan.checked) {
+            const dp = downpayment.value || 30;
+            const period = installmentPeriod.value || 3;
+            terms = `Installment Plan: ${dp}% downpayment, ${period} months`;
+        } else if (progressPayment.checked) {
+            const type = progressPaymentType.value;
+            terms = `Progress Payment: ${type === '70_completion' ? '70% completion' : 'completion only'}`;
+        }
+        paymentTermsInput.value = terms;
+
+        // Debounce the save operation
+        if (window.saveTimeout) {
+            clearTimeout(window.saveTimeout);
+        }
+        window.saveTimeout = setTimeout(saveFormData, 300);
+    }
+
+    // Add change event listeners for immediate UI updates
+    payAllIn.addEventListener('change', function() {
+        toggleOptions();
+        updatePaymentTerms();
+    });
+
+    installmentPlan.addEventListener('change', function() {
+        toggleOptions();
+        updatePaymentTerms();
+    });
+
+    progressPayment.addEventListener('change', function() {
+        toggleOptions();
+        updatePaymentTerms();
+    });
+
+    // Add input event listeners for numeric fields to ensure immediate feedback
+    downpayment.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        if (parseInt(this.value) > 100) this.value = '100';
+        updatePaymentTerms();
+    });
+
+    installmentPeriod.addEventListener('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+        if (parseInt(this.value) > 24) this.value = '24';
+        if (parseInt(this.value) < 1) this.value = '1';
+        updatePaymentTerms();
+    });
+
+    progressPaymentType.addEventListener('change', updatePaymentTerms);
+
+    // Initialize from saved session data
     const savedPaymentTerms = paymentTermsInput.value;
     if (savedPaymentTerms) {
         if (savedPaymentTerms.startsWith('Installment Plan:')) {
             installmentPlan.checked = true;
-            // Extract values from saved payment terms
             const match = savedPaymentTerms.match(/(\d+)% downpayment, (\d+) months/);
             if (match) {
                 downpayment.value = match[1];
                 installmentPeriod.value = match[2];
             }
-            installmentOptions.style.display = 'block';
-            progressPaymentOptions.style.display = 'none';
         } else if (savedPaymentTerms.startsWith('Progress Payment:')) {
             progressPayment.checked = true;
-            // Set progress payment type
             if (savedPaymentTerms.includes('70% completion')) {
                 progressPaymentType.value = '70_completion';
             } else {
                 progressPaymentType.value = 'completion';
             }
-            installmentOptions.style.display = 'none';
-            progressPaymentOptions.style.display = 'block';
         } else {
             payAllIn.checked = true;
-            installmentOptions.style.display = 'none';
-            progressPaymentOptions.style.display = 'none';
         }
+    } else {
+        payAllIn.checked = true;
     }
 
-    function updatePaymentTerms() {
-        if (payAllIn.checked) {
-            paymentTermsInput.value = 'Pay All In';
-            installmentOptions.style.display = 'none';
-            progressPaymentOptions.style.display = 'none';
-        } else if (installmentPlan.checked) {
-            const dp = downpayment.value;
-            const period = installmentPeriod.value;
-            paymentTermsInput.value = `Installment Plan: ${dp}% downpayment, ${period} months installment`;
-            installmentOptions.style.display = 'block';
-            progressPaymentOptions.style.display = 'none';
-        } else if (progressPayment.checked) {
-            const type = progressPaymentType.value;
-            paymentTermsInput.value = type === '70_completion' ? 
-                'Progress Payment: Payment after 70% completion' : 
-                'Progress Payment: Payment after completion';
-            installmentOptions.style.display = 'none';
-            progressPaymentOptions.style.display = 'block';
-        }
-    }
+    // Initial UI setup
+    toggleOptions();
+    updatePaymentTerms();
 
-    payAllIn.addEventListener('change', updatePaymentTerms);
-    installmentPlan.addEventListener('change', updatePaymentTerms);
-    progressPayment.addEventListener('change', updatePaymentTerms);
-    downpayment.addEventListener('change', updatePaymentTerms);
-    installmentPeriod.addEventListener('change', updatePaymentTerms);
-    progressPaymentType.addEventListener('change', updatePaymentTerms);
+    // Optimize form saving
+    let saveFormTimeout;
+    function saveFormData() {
+        const formData = new FormData(document.getElementById('step3Form'));
+        fetch('{{ route("contracts.save.step3") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(Object.fromEntries(formData))
+        })
+        .catch(error => console.error('Error saving form:', error));
+    }
 
     // Initialize signature pads
     const contractorCanvas = document.getElementById('contractorSignaturePad');
@@ -454,9 +507,48 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Form validation and submission
+    // Add event listeners for auto-save
     const form = document.getElementById('step3Form');
-    form.addEventListener('submit', function(e) {
+    const textareas = form.querySelectorAll('textarea');
+    const signaturePads = document.querySelectorAll('.signature-pad');
+
+    // Auto-save when textareas change
+    textareas.forEach(textarea => {
+        textarea.addEventListener('change', saveFormData);
+        textarea.addEventListener('input', debounce(saveFormData, 1000));
+    });
+
+    // Auto-save when signatures change
+    signaturePads.forEach(pad => {
+        pad.addEventListener('endStroke', debounce(saveFormData, 1000));
+    });
+
+    // Debounce function to prevent too many saves
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Make handlePreviousStep globally available
+    window.handlePreviousStep = function() {
+        console.log('Previous Step button clicked');
+        Promise.resolve(typeof saveFormData === 'function' ? saveFormData() : null)
+            .finally(() => {
+                console.log('Navigating to step 2');
+                window.location.href = '{{ route("contracts.step2") }}';
+            });
+    }
+
+    // Form validation and submission
+    const formSubmit = document.getElementById('step3Form');
+    formSubmit.addEventListener('submit', function(e) {
         e.preventDefault();
         let errorMessage = '';
         const errorDiv = document.getElementById('formErrorMessage');
@@ -464,9 +556,9 @@ document.addEventListener('DOMContentLoaded', function() {
         errorDiv.textContent = '';
         console.log('Form submit triggered');
 
-        if (!form.checkValidity()) {
+        if (!formSubmit.checkValidity()) {
             e.stopPropagation();
-            form.classList.add('was-validated');
+            formSubmit.classList.add('was-validated');
             errorMessage = 'Please fill in all required fields.';
             errorDiv.textContent = errorMessage;
             errorDiv.classList.remove('d-none');
@@ -510,7 +602,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Submit the form
         console.log('All validations passed, submitting form');
-        form.submit();
+        formSubmit.submit();
     });
 });
 </script>

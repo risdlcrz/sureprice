@@ -60,9 +60,10 @@
                 </div>
                 <div class="card-body">
                     <p><strong>Street:</strong> {{ $company->street }}</p>
+                    <p><strong>Barangay:</strong> {{ $company->barangay }}</p>
                     <p><strong>City:</strong> {{ $company->city }}</p>
-                    <p><strong>Province:</strong> {{ $company->province }}</p>
-                    <p><strong>ZIP Code:</strong> {{ $company->zip_code }}</p>
+                    <p><strong>State/Province:</strong> {{ $company->state }}</p>
+                    <p><strong>Postal Code:</strong> {{ $company->postal }}</p>
                 </div>
             </div>
 

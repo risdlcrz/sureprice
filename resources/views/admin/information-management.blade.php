@@ -34,6 +34,10 @@
                class="btn {{ $role === 'warehousing' ? 'btn-primary' : 'btn-outline-secondary' }}">
                 <i class="fas fa-warehouse me-1"></i> Warehousing
             </a>
+            <a href="{{ route('information-management.index', ['role' => 'contractor'] + request()->except('role')) }}" 
+               class="btn {{ $role === 'contractor' ? 'btn-primary' : 'btn-outline-secondary' }}">
+                <i class="fas fa-user-tie me-1"></i> Contractor
+            </a>
         </div>
         @endif
 
@@ -233,6 +237,36 @@
                                                     </span>
                                                 </td>
                                             </tr>
+                                            @if($item->role === 'contractor')
+                                                <tr>
+                                                    <th>Company Name</th>
+                                                    <td>{{ $item->company_name }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Phone</th>
+                                                    <td>{{ $item->phone }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Street</th>
+                                                    <td>{{ $item->street }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Barangay</th>
+                                                    <td>{{ $item->barangay }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>City</th>
+                                                    <td>{{ $item->city }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>State</th>
+                                                    <td>{{ $item->state }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Postal</th>
+                                                    <td>{{ $item->postal }}</td>
+                                                </tr>
+                                            @endif
                                         </table>
                                     </div>
                                 </div>
@@ -285,6 +319,136 @@
 
 @if($type === 'company')
     @foreach($items as $company)
+        <!-- View Company Modal (Corrected for Companies) -->
+        <div class="modal fade" id="viewModal{{ $company->id }}" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Company Information</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6 class="text-primary">Company Details</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <th width="40%">Company Name</th>
+                                                <td>{{ $company->company_name }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Designation</th>
+                                                <td>{{ ucfirst($company->designation) }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Contact Person</th>
+                                                <td>{{ $company->contact_person }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Email</th>
+                                                <td>{{ $company->email }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Mobile Number</th>
+                                                <td>{{ $company->mobile_number }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Telephone Number</th>
+                                                <td>{{ $company->telephone_number }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Business Reg. No.</th>
+                                                <td>{{ $company->business_reg_no }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Supplier Type</th>
+                                                <td>{{ $company->supplier_type }}</td>
+                                            </tr>
+                                            @if($company->other_supplier_type)
+                                                <tr>
+                                                    <th>Other Supplier Type</th>
+                                                    <td>{{ $company->other_supplier_type }}</td>
+                                                </tr>
+                                            @endif
+                                            <tr>
+                                                <th>VAT Registered</th>
+                                                <td>{{ $company->vat_registered ? 'Yes' : 'No' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Use Sureprice</th>
+                                                <td>{{ $company->use_sureprice ? 'Yes' : 'No' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Payment Terms</th>
+                                                <td>{{ $company->payment_terms }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Status</th>
+                                                <td>
+                                                    <span class="badge bg-{{ $company->status === 'approved' ? 'success' : ($company->status === 'pending' ? 'warning' : 'danger') }}">
+                                                        {{ ucfirst($company->status) }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <h6 class="text-primary">Address Details</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <th width="40%">Street</th>
+                                                <td>{{ $company->street }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Barangay</th>
+                                                <td>{{ $company->barangay }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>City</th>
+                                                <td>{{ $company->city }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>State/Province</th>
+                                                <td>{{ $company->state }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Postal Code</th>
+                                                <td>{{ $company->postal }}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <h6 class="text-primary">Activity Information</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <tr>
+                                                <th width="40%">Created At</th>
+                                                <td>{{ $company->created_at->format('M d, Y H:i A') }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Updated At</th>
+                                                <td>{{ $company->updated_at->format('M d, Y H:i A') }}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         @if($company->status === 'pending')
             <!-- Reject Modal -->
             <div class="modal fade" id="rejectModal{{ $company->id }}" tabindex="-1">
@@ -343,6 +507,11 @@
 .role-warehousing {
     background-color: #198754;
     color: white;
+}
+
+.role-contractor {
+    background-color: #ffc107;
+    color: #212529;
 }
 
 .modal-body .table th {
