@@ -12,10 +12,7 @@ class PaymentController extends Controller
 {
     public function index()
     {
-        $payments = Payment::with(['contract', 'purchaseOrder', 'creator'])
-            ->latest()
-            ->paginate(10);
-
+        $payments = \App\Models\Payment::with('contract')->orderBy('due_date')->paginate(15);
         return view('payments.index', compact('payments'));
     }
 
@@ -69,13 +66,35 @@ class PaymentController extends Controller
     public function markAsPaid(Request $request, Payment $payment)
     {
         $request->validate([
-            'reference_number' => 'required|string|max:255'
+            'reference_number' => 'required|string|max:255',
+            'payment_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         try {
             DB::beginTransaction();
 
             $payment->markAsPaid($request->reference_number);
+
+            // Handle payment proof upload
+            if ($request->hasFile('payment_proof')) {
+                $file = $request->file('payment_proof');
+                $path = $file->store('payment_proofs', 'public');
+                $payment->attachment()->create([
+                    'path' => $path,
+                    'original_name' => $file->getClientOriginalName(),
+                ]);
+            }
+
+            // Create a transaction record when payment is marked as paid
+            \App\Models\Transaction::create([
+                'payment_id'        => $payment->id,
+                'contract_id'       => $payment->contract_id,
+                'amount'            => $payment->amount,
+                'transaction_type'  => 'payment',
+                'reference_number'  => $request->reference_number,
+                'transaction_date'  => now(),
+                'created_by'        => auth()->id(),
+            ]);
 
             // If this is a contract payment, check if all payments are paid
             if ($payment->contract_id) {

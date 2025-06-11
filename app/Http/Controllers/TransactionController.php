@@ -11,8 +11,8 @@ class TransactionController extends Controller
 {
     public function index()
     {
-        $transactions = Transaction::with('contract')->latest()->paginate(20);
-        return view('admin.transactions.index', compact('transactions'));
+        $transactions = \App\Models\Transaction::with('payment')->orderBy('transaction_date', 'desc')->paginate(15);
+        return view('transactions.index', compact('transactions'));
     }
 
     public function create(Request $request)

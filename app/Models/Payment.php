@@ -57,6 +57,11 @@ class Payment extends Model
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    public function attachment()
+    {
+        return $this->morphOne(\App\Models\Attachment::class, 'attachable');
+    }
+
     // Scopes
     public function scopePending($query)
     {

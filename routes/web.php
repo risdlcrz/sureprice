@@ -28,6 +28,7 @@ use App\Http\Controllers\SupplierRankingController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\PaymentController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -239,6 +240,10 @@ Route::get('/admin/suppliers/{supplier}/purchase-order-metrics', [SupplierRankin
 Route::get('/project-timeline', [ContractController::class, 'projectTimeline'])->name('project.timeline');
 
 Route::resource('contracts', \App\Http\Controllers\ContractController::class);
+
+// Payments routes
+Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+Route::post('/payments/{payment}/mark-as-paid', [PaymentController::class, 'markAsPaid'])->name('payments.markAsPaid');
 
 // Search Routes
 Route::prefix('search')->group(function () {
