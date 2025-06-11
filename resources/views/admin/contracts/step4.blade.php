@@ -346,176 +346,147 @@
                         <form method="POST" action="{{ route('contracts.store') }}" id="step4Form">
                             @csrf
                             <input type="hidden" name="payment_terms" value="{{ session('contract_step3.payment_terms', '') }}">
-                            <!-- Add hidden start/end date fields for JS -->
-                            <input type="hidden" id="start_date" value="{{ session('contract_step2.start_date', '') }}">
-                            <input type="hidden" id="end_date" value="{{ session('contract_step2.end_date', '') }}">
+                            <input type="hidden" name="payment_schedule" id="payment_schedule">
+                            <input type="hidden" name="start_date" id="start_date" value="{{ session('contract_step2.start_date', '') }}">
+                            <input type="hidden" name="end_date" id="end_date" value="{{ session('contract_step2.end_date', '') }}">
 
-                            <!-- Payment Details -->
-                            <div class="section-container" id="paymentSection">
-                                <h5 class="section-title">Payment Details</h5>
+                            <!-- Payment Due Days -->
+                            <div class="section-container">
                                 <div class="row">
-                                    <div class="col-md-12">
+                                    <div class="col-md-4">
                                         <div class="form-group">
-                                            <label for="payment_method">Payment Method</label>
-                                            <select class="form-control @error('payment_method') is-invalid @enderror" 
-                                                id="payment_method" name="payment_method" required>
+                                            <label for="payment_due_days">Payment Due Days</label>
+                                            <input type="number" class="form-control" id="payment_due_days" name="payment_due_days" 
+                                                value="{{ old('payment_due_days', session('contract_step4.payment_due_days', 5)) }}" 
+                                                min="0" max="30">
+                                            <small class="text-muted">Number of days after milestone date when payment becomes due</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment Method -->
+                            <div class="section-container mt-4">
+                                <h5 class="section-title">Payment Method</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="payment_method">Select Payment Method</label>
+                                            <select class="form-control" id="payment_method" name="payment_method" required>
                                                 <option value="">Select Payment Method</option>
-                                                <option value="cash" {{ old('payment_method', session('contract_step4.payment_method')) == 'cash' ? 'selected' : '' }}>Cash</option>
-                                                <option value="check" {{ old('payment_method', session('contract_step4.payment_method')) == 'check' ? 'selected' : '' }}>Check</option>
                                                 <option value="bank_transfer" {{ old('payment_method', session('contract_step4.payment_method')) == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                                                <option value="check" {{ old('payment_method', session('contract_step4.payment_method')) == 'check' ? 'selected' : '' }}>Check</option>
+                                                <option value="cash" {{ old('payment_method', session('contract_step4.payment_method')) == 'cash' ? 'selected' : '' }}>Cash</option>
                                             </select>
-                                            @error('payment_method')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Bank Transfer Details -->
-                                <div class="row g-3" id="bankDetails" style="display: none;">
-                                    <div class="col-md-4">
+                                <div id="bankTransferDetails" class="row mt-3" style="display: none;">
+                                    <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="bank_name">Bank Name</label>
-                                            <input type="text" class="form-control @error('bank_name') is-invalid @enderror" 
-                                                id="bank_name" name="bank_name" 
-                                                value="{{ old('bank_name', session('contract_step4.bank_name', '')) }}">
-                                            @error('bank_name')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
+                                            <input type="text" class="form-control" id="bank_name" name="bank_name" 
+                                                value="{{ old('bank_name', session('contract_step4.bank_name')) }}">
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="bank_account_name">Account Name</label>
-                                            <input type="text" class="form-control @error('bank_account_name') is-invalid @enderror" 
-                                                id="bank_account_name" name="bank_account_name" 
-                                                value="{{ old('bank_account_name', session('contract_step4.bank_account_name', '')) }}">
-                                            @error('bank_account_name')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
+                                            <input type="text" class="form-control" id="bank_account_name" name="bank_account_name" 
+                                                value="{{ old('bank_account_name', session('contract_step4.bank_account_name')) }}">
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6 mt-3">
                                         <div class="form-group">
                                             <label for="bank_account_number">Account Number</label>
-                                            <input type="text" class="form-control @error('bank_account_number') is-invalid @enderror" 
-                                                id="bank_account_number" name="bank_account_number" 
-                                                value="{{ old('bank_account_number', session('contract_step4.bank_account_number', '')) }}">
-                                            @error('bank_account_number')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
+                                            <input type="text" class="form-control" id="bank_account_number" name="bank_account_number" 
+                                                value="{{ old('bank_account_number', session('contract_step4.bank_account_number')) }}">
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Check Details -->
-                                <div class="row g-3 mt-0" id="checkDetails" style="display: none;">
+                                <div id="checkDetails" class="row mt-3" style="display: none;">
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="check_number">Check Number</label>
-                                            <input type="text" class="form-control @error('check_number') is-invalid @enderror" 
-                                                id="check_number" name="check_number" 
-                                                value="{{ old('check_number', session('contract_step4.check_number', '')) }}">
-                                            @error('check_number')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
+                                            <input type="text" class="form-control" id="check_number" name="check_number" 
+                                                value="{{ old('check_number', session('contract_step4.check_number')) }}">
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group">
                                             <label for="check_date">Check Date</label>
-                                            <input type="date" class="form-control @error('check_date') is-invalid @enderror" 
-                                                id="check_date" name="check_date" 
-                                                value="{{ old('check_date', session('contract_step4.check_date', '')) }}">
-                                            @error('check_date')
-                                                <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
+                                            <input type="date" class="form-control" id="check_date" name="check_date" 
+                                                value="{{ old('check_date', session('contract_step4.check_date')) }}">
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <!-- Payment Schedule (Smart Table) -->
-                                <div class="form-group mt-3">
-                                    <label>Payment Schedule</label>
-                                    <div class="alert alert-info">
-                                        <i class="fas fa-info-circle"></i> Payment schedule will be automatically calculated based on project milestones.
-                                    </div>
-                                    <table class="table table-bordered" id="paymentScheduleTable">
-                                        <thead>
-                                            <tr>
-                                                <th>Milestone</th>
-                                                <th>Description</th>
-                                                <th>Amount (%)</th>
-                                                <th>Due Date</th>
-                                                <th>Payment Due Date</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <!-- Will be populated by JavaScript -->
-                                        </tbody>
-                                        <tfoot>
-                                            <tr>
-                                                <td colspan="2" class="text-end"><strong>Total:</strong></td>
-                                                <td><span id="totalPercentage">100</span>%</td>
-                                                <td colspan="2"></td>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-                                    <input type="hidden" name="payment_schedule" id="payment_schedule">
-
-                                    <!-- Only show these controls for milestone-based payments -->
-                                    <div id="milestoneControls" style="display: none;">
-                                        <div class="row g-3 mt-3">
-                                            <div class="col-md-6">
-                                                <label for="advance_payment_percentage">Advance Payment (%)</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="advance_payment_percentage" 
-                                                           min="20" max="40" value="30">
-                                                    <span class="input-group-text">%</span>
-                                                </div>
-                                                <small class="text-muted">Recommended: 20-40%</small>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label for="retention_percentage">Retention (%)</label>
-                                                <div class="input-group">
-                                                    <input type="number" class="form-control" id="retention_percentage" 
-                                                           min="0" max="10" value="5">
-                                                    <span class="input-group-text">%</span>
-                                                </div>
-                                                <small class="text-muted">Maximum allowed: 10%</small>
+                            <!-- Payment Schedule -->
+                            <div class="section-container mt-4">
+                                <h5 class="section-title">Payment Schedule</h5>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label>Payment Terms</label>
+                                            <div class="payment-terms-display mb-3">
+                                                <strong>Selected Payment Terms:</strong> 
+                                                <span id="selectedPaymentTerms">{{ session('contract_step3.payment_terms', '') }}</span>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
 
-                                    <div class="mt-3">
-                                        <div id="payment-warnings"></div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered" id="paymentScheduleTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Payment Stage</th>
+                                                        <th>Milestone Date</th>
+                                                        <th>Payment Due Date</th>
+                                                        <th>Amount (₱)</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <!-- Will be populated dynamically -->
+                                                </tbody>
+                                                <tfoot>
+                                                    <tr>
+                                                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                                        <td><strong id="totalAmount">₱0.00</strong></td>
+                                                        <td></td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                <!-- Hidden fields for contract data -->
-                                <input type="hidden" name="contract_data" value="{{ json_encode([
-                                    'step1' => session('contract_step1', []),
-                                    'step2' => session('contract_step2', []),
-                                    'step3' => session('contract_step3', []),
-                                    'step4' => session('contract_step4', [])
-                                ]) }}">
+                            <!-- Hidden fields for contract data -->
+                            <input type="hidden" name="contract_data" value="{{ json_encode([
+                                'step1' => session('contract_step1', []),
+                                'step2' => session('contract_step2', []),
+                                'step3' => session('contract_step3', []),
+                                'step4' => session('contract_step4', [])
+                            ]) }}">
 
-                                <!-- Hidden fields for financial data -->
-                                <input type="hidden" name="total_amount" value="{{ session('contract_step2.total_amount', 0) }}">
-                                <input type="hidden" name="labor_cost" value="{{ session('contract_step2.labor_cost', 0) }}">
-                                <input type="hidden" name="materials_cost" value="{{ session('contract_step2.materials_cost', 0) }}">
+                            <!-- Hidden fields for financial data -->
+                            <input type="hidden" name="total_amount" value="{{ session('contract_step2.total_amount', 0) }}">
+                            <input type="hidden" name="labor_cost" value="{{ session('contract_step2.labor_cost', 0) }}">
+                            <input type="hidden" name="materials_cost" value="{{ session('contract_step2.materials_cost', 0) }}">
 
-                                <!-- New fields -->
-                                <div class="form-group mt-3">
-                                    <label for="payment_due_days">Payment Due Days</label>
-                                    <input type="number" class="form-control" id="payment_due_days" name="payment_due_days" min="0" value="0" required>
-                                </div>
-
-                                <div class="form-group mt-4">
-                                    <a href="{{ route('contracts.step3') }}" class="btn btn-secondary">Previous Step</a>
-                                    <button type="submit" class="btn btn-primary">Create Contract</button>
-                                    <a href="{{ route('contracts.clear-session') }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel? All entered data will be lost.')">Cancel</a>
-                                </div>
+                            <div class="form-group mt-4">
+                                <a href="{{ route('contracts.step3') }}" class="btn btn-secondary">Previous Step</a>
+                                <button type="submit" class="btn btn-primary">Create Contract</button>
+                                <a href="{{ route('contracts.clear-session') }}" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel? All entered data will be lost.')">Cancel</a>
                             </div>
                         </form>
                     </div>
@@ -529,135 +500,205 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize payment method handling
-    const paymentMethod = document.getElementById('payment_method');
-    const bankDetails = document.getElementById('bankDetails');
+    const paymentTerms = document.getElementById('selectedPaymentTerms').textContent;
+    const totalProjectAmount = parseFloat('{{ session("contract_step2.grand_total", 0) }}');
+    const startDate = new Date('{{ session("contract_step2.start_date") }}');
+    const endDate = new Date('{{ session("contract_step2.end_date") }}');
+    const paymentDueDaysInput = document.getElementById('payment_due_days');
+    
+    // Payment method handling
+    const paymentMethodSelect = document.getElementById('payment_method');
+    const bankTransferDetails = document.getElementById('bankTransferDetails');
     const checkDetails = document.getElementById('checkDetails');
-    const form = document.getElementById('step4Form');
 
-    // Payment method change handler
-        paymentMethod.addEventListener('change', function() {
-        // Hide all payment details sections first
-        bankDetails.style.display = 'none';
+    function togglePaymentDetails() {
+        const selectedMethod = paymentMethodSelect.value;
+        
+        // Hide all details sections first
+        bankTransferDetails.style.display = 'none';
         checkDetails.style.display = 'none';
-
-        // Show relevant section based on selection
-            if (this.value === 'bank_transfer') {
-            bankDetails.style.display = 'block';
-            } else if (this.value === 'check') {
+        
+        // Show the appropriate section based on selection
+        if (selectedMethod === 'bank_transfer') {
+            bankTransferDetails.style.display = 'block';
+        } else if (selectedMethod === 'check') {
             checkDetails.style.display = 'block';
         }
-
-        // Clear validation states
-        clearValidation();
-    });
-
-    // Function to clear validation states
-    function clearValidation() {
-        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-        document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
     }
 
-    // Form submission handler
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-        clearValidation();
-            let isValid = true;
-
-            // Validate payment method selection
-            if (!paymentMethod.value) {
-                isValid = false;
-            showError(paymentMethod, 'Please select a payment method');
-        }
-
-            // Validate bank transfer fields
-            if (paymentMethod.value === 'bank_transfer') {
-                ['bank_name', 'bank_account_name', 'bank_account_number'].forEach(field => {
-                    const input = document.getElementById(field);
-                    if (!input.value.trim()) {
-                        isValid = false;
-                    showError(input, 'This field is required');
-                    }
-                });
-            }
-
-            // Validate check fields
-            if (paymentMethod.value === 'check') {
-                ['check_number', 'check_date'].forEach(field => {
-                    const input = document.getElementById(field);
-                    if (!input.value.trim()) {
-                        isValid = false;
-                    showError(input, 'This field is required');
-                    }
-                });
-            }
-
-        // Validate payment schedule
-            const schedule = [];
-            let total = 0;
-        const scheduleTable = document.querySelector('#paymentScheduleTable tbody');
-        if (scheduleTable) {
-            scheduleTable.querySelectorAll('tr').forEach(row => {
-                const milestone = row.cells[0].textContent.trim();
-                const description = row.cells[1].textContent.trim();
-                const amount = parseFloat(row.querySelector('.milestone-amount').value) || 0;
-                const dueDate = row.querySelector('.milestone-date').value;
-
-                if (!dueDate) {
-                    isValid = false;
-                    showError(row.querySelector('.milestone-date'), 'Due date is required');
-                }
-
-                if (amount <= 0) {
-                    isValid = false;
-                    showError(row.querySelector('.milestone-amount'), 'Amount must be greater than 0');
-                }
-                
-                schedule.push({
-                    milestone,
-                    description,
-                    amount,
-                    due_date: dueDate
-                });
-                
-                total += amount;
-            });
-
-            if (total !== 100) {
-                isValid = false;
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'alert alert-danger mt-3';
-                errorDiv.textContent = 'Total payment schedule must add up to 100%';
-                scheduleTable.parentNode.appendChild(errorDiv);
-            }
-        }
-
-        // If all validations pass, submit the form
-        if (isValid) {
-            document.getElementById('payment_schedule').value = JSON.stringify(schedule);
-                form.submit();
-        }
-    });
-
-    // Helper function to show error messages
-    function showError(input, message) {
-        input.classList.add('is-invalid');
-        const feedback = document.createElement('div');
-        feedback.className = 'invalid-feedback';
-        feedback.textContent = message;
-        input.parentNode.appendChild(feedback);
-    }
-
-    // Auto-save functionality
-    function saveFormData() {
-        const formData = new FormData(form);
+    // Add change event listener for payment method
+    paymentMethodSelect.addEventListener('change', function() {
+        togglePaymentDetails();
+        
+        // Auto-save the payment method selection
         const data = {
-            payment_method: formData.get('payment_method'),
-            bank_name: formData.get('bank_name'),
-            bank_account_name: formData.get('bank_account_name'),
-            bank_account_number: formData.get('bank_account_number'),
-            check_number: formData.get('check_number'),
-            check_date: formData.get('check_date'),
+            payment_method: this.value,
+            bank_name: document.getElementById('bank_name').value,
+            bank_account_name: document.getElementById('bank_account_name').value,
+            bank_account_number: document.getElementById('bank_account_number').value,
+            check_number: document.getElementById('check_number').value,
+            check_date: document.getElementById('check_date').value
+        };
+
+        fetch('{{ route("contracts.save.step4") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .catch(error => console.error('Error saving data:', error));
+    });
+
+    // Add change event listeners for bank transfer and check details
+    ['bank_name', 'bank_account_name', 'bank_account_number', 'check_number', 'check_date'].forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('change', function() {
+                const data = {
+                    payment_method: paymentMethodSelect.value,
+                    bank_name: document.getElementById('bank_name').value,
+                    bank_account_name: document.getElementById('bank_account_name').value,
+                    bank_account_number: document.getElementById('bank_account_number').value,
+                    check_number: document.getElementById('check_number').value,
+                    check_date: document.getElementById('check_date').value
+                };
+
+                fetch('{{ route("contracts.save.step4") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .catch(error => console.error('Error saving data:', error));
+            });
+        }
+    });
+
+    // Initialize payment details visibility
+    togglePaymentDetails();
+    
+    const tableBody = document.querySelector('#paymentScheduleTable tbody');
+    const scheduleData = [];
+    
+    function calculateDueDate(milestoneDate, dueDays) {
+        const dueDate = new Date(milestoneDate);
+        dueDate.setDate(dueDate.getDate() + parseInt(dueDays));
+        return dueDate;
+    }
+    
+    function addPaymentRow(stage, milestoneDate, amount, status = 'Pending') {
+        const dueDays = parseInt(paymentDueDaysInput.value) || 0;
+        const dueDate = calculateDueDate(milestoneDate, dueDays);
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${stage}</td>
+            <td>${milestoneDate.toISOString().split('T')[0]}</td>
+            <td>${dueDate.toISOString().split('T')[0]}</td>
+            <td>₱${amount.toFixed(2)}</td>
+            <td>${status}</td>
+        `;
+        tableBody.appendChild(row);
+        
+        scheduleData.push({
+            stage: stage,
+            milestone_date: milestoneDate.toISOString().split('T')[0],
+            due_date: dueDate.toISOString().split('T')[0],
+            amount: amount,
+            status: status
+        });
+    }
+    
+    function clearTable() {
+        tableBody.innerHTML = '';
+        scheduleData.length = 0;
+    }
+    
+    function updateTotalAmount() {
+        const total = scheduleData.reduce((sum, item) => sum + item.amount, 0);
+        document.getElementById('totalAmount').textContent = `₱${total.toFixed(2)}`;
+    }
+    
+    function generateSchedule() {
+        clearTable();
+        
+        if (paymentTerms.includes('Pay All In')) {
+            // Single payment at project completion
+            addPaymentRow('Full Payment', endDate, totalProjectAmount);
+        }
+        else if (paymentTerms.includes('Progress Payment')) {
+            // Progress payment with advance payment and retention
+            const advancePayment = totalProjectAmount * 0.15; // 15% advance payment
+            const retention = totalProjectAmount * 0.10; // 10% retention
+            const progressPayment = totalProjectAmount - advancePayment - retention;
+            
+            // Add advance payment (due at start)
+            addPaymentRow('Advance Payment (15%)', startDate, advancePayment);
+            
+            // Add progress payment (due at 70% completion or completion based on terms)
+            const progressDueDate = new Date(startDate);
+            const totalDays = (endDate - startDate) / (1000 * 60 * 60 * 24);
+            
+            if (paymentTerms.includes('70% completion')) {
+                progressDueDate.setDate(startDate.getDate() + Math.ceil(totalDays * 0.7));
+                addPaymentRow('Progress Payment (75%)', progressDueDate, progressPayment);
+            } else {
+                progressDueDate.setDate(endDate.getDate());
+                addPaymentRow('Progress Payment (75%)', progressDueDate, progressPayment);
+            }
+            
+            // Add retention (due 30 days after completion)
+            const retentionDueDate = new Date(endDate);
+            retentionDueDate.setDate(endDate.getDate() + 30);
+            addPaymentRow('Retention (10%)', retentionDueDate, retention);
+        }
+        else if (paymentTerms.includes('Installment')) {
+            // Parse installment terms
+            const match = paymentTerms.match(/(\d+)% downpayment, (\d+) months/);
+            if (match) {
+                const downpaymentPercent = parseInt(match[1]);
+                const months = parseInt(match[2]);
+                
+                const downpayment = (totalProjectAmount * downpaymentPercent) / 100;
+                const remainingAmount = totalProjectAmount - downpayment;
+                const monthlyPayment = remainingAmount / months;
+                
+                // Add downpayment
+                addPaymentRow(`Downpayment (${downpaymentPercent}%)`, startDate, downpayment);
+                
+                // Add monthly installments
+                const installmentDate = new Date(startDate);
+                for (let i = 1; i <= months; i++) {
+                    installmentDate.setMonth(installmentDate.getMonth() + 1);
+                    addPaymentRow(`Installment ${i}`, new Date(installmentDate), monthlyPayment);
+                }
+            }
+        }
+        
+        updateTotalAmount();
+        
+        // Store payment schedule in hidden input
+        document.getElementById('payment_schedule').value = JSON.stringify(scheduleData);
+    }
+    
+    // Generate initial schedule
+    generateSchedule();
+    
+    // Update schedule when payment due days changes
+    paymentDueDaysInput.addEventListener('change', function() {
+        generateSchedule();
+    });
+
+    // Auto-save when payment due days changes
+    paymentDueDaysInput.addEventListener('change', function() {
+        const data = {
+            payment_due_days: this.value,
             payment_schedule: document.getElementById('payment_schedule').value
         };
 
@@ -670,430 +711,7 @@ document.addEventListener('DOMContentLoaded', function() {
             body: JSON.stringify(data)
         })
         .then(response => response.json())
-        .then(data => {
-            if (!data.success) {
-                console.error('Failed to save form data');
-            }
-        })
-        .catch(error => {
-            console.error('Error saving form data:', error);
-        });
-    }
-
-    // Add auto-save event listeners
-    paymentMethod.addEventListener('change', debounce(saveFormData, 1000));
-    document.querySelectorAll('#bankDetails input, #checkDetails input').forEach(input => {
-        input.addEventListener('change', debounce(saveFormData, 1000));
-    });
-
-    // Debounce function
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
-
-    // --- Milestone & Payment Schedule Logic ---
-    const advanceInput = document.getElementById('advance_payment_percentage');
-    const retentionInput = document.getElementById('retention_percentage');
-    const dueDaysInput = document.getElementById('payment_due_days');
-    const scheduleTable = document.getElementById('paymentScheduleTable');
-    const startDate = document.getElementById('start_date').value;
-    const endDate = document.getElementById('end_date').value;
-
-    // Set default milestone percentages
-    const defaultPercents = [30, 20, 20, 25, 5];
-    function setDefaultMilestones() {
-        // Force initialization of payment schedule based on payment terms
-        initializePaymentSchedule();
-        
-        // Ensure all milestone amounts are readonly
-        document.querySelectorAll('.milestone-amount').forEach(input => {
-            input.setAttribute('readonly', 'readonly');
-        });
-
-        // Update dates and totals
-        updateMilestoneDates();
-        updateTotalPercentage();
-    }
-
-    function updateMilestonePercentages() {
-        const rows = scheduleTable.querySelectorAll('tbody tr');
-        let advance = parseInt(advanceInput.value) || 0;
-        let retention = parseInt(retentionInput.value) || 0;
-
-        // Clear existing warnings
-        hideMilestoneWarning();
-
-        // Validate retention (max 10%)
-        if (retention > 10) {
-            showMilestoneWarning('⚠️ Retention cannot exceed 10% of total contract value. Value has been adjusted.', 'warning');
-            retentionInput.value = '10';
-            retention = 10;
-        }
-
-        // Check if we should use default distribution (30-20-20-25-5)
-        const defaultDistribution = [30, 20, 20, 25, 5];
-        const isDefaultCase = advance === 30 && retention === 5;
-
-        // Update all milestone amounts
-        rows.forEach((row, index) => {
-            const amountInput = row.querySelector('.milestone-amount');
-            let value = 0;
-
-            if (isDefaultCase) {
-                // Use default distribution
-                value = defaultDistribution[index];
-            } else {
-                if (index === 0) {
-                    // Advance Payment
-                    value = advance;
-                } else if (index === rows.length - 1) {
-                    // Retention
-                    value = retention;
-                } else {
-                    // Middle milestone - distribute remaining evenly
-                    const middleMilestones = rows.length - 2; // Exclude advance and retention
-                    const remainingPercent = 100 - advance - retention;
-                    let baseShare = Math.floor(remainingPercent / middleMilestones);
-                    let extra = remainingPercent - (baseShare * middleMilestones);
-                    
-                    value = baseShare;
-                    if (extra > 0 && index === rows.length - 2) {
-                        value += extra; // Add any remainder to the last middle milestone
-                    }
-                }
-            }
-            
-            // Set the value and make it read-only
-            amountInput.value = value;
-            amountInput.readOnly = true;
-        });
-
-        // Validate advance payment with proper range checks
-        if (advance > 80) {
-            showMilestoneWarning('⚠️ High advance payment detected. Consider reducing for better risk management.', 'warning');
-        } else if (advance > 40) {
-            showMilestoneWarning('⚠️ Advance payment is higher than typical range (20-40%).', 'warning');
-        } else if (advance < 20 && advance > 0) {
-            showMilestoneWarning('ℹ️ Low advance payment. Typical range is 20-40% of total value.', 'info');
-        }
-
-        updateTotalPercentage();
-    }
-
-    function updateTotalPercentage() {
-        const rows = scheduleTable.querySelectorAll('tbody tr');
-        let total = 0;
-        
-        rows.forEach(row => {
-            total += parseInt(row.querySelector('.milestone-amount').value) || 0;
-        });
-
-        const totalElement = document.getElementById('totalPercentage');
-        // Show total as whole number without decimals
-        totalElement.textContent = total;
-        
-        // Visual feedback for total
-        if (total !== 100) {
-            totalElement.style.color = 'red';
-            showMilestoneWarning('Total must be exactly 100%');
-        } else {
-            totalElement.style.color = '';
-            hideMilestoneWarning();
-        }
-    }
-
-    function showMilestoneWarning(msg, type = 'danger') {
-        const warningsContainer = document.getElementById('payment-warnings');
-        let warning = document.createElement('div');
-        warning.className = `alert alert-${type} alert-dismissible fade show`;
-        warning.innerHTML = `
-            <i class="fas fa-exclamation-circle"></i> 
-            ${msg}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
-        
-        // Remove any existing warnings
-        while (warningsContainer.firstChild) {
-            warningsContainer.firstChild.remove();
-        }
-        
-        warningsContainer.appendChild(warning);
-    }
-    function hideMilestoneWarning() {
-        let warn = document.getElementById('milestone-warning');
-        if (warn) warn.remove();
-    }
-
-    function addDays(dateStr, days) {
-        const date = new Date(dateStr);
-        date.setDate(date.getDate() + days);
-        return date.toISOString().split('T')[0];
-    }
-
-    function updateMilestoneDates() {
-        const rows = scheduleTable.querySelectorAll('tbody tr');
-        const dueDays = parseInt(dueDaysInput.value) || 0;
-        const milestoneCount = rows.length;
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const totalDays = Math.max(1, Math.round((end - start) / (1000 * 60 * 60 * 24)));
-        let interval = Math.floor(totalDays / (milestoneCount - 1));
-        rows.forEach((row, idx) => {
-            let dueDate = '';
-            if (idx === 0) {
-                dueDate = startDate;
-            } else if (idx === milestoneCount - 1) {
-                dueDate = addDays(endDate, 30);
-            } else {
-                dueDate = addDays(startDate, interval * idx);
-            }
-            row.querySelector('.milestone-date').value = dueDate;
-            row.querySelector('.payment-due-date').value = dueDate ? addDays(dueDate, dueDays) : '';
-        });
-    }
-
-    // --- Event Listeners ---
-    advanceInput.addEventListener('input', function() {
-        this.value = this.value.replace(/[^0-9]/g, '');
-        if (parseInt(this.value) > 100) this.value = '100';
-        updateMilestonePercentages();
-    });
-    retentionInput.addEventListener('input', function() {
-        this.value = this.value.replace(/[^0-9]/g, '');
-        // Limit retention to 10%
-        if (parseInt(this.value) > 10) this.value = '10';
-        updateMilestonePercentages();
-    });
-    dueDaysInput.addEventListener('input', function() {
-        updateMilestoneDates();
-    });
-    // Make other milestone-amount fields readonly
-    scheduleTable.querySelectorAll('tbody tr').forEach((row, idx) => {
-        if (idx !== 0 && idx !== scheduleTable.querySelectorAll('tbody tr').length - 1) {
-            row.querySelector('.milestone-amount').setAttribute('readonly', 'readonly');
-        }
-    });
-
-    // Initial sync on page load
-    setDefaultMilestones();
-    updateMilestoneDates();
-
-    // If user changes start/end date (shouldn't happen here, but just in case)
-    // document.getElementById('start_date').addEventListener('change', updateMilestoneDates);
-    // document.getElementById('end_date').addEventListener('change', updateMilestoneDates);
-
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-
-    function initializePaymentSchedule() {
-        const paymentTerms = '{{ session('contract_step3.payment_terms') ?: session('step3_data.payment_terms') }}';
-        console.log('Payment Terms:', paymentTerms);
-        
-        const scheduleTable = document.getElementById('paymentScheduleTable');
-        if (!scheduleTable) {
-            console.error('Payment schedule table not found');
-            return;
-        }
-        const tbody = scheduleTable.querySelector('tbody');
-        tbody.innerHTML = ''; // Clear existing rows
-
-        // Hide milestone controls by default
-        document.getElementById('milestoneControls').style.display = 'none';
-
-        if (!paymentTerms) {
-            console.log('No payment terms found in session');
-            setDefaultMilestoneSchedule();
-            return;
-        }
-
-        if (paymentTerms === 'Pay All In') {
-            // Single payment
-            tbody.innerHTML = `
-                <tr>
-                    <td>Full Payment</td>
-                    <td>Payment upon contract signing</td>
-                    <td><input type="number" class="form-control milestone-amount" value="100" min="0" max="100" readonly></td>
-                    <td><input type="date" class="form-control milestone-date" required readonly></td>
-                    <td><input type="text" class="form-control payment-due-date" readonly></td>
-                </tr>`;
-        } else if (paymentTerms.startsWith('Installment Plan:')) {
-            // Extract downpayment and period from payment terms
-            const match = paymentTerms.match(/(\d+)% downpayment, (\d+) months/);
-            if (match) {
-                const downpayment = parseInt(match[1]);
-                const months = parseInt(match[2]);
-                const monthlyPayment = Math.floor((100 - downpayment) / months);
-                const remainder = 100 - downpayment - (monthlyPayment * months);
-
-                // Add downpayment row
-                tbody.innerHTML = `
-                    <tr>
-                        <td>Downpayment</td>
-                        <td>Initial payment</td>
-                        <td><input type="number" class="form-control milestone-amount" value="${downpayment}" min="0" max="100" readonly></td>
-                        <td><input type="date" class="form-control milestone-date" required readonly></td>
-                        <td><input type="text" class="form-control payment-due-date" readonly></td>
-                    </tr>`;
-
-                // Add monthly installment rows
-                for (let i = 0; i < months; i++) {
-                    const amount = i === months - 1 ? monthlyPayment + remainder : monthlyPayment;
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>Installment ${i + 1}</td>
-                            <td>Monthly payment</td>
-                            <td><input type="number" class="form-control milestone-amount" value="${amount}" min="0" max="100" readonly></td>
-                            <td><input type="date" class="form-control milestone-date" required readonly></td>
-                            <td><input type="text" class="form-control payment-due-date" readonly></td>
-                        </tr>`;
-                }
-            }
-        } else if (paymentTerms.startsWith('Progress Payment:')) {
-            // Show milestone controls for progress payments
-            document.getElementById('milestoneControls').style.display = 'block';
-            
-            if (paymentTerms.includes('70% completion')) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td>Initial Payment</td>
-                        <td>Payment upon contract signing</td>
-                        <td><input type="number" class="form-control milestone-amount" value="30" min="0" max="100" readonly></td>
-                        <td><input type="date" class="form-control milestone-date" required readonly></td>
-                        <td><input type="text" class="form-control payment-due-date" readonly></td>
-                    </tr>
-                    <tr>
-                        <td>70% Completion</td>
-                        <td>Payment at 70% project completion</td>
-                        <td><input type="number" class="form-control milestone-amount" value="40" min="0" max="100" readonly></td>
-                        <td><input type="date" class="form-control milestone-date" required readonly></td>
-                        <td><input type="text" class="form-control payment-due-date" readonly></td>
-                    </tr>
-                    <tr>
-                        <td>Completion</td>
-                        <td>Payment upon project completion</td>
-                        <td><input type="number" class="form-control milestone-amount" value="25" min="0" max="100" readonly></td>
-                        <td><input type="date" class="form-control milestone-date" required readonly></td>
-                        <td><input type="text" class="form-control payment-due-date" readonly></td>
-                    </tr>
-                    <tr>
-                        <td>Retention</td>
-                        <td>Retention payment</td>
-                        <td><input type="number" class="form-control milestone-amount" value="5" min="0" max="100" readonly></td>
-                        <td><input type="date" class="form-control milestone-date" required readonly></td>
-                        <td><input type="text" class="form-control payment-due-date" readonly></td>
-                    </tr>`;
-            } else {
-                tbody.innerHTML = `
-                    <tr>
-                        <td>Initial Payment</td>
-                        <td>Payment upon contract signing</td>
-                        <td><input type="number" class="form-control milestone-amount" value="30" min="0" max="100" readonly></td>
-                        <td><input type="date" class="form-control milestone-date" required readonly></td>
-                        <td><input type="text" class="form-control payment-due-date" readonly></td>
-                    </tr>
-                    <tr>
-                        <td>Completion</td>
-                        <td>Payment upon project completion</td>
-                        <td><input type="number" class="form-control milestone-amount" value="65" min="0" max="100" readonly></td>
-                        <td><input type="date" class="form-control milestone-date" required readonly></td>
-                        <td><input type="text" class="form-control payment-due-date" readonly></td>
-                    </tr>
-                    <tr>
-                        <td>Retention</td>
-                        <td>Retention payment</td>
-                        <td><input type="number" class="form-control milestone-amount" value="5" min="0" max="100" readonly></td>
-                        <td><input type="date" class="form-control milestone-date" required readonly></td>
-                        <td><input type="text" class="form-control payment-due-date" readonly></td>
-                    </tr>`;
-            }
-        } else {
-            // Default milestone-based schedule
-            setDefaultMilestoneSchedule();
-        }
-
-        // Update dates and totals after modifying the table
-        updateMilestoneDates();
-        updateTotalPercentage();
-    }
-
-    function setDefaultMilestoneSchedule() {
-        // Show milestone controls for default schedule
-        document.getElementById('milestoneControls').style.display = 'block';
-        
-        const tbody = document.getElementById('paymentScheduleTable').querySelector('tbody');
-        tbody.innerHTML = `
-            <tr>
-                <td>Initial Payment</td>
-                <td>Payment upon contract signing</td>
-                <td><input type="number" class="form-control milestone-amount" value="30" min="0" max="100" readonly></td>
-                <td><input type="date" class="form-control milestone-date" required readonly></td>
-                <td><input type="text" class="form-control payment-due-date" readonly></td>
-            </tr>
-            <tr>
-                <td>Materials Delivery</td>
-                <td>Payment upon delivery of materials</td>
-                <td><input type="number" class="form-control milestone-amount" value="20" min="0" max="100" readonly></td>
-                <td><input type="date" class="form-control milestone-date" required readonly></td>
-                <td><input type="text" class="form-control payment-due-date" readonly></td>
-            </tr>
-            <tr>
-                <td>Work Start</td>
-                <td>Payment upon commencement of work</td>
-                <td><input type="number" class="form-control milestone-amount" value="20" min="0" max="100" readonly></td>
-                <td><input type="date" class="form-control milestone-date" required readonly></td>
-                <td><input type="text" class="form-control payment-due-date" readonly></td>
-            </tr>
-            <tr>
-                <td>Completion</td>
-                <td>Payment upon project completion</td>
-                <td><input type="number" class="form-control milestone-amount" value="25" min="0" max="100" readonly></td>
-                <td><input type="date" class="form-control milestone-date" required readonly></td>
-                <td><input type="text" class="form-control payment-due-date" readonly></td>
-            </tr>
-            <tr>
-                <td>Retention</td>
-                <td>Retention payment (after warranty period)</td>
-                <td><input type="number" class="form-control milestone-amount" value="5" min="0" max="100" readonly></td>
-                <td><input type="date" class="form-control milestone-date" required readonly></td>
-                <td><input type="text" class="form-control payment-due-date" readonly></td>
-            </tr>`;
-    }
-
-    // Call initializePaymentSchedule when the page loads and when payment terms change
-    document.addEventListener('DOMContentLoaded', function() {
-        initializePaymentSchedule();
-        
-        // Also call it when payment terms change
-        const paymentTermsInput = document.querySelector('input[name="payment_terms"]');
-        if (paymentTermsInput) {
-            paymentTermsInput.addEventListener('change', initializePaymentSchedule);
-        }
-    });
-
-    // Save the schedule data before form submission
-    document.getElementById('step4Form').addEventListener('submit', function(e) {
-        const scheduleData = [];
-        document.querySelectorAll('#paymentScheduleTable tbody tr').forEach(row => {
-            scheduleData.push({
-                milestone: row.cells[0].textContent,
-                description: row.cells[1].textContent,
-                percentage: row.querySelector('.milestone-amount').value,
-                date: row.querySelector('.milestone-date').value,
-                dueDate: row.querySelector('.payment-due-date').value
-            });
-        });
-        document.getElementById('payment_schedule').value = JSON.stringify(scheduleData);
+        .catch(error => console.error('Error saving data:', error));
     });
 });
 </script>

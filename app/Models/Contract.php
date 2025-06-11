@@ -193,19 +193,31 @@ class Contract extends Model
         }
 
         foreach ($paymentSchedule as $schedule) {
-            $dueDate = now()->addDays($schedule['days']);
-            $amount = $this->total_amount * ($schedule['percentage'] / 100);
-
             Payment::create([
                 'payment_number' => Payment::generatePaymentNumber(),
                 'contract_id' => $this->id,
-                'amount' => $amount,
+                'amount' => $schedule['amount'],
                 'payment_method' => $this->payment_method,
-                'payment_type' => $schedule['type'] ?? 'regular',
+                'payment_type' => $this->getPaymentType($schedule['stage']),
                 'status' => 'pending',
-                'due_date' => $dueDate,
+                'due_date' => $schedule['due_date'],
                 'created_by' => auth()->id()
             ]);
+        }
+    }
+
+    private function getPaymentType($stage)
+    {
+        if (stripos($stage, 'advance') !== false) {
+            return 'advance';
+        } else if (stripos($stage, 'retention') !== false) {
+            return 'retention';
+        } else if (stripos($stage, 'progress') !== false) {
+            return 'progress';
+        } else if (stripos($stage, 'installment') !== false) {
+            return 'installment';
+        } else {
+            return 'regular';
         }
     }
 

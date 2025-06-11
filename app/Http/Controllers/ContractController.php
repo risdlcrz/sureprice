@@ -162,7 +162,23 @@ class ContractController extends Controller
 
         // Get session data if it exists
         $sessionData = session('contract_step2', []);
-        \Log::info('Loading Step 2 with session data:', $sessionData);
+        
+        // Ensure rooms is always an array, not an object
+        if (isset($sessionData['rooms']) && !is_array($sessionData['rooms'])) {
+            // Convert object to array
+            $rooms = [];
+            foreach ($sessionData['rooms'] as $roomId => $roomData) {
+                $roomData['id'] = $roomId;
+                $rooms[] = $roomData;
+            }
+            $sessionData['rooms'] = $rooms;
+        }
+
+        \Log::info('Loading Step 2 with session data:', [
+            'has_session_data' => !empty($sessionData),
+            'session_data' => $sessionData,
+            'all_session_keys' => array_keys(session()->all())
+        ]);
 
         return view('admin.contracts.step2', compact('scopeTypes', 'sessionData'));
     }
@@ -232,17 +248,30 @@ class ContractController extends Controller
     public function saveStep2(Request $request)
     {
         try {
-            // Store the current state in session without validation
+            // Get the input data
+            $data = $request->all();
+            
+            // Ensure rooms is an array
+            if (isset($data['rooms']) && !is_array($data['rooms'])) {
+                $rooms = [];
+                foreach ($data['rooms'] as $roomId => $roomData) {
+                    $roomData['id'] = $roomId;
+                    $rooms[] = $roomData;
+                }
+                $data['rooms'] = $rooms;
+            }
+
+            // Store in session
             $sessionData = [
-                'rooms' => $request->input('rooms', []),
-                'start_date' => $request->input('start_date'),
-                'end_date' => $request->input('end_date'),
-                'total_materials' => $request->input('total_materials', 0),
-                'total_labor' => $request->input('total_labor', 0),
-                'grand_total' => $request->input('grand_total', 0),
-                'total_amount' => $request->input('grand_total', 0),
-                'labor_cost' => $request->input('total_labor', 0),
-                'materials_cost' => $request->input('total_materials', 0)
+                'rooms' => $data['rooms'] ?? [],
+                'start_date' => $data['start_date'] ?? null,
+                'end_date' => $data['end_date'] ?? null,
+                'total_materials' => $data['total_materials'] ?? 0,
+                'total_labor' => $data['total_labor'] ?? 0,
+                'grand_total' => $data['grand_total'] ?? 0,
+                'total_amount' => $data['grand_total'] ?? 0,
+                'labor_cost' => $data['total_labor'] ?? 0,
+                'materials_cost' => $data['total_materials'] ?? 0
             ];
             
             session(['contract_step2' => $sessionData]);
@@ -250,7 +279,10 @@ class ContractController extends Controller
 
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
-            \Log::error('Error in Step 2 auto-save:', ['error' => $e->getMessage()]);
+            \Log::error('Error in Step 2 auto-save:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while saving the data.'
@@ -306,20 +338,54 @@ class ContractController extends Controller
 
     public function saveStep3(Request $request)
     {
-        $data = $request->validate([
-            'payment_terms' => 'nullable|string',
-            'warranty_terms' => 'nullable|string',
-            'cancellation_terms' => 'nullable|string',
-            'additional_terms' => 'nullable|string',
-            'contractor_signature' => 'nullable|string',
-            'client_signature' => 'nullable|string'
-        ]);
+        try {
+            $data = $request->validate([
+                'payment_terms' => 'nullable|string',
+                'warranty_terms' => 'nullable|string',
+                'cancellation_terms' => 'nullable|string',
+                'additional_terms' => 'nullable|string',
+                'contractor_signature' => 'nullable|string',
+                'client_signature' => 'nullable|string'
+            ]);
 
-        // Save to both session keys to ensure compatibility
-        session(['step3_data' => $data]);
-        session(['contract_step3' => $data]);
+            // Process signatures if they are new data URLs
+            foreach (['contractor', 'client'] as $type) {
+                $signatureKey = $type . '_signature';
+                $signatureData = $data[$signatureKey] ?? null;
+                
+                // If it's a new signature (data URL)
+                if ($signatureData && strpos($signatureData, 'data:image') === 0) {
+                    list(, $imageData) = explode(',', $signatureData);
+                    $decodedData = base64_decode($imageData);
+                    $filename = 'signatures/' . uniqid($type . '_') . '.png';
+                    
+                    if (Storage::disk('public')->put($filename, $decodedData)) {
+                        $data[$signatureKey] = $filename;
+                    }
+                }
+                // If no new signature and we want to keep the old one
+                elseif (!$signatureData && session()->has('contract_step3.' . $signatureKey)) {
+                    $data[$signatureKey] = session('contract_step3.' . $signatureKey);
+                }
+            }
 
-        return response()->json(['success' => true]);
+            // Save to both session keys to ensure compatibility
+            session(['step3_data' => $data]);
+            session(['contract_step3' => $data]);
+
+            \Log::info('Saved Step 3 data to session:', $data);
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            \Log::error('Error saving Step 3 data:', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while saving the data.'
+            ], 500);
+        }
     }
 
     public function step4()
@@ -343,7 +409,7 @@ class ContractController extends Controller
             'payment_schedule' => 'required|json'
         ]);
 
-        session(['step4_data' => $data]);
+        session(['contract_step4' => $data]);
 
         // Create the contract
         $contract = $this->createContract();
@@ -364,7 +430,7 @@ class ContractController extends Controller
             'payment_schedule' => 'nullable|json'
         ]);
 
-        session(['step4_data' => $data]);
+        session(['contract_step4' => $data]);
 
         return response()->json(['success' => true]);
     }
@@ -434,12 +500,13 @@ class ContractController extends Controller
                 'materials_cost' => session('contract_step2.total_materials'),
                 'labor_cost' => session('contract_step2.total_labor'),
                 'payment_terms' => session('contract_step3.payment_terms'),
-                'payment_method' => session('contract_step3.payment_method', 'cash'),
-                'bank_name' => session('contract_step3.bank_name'),
-                'bank_account_name' => session('contract_step3.bank_account_name'),
-                'bank_account_number' => session('contract_step3.bank_account_number'),
+                'payment_method' => session('contract_step4.payment_method', 'cash'),
+                'bank_name' => session('contract_step4.bank_name'),
+                'bank_account_name' => session('contract_step4.bank_account_name'),
+                'bank_account_number' => session('contract_step4.bank_account_number'),
                 'contractor_signature' => session('contract_step3.contractor_signature'),
                 'client_signature' => session('contract_step3.client_signature'),
+                'payment_schedule' => session('contract_step4.payment_schedule'),
                 'status' => 'draft'
             ]);
 
@@ -1075,15 +1142,24 @@ class ContractController extends Controller
         }
     }
 
-    public function updateStatus(Contract $contract, Request $request)
+    public function updateStatus(Request $request, Contract $contract)
     {
         try {
             $request->validate([
                 'status' => 'required|in:draft,approved,rejected'
             ]);
 
+            DB::beginTransaction();
+
             $contract->status = $request->status;
             $contract->save();
+
+            // Generate payments when contract is approved
+            if ($request->status === 'approved') {
+                $contract->generatePayments();
+            }
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
@@ -1091,6 +1167,7 @@ class ContractController extends Controller
                 'status' => ucfirst($contract->status)
             ]);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating contract status: ' . $e->getMessage()

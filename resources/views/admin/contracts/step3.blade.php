@@ -434,19 +434,37 @@ document.addEventListener('DOMContentLoaded', function() {
     let saveFormTimeout;
     function saveFormData() {
         const formData = new FormData(document.getElementById('step3Form'));
-        fetch('{{ route("contracts.save.step3") }}', {
+        const data = {
+            payment_terms: formData.get('payment_terms'),
+            warranty_terms: formData.get('warranty_terms'),
+            cancellation_terms: formData.get('cancellation_terms'),
+            additional_terms: formData.get('additional_terms'),
+            contractor_signature: document.getElementById('contractor_signature').value || 
+                (document.getElementById('keepContractorSignature')?.checked ? @json(session('contract_step3.contractor_signature')) : null),
+            client_signature: document.getElementById('client_signature').value || 
+                (document.getElementById('keepClientSignature')?.checked ? @json(session('contract_step3.client_signature')) : null)
+        };
+
+        console.log('Auto-saving form data:', data);
+
+        return fetch('{{ route("contracts.save.step3") }}', {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
             },
-            body: JSON.stringify(Object.fromEntries(formData))
-        })
-        .catch(error => console.error('Error saving form:', error));
+            body: JSON.stringify(data)
+        }).then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        }).then(data => {
+            console.log('Form data saved successfully:', data);
+        }).catch(error => {
+            console.error('Error saving form data:', error);
+        });
     }
 
-    // Initialize signature pads
+    // Initialize signature pads and restore saved signatures
     const contractorCanvas = document.getElementById('contractorSignaturePad');
     const clientCanvas = document.getElementById('clientSignaturePad');
     
@@ -454,15 +472,50 @@ document.addEventListener('DOMContentLoaded', function() {
         window.contractorPad = new SignaturePad(contractorCanvas);
         window.clientPad = new SignaturePad(clientCanvas);
 
+        // Restore saved signatures if they exist
+        const savedContractorSignature = @json(session('contract_step3.contractor_signature'));
+        const savedClientSignature = @json(session('contract_step3.client_signature'));
+
+        if (savedContractorSignature) {
+            // Create a temporary image to load the signature
+            const contractorImg = new Image();
+            contractorImg.onload = function() {
+                const ctx = contractorCanvas.getContext('2d');
+                ctx.drawImage(contractorImg, 0, 0);
+                // Update the hidden input
+                document.getElementById('contractor_signature').value = savedContractorSignature;
+            };
+            contractorImg.src = savedContractorSignature;
+        }
+
+        if (savedClientSignature) {
+            const clientImg = new Image();
+            clientImg.onload = function() {
+                const ctx = clientCanvas.getContext('2d');
+                ctx.drawImage(clientImg, 0, 0);
+                // Update the hidden input
+                document.getElementById('client_signature').value = savedClientSignature;
+            };
+            clientImg.src = savedClientSignature;
+        }
+
         // Clear signature buttons
         document.getElementById('clearContractorSignature')?.addEventListener('click', () => {
             window.contractorPad.clear();
-            document.getElementById('keepContractorSignature').checked = false;
+            document.getElementById('contractor_signature').value = '';
+            if (document.getElementById('keepContractorSignature')) {
+                document.getElementById('keepContractorSignature').checked = false;
+            }
+            saveFormData(); // Save the cleared state
         });
         
         document.getElementById('clearClientSignature')?.addEventListener('click', () => {
             window.clientPad.clear();
-            document.getElementById('keepClientSignature').checked = false;
+            document.getElementById('client_signature').value = '';
+            if (document.getElementById('keepClientSignature')) {
+                document.getElementById('keepClientSignature').checked = false;
+            }
+            saveFormData(); // Save the cleared state
         });
 
         // Handle canvas resize
@@ -479,31 +532,18 @@ document.addEventListener('DOMContentLoaded', function() {
         resizeCanvas(); // Initial setup
 
         // Auto-save signatures when drawn
-        contractorCanvas.addEventListener('mouseup', () => {
-            if (!window.contractorPad.isEmpty()) {
-                saveSignature('contractor', window.contractorPad.toDataURL());
-            }
-        });
-
-        clientCanvas.addEventListener('mouseup', () => {
-            if (!window.clientPad.isEmpty()) {
-                saveSignature('client', window.clientPad.toDataURL());
-            }
-        });
-    }
-
-    // Function to save signature to session
-    function saveSignature(type, dataURL) {
-        fetch('{{ route("contracts.contracts.save.signature") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({
-                type: type,
-                signature: dataURL
-            })
+        [contractorCanvas, clientCanvas].forEach(canvas => {
+            canvas.addEventListener('mouseup', () => {
+                const pad = canvas === contractorCanvas ? window.contractorPad : window.clientPad;
+                const type = canvas === contractorCanvas ? 'contractor' : 'client';
+                const hiddenInput = document.getElementById(`${type}_signature`);
+                
+                if (!pad.isEmpty()) {
+                    const dataURL = pad.toDataURL();
+                    hiddenInput.value = dataURL;
+                    saveFormData();
+                }
+            });
         });
     }
 
@@ -539,11 +579,45 @@ document.addEventListener('DOMContentLoaded', function() {
     // Make handlePreviousStep globally available
     window.handlePreviousStep = function() {
         console.log('Previous Step button clicked');
-        Promise.resolve(typeof saveFormData === 'function' ? saveFormData() : null)
-            .finally(() => {
-                console.log('Navigating to step 2');
-                window.location.href = '{{ route("contracts.step2") }}';
-            });
+        
+        // First save any form data including signatures
+        const formData = new FormData(document.getElementById('step3Form'));
+        const data = {
+            payment_terms: formData.get('payment_terms'),
+            warranty_terms: formData.get('warranty_terms'),
+            cancellation_terms: formData.get('cancellation_terms'),
+            additional_terms: formData.get('additional_terms'),
+            contractor_signature: document.getElementById('contractor_signature').value || 
+                (document.getElementById('keepContractorSignature')?.checked ? @json(session('contract_step3.contractor_signature')) : null),
+            client_signature: document.getElementById('client_signature').value || 
+                (document.getElementById('keepClientSignature')?.checked ? @json(session('contract_step3.client_signature')) : null)
+        };
+
+        // Log the data being saved
+        console.log('Saving step 3 data before navigation:', data);
+
+        // Save the data and then navigate
+        fetch('{{ route("contracts.save.step3") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify(data)
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        }).then(data => {
+            console.log('Step 3 data saved successfully:', data);
+            // Only navigate after successful save
+            window.location.href = '{{ route("contracts.step2") }}';
+        }).catch(error => {
+            console.error('Error saving step 3 data:', error);
+            // Still navigate even if save fails
+            window.location.href = '{{ route("contracts.step2") }}';
+        });
     }
 
     // Form validation and submission
