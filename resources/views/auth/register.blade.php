@@ -218,6 +218,15 @@
     @error('street')<span class="error-message"><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
   </div>
   
+  <div class="form-group">
+    <label for="barangay">Barangay</label>
+    <div class="input-with-icon">
+      <i class="fas fa-map-marker-alt"></i>
+      <input type="text" id="barangay" name="barangay" value="{{ old('barangay') }}" placeholder="Barangay name" required />
+    </div>
+    @error('barangay')<span class="error-message"><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
+  </div>
+
   <div class="form-row">
     <div class="form-group">
       <label for="city">City/Municipality</label>
@@ -232,18 +241,18 @@
       <label for="province">Province</label>
       <div class="input-with-icon">
         <i class="fas fa-map"></i>
-        <input type="text" id="province" name="province" value="{{ old('province') }}" placeholder="Province name" required />
+        <input type="text" id="province" name="state" value="{{ old('state') }}" placeholder="Province name" required />
       </div>
-      @error('province')<span class="error-message"><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
+      @error('state')<span class="error-message"><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
     </div>
     
     <div class="form-group">
       <label for="zip_code">ZIP Code</label>
       <div class="input-with-icon">
         <i class="fas fa-mail-bulk"></i>
-        <input type="text" id="zip_code" name="zip_code" value="{{ old('zip_code') }}" placeholder="e.g. 1000" required />
+        <input type="text" id="zip_code" name="postal" value="{{ old('postal') }}" placeholder="e.g. 1000" required />
       </div>
-      @error('zip_code')<span class="error-message"><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
+      @error('postal')<span class="error-message"><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
     </div>
   </div>
 </div>

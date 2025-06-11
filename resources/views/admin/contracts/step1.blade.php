@@ -142,6 +142,7 @@
                                         label="Search Contractor (optional)"
                                         :url="route('search.contractors')"
                                         id="contractor_search"
+                                        :minimumInputLength="0"
                                     />
                                 </div>
                                 <div class="row g-3">
@@ -219,6 +220,7 @@
                                         label="Search Client (optional)"
                                         :url="route('search.clients')"
                                         id="client_search"
+                                        :minimumInputLength="0"
                                     />
                                 </div>
                                 <div class="row g-3">
@@ -254,14 +256,6 @@
                                         <div class="form-group">
                                             <label for="client_street">Street Address</label>
                                             <input type="text" class="form-control" id="client_street" name="client_street" value="{{ old('client_street', session('contract_step1.client_street')) }}" required>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row g-3 mt-2">
-                                    <div class="col-md-12">
-                                        <div class="form-group">
-                                            <label for="client_unit">Unit/Floor/Building (Optional)</label>
-                                            <input type="text" class="form-control" id="client_unit" name="client_unit" value="{{ old('client_unit', session('contract_step1.client_unit')) }}">
                                         </div>
                                     </div>
                                 </div>
@@ -324,12 +318,6 @@
                                             <input type="text" class="form-control" id="property_street" name="property_street" value="{{ old('property_street', session('contract_step1.property_street')) }}" required>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="property_unit">Unit/Floor/Building (Optional)</label>
-                                            <input type="text" class="form-control" id="property_unit" name="property_unit" value="{{ old('property_unit', session('contract_step1.property_unit')) }}">
-                                        </div>
-                                    </div>
                                 </div>
                                 <div class="row g-3 mt-2">
                                     <div class="col-md-6">
@@ -376,69 +364,110 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Form validation
-    const form = document.getElementById('step1Form');
-    form.addEventListener('submit', function(e) {
-        if (!form.checkValidity()) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-        form.classList.add('was-validated');
+$(document).ready(function() {
+    $('#contractor_search').select2({
+        ajax: {
+            url: '{{ route("search.contractors") }}',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data.data.map(function(item) {
+                        return {
+                            id: item.id,
+                            text: item.name,
+                            name: item.name,
+                            company_name: item.company_name,
+                            email: item.email,
+                            phone: item.phone,
+                            street: item.street,
+                            barangay: item.barangay,
+                            city: item.city,
+                            state: item.state,
+                            postal: item.postal
+                        };
+                    })
+                };
+            },
+            cache: true
+        },
+        minimumInputLength: 0,
+        width: '100%'
     });
 
-    function autofillContractorFields(data) {
-        document.getElementById('contractor_name').value = data.name || '';
-        document.getElementById('contractor_company').value = data.company_name || '';
-        document.getElementById('contractor_email').value = data.email || '';
-        document.getElementById('contractor_phone').value = data.phone || '';
-        document.getElementById('contractor_street').value = data.street || '';
-        document.getElementById('contractor_barangay').value = data.barangay || '';
-        document.getElementById('contractor_city').value = data.city || '';
-        document.getElementById('contractor_postal').value = data.postal || '';
-        document.getElementById('contractor_state').value = data.state || '';
-    }
-    function autofillClientFields(data) {
-        document.getElementById('client_name').value = data.name || '';
-        document.getElementById('client_company').value = data.company_name || '';
-        document.getElementById('client_email').value = data.email || '';
-        document.getElementById('client_phone').value = data.phone || '';
-        document.getElementById('client_street').value = data.street || '';
-        document.getElementById('client_unit').value = data.unit || '';
-        document.getElementById('client_barangay').value = data.barangay || '';
-        document.getElementById('client_city').value = data.city || '';
-        document.getElementById('client_postal').value = data.postal || '';
-        document.getElementById('client_state').value = data.state || '';
-    }
-    document.getElementById('contractor_search').addEventListener('change', function(e) {
-        var userId = this.value;
-        if (userId) {
-            fetch('/api/users/' + userId)
-                .then(response => response.json())
-                .then(data => autofillContractorFields(data));
-        } else {
-            autofillContractorFields({});
-        }
-    });
-    document.getElementById('client_search').addEventListener('change', function(e) {
-        var userId = this.value;
-        if (userId) {
-            fetch('/api/users/' + userId)
-                .then(response => response.json())
-                .then(data => autofillClientFields(data));
-        } else {
-            autofillClientFields({});
-        }
+    $('#contractor_search').on('select2:select', function(e) {
+        const data = e.params.data;
+        $('#contractor_name').val(data.name || '');
+        $('#contractor_company').val(data.company_name || '');
+        $('#contractor_email').val(data.email || '');
+        $('#contractor_phone').val(data.phone || '');
+        $('#contractor_street').val(data.street || '');
+        $('#contractor_barangay').val(data.barangay || '');
+        $('#contractor_city').val(data.city || '');
+        $('#contractor_state').val(data.state || '');
+        $('#contractor_postal').val(data.postal || '');
+        if (typeof saveFormData === 'function') saveFormData();
     });
 
-    document.getElementById('same_as_client_address').addEventListener('change', function() {
+    // Client search Select2 initialization and autofill
+    $('#client_search').select2({
+        ajax: {
+            url: '{{ route("search.clients") }}',
+            dataType: 'json',
+            delay: 250,
+            processResults: function (data) {
+                return {
+                    results: data.data.map(function(item) {
+                        // If the API returns nested data, use item.data.field, else item.field
+                        const d = item.data || item;
+                        return {
+                            id: item.id,
+                            text: d.name || d.company_name || item.text,
+                            name: d.name || '',
+                            company_name: d.company_name || '',
+                            email: d.email || '',
+                            phone: d.phone || '',
+                            street: d.street || '',
+                            unit: d.unit || '',
+                            barangay: d.barangay || '',
+                            city: d.city || '',
+                            state: d.state || '',
+                            postal: d.postal || ''
+                        };
+                    })
+                };
+            },
+            cache: true
+        },
+        minimumInputLength: 0,
+        width: '100%'
+    });
+
+    $('#client_search').on('select2:select', function(e) {
+        const data = e.params.data;
+        $('#client_name').val(data.name || '');
+        $('#client_company').val(data.company_name || '');
+        $('#client_email').val(data.email || '');
+        $('#client_phone').val(data.phone || '');
+        $('#client_street').val(data.street || '');
+        $('#client_unit').val(data.unit || '');
+        $('#client_barangay').val(data.barangay || '');
+        $('#client_city').val(data.city || '');
+        $('#client_state').val(data.state || '');
+        $('#client_postal').val(data.postal || '');
+        if (typeof saveFormData === 'function') saveFormData();
+    });
+
+    // Handle "Same as Client Address" checkbox
+    $('#same_as_client_address').on('change', function() {
         if (this.checked) {
-            document.getElementById('property_street').value = document.getElementById('client_street').value;
-            document.getElementById('property_unit').value = document.getElementById('client_unit').value;
-            document.getElementById('property_barangay').value = document.getElementById('client_barangay').value;
-            document.getElementById('property_city').value = document.getElementById('client_city').value;
-            document.getElementById('property_state').value = document.getElementById('client_state').value;
-            document.getElementById('property_postal').value = document.getElementById('client_postal').value;
+            $('#property_street').val($('#client_street').val());
+            $('#property_unit').val($('#client_unit').val());
+            $('#property_barangay').val($('#client_barangay').val());
+            $('#property_city').val($('#client_city').val());
+            $('#property_state').val($('#client_state').val());
+            $('#property_postal').val($('#client_postal').val());
+            if (typeof saveFormData === 'function') saveFormData();
         }
     });
 });

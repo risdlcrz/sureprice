@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         MaterialSeeder::class,
         ScopeTypeSeeder::class,
         ScopeTypeMaterialSeeder::class,
+        SyncEmployeesToUsersSeeder::class,
     ]);
 }
 }

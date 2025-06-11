@@ -79,17 +79,24 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/clear-session', [ContractController::class, 'clearContractSession'])->name('clear-session');
         Route::get('/step1', [ContractController::class, 'step1'])->name('step1');
         Route::post('/step1', [ContractController::class, 'storeStep1'])->name('store.step1');
+        Route::post('/step1/save', [ContractController::class, 'saveStep1'])->name('save.step1');
         Route::get('/step2', [ContractController::class, 'step2'])->name('step2');
         Route::post('/step2', [ContractController::class, 'storeStep2'])->name('store.step2');
         Route::post('/step2/save', [ContractController::class, 'saveStep2'])->name('save.step2');
         Route::get('/step3', [ContractController::class, 'step3'])->name('step3');
         Route::post('/step3', [ContractController::class, 'storeStep3'])->name('store.step3');
+        Route::post('/step3/save', [ContractController::class, 'saveStep3'])->name('save.step3');
         Route::get('/step4', [ContractController::class, 'step4'])->name('step4');
         Route::post('/', [ContractController::class, 'store'])->name('store');
         Route::get('/{contract}', [ContractController::class, 'show'])->name('show');
         Route::get('/{contract}/download', [ContractController::class, 'download'])->name('download');
         Route::patch('/{contract}/status', [ContractController::class, 'updateStatus'])->name('updateStatus');
         Route::post('/save-signature', [ContractController::class, 'saveSignature'])->name('contracts.save.signature');
+        Route::post('/contracts/store/step3', [ContractController::class, 'storeStep3'])->name('contracts.store.step3');
+        Route::post('/contracts/save/step3', [ContractController::class, 'saveStep3'])->name('contracts.save.step3');
+        Route::get('/contracts/step4', [ContractController::class, 'step4'])->name('contracts.step4');
+        Route::post('/contracts/store/step4', [ContractController::class, 'storeStep4'])->name('contracts.store.step4');
+        Route::post('/save/step4', [ContractController::class, 'saveStep4'])->name('save.step4');
     });
     
     // Supporting routes for contract form

@@ -30,35 +30,68 @@ class SearchController extends Controller
 
     public function contractors(Request $request)
     {
-        $query = User::role('contractor');
+        $query = \App\Models\Employee::where('role', 'contractor');
 
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
+        $search = $request->input('q', $request->input('search', ''));
+        if ($search) {
+            $query->where(function($q2) use ($search) {
+                $q2->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('company_name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%")
-                  ->orWhere('company_name', 'like', "%{$search}%");
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
-        return $query->paginate(10);
+        $results = $query->paginate(10);
+        $results->getCollection()->transform(function ($item) {
+            $item->name = trim($item->first_name . ' ' . $item->last_name);
+            return $item;
+        });
+        return $results;
     }
 
     public function clients(Request $request)
     {
-        $query = User::role('client');
+        $query = \App\Models\Company::where('designation', 'client')
+                                    ->where('status', 'approved');
 
-        if ($request->has('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
+        $search = $request->input('q', $request->input('search', ''));
+        if ($search) {
+            $query->where(function($q2) use ($search) {
+                $q2->where('company_name', 'like', "%{$search}%")
+                    ->orWhere('contact_person', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('mobile_number', 'like', "%{$search}%")
+                    ->orWhere('street', 'like', "%{$search}%")
+                    ->orWhere('city', 'like', "%{$search}%")
+                    ->orWhere('state', 'like', "%{$search}%")
+                    ->orWhere('postal', 'like', "%{$search}%");
             });
         }
 
-        return $query->paginate(10);
+        $results = $query->paginate(10);
+        $results->getCollection()->transform(function ($item) {
+            $nameForDisplay = $item->contact_person ?: $item->company_name;
+
+            return [
+                'id' => $item->id,
+                'text' => $nameForDisplay,
+                'data' => [
+                    'name' => $item->contact_person,
+                    'company_name' => $item->company_name,
+                    'email' => $item->email,
+                    'phone' => $item->mobile_number,
+                    'street' => $item->street,
+                    'unit' => $item->unit,
+                    'barangay' => $item->barangay,
+                    'city' => $item->city,
+                    'postal' => $item->postal,
+                    'state' => $item->state,
+                ]
+            ];
+        });
+        return response()->json($results);
     }
 
     public function properties(Request $request)

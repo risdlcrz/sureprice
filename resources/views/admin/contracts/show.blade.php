@@ -97,25 +97,19 @@
             <h5 class="mb-0">Property Information</h5>
         </div>
         <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <p><strong>Address:</strong><br>
-                        {{ $contract->property->street }}<br>
-                        @if($contract->property->unit)
-                            Unit {{ $contract->property->unit }},<br>
-                        @endif
-                        Barangay {{ $contract->property->barangay }},<br>
-                        {{ $contract->property->city }},<br>
-                        {{ $contract->property->state }} {{ $contract->property->postal }}
-                    </p>
-                </div>
-                <div class="col-md-6">
-                    <p><strong>Property Type:</strong> {{ ucfirst($contract->property->property_type) }}</p>
-                    @if($contract->property->property_size)
-                        <p><strong>Property Size:</strong> {{ number_format($contract->property->property_size) }} sq ft</p>
-                    @endif
-                </div>
-            </div>
+            <p><strong>Property Type:</strong> {{ ucfirst($contract->property->property_type) }}</p>
+            <p><strong>Address:</strong><br>
+                {{ $contract->property->street }}
+                @if($contract->property->unit_number)
+                    Unit {{ $contract->property->unit_number }},<br>
+                @endif
+                Barangay {{ $contract->property->barangay }},<br>
+                {{ $contract->property->city }},<br>
+                {{ $contract->property->state }} {{ $contract->property->postal }}
+            </p>
+            @if($contract->property->property_size)
+                <p><strong>Property Size:</strong> {{ $contract->property->property_size }}㎡</p>
+            @endif
         </div>
     </div>
 
@@ -167,12 +161,12 @@
                     <p><strong>Email:</strong> {{ $contract->client->email }}</p>
                     <p><strong>Phone:</strong> {{ $contract->client->phone }}</p>
                 </div>
-                </div>
             </div>
         </div>
+    </div>
 
     <div class="card mb-4">
-                <div class="card-header">
+        <div class="card-header">
             <h5 class="mb-0">Payment Details</h5>
         </div>
         <div class="card-body">
@@ -207,25 +201,35 @@
             <div class="row">
                 <div class="col-md-12">
                     <h6>Rooms & Work Categories</h6>
-                    @if($contract->rooms && $contract->rooms->count())
-                        <ul class="list-group mb-3">
-                            @foreach($contract->rooms as $room)
-                                <li class="list-group-item">
-                                    <strong>{{ $room->name }}</strong>
-                                    <span class="text-muted"> ({{ $room->length }}m x {{ $room->width }}m, Area: {{ $room->area }} m²)</span>
-                                    <br>
-                                    <span>Scopes:</span>
-                                    <ul>
+                    @forelse($contract->rooms as $room)
+                        <div class="room-section mb-4">
+                            <h6>{{ $room->name }}</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Dimensions:</strong> {{ $room->length }}m x {{ $room->width }}m (Area: {{ $room->area }}㎡)</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Total Cost:</strong> ₱{{ number_format($room->materials_cost + $room->labor_cost, 2) }}</p>
+                                </div>
+                            </div>
+                            
+                            @if($room->scopeTypes->count() > 0)
+                                <div class="scope-types mt-2">
+                                    <strong>Work Categories:</strong>
+                                    <ul class="list-unstyled">
                                         @foreach($room->scopeTypes as $scope)
-                                            <li>{{ $scope->name }}</li>
+                                            <li>
+                                                <i class="fas fa-check-circle text-success"></i>
+                                                {{ $scope->name }} ({{ $scope->category }})
+                                            </li>
                                         @endforeach
                                     </ul>
-                                </li>
-                            @endforeach
-                        </ul>
-                    @else
-                        <p class="text-muted">No rooms or scopes defined for this contract.</p>
-                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    @empty
+                        <p class="text-center">No rooms defined for this contract.</p>
+                    @endforelse
                     <h6>Description</h6>
                     <p>{{ $contract->scope_description }}</p>
                 </div>
@@ -252,11 +256,11 @@
                     <tbody>
                         @forelse($contract->items as $item)
                             <tr>
-                                <td data-item-name>{{ $item->description ?? $item->material->name ?? 'N/A' }}</td>
-                                <td data-item-unit>{{ $item->material_unit ?? $item->unit ?? 'N/A' }}</td>
-                                <td data-item-unit-cost>{{ number_format($item->amount, 2) }}</td>
-                                <td data-item-quantity>{{ number_format($item->quantity, 2) }}</td>
-                                <td data-item-total-cost>{{ number_format($item->total, 2) }}</td>
+                                <td>{{ $item->material_name }}</td>
+                                <td>{{ $item->unit }}</td>
+                                <td>₱{{ number_format($item->amount, 2) }}</td>
+                                <td>{{ number_format($item->quantity, 2) }}</td>
+                                <td>₱{{ number_format($item->total, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -264,6 +268,20 @@
                             </tr>
                         @endforelse
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="4" class="text-end"><strong>Total Materials Cost:</strong></td>
+                            <td>₱{{ number_format($contract->materials_cost, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="text-end"><strong>Total Labor Cost:</strong></td>
+                            <td>₱{{ number_format($contract->labor_cost, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="text-end"><strong>Grand Total:</strong></td>
+                            <td>₱{{ number_format($contract->total_amount, 2) }}</td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>
@@ -278,7 +296,7 @@
                 <div class="col-md-6 text-center">
                     <h6>Contractor's Signature</h6>
                     @if($contract->contractor_signature)
-                        <img src="{{ Storage::url($contract->contractor_signature) }}" 
+                        <img src="{{ asset('storage/' . $contract->contractor_signature) }}" 
                              alt="Contractor's Signature" 
                              class="img-fluid mb-2" 
                              style="max-height: 100px;">
@@ -291,7 +309,7 @@
                 <div class="col-md-6 text-center">
                     <h6>Client's Signature</h6>
                     @if($contract->client_signature)
-                        <img src="{{ Storage::url($contract->client_signature) }}" 
+                        <img src="{{ asset('storage/' . $contract->client_signature) }}" 
                              alt="Client's Signature" 
                              class="img-fluid mb-2" 
                              style="max-height: 100px;">
