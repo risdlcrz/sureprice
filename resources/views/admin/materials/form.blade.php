@@ -162,6 +162,37 @@
                             </div>
                         </div>
 
+                        <!-- Scope Types -->
+                        <div class="section-container mt-4">
+                            <h5 class="section-title">Associated Scope Types</h5>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="scope_types">Select Scope Types where this material is used</label>
+                                        <select class="form-control select2-multiple @error('scope_types') is-invalid @enderror" 
+                                                id="scope_types" 
+                                                name="scope_types[]" 
+                                                multiple="multiple"
+                                                data-placeholder="Select scope types...">
+                                            @foreach($scopeTypes ?? [] as $scopeType)
+                                                <option value="{{ $scopeType->id }}"
+                                                    {{ (isset($material) && $material->scopeTypes->contains($scopeType->id)) ? 'selected' : '' }}>
+                                                    {{ $scopeType->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('scope_types')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <small class="form-text text-muted">
+                                            You can select multiple scope types where this material is used. 
+                                            For example, paint would be used in "Painting Work", while cleaning supplies might be used in multiple types of work.
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Images -->
                         <div class="section-container mt-4">
                             <h5 class="section-title">Images</h5>
@@ -233,11 +264,20 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $(document).ready(function() {
+    // Initialize Select2 for multiple selection
+    $('.select2-multiple').select2({
+        theme: 'bootstrap4',
+        width: '100%',
+        placeholder: 'Select scope types...',
+        allowClear: true
+    });
+
     // Initialize Select2 for suppliers
     $('#suppliers').select2({
-        placeholder: 'Select suppliers',
-        allowClear: true,
-        width: '100%'
+        theme: 'bootstrap4',
+        width: '100%',
+        placeholder: 'Select suppliers...',
+        allowClear: true
     });
 
     // Form validation
