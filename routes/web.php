@@ -29,6 +29,7 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\ProjectTimelineController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -238,7 +239,7 @@ Route::get('/admin/suppliers/{supplier}/purchase-order-metrics', [SupplierRankin
     ->name('admin.suppliers.purchase-order-metrics');
 
 // Project Timeline Route
-Route::get('/project-timeline', [ContractController::class, 'projectTimeline'])->name('project.timeline');
+Route::get('/project-timeline', [App\Http\Controllers\ProjectTimelineController::class, 'index'])->name('project-timeline.index');
 
 Route::resource('contracts', \App\Http\Controllers\ContractController::class);
 
