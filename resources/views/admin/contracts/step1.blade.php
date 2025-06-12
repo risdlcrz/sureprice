@@ -303,7 +303,7 @@
                                         <div class="form-group">
                                             <label for="property_type">Property Type</label>
                                             <select class="form-control" id="property_type" name="property_type" required>
-                                                <option value="">Select Type</option>
+                                                <option value="" disabled>Select Type</option>
                                                 <option value="residential" {{ old('property_type', session('contract_step1.property_type')) == 'residential' ? 'selected' : '' }}>Residential</option>
                                                 <option value="commercial" {{ old('property_type', session('contract_step1.property_type')) == 'commercial' ? 'selected' : '' }}>Commercial</option>
                                                 <option value="industrial" {{ old('property_type', session('contract_step1.property_type')) == 'industrial' ? 'selected' : '' }}>Industrial</option>
@@ -467,8 +467,12 @@ $(document).ready(function() {
             $('#property_city').val($('#client_city').val());
             $('#property_state').val($('#client_state').val());
             $('#property_postal').val($('#client_postal').val());
-            if (typeof saveFormData === 'function') saveFormData();
         }
+    });
+
+    // Add a change listener to property_type for debugging
+    $('#property_type').on('change', function() {
+        console.log('Property Type changed to:', $(this).val());
     });
 });
 </script>

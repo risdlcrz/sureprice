@@ -76,41 +76,57 @@ class ContractController extends Controller
 
     public function storeStep1(Request $request)
     {
-        $validated = $request->validate([
-            'contractor_name' => 'required|string|max:255',
-            'contractor_company' => 'nullable|string|max:255',
-            'contractor_email' => 'required|email|max:255',
-            'contractor_phone' => 'required|string|max:20',
-            'contractor_street' => 'required|string|max:255',
-            'contractor_barangay' => 'required|string|max:255',
-            'contractor_city' => 'required|string|max:255',
-            'contractor_state' => 'required|string|max:255',
-            'contractor_postal' => 'required|string|max:20',
-            
-            'client_name' => 'required|string|max:255',
-            'client_company' => 'nullable|string|max:255',
-            'client_email' => 'required|email|max:255',
-            'client_phone' => 'required|string|max:20',
-            'client_street' => 'required|string|max:255',
-            'client_unit' => 'nullable|string|max:255',
-            'client_barangay' => 'required|string|max:255',
-            'client_city' => 'required|string|max:255',
-            'client_state' => 'required|string|max:255',
-            'client_postal' => 'required|string|max:20',
-            
-            'property_type' => 'required|string|in:residential,commercial,industrial',
-            'property_street' => 'required|string|max:255',
-            'property_unit' => 'nullable|string|max:255',
-            'property_barangay' => 'required|string|max:255',
-            'property_city' => 'required|string|max:255',
-            'property_state' => 'required|string|max:255',
-            'property_postal' => 'required|string|max:20',
-        ]);
+        // Log that the method is being hit
+        \Log::info('storeStep1 method hit');
 
-        // Store in session
-        session(['contract_step1' => $validated]);
+        try {
+            $validated = $request->validate([
+                'contractor_name' => 'required|string|max:255',
+                'contractor_company' => 'nullable|string|max:255',
+                'contractor_email' => 'required|email|max:255',
+                'contractor_phone' => 'required|string|max:20',
+                'contractor_street' => 'required|string|max:255',
+                'contractor_barangay' => 'required|string|max:255',
+                'contractor_city' => 'required|string|max:255',
+                'contractor_state' => 'required|string|max:255',
+                'contractor_postal' => 'required|string|max:20',
+                
+                'client_name' => 'required|string|max:255',
+                'client_company' => 'nullable|string|max:255',
+                'client_email' => 'required|email|max:255',
+                'client_phone' => 'required|string|max:20',
+                'client_street' => 'required|string|max:255',
+                'client_unit' => 'nullable|string|max:255',
+                'client_barangay' => 'required|string|max:255',
+                'client_city' => 'required|string|max:255',
+                'client_state' => 'required|string|max:255',
+                'client_postal' => 'required|string|max:20',
+                
+                'property_type' => 'required|string|in:residential,commercial,industrial',
+                'property_street' => 'required|string|max:255',
+                'property_unit' => 'nullable|string|max:255',
+                'property_barangay' => 'required|string|max:255',
+                'property_city' => 'required|string|max:255',
+                'property_state' => 'required|string|max:255',
+                'property_postal' => 'required|string|max:20',
+            ]);
 
-        return redirect()->route('contracts.step2');
+            // Log validated data
+            \Log::info('Validation successful for Step 1:', $validated);
+
+            // Store in session
+            session(['contract_step1' => $validated]);
+
+            return redirect()->route('contracts.step2');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Log validation errors
+            \Log::error('Validation error in Step 1:', $e->errors());
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            // Catch any other exceptions
+            \Log::error('Error in storeStep1:', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return back()->with('error', 'An unexpected error occurred.')->withInput();
+        }
     }
 
     public function saveStep1(Request $request)
@@ -558,8 +574,13 @@ class ContractController extends Controller
 
                 foreach ($room->scopeTypes as $scope) {
                     foreach ($scope->materials as $material) {
+                        \Log::info('Processing material for contract item:', [
+                            'material_name' => $material->name,
+                            'srp_price' => $material->srp_price,
+                            'base_price' => $material->base_price
+                        ]);
                         // Get the price from either srp_price or base_price
-                        $price = floatval($material->srp_price ?? $material->base_price ?? 0);
+                        $price = ($material->srp_price > 0) ? floatval($material->srp_price) : floatval($material->base_price ?? 0);
                         $quantity = 1;
                         
                         // Calculate quantity based on area if needed
@@ -1246,6 +1267,7 @@ class ContractController extends Controller
                 // Create payment records
                 foreach ($paymentSchedule as $schedule) {
                     try {
+                        \Log::info('Attempting to create payment with schedule data:', $schedule);
                         Payment::create([
                             'payment_number' => Payment::generatePaymentNumber(),
                             'payable_type' => Contract::class,

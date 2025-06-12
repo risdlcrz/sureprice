@@ -33,6 +33,8 @@ class ScopeType extends Model
     public function materials(): BelongsToMany
     {
         return $this->belongsToMany(Material::class, 'scope_type_material')
+                    ->withPivot(['id'])
+                    ->select('materials.id', 'materials.name', 'materials.unit', 'materials.base_price', 'materials.srp_price', 'materials.is_per_area', 'materials.coverage_rate', 'materials.minimum_quantity', 'materials.waste_factor', 'materials.bulk_pricing')
                     ->withTimestamps();
     }
 

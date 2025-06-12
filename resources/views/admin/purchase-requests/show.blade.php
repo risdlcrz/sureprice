@@ -73,7 +73,7 @@
                                 @endif
                                 <tr>
                                     <th>Requested By</th>
-                                    <td>{{ $purchaseRequest->requestedBy->name }}</td>
+                                    <td>{{ $purchaseRequest->requestedBy?->name ?? 'N/A' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Created Date</th>
@@ -90,11 +90,11 @@
                             <table class="table table-bordered">
                                 <tr>
                                     <th style="width: 200px;">Total Amount</th>
-                                    <td class="text-right">{{ number_format($purchaseRequest->total_amount, 2) }}</td>
+                                    <td class="text-right">{{ $purchaseRequest->total_amount ? number_format($purchaseRequest->total_amount, 2) : 'N/A' }}</td>
                                 </tr>
                                 <tr>
                                     <th>Number of Items</th>
-                                    <td class="text-right">{{ $purchaseRequest->items->count() }}</td>
+                                    <td class="text-right">{{ $purchaseRequest->items?->count() ?? 0 }}</td>
                                 </tr>
                             </table>
 
@@ -127,30 +127,36 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($purchaseRequest->items as $item)
+                                    @if($purchaseRequest->items)
+                                        @foreach($purchaseRequest->items as $item)
+                                            <tr>
+                                                <td>{{ $item->material?->name ?? 'N/A' }}</td>
+                                                <td>{{ $item->description }}</td>
+                                                    <td class="text-right">{{ $item->quantity ? number_format($item->quantity, 2) : 'N/A' }}</td>
+                                                <td>{{ $item->unit }}</td>
+                                                    <td class="text-right">{{ $item->estimated_unit_price ? number_format($item->estimated_unit_price, 2) : 'N/A' }}</td>
+                                                    <td class="text-right">{{ $item->total_amount ? number_format($item->total_amount, 2) : 'N/A' }}</td>
+                                                    <td>{{ $item->preferred_brand ?? 'N/A' }}</td>
+                                                    <td>
+                                                        @if($item->preferredSupplier)
+                                                            {{ $item->preferredSupplier->company_name }}
+                                                        @else
+                                                            N/A
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $item->notes ?? 'N/A' }}</td>
+                                            </tr>
+                                        @endforeach
+                                    @else
                                         <tr>
-                                            <td>{{ $item->material->name }}</td>
-                                            <td>{{ $item->description }}</td>
-                                                <td class="text-right">{{ number_format($item->quantity, 2) }}</td>
-                                            <td>{{ $item->unit }}</td>
-                                                <td class="text-right">{{ number_format($item->estimated_unit_price, 2) }}</td>
-                                                <td class="text-right">{{ number_format($item->total_amount, 2) }}</td>
-                                                <td>{{ $item->preferred_brand ?? 'N/A' }}</td>
-                                                <td>
-                                                    @if($item->preferredSupplier)
-                                                        {{ $item->preferredSupplier->company_name }}
-                                                    @else
-                                                        N/A
-                                                    @endif
-                                                </td>
-                                                <td>{{ $item->notes ?? 'N/A' }}</td>
+                                            <td colspan="9" class="text-center">No items found</td>
                                         </tr>
-                                    @endforeach
+                                    @endif
                                 </tbody>
                                     <tfoot>
                                         <tr>
                                             <th colspan="5" class="text-right">Total:</th>
-                                            <th class="text-right">{{ number_format($purchaseRequest->total_amount, 2) }}</th>
+                                            <th class="text-right">{{ $purchaseRequest->total_amount ? number_format($purchaseRequest->total_amount, 2) : 'N/A' }}</th>
                                             <th colspan="3"></th>
                                         </tr>
                                     </tfoot>
@@ -187,7 +193,7 @@
                     @endif
 
                     <!-- Related Purchase Orders -->
-                    @if($purchaseRequest->purchaseOrders->count() > 0)
+                    @if($purchaseRequest->purchaseOrders?->count() > 0)
                         <div class="row mt-4">
                             <div class="col-12">
                                 <h4>Related Purchase Orders</h4>
@@ -204,24 +210,30 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach($purchaseRequest->purchaseOrders as $po)
+                                            @if($purchaseRequest->purchaseOrders)
+                                                @foreach($purchaseRequest->purchaseOrders as $po)
+                                                    <tr>
+                                                        <td>{{ $po->po_number }}</td>
+                                                        <td>{{ $po->supplier->company_name }}</td>
+                                                        <td class="text-right">{{ $po->total_amount ? number_format($po->total_amount, 2) : 'N/A' }}</td>
+                                                        <td>
+                                                            <span class="badge badge-{{ $po->status === 'pending' ? 'warning' : ($po->status === 'approved' ? 'success' : 'danger') }}">
+                                                                {{ ucfirst($po->status) }}
+                                                            </span>
+                                                        </td>
+                                                        <td>{{ $po->created_at->format('M d, Y') }}</td>
+                                                        <td>
+                                                            <a href="{{ route('purchase-orders.show', $po) }}" class="btn btn-sm btn-info">
+                                                                <i class="fas fa-eye"></i>
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            @else
                                                 <tr>
-                                                    <td>{{ $po->po_number }}</td>
-                                                    <td>{{ $po->supplier->company_name }}</td>
-                                                    <td class="text-right">{{ number_format($po->total_amount, 2) }}</td>
-                                                    <td>
-                                                        <span class="badge badge-{{ $po->status === 'pending' ? 'warning' : ($po->status === 'approved' ? 'success' : 'danger') }}">
-                                                            {{ ucfirst($po->status) }}
-                                                        </span>
-                                                    </td>
-                                                    <td>{{ $po->created_at->format('M d, Y') }}</td>
-                                                    <td>
-                                                        <a href="{{ route('purchase-orders.show', $po) }}" class="btn btn-sm btn-info">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                    </td>
+                                                    <td colspan="6" class="text-center">No purchase orders found</td>
                                                 </tr>
-                                            @endforeach
+                                            @endif
                                         </tbody>
                                     </table>
                         </div>

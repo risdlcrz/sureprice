@@ -232,60 +232,195 @@ class InformationManagementController extends Controller
             // Remove header row
             $headers = array_shift($csvData);
 
-            foreach ($csvData as $row) {
-                // Create user first
-                $user = User::create([
-                    'name' => $row[0] . ' ' . $row[1], // first_name + last_name
-                    'email' => $row[2],
-                    'username' => $row[3],
-                    'password' => Hash::make($row[4]), // You might want to generate random passwords
-                    'user_type' => 'employee',
-                    'role' => $row[5],
-                ]);
+            $type = $request->input('type', 'employee'); // Get the type from the request
 
-                // Create employee
-                Employee::create([
-                    'user_id' => $user->id,
-                    'first_name' => $row[0],
-                    'last_name' => $row[1],
-                    'email' => $row[2],
-                    'username' => $row[3],
-                    'role' => $row[5],
-                ]);
+            foreach ($csvData as $row) {
+                // Skip empty rows
+                if (empty(array_filter($row))) {
+                    continue;
+                }
+
+                if ($type === 'employee') {
+                    // Employee data expected: First Name, Last Name, Email, Username, Password, Role (procurement/warehousing)
+                    $firstName = $row[0] ?? null;
+                    $lastName = $row[1] ?? null;
+                    $email = $row[2] ?? null;
+                    $username = $row[3] ?? null;
+                    $password = $row[4] ?? null;
+                    $role = $row[5] ?? null;
+
+                    // Basic validation for critical fields
+                    if (!$firstName || !$lastName || !$email || !$username || !$password || !$role) {
+                        \Log::warning('Skipping employee row due to missing critical data:', $row);
+                        continue;
+                    }
+
+                    // Ensure role is valid for employees
+                    if (!in_array($role, ['procurement', 'warehousing'])) {
+                        \Log::warning('Skipping employee row due to invalid role:', $row);
+                        continue;
+                    }
+
+                    // Check if user already exists by email or username
+                    $existingUser = User::where('email', $email)->orWhere('username', $username)->first();
+                    if ($existingUser) {
+                        \Log::info('Skipping existing employee during import:', ['email' => $email, 'username' => $username]);
+                        continue; // Skip existing users
+                    }
+
+                    $user = User::create([
+                        'name' => $firstName . ' ' . $lastName,
+                        'email' => $email,
+                        'username' => $username,
+                        'password' => Hash::make($password),
+                        'user_type' => 'employee',
+                        'role' => $role,
+                    ]);
+
+                    Employee::create([
+                        'user_id' => $user->id,
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'email' => $email,
+                        'username' => $username,
+                        'role' => $role,
+                    ]);
+                } else if ($type === 'contractor') {
+                    // Contractor data expected: First Name, Last Name, Email, Username, Password, Company Name, Phone, Street, Barangay, City, State, Postal
+                    $firstName = $row[0] ?? null;
+                    $lastName = $row[1] ?? null;
+                    $email = $row[2] ?? null;
+                    $username = $row[3] ?? null;
+                    $password = $row[4] ?? null;
+                    $companyName = $row[5] ?? null;
+                    $phone = $row[6] ?? null;
+                    $street = $row[7] ?? null;
+                    $barangay = $row[8] ?? null;
+                    $city = $row[9] ?? null;
+                    $state = $row[10] ?? null;
+                    $postal = $row[11] ?? null;
+
+                    // Basic validation for critical fields
+                    if (!$firstName || !$lastName || !$email || !$username || !$password || !$companyName || !$phone) {
+                        \Log::warning('Skipping contractor row due to missing critical data:', $row);
+                        continue;
+                    }
+
+                    // Check if user already exists by email or username
+                    $existingUser = User::where('email', $email)->orWhere('username', $username)->first();
+                    if ($existingUser) {
+                        \Log::info('Skipping existing contractor during import:', ['email' => $email, 'username' => $username]);
+                        continue; // Skip existing users
+                    }
+
+                    $user = User::create([
+                        'name' => $firstName . ' ' . $lastName,
+                        'email' => $email,
+                        'username' => $username,
+                        'password' => Hash::make($password),
+                        'user_type' => 'employee', // Contractors are also 'employees' in the User table, but with a 'contractor' role
+                        'role' => 'contractor',
+                    ]);
+
+                    Employee::create([
+                        'user_id' => $user->id,
+                        'first_name' => $firstName,
+                        'last_name' => $lastName,
+                        'email' => $email,
+                        'username' => $username,
+                        'role' => 'contractor',
+                        'company_name' => $companyName,
+                        'phone' => $phone,
+                        'street' => $street,
+                        'barangay' => $barangay,
+                        'city' => $city,
+                        'state' => $state,
+                        'postal' => $postal,
+                    ]);
+                } else {
+                    \Log::warning('Unknown import type encountered:', ['type' => $type]);
+                    return back()->with('error', 'Unknown import type. Please use a valid template.');
+                }
             }
 
             DB::commit();
-            return back()->with('success', 'Employees imported successfully!');
+            return back()->with('success', 'Data imported successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error importing employees: ' . $e->getMessage());
+            return back()->with('error', 'Error importing data: ' . $e->getMessage());
         }
     }
 
-    public function template()
+    public function template(Request $request)
     {
-        $headers = [
-            'First Name',
-            'Last Name',
-            'Email',
-            'Username',
-            'Password',
-            'Role (procurement/warehousing)'
-        ];
+        $type = $request->input('type', 'employee'); // Default to employee
+
+        $headers = [];
+        $sampleRow = [];
+        $filename = '';
+
+        if ($type === 'employee') {
+            $headers = [
+                'First Name',
+                'Last Name',
+                'Email',
+                'Username',
+                'Password',
+                'Role (procurement/warehousing)'
+            ];
+
+            $sampleRow = [
+                'John',
+                'Doe',
+                'john.doe@example.com',
+                'johndoe',
+                'password123',
+                'procurement'
+            ];
+            $filename = 'employee_template.csv';
+        } else if ($type === 'contractor') {
+            // Contractor specific headers and sample data will go here
+            // For now, it can be empty or have placeholder values
+            $headers = [
+                'First Name',
+                'Last Name',
+                'Email',
+                'Username',
+                'Password',
+                'Company Name',
+                'Phone',
+                'Street',
+                'Barangay',
+                'City',
+                'State',
+                'Postal',
+            ];
+            $sampleRow = [
+                'Jane',
+                'Smith',
+                'jane.smith@example.com',
+                'janesmith',
+                'password123',
+                'ABC Construction',
+                '09123456789',
+                '123 Main St',
+                'Brgy. Sample',
+                'Sample City',
+                'Sample Province',
+                '12345',
+            ];
+            $filename = 'contractor_template.csv';
+        } else {
+            // Fallback for unknown types
+            return back()->with('error', 'Invalid template type requested.');
+        }
 
         $output = fopen('php://temp', 'w+');
         fputcsv($output, $headers);
 
         // Add a sample row
-        fputcsv($output, [
-            'John',
-            'Doe',
-            'john.doe@example.com',
-            'johndoe',
-            'password123',
-            'procurement'
-        ]);
+        fputcsv($output, $sampleRow);
 
         rewind($output);
         $csv = stream_get_contents($output);
@@ -293,6 +428,6 @@ class InformationManagementController extends Controller
 
         return response($csv)
             ->header('Content-Type', 'text/csv')
-            ->header('Content-Disposition', 'attachment; filename="employee_template.csv"');
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
 } 

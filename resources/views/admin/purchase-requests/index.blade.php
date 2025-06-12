@@ -33,7 +33,7 @@
 
                     <!-- Statistics Cards -->
                     <div class="row mb-4">
-                        <div class="col-md-3">
+                        <div class="col-md-3 mb-3">
                             <div class="small-box bg-info">
                                 <div class="inner">
                                     <h3>{{ $purchaseRequests->where('status', 'pending')->count() }}</h3>
@@ -44,7 +44,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 mb-3">
                             <div class="small-box bg-success">
                                 <div class="inner">
                                     <h3>{{ $purchaseRequests->where('status', 'approved')->count() }}</h3>
@@ -55,7 +55,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 mb-3">
                             <div class="small-box bg-warning">
                                 <div class="inner">
                                     <h3>{{ $purchaseRequests->where('status', 'rejected')->count() }}</h3>
@@ -66,7 +66,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 mb-3">
                             <div class="small-box bg-primary">
                                 <div class="inner">
                                     <h3>{{ $purchaseRequests->where('is_project_related', true)->count() }}</h3>
@@ -80,7 +80,7 @@
                     </div>
 
                     <!-- Search and Filter -->
-                    <div class="row mb-3">
+                    <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="input-group">
                                 <input type="text" id="searchInput" class="form-control" placeholder="Search purchase requests...">
@@ -109,8 +109,8 @@
                     </div>
 
                     <!-- Purchase Requests Table -->
-                <div class="table-responsive">
-                        <table class="table table-bordered table-hover" id="purchaseRequestsTable">
+                <div class="table-responsive mb-4">
+                        <table class="table table-bordered table-hover table-striped" id="purchaseRequestsTable">
                         <thead>
                             <tr>
                                     <th>Request #</th>
@@ -151,14 +151,14 @@
                                     <td>{{ $request->created_at->format('M d, Y') }}</td>
                                     <td>
                                         <div class="btn-group">
-                                            <a href="{{ route('purchase-requests.show', $request) }}" class="btn btn-sm btn-info">
+                                            <a href="{{ route('purchase-requests.show', $request) }}" class="btn btn-sm btn-info me-1">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                             @if($request->status === 'pending')
-                                                <a href="{{ route('purchase-requests.edit', $request) }}" class="btn btn-sm btn-primary">
+                                                <a href="{{ route('purchase-requests.edit', $request) }}" class="btn btn-sm btn-primary me-1">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                                <form action="{{ route('purchase-requests.destroy', $request) }}" method="POST" class="d-inline">
+                                                <form action="{{ route('purchase-requests.destroy', $request) }}" method="POST" class="d-inline me-1">
                                                 @csrf
                                                 @method('DELETE')
                                                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this request?')">
@@ -167,7 +167,7 @@
                                             </form>
                                         @endif
                                             @if($request->status === 'pending' && auth()->user()->can('approve-purchase-requests'))
-                                                <form action="{{ route('purchase-requests.approve', $request) }}" method="POST" class="d-inline">
+                                                <form action="{{ route('purchase-requests.approve', $request) }}" method="POST" class="d-inline me-1">
                                                     @csrf
                                                     <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Are you sure you want to approve this request?')">
                                                         <i class="fas fa-check"></i>

@@ -60,20 +60,61 @@
                 <a href="{{ route('information-management.create') }}" class="btn btn-sm btn-primary">
                     <i class="fas fa-user-plus me-1"></i> Add Employee
                 </a>
-                <form action="{{ route('information-management.import') }}" method="POST" enctype="multipart/form-data" class="d-inline">
-                    @csrf
-                    <div class="btn-group">
-                        <label class="btn btn-sm btn-success" title="Upload CSV">
-                            <i class="fas fa-file-csv me-1"></i> Import CSV
-                            <input type="file" name="csv_file" class="d-none" accept=".csv" onchange="this.form.submit()">
-                        </label>
-                        <a href="{{ route('information-management.template') }}" class="btn btn-sm btn-outline-success" title="Download Template">
-                            <i class="fas fa-download"></i>
-                        </a>
-                    </div>
-                </form>
+                
+                <!-- New Import CSV button to trigger modal -->
+                <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#importCsvModal" title="Import CSV">
+                    <i class="fas fa-file-csv me-1"></i> Import CSV
+                </button>
+                
+                <!-- Original Download Template button -->
+                <a href="{{ route('information-management.template') }}" class="btn btn-sm btn-outline-success" title="Download Template">
+                    <i class="fas fa-download"></i>
+                </a>
+
             </div>
             @endif
+        </div>
+    </div>
+
+    <!-- Import CSV Modal -->
+    <div class="modal fade" id="importCsvModal" tabindex="-1" aria-labelledby="importCsvModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importCsvModalLabel">Import Data via CSV</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Instructions and Template Download will go here -->
+                    <p>Please ensure your CSV file follows the correct format for the data you are importing. You can download a template below.</p>
+                    
+                    <h6 class="mt-4">Download CSV Template:</h6>
+                    <div class="d-flex gap-2 mb-4">
+                        <a href="{{ route('information-management.template', ['type' => 'employee']) }}" class="btn btn-info btn-sm">
+                            <i class="fas fa-download me-1"></i> Employee Template
+                        </a>
+                        <a href="{{ route('information-management.template', ['type' => 'contractor']) }}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-download me-1"></i> Contractor Template
+                        </a>
+                    </div>
+
+                    <hr>
+
+                    <h6 class="mt-4">Upload Your CSV File:</h6>
+                    <form action="{{ route('information-management.import') }}" method="POST" enctype="multipart/form-data" id="csvUploadForm">
+                        @csrf
+                        <input type="hidden" name="type" value="{{ $type ?? 'employee' }}" id="importType">
+                        <div class="mb-3">
+                            <label for="csv_file" class="form-label">Choose CSV File:</label>
+                            <input type="file" name="csv_file" id="csv_file" class="form-control" accept=".csv" required>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Import CSV</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
