@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ProjectTimelineController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\PurchaseRequestController;
 use App\Http\Controllers\MaterialController;
@@ -18,6 +19,12 @@ use App\Models\Supplier;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+// Project Timeline Routes
+Route::prefix('project-timeline')->group(function () {
+    Route::get('/events', [ProjectTimelineController::class, 'apiEvents'])->name('api.project-timeline.events');
+    Route::post('/events', [ProjectTimelineController::class, 'store'])->name('api.project-timeline.events.store');
+});
 
 Route::get('/materials/search', [MaterialController::class, 'search']);
 

@@ -198,4 +198,36 @@ class ProjectTimelineController extends Controller
 
         return response()->json($tasks);
     }
+
+    public function apiEvents(Request $request)
+    {
+        // Project Tasks as events
+        $tasks = \App\Models\ProjectTask::all()->map(function($task) {
+            return [
+                'id' => 'task-' . $task->id,
+                'title' => $task->title,
+                'start' => $task->start_date->format('Y-m-d'),
+                'end' => $task->end_date->format('Y-m-d'),
+                'type' => 'task',
+                'backgroundColor' => '#3788d8', // blue for tasks
+            ];
+        });
+
+        // Contracts as events
+        $contracts = \App\Models\Contract::all()->map(function($contract) {
+            return [
+                'id' => 'contract-' . $contract->id,
+                'title' => 'Contract: ' . $contract->contract_number,
+                'start' => $contract->start_date->format('Y-m-d'),
+                'end' => $contract->end_date->format('Y-m-d'),
+                'type' => 'contract',
+                'backgroundColor' => '#28a745', // green for contracts
+            ];
+        });
+
+        // Merge and return all events
+        $events = $tasks->merge($contracts)->values();
+
+        return response()->json($events);
+    }
 } 

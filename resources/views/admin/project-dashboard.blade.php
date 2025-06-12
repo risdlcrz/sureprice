@@ -72,7 +72,7 @@
                         </div>
                     </div>
                     <div class="card-footer">
-                        <a href="{{ route('project.timeline') }}" class="btn btn-info w-100">View Timeline</a>
+                        <a href="{{ route('project-timeline.index') }}" class="btn btn-info w-100">View Timeline</a>
                     </div>
                 </div>
             </div>
