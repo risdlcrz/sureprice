@@ -91,7 +91,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/', [ContractController::class, 'store'])->name('store');
         Route::get('/{contract}', [ContractController::class, 'show'])->name('show');
         Route::get('/{contract}/download', [ContractController::class, 'download'])->name('download');
-        Route::post('/{contract}/status', [ContractController::class, 'updateStatus'])->name('updateStatus');
+        Route::patch('/{contract}/status', [ContractController::class, 'updateStatus'])->name('updateStatus');
+        Route::post('/{contract}/status', [ContractController::class, 'updateStatus']);
         Route::post('/save-signature', [ContractController::class, 'saveSignature'])->name('contracts.save.signature');
         Route::post('/contracts/store/step3', [ContractController::class, 'storeStep3'])->name('contracts.store.step3');
         Route::post('/contracts/save/step3', [ContractController::class, 'saveStep3'])->name('contracts.save.step3');

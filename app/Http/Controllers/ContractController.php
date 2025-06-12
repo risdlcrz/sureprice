@@ -1179,19 +1179,10 @@ class ContractController extends Controller
 
             $oldStatus = $contract->status;
             $contract->status = $request->status;
-            $contract->save();
 
-            \Log::info('Contract status updated', [
-                'contract_id' => $contract->id,
-                'old_status' => $oldStatus,
-                'new_status' => $request->status,
-                'payment_terms' => $contract->payment_terms,
-                'total_amount' => $contract->total_amount
-            ]);
-
-            // Generate payments when contract is approved
+            // Generate payment schedule when contract is approved
             if ($request->status === 'approved') {
-                \Log::info('Attempting to generate payments');
+                \Log::info('Generating payment schedule for contract: ' . $contract->id);
                 
                 // Generate payment schedule based on payment terms
                 $paymentSchedule = [];
@@ -1264,27 +1255,24 @@ class ContractController extends Controller
                 
                 \Log::info('Generated payment schedule:', $paymentSchedule);
                 
-                // Create payment records
-                foreach ($paymentSchedule as $schedule) {
-                    try {
-                        \Log::info('Attempting to create payment with schedule data:', $schedule);
-                        Payment::create([
-                            'payment_number' => Payment::generatePaymentNumber(),
-                            'payable_type' => Contract::class,
-                            'payable_id' => $contract->id,
-                            'contract_id' => $contract->id,
-                            'amount' => $schedule['amount'],
-                            'payment_method' => $contract->payment_method,
-                            'payment_type' => $schedule['stage'],
-                            'status' => 'pending',
-                            'due_date' => $schedule['due_date'],
-                            'created_by' => auth()->id() ?? 1
-                        ]);
-                    } catch (\Exception $e) {
-                        \Log::error('Error creating payment: ' . $e->getMessage());
-                        throw $e;
-                    }
-                }
+                // Set the payment schedule
+                $contract->payment_schedule = json_encode($paymentSchedule);
+            }
+
+            $contract->save();
+
+            \Log::info('Contract status updated', [
+                'contract_id' => $contract->id,
+                'old_status' => $oldStatus,
+                'new_status' => $request->status,
+                'payment_terms' => $contract->payment_terms,
+                'total_amount' => $contract->total_amount
+            ]);
+
+            // Generate payments when contract is approved
+            if ($request->status === 'approved') {
+                \Log::info('Attempting to generate payments');
+                $contract->generatePayments();
             }
 
             DB::commit();
