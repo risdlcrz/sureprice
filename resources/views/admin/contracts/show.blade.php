@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Contract Details</h1>
@@ -273,11 +274,11 @@
                     <tbody>
                         @forelse($contract->items as $item)
                             <tr>
-                                <td>{{ $item->material_name }}</td>
-                                <td>{{ $item->unit }}</td>
-                                <td>₱{{ number_format($item->amount, 2) }}</td>
-                                <td>{{ number_format($item->quantity, 2) }}</td>
-                                <td>₱{{ number_format($item->total, 2) }}</td>
+                                <td data-item-name>{{ $item->material_name }}</td>
+                                <td data-item-unit>{{ $item->unit }}</td>
+                                <td data-item-unit-cost>₱{{ number_format($item->amount, 2) }}</td>
+                                <td data-item-quantity>{{ number_format($item->quantity, 2) }}</td>
+                                <td data-item-total-cost>₱{{ number_format($item->total, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -397,8 +398,7 @@ function updateStatus(status) {
             'Accept': 'application/json'
         },
         body: JSON.stringify({ 
-            status: status, 
-            _method: 'PATCH' 
+            status: status 
         }),
         credentials: 'same-origin'
     })
@@ -442,53 +442,154 @@ function submitDelete() {
 }
 
 document.getElementById('generatePurchaseRequest')?.addEventListener('click', function() {
+    console.log('Generate Purchase Request button clicked');
+    
+    // Show loading state
+    const button = this;
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    
     // Gather contract_id
     const contractId = '{{ $contract->id }}';
+    console.log('Contract ID:', contractId);
+    
     // Gather items from the contract items table
     const items = [];
-    document.querySelectorAll('#contractItemsTable tbody tr').forEach(row => {
-        // Only process rows with item data (skip empty or summary rows)
+    const tableRows = document.querySelectorAll('#contractItemsTable tbody tr');
+    console.log('Found table rows:', tableRows.length);
+    
+    tableRows.forEach((row, index) => {
+        // Skip rows that don't have item data (like "No items found" row)
         const nameCell = row.querySelector('td[data-item-name]');
-        if (!nameCell) return;
+        if (!nameCell || nameCell.textContent.trim() === 'No items found.') {
+            console.log(`Skipping row ${index}: No valid name cell`);
+            return;
+        }
+        
         const name = nameCell.textContent.trim();
         const unit = row.querySelector('td[data-item-unit]')?.textContent.trim() || '';
         const unitCost = parseFloat(row.querySelector('td[data-item-unit-cost]')?.textContent.replace(/[^\d.]/g, '') || 0);
         const quantity = parseFloat(row.querySelector('td[data-item-quantity]')?.textContent.replace(/[^\d.]/g, '') || 0);
         const totalCost = parseFloat(row.querySelector('td[data-item-total-cost]')?.textContent.replace(/[^\d.]/g, '') || 0);
+        
+        console.log(`Row ${index}:`, { name, unit, unitCost, quantity, totalCost });
+        
         if (name && unit && !isNaN(unitCost) && !isNaN(quantity) && !isNaN(totalCost)) {
             items.push({ name, unit, unitCost, quantity, totalCost });
         }
     });
+    
+    console.log('Total items found:', items.length);
+    
     if (items.length === 0) {
-        Swal.fire({ icon: 'error', title: 'No contract items found to generate PR.' });
+        // Reset button state
+        button.disabled = false;
+        button.innerHTML = originalText;
+        
+        Swal.fire({ 
+            icon: 'error', 
+            title: 'No Items Found',
+            text: 'No contract items found to generate purchase request. Please add items to the contract first.',
+            confirmButtonText: 'OK'
+        });
         return;
     }
+    
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                     document.querySelector('input[name="_token"]')?.value;
+    
+    console.log('CSRF token found:', !!csrfToken);
+    
+    if (!csrfToken) {
+        // Reset button state
+        button.disabled = false;
+        button.innerHTML = originalText;
+        
+        Swal.fire({ 
+            icon: 'error', 
+            title: 'Security Error',
+            text: 'CSRF token not found. Please refresh the page and try again.',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+    
+    console.log('Sending request to generate purchase request...');
+    
     fetch("{{ route('purchase-requests.generate-from-contract') }}", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
         },
         body: JSON.stringify({
             contract_id: contractId,
             items: items
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        console.log('Response data:', data);
+        
+        // Reset button state
+        button.disabled = false;
+        button.innerHTML = originalText;
+        
         if (data.success) {
             Swal.fire({
                 icon: 'success',
-                title: 'Purchase Request Generated!',
-                html: `PR <b>${data.pr_number}</b> for CT <b>${data.contract_number}</b> generated as draft.<br><a href='/purchase-requests/${data.pr_id}'>View Purchase Request</a>`,
-                confirmButtonText: 'OK'
+                title: 'Purchase Request Generated Successfully!',
+                html: `
+                    <div class="text-left">
+                        <p><strong>PR Number:</strong> ${data.pr_number}</p>
+                        <p><strong>Contract:</strong> ${data.contract_number}</p>
+                        <p><strong>Status:</strong> <span class="badge bg-warning">Pending</span></p>
+                        <p><strong>Items:</strong> ${items.length} items</p>
+                        <p><strong>Total Amount:</strong> ₱${items.reduce((sum, item) => sum + item.totalCost, 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</p>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'View Purchase Request',
+                cancelButtonText: 'Close',
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Navigate to the purchase request
+                    window.location.href = `{{ asset('purchase-requests') }}/${data.pr_id}`;
+                }
             });
         } else {
-            Swal.fire({ icon: 'error', title: 'Failed to generate PR.' });
+            Swal.fire({ 
+                icon: 'error', 
+                title: 'Generation Failed',
+                text: data.message || 'Failed to generate purchase request. Please try again.',
+                confirmButtonText: 'OK'
+            });
         }
     })
-    .catch(() => {
-        Swal.fire({ icon: 'error', title: 'Failed to generate PR.' });
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // Reset button state
+        button.disabled = false;
+        button.innerHTML = originalText;
+        
+        Swal.fire({ 
+            icon: 'error', 
+            title: 'Network Error',
+            text: 'Failed to connect to server. Please check your internet connection and try again.',
+            confirmButtonText: 'OK'
+        });
     });
 });
 </script>

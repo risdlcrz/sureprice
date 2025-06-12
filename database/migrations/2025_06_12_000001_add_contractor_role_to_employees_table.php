@@ -9,13 +9,28 @@ return new class extends Migration
 {
     public function up()
     {
-        // Modify the enum to include contractor
-        DB::statement("ALTER TABLE employees MODIFY role ENUM('procurement','warehousing','contractor') NOT NULL");
+        // Check if we're using SQLite
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            // For SQLite, we need to recreate the table
+            Schema::table('employees', function (Blueprint $table) {
+                $table->string('role')->default('procurement')->change();
+            });
+        } else {
+            // For MySQL, use the MODIFY approach
+            DB::statement("ALTER TABLE employees MODIFY role ENUM('procurement','warehousing','contractor') NOT NULL");
+        }
     }
 
     public function down()
     {
-        // Revert to original
-        DB::statement("ALTER TABLE employees MODIFY role ENUM('procurement','warehousing') NOT NULL");
+        // Check if we're using SQLite
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            Schema::table('employees', function (Blueprint $table) {
+                $table->string('role')->default('procurement')->change();
+            });
+        } else {
+            // For MySQL, revert to original
+            DB::statement("ALTER TABLE employees MODIFY role ENUM('procurement','warehousing') NOT NULL");
+        }
     }
 }; 

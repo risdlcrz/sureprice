@@ -65,14 +65,14 @@ class PurchaseRequestController extends Controller
 
             $totalAmount = 0;
 
-        foreach ($validated['items'] as $item) {
-            $purchaseRequest->items()->create([
-                'material_id' => $item['material_id'],
+            foreach ($validated['items'] as $item) {
+                $purchaseRequest->items()->create([
+                    'material_id' => $item['material_id'],
                     'supplier_id' => $item['supplier_id'] ?? null,
-                'description' => $item['description'],
-                'quantity' => $item['quantity'],
-                'unit' => $item['unit'],
-                'estimated_unit_price' => $item['estimated_unit_price'],
+                    'description' => $item['description'],
+                    'quantity' => $item['quantity'],
+                    'unit' => $item['unit'],
+                    'estimated_unit_price' => $item['estimated_unit_price'],
                     'total_amount' => $item['quantity'] * $item['estimated_unit_price'],
                     'notes' => $item['notes'] ?? null,
                     'preferred_brand' => $item['preferred_brand'] ?? null,
@@ -114,8 +114,11 @@ class PurchaseRequestController extends Controller
         }])->get();
         
         $suppliers = Supplier::orderBy('company_name')->get();
+        $contracts = \App\Models\Contract::with('client')->orderBy('created_at', 'desc')->get();
+        $projects = \App\Models\Project::orderBy('created_at', 'desc')->get();
+        \Log::info('Projects variable in PurchaseRequestController@edit:', ['projects' => $projects]);
 
-        return view('admin.purchase-requests.edit', compact('purchaseRequest', 'materials', 'suppliers'));
+        return view('admin.purchase-requests.edit', compact('purchaseRequest', 'materials', 'suppliers', 'contracts', 'projects'));
     }
 
     public function update(Request $request, PurchaseRequest $purchaseRequest)
@@ -215,11 +218,122 @@ class PurchaseRequestController extends Controller
             return back()->with('error', 'Cannot reject a purchase request that is not pending.');
         }
 
+        $purchaseRequest->update(['status' => 'rejected']);
+
+        return back()->with('success', 'Purchase request rejected successfully.');
+    }
+
+    public function generateFromContract(Request $request)
+    {
         try {
-            $purchaseRequest->update(['status' => 'rejected']);
-            return back()->with('success', 'Purchase request rejected successfully.');
+            // Validate the request
+            $validated = $request->validate([
+                'contract_id' => 'required|exists:contracts,id',
+                'items' => 'required|array|min:1',
+                'items.*.name' => 'required|string',
+                'items.*.unit' => 'required|string',
+                'items.*.unitCost' => 'required|numeric|min:0',
+                'items.*.quantity' => 'required|numeric|min:0',
+                'items.*.totalCost' => 'required|numeric|min:0'
+            ]);
+
+            \Log::info('Items received in generateFromContract:', ['items' => $validated['items']]);
+
+            // Find the contract
+            $contract = \App\Models\Contract::findOrFail($validated['contract_id']);
+
+            // Generate a unique PR number
+            $date = now()->format('Ymd');
+            $lastPR = PurchaseRequest::where('request_number', 'like', "PR-{$date}-%")
+                ->orderBy('request_number', 'desc')
+                ->first();
+            
+            $sequence = '0001';
+            if ($lastPR) {
+                $lastSequence = intval(substr($lastPR->request_number, -4));
+                $sequence = str_pad($lastSequence + 1, 4, '0', STR_PAD_LEFT);
+            }
+            
+            $prNumber = "PR-{$date}-{$sequence}";
+
+            // Start database transaction
+            DB::beginTransaction();
+
+            try {
+                // Create the purchase request
+                $purchaseRequest = PurchaseRequest::create([
+                    'request_number' => $prNumber,
+                    'contract_id' => $contract->id,
+                    'requested_by' => auth()->id(),
+                    'status' => 'pending',
+                    'is_project_related' => true,
+                    'notes' => 'Automatically generated from contract ' . $contract->contract_number,
+                    'total_amount' => collect($validated['items'])->sum('totalCost')
+                ]);
+
+                // Create purchase request items
+                foreach ($validated['items'] as $item) {
+                    // Find or create the material based on its name
+                    $material = Material::firstOrCreate(
+                        ['name' => $item['name']],
+                        [
+                            'unit' => $item['unit'] ?? 'pcs',
+                            'base_price' => $item['unitCost'] ?? 0, // Use unitCost from contract if available
+                            'category_id' => 1, // Default category, adjust as needed
+                            'code' => 'MAT' . str_pad(rand(1, 99999), 6, '0', STR_PAD_LEFT) // Generate a random code
+                        ]
+                    );
+
+                    // Determine the estimated unit price: prioritize contract unitCost, then material base_price
+                    $estimatedUnitPrice = $item['unitCost'] > 0 ? $item['unitCost'] : ($material->srp_price > 0 ? $material->srp_price : $material->base_price);
+
+                    $purchaseRequest->items()->create([
+                        'material_id' => $material->id,
+                        'description' => $item['name'],
+                        'quantity' => $item['quantity'],
+                        'unit' => $item['unit'],
+                        'estimated_unit_price' => $estimatedUnitPrice,
+                        'total_amount' => $estimatedUnitPrice * $item['quantity'],
+                        'notes' => 'Generated from contract'
+                    ]);
+                }
+
+                // Commit the transaction
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'pr_number' => $prNumber,
+                    'contract_number' => $contract->contract_number,
+                    'pr_id' => $purchaseRequest->id,
+                    'message' => 'Purchase request generated successfully'
+                ]);
+
+            } catch (\Exception $e) {
+                // Rollback the transaction
+                DB::rollBack();
+                throw $e;
+            }
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error: ' . $e->getMessage(),
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
-            return back()->with('error', 'Error rejecting purchase request: ' . $e->getMessage());
+            // Log the error for debugging
+            \Log::error('Error generating purchase request: ' . $e->getMessage(), [
+                'contract_id' => $request->input('contract_id'),
+                'items_count' => count($request->input('items', [])),
+                'user_id' => auth()->id(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating purchase request: ' . $e->getMessage()
+            ], 500);
         }
     }
 } 

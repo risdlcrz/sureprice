@@ -540,9 +540,10 @@ function initializeForm() {
                                                                 <ul class="list-unstyled small">
                                                                     ${(scope.materials && getScopeMaterials(scope).length > 0) ? getScopeMaterials(scope).map(material => {
                                                                         const name = material.name || 'Unnamed Material';
-                                                                        const price = material.srp_price ?? material.base_price ?? 0;
+                                                                        // Determine the price to display, prioritizing srp_price if greater than 0, else base_price
+                                                                        const displayPrice = parseFloat(material.srp_price ?? 0) > 0 ? parseFloat(material.srp_price) : parseFloat(material.base_price ?? 0);
                                                                         const unit = material.unit || 'pcs';
-                                                                        return `<li>${name} - ₱${price} ${unit}</li>`;
+                                                                        return `<li>${name} - ₱${displayPrice.toFixed(2)}</li>`;
                                                                     }).filter(Boolean).join('') : '<li><em>No materials assigned</em></li>'}
                                                                 </ul>
                                                                 <small class="text-muted">Tasks:</small>
@@ -696,9 +697,10 @@ function createRoomRow() {
                                                         <ul class="list-unstyled small">
                                                             ${(scope.materials && getScopeMaterials(scope).length > 0) ? getScopeMaterials(scope).map(material => {
                                                                 const name = material.name || 'Unnamed Material';
-                                                                const price = material.srp_price ?? material.base_price ?? 0;
+                                                                // Determine the price to display, prioritizing srp_price if greater than 0, else base_price
+                                                                const displayPrice = parseFloat(material.srp_price ?? 0) > 0 ? parseFloat(material.srp_price) : parseFloat(material.base_price ?? 0);
                                                                 const unit = material.unit || 'pcs';
-                                                                return `<li>${name} - ₱${price} ${unit}</li>`;
+                                                                return `<li>${name} - ₱${displayPrice.toFixed(2)}</li>`;
                                                             }).filter(Boolean).join('') : '<li><em>No materials assigned</em></li>'}
                                                         </ul>
                                                         <small class="text-muted">Tasks:</small>
@@ -919,24 +921,29 @@ function calculateAllCosts() {
             console.log('Processed Materials Array for scope', scope.id, ':', materialsArr);
             materialsArr.forEach(material => {
                 if (!material || typeof material !== 'object') return;
+                console.log('Processing material in getScopeMaterials:', material);
 
-                const price = parseFloat(material.srp_price ?? material.base_price ?? 0) || 0;
-                let quantity = 1;
+                const price = parseFloat(material.srp_price ?? 0) > 0 ? parseFloat(material.srp_price) : parseFloat(material.base_price ?? 0);
+                let quantity = 0;
                 if (material.is_per_area) {
                     const coverage = parseFloat(material.coverage_rate ?? 1) || 1;
-                    quantity = Math.ceil(area / coverage);
+                    quantity = area > 0 && coverage > 0 ? Math.ceil(area / coverage) : 0;
                 } else {
-                    quantity = Math.max(1, material.minimum_quantity ?? 1);
+                    quantity = parseFloat(material.minimum_quantity ?? 1) || 0; // Ensure quantity is a number
                 }
-                const wasteFactor = parseFloat(material.waste_factor ?? 1.1) || 1.1;
-                quantity = Math.ceil(quantity * wasteFactor);
+                
+                // Only apply waste factor if quantity is greater than 0
+                if (quantity > 0) {
+                    const wasteFactor = parseFloat(material.waste_factor ?? 1.1) || 1.1;
+                    quantity = Math.ceil(quantity * wasteFactor);
+                }
 
                 let finalPrice = price;
                 if (material.bulk_pricing) {
                     const bulkPricing = Array.isArray(material.bulk_pricing) ? material.bulk_pricing : Object.values(material.bulk_pricing || {});
                     for (const tier of bulkPricing) {
                         if (tier && typeof tier === 'object' && quantity >= (tier.min_quantity ?? 0)) {
-                            finalPrice = tier.price ?? finalPrice;
+                            finalPrice = parseFloat(tier.price ?? finalPrice) || 0; // Ensure finalPrice is a number
                         }
                     }
                 }
@@ -944,6 +951,7 @@ function calculateAllCosts() {
                 const totalCost = finalPrice * quantity;
                 roomMaterialsCost += totalCost; // Accumulate room materials cost
 
+                // Only add to materialsMap if totalCost is valid and greater than 0
                 const key = `${material.name ?? 'Unnamed Material'}-${material.unit ?? 'pcs'}`;
                 if (materialsMap.has(key)) {
                     const existing = materialsMap.get(key);
@@ -965,6 +973,7 @@ function calculateAllCosts() {
                         coverage: material.coverage_rate ?? 1
                     });
                 }
+                console.log('Material added to materialsMap:', materialsMap.get(key));
             });
 
             // --- Labor ---
@@ -1046,6 +1055,8 @@ function getScopeMaterials(scope) {
                 console.warn('Invalid material found:', material);
                 return null;
             }
+            // Log the material object here to inspect its structure
+            console.log('Material object in getScopeMaterials:', material);
 
             // Handle bulk pricing
             let bulkPricing = [];
@@ -1067,8 +1078,8 @@ function getScopeMaterials(scope) {
             return {
                 id: material.id || null,
                 name: material.name || 'Unnamed Material',
-                srp_price: parseFloat(material.srp_price || material.cost || 0),
-                base_price: parseFloat(material.base_price || material.cost || 0),
+                srp_price: parseFloat(material.srp_price ?? 0) > 0 ? parseFloat(material.srp_price) : parseFloat(material.base_price ?? 0),
+                base_price: parseFloat(material.base_price ?? 0),
                 unit: material.unit || 'pcs',
                 is_per_area: material.is_per_area || material.isPerArea || false,
                 coverage_rate: parseFloat(material.coverage_rate || 1),
