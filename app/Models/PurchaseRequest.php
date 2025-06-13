@@ -59,6 +59,11 @@ class PurchaseRequest extends Model
         return $this->belongsTo(User::class, 'requested_by');
     }
 
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
     // Accessors
     public function getStatusColorAttribute()
     {
