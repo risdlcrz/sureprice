@@ -26,8 +26,7 @@ Route::prefix('project-timeline')->group(function () {
     Route::post('/events', [ProjectTimelineController::class, 'store'])->name('api.project-timeline.events.store');
 });
 
-Route::get('/materials/search', [MaterialController::class, 'search']);
-
+// Contract Timeline Route
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/contracts/timeline', [ContractController::class, 'timeline']);
     Route::get('/contracts/search', [ContractController::class, 'search']);
@@ -39,6 +38,12 @@ Route::middleware('auth:sanctum')->group(function () {
             'categories' => $categories
         ]);
     });
+});
+
+Route::get('/materials/search', [MaterialController::class, 'search']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/materials/test', [MaterialController::class, 'test']);
 });
 
 Route::middleware([
@@ -83,5 +88,8 @@ Route::middleware('api')->group(function () {
 });
 
 Route::get('users/{id}', [App\Http\Controllers\UserController::class, 'showMinimal']);
+
+// Add this route for fetching contract items (materials)
+Route::get('/contracts/{contract}/items', [\App\Http\Controllers\ContractController::class, 'getItems']);
 
 require __DIR__.'/auth.php'; 

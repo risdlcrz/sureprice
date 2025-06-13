@@ -12,14 +12,14 @@ class PurchaseRequestController extends Controller
 {
     public function index()
     {
-        $purchaseRequests = PurchaseRequest::with(['contract', 'requestedBy', 'items.material', 'items.supplier'])
+        $purchaseRequests = PurchaseRequest::with(['contract', 'project', 'requestedBy', 'items.material', 'items.supplier'])
             ->latest()
             ->paginate(10);
 
         return view('admin.purchase-requests.index', compact('purchaseRequests'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $materials = Material::with(['suppliers' => function($query) {
             $query->orderBy('price');
@@ -29,15 +29,36 @@ class PurchaseRequestController extends Controller
         $contracts = \App\Models\Contract::with('client')->orderBy('created_at', 'desc')->get();
         $projects = \App\Models\Project::orderBy('created_at', 'desc')->get();
         
-        return view('admin.purchase-requests.create', compact('materials', 'suppliers', 'contracts', 'projects'));
+        $prefillItems = [];
+        if ($request->has('contract_id')) {
+            $contract = \App\Models\Contract::with('items')->find($request->contract_id);
+            if ($contract) {
+                foreach ($contract->items as $item) {
+                    $prefillItems[] = [
+                        'material_id' => $item->material_id,
+                        'description' => $item->material_name ?? $item->description,
+                        'quantity' => $item->quantity,
+                        'unit' => $item->unit,
+                        'estimated_unit_price' => $item->amount,
+                        'total_amount' => $item->total,
+                        'notes' => 'From contract',
+                        'preferred_brand' => null,
+                        'preferred_supplier_id' => null
+                    ];
+                }
+            }
+        }
+        
+        return view('admin.purchase-requests.create', compact('materials', 'suppliers', 'contracts', 'projects', 'prefillItems'));
     }
 
     public function store(Request $request)
     {
+        \Log::info('PurchaseRequestController@store called', ['request' => $request->all()]);
         $validated = $request->validate([
             'is_project_related' => 'required|boolean',
-            'contract_id' => 'required_if:is_project_related,true|exists:contracts,id',
-            'project_id' => 'required_if:is_project_related,true|exists:projects,id',
+            'contract_id' => 'nullable|exists:contracts,id',
+            'project_id' => 'nullable|exists:projects,id',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.material_id' => 'required|exists:materials,id',
@@ -48,11 +69,18 @@ class PurchaseRequestController extends Controller
             'items.*.estimated_unit_price' => 'required|numeric|min:0',
             'items.*.notes' => 'nullable|string',
             'items.*.preferred_brand' => 'nullable|string',
-            'items.*.preferred_supplier_id' => 'nullable|exists:suppliers,id'
+            'items.*.preferred_supplier_id' => 'required|exists:suppliers,id',
+        ], [
+            // Custom error messages
         ]);
+        // Custom validation: require at least one of contract_id or project_id if is_project_related
+        if ($validated['is_project_related'] && empty($validated['contract_id']) && empty($validated['project_id'])) {
+            return back()->withErrors(['contract_id' => 'Either contract or project must be selected for project-related requests.'])->withInput();
+        }
+        try {
+            \Log::info('Validation passed', ['validated' => $validated]);
 
         DB::beginTransaction();
-        try {
             $purchaseRequest = new PurchaseRequest([
                 'request_number' => 'PR-' . str_pad(PurchaseRequest::count() + 1, 6, '0', STR_PAD_LEFT),
                 'contract_id' => $validated['is_project_related'] ? $validated['contract_id'] : null,
@@ -62,36 +90,33 @@ class PurchaseRequestController extends Controller
                 'is_project_related' => $validated['is_project_related'],
                 'notes' => $validated['notes']
             ]);
-
+            $purchaseRequest->save();
+            \Log::info('PurchaseRequest instance created', ['purchaseRequest' => $purchaseRequest]);
             $totalAmount = 0;
-
             foreach ($validated['items'] as $item) {
                 $purchaseRequest->items()->create([
                     'material_id' => $item['material_id'],
-                    'supplier_id' => $item['supplier_id'] ?? null,
+                    'supplier_id' => $item['preferred_supplier_id'],
+                    'preferred_supplier_id' => $item['preferred_supplier_id'],
                     'description' => $item['description'],
                     'quantity' => $item['quantity'],
                     'unit' => $item['unit'],
                     'estimated_unit_price' => $item['estimated_unit_price'],
                     'total_amount' => $item['quantity'] * $item['estimated_unit_price'],
                     'notes' => $item['notes'] ?? null,
-                    'preferred_brand' => $item['preferred_brand'] ?? null,
-                    'preferred_supplier_id' => $item['preferred_supplier_id'] ?? null
+                    'preferred_brand' => $item['preferred_brand'] ?? null
                 ]);
-
                 $totalAmount += $item['quantity'] * $item['estimated_unit_price'];
             }
-
             $purchaseRequest->total_amount = $totalAmount;
             $purchaseRequest->save();
-
             DB::commit();
-
+            \Log::info('PurchaseRequest saved and committed', ['purchaseRequest' => $purchaseRequest]);
             return redirect()->route('purchase-requests.show', $purchaseRequest)
                 ->with('success', 'Purchase request created successfully.');
-
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Error creating purchase request', ['exception' => $e, 'request' => $request->all()]);
             return back()->with('error', 'Error creating purchase request: ' . $e->getMessage());
         }
     }
@@ -138,7 +163,7 @@ class PurchaseRequestController extends Controller
             'items.*.estimated_unit_price' => 'required|numeric|min:0',
             'items.*.notes' => 'nullable|string',
             'items.*.preferred_brand' => 'nullable|string',
-            'items.*.preferred_supplier_id' => 'nullable|exists:suppliers,id'
+            'items.*.preferred_supplier_id' => 'required|exists:suppliers,id'
         ]);
 
         DB::beginTransaction();
@@ -156,15 +181,15 @@ class PurchaseRequestController extends Controller
         foreach ($validated['items'] as $item) {
             $purchaseRequest->items()->create([
                 'material_id' => $item['material_id'],
-                    'supplier_id' => $item['supplier_id'] ?? null,
+                    'supplier_id' => $item['preferred_supplier_id'],
+                'preferred_supplier_id' => $item['preferred_supplier_id'],
                 'description' => $item['description'],
                 'quantity' => $item['quantity'],
                 'unit' => $item['unit'],
                 'estimated_unit_price' => $item['estimated_unit_price'],
                     'total_amount' => $item['quantity'] * $item['estimated_unit_price'],
                     'notes' => $item['notes'] ?? null,
-                    'preferred_brand' => $item['preferred_brand'] ?? null,
-                    'preferred_supplier_id' => $item['preferred_supplier_id'] ?? null
+                    'preferred_brand' => $item['preferred_brand'] ?? null
                 ]);
 
                 $totalAmount += $item['quantity'] * $item['estimated_unit_price'];
@@ -335,5 +360,11 @@ class PurchaseRequestController extends Controller
                 'message' => 'Error generating purchase request: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    public function getItems(PurchaseRequest $purchaseRequest)
+    {
+        $items = $purchaseRequest->items()->with(['material', 'supplier'])->get();
+        return response()->json($items);
     }
 } 

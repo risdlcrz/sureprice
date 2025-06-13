@@ -18,8 +18,7 @@
     <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css" rel="stylesheet">
     
     <!-- Vite Assets -->
-    @vite(['resources/css/header.css'])
-    @vite(['resources/js/header.js'])
+    @vite(['resources/css/header.css', 'resources/js/app.js'])
     
     <!-- Additional Styles -->
     @stack('styles')

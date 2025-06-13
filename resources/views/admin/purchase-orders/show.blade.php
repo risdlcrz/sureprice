@@ -34,7 +34,13 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <p><strong>PO Number:</strong> {{ $purchaseOrder->po_number }}</p>
-                                <p><strong>Contract:</strong> {{ $purchaseOrder->contract->contract_id ?? 'N/A' }}</p>
+                                <p><strong>Contract:</strong> 
+                                    @if($purchaseOrder->contract)
+                                        {{ $purchaseOrder->contract->contract_number ?? 'N/A' }} - {{ $purchaseOrder->contract->name ?? $purchaseOrder->contract->title ?? 'N/A' }}
+                                    @else
+                                        N/A
+                                    @endif
+                                </p>
                                 <p><strong>Purchase Request:</strong> {{ $purchaseOrder->purchaseRequest->pr_number }}</p>
                                 <p><strong>Supplier:</strong> {{ $purchaseOrder->supplier->company_name }}</p>
                             </div>

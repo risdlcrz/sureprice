@@ -29,7 +29,15 @@ class PurchaseOrderController extends Controller
             ->with(['contract', 'items.supplier', 'materials'])
             ->get();
 
-        $suppliers = Supplier::all();
+        // Get all suppliers referenced by PR items
+        $referencedSupplierIds = $purchaseRequests->flatMap(function ($pr) {
+            return $pr->items->pluck('supplier_id')->filter();
+        })->unique()->values();
+
+        $referencedSuppliers = Supplier::whereIn('id', $referencedSupplierIds)->get();
+        $allSuppliers = Supplier::all();
+        // Merge and deduplicate
+        $suppliers = $allSuppliers->merge($referencedSuppliers)->unique('id')->values();
 
         return view('admin.purchase-orders.create', compact('purchaseRequests', 'suppliers'));
     }

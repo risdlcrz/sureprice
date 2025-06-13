@@ -168,7 +168,9 @@ class Contract extends Model
                 'unit' => $item->unit,
                 'estimated_unit_price' => $item->amount,
                 'total_amount' => $item->total,
-                'notes' => 'From contract item'
+                'notes' => 'From contract item',
+                'supplier_id' => null,
+                'preferred_supplier_id' => null
             ]);
 
             $totalAmount += $item->total;

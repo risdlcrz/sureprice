@@ -157,12 +157,20 @@ class RegisteredUserController extends Controller
             ? $data['firstname'] . ' ' . $data['lastname']
             : $data['company_name'];
 
+        $role = null;
+        if ($type === 'company') {
+            $role = $data['designation']; // 'client' or 'supplier'
+        } elseif ($type === 'employee') {
+            $role = $data['role'];
+        }
+
         return User::create([
             'name' => $name,
             'username' => $data['username'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'user_type' => $type,
+            'role' => $role,
         ]);
     }
 

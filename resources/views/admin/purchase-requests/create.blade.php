@@ -31,11 +31,11 @@
                                 <div class="form-group">
                                     <label>Request Type</label>
                                     <div class="custom-control custom-radio custom-control-inline">
-                                        <input type="radio" id="standalone" name="is_project_related" value="0" class="custom-control-input" checked>
+                                        <input type="radio" id="standalone" name="is_project_related" value="0" class="custom-control-input" {{ request('contract_id') ? '' : 'checked' }}>
                                         <label class="custom-control-label" for="standalone">Standalone Request</label>
                                     </div>
                                     <div class="custom-control custom-radio custom-control-inline">
-                                        <input type="radio" id="project_related" name="is_project_related" value="1" class="custom-control-input">
+                                        <input type="radio" id="project_related" name="is_project_related" value="1" class="custom-control-input" {{ request('contract_id') ? 'checked' : '' }}>
                                         <label class="custom-control-label" for="project_related">Project Related</label>
                                     </div>
                                 </div>
@@ -47,23 +47,22 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="contract_id">Contract</label>
-                                    <select name="contract_id" id="contract_id" class="form-control">
-                                        <option value="">Select a contract</option>
-                                        @foreach($contracts as $contract)
-                                            <option value="{{ $contract->id }}">{{ $contract->contract_number }} - {{ $contract->client->name ?? 'No Client' }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="project_id">Project</label>
-                                    <select name="project_id" id="project_id" class="form-control">
-                                        <option value="">Select a project</option>
-                                        @foreach($projects as $project)
-                                            <option value="{{ $project->id }}">{{ $project->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    @if(request('contract_id'))
+                                        @php
+                                            $selectedContract = $contracts->firstWhere('id', request('contract_id'));
+                                        @endphp
+                                        <input type="text" class="form-control bg-light" value="{{ $selectedContract ? ($selectedContract->contract_number . ' - ' . ($selectedContract->name ?? $selectedContract->title ?? '') ) : '' }}" readonly>
+                                        <input type="hidden" name="contract_id" value="{{ request('contract_id') }}">
+                                    @else
+                                        <select name="contract_id" id="contract_id" class="form-control">
+                                            <option value="">Select a contract</option>
+                                            @foreach($contracts as $contract)
+                                                <option value="{{ $contract->id }}" {{ (request('contract_id') == $contract->id) ? 'selected' : '' }}>
+                                                    {{ $contract->contract_number }} - {{ $contract->name ?? $contract->title ?? '' }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -88,15 +87,67 @@
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody id="items-container">
+                                            @if(isset($prefillItems) && count($prefillItems) > 0)
+                                                @foreach($prefillItems as $index => $item)
+                                                    <tr class="item-row">
+                                                        <td>
+                                                            <select name="items[{{ $index }}][material_id]" class="form-control material-select" required>
+                                                                <option value="">Select Material</option>
+                                                                @foreach($materials as $material)
+                                                                    <option value="{{ $material->id }}"
+                                                                        data-unit="{{ $material->unit }}"
+                                                                        data-suppliers="{{ $material->suppliers->pluck('id')->toJson() }}"
+                                                                        data-price="{{ $material->srp_price ?? $material->base_price }}"
+                                                                        {{ $item['material_id'] == $material->id ? 'selected' : '' }}>
+                                                                        {{ $material->name }}
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="items[{{ $index }}][description]" class="form-control" value="{{ $item['description'] }}" required>
+                                                        </td>
+                                                        <td>
+                                                            <input type="number" name="items[{{ $index }}][quantity]" class="form-control quantity" step="0.01" value="{{ $item['quantity'] }}" required>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="items[{{ $index }}][unit]" class="form-control unit" value="{{ $item['unit'] }}" readonly>
+                                                        </td>
+                                                        <td>
+                                                            <input type="number" name="items[{{ $index }}][estimated_unit_price]" class="form-control unit-price" step="0.01" value="{{ $item['estimated_unit_price'] }}" required>
+                                                        </td>
+                                                        <td>
+                                                            <input type="number" name="items[{{ $index }}][total_amount]" class="form-control total-amount" value="{{ $item['total_amount'] }}" readonly>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="items[{{ $index }}][preferred_brand]" class="form-control" value="{{ $item['preferred_brand'] }}">
+                                                        </td>
+                                                        <td>
+                                                            <select name="items[{{ $index }}][preferred_supplier_id]" class="form-control supplier-select" required>
+                                                                <option value="">Select Supplier</option>
+                                                            </select>
+                                                        </td>
+                                                        <td>
+                                                            <input type="text" name="items[{{ $index }}][notes]" class="form-control" value="{{ $item['notes'] }}">
+                                                        </td>
+                                                        <td>
+                                                            <button type="button" class="btn btn-danger btn-sm remove-row">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            @else
                                             <tr class="item-row">
                                                 <td>
                                                     <select name="items[0][material_id]" class="form-control material-select" required>
                                                         <option value="">Select Material</option>
                                                         @foreach($materials as $material)
-                                                            <option value="{{ $material->id }}" 
+                                                            <option value="{{ $material->id }}"
                                                                 data-unit="{{ $material->unit }}"
-                                                                data-suppliers="{{ $material->suppliers->pluck('id')->toJson() }}">
+                                                                data-suppliers="{{ $material->suppliers->pluck('id')->toJson() }}"
+                                                                data-price="{{ $material->srp_price ?? $material->base_price }}">
                                                                 {{ $material->name }}
                                                             </option>
                                                         @endforeach
@@ -121,11 +172,8 @@
                                                     <input type="text" name="items[0][preferred_brand]" class="form-control">
                                                 </td>
                                                 <td>
-                                                    <select name="items[0][preferred_supplier_id]" class="form-control supplier-select">
+                                                        <select name="items[0][preferred_supplier_id]" class="form-control supplier-select" required>
                                                         <option value="">Select Supplier</option>
-                                                        @foreach($suppliers as $supplier)
-                                                            <option value="{{ $supplier->id }}">{{ $supplier->company_name }}</option>
-                                                        @endforeach
                                                     </select>
                                                 </td>
                                                 <td>
@@ -137,6 +185,7 @@
                                                     </button>
                                                 </td>
                                             </tr>
+                                            @endif
                                         </tbody>
                                     </table>
                                 </div>
@@ -169,6 +218,11 @@
 
 @push('scripts')
 <script>
+const baseUrl = '{{ url("/") }}';
+
+window.suppliers = @json($suppliers ?? []);
+window.materials = @json($materials ?? []);
+
 document.addEventListener('DOMContentLoaded', function() {
     // Show/hide project related fields
     const projectRelatedFields = document.getElementById('projectRelatedFields');
@@ -220,7 +274,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const row = e.target.closest('tr');
             const selectedOption = e.target.options[e.target.selectedIndex];
             const unit = selectedOption.dataset.unit;
+            const price = selectedOption.dataset.price;
             row.querySelector('.unit').value = unit;
+            if (price && row.querySelector('.unit-price')) {
+                row.querySelector('.unit-price').value = price;
+            }
         }
     });
 
@@ -235,6 +293,141 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Please select either a contract or project for project-related requests.');
         }
     });
+
+    // On material change, update supplier dropdown
+    $(document).on('change', '.material-select', function() {
+        var $row = $(this).closest('tr');
+        var materialId = $(this).val();
+        var supplierIds = [];
+        if (materialId) {
+            var option = $(this).find('option:selected');
+            supplierIds = option.data('suppliers') || [];
+        }
+        var $supplierSelect = $row.find('.supplier-select');
+        $supplierSelect.empty().append('<option value="">Select Supplier</option>');
+        if (supplierIds.length === 0) {
+            $supplierSelect.append('<option value="">No suppliers available</option>');
+        } else {
+            supplierIds.forEach(function(supplierId) {
+                var supplier = window.suppliers.find(function(s) { return s.id == supplierId; });
+                if (supplier) {
+                    $supplierSelect.append('<option value="'+supplier.id+'">'+supplier.company_name+'</option>');
+                }
+            });
+        }
+        $supplierSelect.prop('required', true);
+    });
+
+    // On page load, trigger change for all material selects to populate suppliers
+    $('.material-select').each(function() { $(this).trigger('change'); });
+
+    // Show/hide project related fields
+    function toggleProjectRelatedFields() {
+        const isProjectRelated = document.getElementById('project_related').checked;
+        document.getElementById('projectRelatedFields').style.display = isProjectRelated ? 'flex' : 'none';
+        // Clear items table if switching to standalone
+        if (!isProjectRelated) {
+            const itemsContainer = document.getElementById('items-container');
+            itemsContainer.innerHTML = `<tr class="item-row">
+                <td>
+                    <select name="items[0][material_id]" class="form-control material-select" required>
+                        <option value="">Select Material</option>
+                        ${window.materials.map(material => `<option value="${material.id}" data-unit="${material.unit}" data-suppliers='${JSON.stringify(material.suppliers.map(s => s.id))}' data-price="${material.srp_price ?? material.base_price}">${material.name}</option>`).join('')}
+                    </select>
+                </td>
+                <td><input type="text" name="items[0][description]" class="form-control" required></td>
+                <td><input type="number" name="items[0][quantity]" class="form-control quantity" step="0.01" required></td>
+                <td><input type="text" name="items[0][unit]" class="form-control unit" readonly></td>
+                <td><input type="number" name="items[0][estimated_unit_price]" class="form-control unit-price" step="0.01" required></td>
+                <td><input type="number" name="items[0][total_amount]" class="form-control total-amount" readonly></td>
+                <td><input type="text" name="items[0][preferred_brand]" class="form-control"></td>
+                <td><select name="items[0][preferred_supplier_id]" class="form-control supplier-select" required><option value="">Select Supplier</option></select></td>
+                <td><input type="text" name="items[0][notes]" class="form-control"></td>
+                <td><button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash"></i></button></td>
+            </tr>`;
+            // Trigger change to populate suppliers
+            $('.material-select').each(function() { $(this).trigger('change'); });
+        }
+    }
+    document.getElementById('standalone').addEventListener('change', toggleProjectRelatedFields);
+    document.getElementById('project_related').addEventListener('change', toggleProjectRelatedFields);
+    // On page load, set correct state
+    window.addEventListener('DOMContentLoaded', function() {
+        toggleProjectRelatedFields();
+    });
+
+    // Auto-populate contract items when contract is selected
+    const contractSelect = document.getElementById('contract_id');
+    const itemsContainer = document.getElementById('items-container');
+    if (contractSelect && itemsContainer) {
+        contractSelect.addEventListener('change', function() {
+            const contractId = this.value;
+            if (!contractId) return;
+            itemsContainer.innerHTML = `<tr><td colspan="10" class="text-center"><div class="spinner-border text-primary" role="status"></div></td></tr>`;
+            fetch(`${baseUrl}/contracts/${contractId}/items`)
+                .then(response => response.json())
+                .then(items => {
+                    if (!items.length) {
+                        itemsContainer.innerHTML = `<tr><td colspan="10" class="text-center">No items found for this contract.</td></tr>`;
+                        return;
+                    }
+                    itemsContainer.innerHTML = '';
+                    items.forEach((item, index) => {
+                        // Build material select with all options and correct data attributes
+                        let materialOptions = '<option value="">Select Material</option>';
+                        window.materials.forEach(function(material) {
+                            const selected = material.id == item.material_id ? 'selected' : '';
+                            materialOptions += `<option value="${material.id}" data-unit="${material.unit}" data-suppliers='${JSON.stringify(material.suppliers.map(s => s.id))}' data-price="${material.srp_price ?? material.base_price}" ${selected}>${material.name}</option>`;
+                        });
+                        itemsContainer.innerHTML += `
+                            <tr class="item-row">
+                                <td>
+                                    <select name="items[${index}][material_id]" class="form-control material-select" required>
+                                        ${materialOptions}
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" name="items[${index}][description]" class="form-control" value="${item.material_name || ''}" required>
+                                </td>
+                                <td>
+                                    <input type="number" name="items[${index}][quantity]" class="form-control quantity" step="0.01" value="${item.quantity}" required>
+                                </td>
+                                <td>
+                                    <input type="text" name="items[${index}][unit]" class="form-control unit" value="${item.unit}" readonly>
+                                </td>
+                                <td>
+                                    <input type="number" name="items[${index}][estimated_unit_price]" class="form-control unit-price" step="0.01" value="${item.amount}" required>
+                                </td>
+                                <td>
+                                    <input type="number" name="items[${index}][total_amount]" class="form-control total-amount" value="${item.total}" readonly>
+                                </td>
+                                <td>
+                                    <input type="text" name="items[${index}][preferred_brand]" class="form-control">
+                                </td>
+                                <td>
+                                    <select name="items[${index}][preferred_supplier_id]" class="form-control supplier-select" required>
+                                        <option value="">Select Supplier</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" name="items[${index}][notes]" class="form-control">
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-danger btn-sm remove-row">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    // After rendering, trigger change to populate suppliers
+                    $('.material-select').each(function() { $(this).trigger('change'); });
+                })
+                .catch(error => {
+                    itemsContainer.innerHTML = `<tr><td colspan="10" class="text-center text-danger">Error loading contract items.</td></tr>`;
+                });
+        });
+    }
 });
 </script>
 @endpush

@@ -1292,39 +1292,60 @@ class ContractController extends Controller
         }
     }
 
-    public function timeline()
+    public function timeline(Request $request)
     {
-        $contracts = Contract::with(['client', 'contractor'])
-            ->get()
-            ->map(function($contract) {
-                return [
-                    'id' => $contract->id,
-                    'contract_id' => $contract->contract_id,
-                    'title' => $contract->client->name . ' - ' . $contract->contract_id,
-                    'start' => $contract->start_date->format('Y-m-d'),
-                    'end' => $contract->end_date->format('Y-m-d'),
-                    'backgroundColor' => match($contract->status) {
-                        'draft' => '#ffc107',     // warning
-                        'approved' => '#198754',   // success
-                        'rejected' => '#dc3545',   // danger
-                        default => '#6c757d'       // secondary
-                    },
-                    'borderColor' => match($contract->status) {
-                        'draft' => '#ffc107',
-                        'approved' => '#198754',
-                        'rejected' => '#dc3545',
-                        default => '#6c757d'
-                    },
-                    'extendedProps' => [
-                        'client' => $contract->client->name,
-                        'contractor' => $contract->contractor->name,
-                        'scope' => $contract->scope_of_work,
-                        'budget' => $contract->budget_allocation,
-                        'status' => $contract->status,
-                        'contract_id' => $contract->contract_id
-                    ]
-                ];
+        $query = Contract::with(['client', 'contractor']);
+
+        // Date range filter
+        if ($request->has('startDate')) {
+            $query->where('start_date', '>=', $request->startDate);
+        }
+        if ($request->has('endDate')) {
+            $query->where('end_date', '<=', $request->endDate);
+        }
+
+        // Status filter
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        // Search term
+        if ($request->has('term') && !empty($request->term)) {
+            $query->where(function($q) use ($request) {
+                $q->where('contract_id', 'like', '%' . $request->term . '%')
+                  ->orWhere('scope_of_work', 'like', '%' . $request->term . '%')
+                  ->orWhereHas('client', function($q) use ($request) {
+                      $q->where('name', 'like', '%' . $request->term . '%');
+                  })
+                  ->orWhereHas('contractor', function($q) use ($request) {
+                      $q->where('name', 'like', '%' . $request->term . '%');
+                  });
             });
+        }
+
+        $contracts = $query->get()->map(function($contract) {
+            return [
+                'id' => 'contract-' . $contract->id,
+                'title' => 'Contract: ' . $contract->contract_id . ' - ' . ($contract->client->name ?? 'N/A'),
+                'start' => $contract->start_date->format('Y-m-d'),
+                'end' => $contract->end_date->format('Y-m-d'),
+                'type' => 'contract',
+                'backgroundColor' => match($contract->status) {
+                    'draft' => '#ffc107',
+                    'approved' => '#198754',
+                    'rejected' => '#dc3545',
+                    default => '#6c757d'
+                },
+                'extendedProps' => [
+                    'client' => $contract->client->name ?? 'N/A',
+                    'contractor' => $contract->contractor->name ?? 'N/A',
+                    'scope' => $contract->scope_of_work ?? 'N/A',
+                    'budget' => $contract->budget_allocation,
+                    'status' => $contract->status,
+                    'contract_id' => $contract->contract_id
+                ]
+            ];
+        });
 
         return response()->json($contracts);
     }
@@ -1461,5 +1482,14 @@ class ContractController extends Controller
             \Log::error('Error saving signature: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Error saving signature']);
         }
+    }
+
+    /**
+     * API: Get all items (materials) for a contract
+     */
+    public function getItems($contractId)
+    {
+        $contract = Contract::with(['items.material', 'items.supplier'])->findOrFail($contractId);
+        return response()->json($contract->items);
     }
 } 

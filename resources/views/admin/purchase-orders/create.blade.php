@@ -47,7 +47,9 @@
                                             data-supplier-id="{{ $pr->supplier_id }}"
                                             {{ old('purchase_request_id') == $pr->id ? 'selected' : '' }}
                                             data-contract-id="{{ $pr->contract_id }}">
-                                            {{ $pr->pr_number }}
+                                            {{ $pr->request_number }}
+                                            @if(isset($pr->department)) - {{ $pr->department }}@endif
+                                            @if(isset($pr->requestedBy->name)) ({{ $pr->requestedBy->name }})@endif
                                             @if($pr->contract)
                                                 - {{ $pr->contract->contract_id }}
                                             @endif
@@ -117,8 +119,28 @@
                             <h5 class="mb-0">Items</h5>
                         </div>
                         <div class="card-body">
-                            <div id="items-container">
-                                <!-- Items will be loaded here based on selected purchase request -->
+                            <div class="table-responsive" style="max-height: 400px;">
+                                <table class="table table-bordered align-middle" id="items-table">
+                                    <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 2;">
+                                        <tr>
+                                            <th>Material</th>
+                                            <th>Quantity</th>
+                                            <th>Unit Price</th>
+                                            <th>Total Price</th>
+                                            <th>Specifications</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="items-table-body">
+                                        <!-- JS will populate rows here -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <th colspan="3" class="text-end">Total Amount:</th>
+                                            <th id="total-amount">0.00</th>
+                                            <th></th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -167,116 +189,110 @@
         return supplier ? supplier.company_name : '';
     }
 
+    function getUniqueSuppliers(items) {
+        const supplierIds = items.map(i => i.supplier_id).filter(Boolean);
+        return [...new Set(supplierIds)];
+    }
+
+    function renderSupplierDropdown(suppliersList, selectedSupplierId = null) {
+        const supplierSelect = document.getElementById('supplier_id');
+        supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
+        suppliersList.forEach(supplierId => {
+            const supplier = suppliers.find(s => s.id == supplierId);
+            if (supplier) {
+                supplierSelect.innerHTML += `<option value="${supplier.id}">${supplier.company_name}</option>`;
+            }
+        });
+        // Always leave the dropdown enabled and unselected by default
+            supplierSelect.value = '';
+        supplierSelect.removeAttribute('readonly');
+        // Remove any previous hidden input
+        const prevHidden = document.getElementById('hidden_supplier_id');
+        if (prevHidden) prevHidden.remove();
+    }
+
+    function renderItemsTable(items, filterSupplierId = null) {
+        const tbody = document.getElementById('items-table-body');
+        tbody.innerHTML = '';
+        let totalAmount = 0;
+        items.forEach((item, index) => {
+            if (filterSupplierId && item.supplier_id != filterSupplierId) return;
+            const quantity = parseInt(item.quantity) || 0;
+            const unitPrice = parseFloat(item.estimated_unit_price || item.unit_price) || 0;
+            const totalPrice = quantity * unitPrice;
+            totalAmount += totalPrice;
+            tbody.innerHTML += `
+                <tr>
+                    <td>
+                        <input type="hidden" name="items[${index}][material_id]" value="${item.material_id}">
+                        <input type="text" class="form-control" value="${item.material?.name || ''}" readonly>
+                    </td>
+                    <td>
+                        <input type="number" class="form-control item-qty" name="items[${index}][quantity]" value="${quantity}" min="1" step="1" required data-index="${index}" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                    </td>
+                    <td>
+                        <input type="number" class="form-control item-unit-price" name="items[${index}][unit_price]" value="${unitPrice.toFixed(2)}" min="0.01" step="0.01" required data-index="${index}">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control item-total-price" value="${totalPrice.toFixed(2)}" readonly tabindex="-1">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control" name="items[${index}][specifications]" value="${item.specifications || ''}">
+                    </td>
+                </tr>
+            `;
+        });
+        document.getElementById('total-amount').textContent = totalAmount.toFixed(2);
+    }
+
+    function recalculateTotals() {
+        const rows = document.querySelectorAll('#items-table-body tr');
+        let totalAmount = 0;
+        rows.forEach((row, idx) => {
+            const qtyInput = row.querySelector('.item-qty');
+            const priceInput = row.querySelector('.item-unit-price');
+            const totalInput = row.querySelector('.item-total-price');
+            const quantity = parseInt(qtyInput.value) || 0;
+            const unitPrice = parseFloat(priceInput.value) || 0;
+            const totalPrice = quantity * unitPrice;
+            totalInput.value = totalPrice.toFixed(2);
+            totalAmount += totalPrice;
+        });
+        document.getElementById('total-amount').textContent = totalAmount.toFixed(2);
+    }
+
     document.getElementById('purchase_request_id').addEventListener('change', function() {
         const purchaseRequestId = this.value;
-        const selectedPR = purchaseRequests.find(pr => pr.id == purchaseRequestId);
-        let supplierId = null;
-        let supplierName = '';
-        let allSameSupplier = true;
-        let firstSupplierId = null;
-        let hasSupplier = false;
-        let itemSuppliers = [];
-
-        if (selectedPR && selectedPR.items && selectedPR.items.length > 0) {
-            selectedPR.items.forEach((item, idx) => {
-                if (item.supplier_id) {
-                    hasSupplier = true;
-                    itemSuppliers.push(item.supplier_id);
-                    if (firstSupplierId === null) firstSupplierId = item.supplier_id;
-                    if (item.supplier_id != firstSupplierId) allSameSupplier = false;
-                }
-            });
-            if (allSameSupplier && hasSupplier) {
-                supplierId = firstSupplierId;
-                supplierName = getSupplierNameById(supplierId);
-            }
-        }
-
-        const supplierSelect = document.getElementById('supplier_id');
-        const supplierDisplay = document.getElementById('supplier-display');
-        const warningDisplay = document.getElementById('multi-supplier-warning');
-        const submitBtn = document.querySelector('button[type="submit"]');
-        let hiddenSupplierInput = document.getElementById('hidden-supplier-id');
-
-        if (allSameSupplier && supplierId) {
-            supplierSelect.value = supplierId;
-            supplierSelect.setAttribute('disabled', 'disabled');
-            if (!hiddenSupplierInput) {
-                hiddenSupplierInput = document.createElement('input');
-                hiddenSupplierInput.type = 'hidden';
-                hiddenSupplierInput.name = 'supplier_id';
-                hiddenSupplierInput.id = 'hidden-supplier-id';
-                supplierSelect.parentNode.appendChild(hiddenSupplierInput);
-            }
-            hiddenSupplierInput.value = supplierId;
-            if (supplierDisplay) {
-                supplierDisplay.textContent = 'Supplier: ' + supplierName;
-                supplierDisplay.style.display = 'block';
-            }
-            if (warningDisplay) warningDisplay.style.display = 'none';
-            if (submitBtn) submitBtn.disabled = false;
-        } else if (itemSuppliers.length > 0 && !allSameSupplier) {
-            supplierSelect.value = '';
-            supplierSelect.setAttribute('disabled', 'disabled');
-            if (hiddenSupplierInput) hiddenSupplierInput.remove();
-            if (supplierDisplay) {
-                supplierDisplay.textContent = '';
-                supplierDisplay.style.display = 'none';
-            }
-            if (warningDisplay) {
-                warningDisplay.style.display = 'block';
-                warningDisplay.textContent = 'This Purchase Request contains items from multiple suppliers. Please create separate Purchase Orders for each supplier.';
-            }
-            if (submitBtn) submitBtn.disabled = true;
-        } else {
-            supplierSelect.value = '';
-            supplierSelect.removeAttribute('disabled');
-            if (hiddenSupplierInput) hiddenSupplierInput.remove();
-            if (supplierDisplay) {
-                supplierDisplay.textContent = '';
-                supplierDisplay.style.display = 'none';
-            }
-            if (warningDisplay) warningDisplay.style.display = 'none';
-            if (submitBtn) submitBtn.disabled = false;
-        }
-
         if (purchaseRequestId) {
             fetch(`${apiBase}/purchase-requests/${purchaseRequestId}/items`)
                 .then(response => response.json())
                 .then(data => {
-                    const container = document.getElementById('items-container');
-                    container.innerHTML = '';
-                    data.forEach((item, index) => {
-                        container.innerHTML += `
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <label>Material</label>
-                                    <input type="hidden" name="items[${index}][material_id]" value="${item.material_id}">
-                                    <input type="text" class="form-control" value="${item.material.name}" readonly>
-                                </div>
-                                <div class="col-md-2">
-                                    <label>Quantity</label>
-                                    <input type="number" class="form-control" name="items[${index}][quantity]" 
-                                           value="${item.quantity}" min="0.01" step="0.01" required>
-                                </div>
-                                <div class="col-md-2">
-                                    <label>Unit Price</label>
-                                    <input type="number" class="form-control" name="items[${index}][unit_price]" 
-                                           value="${item.estimated_unit_price || ''}" min="0.01" step="0.01" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <label>Specifications</label>
-                                    <input type="text" class="form-control" name="items[${index}][specifications]" 
-                                           value="${item.specifications || ''}">
-                                </div>
-                            </div>
-                        `;
+                    // Add .material if missing (for compatibility)
+                    data.forEach(item => {
+                        if (!item.material && item.material_id && purchaseRequests) {
+                            const pr = purchaseRequests.find(pr => pr.id == purchaseRequestId);
+                            if (pr && pr.items) {
+                                const found = pr.items.find(i => i.material_id == item.material_id);
+                                if (found && found.material) item.material = found.material;
+                            }
+                        }
                     });
+                    const uniqueSuppliers = getUniqueSuppliers(data);
+                    renderSupplierDropdown(uniqueSuppliers);
+                    // Only render items table when supplier is selected
+                    document.getElementById('supplier_id').addEventListener('change', function() {
+                        renderItemsTable(data, this.value);
+                    });
+                    // Clear items table until supplier is chosen
+                    renderItemsTable([], null);
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     alert('Error loading purchase request items');
                 });
+        } else {
+            renderItemsTable([]);
+            renderSupplierDropdown([]);
         }
     });
 
@@ -314,6 +330,23 @@
 
     document.querySelector('form').addEventListener('submit', function(e) {
         alert('Form is trying to submit!');
+    });
+
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('item-qty')) {
+            // Remove any non-digit characters
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        }
+    });
+
+    // Prevent typing decimal points
+    const qtyInputs = document.querySelectorAll('.item-qty');
+    qtyInputs.forEach(input => {
+        input.addEventListener('keydown', function(e) {
+            if (e.key === '.' || e.key === ',' || e.key === 'e') {
+                e.preventDefault();
+            }
+        });
     });
 </script>
 @endpush 
