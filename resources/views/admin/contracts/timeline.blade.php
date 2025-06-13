@@ -50,9 +50,9 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <a href="#" class="btn btn-primary" id="viewContractBtn">
+                <button type="button" class="btn btn-primary" id="viewContractBtn" onclick="redirectToContractDetails()">
                     <i class="bi bi-eye"></i> View Full Contract
-                </a>
+                </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
@@ -192,8 +192,23 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        document.getElementById('viewContractBtn').href = `/admin/contracts/${event.id}`;
+        const viewContractBtn = document.getElementById('viewContractBtn');
+        const contractId = event.id; // Assuming event.id is the contract ID
+        viewContractBtn.setAttribute('data-contract-id', contractId);
+        console.log('Contract ID set on button:', contractId);
         modal.show();
+    }
+
+    function redirectToContractDetails() {
+        const viewContractBtn = document.getElementById('viewContractBtn');
+        const contractId = viewContractBtn.getAttribute('data-contract-id');
+        if (contractId) {
+            const targetUrl = `/contracts/${contractId}`;
+            console.log('Redirecting to:', targetUrl);
+            window.location.href = targetUrl;
+        } else {
+            console.error('Contract ID not found for redirection.');
+        }
     }
 
     function getStatusColor(status) {

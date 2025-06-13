@@ -576,7 +576,9 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
 
         // Ensure contractId is valid before setting href
-        document.getElementById('viewContractBtn').href = contractId ? `/contracts/${contractId}` : '#';
+        const viewContractUrl = contractId ? `/contracts/${contractId}` : '#';
+        document.getElementById('viewContractBtn').href = viewContractUrl;
+        console.log('View Full Contract href:', viewContractUrl);
         modal.show();
         console.log('Modal show() called.');
     }
