@@ -372,7 +372,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                console.log('Received calendar data:', data);
+                console.log('Received calendar data:', data.calendar);
+                console.log('Received Gantt data:', data.gantt);
                 // Update calendar events
                 successCallback(data.calendar);
                 
@@ -391,37 +392,34 @@ document.addEventListener('DOMContentLoaded', function() {
         },
         eventDidMount: function(info) {
             const event = info.event;
-            const props = event.extendedProps;
+            const props = event._def.extendedProps;
             let statusClass = '';
-            if (event.type === 'contract') {
+            if (props.type === 'contract') {
                 statusClass = `status-${props.status}`;
             }
-            // else if (event.type === 'task') {
-            //     statusClass = `status-${props.status}`;
-            // }
             if (statusClass) {
                 info.el.classList.add(statusClass);
             }
 
             // Add tooltip (keep this)
             let tooltipContent = '';
-            if (event.type === 'contract') {
+            if (props.type === 'contract') {
                 tooltipContent = `
                     <div class="p-2">
-                        <div class="mb-1"><strong>${event.title}</strong></div>
+                        <div class="mb-1"><strong>${info.event.title}</strong></div>
                         <div>Client: ${props.client}</div>
                         <div>Contractor: ${props.contractor}</div>
-                        <div>Budget: ₱${new Intl.NumberFormat().format(props.budget)}</div>
-                        <div>Status: ${props.status.toUpperCase()}</div>
+                        <div>Budget: ₱${new Intl.NumberFormat().format(props.budget || 0)}</div>
+                        <div>Status: ${props.status ? props.status.toUpperCase() : 'N/A'}</div>
                     </div>
                 `;
-            } else if (event.type === 'task') {
+            } else if (props.type === 'task') {
                  tooltipContent = `
                     <div class="p-2">
-                        <div class="mb-1"><strong>Task: ${event.title}</strong></div>
-                        <div>Status: ${props.status.toUpperCase()}</div>
-                        <div>Priority: ${props.priority.toUpperCase()}</div>
-                        <div>Progress: ${props.progress}%</div>
+                        <div class="mb-1"><strong>Task: ${info.event.title}</strong></div>
+                        <div>Status: ${props.status ? props.status.toUpperCase() : 'N/A'}</div>
+                        <div>Priority: ${props.priority ? props.priority.toUpperCase() : 'N/A'}</div>
+                        <div>Progress: ${props.progress || 0}%</div>
                     </div>
                 `;
             }
@@ -434,8 +432,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         },
         eventClick: function(info) {
-            if (info.event.type === 'contract') {
+            console.log('Event clicked:', info.event);
+            console.log('Event type from extendedProps:', info.event._def.extendedProps.type);
+            info.jsEvent.preventDefault(); // Prevent FullCalendar's default action
+            if (info.event._def.extendedProps.type === 'contract') {
+                console.log('Condition met: Event type is contract.');
                 showContractDetails(info.event);
+            } else {
+                console.log('Condition NOT met: Event type is not contract.');
             }
             // Add logic for task click if needed
         }
@@ -444,6 +448,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize Gantt Chart
     function initGanttChart(data) {
+        console.log('Initializing Gantt Chart with data:', data);
         if (!data || !Array.isArray(data) || data.length === 0) {
             console.warn('No data available for Gantt chart');
             return;
@@ -467,6 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 on_click: (task) => {
                     const contract = calendar.getEventById(`contract-${task.id}`);
                     if (contract) {
+                        console.log('Gantt task clicked, corresponding calendar event:', contract);
                         showContractDetails(contract);
                     }
                 }
@@ -506,22 +512,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Show contract details in modal
     function showContractDetails(contractEvent) {
-        const props = contractEvent.extendedProps;
-        const contractId = contractEvent.id.replace('contract-', '');
+        console.log('Showing contract details for:', contractEvent);
+        // Access extendedProps correctly from FullCalendar's _EventImpl object
+        const props = contractEvent._def.extendedProps;
+        console.log('Extended props:', props);
+        // Extract contract ID safely
+        const contractId = contractEvent._def.publicId ? contractEvent._def.publicId.replace('contract-', '') : null;
+        console.log('Contract ID:', contractId);
+
+        // Ensure the modal element exists before trying to initialize Bootstrap Modal
+        const modalElement = document.getElementById('contractModal');
+        if (!modalElement) {
+            console.error('Modal element #contractModal not found!');
+            return;
+        }
+
+        const modal = new bootstrap.Modal(modalElement);
+        console.log('Bootstrap Modal instance:', modal);
+
         document.querySelector('.contract-details').innerHTML = `
             <div class="row g-3">
                 <div class="col-md-6">
                     <div class="mb-2">
                         <div class="label">Contract Number</div>
-                        <div class="value">${contractEvent.title.replace('Contract: ', '')}</div>
+                        <div class="value">${props.contract_id || 'N/A'}</div>
                     </div>
                     <div class="mb-2">
                         <div class="label">Client</div>
-                        <div class="value">${props.client}</div>
+                        <div class="value">${props.client || 'N/A'}</div>
                     </div>
                     <div class="mb-2">
                         <div class="label">Contractor</div>
-                        <div class="value">${props.contractor}</div>
+                        <div class="value">${props.contractor || 'N/A'}</div>
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -529,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="label">Status</div>
                         <div class="value">
                             <span class="badge bg-${getStatusColor(props.status)}">
-                                ${props.status.toUpperCase()}
+                                ${props.status ? props.status.toUpperCase() : 'N/A'}
                             </span>
                         </div>
                     </div>
@@ -541,20 +563,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="mb-2">
                         <div class="label">Budget</div>
-                        <div class="value">₱${new Intl.NumberFormat().format(props.budget)}</div>
+                        <div class="value">₱${new Intl.NumberFormat().format(props.budget || 0)}</div>
                     </div>
                 </div>
                 <div class="col-12">
                     <div class="mb-2">
                         <div class="label">Scope of Work</div>
-                        <div class="value">${props.scope}</div>
+                        <div class="value">${props.scope || 'N/A'}</div>
                     </div>
                 </div>
             </div>
         `;
 
-        document.getElementById('viewContractBtn').href = `/contracts/${contractId}`; // Use extracted ID
+        // Ensure contractId is valid before setting href
+        document.getElementById('viewContractBtn').href = contractId ? `/contracts/${contractId}` : '#';
         modal.show();
+        console.log('Modal show() called.');
     }
 
     // Helper functions

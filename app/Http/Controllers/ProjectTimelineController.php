@@ -235,9 +235,8 @@ class ProjectTimelineController extends Controller
                     'title' => $task->title,
                     'start' => $task->start_date->format('Y-m-d'),
                     'end' => $task->end_date->format('Y-m-d'),
-                    'type' => 'task',
-                    'backgroundColor' => '#3788d8',
                     'extendedProps' => [
+                        'type' => 'task',
                         'status' => $task->status,
                         'priority' => $task->priority,
                         'progress' => $task->progress,
@@ -250,12 +249,15 @@ class ProjectTimelineController extends Controller
 
             if ($searchTerm) {
                 $contractsQuery->where(function($q) use ($searchTerm) {
-                    $q->where('contract_number', 'like', '%' . $searchTerm . '%')
-                      ->orWhere('title', 'like', '%' . $searchTerm . '%');
+                    $q->where('contract_id', 'like', '%' . $searchTerm . '%')
+                      ->orWhereHas('client', function($q_client) use ($searchTerm) {
+                          $q_client->where('name', 'like', '%' . $searchTerm . '%');
+                      });
                 });
             }
             if ($statusFilter && $statusFilter !== 'all') {
-                $contractsQuery->where('status', $statusFilter);
+                $statuses = explode(',', $statusFilter);
+                $contractsQuery->whereIn('status', $statuses);
             }
             if ($startDateFilter) {
                 $contractsQuery->where('start_date', '>=', $startDateFilter);
@@ -264,36 +266,68 @@ class ProjectTimelineController extends Controller
                 $contractsQuery->where('end_date', '<=', $endDateFilter);
             }
             if ($minBudgetFilter) {
-                $contractsQuery->where('budget_allocation', '>=', $minBudgetFilter);
+                $contractsQuery->where('total_amount', '>=', $minBudgetFilter);
             }
             if ($maxBudgetFilter) {
-                $contractsQuery->where('budget_allocation', '<=', $maxBudgetFilter);
+                $contractsQuery->where('total_amount', '<=', $maxBudgetFilter);
             }
 
             $contracts = $contractsQuery->get()->map(function($contract) {
+                $safeStatus = $contract->status ?: 'default';
                 return [
                     'id' => 'contract-' . $contract->id,
-                    'title' => 'Contract: ' . $contract->contract_number . ' - ' . ($contract->title ?? 'N/A'),
+                    'title' => $contract->client->name ?? 'Unknown Client',
                     'start' => $contract->start_date->format('Y-m-d'),
-                    'end' => $contract->end_date->format('Y-m-d'),
-                    'type' => 'contract',
-                    'backgroundColor' => '#28a745',
+                    'end' => $contract->end_date->addDay()->format('Y-m-d'),
+                    'className' => 'status-' . $safeStatus,
                     'extendedProps' => [
-                        'client' => $contract->client->name ?? 'N/A',
+                        'type' => 'contract',
+                        'contract_id' => $contract->contract_id,
+                        'client' => $contract->client->name ?? 'Unknown Client',
                         'contractor' => $contract->contractor->name ?? 'N/A',
-                        'budget' => $contract->budget_allocation,
-                        'status' => $contract->status,
-                        'scope' => $contract->scope_of_work ?? 'N/A',
+                        'status' => $safeStatus,
+                        'budget' => $contract->total_amount,
+                        'scope' => $contract->scope_of_work,
                     ]
                 ];
             });
 
-            $events = $tasks->merge($contracts)->values();
+            // Combine tasks and contracts for FullCalendar
+            $calendarEvents = $tasks->concat($contracts);
 
-            return response()->json($events);
+            // Prepare Gantt data (only contracts for now, as tasks are separate)
+            // Need to decide if tasks should also be on Gantt chart, and how to structure it.
+            // For now, only contracts for Gantt to fix initial issue.
+            $ganttTasks = $contracts->map(function($contract) {
+                $safeStatus = $contract->status ?: 'default';
+                return [
+                    'id' => 'contract-' . $contract->id,
+                    'name' => $contract->client->name ?? 'Unknown Client',
+                    'start' => $contract->start_date->format('YYYY-MM-DD'),
+                    'end' => $contract->end_date->format('YYYY-MM-DD'),
+                    'progress' => match($safeStatus) {
+                        'approved' => 100,
+                        'draft' => 50,
+                        'rejected' => 0,
+                        default => 0
+                    },
+                    'dependencies' => '',
+                    'custom_class' => 'status-' . $safeStatus
+                ];
+            });
+
+            return response()->json([
+                'calendar' => $calendarEvents,
+                'gantt' => $ganttTasks
+            ]);
+
+            // Temporarily dump the data to debug
+            dd($calendarEvents->toJson(), $ganttTasks->toJson());
+
         } catch (\Exception $e) {
-            \Log::error('Error in apiEvents: ' . $e->getMessage());
-            return response()->json(['error' => 'Internal server error'], 500);
+            // Log the error for debugging
+            \Log::error('Error in ProjectTimelineController apiEvents: ' . $e->getMessage() . ' on line ' . $e->getLine() . ' in file ' . $e->getFile());
+            return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
         }
     }
 } 
