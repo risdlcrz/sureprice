@@ -1331,12 +1331,12 @@ class ContractController extends Controller
             // Format for FullCalendar
             $calendarEvent = [
                 'id' => 'contract-' . $contract->id,
-                'title' => $contract->client->name ?? 'Unknown Client', // Ensure a title is always present
+                'title' => $contract->client->name ?? 'Unknown Client', // Client name as event title
                 'start' => $contract->start_date->format('Y-m-d'),
                 'end' => $contract->end_date->addDay()->format('Y-m-d'), // FullCalendar end date is exclusive
-                'type' => 'contract',
-                'className' => 'status-' . $safeStatus, // Use safe status for class
+                'className' => 'status-' . $safeStatus, // Custom class for status styling
                 'extendedProps' => [
+                    'type' => 'contract', // Moved type to extendedProps
                     'contract_id' => $contract->contract_id,
                     'client' => $contract->client->name ?? 'Unknown Client',
                     'contractor' => $contract->contractor->name ?? 'N/A',
@@ -1390,6 +1390,7 @@ class ContractController extends Controller
                     'end' => $contract->end_date->addDay()->format('Y-m-d'), // FullCalendar end date is exclusive
                     'className' => 'status-' . $safeStatus, // Custom class for status styling
                     'extendedProps' => [
+                        'type' => 'contract', // Moved type to extendedProps
                         'contract_id' => $contract->contract_id,
                         'client' => $contract->client->name ?? 'Unknown Client',
                         'contractor' => $contract->contractor->name ?? 'N/A',
