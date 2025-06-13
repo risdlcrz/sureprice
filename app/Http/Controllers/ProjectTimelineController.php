@@ -62,17 +62,35 @@ class ProjectTimelineController extends Controller
             ];
         });
 
-        // Get contracts for search
-        $contracts = Contract::select('id', 'contract_number', 'title')
+        // Get contracts for search and progress calculation
+        $contracts = Contract::with(['tasks'])
+            ->select('id', 'contract_number', 'title')
             ->orderBy('contract_number')
             ->get();
+
+        // Calculate overall project progress
+        $totalOverallProgress = 0;
+        $totalOverallTasks = 0;
+        foreach ($contracts as $contract) {
+            $contractTasksCount = $contract->tasks->count();
+            if ($contractTasksCount > 0) {
+                $contractTotalProgress = $contract->tasks->sum('progress');
+                $individualContractProgress = round(($contractTotalProgress / $contractTasksCount), 2);
+                $contract->progress = $individualContractProgress; // Add progress to contract object
+
+                $totalOverallProgress += $contractTotalProgress;
+                $totalOverallTasks += $contractTasksCount;
+            }
+        }
+
+        $overallProjectProgress = $totalOverallTasks > 0 ? round(($totalOverallProgress / $totalOverallTasks), 2) : 0;
 
         // Get users for assignee filter
         $users = User::select('id', 'name')
             ->orderBy('name')
             ->get();
 
-        return view('project-timeline.index', compact('tasks', 'contracts', 'users'));
+        return view('project-timeline.index', compact('tasks', 'contracts', 'users', 'overallProjectProgress'));
     }
 
     public function create()
