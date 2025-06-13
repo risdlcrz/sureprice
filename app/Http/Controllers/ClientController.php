@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Party;
+use App\Models\Contract;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -94,5 +95,52 @@ class ClientController extends Controller
             'state' => $client->state,
             'postal' => $client->postal
         ]);
+    }
+
+    /**
+     * Show the client dashboard
+     *
+     * @return \Illuminate\View\View
+     */
+    public function dashboard()
+    {
+        $user = auth()->user();
+        $company = $user->company;
+        
+        if (!$company) {
+            return redirect()->route('login.form')->with('error', 'No company associated with this account.');
+        }
+
+        // Get only the client's own contracts
+        $contracts = Contract::whereHas('client', function($query) use ($company) {
+            $query->where('company_name', $company->company_name)
+                  ->orWhere('name', $company->contact_person);
+        })
+        ->with(['items'])
+        ->latest()
+        ->get();
+
+        return view('client.dashboard', compact('user', 'company', 'contracts'));
+    }
+
+    /**
+     * Show the Project & Procurement module for the client (read-only, no approval actions)
+     */
+    public function projectProcurement()
+    {
+        $user = auth()->user();
+        $company = $user->company;
+        if (!$company) {
+            return redirect()->route('client.dashboard')->with('error', 'No company associated with this account.');
+        }
+        $contracts = 
+            \App\Models\Contract::whereHas('client', function($query) use ($company) {
+                $query->where('company_name', $company->company_name)
+                      ->orWhere('name', $company->contact_person);
+            })
+            ->with(['items'])
+            ->latest()
+            ->get();
+        return view('client.project-procurement', compact('contracts'));
     }
 } 

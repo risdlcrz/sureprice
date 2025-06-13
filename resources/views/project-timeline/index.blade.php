@@ -282,11 +282,20 @@
 @endpush
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/timeline@6.1.10/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/resource-timeline@6.1.10/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.10/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>
+<script src="https://unpkg.com/@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize variables
     let calendar, ganttChart;
-    let contracts = []; // This will no longer hold all contracts, but will be used for Gantt data
+    let contracts = []; // This will hold the Gantt data
     const modal = new bootstrap.Modal(document.getElementById('contractModal'));
 
     // Helper function to get filter parameters
@@ -335,8 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                    'Authorization': 'Bearer ' + localStorage.getItem('auth_token')
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
                 credentials: 'same-origin'
             })
@@ -347,16 +355,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
-                contracts = data.filter(event => event.type === 'contract').map(contract => ({
-                    id: contract.id.replace('contract-', ''),
-                    name: contract.title,
-                    start: contract.start,
-                    end: contract.end,
-                    progress: contract.extendedProps.status === 'approved' ? 100 :
-                            contract.extendedProps.status === 'draft' ? 50 : 0,
-                    dependencies: []
-                }));
-                successCallback(data);
+                // Update calendar events
+                successCallback(data.calendar);
+                
+                // Store Gantt data
+                contracts = data.gantt;
+                
+                // If Gantt view is active, refresh it
+                if (document.getElementById('ganttView').style.display !== 'none') {
+                    initGanttChart(contracts);
+                }
             })
             .catch(error => {
                 console.error('Error fetching calendar events:', error);
@@ -419,15 +427,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize Gantt Chart
     function initGanttChart(data) {
+        if (!data || !Array.isArray(data) || data.length === 0) {
+            console.warn('No data available for Gantt chart');
+            return;
+        }
+
         // Ensure Gantt is re-initialized or refreshed with new data
         if (ganttChart) {
             ganttChart.refresh(data);
         } else {
             ganttChart = new Gantt("#ganttChart", data, {
+                header_height: 50,
+                column_width: 30,
+                step: 24,
                 view_modes: ['Day', 'Week', 'Month'],
                 view_mode: 'Month',
+                bar_height: 20,
+                bar_corner_radius: 3,
+                arrow_curve: 5,
+                padding: 18,
+                date_format: 'YYYY-MM-DD',
                 on_click: (task) => {
-                    const contract = calendar.getEventById(`contract-${task.id}`); // Find the original FullCalendar event
+                    const contract = calendar.getEventById(`contract-${task.id}`);
                     if (contract) {
                         showContractDetails(contract);
                     }
@@ -443,11 +464,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (view === 'calendar') {
                 document.getElementById('calendarView').style.display = 'block';
                 document.getElementById('ganttView').style.display = 'none';
-                calendar.render(); // Re-render calendar to apply filters if any
+                calendar.render();
             } else {
                 document.getElementById('calendarView').style.display = 'none';
                 document.getElementById('ganttView').style.display = 'block';
-                initGanttChart(contracts); // Use the contracts data fetched by calendar
+                if (contracts && contracts.length > 0) {
+                    initGanttChart(contracts);
+                } else {
+                    calendar.refetchEvents();
+                }
             }
         });
     });

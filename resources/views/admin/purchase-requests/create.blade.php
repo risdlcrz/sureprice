@@ -36,13 +36,13 @@
                                     </div>
                                     <div class="custom-control custom-radio custom-control-inline">
                                         <input type="radio" id="project_related" name="is_project_related" value="1" class="custom-control-input" {{ request('contract_id') ? 'checked' : '' }}>
-                                        <label class="custom-control-label" for="project_related">Project Related</label>
+                                        <label class="custom-control-label" for="project_related">Contract Related</label>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Project/Contract Selection (initially hidden) -->
+                        <!-- Contract Selection (initially hidden) -->
                         <div class="row mb-4" id="projectRelatedFields" style="display: none;">
                             <div class="col-md-6">
                                 <div class="form-group">

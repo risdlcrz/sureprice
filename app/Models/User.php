@@ -45,6 +45,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(Company::class);
     }
 
+    public function party()
+    {
+        return $this->hasOne(Party::class);
+    }
+
     // Display name logic
     public function getDisplayNameAttribute()
     {

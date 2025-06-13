@@ -11,7 +11,7 @@ class TransactionController extends Controller
 {
     public function index()
     {
-        $transactions = \App\Models\Transaction::with('payment')->orderBy('transaction_date', 'desc')->paginate(15);
+        $transactions = \App\Models\Transaction::with('payment')->orderBy('date', 'desc')->paginate(15);
         return view('transactions.index', compact('transactions'));
     }
 

@@ -26,7 +26,8 @@ class Payment extends Model
         'notes',
         'created_by',
         'approved_by',
-        'approved_at'
+        'approved_at',
+        'marked_paid_by'
     ];
 
     protected $casts = [

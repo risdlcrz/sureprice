@@ -18,8 +18,7 @@ class PurchaseRequest extends Model
         'status',
         'total_amount',
         'notes',
-        'is_project_related',
-        'project_id'
+        'is_project_related'
     ];
 
     protected $casts = [
@@ -31,11 +30,6 @@ class PurchaseRequest extends Model
     public function contract(): BelongsTo
     {
         return $this->belongsTo(Contract::class);
-    }
-
-    public function project(): BelongsTo
-    {
-        return $this->belongsTo(Project::class);
     }
 
     public function items(): HasMany

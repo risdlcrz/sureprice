@@ -58,7 +58,6 @@ class PurchaseRequestController extends Controller
         $validated = $request->validate([
             'is_project_related' => 'required|boolean',
             'contract_id' => 'nullable|exists:contracts,id',
-            'project_id' => 'nullable|exists:projects,id',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.material_id' => 'required|exists:materials,id',
@@ -70,21 +69,20 @@ class PurchaseRequestController extends Controller
             'items.*.notes' => 'nullable|string',
             'items.*.preferred_brand' => 'nullable|string',
             'items.*.preferred_supplier_id' => 'required|exists:suppliers,id',
-        ], [
-            // Custom error messages
         ]);
-        // Custom validation: require at least one of contract_id or project_id if is_project_related
-        if ($validated['is_project_related'] && empty($validated['contract_id']) && empty($validated['project_id'])) {
-            return back()->withErrors(['contract_id' => 'Either contract or project must be selected for project-related requests.'])->withInput();
+
+        // Custom validation: require contract_id if is_project_related
+        if ($validated['is_project_related'] && empty($validated['contract_id'])) {
+            return back()->withErrors(['contract_id' => 'Contract must be selected for project-related requests.'])->withInput();
         }
+
         try {
             \Log::info('Validation passed', ['validated' => $validated]);
 
-        DB::beginTransaction();
+            DB::beginTransaction();
             $purchaseRequest = new PurchaseRequest([
                 'request_number' => 'PR-' . str_pad(PurchaseRequest::count() + 1, 6, '0', STR_PAD_LEFT),
                 'contract_id' => $validated['is_project_related'] ? $validated['contract_id'] : null,
-                'project_id' => $validated['is_project_related'] ? $validated['project_id'] : null,
                 'requested_by' => auth()->id(),
                 'status' => 'pending',
                 'is_project_related' => $validated['is_project_related'],

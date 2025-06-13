@@ -5,15 +5,27 @@ namespace App\Http\Controllers;
 use App\Models\Payment;
 use App\Models\Contract;
 use App\Models\PurchaseOrder;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PaymentController extends Controller
 {
     public function index()
     {
-        $payments = \App\Models\Payment::with('contract')->orderBy('due_date')->paginate(15);
-        return view('payments.index', compact('payments'));
+        // Get paginated payments
+        $pagedPayments = Payment::with(['contract', 'attachment'])
+            ->orderBy('due_date')
+            ->paginate(15);
+            
+        // Group the current page's payments by contract
+        $grouped = $pagedPayments->getCollection()->groupBy('contract_id');
+            
+        return view('payments.index', [
+            'grouped' => $grouped,
+            'payments' => $pagedPayments // Pass the original paginator for links
+        ]);
     }
 
     public function show(Payment $payment)
@@ -65,66 +77,105 @@ class PaymentController extends Controller
 
     public function markAsPaid(Request $request, Payment $payment)
     {
-        $request->validate([
-            'reference_number' => 'required|string|max:255',
-            'payment_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-        ]);
-
         try {
             DB::beginTransaction();
 
-            $payment->markAsPaid($request->reference_number);
+            // Load the contract relationship
+            $payment->load('contract');
 
-            // Handle payment proof upload
-            if ($request->hasFile('payment_proof')) {
-                $file = $request->file('payment_proof');
-                $path = $file->store('payment_proofs', 'public');
-                $payment->attachment()->create([
-                    'path' => $path,
-                    'original_name' => $file->getClientOriginalName(),
-                ]);
+            // Check if payment is already paid
+            if ($payment->status === 'paid') {
+                return redirect()->back()->with('error', 'Payment is already marked as paid.');
             }
 
-            // Create a transaction record when payment is marked as paid
-            \App\Models\Transaction::create([
-                'payment_id'        => $payment->id,
-                'contract_id'       => $payment->contract_id,
-                'amount'            => $payment->amount,
-                'transaction_type'  => 'payment',
-                'reference_number'  => $request->reference_number,
-                'transaction_date'  => now(),
-                'created_by'        => auth()->id(),
+            // Generate reference number if not provided
+            $referenceNumber = $payment->reference_number ?? 'REF-' . date('Ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
+
+            // Log the payment details before update
+            Log::info('Attempting to mark payment as paid', [
+                'payment_id' => $payment->id,
+                'payment_number' => $payment->payment_number,
+                'current_status' => $payment->status,
+                'reference_number' => $referenceNumber,
+                'user_id' => auth()->id()
             ]);
 
-            // If this is a contract payment, check if all payments are paid
-            if ($payment->contract_id) {
-                $contract = $payment->contract;
-                $allPaymentsPaid = $contract->payments()
-                    ->where('status', '!=', 'paid')
-                    ->count() === 0;
+            // Update payment status
+            $payment->status = 'paid';
+            $payment->paid_date = now();
+            $payment->reference_number = $referenceNumber;
+            $payment->marked_paid_by = auth()->id();
 
-                if ($allPaymentsPaid) {
-                    $contract->update(['status' => 'completed']);
-                }
+            // Log before saving payment
+            Log::info('About to save payment', [
+                'payment_data' => $payment->getDirty()
+            ]);
+
+            $payment->save();
+
+            // Log after saving payment
+            Log::info('Payment saved successfully', [
+                'payment_id' => $payment->id,
+                'new_status' => $payment->status
+            ]);
+
+            try {
+                // Create transaction record
+                $transaction = Transaction::create([
+                    'payment_id' => $payment->id,
+                    'contract_id' => $payment->contract_id,
+                    'date' => now(),
+                    'amount' => $payment->amount,
+                    'type' => 'payment',
+                    'reference_number' => $referenceNumber,
+                    'description' => 'Payment for Contract #' . ($payment->contract ? $payment->contract->contract_number : 'N/A') . ' - ' . 
+                                   ($payment->description ?? 'Payment #' . $payment->payment_number),
+                    'status' => 'completed',
+                    'created_by' => auth()->id()
+                ]);
+
+                // Log transaction creation
+                Log::info('Transaction created successfully', [
+                    'transaction_id' => $transaction->id,
+                    'payment_id' => $payment->id
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Failed to create transaction', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw $e;
             }
 
-            // If this is a purchase order payment, check if all payments are paid
-            if ($payment->purchase_order_id) {
-                $purchaseOrder = $payment->purchaseOrder;
-                $allPaymentsPaid = $purchaseOrder->payments()
+            // Check if all contract payments are paid
+            if ($payment->contract) {
+                $unpaidPayments = $payment->contract->payments()
                     ->where('status', '!=', 'paid')
-                    ->count() === 0;
+                    ->count();
 
-                if ($allPaymentsPaid) {
-                    $purchaseOrder->update(['status' => 'completed']);
+                if ($unpaidPayments === 0) {
+                    $payment->contract->update(['status' => 'completed']);
+                    Log::info('Contract marked as completed', [
+                        'contract_id' => $payment->contract_id
+                    ]);
                 }
             }
 
             DB::commit();
-            return redirect()->back()->with('success', 'Payment marked as paid successfully.');
+
+            return redirect()->route('payments.index')
+                           ->with('success', 'Payment #' . $payment->payment_number . ' has been marked as paid successfully.');
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Failed to mark payment as paid.');
+            Log::error('Failed to mark payment as paid', [
+                'payment_id' => $payment->id,
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString()
+            ]);
+
+            return redirect()->back()
+                           ->with('error', 'Failed to mark payment as paid: ' . $e->getMessage());
         }
     }
 
@@ -163,5 +214,65 @@ class PaymentController extends Controller
             ->paginate(10);
 
         return view('payments.overdue', compact('overduePayments'));
+    }
+
+    /**
+     * Show the client payment dashboard
+     *
+     * @return \Illuminate\View\View
+     */
+    public function dashboard()
+    {
+        $client = auth()->user()->party;
+        
+        // Get client's payments
+        $payments = Payment::whereHas('contract', function ($query) use ($client) {
+            $query->where('client_id', $client->id);
+        })
+        ->with(['contract', 'status'])
+        ->latest()
+        ->get();
+
+        // Calculate payment statistics
+        $totalPayments = $payments->count();
+        $pendingPayments = $payments->where('status', 'pending')->count();
+        $paidPayments = $payments->where('status', 'paid')->count();
+        $totalAmount = $payments->sum('amount');
+        $paidAmount = $payments->where('status', 'paid')->sum('amount');
+        $pendingAmount = $payments->where('status', 'pending')->sum('amount');
+
+        return view('payments.client-dashboard', compact(
+            'client',
+            'payments',
+            'totalPayments',
+            'pendingPayments',
+            'paidPayments',
+            'totalAmount',
+            'paidAmount',
+            'pendingAmount'
+        ));
+    }
+
+    public function uploadProof(Request $request, Payment $payment)
+    {
+        $request->validate([
+            'reference_number' => 'required|string|max:255',
+            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $payment->update([
+            'reference_number' => $request->reference_number,
+        ]);
+
+        if ($request->hasFile('payment_proof')) {
+            $file = $request->file('payment_proof');
+            $path = $file->store('payment_proofs', 'public');
+            $payment->attachment()->create([
+                'path' => $path,
+                'original_name' => $file->getClientOriginalName(),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Payment proof uploaded successfully.');
     }
 } 

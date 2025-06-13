@@ -1324,7 +1324,8 @@ class ContractController extends Controller
         }
 
         $contracts = $query->get()->map(function($contract) {
-            return [
+            // Format for FullCalendar
+            $calendarEvent = [
                 'id' => 'contract-' . $contract->id,
                 'title' => 'Contract: ' . $contract->contract_id . ' - ' . ($contract->client->name ?? 'N/A'),
                 'start' => $contract->start_date->format('Y-m-d'),
@@ -1345,9 +1346,33 @@ class ContractController extends Controller
                     'contract_id' => $contract->contract_id
                 ]
             ];
+
+            // Format for Gantt Chart
+            $ganttTask = [
+                'id' => $contract->id,
+                'name' => $contract->contract_id . ' - ' . ($contract->client->name ?? 'N/A'),
+                'start' => $contract->start_date->format('Y-m-d'),
+                'end' => $contract->end_date->format('Y-m-d'),
+                'progress' => match($contract->status) {
+                    'approved' => 100,
+                    'draft' => 50,
+                    'rejected' => 0,
+                    default => 0
+                },
+                'dependencies' => [],
+                'custom_class' => 'status-' . $contract->status
+            ];
+
+            return [
+                'calendar' => $calendarEvent,
+                'gantt' => $ganttTask
+            ];
         });
 
-        return response()->json($contracts);
+        return response()->json([
+            'calendar' => $contracts->pluck('calendar'),
+            'gantt' => $contracts->pluck('gantt')
+        ]);
     }
 
     public function projectTimeline()

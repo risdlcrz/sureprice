@@ -22,7 +22,7 @@
                 <td>{{ $transaction->contract_id }}</td>
                 <td>{{ number_format($transaction->amount, 2) }}</td>
                 <td>{{ $transaction->reference_number }}</td>
-                <td>{{ $transaction->transaction_date }}</td>
+                <td>{{ $transaction->date }}</td>
             </tr>
         @endforeach
         </tbody>

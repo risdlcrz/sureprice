@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
             successMessage.classList.add('d-none');
 
             const formData = new FormData(completePurchaseOrderForm);
-            const response = await fetch(`/purchase-orders/${currentPurchaseOrderId}/complete`, {
+            const response = await fetch(`/sure/sureprice/public/purchase-orders/${currentPurchaseOrderId}/complete`, {
                 method: 'PATCH',
                 body: formData,
                 headers: {

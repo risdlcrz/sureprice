@@ -10,11 +10,8 @@ return new class extends Migration
     {
         Schema::table('purchase_requests', function (Blueprint $table) {
             // Add missing fields from the duplicate migration
-            if (!Schema::hasColumn('purchase_requests', 'project_id')) {
-                $table->foreignId('project_id')->nullable()->after('contract_id');
-            }
             if (!Schema::hasColumn('purchase_requests', 'requested_by')) {
-                $table->foreignId('requested_by')->after('project_id');
+                $table->foreignId('requested_by')->after('contract_id');
             }
             if (!Schema::hasColumn('purchase_requests', 'total_amount')) {
                 $table->decimal('total_amount', 15, 2)->default(0)->after('requested_by');
@@ -35,7 +32,6 @@ return new class extends Migration
     {
         Schema::table('purchase_requests', function (Blueprint $table) {
             $table->dropColumn([
-                'project_id',
                 'requested_by',
                 'total_amount',
                 'is_project_related',

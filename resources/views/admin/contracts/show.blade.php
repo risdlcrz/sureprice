@@ -3,40 +3,45 @@
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <div class="container mt-4">
+    @php
+        $isClient = auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client';
+    @endphp
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Contract Details</h1>
         <div>
-            <div class="btn-group me-2">
-                <button type="button" 
-                        class="btn {{ $contract->status === 'draft' ? 'btn-warning' : 'btn-outline-warning' }}"
-                        onclick="updateStatus('draft')">
-                    Draft
+            @if(!$isClient)
+                <div class="btn-group me-2">
+                    <button type="button" 
+                            class="btn {{ $contract->status === 'draft' ? 'btn-warning' : 'btn-outline-warning' }}"
+                            onclick="updateStatus('draft')">
+                        Draft
+                    </button>
+                    <button type="button" 
+                            class="btn {{ $contract->status === 'approved' ? 'btn-success' : 'btn-outline-success' }}"
+                            onclick="updateStatus('approved')">
+                        Approve
+                    </button>
+                    <button type="button" 
+                            class="btn {{ $contract->status === 'rejected' ? 'btn-danger' : 'btn-outline-danger' }}"
+                            onclick="updateStatus('rejected')">
+                        Reject
+                    </button>
+                </div>
+                <a href="{{ route('contracts.edit', $contract->id) }}" class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> Edit Contract
+                </a>
+                @if($contract->status === 'approved')
+                    <a href="{{ route('purchase-requests.create', ['contract_id' => $contract->id]) }}" class="btn btn-success" id="generatePurchaseRequest">
+                        <i class="fas fa-file-invoice"></i> Edit Purchase Request
+                    </a>
+                @endif
+                <button type="button" class="btn btn-danger" onclick="showDeleteModal()">
+                    <i class="bi bi-trash"></i> Delete Contract
                 </button>
-                <button type="button" 
-                        class="btn {{ $contract->status === 'approved' ? 'btn-success' : 'btn-outline-success' }}"
-                        onclick="updateStatus('approved')">
-                    Approve
-                </button>
-                <button type="button" 
-                        class="btn {{ $contract->status === 'rejected' ? 'btn-danger' : 'btn-outline-danger' }}"
-                        onclick="updateStatus('rejected')">
-                    Reject
-                </button>
-            </div>
-            <a href="{{ route('contracts.edit', $contract->id) }}" class="btn btn-primary">
-                <i class="bi bi-pencil"></i> Edit Contract
-            </a>
+            @endif
             <a href="{{ route('contracts.download', $contract->id) }}" class="btn btn-success">
                 <i class="bi bi-download"></i> Download PDF
             </a>
-            @if($contract->status === 'approved')
-                <a href="{{ route('purchase-requests.create', ['contract_id' => $contract->id]) }}" class="btn btn-success" id="generatePurchaseRequest">
-                    <i class="fas fa-file-invoice"></i> Edit Purchase Request
-                </a>
-            @endif
-            <button type="button" class="btn btn-danger" onclick="showDeleteModal()">
-                <i class="bi bi-trash"></i> Delete Contract
-            </button>
             <a href="{{ route('contracts.index') }}" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Back to List
             </a>
