@@ -7,38 +7,27 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Project Timeline</h3>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="card-title">Contracts Timeline</h3>
+                            <div class="btn-group">
+                                <button class="btn btn-outline-primary" id="viewToggle" data-view="calendar">
+                                    <i class="bi bi-calendar3"></i> Calendar View
+                                </button>
+                                <button class="btn btn-outline-primary" id="viewToggle" data-view="gantt">
+                                    <i class="bi bi-bar-chart"></i> Gantt View
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <div class="timeline">
-                            @foreach($contracts as $contract)
-                                <div class="timeline-item">
-                                    <div class="timeline-date">
-                                        {{ $contract->start_date->format('M d, Y') }} - {{ $contract->end_date->format('M d, Y') }}
-                                    </div>
-                                    <div class="timeline-content">
-                                        <h4>{{ $contract->client->name }}</h4>
-                                        <p>Contractor: {{ $contract->contractor->name }}</p>
-                                        <p>Status: {{ ucfirst($contract->status) }}</p>
-                                        <div class="timeline-progress">
-                                            @php
-                                                $totalDays = $contract->start_date->diffInDays($contract->end_date);
-                                                $elapsedDays = $contract->start_date->diffInDays(now());
-                                                $progress = min(100, max(0, ($elapsedDays / $totalDays) * 100));
-                                            @endphp
-                                            <div class="progress">
-                                                <div class="progress-bar" role="progressbar" 
-                                                     style="width: {{ $progress }}%" 
-                                                     aria-valuenow="{{ $progress }}" 
-                                                     aria-valuemin="0" 
-                                                     aria-valuemax="100">
-                                                    {{ number_format($progress, 1) }}%
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
+                        <!-- Calendar View -->
+                        <div id="calendarView">
+                            <div id="calendar"></div>
+                        </div>
+
+                        <!-- Gantt View (Initially Hidden) -->
+                        <div id="ganttView" style="display: none;">
+                            <div id="ganttChart"></div>
                         </div>
                     </div>
                 </div>
@@ -47,53 +36,175 @@
     </div>
 </div>
 
+<!-- Contract Details Modal -->
+<div class="modal fade" id="contractModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Contract Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="contract-details">
+                    <!-- Details will be populated dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" class="btn btn-primary" id="viewContractBtn">
+                    <i class="bi bi-eye"></i> View Full Contract
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('styles')
+<link href='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/main.min.css' rel='stylesheet' />
+<link href='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/main.min.css' rel='stylesheet' />
+<link href='https://cdn.jsdelivr.net/npm/@fullcalendar/timeline@6.1.10/main.min.css' rel='stylesheet' />
+<link href='https://cdn.jsdelivr.net/npm/@fullcalendar/resource-timeline@6.1.10/main.min.css' rel='stylesheet' />
+<link href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.css" rel="stylesheet">
 <style>
-.timeline {
-    position: relative;
-    padding: 20px 0;
-}
-
-.timeline-item {
-    position: relative;
-    padding: 20px;
-    margin-bottom: 20px;
-    background: #fff;
+.fc-event {
+    cursor: pointer;
+    transition: all 0.2s ease;
     border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    font-size: 0.85rem;
+    padding: 2px 4px;
+    margin-bottom: 2px;
+    border: none;
+    font-weight: normal;
 }
 
-.timeline-date {
-    font-weight: bold;
-    color: #666;
-    margin-bottom: 10px;
+.fc-event:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
-.timeline-content {
-    padding: 10px 0;
+.fc-event.status-draft {
+    background-color: #fce8b2 !important;
+    border-left: 4px solid #f9ab00 !important;
+    color: #3c3c3c !important;
 }
 
-.timeline-content h4 {
-    margin: 0 0 10px 0;
-    color: #333;
+.fc-event.status-approved {
+    background-color: #d1f7d1 !important;
+    border-left: 4px solid #34a853 !important;
+    color: #3c3c3c !important;
 }
 
-.timeline-progress {
-    margin-top: 15px;
+.fc-event.status-rejected {
+    background-color: #f4cccc !important;
+    border-left: 4px solid #ea4335 !important;
+    color: #3c3c3c !important;
 }
 
-.progress {
-    height: 20px;
-    background-color: #f5f5f5;
-    border-radius: 4px;
-    overflow: hidden;
+.gantt-container {
+    height: 600px;
+    overflow-y: auto;
 }
 
-.progress-bar {
-    background-color: #007bff;
-    color: white;
-    text-align: center;
-    line-height: 20px;
-    transition: width 0.6s ease;
+.gantt .bar {
+    fill: #0d6efd;
+}
+
+.gantt .bar-progress {
+    fill: #0a4fb9;
 }
 </style>
+@endpush
+
+@push('scripts')
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.10/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/timeline@6.1.10/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/resource-timeline@6.1.10/main.min.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize FullCalendar
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        events: JSON.parse(@json($contracts)),
+        eventClick: function(info) {
+            showContractDetails(info.event);
+        }
+    });
+    calendar.render();
+
+    // Initialize Gantt Chart
+    const ganttData = JSON.parse(@json($ganttTasks));
+
+    const gantt = new Gantt("#ganttChart", ganttData, {
+        header_height: 50,
+        column_width: 30,
+        step: 24,
+        view_mode: 'Week',
+        bar_height: 20,
+        bar_corner_radius: 3,
+        arrow_curve: 5,
+        padding: 18,
+        view_modes: ['Quarter Day', 'Half Day', 'Day', 'Week', 'Month'],
+        custom_popup_html: function(task) {
+            return `
+                <div class="gantt-popup">
+                    <h5>${task.name}</h5>
+                    <p>Start: ${task.start}</p>
+                    <p>End: ${task.end}</p>
+                </div>
+            `;
+        }
+    });
+
+    // View Toggle
+    document.querySelectorAll('#viewToggle').forEach(button => {
+        button.addEventListener('click', function() {
+            const view = this.dataset.view;
+            document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
+            document.getElementById('ganttView').style.display = view === 'gantt' ? 'block' : 'none';
+        });
+    });
+
+    // Show Contract Details
+    function showContractDetails(event) {
+        const modal = new bootstrap.Modal(document.getElementById('contractModal'));
+        const details = event.extendedProps;
+        
+        document.querySelector('.contract-details').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Client:</strong> ${event.title}</p>
+                    <p><strong>Contractor:</strong> ${details.contractor}</p>
+                    <p><strong>Status:</strong> <span class="badge bg-${getStatusColor(details.status)}">${details.status}</span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Start Date:</strong> ${event.start.toLocaleDateString()}</p>
+                    <p><strong>End Date:</strong> ${event.end.toLocaleDateString()}</p>
+                    <p><strong>Budget:</strong> ₱${details.budget.toLocaleString()}</p>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('viewContractBtn').href = `/admin/contracts/${event.id}`;
+        modal.show();
+    }
+
+    function getStatusColor(status) {
+        switch(status) {
+            case 'approved': return 'success';
+            case 'draft': return 'warning';
+            case 'rejected': return 'danger';
+            default: return 'secondary';
+        }
+    }
+});
+</script>
+@endpush
 @endsection 

@@ -173,6 +173,10 @@
     margin-bottom: 2px; /* Small space between events */
     border: none; /* Remove default border */
     font-weight: normal; /* Lighter font weight */
+    text-align: left; /* Ensure text aligns left */
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden; /* Hide overflowing text */
+    text-overflow: ellipsis; /* Add ellipsis for hidden text */
 }
 
 .fc-event:hover {
@@ -182,6 +186,7 @@
 
 .fc-event-title {
     font-weight: 500;
+    color: #333; /* Darker text for readability */
 }
 
 /* Custom Status Colors - adjust to be softer, more like Google Calendar */
@@ -223,7 +228,7 @@
 }
 
 /* General Calendar container styling */
-  #calendar {
+#calendar {
     font-family: 'Roboto', sans-serif; /* Use a common, clean font */
 }
 
@@ -235,10 +240,22 @@
 
 .gantt .bar {
     fill: #0d6efd;
+    transition: fill 0.3s ease; /* Smooth transition for color changes */
 }
 
 .gantt .bar-progress {
     fill: #0a4fb9;
+}
+
+/* Gantt Status Colors (matching calendar) */
+.gantt .bar.status-draft .bar-wrapper {
+    fill: #f9ab00; /* Orange for draft */
+}
+.gantt .bar.status-approved .bar-wrapper {
+    fill: #34a853; /* Green for approved */
+}
+.gantt .bar.status-rejected .bar-wrapper {
+    fill: #ea4335; /* Red for rejected */
 }
 
 /* Modal Customization */
@@ -277,7 +294,7 @@
 
 ::-webkit-scrollbar-thumb:hover {
     background: #555;
-  }
+}
 </style>
 @endpush
 
@@ -340,7 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 status: document.querySelector('input[name="statusFilter"]:checked')?.value || 'all'
             });
 
-            fetch(`/api/contracts/timeline?${params.toString()}`, {
+            fetch(`{{ url('/api/contracts/timeline') }}?${params.toString()}`, {
                 headers: {
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
@@ -355,6 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return response.json();
             })
             .then(data => {
+                console.log('Received calendar data:', data);
                 // Update calendar events
                 successCallback(data.calendar);
                 
@@ -372,36 +390,35 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         },
         eventDidMount: function(info) {
-            // No longer need to add status class here for coloring, as colors are set directly in event object.
-            // Keeping for potential other styling hooks if needed, but primary coloring is via event props.
-            // const event = info.event;
-            // const props = event.extendedProps;
-            // let statusClass = '';
-            // if (event.type === 'contract') {
-            //     statusClass = `status-${props.status}`;
-            // } else if (event.type === 'task') {
+            const event = info.event;
+            const props = event.extendedProps;
+            let statusClass = '';
+            if (event.type === 'contract') {
+                statusClass = `status-${props.status}`;
+            }
+            // else if (event.type === 'task') {
             //     statusClass = `status-${props.status}`;
             // }
-            // info.el.classList.add(statusClass);
+            if (statusClass) {
+                info.el.classList.add(statusClass);
+            }
 
             // Add tooltip (keep this)
             let tooltipContent = '';
-            if (info.event.type === 'contract') {
-                const props = info.event.extendedProps;
+            if (event.type === 'contract') {
                 tooltipContent = `
                     <div class="p-2">
-                        <div class="mb-1"><strong>${info.event.title}</strong></div>
+                        <div class="mb-1"><strong>${event.title}</strong></div>
                         <div>Client: ${props.client}</div>
                         <div>Contractor: ${props.contractor}</div>
                         <div>Budget: ₱${new Intl.NumberFormat().format(props.budget)}</div>
                         <div>Status: ${props.status.toUpperCase()}</div>
                     </div>
                 `;
-            } else if (info.event.type === 'task') {
-                 const props = info.event.extendedProps;
+            } else if (event.type === 'task') {
                  tooltipContent = `
                     <div class="p-2">
-                        <div class="mb-1"><strong>Task: ${info.event.title}</strong></div>
+                        <div class="mb-1"><strong>Task: ${event.title}</strong></div>
                         <div>Status: ${props.status.toUpperCase()}</div>
                         <div>Priority: ${props.priority.toUpperCase()}</div>
                         <div>Progress: ${props.progress}%</div>
