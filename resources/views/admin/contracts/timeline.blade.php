@@ -203,7 +203,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const viewContractBtn = document.getElementById('viewContractBtn');
         const contractId = viewContractBtn.getAttribute('data-contract-id');
         if (contractId) {
-            const targetUrl = `/contracts/${contractId}`;
+            // Get the base URL from Laravel's helper function
+            const baseUrl = '{{ url('/') }}';
+            const targetUrl = `${baseUrl}/contracts/${contractId}`;
             console.log('Redirecting to:', targetUrl);
             window.location.href = targetUrl;
         } else {
