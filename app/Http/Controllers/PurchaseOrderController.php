@@ -277,22 +277,32 @@ class PurchaseOrderController extends Controller
             }
 
             // Update quality metrics
-            $metrics->total_units += $validated['total_units'];
-            $metrics->defective_units += $validated['defective_units'];
+            if ($validated['total_units'] > 0) {
+                $defectRate = ($validated['defective_units'] / $validated['total_units']) * 100;
+                $metrics->average_defect_rate = (($metrics->average_defect_rate * ($metrics->total_deliveries - 1)) + $defectRate) / $metrics->total_deliveries;
+            }
 
-            // Update cost metrics
-            $metrics->total_orders++;
-            if ($actualCost <= $estimatedCost) {
-                $metrics->within_budget_orders++;
+            // Update cost variance metrics
+            if ($estimatedCost > 0) {
+                $costVariance = (($actualCost - $estimatedCost) / $estimatedCost) * 100;
+                $metrics->average_cost_variance = (($metrics->average_cost_variance * ($metrics->total_deliveries - 1)) + $costVariance) / $metrics->total_deliveries;
             }
 
             $metrics->save();
 
             DB::commit();
-            return response()->json(['success' => true]);
+
+            return response()->json([
+                'message' => 'Purchase order completed successfully',
+                'purchaseOrder' => $purchaseOrder->fresh()
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Error completing purchase order: ' . $e->getMessage(), [
+                'purchase_order_id' => $purchaseOrder->id,
+                'error' => $e
+            ]);
             return response()->json(['error' => 'Failed to complete purchase order: ' . $e->getMessage()], 500);
         }
     }

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\ClientMiddleware;
 use App\Http\Controllers\CompanyDocumentController;
 use App\Http\Controllers\InformationManagementController;
 use App\Http\Controllers\MaterialController;
@@ -150,7 +151,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('purchase-orders', PurchaseOrderController::class);
     Route::post('purchase-orders/{purchaseOrder}/status', [PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
     Route::get('purchase-orders/{id}/json', [App\Http\Controllers\PurchaseOrderController::class, 'showJson'])->name('purchase-orders.json');
-    Route::patch('purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete'])->name('purchase-orders.complete');
+    Route::post('purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete'])->name('purchase-orders.complete');
 
     // Transaction Routes
     Route::resource('transactions', \App\Http\Controllers\TransactionController::class);
@@ -181,9 +182,25 @@ Route::middleware(['auth'])->group(function () {
 
     // Project Timeline Route
     Route::get('/project-timeline', [App\Http\Controllers\ProjectTimelineController::class, 'index'])->name('project-timeline.index');
+    Route::get('/api/contracts/timeline', [App\Http\Controllers\ContractController::class, 'timeline'])->name('api.contracts.timeline');
 
     // Add this route for fetching contract items (materials) for web requests
     Route::get('/contracts/{contract}/items', [\App\Http\Controllers\ContractController::class, 'getItems'])->name('contracts.items');
+});
+
+// Payments routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::post('/payments/{payment}/mark-as-paid', [PaymentController::class, 'markAsPaid'])->name('payments.markAsPaid');
+    Route::post('/payments/{payment}/upload-proof', [PaymentController::class, 'uploadProof'])->name('payments.uploadProof');
+});
+
+// Client Routes
+Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefix('client')->name('client.')->group(function () {
+    Route::get('/dashboard', [ClientController::class, 'dashboard'])->name('dashboard');
+    Route::get('/payments', [PaymentController::class, 'index'])->name('payments');
+    Route::get('/payments/dashboard', [PaymentController::class, 'dashboard'])->name('payments.dashboard');
+    Route::get('/project-procurement', [ClientController::class, 'projectProcurement'])->name('project.procurement');
 });
 
 // ================== Email Verification Routes ==================
@@ -250,10 +267,6 @@ Route::get('/admin/suppliers/{supplier}/purchase-order-metrics', [SupplierRankin
 Route::get('/contracts/{contract}/items', [\App\Http\Controllers\ContractController::class, 'getItems'])->name('contracts.items');
 
 Route::resource('contracts', \App\Http\Controllers\ContractController::class);
-
-// Payments routes
-Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
-Route::post('/payments/{payment}/mark-as-paid', [PaymentController::class, 'markAsPaid'])->name('payments.markAsPaid');
 
 // Search Routes
 Route::prefix('search')->group(function () {

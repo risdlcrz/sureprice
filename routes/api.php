@@ -26,21 +26,25 @@ Route::prefix('project-timeline')->group(function () {
     Route::post('/events', [ProjectTimelineController::class, 'store'])->name('api.project-timeline.events.store');
 });
 
-// Contract Timeline Route
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/contracts/timeline', [ContractController::class, 'timeline']);
-    Route::get('/contracts/search', [ContractController::class, 'search']);
-    Route::get('/materials/test', [MaterialController::class, 'test']);
-    Route::get('/categories/test', function() {
-        $categories = \App\Models\Category::all();
-        return response()->json([
-            'count' => $categories->count(),
-            'categories' => $categories
-        ]);
-    });
+// Contract Routes
+Route::prefix('contracts')->group(function () {
+    Route::get('/timeline', [ContractController::class, 'timeline'])->name('api.contracts.timeline');
+    Route::get('/search', [ContractController::class, 'search'])->name('api.contracts.search');
+    Route::get('/{contract}/items', [ContractController::class, 'getItems']);
 });
 
+// Material Routes
+Route::get('/materials/test', [MaterialController::class, 'test']);
 Route::get('/materials/search', [MaterialController::class, 'search']);
+
+// Categories Test Route
+Route::get('/categories/test', function() {
+    $categories = \App\Models\Category::all();
+    return response()->json([
+        'count' => $categories->count(),
+        'categories' => $categories
+    ]);
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/materials/test', [MaterialController::class, 'test']);
@@ -88,8 +92,5 @@ Route::middleware('api')->group(function () {
 });
 
 Route::get('users/{id}', [App\Http\Controllers\UserController::class, 'showMinimal']);
-
-// Add this route for fetching contract items (materials)
-Route::get('/contracts/{contract}/items', [\App\Http\Controllers\ContractController::class, 'getItems']);
 
 require __DIR__.'/auth.php'; 

@@ -199,9 +199,8 @@
                     <h5 class="modal-title" id="completePurchaseOrderModalLabel">Complete Purchase Order</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form id="completePurchaseOrderForm">
+                <form id="completePurchaseOrderForm" method="POST">
                     @csrf
-                    @method('PATCH')
                     <div class="modal-body">
                         <div class="alert alert-success d-none" id="completeSuccessMessage">
                             Purchase order completed successfully!
@@ -377,18 +376,24 @@
                 spinner.classList.remove('d-none');
                 successMessage.classList.add('d-none');
 
-                const formData = new FormData(completePurchaseOrderForm);
-                const response = await fetch(`/purchase-orders/${currentPurchaseOrderId}/complete`, {
-                    method: 'PATCH',
-                    body: formData,
+                const formData = new FormData(this);
+                const response = await fetch(`/sure/sureprice/public/purchase-orders/${currentPurchaseOrderId}/complete`, {
+                    method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    }
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
                 });
 
-                if (!response.ok) throw new Error('Failed to complete purchase order');
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to complete purchase order');
+                }
 
                 successMessage.classList.remove('d-none');
+                successMessage.textContent = data.message || 'Purchase order completed successfully!';
                 
                 // Reload page after a delay
                 setTimeout(() => {
@@ -397,7 +402,7 @@
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to complete purchase order. Please try again.');
+                alert(error.message || 'Failed to complete purchase order. Please try again.');
             } finally {
                 completeButton.disabled = false;
                 spinner.classList.add('d-none');

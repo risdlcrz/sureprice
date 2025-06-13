@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SupplierMetrics extends Model
 {
@@ -13,25 +14,27 @@ class SupplierMetrics extends Model
         'supplier_id',
         'total_deliveries',
         'ontime_deliveries',
-        'total_units',
-        'defective_units',
-        'estimated_cost',
-        'actual_cost',
-        'measurement_date'
+        'average_defect_rate',
+        'average_cost_variance'
     ];
 
     protected $casts = [
         'total_deliveries' => 'integer',
         'ontime_deliveries' => 'integer',
-        'total_units' => 'integer',
-        'defective_units' => 'integer',
-        'estimated_cost' => 'decimal:2',
-        'actual_cost' => 'decimal:2',
-        'measurement_date' => 'datetime'
+        'average_defect_rate' => 'decimal:2',
+        'average_cost_variance' => 'decimal:2'
     ];
 
-    public function supplier()
+    public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function getOnTimeDeliveryRateAttribute(): float
+    {
+        if ($this->total_deliveries === 0) {
+            return 0;
+        }
+        return ($this->ontime_deliveries / $this->total_deliveries) * 100;
     }
 } 

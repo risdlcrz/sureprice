@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('contract_id')->constrained()->onDelete('cascade');
+            $table->foreignId('payment_id')->nullable()->constrained()->onDelete('cascade');
             $table->date('date');
             $table->string('description');
             $table->decimal('amount', 10, 2);
@@ -22,6 +23,7 @@ return new class extends Migration
             $table->string('payment_method')->nullable();
             $table->string('reference_number')->nullable();
             $table->text('notes')->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('users');
             $table->timestamps();
         });
     }
