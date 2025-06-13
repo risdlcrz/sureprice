@@ -130,12 +130,10 @@
                                         @if($request->is_project_related)
                                             @if($request->contract)
                                                 <a href="{{ route('contracts.show', $request->contract) }}">
-                                                    {{ $request->contract->contract_id }}
+                                                    {{ $request->contract->contract_number ?? '[No Contract Number]' }} - {{ $request->contract->name ?? $request->contract->title ?? '[No Contract Name]' }}
                                                 </a>
-                                            @elseif($request->project)
-                                                <a href="{{ route('projects.show', $request->project) }}">
-                                                    {{ $request->project->name }}
-                                                </a>
+                                            @else
+                                                <span class="text-muted">Project Related</span>
                                             @endif
                                         @else
                                             <span class="text-muted">Standalone</span>
@@ -166,7 +164,7 @@
                                                 </button>
                                             </form>
                                         @endif
-                                            @if($request->status === 'pending' && auth()->user()->can('approve-purchase-requests'))
+                                            @if($request->status === 'pending' && (auth()->user()->role === 'procurement' || auth()->user()->role === 'admin'))
                                                 <form action="{{ route('purchase-requests.approve', $request) }}" method="POST" class="d-inline me-1">
                                                     @csrf
                                                     <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Are you sure you want to approve this request?')">

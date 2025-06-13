@@ -140,6 +140,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Purchase Requests
     Route::resource('purchase-requests', PurchaseRequestController::class);
+    Route::post('purchase-requests/{purchaseRequest}/approve', [PurchaseRequestController::class, 'approve'])->name('purchase-requests.approve');
+    Route::post('purchase-requests/{purchaseRequest}/reject', [PurchaseRequestController::class, 'reject'])->name('purchase-requests.reject');
     Route::post('purchase-requests/{purchaseRequest}/status', [PurchaseRequestController::class, 'updateStatus'])->name('purchase-requests.update-status');
     Route::get('/api/purchase-requests/{purchaseRequest}/items', [PurchaseRequestController::class, 'getItems'])->name('api.purchase-requests.items');
     Route::post('/purchase-requests/generate-from-contract', [App\Http\Controllers\PurchaseRequestController::class, 'generateFromContract'])->name('purchase-requests.generate-from-contract');
@@ -176,6 +178,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/inventory/import-from-scope', [InventoryController::class, 'importFromScope'])->name('inventory.import-from-scope');
     Route::get('/inventory/low-stock', [InventoryController::class, 'lowStock'])->name('inventory.low-stock');
     Route::get('/inventory/expiring', [InventoryController::class, 'expiring'])->name('inventory.expiring');
+
+    // Project Timeline Route
+    Route::get('/project-timeline', [App\Http\Controllers\ProjectTimelineController::class, 'index'])->name('project-timeline.index');
+
+    // Add this route for fetching contract items (materials) for web requests
+    Route::get('/contracts/{contract}/items', [\App\Http\Controllers\ContractController::class, 'getItems'])->name('contracts.items');
 });
 
 // ================== Email Verification Routes ==================
@@ -238,8 +246,8 @@ Route::get('/admin/suppliers/{supplier}/latest-evaluation', [SupplierRankingCont
 Route::get('/admin/suppliers/{supplier}/purchase-order-metrics', [SupplierRankingController::class, 'getPurchaseOrderMetrics'])
     ->name('admin.suppliers.purchase-order-metrics');
 
-// Project Timeline Route
-Route::get('/project-timeline', [App\Http\Controllers\ProjectTimelineController::class, 'index'])->name('project-timeline.index');
+// Add this route for fetching contract items (materials) for web requests
+Route::get('/contracts/{contract}/items', [\App\Http\Controllers\ContractController::class, 'getItems'])->name('contracts.items');
 
 Route::resource('contracts', \App\Http\Controllers\ContractController::class);
 

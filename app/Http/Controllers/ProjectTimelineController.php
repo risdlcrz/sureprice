@@ -201,33 +201,99 @@ class ProjectTimelineController extends Controller
 
     public function apiEvents(Request $request)
     {
-        // Project Tasks as events
-        $tasks = \App\Models\ProjectTask::all()->map(function($task) {
-            return [
-                'id' => 'task-' . $task->id,
-                'title' => $task->title,
-                'start' => $task->start_date->format('Y-m-d'),
-                'end' => $task->end_date->format('Y-m-d'),
-                'type' => 'task',
-                'backgroundColor' => '#3788d8', // blue for tasks
-            ];
-        });
+        try {
+            if (!auth()->check()) {
+                return response()->json(['error' => 'Unauthorized'], 401);
+            }
 
-        // Contracts as events
-        $contracts = \App\Models\Contract::all()->map(function($contract) {
-            return [
-                'id' => 'contract-' . $contract->id,
-                'title' => 'Contract: ' . $contract->contract_number,
-                'start' => $contract->start_date->format('Y-m-d'),
-                'end' => $contract->end_date->format('Y-m-d'),
-                'type' => 'contract',
-                'backgroundColor' => '#28a745', // green for contracts
-            ];
-        });
+            $searchTerm = $request->query('term');
+            $statusFilter = $request->query('status');
+            $startDateFilter = $request->query('startDate');
+            $endDateFilter = $request->query('endDate');
+            $minBudgetFilter = $request->query('minBudget');
+            $maxBudgetFilter = $request->query('maxBudget');
 
-        // Merge and return all events
-        $events = $tasks->merge($contracts)->values();
+            // Project Tasks as events
+            $tasksQuery = \App\Models\ProjectTask::query();
 
-        return response()->json($events);
+            if ($searchTerm) {
+                $tasksQuery->where('title', 'like', '%' . $searchTerm . '%');
+            }
+            if ($statusFilter && $statusFilter !== 'all') {
+                $tasksQuery->where('status', $statusFilter);
+            }
+            if ($startDateFilter) {
+                $tasksQuery->where('start_date', '>=', $startDateFilter);
+            }
+            if ($endDateFilter) {
+                $tasksQuery->where('end_date', '<=', $endDateFilter);
+            }
+
+            $tasks = $tasksQuery->get()->map(function($task) {
+                return [
+                    'id' => 'task-' . $task->id,
+                    'title' => $task->title,
+                    'start' => $task->start_date->format('Y-m-d'),
+                    'end' => $task->end_date->format('Y-m-d'),
+                    'type' => 'task',
+                    'backgroundColor' => '#3788d8',
+                    'extendedProps' => [
+                        'status' => $task->status,
+                        'priority' => $task->priority,
+                        'progress' => $task->progress,
+                    ]
+                ];
+            });
+
+            // Contracts as events
+            $contractsQuery = \App\Models\Contract::query()->with(['client', 'contractor']);
+
+            if ($searchTerm) {
+                $contractsQuery->where(function($q) use ($searchTerm) {
+                    $q->where('contract_number', 'like', '%' . $searchTerm . '%')
+                      ->orWhere('title', 'like', '%' . $searchTerm . '%');
+                });
+            }
+            if ($statusFilter && $statusFilter !== 'all') {
+                $contractsQuery->where('status', $statusFilter);
+            }
+            if ($startDateFilter) {
+                $contractsQuery->where('start_date', '>=', $startDateFilter);
+            }
+            if ($endDateFilter) {
+                $contractsQuery->where('end_date', '<=', $endDateFilter);
+            }
+            if ($minBudgetFilter) {
+                $contractsQuery->where('budget_allocation', '>=', $minBudgetFilter);
+            }
+            if ($maxBudgetFilter) {
+                $contractsQuery->where('budget_allocation', '<=', $maxBudgetFilter);
+            }
+
+            $contracts = $contractsQuery->get()->map(function($contract) {
+                return [
+                    'id' => 'contract-' . $contract->id,
+                    'title' => 'Contract: ' . $contract->contract_number . ' - ' . ($contract->title ?? 'N/A'),
+                    'start' => $contract->start_date->format('Y-m-d'),
+                    'end' => $contract->end_date->format('Y-m-d'),
+                    'type' => 'contract',
+                    'backgroundColor' => '#28a745',
+                    'extendedProps' => [
+                        'client' => $contract->client->name ?? 'N/A',
+                        'contractor' => $contract->contractor->name ?? 'N/A',
+                        'budget' => $contract->budget_allocation,
+                        'status' => $contract->status,
+                        'scope' => $contract->scope_of_work ?? 'N/A',
+                    ]
+                ];
+            });
+
+            $events = $tasks->merge($contracts)->values();
+
+            return response()->json($events);
+        } catch (\Exception $e) {
+            \Log::error('Error in apiEvents: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal server error'], 500);
+        }
     }
 } 

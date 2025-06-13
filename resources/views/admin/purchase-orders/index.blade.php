@@ -45,7 +45,15 @@
                             @forelse($purchaseOrders as $po)
                                 <tr>
                                     <td>{{ $po->po_number }}</td>
-                                    <td>{{ $po->contract->contract_id ?? 'N/A' }}</td>
+                                    <td>
+                                        @if($po->contract)
+                                            <a href="{{ route('contracts.show', $po->contract) }}">
+                                                {{ $po->contract->contract_number ?? '[No Contract Number]' }} - {{ $po->contract->name ?? $po->contract->title ?? '[No Contract Name]' }}
+                                            </a>
+                                        @else
+                                            N/A
+                                        @endif
+                                    </td>
                                     <td>{{ $po->supplier->company_name }}</td>
                                     <td>₱{{ number_format($po->total_amount, 2) }}</td>
                                     <td>

@@ -27,51 +27,47 @@
                         @endif
 
                         <!-- Request Type Selection -->
-                        <div class="row mb-4">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label>Request Type</label>
-                                    <div class="custom-control custom-radio custom-control-inline">
-                                        <input type="radio" id="standalone" name="is_project_related" value="0" class="custom-control-input" {{ !$purchaseRequest->is_project_related ? 'checked' : '' }}>
-                                        <label class="custom-control-label" for="standalone">Standalone Request</label>
-                                    </div>
-                                    <div class="custom-control custom-radio custom-control-inline">
-                                        <input type="radio" id="project_related" name="is_project_related" value="1" class="custom-control-input" {{ $purchaseRequest->is_project_related ? 'checked' : '' }}>
-                                        <label class="custom-control-label" for="project_related">Project Related</label>
+                        @if($purchaseRequest->contract_id)
+                            <div class="row mb-4">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Request Type</label>
+                                        <div class="custom-control custom-radio custom-control-inline">
+                                            <input type="radio" id="project_related" name="is_project_related" value="1" class="custom-control-input" checked disabled>
+                                            <label class="custom-control-label" for="project_related">Project Related</label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                            <input type="hidden" name="is_project_related" value="1">
+                            <input type="hidden" name="contract_id" value="{{ $purchaseRequest->contract_id }}">
+                        @else
+                            <div class="row mb-4">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label>Request Type</label>
+                                        <div class="custom-control custom-radio custom-control-inline">
+                                            <input type="radio" id="standalone" name="is_project_related" value="0" class="custom-control-input" checked disabled>
+                                            <label class="custom-control-label" for="standalone">Standalone Request</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="hidden" name="is_project_related" value="0">
+                        @endif
 
                         <!-- Project/Contract Selection -->
-                        <div class="row mb-4" id="projectRelatedFields" style="display: {{ $purchaseRequest->is_project_related ? 'flex' : 'none' }};">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="contract_id">Contract</label>
-                                    <select name="contract_id" id="contract_id" class="form-control">
-                                        <option value="">Select a contract</option>
-                                        @foreach($contracts as $contract)
-                                            <option value="{{ $contract->id }}" {{ $purchaseRequest->contract_id == $contract->id ? 'selected' : '' }}>
-                                                {{ $contract->contract_id }} - {{ $contract->client->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                        @if($purchaseRequest->contract_id && $purchaseRequest->contract)
+                            <div class="row mb-4" id="projectRelatedFields" style="display: flex;">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="contract_id">Contract</label>
+                                        <input type="text" class="form-control bg-light" value="{{ $purchaseRequest->contract->contract_number . ' - ' . ($purchaseRequest->contract->name ?? $purchaseRequest->contract->title ?? '') }}" readonly>
+                                        <input type="hidden" name="contract_id" value="{{ $purchaseRequest->contract_id }}">
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="project_id">Project</label>
-                                    <select name="project_id" id="project_id" class="form-control">
-                                        <option value="">Select a project</option>
-                                        @foreach($projects as $project)
-                                            <option value="{{ $project->id }}" {{ $purchaseRequest->project_id == $project->id ? 'selected' : '' }}>
-                                                {{ $project->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
+                        @endif
 
                         <!-- Items Section -->
                         <div class="row mb-4">
@@ -100,9 +96,9 @@
                                                         <select name="items[{{ $index }}][material_id]" class="form-control material-select" required>
                                                             <option value="">Select Material</option>
                                                             @foreach($materials as $material)
-                                                                <option value="{{ $material->id }}" 
+                                                                <option value="{{ $material->id }}"
                                                                     data-unit="{{ $material->unit }}"
-                                                                    data-suppliers="{{ $material->suppliers->pluck('id')->toJson() }}"
+                                                                    data-suppliers='@json($material->suppliers->map(fn($s) => ["id"=>$s->id,"name"=>$s->company_name]))'
                                                                     {{ $item->material_id == $material->id ? 'selected' : '' }}>
                                                                     {{ $material->name }}
                                                                 </option>
@@ -128,14 +124,11 @@
                                                         <input type="text" name="items[{{ $index }}][preferred_brand]" class="form-control" value="{{ $item->preferred_brand }}">
                                                     </td>
                                                     <td>
-                                                        <select name="items[{{ $index }}][preferred_supplier_id]" class="form-control supplier-select">
+                                                        <select name="items[{{ $index }}][preferred_supplier_id]" class="form-control supplier-select" required data-selected-supplier="{{ $item->preferred_supplier_id }}">
                                                             <option value="">Select Supplier</option>
-                                                            @foreach($suppliers as $supplier)
-                                                                <option value="{{ $supplier->id }}" {{ $item->preferred_supplier_id == $supplier->id ? 'selected' : '' }}>
-                                                                    {{ $supplier->company_name }}
-                                                                </option>
-                                                            @endforeach
+                                                            <!-- Options will be dynamically populated based on selected material -->
                                                         </select>
+                                                        <script>console.log('Blade Debug: Item Index {{ $index }}, Preferred Supplier ID: {{ $item->preferred_supplier_id }}');</script>
                                                     </td>
                                                     <td>
                                                         <input type="text" name="items[{{ $index }}][notes]" class="form-control" value="{{ $item->notes }}">
@@ -184,9 +177,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const projectRelatedFields = document.getElementById('projectRelatedFields');
     const projectRelatedRadio = document.getElementById('project_related');
     
-    projectRelatedRadio.addEventListener('change', function() {
-        projectRelatedFields.style.display = this.checked ? 'flex' : 'none';
-    });
+    // Only add event listener if the radio button exists (i.e., not hidden by conditional Blade logic)
+    if (projectRelatedRadio) {
+        projectRelatedRadio.addEventListener('change', function() {
+            if (projectRelatedFields) {
+                projectRelatedFields.style.display = this.checked ? 'flex' : 'none';
+            }
+        });
+    }
 
     // Add new row
     let rowCount = {{ $purchaseRequest->items->count() }};
@@ -244,6 +242,44 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             alert('Please select either a contract or project for project-related requests.');
         }
+    });
+
+    // On material change, update supplier dropdown
+    $(document).on('change', '.material-select', function() {
+        var $row = $(this).closest('tr');
+        var materialId = $(this).val();
+        var suppliers = [];
+        if (materialId) {
+            var option = $(this).find('option:selected');
+            suppliers = option.data('suppliers') || []; // This should be an array of {id, name}
+        }
+        var $supplierSelect = $row.find('.supplier-select');
+        $supplierSelect.empty().append('<option value="">Select Supplier</option>');
+        suppliers.forEach(function(supplier) {
+            $supplierSelect.append('<option value="'+supplier.id+'">'+supplier.name+'</option>');
+        });
+
+        // Set the previously selected supplier from the data attribute on the select itself
+        var previouslySelectedSupplierId = $supplierSelect.data('selected-supplier');
+        
+        console.log('--- Material Change Debug ---');
+        console.log('Material ID:', materialId);
+        console.log('Available Suppliers (from data-suppliers):', suppliers);
+        console.log('Previously Selected Supplier ID (from data-selected-supplier):', previouslySelectedSupplierId);
+
+        if (previouslySelectedSupplierId) {
+            $supplierSelect.val(previouslySelectedSupplierId);
+            console.log('Attempted to set supplier value to:', previouslySelectedSupplierId);
+        }
+        console.log('Final Supplier Select Value:', $supplierSelect.val());
+        console.log('----------------------------');
+
+        $supplierSelect.prop('required', true);
+    });
+
+    // Trigger change event on page load for existing materials to populate suppliers and set selected
+    $('.material-select').each(function() {
+        $(this).trigger('change');
     });
 });
 </script>

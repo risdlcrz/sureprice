@@ -50,21 +50,7 @@
                                         <th>Contract</th>
                                         <td>
                                             @if($purchaseRequest->contract)
-                                                <a href="{{ route('contracts.show', $purchaseRequest->contract) }}">
-                                                    {{ $purchaseRequest->contract->contract_id }}
-                                                </a>
-                                            @else
-                                                N/A
-                                            @endif
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th>Project</th>
-                                        <td>
-                                            @if($purchaseRequest->project)
-                                                <a href="{{ route('projects.show', $purchaseRequest->project) }}">
-                                                    {{ $purchaseRequest->project->name }}
-                                                </a>
+                                                {{ $purchaseRequest->contract->contract_number }} - {{ $purchaseRequest->contract->client->name ?? '' }}
                                             @else
                                                 N/A
                                             @endif
@@ -166,7 +152,7 @@
                 </div>
 
                     <!-- Approval Actions -->
-                    @if($purchaseRequest->status === 'pending' && auth()->user()->can('approve-purchase-requests'))
+                    @if($purchaseRequest->status === 'pending' && (auth()->user()->role === 'procurement' || auth()->user()->role === 'admin'))
                         <div class="row mt-4">
                             <div class="col-12">
                                 <div class="card">
