@@ -8,12 +8,15 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <h1 class="h3 mb-0">Project Timeline</h1>
-                        <div class="btn-group">
+                        <div class="btn-group btn-group-timeline">
                             <button class="btn btn-outline-primary" id="viewToggle" data-view="calendar">
                                 <i class="bi bi-calendar3"></i> Calendar View
                             </button>
                             <button class="btn btn-outline-primary" id="viewToggle" data-view="gantt">
                                 <i class="bi bi-bar-chart"></i> Gantt View
+                            </button>
+                            <button class="btn btn-outline-primary" id="viewToggle" data-view="progress">
+                                <i class="bi bi-hourglass-split"></i> Progress View
                             </button>
                         </div>
                     </div>
@@ -136,6 +139,21 @@
             <div id="ganttView" class="card" style="display: none;">
                 <div class="card-body">
                     <div id="ganttChart"></div>
+                </div>
+            </div>
+
+            <!-- Progress View (Initially Hidden) -->
+            <div id="progressView" class="card" style="display: none;">
+                <div class="card-body">
+                    <h4 class="text-center mb-4">Overall Project Completion</h4>
+                    <div id="projectProgressBar" class="progress mb-4" style="height: 40px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                            <span class="fw-bold">0% Complete</span>
+                        </div>
+                    </div>
+                    <hr class="my-4">
+                    <h5 class="mb-3">Individual Contract Progress:</h5>
+                    <div id="contractProgressDetails" class="mt-4"></div>
                 </div>
             </div>
 
@@ -355,6 +373,11 @@
 ::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
+
+/* Calendar Customization */
+.btn-group-timeline {
+    flex-wrap: wrap;
+}
 </style>
 @endpush
 
@@ -568,7 +591,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     end: endFormatted,
                     progress: parseInt(contract.progress || contract.progress_percentage || 0),
                     dependencies: '',
-                    custom_class: `status-${contract.status || contract.contract_status || 'pending'}`
+                    custom_class: `status-${contract.status || contract.contract_status || 'pending'}`,
+                    bar_color: contract.bar_color || '#0d6efd' // Use bar_color from backend or default
                 };
 
                 // Additional data for tooltip
@@ -587,63 +611,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Initialize Gantt chart
-    function initGanttChart(data) {
-        console.log('Initializing Gantt chart with data:', data);
-        
-        if (!data || !Array.isArray(data) || data.length === 0) {
-            console.warn('No valid data available for Gantt chart');
-            document.getElementById('ganttChart').innerHTML = '<div class="alert alert-info">No data available for the selected period.</div>';
-            return;
-        }
+    function initGanttChart(ganttData) {
+        console.log('Final processed data:', ganttData);
+        const ganttChartEl = document.getElementById('ganttChart');
+        ganttChartEl.innerHTML = ''; // Clear previous Gantt chart
 
-        try {
-            // Clear existing chart
-            const ganttContainer = document.getElementById('ganttChart');
-            ganttContainer.innerHTML = '';
+        // Filter out tasks without valid start/end dates for Gantt chart
+        const cleanedData = ganttData.filter(task => task.start && task.end);
+        console.table(cleanedData);
 
-            // Perform a final filtering to ensure all tasks are valid for Frappe Gantt
-            const cleanedData = data.filter(task => {
-                // Explicitly check for typeof string for name, start, and end
-                const isValid = task && 
-                                typeof task.id === 'string' && task.id !== '' &&
-                                typeof task.name === 'string' && task.name !== '' &&
-                                typeof task.start === 'string' && task.start !== '' &&
-                                typeof task.end === 'string' && task.end !== '';
-                if (!isValid) {
-                    console.warn('Invalid task data found, skipping for Gantt chart:', task);
-                }
-                return isValid;
-            });
-
-            if (cleanedData.length === 0) {
-                console.warn('No valid tasks remaining after cleaning for Gantt chart.');
-                document.getElementById('ganttChart').innerHTML = '<div class="alert alert-info">No valid data available for the selected period after processing.</div>';
-                return;
-            }
-            
-            console.log('Data sent to Gantt constructor:', cleanedData);
-            console.table(cleanedData);
-
-            // Initialize the Gantt chart with minimal configuration first
-            const gantt = new Gantt("#ganttChart", cleanedData, {
-                header_height: 50,
-                column_width: 30,
-                step: 24,
-                view_modes: ['Quarter Day', 'Half Day', 'Day', 'Week', 'Month'],
-                bar_height: 20,
-                bar_corner_radius: 3,
-                arrow_curve: 5,
-                padding: 18,
-                view_mode: 'Week',
-                date_format: 'YYYY-MM-DD',
-                language: 'en'
-            });
-
-            // Store the gantt instance
-            window.gantt = gantt;
-
-            // Add custom popup after initialization
-            gantt.custom_popup_html = function(task) {
+        // Initialize the Gantt chart with minimal configuration first
+        const gantt = new Gantt("#ganttChart", cleanedData, {
+            header_height: 50,
+            column_width: 30,
+            step: 24,
+            view_modes: ['Quarter Day', 'Half Day', 'Day', 'Week', 'Month'],
+            bar_height: 20,
+            bar_corner_radius: 3,
+            arrow_curve: 5,
+            padding: 18,
+            view_mode: 'Week',
+            date_format: 'YYYY-MM-DD',
+            language: 'en',
+            // Use custom_html to apply dynamic bar colors based on data
+            // bar_color: function(task) { return task.bar_color; }, // Frappe Gantt v0.6.1 does not support this directly
+            custom_popup_html: function(task) {
                 if (!task) return '';
                 
                 return `
@@ -657,226 +649,197 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p><strong>Progress:</strong> ${task.progress || 0}%</p>
                     </div>
                 `;
-            };
-
-            // Add click handler for tasks
-            gantt.bar_click = function(task) {
-                console.log('Task clicked:', task);
-            };
-
-            // Add custom styling for status colors after a short delay
-            setTimeout(() => {
-                cleanedData.forEach(task => {
-                    if (!task || !task.id) return;
-                    
-                    const bar = document.querySelector(`.bar[data-id="${task.id}"]`);
-                    if (bar && task.custom_class) {
-                        bar.classList.add(task.custom_class);
-                    }
-                });
-            }, 100);
-
-        } catch (error) {
-            console.error('Error initializing Gantt chart:', error);
-            document.getElementById('ganttChart').innerHTML = `
-                <div class="alert alert-danger">
-                    Error initializing Gantt chart: ${error.message}
-                </div>
-            `;
-        }
-    }
-
-    // Toggle between Calendar and Gantt views
-    document.querySelectorAll('#viewToggle').forEach(button => {
-        button.addEventListener('click', function() {
-            const view = this.dataset.view;
-            const calendarView = document.getElementById('calendarView');
-            const ganttView = document.getElementById('ganttView');
-            
-            if (view === 'calendar') {
-                calendarView.style.display = 'block';
-                ganttView.style.display = 'none';
-                calendar.render();
-            } else {
-                calendarView.style.display = 'none';
-                ganttView.style.display = 'block';
-                
-                // Initialize or refresh Gantt chart
-                if (contracts && contracts.length > 0) {
-                    initGanttChart(contracts);
+            },
+            // Handle bar click event
+            on_click: function(task) {
+                console.log('Gantt task clicked:', task);
+                // Find the corresponding FullCalendar event and show details
+                const eventId = task.id.replace('contract-', '');
+                const fcEvent = calendar.getEventById(eventId);
+                if (fcEvent) {
+                    showContractDetails(fcEvent);
                 } else {
-                    // If no contracts data, fetch it
-                    const filterParams = getFilterParams();
-                    const params = new URLSearchParams(filterParams);
-                    
-                    fetch(`{{ url('/api/contracts/timeline') }}?${params.toString()}`, {
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                        },
-                        credentials: 'same-origin'
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+                    // If not found in calendar events, construct a temporary event object
+                    const tempEvent = {
+                        id: task.id,
+                        title: task.name,
+                        start: task.start,
+                        end: task.end,
+                        extendedProps: {
+                            type: 'contract',
+                            contract_id: task.id.replace('contract-', ''),
+                            client: task.client,
+                            contractor: task.contractor,
+                            status: task.status,
+                            budget: task.budget,
+                            scope: task.scope,
+                            progress: task.progress
                         }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.error) {
-                            throw new Error(data.error);
-                        }
-                        contracts = processGanttData(data.gantt || []);
-                        initGanttChart(contracts);
-                    })
-                    .catch(error => {
-                        console.error('Error fetching timeline data:', error);
-                        document.getElementById('ganttChart').innerHTML = `
-                            <div class="alert alert-danger">
-                                Error loading Gantt chart: ${error.message}
-                            </div>
-                        `;
-                    });
+                    };
+                    showContractDetails(tempEvent);
                 }
             }
         });
-    });
 
-    // Filter functionality
-    function applyFilters() {
-        calendar.refetchEvents();
-        if (document.getElementById('ganttView').style.display !== 'none') {
-            initGanttChart(contracts);
-        }
+        // Store the gantt instance
+        window.gantt = gantt;
+
+        // Manually apply bar colors after rendering due to Frappe Gantt limitations
+        gantt.bars.forEach(bar => {
+            const task = cleanedData.find(d => d.id === bar.task.id);
+            if (task && task.bar_color) {
+                bar.group.querySelector('.bar').style.fill = task.bar_color;
+                bar.group.querySelector('.bar-progress').style.fill = task.bar_color; // Use same color for progress
+            }
+        });
     }
 
-    // Event listeners for filters
-    document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.addEventListener('change', function() {
-            if (this.value === 'all' && this.checked) {
-                document.querySelectorAll('input[name="statusFilter"]:not([value="all"])').forEach(cb => {
-                    cb.checked = false;
-                });
-            } else if (this.checked) {
-                document.getElementById('statusAll').checked = false;
-            }
-            applyFilters();
-        });
-    });
+    // Update Overall Progress Bar
+    const overallProgress = {{ $overallProjectProgress ?? 0 }};
+    const progressBar = document.getElementById('projectProgressBar').querySelector('.progress-bar');
+    const progressBarText = document.getElementById('progressBarText');
 
-    // Add event listeners for all filter inputs
-    document.getElementById('startDate').addEventListener('change', applyFilters);
-    document.getElementById('endDate').addEventListener('change', applyFilters);
-    document.getElementById('minBudget').addEventListener('input', applyFilters);
-    document.getElementById('maxBudget').addEventListener('input', applyFilters);
-    
-    // Search button click
-    document.getElementById('searchButton').addEventListener('click', applyFilters);
+    progressBar.style.width = overallProgress + '%';
+    progressBar.setAttribute('aria-valuenow', overallProgress);
+    progressBar.textContent = `${overallProgress}%`;
+    progressBarText.innerHTML = `Overall Project Completion: <span class="fw-bold">${overallProgress}%</span>`;
 
-    // Search input with debounce
-    let searchTimeout;
-    document.getElementById('searchInput').addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(applyFilters, 300);
-    });
+    // Function to render individual contract progress bars
+    function renderContractProgressDetails(contractsData) {
+        const contractProgressDetails = document.getElementById('contractProgressDetails');
+        contractProgressDetails.innerHTML = ''; // Clear previous content
 
-    // Handle Enter key for search input
-    document.getElementById('searchInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            applyFilters();
+        if (!contractsData || !Array.isArray(contractsData)) {
+            console.warn('Invalid contracts data for rendering individual progress bars:', contractsData);
+            return;
         }
-    });
 
-    // Clear filters
-    document.getElementById('clearFilters').addEventListener('click', function() {
-        document.getElementById('searchInput').value = '';
-        document.getElementById('statusAll').checked = true;
-        document.querySelectorAll('input[name="statusFilter"]:not([value="all"])').forEach(cb => {
-            cb.checked = false;
+        contractsData.forEach(contract => {
+            // Ensure contract object has necessary properties
+            const contractName = contract.contract_number || contract.title || 'Untitled Contract';
+            const contractProgress = contract.progress || 0;
+            const progressBarColor = contract.color || '#0d6efd';
+
+            const contractProgressBarHtml = `
+                <div class="mb-4 p-3 border rounded shadow-sm bg-white">
+                    <h6 class="mb-2 text-primary">${contractName}</h6>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" 
+                             style="width: ${contractProgress}%; background-color: ${progressBarColor};" 
+                             aria-valuenow="${contractProgress}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                            ${contractProgress}%
+                        </div>
+                    </div>
+                </div>
+            `;
+            contractProgressDetails.insertAdjacentHTML('beforeend', contractProgressBarHtml);
         });
-        document.getElementById('startDate').value = '';
-        document.getElementById('endDate').value = '';
-        document.getElementById('minBudget').value = '';
-        document.getElementById('maxBudget').value = '';
-        applyFilters();
+    }
+
+    // View Toggle
+    document.querySelectorAll('#viewToggle').forEach(button => {
+        button.addEventListener('click', function() {
+            const view = this.dataset.view;
+            document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
+            document.getElementById('ganttView').style.display = view === 'gantt' ? 'block' : 'none';
+            document.getElementById('progressView').style.display = view === 'progress' ? 'block' : 'none';
+
+            if (view === 'progress') {
+                // Fetch contracts data if not already available or refresh
+                const filterParams = getFilterParams();
+                const params = new URLSearchParams(filterParams);
+                fetch(`{{ url('/api/contracts/timeline') }}?${params.toString()}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Convert object of objects to array of objects if needed
+                    const contractsArray = Object.values(data.calendar);
+                    renderContractProgressDetails(contractsArray);
+                })
+                .catch(error => {
+                    console.error('Error fetching contracts for progress view:', error);
+                    document.getElementById('contractProgressDetails').innerHTML = `
+                        <div class="alert alert-danger">
+                            Error loading contract progress: ${error.message}
+                        </div>
+                    `;
+                });
+            }
+        });
     });
 
-    // Show contract details in modal
-    function showContractDetails(contractEvent) {
-        const props = contractEvent._def.extendedProps;
-        const contractId = contractEvent._def.publicId ? contractEvent._def.publicId.replace('contract-', '') : null;
-
+    // Show Contract Details
+    function showContractDetails(event) {
+        const modal = new bootstrap.Modal(document.getElementById('contractModal'));
+        const details = event.extendedProps;
+        
         document.querySelector('.contract-details').innerHTML = `
-            <div class="row g-3">
+            <div class="row">
                 <div class="col-md-6">
-                    <div class="mb-2">
-                        <div class="label">Contract Number</div>
-                        <div class="value">${props.contract_id || 'N/A'}</div>
-                    </div>
-                    <div class="mb-2">
-                        <div class="label">Client</div>
-                        <div class="value">${props.client || 'N/A'}</div>
-                    </div>
-                    <div class="mb-2">
-                        <div class="label">Contractor</div>
-                        <div class="value">${props.contractor || 'N/A'}</div>
-                    </div>
+                    <p><strong>Client:</strong> ${event.title}</p>
+                    <p><strong>Contractor:</strong> ${details.contractor}</p>
+                    <p><strong>Status:</strong> <span class="badge bg-${getStatusColor(details.status)}">${details.status}</span></p>
                 </div>
                 <div class="col-md-6">
-                    <div class="mb-2">
-                        <div class="label">Status</div>
-                        <div class="value">
-                            <span class="badge bg-${getStatusColor(props.status)}">
-                                ${props.status ? props.status.toUpperCase() : 'N/A'}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="mb-2">
-                        <div class="label">Duration</div>
-                        <div class="value">
-                            ${formatDate(contractEvent.start)} - ${formatDate(contractEvent.end)}
-                        </div>
-                    </div>
-                    <div class="mb-2">
-                        <div class="label">Budget</div>
-                        <div class="value">₱${new Intl.NumberFormat().format(props.budget || 0)}</div>
-                    </div>
-                </div>
-                <div class="col-12">
-                    <div class="mb-2">
-                        <div class="label">Scope of Work</div>
-                        <div class="value">${props.scope || 'N/A'}</div>
-                    </div>
+                    <p><strong>Start Date:</strong> ${event.start.toLocaleDateString()}</p>
+                    <p><strong>End Date:</strong> ${event.end.toLocaleDateString()}</p>
+                    <p><strong>Budget:</strong> ₱${details.budget.toLocaleString()}</p>
                 </div>
             </div>
         `;
-
-        const viewContractUrl = contractId ? `/contracts/${contractId}` : '#';
-        document.getElementById('viewContractBtn').href = viewContractUrl;
+        
+        const viewContractBtn = document.getElementById('viewContractBtn');
+        // Ensure contractId is always just the number, removing any 'contract-' prefix
+        const contractId = event.id.toString().replace('contract-', '');
+        viewContractBtn.setAttribute('href', `{{ url('/contracts/') }}/${contractId}`);
+        console.log('Contract ID set on button:', contractId);
         modal.show();
     }
 
-    // Helper functions
-    function getStatusColor(status) {
-        return {
-            draft: 'warning',
-            approved: 'success',
-            rejected: 'danger',
-            pending: 'info',
-            in_progress: 'primary',
-            completed: 'success',
-            delayed: 'danger'
-        }[status] || 'secondary';
-    }
+    // Initial setup of the Gantt chart and overall progress bar when the page loads
+    // The Gantt chart data is already available via `contracts` variable.
+    // No need to call initGanttChart here directly, as it's triggered by tab switch or API response.
 
-    function formatDate(dateStr) {
-        return new Date(dateStr).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
+    // Initial setup for the overall progress bar
+    // It's already correctly updated via a direct script block above.
+
+    // Set the initial view to calendar
+    document.getElementById('calendarView').style.display = 'block';
+    document.getElementById('ganttView').style.display = 'none';
+    document.getElementById('progressView').style.display = 'none';
+
+    // Handle click on View Full Contract button in modal
+    document.getElementById('viewContractBtn').addEventListener('click', function(e) {
+        e.preventDefault(); // Prevent default link behavior
+        const contractUrl = this.getAttribute('href');
+        if (contractUrl) {
+            window.location.href = contractUrl;
+        } else {
+            console.error('Contract URL not found.');
+        }
+    });
+
+    function getStatusColor(status) {
+        switch(status) {
+            case 'approved': return 'success';
+            case 'draft': return 'warning';
+            case 'rejected': return 'danger';
+            default: return 'secondary';
+        }
     }
 });
 </script>
