@@ -23,103 +23,112 @@
     </div>
 
     <div class="row">
-        <!-- Filters Sidebar -->
-        <div class="col-md-3">
-            <div class="card sticky-top" style="top: 20px;">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">Filters</h5>
-                    
-                    <!-- Search -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Search Contracts</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="searchInput" 
-                                   name="term"
-                                   placeholder="Search by contract ID, client, or contractor...">
-                            <button class="btn btn-primary" type="button" id="searchButton">
-                                Search
-                            </button>
+        <!-- Main Content -->
+        <div class="col-12">
+            <!-- Filter Button -->
+            <div class="mb-3">
+                <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filterCollapse" aria-expanded="false" aria-controls="filterCollapse">
+                    <i class="bi bi-funnel"></i> Filters
+                </button>
+            </div>
+
+            <!-- Collapsible Filter Panel -->
+            <div class="collapse mb-4" id="filterCollapse">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Search -->
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Search Contracts</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="bi bi-search"></i>
+                                    </span>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="searchInput" 
+                                           name="term"
+                                           placeholder="Search by contract ID, client, or contractor...">
+                                    <button class="btn btn-primary" type="button" id="searchButton">
+                                        Search
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Status Filter -->
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Status</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="all" id="statusAll" checked name="statusFilter">
+                                        <label class="form-check-label" for="statusAll">All</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="draft" id="statusDraft" name="statusFilter">
+                                        <label class="form-check-label" for="statusDraft">
+                                            <span class="badge bg-warning">Draft</span>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="approved" id="statusApproved" name="statusFilter">
+                                        <label class="form-check-label" for="statusApproved">
+                                            <span class="badge bg-success">Approved</span>
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="rejected" id="statusRejected" name="statusFilter">
+                                        <label class="form-check-label" for="statusRejected">
+                                            <span class="badge bg-danger">Rejected</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Date Range -->
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Date Range</label>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text bg-light">
+                                        <i class="bi bi-calendar-event"></i>
+                                    </span>
+                                    <input type="date" class="form-control" id="startDate">
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="bi bi-calendar-event"></i>
+                                    </span>
+                                    <input type="date" class="form-control" id="endDate">
+                                </div>
+                            </div>
+
+                            <!-- Budget Range -->
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Budget Range</label>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text bg-light">₱</span>
+                                    <input type="number" class="form-control" id="minBudget" placeholder="Min">
+                                </div>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">₱</span>
+                                    <input type="number" class="form-control" id="maxBudget" placeholder="Max">
+                                </div>
+                            </div>
+
+                            <!-- Clear Filters -->
+                            <div class="col-12">
+                                <button class="btn btn-outline-secondary" id="clearFilters">
+                                    <i class="bi bi-x-circle"></i> Clear Filters
+                                </button>
+                            </div>
                         </div>
                     </div>
-
-                    <!-- Status Filter -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Status</label>
-                        <div class="d-flex flex-wrap gap-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="all" id="statusAll" checked name="statusFilter">
-                                <label class="form-check-label" for="statusAll">All</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="draft" id="statusDraft" name="statusFilter">
-                                <label class="form-check-label" for="statusDraft">
-                                    <span class="badge bg-warning">Draft</span>
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="approved" id="statusApproved" name="statusFilter">
-                                <label class="form-check-label" for="statusApproved">
-                                    <span class="badge bg-success">Approved</span>
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" value="rejected" id="statusRejected" name="statusFilter">
-                                <label class="form-check-label" for="statusRejected">
-                                    <span class="badge bg-danger">Rejected</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Date Range -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Date Range</label>
-                        <div class="input-group mb-2">
-                            <span class="input-group-text bg-light">
-                                <i class="bi bi-calendar-event"></i>
-                            </span>
-                            <input type="date" class="form-control" id="startDate">
-                        </div>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light">
-                                <i class="bi bi-calendar-event"></i>
-                            </span>
-                            <input type="date" class="form-control" id="endDate">
-                        </div>
-                    </div>
-
-                    <!-- Budget Range -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold">Budget Range</label>
-                        <div class="input-group mb-2">
-                            <span class="input-group-text bg-light">₱</span>
-                            <input type="number" class="form-control" id="minBudget" placeholder="Min">
-                        </div>
-                        <div class="input-group">
-                            <span class="input-group-text bg-light">₱</span>
-                            <input type="number" class="form-control" id="maxBudget" placeholder="Max">
-                        </div>
-                    </div>
-
-                    <!-- Clear Filters -->
-                    <button class="btn btn-outline-secondary w-100" id="clearFilters">
-                        <i class="bi bi-x-circle"></i> Clear Filters
-                    </button>
                 </div>
             </div>
-        </div>
 
-        <!-- Main Content -->
-        <div class="col-md-9">
             <!-- Calendar View -->
             <div id="calendarView" class="card">
                 <div class="card-body">
-    <div id="calendar"></div>
+                    <div id="calendar"></div>
                 </div>
             </div>
 
@@ -128,17 +137,17 @@
                 <div class="card-body">
                     <div id="ganttChart"></div>
                 </div>
-</div>
+            </div>
 
             <!-- Contract Details Modal -->
             <div class="modal fade" id="contractModal" tabindex="-1">
                 <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
+                    <div class="modal-content">
+                        <div class="modal-header">
                             <h5 class="modal-title">Contract Details</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
+                        </div>
+                        <div class="modal-body">
                             <div class="contract-details">
                                 <!-- Details will be populated dynamically -->
                             </div>
@@ -148,12 +157,12 @@
                                 <i class="bi bi-eye"></i> View Full Contract
                             </a>
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          </div>
-          </div>
-          </div>
-      </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 @push('styles')
@@ -236,26 +245,77 @@
 .gantt-container {
     height: 600px;
     overflow-y: auto;
+    margin-top: 20px;
 }
 
 .gantt .bar {
     fill: #0d6efd;
-    transition: fill 0.3s ease; /* Smooth transition for color changes */
+    transition: fill 0.3s ease;
 }
 
 .gantt .bar-progress {
     fill: #0a4fb9;
 }
 
-/* Gantt Status Colors (matching calendar) */
-.gantt .bar.status-draft .bar-wrapper {
-    fill: #f9ab00; /* Orange for draft */
+.gantt .bar-label {
+    fill: #fff;
+    dominant-baseline: central;
+    text-anchor: middle;
+    font-size: 12px;
+    font-weight: lighter;
 }
-.gantt .bar.status-approved .bar-wrapper {
-    fill: #34a853; /* Green for approved */
+
+.gantt .grid-header {
+    fill: #ffffff;
+    stroke: #e0e0e0;
+    stroke-width: 1.4;
 }
-.gantt .bar.status-rejected .bar-wrapper {
-    fill: #ea4335; /* Red for rejected */
+
+.gantt .grid-row {
+    fill: #ffffff;
+}
+
+.gantt .grid-row:nth-child(even) {
+    fill: #f5f5f5;
+}
+
+.gantt .lower-text, .gantt .upper-text {
+    font-size: 12px;
+    text-anchor: middle;
+}
+
+.gantt .today-highlight {
+    fill: #fcf8e3;
+    opacity: 0.5;
+}
+
+/* Gantt Status Colors */
+.gantt .bar.status-draft {
+    fill: #f9ab00;
+}
+
+.gantt .bar.status-approved {
+    fill: #34a853;
+}
+
+.gantt .bar.status-rejected {
+    fill: #ea4335;
+}
+
+.gantt .bar.status-pending {
+    fill: #4285f4;
+}
+
+.gantt .bar.status-in_progress {
+    fill: #0d6efd;
+}
+
+.gantt .bar.status-completed {
+    fill: #34a853;
+}
+
+.gantt .bar.status-delayed {
+    fill: #ea4335;
 }
 
 /* Modal Customization */
@@ -328,7 +388,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const params = new URLSearchParams();
         if (searchTerm) params.append('term', searchTerm);
-        if (selectedStatuses.length > 0) params.append('status', selectedStatuses.join(',')); // Join multiple statuses
+        if (selectedStatuses.length > 0) params.append('status', selectedStatuses.join(','));
         if (startDate) params.append('startDate', startDate);
         if (endDate) params.append('endDate', endDate);
         if (minBudget) params.append('minBudget', minBudget);
@@ -341,22 +401,26 @@ document.addEventListener('DOMContentLoaded', function() {
     calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
         initialView: 'dayGridMonth',
-        navLinks: true, // Make day/week numbers clickable
-        plugins: [ FullCalendar.dayGridPlugin, FullCalendar.timeGridPlugin, FullCalendar.resourceTimelinePlugin, FullCalendar.interactionPlugin ], // Add necessary plugins
+        navLinks: true,
+        plugins: [ FullCalendar.dayGridPlugin, FullCalendar.timeGridPlugin, FullCalendar.resourceTimelinePlugin, FullCalendar.interactionPlugin ],
         headerToolbar: {
-            left: 'dayGridMonth,dayGridWeek,dayGridDay', // View buttons on left
+            left: 'dayGridMonth,dayGridWeek,dayGridDay',
             center: 'title',
-            right: 'today prev,next' // Today button and navigation on right
+            right: 'today prev,next'
         },
         height: 'auto',
         events: function(fetchInfo, successCallback, failureCallback) {
-            const params = new URLSearchParams({
-                startDate: fetchInfo.startStr,
-                endDate: fetchInfo.endStr,
-                term: document.getElementById('searchInput')?.value || '',
-                status: document.querySelector('input[name="statusFilter"]:checked')?.value || 'all'
-            });
+            // Get current filter parameters
+            const filterParams = getFilterParams();
+            
+            // Add date range from calendar view
+            const params = new URLSearchParams(filterParams);
+            params.append('startDate', fetchInfo.startStr);
+            params.append('endDate', fetchInfo.endStr);
 
+            console.log('Fetching timeline data with params:', params.toString());
+
+            // Fetch events with filters
             fetch(`{{ url('/api/contracts/timeline') }}?${params.toString()}`, {
                 headers: {
                     'Accept': 'application/json',
@@ -367,18 +431,22 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
                 }
                 return response.json();
             })
             .then(data => {
-                console.log('Received calendar data:', data.calendar);
-                console.log('Received Gantt data:', data.gantt);
-                // Update calendar events
-                successCallback(data.calendar);
+                console.log('Received API response:', data);
                 
-                // Store Gantt data
-                contracts = data.gantt;
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Update calendar events
+                successCallback(data.calendar || []);
+                
+                // Store and process Gantt data
+                contracts = processGanttData(data.gantt || []);
                 
                 // If Gantt view is active, refresh it
                 if (document.getElementById('ganttView').style.display !== 'none') {
@@ -386,8 +454,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error fetching calendar events:', error);
+                console.error('Error fetching timeline data:', error);
                 failureCallback(error);
+                
+                // Show error message to user
+                const errorMessage = error.message || 'An error occurred while fetching timeline data';
+                alert(errorMessage);
             });
         },
         eventDidMount: function(info) {
@@ -401,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 info.el.classList.add(statusClass);
             }
 
-            // Add tooltip (keep this)
+            // Add tooltip
             let tooltipContent = '';
             if (props.type === 'contract') {
                 tooltipContent = `
@@ -413,8 +485,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div>Status: ${props.status ? props.status.toUpperCase() : 'N/A'}</div>
                     </div>
                 `;
-            } else if (props.type === 'task') {
-                 tooltipContent = `
+            } else {
+                tooltipContent = `
                     <div class="p-2">
                         <div class="mb-1"><strong>Task: ${info.event.title}</strong></div>
                         <div>Status: ${props.status ? props.status.toUpperCase() : 'N/A'}</div>
@@ -432,69 +504,240 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         },
         eventClick: function(info) {
-            console.log('Event clicked:', info.event);
-            console.log('Event type from extendedProps:', info.event._def.extendedProps.type);
-            info.jsEvent.preventDefault(); // Prevent FullCalendar's default action
             if (info.event._def.extendedProps.type === 'contract') {
-                console.log('Condition met: Event type is contract.');
                 showContractDetails(info.event);
-            } else {
-                console.log('Condition NOT met: Event type is not contract.');
             }
-            // Add logic for task click if needed
         }
     });
-    calendar.render(); // Render calendar initially
+    calendar.render();
 
-    // Initialize Gantt Chart
+    // Process Gantt data
+    function processGanttData(data) {
+        console.log('Raw Gantt data received:', data);
+        
+        if (!data || !Array.isArray(data)) {
+            console.warn('Invalid Gantt data format:', data);
+            return [];
+        }
+        
+        const processedData = data
+            .filter(contract => {
+                // Check if we have the minimum required data
+                if (!contract) {
+                    console.warn('Empty contract object');
+                    return false;
+                }
+
+                // Ensure we have required fields
+                const hasId = contract.id || contract.contract_id || contract.contractId;
+                const hasName = contract.name || contract.title || contract.contract_title || contract.contractTitle;
+                const rawStartDate = contract.start || contract.start_date || contract.startDate;
+                const rawEndDate = contract.end || contract.end_date || contract.endDate;
+
+                if (!hasId || !hasName || !rawStartDate || !rawEndDate) {
+                    console.warn('Contract missing required fields (id, name, start, end):', contract);
+                    return false;
+                }
+
+                const startDateObj = new Date(rawStartDate);
+                const endDateObj = new Date(rawEndDate);
+
+                if (isNaN(startDateObj.getTime()) || isNaN(endDateObj.getTime())) {
+                    console.warn(`Contract ${hasId} has invalid dates:`, contract);
+                    return false;
+                }
+
+                return true;
+            })
+            .map(contract => {
+                // Basic required fields
+                const contractId = contract.id || contract.contract_id || contract.contractId;
+                const title = contract.name || contract.title || contract.contract_title || contract.contractTitle || 'Untitled Task'; // Ensure name is always a string
+                
+                const startDateObj = new Date(contract.start || contract.start_date || contract.startDate);
+                const endDateObj = new Date(contract.end || contract.end_date || contract.endDate);
+
+                // Format dates as YYYY-MM-DD strings for Frappe Gantt
+                const startFormatted = startDateObj.toISOString().split('T')[0];
+                const endFormatted = endDateObj.toISOString().split('T')[0];
+
+                const task = {
+                    id: `contract-${contractId}`,
+                    name: title,
+                    start: startFormatted,
+                    end: endFormatted,
+                    progress: parseInt(contract.progress || contract.progress_percentage || 0),
+                    dependencies: '',
+                    custom_class: `status-${contract.status || contract.contract_status || 'pending'}`
+                };
+
+                // Additional data for tooltip
+                task.client = contract.extendedProps?.client || contract.client || contract.client_name || contract.clientName || 'N/A';
+                task.contractor = contract.extendedProps?.contractor || contract.contractor || contract.contractor_name || contract.contractorName || 'N/A';
+                task.budget = parseFloat(contract.extendedProps?.budget || contract.budget || contract.contract_budget || 0);
+                task.status = contract.status || contract.contract_status || 'pending';
+                task.scope = contract.extendedProps?.scope || contract.scope || contract.scope_of_work || contract.scopeOfWork || 'N/A';
+
+                console.log('Processed task:', task);
+                return task;
+            });
+            
+        console.log('Final processed data:', processedData);
+        return processedData;
+    }
+
+    // Initialize Gantt chart
     function initGanttChart(data) {
-        console.log('Initializing Gantt Chart with data:', data);
+        console.log('Initializing Gantt chart with data:', data);
+        
         if (!data || !Array.isArray(data) || data.length === 0) {
-            console.warn('No data available for Gantt chart');
+            console.warn('No valid data available for Gantt chart');
+            document.getElementById('ganttChart').innerHTML = '<div class="alert alert-info">No data available for the selected period.</div>';
             return;
         }
 
-        // Ensure Gantt is re-initialized or refreshed with new data
-        if (ganttChart) {
-            ganttChart.refresh(data);
-        } else {
-            ganttChart = new Gantt("#ganttChart", data, {
+        try {
+            // Clear existing chart
+            const ganttContainer = document.getElementById('ganttChart');
+            ganttContainer.innerHTML = '';
+
+            // Perform a final filtering to ensure all tasks are valid for Frappe Gantt
+            const cleanedData = data.filter(task => {
+                // Explicitly check for typeof string for name, start, and end
+                const isValid = task && 
+                                typeof task.id === 'string' && task.id !== '' &&
+                                typeof task.name === 'string' && task.name !== '' &&
+                                typeof task.start === 'string' && task.start !== '' &&
+                                typeof task.end === 'string' && task.end !== '';
+                if (!isValid) {
+                    console.warn('Invalid task data found, skipping for Gantt chart:', task);
+                }
+                return isValid;
+            });
+
+            if (cleanedData.length === 0) {
+                console.warn('No valid tasks remaining after cleaning for Gantt chart.');
+                document.getElementById('ganttChart').innerHTML = '<div class="alert alert-info">No valid data available for the selected period after processing.</div>';
+                return;
+            }
+            
+            console.log('Data sent to Gantt constructor:', cleanedData);
+            console.table(cleanedData);
+
+            // Initialize the Gantt chart with minimal configuration first
+            const gantt = new Gantt("#ganttChart", cleanedData, {
                 header_height: 50,
                 column_width: 30,
                 step: 24,
-                view_modes: ['Day', 'Week', 'Month'],
-                view_mode: 'Month',
+                view_modes: ['Quarter Day', 'Half Day', 'Day', 'Week', 'Month'],
                 bar_height: 20,
                 bar_corner_radius: 3,
                 arrow_curve: 5,
                 padding: 18,
+                view_mode: 'Week',
                 date_format: 'YYYY-MM-DD',
-                on_click: (task) => {
-                    const contract = calendar.getEventById(`contract-${task.id}`);
-                    if (contract) {
-                        console.log('Gantt task clicked, corresponding calendar event:', contract);
-                        showContractDetails(contract);
-                    }
-                }
+                language: 'en'
             });
+
+            // Store the gantt instance
+            window.gantt = gantt;
+
+            // Add custom popup after initialization
+            gantt.custom_popup_html = function(task) {
+                if (!task) return '';
+                
+                return `
+                    <div class="gantt-popup">
+                        <h5>${task.name || 'Untitled Contract'}</h5>
+                        <p><strong>Client:</strong> ${task.client || 'N/A'}</p>
+                        <p><strong>Contractor:</strong> ${task.contractor || 'N/A'}</p>
+                        <p><strong>Status:</strong> ${task.status || 'N/A'}</p>
+                        <p><strong>Budget:</strong> ${task.budget ? '₱' + task.budget.toLocaleString() : 'N/A'}</p>
+                        <p><strong>Scope:</strong> ${task.scope || 'N/A'}</p>
+                        <p><strong>Progress:</strong> ${task.progress || 0}%</p>
+                    </div>
+                `;
+            };
+
+            // Add click handler for tasks
+            gantt.bar_click = function(task) {
+                console.log('Task clicked:', task);
+            };
+
+            // Add custom styling for status colors after a short delay
+            setTimeout(() => {
+                cleanedData.forEach(task => {
+                    if (!task || !task.id) return;
+                    
+                    const bar = document.querySelector(`.bar[data-id="${task.id}"]`);
+                    if (bar && task.custom_class) {
+                        bar.classList.add(task.custom_class);
+                    }
+                });
+            }, 100);
+
+        } catch (error) {
+            console.error('Error initializing Gantt chart:', error);
+            document.getElementById('ganttChart').innerHTML = `
+                <div class="alert alert-danger">
+                    Error initializing Gantt chart: ${error.message}
+                </div>
+            `;
         }
     }
 
-    // View Toggle - ensure Gantt is refreshed after toggle
+    // Toggle between Calendar and Gantt views
     document.querySelectorAll('#viewToggle').forEach(button => {
         button.addEventListener('click', function() {
             const view = this.dataset.view;
+            const calendarView = document.getElementById('calendarView');
+            const ganttView = document.getElementById('ganttView');
+            
             if (view === 'calendar') {
-                document.getElementById('calendarView').style.display = 'block';
-                document.getElementById('ganttView').style.display = 'none';
+                calendarView.style.display = 'block';
+                ganttView.style.display = 'none';
                 calendar.render();
             } else {
-                document.getElementById('calendarView').style.display = 'none';
-                document.getElementById('ganttView').style.display = 'block';
+                calendarView.style.display = 'none';
+                ganttView.style.display = 'block';
+                
+                // Initialize or refresh Gantt chart
                 if (contracts && contracts.length > 0) {
                     initGanttChart(contracts);
                 } else {
-                    calendar.refetchEvents();
+                    // If no contracts data, fetch it
+                    const filterParams = getFilterParams();
+                    const params = new URLSearchParams(filterParams);
+                    
+                    fetch(`{{ url('/api/contracts/timeline') }}?${params.toString()}`, {
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        credentials: 'same-origin'
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.error) {
+                            throw new Error(data.error);
+                        }
+                        contracts = processGanttData(data.gantt || []);
+                        initGanttChart(contracts);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching timeline data:', error);
+                        document.getElementById('ganttChart').innerHTML = `
+                            <div class="alert alert-danger">
+                                Error loading Gantt chart: ${error.message}
+                            </div>
+                        `;
+                    });
                 }
             }
         });
@@ -502,33 +745,68 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Filter functionality
     function applyFilters() {
-        calendar.refetchEvents(); // Tells FullCalendar to re-fetch events with current filters
-        // Gantt chart will be updated when its view is toggled or when calendar fetches new data.
-        // If Gantt is active, force a refresh
+        calendar.refetchEvents();
         if (document.getElementById('ganttView').style.display !== 'none') {
-            initGanttChart(contracts); // Use the updated contracts from refetchEvents
+            initGanttChart(contracts);
         }
     }
 
+    // Event listeners for filters
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        cb.addEventListener('change', function() {
+            if (this.value === 'all' && this.checked) {
+                document.querySelectorAll('input[name="statusFilter"]:not([value="all"])').forEach(cb => {
+                    cb.checked = false;
+                });
+            } else if (this.checked) {
+                document.getElementById('statusAll').checked = false;
+            }
+            applyFilters();
+        });
+    });
+
+    // Add event listeners for all filter inputs
+    document.getElementById('startDate').addEventListener('change', applyFilters);
+    document.getElementById('endDate').addEventListener('change', applyFilters);
+    document.getElementById('minBudget').addEventListener('input', applyFilters);
+    document.getElementById('maxBudget').addEventListener('input', applyFilters);
+    
+    // Search button click
+    document.getElementById('searchButton').addEventListener('click', applyFilters);
+
+    // Search input with debounce
+    let searchTimeout;
+    document.getElementById('searchInput').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(applyFilters, 300);
+    });
+
+    // Handle Enter key for search input
+    document.getElementById('searchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            applyFilters();
+        }
+    });
+
+    // Clear filters
+    document.getElementById('clearFilters').addEventListener('click', function() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('statusAll').checked = true;
+        document.querySelectorAll('input[name="statusFilter"]:not([value="all"])').forEach(cb => {
+            cb.checked = false;
+        });
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        document.getElementById('minBudget').value = '';
+        document.getElementById('maxBudget').value = '';
+        applyFilters();
+    });
+
     // Show contract details in modal
     function showContractDetails(contractEvent) {
-        console.log('Showing contract details for:', contractEvent);
-        // Access extendedProps correctly from FullCalendar's _EventImpl object
         const props = contractEvent._def.extendedProps;
-        console.log('Extended props:', props);
-        // Extract contract ID safely
         const contractId = contractEvent._def.publicId ? contractEvent._def.publicId.replace('contract-', '') : null;
-        console.log('Contract ID:', contractId);
-
-        // Ensure the modal element exists before trying to initialize Bootstrap Modal
-        const modalElement = document.getElementById('contractModal');
-        if (!modalElement) {
-            console.error('Modal element #contractModal not found!');
-            return;
-        }
-
-        const modal = new bootstrap.Modal(modalElement);
-        console.log('Bootstrap Modal instance:', modal);
 
         document.querySelector('.contract-details').innerHTML = `
             <div class="row g-3">
@@ -575,12 +853,9 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        // Ensure contractId is valid before setting href
         const viewContractUrl = contractId ? `/contracts/${contractId}` : '#';
         document.getElementById('viewContractBtn').href = viewContractUrl;
-        console.log('View Full Contract href:', viewContractUrl);
         modal.show();
-        console.log('Modal show() called.');
     }
 
     // Helper functions
@@ -589,7 +864,7 @@ document.addEventListener('DOMContentLoaded', function() {
             draft: 'warning',
             approved: 'success',
             rejected: 'danger',
-            pending: 'info', // Added pending status for tasks/events
+            pending: 'info',
             in_progress: 'primary',
             completed: 'success',
             delayed: 'danger'
@@ -603,63 +878,6 @@ document.addEventListener('DOMContentLoaded', function() {
             year: 'numeric'
         });
     }
-
-    // Event listeners for filters
-    document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-        cb.addEventListener('change', function() {
-            if (this.value === 'all' && this.checked) {
-                document.querySelectorAll('input[name="statusFilter"]:not([value="all"])').forEach(cb => {
-                    cb.checked = false;
-                });
-            } else if (this.checked) {
-                document.getElementById('statusAll').checked = false;
-            }
-            applyFilters();
-            });
-    });
-    document.getElementById('startDate').addEventListener('change', applyFilters);
-    document.getElementById('endDate').addEventListener('change', applyFilters);
-    document.getElementById('minBudget').addEventListener('input', applyFilters);
-    document.getElementById('maxBudget').addEventListener('input', applyFilters);
-    
-    // Search on button click (performSearch is replaced by applyFilters)
-    document.getElementById('searchButton').addEventListener('click', applyFilters);
-
-    // Search on input with debounce
-    let searchTimeout;
-    document.getElementById('searchInput').addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        // Only filter if there are 2 or more characters, or if clearing search
-        if (this.value.length >= 2 || this.value.length === 0) {
-            searchTimeout = setTimeout(applyFilters, 300);
-        }
-    });
-
-    // Handle Enter key for search input
-    document.getElementById('searchInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            applyFilters();
-        }
-    });
-
-    // Clear filters
-    document.getElementById('clearFilters').addEventListener('click', function() {
-        document.getElementById('searchInput').value = '';
-        document.getElementById('statusAll').checked = true;
-        document.querySelectorAll('input[name="statusFilter"]:not([value="all"])').forEach(cb => {
-            cb.checked = false;
-        });
-        document.getElementById('startDate').value = '';
-        document.getElementById('endDate').value = '';
-        document.getElementById('minBudget').value = '';
-        document.getElementById('maxBudget').value = '';
-        applyFilters();
-    });
-
-    // Initial filter application to load data (if any pre-existing filters)
-    // applyFilters(); // FullCalendar's initial render will call events function
-
 });
 </script>
 @endpush 
