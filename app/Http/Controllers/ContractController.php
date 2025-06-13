@@ -1294,126 +1294,78 @@ class ContractController extends Controller
 
     public function timeline(Request $request)
     {
-        $query = Contract::with(['client', 'contractor']);
+        try {
+            $query = Contract::with(['client', 'contractor']);
 
-        // Date range filter
-        if ($request->has('startDate')) {
-            $query->where('start_date', '>=', $request->startDate);
-        }
-        if ($request->has('endDate')) {
-            $query->where('end_date', '<=', $request->endDate);
-        }
+            // Apply search filter
+            if ($request->has('term')) {
+                $searchTerm = $request->term;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('contract_id', 'like', '%' . $searchTerm . '%')
+                      ->orWhereHas('client', function($q_client) use ($searchTerm) {
+                          $q_client->where('name', 'like', '%' . $searchTerm . '%');
+                      });
+                });
+            }
 
-        // Status filter
-        if ($request->has('status') && $request->status !== 'all') {
-            // Ensure status is an array if multiple are passed, otherwise handle single status
-            $statuses = explode(',', $request->status);
-            $query->whereIn('status', $statuses);
-        }
+            // Apply status filter
+            if ($request->has('status') && $request->status !== 'all') {
+                $statuses = explode(',', $request->status);
+                $query->whereIn('status', $statuses);
+            }
 
-        // Search term
-        if ($request->has('term') && !empty($request->term)) {
-            $query->where(function($q) use ($request) {
-                $q->where('contract_id', 'like', '%' . $request->term . '%')
-                  ->orWhere('scope_of_work', 'like', '%' . $request->term . '%')
-                  ->orWhereHas('client', function($q) use ($request) {
-                      $q->where('name', 'like', '%' . $request->term . '%');
-                  })
-                  ->orWhereHas('contractor', function($q) use ($request) {
-                      $q->where('name', 'like', '%' . $request->term . '%');
-                  });
-            });
-        }
+            // Apply date range filter
+            if ($request->has('startDate')) {
+                $query->where('start_date', '>=', $request->startDate);
+            }
+            if ($request->has('endDate')) {
+                $query->where('end_date', '<=', $request->endDate);
+            }
 
-        $contracts = $query->get()->map(function($contract) {
-            $safeStatus = $contract->status ?: 'default'; // Ensure status is never empty or null
+            // Apply budget range filter
+            if ($request->has('minBudget')) {
+                $query->where('total_amount', '>=', $request->minBudget);
+            }
+            if ($request->has('maxBudget')) {
+                $query->where('total_amount', '<=', $request->maxBudget);
+            }
 
-            // Format for FullCalendar
-            $calendarEvent = [
-                'id' => 'contract-' . $contract->id,
-                'title' => $contract->client->name ?? 'Unknown Client', // Client name as event title
-                'start' => $contract->start_date->format('Y-m-d'),
-                'end' => $contract->end_date->addDay()->format('Y-m-d'), // FullCalendar end date is exclusive
-                'className' => 'status-' . $safeStatus, // Custom class for status styling
-                'extendedProps' => [
-                    'type' => 'contract', // Moved type to extendedProps
-                    'contract_id' => $contract->contract_id,
-                    'client' => $contract->client->name ?? 'Unknown Client',
-                    'contractor' => $contract->contractor->name ?? 'N/A',
-                    'status' => $safeStatus, // Use safe status in extended props
-                    'budget' => $contract->total_amount,
-                    'scope' => $contract->scope_of_work,
-                ]
-            ];
-
-            // Format for Gantt Chart
-            $ganttTask = [
-                'id' => 'contract-' . $contract->id, // Unique ID for Gantt
-                'name' => $contract->client->name ?? 'Unknown Client', // Simplified Gantt task name
-                'start' => $contract->start_date->format('YYYY-MM-DD'),
-                'end' => $contract->end_date->format('YYYY-MM-DD'),
-                'progress' => match($safeStatus) { // Use safe status for progress
-                    'approved' => 100,
-                    'draft' => 50,
-                    'rejected' => 0,
-                    default => 0
-                },
-                'dependencies' => [],
-                'custom_class' => 'status-' . $safeStatus // Use safe status for class
-            ];
-
-            return [
-                'calendar' => $calendarEvent,
-                'gantt' => $ganttTask
-            ];
-        });
-
-        return response()->json([
-            'calendar' => $contracts->pluck('calendar'),
-            'gantt' => $contracts->pluck('gantt')
-        ]);
-    }
-
-    public function projectTimeline()
-    {
-        $contracts = Contract::with(['client', 'contractor'])
-            ->orderBy('start_date', 'desc')
-            ->get()
-            ->map(function($contract) {
-                $safeStatus = $contract->status ?: 'default'; // Ensure status is never empty or null
+            $contracts = $query->get()->map(function($contract) {
+                $safeStatus = $contract->status ?: 'default';
 
                 // Prepare data for FullCalendar
                 $calendarEvent = [
-                    'id' => $contract->id,
-                    'title' => $contract->client->name ?? 'Unknown Client', // Client name as event title
+                    'id' => 'contract-' . $contract->id,
+                    'title' => $contract->client->name ?? 'Unknown Client',
                     'start' => $contract->start_date->format('Y-m-d'),
-                    'end' => $contract->end_date->addDay()->format('Y-m-d'), // FullCalendar end date is exclusive
-                    'className' => 'status-' . $safeStatus, // Custom class for status styling
+                    'end' => $contract->end_date->addDay()->format('Y-m-d'),
+                    'className' => 'status-' . $safeStatus,
+                    'color' => $this->getContractColor($contract),
                     'extendedProps' => [
-                        'type' => 'contract', // Moved type to extendedProps
+                        'type' => 'contract',
                         'contract_id' => $contract->contract_id,
                         'client' => $contract->client->name ?? 'Unknown Client',
                         'contractor' => $contract->contractor->name ?? 'N/A',
-                        'status' => $safeStatus, // Use safe status in extended props
+                        'status' => $safeStatus,
                         'budget' => $contract->total_amount,
                         'scope' => $contract->scope_of_work,
                     ]
                 ];
 
-                // Prepare data for Frappe Gantt
+                // Prepare data for Gantt chart
                 $ganttTask = [
-                    'id' => 'contract-' . $contract->id, // Unique ID for Gantt
-                    'name' => $contract->client->name ?? 'Unknown Client', // Simplified Gantt task name
-                    'start' => $contract->start_date->format('YYYY-MM-DD'),
-                    'end' => $contract->end_date->format('YYYY-MM-DD'),
-                    'progress' => match($safeStatus) { // Use safe status for progress
+                    'id' => 'contract-' . $contract->id,
+                    'name' => $contract->client->name ?? 'Unknown Client',
+                    'start' => $contract->start_date->format('Y-m-d'),
+                    'end' => $contract->end_date->format('Y-m-d'),
+                    'progress' => match($safeStatus) {
                         'approved' => 100,
                         'draft' => 50,
                         'rejected' => 0,
                         default => 0
                     },
-                    'dependencies' => [],
-                    'custom_class' => 'status-' . $safeStatus // Use safe status for class
+                    'dependencies' => '',
+                    'bar_color' => $this->getContractColor($contract)
                 ];
 
                 return [
@@ -1422,10 +1374,88 @@ class ContractController extends Controller
                 ];
             });
 
+            return response()->json([
+                'calendar' => $contracts->pluck('calendar'),
+                'gantt' => $contracts->pluck('gantt')
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in ContractController timeline: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'An error occurred while fetching timeline data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function projectTimeline()
+    {
+        $contracts = Contract::with(['client', 'contractor', 'tasks'])
+            ->orderBy('start_date', 'desc')
+            ->get();
+
+        // Calculate overall project progress
+        $totalProgress = 0;
+        $totalTasks = 0;
+
+        foreach ($contracts as $contract) {
+            foreach ($contract->tasks as $task) {
+                $totalProgress += $task->progress;
+                $totalTasks++;
+            }
+        }
+
+        $overallProgress = $totalTasks > 0 ? round(($totalProgress / $totalTasks), 2) : 0;
+
+        $mappedContracts = $contracts->map(function($contract) {
+            $safeStatus = $contract->status ?: 'default'; // Ensure status is never empty or null
+
+            // Calculate individual contract progress
+            $contractTasksCount = $contract->tasks->count();
+            $contractTotalProgress = $contractTasksCount > 0 ? $contract->tasks->sum('progress') : 0;
+            $individualContractProgress = $contractTasksCount > 0 ? round(($contractTotalProgress / $contractTasksCount), 2) : 0;
+
+            // Prepare data for FullCalendar
+            $calendarEvent = [
+                'id' => $contract->id,
+                'title' => $contract->client->name ?? 'Unknown Client', // Client name as event title
+                'start' => $contract->start_date->format('Y-m-d'),
+                'end' => $contract->end_date->addDay()->format('Y-m-d'), // FullCalendar end date is exclusive
+                'className' => 'status-' . $safeStatus, // Custom class for status styling
+                'color' => $this->getContractColor($contract),
+                'extendedProps' => [
+                    'type' => 'contract', // Moved type to extendedProps
+                    'contract_id' => $contract->contract_id,
+                    'client' => $contract->client->name ?? 'Unknown Client',
+                    'contractor' => $contract->contractor->name ?? 'N/A',
+                    'status' => $safeStatus, // Use safe status in extended props
+                    'budget' => $contract->total_amount,
+                    'scope' => $contract->scope_of_work,
+                    'progress' => $individualContractProgress, // Add individual contract progress
+                ]
+            ];
+
+            // Prepare data for Frappe Gantt
+            $ganttTask = [
+                'id' => 'contract-' . $contract->id, // Unique ID for Gantt
+                'name' => $contract->client->name ?? 'Unknown Client', // Simplified Gantt task name
+                'start' => $contract->start_date->format('YYYY-MM-DD'),
+                'end' => $contract->end_date->format('YYYY-MM-DD'),
+                'progress' => $individualContractProgress, // Use individual contract progress for Gantt
+                'dependencies' => [],
+                'bar_color' => $this->getContractColor($contract) // Add bar_color for distinctness
+            ];
+
+            return [
+                'calendar' => $calendarEvent,
+                'gantt' => $ganttTask
+            ];
+        });
+
         // Pass both calendar events and gantt tasks to the view
         return view('admin.contracts.timeline', [
-            'contracts' => $contracts->pluck('calendar')->toJson(), // FullCalendar expects JSON
-            'ganttTasks' => $contracts->pluck('gantt')->toJson(), // Gantt expects JSON
+            'contracts' => $mappedContracts->pluck('calendar')->toJson(), // FullCalendar expects JSON
+            'ganttTasks' => $mappedContracts->pluck('gantt')->toJson(), // Gantt expects JSON
+            'overallProgress' => $overallProgress // Pass overall progress
         ]);
     }
 
@@ -1561,5 +1591,11 @@ class ContractController extends Controller
     {
         $contract = Contract::with(['items.material', 'items.supplier'])->findOrFail($contractId);
         return response()->json($contract->items);
+    }
+
+    protected function getContractColor($contract)
+    {
+        $colors = ['#3490dc', '#6574cd', '#9561e2', '#f66d9b', '#e3342f'];
+        return $colors[$contract->id % count($colors)];
     }
 } 

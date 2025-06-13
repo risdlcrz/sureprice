@@ -9,12 +9,15 @@
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
                             <h3 class="card-title">Contracts Timeline</h3>
-                            <div class="btn-group">
+                            <div class="btn-group btn-group-timeline">
                                 <button class="btn btn-outline-primary" id="viewToggle" data-view="calendar">
                                     <i class="bi bi-calendar3"></i> Calendar View
                                 </button>
                                 <button class="btn btn-outline-primary" id="viewToggle" data-view="gantt">
                                     <i class="bi bi-bar-chart"></i> Gantt View
+                                </button>
+                                <button class="btn btn-outline-primary" id="viewToggle" data-view="progress">
+                                    <i class="bi bi-hourglass-split"></i> Progress View
                                 </button>
                             </div>
                         </div>
@@ -28,6 +31,17 @@
                         <!-- Gantt View (Initially Hidden) -->
                         <div id="ganttView" style="display: none;">
                             <div id="ganttChart"></div>
+                        </div>
+
+                        <!-- Progress View (Initially Hidden) -->
+                        <div id="progressView" style="display: none;">
+                            <div id="projectProgressBar" class="progress" style="height: 30px;">
+                                <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                    0%
+                                </div>
+                            </div>
+                            <p class="mt-2 text-center" id="progressBarText">Overall Project Completion</p>
+                            <div id="contractProgressDetails" class="mt-4"></div>
                         </div>
                     </div>
                 </div>
@@ -66,6 +80,10 @@
 <link href='https://cdn.jsdelivr.net/npm/@fullcalendar/resource-timeline@6.1.10/main.min.css' rel='stylesheet' />
 <link href="https://cdn.jsdelivr.net/npm/frappe-gantt@0.6.1/dist/frappe-gantt.min.css" rel="stylesheet">
 <style>
+.btn-group-timeline {
+    flex-wrap: wrap;
+}
+
 .fc-event {
     cursor: pointer;
     transition: all 0.2s ease;
@@ -83,21 +101,21 @@
 }
 
 .fc-event.status-draft {
-    background-color: #fce8b2 !important;
-    border-left: 4px solid #f9ab00 !important;
-    color: #3c3c3c !important;
+    background-color: #fce8b2;
+    border-left: 4px solid #f9ab00;
+    color: #3c3c3c;
 }
 
 .fc-event.status-approved {
-    background-color: #d1f7d1 !important;
-    border-left: 4px solid #34a853 !important;
-    color: #3c3c3c !important;
+    background-color: #d1f7d1;
+    border-left: 4px solid #34a853;
+    color: #3c3c3c;
 }
 
 .fc-event.status-rejected {
-    background-color: #f4cccc !important;
-    border-left: 4px solid #ea4335 !important;
-    color: #3c3c3c !important;
+    background-color: #f4cccc;
+    border-left: 4px solid #ea4335;
+    color: #3c3c3c;
 }
 
 .gantt-container {
@@ -105,13 +123,24 @@
     overflow-y: auto;
 }
 
-.gantt .bar {
+/* Remove fixed fill for gantt bars to allow dynamic coloring */
+/* .gantt .bar {
     fill: #0d6efd;
 }
 
 .gantt .bar-progress {
     fill: #0a4fb9;
-}
+} */
+
+/* New classes for Gantt bar colors */
+/* .gantt-color-0 .bar { fill: #3498db; } .gantt-color-0 .bar-progress { fill: #217dbb; }
+.gantt-color-1 .bar { fill: #e74c3c; } .gantt-color-1 .bar-progress { fill: #b53b31; }
+.gantt-color-2 .bar { fill: #2ecc71; } .gantt-color-2 .bar-progress { fill: #23a059; }
+.gantt-color-3 .bar { fill: #f39c12; } .gantt-color-3 .bar-progress { fill: #c17c0e; }
+.gantt-color-4 .bar { fill: #9b59b6; } .gantt-color-4 .bar-progress { fill: #7a468d; }
+.gantt-color-5 .bar { fill: #1abc9c; } .gantt-color-5 .bar-progress { fill: #158f77; }
+.gantt-color-6 .bar { fill: #d35400; } .gantt-color-6 .bar-progress { fill: #a54100; }
+.gantt-color-7 .bar { fill: #c0392b; } .gantt-color-7 .bar-progress { fill: #9a2e22; } */
 </style>
 @endpush
 
@@ -152,6 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
         arrow_curve: 5,
         padding: 18,
         view_modes: ['Quarter Day', 'Half Day', 'Day', 'Week', 'Month'],
+        bar_progress_color: '#0a4fb9', // Default progress color
         custom_popup_html: function(task) {
             return `
                 <div class="gantt-popup">
@@ -160,8 +190,55 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p>End: ${task.end}</p>
                 </div>
             `;
+        },
+        on_click: function(task) {
+            // Use the bar_color property for event coloring if available
+            if (task.bar_color) {
+                // Find the event in FullCalendar events by ID and update its color
+                const event = calendar.getEventById(task.id.replace('contract-', ''));
+                if (event) {
+                    event.setProp('color', task.bar_color);
+                }
+            }
+            showContractDetails(task);
         }
     });
+
+    // Update Progress Bar
+    const overallProgress = {{ $overallProgress ?? 0 }};
+    const progressBar = document.getElementById('projectProgressBar').querySelector('.progress-bar');
+    const progressBarText = document.getElementById('progressBarText');
+
+    progressBar.style.width = overallProgress + '%';
+    progressBar.setAttribute('aria-valuenow', overallProgress);
+    progressBar.textContent = overallProgress + '%';
+    progressBarText.textContent = `Overall Project Completion: ${overallProgress}%`;
+
+    // Function to render individual contract progress bars
+    function renderContractProgressDetails() {
+        const contractProgressDetails = document.getElementById('contractProgressDetails');
+        contractProgressDetails.innerHTML = ''; // Clear previous content
+
+        ganttData.forEach(contract => {
+            const contractProgressBarHtml = `
+                <div class="mb-3">
+                    <h6>${contract.name} Progress:</h6>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar" role="progressbar" style="width: ${contract.progress || 0}%; background-color: ${contract.bar_color || '#0d6efd'};" 
+                             aria-valuenow="${contract.progress || 0}" aria-valuemin="0" aria-valuemax="100">
+                            ${contract.progress || 0}%
+                        </div>
+                    </div>
+                </div>
+            `;
+            contractProgressDetails.insertAdjacentHTML('beforeend', contractProgressBarHtml);
+        });
+    }
+
+    // Initial render of individual contract progress bars
+    // This will only render if the progress view is initially visible, which it is not.
+    // We will call it explicitly when the tab is switched.
+    // renderContractProgressDetails(); // Removed initial call here
 
     // View Toggle
     document.querySelectorAll('#viewToggle').forEach(button => {
@@ -169,6 +246,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const view = this.dataset.view;
             document.getElementById('calendarView').style.display = view === 'calendar' ? 'block' : 'none';
             document.getElementById('ganttView').style.display = view === 'gantt' ? 'block' : 'none';
+            document.getElementById('progressView').style.display = view === 'progress' ? 'block' : 'none';
+
+            if (view === 'progress') {
+                renderContractProgressDetails();
+            }
         });
     });
 
