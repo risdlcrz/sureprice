@@ -14,7 +14,6 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->text('description')->nullable();
             $table->string('unit');
-            $table->foreignId('category_id')->constrained()->onDelete('cascade');
             $table->decimal('base_price', 10, 2)->default(0);
             $table->decimal('srp_price', 10, 2)->default(0);
             $table->text('specifications')->nullable();

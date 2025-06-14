@@ -68,8 +68,13 @@
 
                                                 <div class="mt-3">
                                                     <a href="{{ route('contracts.show', $contract->id) }}" class="btn btn-primary btn-sm">View Full Contract</a>
-        </div>
-    </div>
+                                                    @if($contract->status === 'COMPLETED')
+                                                        <button type="button" class="btn btn-warning btn-sm ms-2" data-bs-toggle="modal" data-bs-target="#warrantyModal{{ $contract->id }}">
+                                                            <i class="bi bi-shield-check"></i> Request Warranty
+                                                        </button>
+                                                    @endif
+                                                </div>
+                                            </div>
 
                                             <!-- Right Column: Scope of Work & Tasks -->
                                             <div class="col-md-6 ps-4">
@@ -133,40 +138,42 @@
                         @endforeach
                     </div>
                     <hr/>
-                    <!-- Filters Section (kept as requested) -->
-                    <div class="mb-3">
+                    <!-- Search and Filters Section -->
+                    <div class="mb-3 d-flex align-items-center gap-3">
+                        <div class="flex-grow-1">
+                            <input type="text" class="form-control" id="searchInput" name="searchInput" placeholder="Search contracts or tasks...">
+                        </div>
+                        <a href="{{ route('warranty-requests.index') }}" class="btn btn-warning">
+                            <i class="bi bi-shield-check"></i> Warranty Requests
+                        </a>
                         <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse" aria-expanded="false" aria-controls="filtersCollapse">
                             <i class="bi bi-funnel"></i> Filters
                         </button>
-                        <div class="collapse mt-2" id="filtersCollapse">
-                            <form id="filtersForm" class="row g-3">
-                                <div class="col-md-3">
-                                    <label for="searchInput" class="form-label">Search</label>
-                                    <input type="text" class="form-control" id="searchInput" name="searchInput" placeholder="Search contracts or tasks...">
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="statusFilter" class="form-label">Status</label>
-                                    <select class="form-select" id="statusFilter" name="statusFilter">
-                                        <option value="">All</option>
-                                        <option value="approved">Approved</option>
-                                        <option value="draft">Draft</option>
-                                        <option value="rejected">Rejected</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="startDate" class="form-label">Start Date</label>
-                                    <input type="date" class="form-control" id="startDate" name="startDate">
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="endDate" class="form-label">End Date</label>
-                                    <input type="date" class="form-control" id="endDate" name="endDate">
-                                </div>
-                            <div class="col-12">
-                                    <button type="submit" class="btn btn-success">Apply Filters</button>
-                                    <button type="reset" class="btn btn-secondary">Reset</button>
+                    </div>
+                    <div class="collapse mt-2" id="filtersCollapse">
+                        <form id="filtersForm" class="row g-3">
+                            <div class="col-md-4">
+                                <label for="statusFilter" class="form-label">Status</label>
+                                <select class="form-select" id="statusFilter" name="statusFilter">
+                                    <option value="">All</option>
+                                    <option value="approved">Approved</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="rejected">Rejected</option>
+                                </select>
                             </div>
-                            </form>
-                        </div>
+                            <div class="col-md-4">
+                                <label for="startDate" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="startDate" name="startDate">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="endDate" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="endDate" name="endDate">
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-success">Apply Filters</button>
+                                <button type="reset" class="btn btn-secondary">Reset</button>
+                            </div>
+                        </form>
                     </div>
                     <!-- Calendar Section -->
                     <div id="calendar"></div>
@@ -175,6 +182,57 @@
         </div>
     </div>
 </div>
+
+<!-- Warranty Request Modals -->
+@foreach($contracts as $contract)
+    @if($contract->status === 'COMPLETED')
+        <div class="modal fade" id="warrantyModal{{ $contract->id }}" tabindex="-1" aria-labelledby="warrantyModalLabel{{ $contract->id }}" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="warrantyModalLabel{{ $contract->id }}">Warranty Request - Contract #{{ $contract->contract_number }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="warrantyForm{{ $contract->id }}" class="needs-validation" novalidate>
+                            <div class="mb-3">
+                                <label for="productName{{ $contract->id }}" class="form-label">Product Name</label>
+                                <input type="text" class="form-control" id="productName{{ $contract->id }}" name="productName" required>
+                                <div class="invalid-feedback">Please provide the product name.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="serialNumber{{ $contract->id }}" class="form-label">Serial Number</label>
+                                <input type="text" class="form-control" id="serialNumber{{ $contract->id }}" name="serialNumber" required>
+                                <div class="invalid-feedback">Please provide the serial number.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="issueDescription{{ $contract->id }}" class="form-label">Issue Description</label>
+                                <textarea class="form-control" id="issueDescription{{ $contract->id }}" name="issueDescription" rows="3" required></textarea>
+                                <div class="invalid-feedback">Please describe the issue.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="purchaseProof{{ $contract->id }}" class="form-label">Proof of Purchase</label>
+                                <input type="file" class="form-control" id="purchaseProof{{ $contract->id }}" name="purchaseProof" accept=".pdf,.jpg,.jpeg,.png" required>
+                                <div class="form-text">Upload receipt, invoice, or any proof of purchase (PDF, JPG, PNG)</div>
+                                <div class="invalid-feedback">Please provide proof of purchase.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="issuePhotos{{ $contract->id }}" class="form-label">Photos of the Issue</label>
+                                <input type="file" class="form-control" id="issuePhotos{{ $contract->id }}" name="issuePhotos" accept=".jpg,.jpeg,.png" multiple>
+                                <div class="form-text">Upload photos showing the issue (optional)</div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="submitWarrantyRequest({{ $contract->id }})">Submit Request</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+@endforeach
+
 @endsection
 
 @push('styles')
@@ -400,5 +458,68 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     calendar.render();
 });
+
+function submitWarrantyRequest(contractId) {
+    const form = document.getElementById(`warrantyForm${contractId}`);
+    if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        return;
+    }
+
+    const formData = new FormData(form);
+    formData.append('contract_id', contractId);
+
+    // Show loading state
+    const submitBtn = form.closest('.modal').querySelector('.btn-primary');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
+
+    // Submit the form data
+    fetch('/api/warranty-requests', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: 'Your warranty request has been submitted successfully.',
+                confirmButtonText: 'OK'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById(`warrantyModal${contractId}`));
+                    modal.hide();
+                    // Reset the form
+                    form.reset();
+                    form.classList.remove('was-validated');
+                }
+            });
+        } else {
+            throw new Error(data.message || 'Something went wrong');
+        }
+    })
+    .catch(error => {
+        // Show error message
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: error.message || 'Failed to submit warranty request. Please try again.',
+            confirmButtonText: 'OK'
+        });
+    })
+    .finally(() => {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    });
+}
 </script>
 @endpush 
