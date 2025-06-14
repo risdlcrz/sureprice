@@ -30,15 +30,12 @@
                                 <label for="category">Category</label>
                                 <select class="form-control" id="category">
                                     <option value="">All Categories</option>
-                                    <option value="construction-materials">Construction Materials</option>
-                                    <option value="electrical-supplies">Electrical Supplies</option>
-                                    <option value="plumbing-materials">Plumbing Materials</option>
-                                    <option value="windows-and-doors">Windows and Doors</option>
-                                    <option value="tools-and-hardware">Tools and Hardware</option>
-                                    <option value="paint-and-coatings">Paint and Coatings</option>
-                                    <option value="safety-equipment">Safety Equipment</option>
-                                    <option value="insulation-materials">Insulation Materials</option>
-                                    <option value="structural-materials">Structural Materials</option>
+                                    <option value="construction">Construction</option>
+                                    <option value="electrical">Electrical</option>
+                                    <option value="plumbing">Plumbing</option>
+                                    <option value="finishing">Finishing</option>
+                                    <option value="tools">Tools</option>
+                                    <option value="other">Other</option>
                                 </select>
                             </div>
                         </div>

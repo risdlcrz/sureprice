@@ -37,12 +37,12 @@ class MaterialController extends Controller
         }
 
         // Sorting
-        $sort = $request->input('sort', 'name');
+        $sort = $request->input('sort', 'created_at');
         $allowedSorts = ['name', 'code', 'base_price', 'created_at'];
         if (!in_array($sort, $allowedSorts)) {
-            $sort = 'name';
+            $sort = 'created_at';
         }
-        $query->orderBy($sort);
+        $query->orderBy($sort, $sort === 'created_at' ? 'asc' : 'asc');
 
         // Per page
         $perPage = (int) $request->input('per_page', 10);
