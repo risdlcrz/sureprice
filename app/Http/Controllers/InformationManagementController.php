@@ -286,6 +286,7 @@ class InformationManagementController extends Controller
                         'role' => $role,
                     ]);
                 } else if ($type === 'contractor') {
+                    \Log::info('Processing contractor row:', $row);
                     // Contractor data expected: First Name, Last Name, Email, Username, Password, Company Name, Phone, Street, Barangay, City, State, Postal
                     $firstName = $row[0] ?? null;
                     $lastName = $row[1] ?? null;
@@ -322,7 +323,7 @@ class InformationManagementController extends Controller
                         'role' => 'contractor',
                     ]);
 
-                    Employee::create([
+                    $employee = Employee::create([
                         'user_id' => $user->id,
                         'first_name' => $firstName,
                         'last_name' => $lastName,
@@ -336,6 +337,30 @@ class InformationManagementController extends Controller
                         'city' => $city,
                         'state' => $state,
                         'postal' => $postal,
+                    ]);
+
+                    $company = Company::create([
+                        'user_id' => $user->id,
+                        'company_name' => $companyName,
+                        'contact_person' => $firstName . ' ' . $lastName,
+                        'email' => $email,
+                        'username' => $username,
+                        'mobile_number' => $phone,
+                        'street' => $street,
+                        'city' => $city,
+                        'province' => $state,
+                        'zip_code' => $postal,
+                        'supplier_type' => 'Contractor',
+                        'designation' => 'contractor',
+                        'status' => 'pending', // or 'approved' if you want them visible immediately
+                    ]);
+
+                    \Log::info('Successfully created contractor:', [
+                        'user_id' => $user->id,
+                        'employee_id' => $employee->id,
+                        'company_id' => $company->id,
+                        'email' => $email,
+                        'username' => $username
                     ]);
                 } else {
                     \Log::warning('Unknown import type encountered:', ['type' => $type]);
@@ -391,10 +416,9 @@ class InformationManagementController extends Controller
                 'Company Name',
                 'Phone',
                 'Street',
-                'Barangay',
                 'City',
-                'State',
-                'Postal',
+                'Province',
+                'Zip Code',
             ];
             $sampleRow = [
                 'Jane',
@@ -405,10 +429,9 @@ class InformationManagementController extends Controller
                 'ABC Construction',
                 '09123456789',
                 '123 Main St',
-                'Brgy. Sample',
-                'Sample City',
-                'Sample Province',
-                '12345',
+                'Quezon City',
+                'Metro Manila',
+                '1100',
             ];
             $filename = 'contractor_template.csv';
         } else {

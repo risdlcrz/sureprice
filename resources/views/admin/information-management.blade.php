@@ -103,7 +103,7 @@
                     <h6 class="mt-4">Upload Your CSV File:</h6>
                     <form action="{{ route('information-management.import') }}" method="POST" enctype="multipart/form-data" id="csvUploadForm">
                         @csrf
-                        <input type="hidden" name="type" value="{{ $type ?? 'employee' }}" id="importType">
+                        <input type="hidden" name="type" value="{{ $type === 'company' ? 'contractor' : 'employee' }}" id="importType">
                         <div class="mb-3">
                             <label for="csv_file" class="form-label">Choose CSV File:</label>
                             <input type="file" name="csv_file" id="csv_file" class="form-control" accept=".csv" required>
