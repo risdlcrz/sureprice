@@ -13,7 +13,7 @@
         <div class="col-md-6 col-lg-3 mb-4">
             <a href="{{ route('admin.transactions') }}" class="text-decoration-none">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/aimage1.jpg') }}" class="card-img-top" alt="Purchase Orders">
+                    <img src="{{ asset('images/aimage1.svg') }}" class="card-img-top" alt="Purchase Orders">
                     <div class="card-body">
                         <h5 class="card-title">Transactions</h5>
                         <p class="card-text">History and reports of past transactions.</p>
@@ -26,12 +26,12 @@
         <div class="col-md-6 col-lg-3 mb-4">
             <a href="{{ route('admin.budget-allocation') }}" class="text-decoration-none">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/aimage2.jpg') }}" class="card-img-top" alt="Budget">
-            <div class="card-body">
-                <h5 class="card-title">Budget Allocation and Expenditures</h5>
+                    <img src="{{ asset('images/aimage2.svg') }}" class="card-img-top" alt="Budget">
+                    <div class="card-body">
+                        <h5 class="card-title">Budget Allocation and Expenditures</h5>
                         <p class="card-text">Monitor budget allocations and track expenditures.</p>
                     </div>
-            </div>
+                </div>
             </a>
         </div>
 
@@ -39,9 +39,9 @@
         <div class="col-md-6 col-lg-3 mb-4">
             <a href="{{ route('admin.supplier-rankings') }}" class="text-decoration-none">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/aimage3.jpg') }}" class="card-img-top" alt="Suppliers">
-            <div class="card-body">
-                <h5 class="card-title">Supplier Ranking and Performance</h5>
+                    <img src="{{ asset('images/aimage3.svg') }}" class="card-img-top" alt="Suppliers">
+                    <div class="card-body">
+                        <h5 class="card-title">Supplier Ranking and Performance</h5>
                         <p class="card-text">Evaluate and compare supplier performance metrics.</p>
                     </div>
                 </div>
@@ -52,12 +52,12 @@
         <div class="col-md-6 col-lg-3 mb-4">
             <a href="{{ route('admin.price-analysis') }}" class="text-decoration-none">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/aimage4.jpg') }}"class="card-img-top" alt="Price Trend">
+                    <img src="{{ asset('images/aimage4.svg') }}" class="card-img-top" alt="Price Trend">
                     <div class="card-body">
                         <h5 class="card-title">Price Trend Analysis</h5>
                         <p class="card-text">Analyze price trends and market fluctuations.</p>
                     </div>
-            </div>
+                </div>
             </a>
         </div>
     </div>
@@ -69,7 +69,7 @@
                 <div class="card-header">
                     <h5 class="card-title mb-0">Recent Analytics Overview</h5>
                 </div>
-            <div class="card-body">
+                <div class="card-body">
                     <!-- Add your analytics overview content here -->
                 </div>
             </div>
@@ -100,7 +100,7 @@
 
 .card-body {
     padding: 1.5rem;
- }
+}
 
 .card-footer {
     background: none;

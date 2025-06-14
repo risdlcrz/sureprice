@@ -301,16 +301,10 @@
                                 <div class="material-item row mb-3">
                                     <div class="col-md-4">
                                         <label class="form-label">Material*</label>
-                                        <select class="form-select material-select" name="materials[0][material_id]" required>
-                                            <option value="">Select material...</option>
-                                            @foreach(App\Models\Material::all() as $material)
-                                                <option value="{{ $material->id }}" 
-                                                        data-code="{{ $material->code }}"
-                                                        data-unit="{{ $material->unit }}">
-                                                    {{ $material->name }} ({{ $material->code }})
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                        <input type="text" class="form-control material-search-input" placeholder="Search material..." required>
+                                        <input type="hidden" class="material-id-input" name="materials[0][material_id]" required>
+                                        <div class="material-search-results list-group position-absolute w-100" style="z-index: 1000;"></div>
+                                        <div class="invalid-feedback">Please select a material.</div>
                                     </div>
                                     <div class="col-md-2">
                                         <label class="form-label">Quantity*</label>
@@ -497,6 +491,120 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    let materialCount = 1;
+
+    // Add Material Row
+    document.getElementById('addMaterial').addEventListener('click', function() {
+        const materialsContainer = document.getElementById('materialsContainer');
+        const template = document.querySelector('.material-item').cloneNode(true);
+        template.querySelectorAll('input').forEach(input => input.value = ''); // Clear values for new row
+        template.querySelector('.material-id-input').value = '';
+        template.querySelector('.unit-display').value = '';
+        template.querySelector('.material-search-results').innerHTML = '';
+        template.querySelector('.remove-material').style.display = 'block';
+        // Update names for new row
+        template.querySelectorAll('[name*="materials[0]"]').forEach(element => {
+            element.name = element.name.replace('[0]', `[${materialCount}]`);
+        });
+        materialsContainer.appendChild(template);
+        setupMaterialSearch(template); // Initialize search for the new row
+        materialCount++;
+    });
+
+    // Remove Material Row
+    document.getElementById('materialsContainer').addEventListener('click', function(e) {
+        if (e.target.closest('.remove-material')) {
+            e.target.closest('.material-item').remove();
+        }
+    });
+
+    // Handle material selection and unit display
+    document.getElementById('materialsContainer').addEventListener('input', function(e) {
+        if (e.target.classList.contains('material-search-input')) {
+            const searchInput = e.target;
+            const materialItem = searchInput.closest('.material-item');
+            const materialIdInput = materialItem.querySelector('.material-id-input');
+            const unitDisplay = materialItem.querySelector('.unit-display');
+            
+            // Clear previously selected material if user starts typing again
+            materialIdInput.value = '';
+            unitDisplay.value = '';
+            materialItem.querySelector('.material-search-results').innerHTML = '';
+        }
+    });
+
+    document.getElementById('materialsContainer').addEventListener('click', function(e) {
+        if (e.target.classList.contains('list-group-item-action')) {
+            e.preventDefault(); // Prevent default link behavior
+            const selectedResult = e.target;
+            const materialId = selectedResult.dataset.materialId;
+            const materialName = selectedResult.dataset.materialName;
+            const unit = selectedResult.dataset.unit;
+
+            const materialItem = selectedResult.closest('.material-item');
+            materialItem.querySelector('.material-search-input').value = materialName;
+            materialItem.querySelector('.material-id-input').value = materialId;
+            materialItem.querySelector('.unit-display').value = unit;
+            materialItem.querySelector('.material-search-results').innerHTML = ''; // Clear results
+        }
+    });
+
+    // Debounce function
+    function debounce(func, delay) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), delay);
+        };
+    }
+
+    // Setup Material Search functionality
+    function setupMaterialSearch(container) {
+        const searchInput = container.querySelector('.material-search-input');
+        const materialIdInput = container.querySelector('.material-id-input');
+        const searchResultsDiv = container.querySelector('.material-search-results');
+        const unitDisplay = container.querySelector('.unit-display');
+
+        const performSearch = debounce(function() {
+            const query = searchInput.value.trim();
+            if (query.length < 2) {
+                searchResultsDiv.innerHTML = '';
+                return;
+            }
+
+            fetch(`/api/materials/search?query=${query}`)
+                .then(response => response.json())
+                .then(materials => {
+                    searchResultsDiv.innerHTML = '';
+                    if (materials.length > 0) {
+                        materials.forEach(material => {
+                            const item = document.createElement('a');
+                            item.href = '#';
+                            item.classList.add('list-group-item', 'list-group-item-action');
+                            item.dataset.materialId = material.id;
+                            item.dataset.materialName = `${material.name} (${material.code})`;
+                            item.dataset.unit = material.unit;
+                            item.textContent = `${material.name} (${material.code}) - ${material.unit}`;
+                            searchResultsDiv.appendChild(item);
+                        });
+                    } else {
+                        searchResultsDiv.innerHTML = '<div class="list-group-item">No materials found</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error searching materials:', error);
+                    searchResultsDiv.innerHTML = '<div class="list-group-item text-danger">Error searching</div>';
+                });
+        }, 300);
+
+        searchInput.addEventListener('input', performSearch);
+
+    }
+
+    // Initial setup for the first row
+    setupMaterialSearch(document.querySelector('.material-item'));
+
     // Additional Work Request Form Handling
     const additionalWorkForm = document.getElementById('additionalWorkForm');
     const addMaterialBtn = document.getElementById('addMaterial');
@@ -506,12 +614,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add Material Row
     addMaterialBtn.addEventListener('click', function() {
         const template = document.querySelector('.material-item').cloneNode(true);
-        template.querySelectorAll('select, input').forEach(input => {
-            input.value = '';
-            input.name = input.name.replace('[0]', `[${materialCount}]`);
-        });
+        template.querySelectorAll('input').forEach(input => input.value = ''); // Clear values for new row
+        template.querySelector('.material-id-input').value = '';
+        template.querySelector('.unit-display').value = '';
+        template.querySelector('.material-search-results').innerHTML = '';
         template.querySelector('.remove-material').style.display = 'block';
+        // Update names for new row
+        template.querySelectorAll('[name*="materials[0]"]').forEach(element => {
+            element.name = element.name.replace('[0]', `[${materialCount}]`);
+        });
         materialsContainer.appendChild(template);
+        setupMaterialSearch(template); // Initialize search for the new row
         materialCount++;
     });
 
@@ -522,12 +635,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Update Unit Display
-    materialsContainer.addEventListener('change', function(e) {
-        if (e.target.classList.contains('material-select')) {
-            const unitDisplay = e.target.closest('.material-item').querySelector('.unit-display');
-            const selectedOption = e.target.options[e.target.selectedIndex];
-            unitDisplay.value = selectedOption.dataset.unit || '';
+    // Handle material selection and unit display
+    materialsContainer.addEventListener('input', function(e) {
+        if (e.target.classList.contains('material-search-input')) {
+            const searchInput = e.target;
+            const materialItem = searchInput.closest('.material-item');
+            const materialIdInput = materialItem.querySelector('.material-id-input');
+            const unitDisplay = materialItem.querySelector('.unit-display');
+            
+            // Clear previously selected material if user starts typing again
+            materialIdInput.value = '';
+            unitDisplay.value = '';
+            materialItem.querySelector('.material-search-results').innerHTML = '';
+        }
+    });
+
+    materialsContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('list-group-item-action')) {
+            const selectedResult = e.target;
+            const materialId = selectedResult.dataset.materialId;
+            const materialName = selectedResult.dataset.materialName;
+            const unit = selectedResult.dataset.unit;
+
+            const materialItem = selectedResult.closest('.material-item');
+            materialItem.querySelector('.material-search-input').value = materialName;
+            materialItem.querySelector('.material-id-input').value = materialId;
+            materialItem.querySelector('.unit-display').value = unit;
+            materialItem.querySelector('.material-search-results').innerHTML = ''; // Clear results
         }
     });
 

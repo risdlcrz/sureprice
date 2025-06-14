@@ -92,18 +92,12 @@
                                                 @foreach($prefillItems as $index => $item)
                                                     <tr class="item-row">
                                                         <td>
-                                                            <select name="items[{{ $index }}][material_id]" class="form-control material-select" required>
-                                                                <option value="">Select Material</option>
-                                                                @foreach($materials as $material)
-                                                                    <option value="{{ $material->id }}"
-                                                                        data-unit="{{ $material->unit }}"
-                                                                        data-suppliers="{{ $material->suppliers->pluck('id')->toJson() }}"
-                                                                        data-price="{{ $material->srp_price ?? $material->base_price }}"
-                                                                        {{ $item['material_id'] == $material->id ? 'selected' : '' }}>
-                                                                        {{ $material->name }}
-                                                                    </option>
-                                                                @endforeach
-                                                            </select>
+                                                            <div class="material-search-container position-relative">
+                                                                <input type="text" class="form-control material-search-input" placeholder="Search material..." value="{{ $item['material_name'] ?? (App\Models\Material::find($item['material_id'])->name ?? '') }}" required>
+                                                                <input type="hidden" class="material-id-input" name="items[{{ $index }}][material_id]" value="{{ $item['material_id'] }}" required>
+                                                                <div class="material-search-results list-group position-absolute w-100" style="z-index: 1000;"></div>
+                                                                <div class="invalid-feedback">Please select a material.</div>
+                                                            </div>
                                                         </td>
                                                         <td>
                                                             <input type="text" name="items[{{ $index }}][description]" class="form-control" value="{{ $item['description'] }}" required>
@@ -141,17 +135,12 @@
                                             @else
                                             <tr class="item-row">
                                                 <td>
-                                                    <select name="items[0][material_id]" class="form-control material-select" required>
-                                                        <option value="">Select Material</option>
-                                                        @foreach($materials as $material)
-                                                            <option value="{{ $material->id }}"
-                                                                data-unit="{{ $material->unit }}"
-                                                                data-suppliers="{{ $material->suppliers->pluck('id')->toJson() }}"
-                                                                data-price="{{ $material->srp_price ?? $material->base_price }}">
-                                                                {{ $material->name }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
+                                                    <div class="material-search-container position-relative">
+                                                        <input type="text" class="form-control material-search-input" placeholder="Search material..." required>
+                                                        <input type="hidden" class="material-id-input" name="items[0][material_id]" required>
+                                                        <div class="material-search-results list-group position-absolute w-100" style="z-index: 1000;"></div>
+                                                        <div class="invalid-feedback">Please select a material.</div>
+                                                    </div>
                                                 </td>
                                                 <td>
                                                     <input type="text" name="items[0][description]" class="form-control" required>
@@ -220,6 +209,7 @@
 <script>
 const baseUrl = '{{ url("/") }}';
 
+// Ensure these are globally available or passed to functions as needed
 window.suppliers = @json($suppliers ?? []);
 window.materials = @json($materials ?? []);
 
@@ -233,202 +223,181 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Add new row
-    let rowCount = 1;
+    let rowCount = document.querySelectorAll('.item-row').length; // Start rowCount based on existing rows
+    const itemsContainer = document.getElementById('items-container'); // Get the tbody for items
+
     document.getElementById('addRow').addEventListener('click', function() {
-        const tbody = document.querySelector('#itemsTable tbody');
-        const newRow = tbody.querySelector('.item-row').cloneNode(true);
+        const templateRow = document.querySelector('.item-row');
+        if (!templateRow) {
+            console.error("No template row found. Please ensure at least one .item-row exists initially or provide a hidden template.");
+            return;
+        }
+
+        const newRow = templateRow.cloneNode(true); // Clone the first row
         
-        // Update input names
+        // Clear values and update names for new row
         newRow.querySelectorAll('input, select').forEach(input => {
-            input.name = input.name.replace('[0]', `[${rowCount}]`);
+            input.name = input.name.replace(/\[\d+\]/, `[${rowCount}]`);
             input.value = '';
+            input.classList.remove('is-invalid'); // Clear validation styles
         });
-        
-        tbody.appendChild(newRow);
+
+        // Clear search input and hidden material ID for the new row
+        newRow.querySelector('.material-search-input').value = '';
+        newRow.querySelector('.material-id-input').value = '';
+        newRow.querySelector('.material-search-results').innerHTML = '';
+        newRow.querySelector('.unit').value = ''; // Clear unit
+        newRow.querySelector('.total-amount').value = ''; // Clear total amount
+        newRow.querySelector('.supplier-select').innerHTML = '<option value="">Select Supplier</option>'; // Clear suppliers
+
+        itemsContainer.appendChild(newRow);
+        setupMaterialSearch(newRow); // Initialize search for the new row
+        setupRowCalculations(newRow); // Initialize calculations for the new row
         rowCount++;
     });
 
     // Remove row
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('remove-row') || e.target.parentElement.classList.contains('remove-row')) {
-            const tbody = document.querySelector('#itemsTable tbody');
-            if (tbody.children.length > 1) {
-                e.target.closest('tr').remove();
-            }
+    itemsContainer.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-row')) {
+            e.target.closest('.item-row').remove();
+            // Note: Re-indexing names after removal is more complex and might not be strictly necessary
+            // for simple form submissions if your backend handles it flexibly.
+            // If strict 0-indexed arrays are required, you'd need to re-index all row names here.
         }
     });
 
-    // Calculate totals
-    document.addEventListener('input', function(e) {
-        if (e.target.classList.contains('quantity') || e.target.classList.contains('unit-price')) {
-            const row = e.target.closest('tr');
-            const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
-            const unitPrice = parseFloat(row.querySelector('.unit-price').value) || 0;
-            row.querySelector('.total-amount').value = (quantity * unitPrice).toFixed(2);
-        }
-    });
-
-    // Update unit when material is selected
-    document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('material-select')) {
-            const row = e.target.closest('tr');
-            const selectedOption = e.target.options[e.target.selectedIndex];
-            const unit = selectedOption.dataset.unit;
-            const price = selectedOption.dataset.price;
-            row.querySelector('.unit').value = unit;
-            if (price && row.querySelector('.unit-price')) {
-                row.querySelector('.unit-price').value = price;
-            }
-        }
-    });
-
-    // Form validation
-    document.getElementById('purchaseRequestForm').addEventListener('submit', function(e) {
-        const isProjectRelated = document.getElementById('project_related').checked;
-        const contractId = document.getElementById('contract_id').value;
-        const projectId = document.getElementById('project_id').value;
-
-        if (isProjectRelated && !contractId && !projectId) {
-            e.preventDefault();
-            alert('Please select either a contract or project for project-related requests.');
-        }
-    });
-
-    // On material change, update supplier dropdown
-    $(document).on('change', '.material-select', function() {
-        var $row = $(this).closest('tr');
-        var materialId = $(this).val();
-        var supplierIds = [];
-        if (materialId) {
-            var option = $(this).find('option:selected');
-            supplierIds = option.data('suppliers') || [];
-        }
-        var $supplierSelect = $row.find('.supplier-select');
-        $supplierSelect.empty().append('<option value="">Select Supplier</option>');
-        if (supplierIds.length === 0) {
-            $supplierSelect.append('<option value="">No suppliers available</option>');
-        } else {
-            supplierIds.forEach(function(supplierId) {
-                var supplier = window.suppliers.find(function(s) { return s.id == supplierId; });
-                if (supplier) {
-                    $supplierSelect.append('<option value="'+supplier.id+'">'+supplier.company_name+'</option>');
-                }
-            });
-        }
-        $supplierSelect.prop('required', true);
-    });
-
-    // On page load, trigger change for all material selects to populate suppliers
-    $('.material-select').each(function() { $(this).trigger('change'); });
-
-    // Show/hide project related fields
-    function toggleProjectRelatedFields() {
-        const isProjectRelated = document.getElementById('project_related').checked;
-        document.getElementById('projectRelatedFields').style.display = isProjectRelated ? 'flex' : 'none';
-        // Clear items table if switching to standalone
-        if (!isProjectRelated) {
-            const itemsContainer = document.getElementById('items-container');
-            itemsContainer.innerHTML = `<tr class="item-row">
-                <td>
-                    <select name="items[0][material_id]" class="form-control material-select" required>
-                        <option value="">Select Material</option>
-                        ${window.materials.map(material => `<option value="${material.id}" data-unit="${material.unit}" data-suppliers='${JSON.stringify(material.suppliers.map(s => s.id))}' data-price="${material.srp_price ?? material.base_price}">${material.name}</option>`).join('')}
-                    </select>
-                </td>
-                <td><input type="text" name="items[0][description]" class="form-control" required></td>
-                <td><input type="number" name="items[0][quantity]" class="form-control quantity" step="0.01" required></td>
-                <td><input type="text" name="items[0][unit]" class="form-control unit" readonly></td>
-                <td><input type="number" name="items[0][estimated_unit_price]" class="form-control unit-price" step="0.01" required></td>
-                <td><input type="number" name="items[0][total_amount]" class="form-control total-amount" readonly></td>
-                <td><input type="text" name="items[0][preferred_brand]" class="form-control"></td>
-                <td><select name="items[0][preferred_supplier_id]" class="form-control supplier-select" required><option value="">Select Supplier</option></select></td>
-                <td><input type="text" name="items[0][notes]" class="form-control"></td>
-                <td><button type="button" class="btn btn-danger btn-sm remove-row"><i class="fas fa-trash"></i></button></td>
-            </tr>`;
-            // Trigger change to populate suppliers
-            $('.material-select').each(function() { $(this).trigger('change'); });
-        }
+    // Debounce function
+    function debounce(func, delay) {
+        let timeout;
+        return function(...args) {
+            const context = this;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(context, args), delay);
+        };
     }
-    document.getElementById('standalone').addEventListener('change', toggleProjectRelatedFields);
-    document.getElementById('project_related').addEventListener('change', toggleProjectRelatedFields);
-    // On page load, set correct state
-    window.addEventListener('DOMContentLoaded', function() {
-        toggleProjectRelatedFields();
-    });
 
-    // Auto-populate contract items when contract is selected
-    const contractSelect = document.getElementById('contract_id');
-    const itemsContainer = document.getElementById('items-container');
-    if (contractSelect && itemsContainer) {
-        contractSelect.addEventListener('change', function() {
-            const contractId = this.value;
-            if (!contractId) return;
-            itemsContainer.innerHTML = `<tr><td colspan="10" class="text-center"><div class="spinner-border text-primary" role="status"></div></td></tr>`;
-            fetch(`${baseUrl}/contracts/${contractId}/items`)
+    // Setup Material Search functionality
+    function setupMaterialSearch(container) {
+        const searchInput = container.querySelector('.material-search-input');
+        const materialIdInput = container.querySelector('.material-id-input');
+        const searchResultsDiv = container.querySelector('.material-search-results');
+        const unitInput = container.querySelector('.unit');
+        const unitPriceInput = container.querySelector('.unit-price');
+        const supplierSelect = container.querySelector('.supplier-select');
+
+        const performSearch = debounce(function() {
+            const query = searchInput.value.trim();
+            if (query.length < 2) {
+                searchResultsDiv.innerHTML = '';
+                return;
+            }
+
+            fetch(`${baseUrl}/api/materials/search?query=${query}`)
                 .then(response => response.json())
-                .then(items => {
-                    if (!items.length) {
-                        itemsContainer.innerHTML = `<tr><td colspan="10" class="text-center">No items found for this contract.</td></tr>`;
-                        return;
-                    }
-                    itemsContainer.innerHTML = '';
-                    items.forEach((item, index) => {
-                        // Build material select with all options and correct data attributes
-                        let materialOptions = '<option value="">Select Material</option>';
-                        window.materials.forEach(function(material) {
-                            const selected = material.id == item.material_id ? 'selected' : '';
-                            materialOptions += `<option value="${material.id}" data-unit="${material.unit}" data-suppliers='${JSON.stringify(material.suppliers.map(s => s.id))}' data-price="${material.srp_price ?? material.base_price}" ${selected}>${material.name}</option>`;
+                .then(materials => {
+                    searchResultsDiv.innerHTML = '';
+                    if (materials.length > 0) {
+                        materials.forEach(material => {
+                            const item = document.createElement('a');
+                            item.href = '#';
+                            item.classList.add('list-group-item', 'list-group-item-action');
+                            item.dataset.materialId = material.id;
+                            item.dataset.materialName = material.name;
+                            item.dataset.materialCode = material.code;
+                            item.dataset.unit = material.unit;
+                            item.dataset.price = material.srp_price || material.base_price; // Use srp_price if available, else base_price
+                            item.dataset.suppliers = JSON.stringify(material.suppliers || []); // Pass suppliers as JSON string
+                            item.textContent = `${material.name} (${material.code}) - ${material.unit}`;
+                            searchResultsDiv.appendChild(item);
                         });
-                        itemsContainer.innerHTML += `
-                            <tr class="item-row">
-                                <td>
-                                    <select name="items[${index}][material_id]" class="form-control material-select" required>
-                                        ${materialOptions}
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" name="items[${index}][description]" class="form-control" value="${item.material_name || ''}" required>
-                                </td>
-                                <td>
-                                    <input type="number" name="items[${index}][quantity]" class="form-control quantity" step="0.01" value="${item.quantity}" required>
-                                </td>
-                                <td>
-                                    <input type="text" name="items[${index}][unit]" class="form-control unit" value="${item.unit}" readonly>
-                                </td>
-                                <td>
-                                    <input type="number" name="items[${index}][estimated_unit_price]" class="form-control unit-price" step="0.01" value="${item.amount}" required>
-                                </td>
-                                <td>
-                                    <input type="number" name="items[${index}][total_amount]" class="form-control total-amount" value="${item.total}" readonly>
-                                </td>
-                                <td>
-                                    <input type="text" name="items[${index}][preferred_brand]" class="form-control">
-                                </td>
-                                <td>
-                                    <select name="items[${index}][preferred_supplier_id]" class="form-control supplier-select" required>
-                                        <option value="">Select Supplier</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" name="items[${index}][notes]" class="form-control">
-                                </td>
-                                <td>
-                                    <button type="button" class="btn btn-danger btn-sm remove-row">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    // After rendering, trigger change to populate suppliers
-                    $('.material-select').each(function() { $(this).trigger('change'); });
+                    } else {
+                        searchResultsDiv.innerHTML = '<div class="list-group-item">No materials found</div>';
+                    }
                 })
                 .catch(error => {
-                    itemsContainer.innerHTML = `<tr><td colspan="10" class="text-center text-danger">Error loading contract items.</td></tr>`;
+                    console.error('Error searching materials:', error);
+                    searchResultsDiv.innerHTML = '<div class="list-group-item text-danger">Error searching</div>';
                 });
+        }, 300);
+
+        searchInput.addEventListener('input', performSearch);
+
+        // Handle selection from search results
+        searchResultsDiv.addEventListener('click', function(e) {
+            if (e.target.classList.contains('list-group-item-action')) {
+                e.preventDefault();
+                const selectedResult = e.target;
+                const materialId = selectedResult.dataset.materialId;
+                const materialName = selectedResult.dataset.materialName;
+                const materialCode = selectedResult.dataset.materialCode;
+                const unit = selectedResult.dataset.unit;
+                const price = selectedResult.dataset.price;
+                const suppliers = JSON.parse(selectedResult.dataset.suppliers);
+
+                searchInput.value = `${materialName} (${materialCode})`; // Display full name in input
+                materialIdInput.value = materialId;
+                unitInput.value = unit;
+                unitPriceInput.value = price;
+                searchResultsDiv.innerHTML = ''; // Clear results
+
+                // Populate preferred supplier dropdown
+                supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
+                suppliers.forEach(supplier => {
+                    const option = document.createElement('option');
+                    option.value = supplier.id;
+                    option.textContent = supplier.name;
+                    supplierSelect.appendChild(option);
+                });
+
+                // Trigger change to recalculate total
+                const quantityInput = container.querySelector('.quantity');
+                const event = new Event('input', { bubbles: true });
+                quantityInput.dispatchEvent(event);
+            }
         });
+
+        // Clear hidden ID and unit if search input is cleared
+        searchInput.addEventListener('change', function() {
+            if (searchInput.value.trim() === '') {
+                materialIdInput.value = '';
+                unitInput.value = '';
+                unitPriceInput.value = '';
+                supplierSelect.innerHTML = '<option value="">Select Supplier</option>'; // Clear suppliers
+                const quantityInput = container.querySelector('.quantity');
+                const event = new Event('input', { bubbles: true });
+                quantityInput.dispatchEvent(event); // Trigger recalculation
+            }
+        });
+    }
+
+    // Function to set up quantity and unit price calculations for a row
+    function setupRowCalculations(row) {
+        const quantityInput = row.querySelector('.quantity');
+        const unitPriceInput = row.querySelector('.unit-price');
+        const totalAmountInput = row.querySelector('.total-amount');
+
+        const calculateTotal = function() {
+            const quantity = parseFloat(quantityInput.value) || 0;
+            const unitPrice = parseFloat(unitPriceInput.value) || 0;
+            const total = (quantity * unitPrice).toFixed(2);
+            totalAmountInput.value = total;
+        };
+
+        quantityInput.addEventListener('input', calculateTotal);
+        unitPriceInput.addEventListener('input', calculateTotal);
+    }
+
+    // Initialize search and calculations for all existing rows
+    document.querySelectorAll('.item-row').forEach(row => {
+        setupMaterialSearch(row);
+        setupRowCalculations(row);
+    });
+
+    // Initially hide project related fields if not checked on load
+    if (!projectRelatedRadio.checked) {
+        projectRelatedFields.style.display = 'none';
     }
 });
 </script>
 @endpush
-@endsection 
+@endsection
