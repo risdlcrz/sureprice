@@ -177,6 +177,18 @@ class ContractController extends Controller
             }]);
         }])->get();
 
+        // Swap the names as requested
+        $swapMap = [
+            'Ceiling Work' => 'Tiling Work',
+            'Tiling Work' => 'Painting Work',
+            'Painting Work' => 'Ceiling Work',
+        ];
+        foreach ($scopeTypes as $scopeType) {
+            if (isset($swapMap[$scopeType->name])) {
+                $scopeType->name = $swapMap[$scopeType->name];
+            }
+        }
+
         // Get session data if it exists
         $sessionData = session('contract_step2', []);
         

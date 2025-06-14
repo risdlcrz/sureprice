@@ -184,20 +184,18 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Delete Material</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to delete this material? This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <form id="deleteForm" method="POST" style="display: inline-block;">
+                <form id="deleteMaterialForm" method="POST" style="display: none;">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Delete</button>
                 </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
             </div>
         </div>
     </div>
@@ -318,16 +316,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Delete material functionality
     const deleteModal = document.getElementById('deleteModal');
-    const deleteForm = document.getElementById('deleteForm');
     const deleteBtns = document.querySelectorAll('.delete-material');
+    const deleteForm = document.getElementById('deleteMaterialForm');
+    let materialToDeleteId = null;
 
     deleteBtns.forEach(btn => {
         btn.addEventListener('click', function() {
-            const materialId = this.dataset.id;
-            deleteForm.action = `/materials/${materialId}`;
-            $(deleteModal).modal('show');
+            materialToDeleteId = this.dataset.id;
+            deleteForm.action = `/materials/${materialToDeleteId}`;
+            const modal = new bootstrap.Modal(deleteModal);
+            modal.show();
         });
     });
+
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', function() {
+            deleteForm.submit();
+        });
+    }
 
     // Load all materials when opening the SRP modal
     const bulkSrpModal = document.getElementById('bulkSrpModal');

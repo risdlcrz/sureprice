@@ -8,6 +8,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/css/infoman.css',
                 'resources/css/header.css',
+                'resources/css/login.css',
                 'resources/js/app.js',
                 'resources/js/info-man.js',
                 'resources/js/bootstrap.js',

@@ -31,6 +31,7 @@ use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProjectTimelineController;
+use App\Http\Controllers\WarrantyRequestController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -109,13 +110,27 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
 
     // Material Routes
-    Route::resource('materials', MaterialController::class);
-    Route::get('/api/materials/search', [MaterialController::class, 'apiSearch'])->name('api.materials.search');
-    Route::post('/materials/update-srp', [MaterialController::class, 'updateSrpPrices'])->name('materials.update-srp');
-    Route::get('/api/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('api.materials.suppliers');
-    Route::get('/api/materials/all', [MaterialController::class, 'getAllMaterials'])->name('api.materials.all');
-    Route::post('/materials/ajax-store', [App\Http\Controllers\MaterialController::class, 'ajaxStore'])->name('materials.ajax-store');
-    Route::get('/materials/check-code', [MaterialController::class, 'checkCode'])->name('materials.check-code');
+    Route::prefix('materials')->name('materials.')->group(function () {
+        Route::get('/', [MaterialController::class, 'index'])->name('index');
+        Route::get('/create', [MaterialController::class, 'create'])->name('create');
+        Route::post('/', [MaterialController::class, 'store'])->name('store');
+        Route::get('/{material}', [MaterialController::class, 'show'])->name('show');
+        Route::get('/{material}/edit', [MaterialController::class, 'edit'])->name('edit');
+        Route::put('/{material}', [MaterialController::class, 'update'])->name('update');
+        Route::delete('/{material}', [MaterialController::class, 'destroy'])->name('destroy');
+        Route::get('/search', [MaterialController::class, 'search'])->name('search');
+        Route::get('/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('suppliers');
+        Route::post('/update-srp', [MaterialController::class, 'updateSrpPrices'])->name('update-srp');
+        Route::post('/ajax-store', [MaterialController::class, 'ajaxStore'])->name('ajax-store');
+        Route::get('/check-code', [MaterialController::class, 'checkCode'])->name('check-code');
+    });
+
+    // API Material Routes
+    Route::prefix('api/materials')->name('api.materials.')->group(function () {
+        Route::get('/search', [MaterialController::class, 'apiSearch'])->name('search');
+        Route::get('/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('suppliers');
+        Route::get('/all', [MaterialController::class, 'getAllMaterials'])->name('all');
+    });
 
     // Inquiry Routes
     Route::resource('inquiries', InquiryController::class);
@@ -183,8 +198,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/inventory/expiring', [InventoryController::class, 'expiring'])->name('inventory.expiring');
 
     // Project Timeline Route
-    Route::get('/project-timeline', [App\Http\Controllers\ProjectTimelineController::class, 'index'])->name('project-timeline.index');
-    Route::get('/api/contracts/timeline', [App\Http\Controllers\ContractController::class, 'timeline'])->name('api.contracts.timeline');
+    Route::get('/project-timeline', [ProjectTimelineController::class, 'index'])->name('project-timeline.index');
+    Route::get('/project-timeline/create', [ProjectTimelineController::class, 'create'])->name('project-timeline.create');
+    Route::post('/project-timeline', [ProjectTimelineController::class, 'store'])->name('project-timeline.store');
+    Route::get('/project-timeline/{projectTimeline}', [ProjectTimelineController::class, 'show'])->name('project-timeline.show');
+    Route::get('/project-timeline/{projectTimeline}/edit', [ProjectTimelineController::class, 'edit'])->name('project-timeline.edit');
+    Route::put('/project-timeline/{projectTimeline}', [ProjectTimelineController::class, 'update'])->name('project-timeline.update');
+    Route::delete('/project-timeline/{projectTimeline}', [ProjectTimelineController::class, 'destroy'])->name('project-timeline.destroy');
 
     // Add this route for fetching contract items (materials) for web requests
     Route::get('/contracts/{contract}/items', [\App\Http\Controllers\ContractController::class, 'getItems'])->name('contracts.items');
@@ -281,3 +301,15 @@ Route::prefix('search')->group(function () {
     Route::get('scope-types', [SearchController::class, 'scopeTypes'])->name('search.scope-types');
     Route::get('contracts', [SearchController::class, 'contracts'])->name('search.contracts');
 });
+
+// Warranty Request Routes
+Route::middleware(['auth'])->group(function () {
+    Route::get('/warranty-requests', [WarrantyRequestController::class, 'index'])->name('warranty-requests.index');
+    Route::get('/warranty-requests/{warrantyRequest}', [WarrantyRequestController::class, 'show'])->name('warranty-requests.show');
+    Route::post('/warranty-requests', [WarrantyRequestController::class, 'store'])->name('warranty-requests.store');
+    Route::post('/warranty-requests/{warrantyRequest}/status', [WarrantyRequestController::class, 'updateStatus'])->name('warranty-requests.update-status');
+    Route::get('/warranty-requests/export', [WarrantyRequestController::class, 'export'])->name('warranty-requests.export');
+});
+
+// API Routes for Warranty Requests
+Route::post('/api/warranty-requests', [WarrantyRequestController::class, 'store'])->middleware('auth');

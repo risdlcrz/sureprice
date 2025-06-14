@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class MaterialController extends Controller
 {
@@ -202,10 +203,46 @@ class MaterialController extends Controller
 
     public function destroy(Material $material)
     {
-        $material->delete();
-
-        return redirect()->route('materials.index')
-            ->with('success', 'Material deleted successfully');
+        try {
+            DB::beginTransaction();
+            
+            // Delete associated images
+            foreach ($material->images as $image) {
+                // Delete the file from storage
+                if (Storage::disk('public')->exists($image->path)) {
+                    Storage::disk('public')->delete($image->path);
+                }
+                $image->delete();
+            }
+            
+            // Delete the material
+            $material->delete();
+            
+            DB::commit();
+            
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Material deleted successfully.'
+                ]);
+            }
+            
+            return redirect()->route('materials.index')
+                ->with('success', 'Material deleted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error deleting material: ' . $e->getMessage());
+            
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to delete material: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->route('materials.index')
+                ->with('error', 'Failed to delete material: ' . $e->getMessage());
+        }
     }
 
     public function search(Request $request)
