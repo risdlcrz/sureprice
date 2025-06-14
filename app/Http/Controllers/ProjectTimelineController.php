@@ -65,7 +65,7 @@ class ProjectTimelineController extends Controller
         });
 
         // Get contracts for search and progress calculation
-        $contracts = Contract::with(['tasks', 'client', 'contractor'])
+        $contracts = Contract::with(['tasks', 'client', 'contractor', 'rooms', 'rooms.scopeTypes', 'rooms.scopeTypes.materials'])
             ->orderBy('contract_number')
             ->get();
 
@@ -87,8 +87,37 @@ class ProjectTimelineController extends Controller
             ];
         });
 
-        // Combine contracts and tasks for the calendar
-        $calendarEvents = $contractEvents->concat($tasks)->values();
+        // Add scope types as calendar events
+        $scopeEvents = collect();
+        foreach ($contracts as $contract) {
+            if ($contract->start_date) { // Ensure contract has a start date
+                foreach ($contract->rooms as $room) {
+                    foreach ($room->scopeTypes as $scopeType) {
+                        $scopeStartDate = \Carbon\Carbon::parse($contract->start_date);
+                        $scopeEndDate = $scopeStartDate->copy()->addDays($scopeType->estimated_days ?? 0);
+
+                        $scopeEvents->push([
+                            'id' => 'scope-' . $scopeType->id . '-contract-' . $contract->id,
+                            'title' => 'Scope: ' . ($scopeType->name ?? 'N/A') . ' in ' . ($room->name ?? 'N/A'),
+                            'start' => $scopeStartDate->format('Y-m-d'),
+                            'end' => $scopeEndDate->format('Y-m-d'),
+                            'extendedProps' => [
+                                'type' => 'scope',
+                                'contract_id' => $contract->id,
+                                'room_id' => $room->id,
+                                'scope_type_id' => $scopeType->id,
+                                'estimated_days' => $scopeType->estimated_days,
+                                'status' => $contract->status // Inherit contract status for display
+                            ],
+                            'className' => 'status-' . ($contract->status ? strtolower($contract->status) : 'secondary') // Apply a class based on contract status
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // Combine contracts, tasks, and scopes for the calendar
+        $calendarEvents = $contractEvents->concat($tasks)->concat($scopeEvents)->values();
 
         // If no events, add a demo event
         if ($calendarEvents->isEmpty()) {
@@ -340,7 +369,7 @@ class ProjectTimelineController extends Controller
                     'id' => 'contract-' . $contract->id,
                     'title' => $contract->client->name ?? 'Unknown Client',
                     'start' => $contract->start_date->format('Y-m-d'),
-                    'end' => $contract->end_date->addDay()->format('Y-m-d'),
+                    'end' => $contract->end_date->format('Y-m-d'),
                     'className' => 'status-' . $safeStatus,
                     'extendedProps' => [
                         'type' => 'contract',
