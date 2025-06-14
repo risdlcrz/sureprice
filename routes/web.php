@@ -208,6 +208,18 @@ Route::middleware(['auth'])->group(function () {
 
     // Add this route for fetching contract items (materials) for web requests
     Route::get('/contracts/{contract}/items', [\App\Http\Controllers\ContractController::class, 'getItems'])->name('contracts.items');
+
+    // Warranty Requests Routes
+    Route::prefix('warranty-requests')->name('warranty-requests.')->group(function () {
+        Route::get('/', [WarrantyRequestController::class, 'index'])->name('index');
+        Route::get('/export', [WarrantyRequestController::class, 'export'])->name('export');
+        Route::get('/template', [WarrantyRequestController::class, 'template'])->name('template');
+        Route::post('/import', [WarrantyRequestController::class, 'import'])->name('import');
+        Route::post('/additional-work', [WarrantyRequestController::class, 'storeAdditionalWork'])->name('additional-work');
+        Route::get('/{warrantyRequest}', [WarrantyRequestController::class, 'show'])->name('show');
+        Route::post('/', [WarrantyRequestController::class, 'store'])->name('store');
+        Route::post('/{warrantyRequest}/status', [WarrantyRequestController::class, 'updateStatus'])->name('update-status');
+    });
 });
 
 // Payments routes
@@ -300,15 +312,6 @@ Route::prefix('search')->group(function () {
     Route::get('suppliers', [SearchController::class, 'suppliers'])->name('search.suppliers');
     Route::get('scope-types', [SearchController::class, 'scopeTypes'])->name('search.scope-types');
     Route::get('contracts', [SearchController::class, 'contracts'])->name('search.contracts');
-});
-
-// Warranty Request Routes
-Route::middleware(['auth'])->group(function () {
-    Route::get('/warranty-requests', [WarrantyRequestController::class, 'index'])->name('warranty-requests.index');
-    Route::get('/warranty-requests/{warrantyRequest}', [WarrantyRequestController::class, 'show'])->name('warranty-requests.show');
-    Route::post('/warranty-requests', [WarrantyRequestController::class, 'store'])->name('warranty-requests.store');
-    Route::post('/warranty-requests/{warrantyRequest}/status', [WarrantyRequestController::class, 'updateStatus'])->name('warranty-requests.update-status');
-    Route::get('/warranty-requests/export', [WarrantyRequestController::class, 'export'])->name('warranty-requests.export');
 });
 
 // API Routes for Warranty Requests

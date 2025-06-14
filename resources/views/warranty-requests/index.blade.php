@@ -12,13 +12,23 @@
                             <button type="button" class="btn btn-outline-primary" id="filterBtn">
                                 <i class="bi bi-funnel"></i> Filter
                             </button>
-                            <a href="{{ route('warranty-requests.export') }}" class="btn btn-outline-success">
+                            <button type="button" class="btn btn-outline-success" id="exportBtn">
                                 <i class="bi bi-download"></i> Export
-                            </a>
+                            </button>
+                            <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#importModal">
+                                <i class="bi bi-upload"></i> Import
+                            </button>
                             <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#addWarrantyModal">
                                 <i class="bi bi-plus-circle"></i> Add Request
                             </button>
                         </div>
+                    </div>
+
+                    <!-- Additional Work Request Button -->
+                    <div class="mb-4">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#additionalWorkModal">
+                            <i class="bi bi-tools"></i> Request Additional Work
+                        </button>
                     </div>
 
                     <!-- Filters Section -->
@@ -179,7 +189,217 @@
         </div>
     </div>
 </div>
-@endsection
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="importModalLabel">Import Warranty Requests</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Instructions</h6>
+                    <ol class="mb-0">
+                        <li>Download the template file using the button below</li>
+                        <li>Fill in the required information in the template</li>
+                        <li>Save the file as CSV format</li>
+                        <li>Upload the filled template using the form below</li>
+                    </ol>
+                </div>
+
+                <div class="mb-4">
+                    <a href="{{ route('warranty-requests.template') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-download"></i> Download Template
+                    </a>
+                </div>
+
+                <form id="importForm" action="{{ route('warranty-requests.import') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="mb-3">
+                        <label for="importFile" class="form-label">Select CSV File</label>
+                        <input type="file" class="form-control" id="importFile" name="file" accept=".csv" required>
+                        <div class="form-text">Only CSV files are accepted. Maximum file size: 5MB</div>
+                    </div>
+                </form>
+
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Important Notes</h6>
+                    <ul class="mb-0">
+                        <li>All fields marked with * are required</li>
+                        <li>Contract Number must exist in the system</li>
+                        <li>Status must be one of: pending, in_review, approved, rejected</li>
+                        <li>Dates should be in YYYY-MM-DD format</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="submit" form="importForm" class="btn btn-primary">Import</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Work Request Modal -->
+<div class="modal fade" id="additionalWorkModal" tabindex="-1" aria-labelledby="additionalWorkModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="additionalWorkModalLabel">Request Additional Work</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="additionalWorkForm" class="needs-validation" novalidate>
+                    <div class="row">
+                        <!-- Contract Selection -->
+                        <div class="col-md-6 mb-3">
+                            <label for="work_contract_id" class="form-label">Select Contract*</label>
+                            <select class="form-select" id="work_contract_id" name="contract_id" required>
+                                <option value="">Choose a contract...</option>
+                                @foreach(App\Models\Contract::where('status', 'COMPLETED')->get() as $contract)
+                                    <option value="{{ $contract->id }}" 
+                                            data-client="{{ $contract->client->name }}"
+                                            data-number="{{ $contract->contract_number }}">
+                                        {{ $contract->contract_number }} - {{ $contract->client->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <div class="invalid-feedback">Please select a contract.</div>
+                        </div>
+
+                        <!-- Work Type -->
+                        <div class="col-md-6 mb-3">
+                            <label for="work_type" class="form-label">Type of Work*</label>
+                            <select class="form-select" id="work_type" name="work_type" required>
+                                <option value="">Select work type...</option>
+                                <option value="installation">Installation</option>
+                                <option value="maintenance">Maintenance</option>
+                                <option value="repair">Repair</option>
+                                <option value="upgrade">Upgrade</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <div class="invalid-feedback">Please select a work type.</div>
+                        </div>
+                    </div>
+
+                    <!-- Work Description -->
+                    <div class="mb-3">
+                        <label for="work_description" class="form-label">Work Description*</label>
+                        <textarea class="form-control" id="work_description" name="description" rows="3" required></textarea>
+                        <div class="invalid-feedback">Please provide a description of the work needed.</div>
+                    </div>
+
+                    <!-- Materials Section -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Required Materials</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="materialsContainer">
+                                <div class="material-item row mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Material*</label>
+                                        <select class="form-select material-select" name="materials[0][material_id]" required>
+                                            <option value="">Select material...</option>
+                                            @foreach(App\Models\Material::all() as $material)
+                                                <option value="{{ $material->id }}" 
+                                                        data-code="{{ $material->code }}"
+                                                        data-unit="{{ $material->unit }}">
+                                                    {{ $material->name }} ({{ $material->code }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Quantity*</label>
+                                        <input type="number" class="form-control" name="materials[0][quantity]" min="0.01" step="0.01" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Unit</label>
+                                        <input type="text" class="form-control unit-display" readonly>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Notes</label>
+                                        <input type="text" class="form-control" name="materials[0][notes]">
+                                    </div>
+                                    <div class="col-md-1 d-flex align-items-end">
+                                        <button type="button" class="btn btn-danger remove-material" style="display: none;">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary" id="addMaterial">
+                                <i class="bi bi-plus-circle"></i> Add Material
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Labor Section -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Labor Requirements</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="estimated_hours" class="form-label">Estimated Hours*</label>
+                                    <input type="number" class="form-control" id="estimated_hours" name="estimated_hours" min="0.5" step="0.5" required>
+                                    <div class="invalid-feedback">Please provide estimated hours.</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="required_skills" class="form-label">Required Skills</label>
+                                    <input type="text" class="form-control" id="required_skills" name="required_skills" placeholder="e.g., Electrical, Plumbing">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="labor_notes" class="form-label">Additional Labor Notes</label>
+                                <textarea class="form-control" id="labor_notes" name="labor_notes" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline Section -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Timeline</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="preferred_start_date" class="form-label">Preferred Start Date*</label>
+                                    <input type="date" class="form-control" id="preferred_start_date" name="preferred_start_date" required>
+                                    <div class="invalid-feedback">Please select a preferred start date.</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="preferred_end_date" class="form-label">Preferred Completion Date*</label>
+                                    <input type="date" class="form-control" id="preferred_end_date" name="preferred_end_date" required>
+                                    <div class="invalid-feedback">Please select a preferred completion date.</div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="timeline_notes" class="form-label">Timeline Notes</label>
+                                <textarea class="form-control" id="timeline_notes" name="timeline_notes" rows="2" placeholder="Any specific timing requirements or constraints"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Notes -->
+                    <div class="mb-3">
+                        <label for="additional_notes" class="form-label">Additional Notes</label>
+                        <textarea class="form-control" id="additional_notes" name="additional_notes" rows="3" placeholder="Any other relevant information"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="submitAdditionalWork">Submit Request</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @push('scripts')
 <script>
@@ -195,8 +415,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Export functionality
     document.getElementById('exportBtn').addEventListener('click', function() {
-        // Implement export functionality here
-        alert('Export functionality will be implemented here');
+        const status = document.getElementById('statusFilter').value;
+        const dateFrom = document.getElementById('dateFrom').value;
+        const dateTo = document.getElementById('dateTo').value;
+        const search = document.getElementById('searchInput').value;
+
+        let exportUrl = '{{ route("warranty-requests.export") }}';
+        const params = new URLSearchParams();
+
+        if (status) params.append('status', status);
+        if (dateFrom) params.append('date_from', dateFrom);
+        if (dateTo) params.append('date_to', dateTo);
+        if (search) params.append('search', search);
+
+        if (params.toString()) {
+            exportUrl += '?' + params.toString();
+        }
+
+        window.location.href = exportUrl;
+    });
+
+    // Filter form submission
+    document.getElementById('filtersForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const params = new URLSearchParams(formData);
+        window.location.href = '{{ route("warranty-requests.index") }}?' + params.toString();
     });
 
     // Add Warranty Request Submit
@@ -250,6 +494,85 @@ document.addEventListener('DOMContentLoaded', function() {
         .finally(() => {
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
+        });
+    });
+
+    // Additional Work Request Form Handling
+    const additionalWorkForm = document.getElementById('additionalWorkForm');
+    const addMaterialBtn = document.getElementById('addMaterial');
+    const materialsContainer = document.getElementById('materialsContainer');
+    let materialCount = 1;
+
+    // Add Material Row
+    addMaterialBtn.addEventListener('click', function() {
+        const template = document.querySelector('.material-item').cloneNode(true);
+        template.querySelectorAll('select, input').forEach(input => {
+            input.value = '';
+            input.name = input.name.replace('[0]', `[${materialCount}]`);
+        });
+        template.querySelector('.remove-material').style.display = 'block';
+        materialsContainer.appendChild(template);
+        materialCount++;
+    });
+
+    // Remove Material Row
+    materialsContainer.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-material')) {
+            e.target.closest('.material-item').remove();
+        }
+    });
+
+    // Update Unit Display
+    materialsContainer.addEventListener('change', function(e) {
+        if (e.target.classList.contains('material-select')) {
+            const unitDisplay = e.target.closest('.material-item').querySelector('.unit-display');
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            unitDisplay.value = selectedOption.dataset.unit || '';
+        }
+    });
+
+    // Form Validation and Submission
+    document.getElementById('submitAdditionalWork').addEventListener('click', function() {
+        if (!additionalWorkForm.checkValidity()) {
+            additionalWorkForm.classList.add('was-validated');
+            return;
+        }
+
+        const formData = new FormData(additionalWorkForm);
+        const data = Object.fromEntries(formData.entries());
+        
+        // Convert materials array
+        const materials = [];
+        document.querySelectorAll('.material-item').forEach((item, index) => {
+            materials.push({
+                material_id: item.querySelector('.material-select').value,
+                quantity: item.querySelector('input[name$="[quantity]"]').value,
+                notes: item.querySelector('input[name$="[notes]"]').value
+            });
+        });
+        data.materials = materials;
+
+        // Submit the form
+        fetch('{{ route("warranty-requests.additional-work") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Additional work request submitted successfully');
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while submitting the request');
         });
     });
 });
