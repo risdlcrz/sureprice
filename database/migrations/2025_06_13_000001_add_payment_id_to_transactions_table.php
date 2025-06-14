@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
+class AddPaymentIdToTransactionsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
-            $table->foreignId('payment_id')->nullable()->after('contract_id')->constrained()->onDelete('cascade');
+            if (!Schema::hasColumn('transactions', 'payment_id')) {
+                $table->bigInteger('payment_id')->unsigned()->nullable()->after('contract_id');
+            }
         });
     }
 
@@ -22,8 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
-            $table->dropForeign(['payment_id']);
-            $table->dropColumn('payment_id');
+            if (Schema::hasColumn('transactions', 'payment_id')) {
+                $table->dropColumn('payment_id');
+            }
         });
     }
-}; 
+} 

@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
-            $table->foreignId('created_by')->nullable()->after('notes')->constrained('users');
+            if (!Schema::hasColumn('transactions', 'created_by')) {
+                $table->foreignId('created_by')->nullable()->after('notes')->constrained('users');
+            }
         });
     }
 
@@ -22,8 +24,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('transactions', function (Blueprint $table) {
-            $table->dropForeign(['created_by']);
-            $table->dropColumn('created_by');
+            if (Schema::hasColumn('transactions', 'created_by')) {
+                $table->dropForeign(['created_by']);
+                $table->dropColumn('created_by');
+            }
         });
     }
 }; 
