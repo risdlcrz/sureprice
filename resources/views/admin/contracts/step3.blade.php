@@ -549,7 +549,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Add event listeners for auto-save
     const form = document.getElementById('step3Form');
-    const textareas = form.querySelectorAll('textarea');
+    const textareas = form ? form.querySelectorAll('textarea') : [];
     const signaturePads = document.querySelectorAll('.signature-pad');
 
     // Auto-save when textareas change
@@ -579,7 +579,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Make handlePreviousStep globally available
     window.handlePreviousStep = function() {
         console.log('Previous Step button clicked');
-        
         // First save any form data including signatures
         const formData = new FormData(document.getElementById('step3Form'));
         const data = {
@@ -592,10 +591,8 @@ document.addEventListener('DOMContentLoaded', function() {
             client_signature: document.getElementById('client_signature').value || 
                 (document.getElementById('keepClientSignature')?.checked ? @json(session('contract_step3.client_signature')) : null)
         };
-
         // Log the data being saved
         console.log('Saving step 3 data before navigation:', data);
-
         // Save the data and then navigate
         fetch('{{ route("contracts.save.step3") }}', {
             method: 'POST',
@@ -622,62 +619,75 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form validation and submission
     const formSubmit = document.getElementById('step3Form');
-    formSubmit.addEventListener('submit', function(e) {
-        e.preventDefault();
-        let errorMessage = '';
-        const errorDiv = document.getElementById('formErrorMessage');
-        errorDiv.classList.add('d-none');
-        errorDiv.textContent = '';
-        console.log('Form submit triggered');
+    if (formSubmit) {
+        let isSubmitting = false;
+        formSubmit.addEventListener('submit', function(e) {
+            if (isSubmitting) return;
+            e.preventDefault();
+            let errorMessage = '';
+            const errorDiv = document.getElementById('formErrorMessage');
+            if (errorDiv) {
+                errorDiv.classList.add('d-none');
+                errorDiv.textContent = '';
+            }
+            console.log('Form submit triggered');
 
-        if (!formSubmit.checkValidity()) {
-            e.stopPropagation();
-            formSubmit.classList.add('was-validated');
-            errorMessage = 'Please fill in all required fields.';
-            errorDiv.textContent = errorMessage;
-            errorDiv.classList.remove('d-none');
-            console.log('Form validation failed');
-            return;
-        }
+            if (!formSubmit.checkValidity()) {
+                e.stopPropagation();
+                formSubmit.classList.add('was-validated');
+                errorMessage = 'Please fill in all required fields.';
+                if (errorDiv) {
+                    errorDiv.textContent = errorMessage;
+                    errorDiv.classList.remove('d-none');
+                }
+                console.log('Form validation failed');
+                return;
+            }
 
-        // Check if signatures are provided or kept
-        const keepContractorSignature = document.getElementById('keepContractorSignature')?.checked;
-        const keepClientSignature = document.getElementById('keepClientSignature')?.checked;
-        console.log('keepContractorSignature:', keepContractorSignature, 'keepClientSignature:', keepClientSignature);
+            // Check if signatures are provided or kept
+            const keepContractorSignature = document.getElementById('keepContractorSignature')?.checked;
+            const keepClientSignature = document.getElementById('keepClientSignature')?.checked;
+            console.log('keepContractorSignature:', keepContractorSignature, 'keepClientSignature:', keepClientSignature);
 
-        // Always set hidden fields before submit
-        if (keepContractorSignature) {
-            document.getElementById('contractor_signature').value = @json(session('contract_step3.contractor_signature')) || '';
-        } else if (window.contractorPad && !window.contractorPad.isEmpty()) {
-            document.getElementById('contractor_signature').value = window.contractorPad.toDataURL();
-        }
+            // Always set hidden fields before submit
+            if (keepContractorSignature) {
+                document.getElementById('contractor_signature').value = @json(session('contract_step3.contractor_signature')) || '';
+            } else if (window.contractorPad && !window.contractorPad.isEmpty()) {
+                document.getElementById('contractor_signature').value = window.contractorPad.toDataURL();
+            }
 
-        if (keepClientSignature) {
-            document.getElementById('client_signature').value = @json(session('contract_step3.client_signature')) || '';
-        } else if (window.clientPad && !window.clientPad.isEmpty()) {
-            document.getElementById('client_signature').value = window.clientPad.toDataURL();
-        }
+            if (keepClientSignature) {
+                document.getElementById('client_signature').value = @json(session('contract_step3.client_signature')) || '';
+            } else if (window.clientPad && !window.clientPad.isEmpty()) {
+                document.getElementById('client_signature').value = window.clientPad.toDataURL();
+            }
 
-        if (!document.getElementById('contractor_signature').value) {
-            errorMessage = 'Please provide contractor signature.';
-            errorDiv.textContent = errorMessage;
-            errorDiv.classList.remove('d-none');
-            console.log('Contractor signature missing');
-            return;
-        }
+            if (!document.getElementById('contractor_signature').value) {
+                errorMessage = 'Please provide contractor signature.';
+                if (errorDiv) {
+                    errorDiv.textContent = errorMessage;
+                    errorDiv.classList.remove('d-none');
+                }
+                console.log('Contractor signature missing');
+                return;
+            }
 
-        if (!document.getElementById('client_signature').value) {
-            errorMessage = 'Please provide client signature.';
-            errorDiv.textContent = errorMessage;
-            errorDiv.classList.remove('d-none');
-            console.log('Client signature missing');
-            return;
-        }
+            if (!document.getElementById('client_signature').value) {
+                errorMessage = 'Please provide client signature.';
+                if (errorDiv) {
+                    errorDiv.textContent = errorMessage;
+                    errorDiv.classList.remove('d-none');
+                }
+                console.log('Client signature missing');
+                return;
+            }
 
-        // Submit the form
-        console.log('All validations passed, submitting form');
-        formSubmit.submit();
-    });
+            // Submit the form
+            console.log('All validations passed, submitting form');
+            isSubmitting = true;
+            formSubmit.submit();
+        });
+    }
 });
 </script>
 @endpush 

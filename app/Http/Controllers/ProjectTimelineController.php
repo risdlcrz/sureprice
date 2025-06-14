@@ -47,26 +47,66 @@ class ProjectTimelineController extends Controller
         // Get tasks for calendar view
         $tasks = $query->get()->map(function($task) {
             return [
-                'id' => $task->id,
+                'id' => 'task-' . $task->id,
                 'title' => $task->title,
                 'start' => $task->start_date->format('Y-m-d'),
                 'end' => $task->end_date->format('Y-m-d'),
-                'status' => $task->status,
-                'priority' => $task->priority,
-                'progress' => $task->progress,
-                'contract' => $task->contract->contract_number,
-                'room' => $task->room ? $task->room->name : null,
-                'scope' => $task->scopeType ? $task->scopeType->name : null,
-                'assignee' => $task->assignee ? $task->assignee->name : null,
-                'url' => route('project-tasks.show', $task)
+                'extendedProps' => [
+                    'type' => 'task',
+                    'status' => $task->status,
+                    'priority' => $task->priority,
+                    'progress' => $task->progress,
+                    'contract' => $task->contract ? $task->contract->contract_number : null,
+                    'room' => $task->room ? $task->room->name : null,
+                    'scope' => $task->scopeType ? $task->scopeType->name : null,
+                    'assignee' => $task->assignee ? $task->assignee->name : null,
+                ]
             ];
         });
 
         // Get contracts for search and progress calculation
-        $contracts = Contract::with(['tasks'])
-            ->select('id', 'contract_number', 'title')
+        $contracts = Contract::with(['tasks', 'client', 'contractor'])
             ->orderBy('contract_number')
             ->get();
+
+        // Add contracts as calendar events
+        $contractEvents = $contracts->map(function($contract) {
+            return [
+                'id' => 'contract-' . $contract->id,
+                'title' => $contract->title ?? $contract->contract_number,
+                'start' => $contract->start_date ? $contract->start_date->format('Y-m-d') : null,
+                'end' => $contract->end_date ? $contract->end_date->format('Y-m-d') : null,
+                'extendedProps' => [
+                    'type' => 'contract',
+                    'client' => $contract->client ? $contract->client->name : null,
+                    'contractor' => $contract->contractor ? $contract->contractor->name : null,
+                    'status' => $contract->status,
+                    'progress' => $contract->progress ?? 0,
+                    'budget' => $contract->total_amount,
+                ]
+            ];
+        });
+
+        // Combine contracts and tasks for the calendar
+        $calendarEvents = $contractEvents->concat($tasks)->values();
+
+        // If no events, add a demo event
+        if ($calendarEvents->isEmpty()) {
+            $calendarEvents = collect([
+                [
+                    'id' => 'demo-1',
+                    'title' => 'Demo Event',
+                    'start' => now()->format('Y-m-d'),
+                    'end' => now()->addDay()->format('Y-m-d'),
+                    'extendedProps' => [
+                        'type' => 'demo',
+                        'client' => 'Demo Client',
+                        'status' => 'approved',
+                        'progress' => 100
+                    ]
+                ]
+            ]);
+        }
 
         // Calculate overall project progress
         $totalOverallProgress = 0;
@@ -82,7 +122,6 @@ class ProjectTimelineController extends Controller
                 $totalOverallTasks += $contractTasksCount;
             }
         }
-
         $overallProjectProgress = $totalOverallTasks > 0 ? round(($totalOverallProgress / $totalOverallTasks), 2) : 0;
 
         // Get users for assignee filter
@@ -90,7 +129,12 @@ class ProjectTimelineController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('project-timeline.index', compact('tasks', 'contracts', 'users', 'overallProjectProgress'));
+        return view('project-timeline.index', [
+            'contracts' => $contracts,
+            'calendarEvents' => $calendarEvents,
+            'overallProjectProgress' => $overallProjectProgress,
+            'users' => $users
+        ]);
     }
 
     public function create()
