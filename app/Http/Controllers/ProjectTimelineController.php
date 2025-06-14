@@ -65,7 +65,7 @@ class ProjectTimelineController extends Controller
         });
 
         // Get contracts for search and progress calculation
-        $contracts = Contract::with(['tasks', 'client', 'contractor', 'rooms', 'rooms.scopeTypes', 'rooms.scopeTypes.materials'])
+        $contracts = Contract::with(['tasks', 'client', 'contractor', 'rooms', 'rooms.scopeTypes', 'rooms.scopeTypes.materials', 'purchaseOrders', 'purchaseOrders.deliveries', 'purchaseOrders.items'])
             ->orderBy('contract_number')
             ->get();
 
@@ -87,37 +87,67 @@ class ProjectTimelineController extends Controller
             ];
         });
 
-        // Add scope types as calendar events
+        // Add scope types as calendar events (parallel per room, sequenced within each room)
         $scopeEvents = collect();
         foreach ($contracts as $contract) {
-            if ($contract->start_date) { // Ensure contract has a start date
+            if ($contract->start_date) {
                 foreach ($contract->rooms as $room) {
-                    foreach ($room->scopeTypes as $scopeType) {
-                        $scopeStartDate = \Carbon\Carbon::parse($contract->start_date);
-                        $scopeEndDate = $scopeStartDate->copy()->addDays($scopeType->estimated_days ?? 0);
-
+                    $currentScopeStart = \Carbon\Carbon::parse($contract->start_date);
+                    $scopes = $room->scopeTypes->sortBy(function($scopeType) {
+                        return $scopeType->order ?? $scopeType->id;
+                    });
+                    foreach ($scopes as $scopeType) {
+                        $scopeDuration = $scopeType->estimated_days ?? 0;
+                        $scopeEnd = $currentScopeStart->copy()->addDays(max($scopeDuration - 1, 0));
                         $scopeEvents->push([
                             'id' => 'scope-' . $scopeType->id . '-contract-' . $contract->id,
-                            'title' => 'Scope: ' . ($scopeType->name ?? 'N/A') . ' in ' . ($room->name ?? 'N/A'),
-                            'start' => $scopeStartDate->format('Y-m-d'),
-                            'end' => $scopeEndDate->format('Y-m-d'),
+                            'title' => $scopeType->name . ($room->name ? ' (' . $room->name . ')' : ''),
+                            'start' => $currentScopeStart->format('Y-m-d'),
+                            'end' => $scopeEnd->format('Y-m-d'),
                             'extendedProps' => [
                                 'type' => 'scope',
                                 'contract_id' => $contract->id,
                                 'room_id' => $room->id,
                                 'scope_type_id' => $scopeType->id,
                                 'estimated_days' => $scopeType->estimated_days,
-                                'status' => $contract->status // Inherit contract status for display
+                                'status' => $contract->status
                             ],
-                            'className' => 'status-' . ($contract->status ? strtolower($contract->status) : 'secondary') // Apply a class based on contract status
+                            'className' => 'status-' . ($contract->status ? strtolower($contract->status) : 'secondary')
                         ]);
+                        $currentScopeStart = $scopeEnd->copy()->addDay();
                     }
                 }
             }
         }
 
-        // Combine contracts, tasks, and scopes for the calendar
-        $calendarEvents = $contractEvents->concat($tasks)->concat($scopeEvents)->values();
+        // Add purchase order deliveries as calendar events
+        $deliveryEvents = collect();
+        foreach ($contracts as $contract) {
+            foreach ($contract->purchaseOrders as $po) {
+                $deliveryDate = $po->delivery_date ?? $po->expected_delivery_date;
+                if ($deliveryDate) {
+                    $deliveryEvents->push([
+                        'id' => 'po-' . $po->id . '-contract-' . $contract->id,
+                        'title' => 'PO: ' . ($po->po_number ?? 'N/A') . ' - ' . ($po->status ? ucwords(str_replace('_', ' ', $po->status)) : 'N/A'),
+                        'start' => $deliveryDate->format('Y-m-d'),
+                        'end' => $deliveryDate->format('Y-m-d'), // Deliveries are point-in-time events
+                        'extendedProps' => [
+                            'type' => 'delivery',
+                            'contract_id' => $contract->id,
+                            'po_id' => $po->id,
+                            'status' => $po->status,
+                            'expected_delivery_date' => $po->expected_delivery_date ? $po->expected_delivery_date->format('Y-m-d') : null,
+                            'delivery_date' => $po->delivery_date ? $po->delivery_date->format('Y-m-d') : null,
+                            'total_amount' => $po->total_amount,
+                        ],
+                        'className' => 'status-' . ($po->status ? strtolower($po->status) : 'secondary')
+                    ]);
+                }
+            }
+        }
+
+        // Combine only scope events for the calendar
+        $calendarEvents = $scopeEvents->values();
 
         // If no events, add a demo event
         if ($calendarEvents->isEmpty()) {

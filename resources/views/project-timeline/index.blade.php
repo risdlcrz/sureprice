@@ -36,19 +36,47 @@
                                                 </div>
                                                 <div class="mb-2">
                                                     <strong>End:</strong> {{ $contract->end_date ? \Carbon\Carbon::parse($contract->end_date)->format('M d, Y') : 'N/A' }}
-                                                </div>
+                </div>
                                                 <div class="mb-2"><strong>Budget:</strong> ₱{{ number_format($contract->total_amount ?? 0, 2) }}</div>
+                                                
+                                                @php
+                                                    $pendingPO = $contract->purchaseOrders->where('status', 'pending')->count();
+                                                    $partiallyDeliveredPO = $contract->purchaseOrders->where('status', 'partially_delivered')->count();
+                                                    $completedPO = $contract->purchaseOrders->where('status', 'completed')->count();
+                                                    $totalPO = $contract->purchaseOrders->count();
+                                                @endphp
+
+                                                <div class="mb-2 mt-3">
+                                                    <strong>Delivery Status:</strong>
+                                                    @if($totalPO > 0)
+                                                        <ul class="list-unstyled mb-0 ms-2">
+                                                            <li><i class="bi bi-box-seam-fill text-primary"></i> Total POs: {{ $totalPO }}</li>
+                                                            @if($pendingPO > 0)
+                                                                <li><i class="bi bi-hourglass text-warning"></i> Pending: {{ $pendingPO }}</li>
+                                                            @endif
+                                                            @if($partiallyDeliveredPO > 0)
+                                                                <li><i class="bi bi-arrow-right-circle text-info"></i> Partially Delivered: {{ $partiallyDeliveredPO }}</li>
+                                                            @endif
+                                                            @if($completedPO > 0)
+                                                                <li><i class="bi bi-truck text-success"></i> Delivered: {{ $completedPO }}</li>
+                                                            @endif
+                                                        </ul>
+                                                    @else
+                                                        <span class="text-muted">No Purchase Orders.</span>
+                                                    @endif
+            </div>
+
                                                 <div class="mt-3">
                                                     <a href="{{ route('contracts.show', $contract->id) }}" class="btn btn-primary btn-sm">View Full Contract</a>
-                                                </div>
-                                            </div>
+        </div>
+    </div>
 
                                             <!-- Right Column: Scope of Work & Tasks -->
                                             <div class="col-md-6 ps-4">
                                                 <h5 class="card-title mb-3">Scope of Work & Tasks</h5>
                                                 @if($contract->rooms->count() > 0)
                                                     @foreach($contract->rooms as $room)
-                                                        <div class="mb-3">
+            <div class="mb-3">
                                                             <h6>Room: {{ $room->name ?? 'N/A' }}</h6>
                                                             @if($room->scopeTypes->count() > 0)
                                                                 <div class="accordion accordion-flush" id="roomAccordion{{ $room->id }}">
@@ -57,7 +85,7 @@
                                                                             <h2 class="accordion-header" id="headingScope{{ $room->id }}{{ $loop->parent->index }}{{ $loop->index }}">
                                                                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseScope{{ $room->id }}{{ $loop->parent->index }}{{ $loop->index }}" aria-expanded="false" aria-controls="collapseScope{{ $room->id }}{{ $loop->parent->index }}{{ $loop->index }}">
                                                                                     <strong>{{ $scopeType->name ?? 'N/A' }}</strong> ({{ $scopeType->estimated_days ?? 0 }} days)
-                                                                                </button>
+                </button>
                                                                             </h2>
                                                                             <div id="collapseScope{{ $room->id }}{{ $loop->parent->index }}{{ $loop->index }}" class="accordion-collapse collapse {{ $loop->index == 0 ? 'show' : '' }}" aria-labelledby="headingScope{{ $room->id }}{{ $loop->parent->index }}{{ $loop->index }}" data-bs-parent="#roomAccordion{{ $room->id }}">
                                                                                 <div class="accordion-body">
@@ -84,21 +112,21 @@
                                                                                     @else
                                                                                         <p class="text-muted">No materials defined.</p>
                                                                                     @endif
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
+            </div>
+                                </div>
+                            </div>
                                                                     @endforeach
                                                                 </div>
                                                             @else
                                                                 <p class="text-muted">No scope types defined for this room.</p>
                                                             @endif
-                                                        </div>
+                                    </div>
                                                     @endforeach
                                                 @else
                                                     <p class="text-muted">No rooms or scopes defined for this contract.</p>
                                                 @endif
-                                            </div>
-                                        </div>
+                                    </div>
+                                    </div>
                                     </div>
                                 </div>
                             </div>
@@ -133,10 +161,10 @@
                                     <label for="endDate" class="form-label">End Date</label>
                                     <input type="date" class="form-control" id="endDate" name="endDate">
                                 </div>
-                                <div class="col-12">
+                            <div class="col-12">
                                     <button type="submit" class="btn btn-success">Apply Filters</button>
                                     <button type="reset" class="btn btn-secondary">Reset</button>
-                                </div>
+                            </div>
                             </form>
                         </div>
                     </div>
@@ -150,7 +178,7 @@
 @endsection
 
 @push('styles')
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/main.min.css" rel="stylesheet" crossorigin="anonymous" />
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" crossorigin="anonymous" />
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" crossorigin="anonymous" />
 <style>
 .progress-bar {
@@ -178,19 +206,53 @@
     border-radius: 0.25rem;
     padding: 1rem;
 }
-
 .contract-card .card-body .row .col-md-6:first-child {
-    border-right: 1px solid #dee2e6; /* Ensure a clear separator */
+    border-right: 1px solid #dee2e6;
 }
-
 .contract-card .card-body .row .col-md-6:last-child {
-    padding-left: 1.5rem; /* Add some padding for the right column */
+    padding-left: 1.5rem;
+}
+/* Color coding for FullCalendar events by status */
+.status-approved {
+    background-color: #198754 !important;
+    color: #fff !important;
+    border: none !important;
+}
+.status-draft {
+    background-color: #6c757d !important;
+    color: #fff !important;
+    border: none !important;
+}
+.status-rejected {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+    border: none !important;
+}
+.status-pending {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+    border: none !important;
+}
+.status-in_progress {
+    background-color: #0dcaf0 !important;
+    color: #212529 !important;
+    border: none !important;
+}
+.status-completed {
+    background-color: #198754 !important;
+    color: #fff !important;
+    border: none !important;
+}
+.status-delayed {
+    background-color: #fd7e14 !important;
+    color: #fff !important;
+    border: none !important;
 }
 </style>
 @endpush
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js" crossorigin="anonymous"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // --- Progress Bar ---
@@ -219,7 +281,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const props = event.extendedProps || {};
             let statusClass = '';
             if (props.status) {
-                statusClass = `status-${props.status}`;
+                // Ensure status is lowercase and underscores for spaces
+                statusClass = `status-${String(props.status).toLowerCase().replace(/\s+/g, '_')}`;
             }
             if (statusClass) {
                 info.el.classList.add(statusClass);
