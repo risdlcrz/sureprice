@@ -93,4 +93,6 @@ Route::middleware('api')->group(function () {
 
 Route::get('users/{id}', [App\Http\Controllers\UserController::class, 'showMinimal']);
 
+Route::get('materials/{material}/suppliers', [App\Http\Controllers\MaterialController::class, 'getSuppliersForMaterial']);
+
 require __DIR__.'/auth.php'; 

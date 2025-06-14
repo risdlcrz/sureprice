@@ -248,6 +248,33 @@
     color: #fff !important;
     border: none !important;
 }
+
+/* Contractor-specific styling */
+.contractor-1 { border-left: 4px solid #198754 !important; }
+.contractor-2 { border-left: 4px solid #0dcaf0 !important; }
+.contractor-3 { border-left: 4px solid #6f42c1 !important; }
+.contractor-4 { border-left: 4px solid #fd7e14 !important; }
+.contractor-5 { border-left: 4px solid #20c997 !important; }
+
+.fc-event {
+    padding: 2px 4px !important;
+    margin: 1px 0 !important;
+    border-radius: 4px !important;
+}
+
+.fc-event-title {
+    font-weight: 500 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.fc-event-contractor {
+    font-size: 0.8em !important;
+    opacity: 0.9 !important;
+    display: block !important;
+    margin-top: 2px !important;
+}
 </style>
 @endpush
 
@@ -276,28 +303,99 @@ document.addEventListener('DOMContentLoaded', function() {
             right: 'dayGridMonth,dayGridWeek,dayGridDay'
         },
         events: @json($calendarEvents ?? []),
+        eventContent: function(arg) {
+            const props = arg.event.extendedProps || {};
+            const contractNumber = props.contract_number;
+            const contractorName = props.contractor || 'N/A';
+            
+            return {
+                html: `
+                    <div class="fc-event-main-frame">
+                        <div class="fc-event-title-container">
+                            <div class="fc-event-title">${arg.event.title}</div>
+                            <div class="fc-event-contractor">${contractNumber}</div>
+                        </div>
+                    </div>
+                `
+            };
+        },
         eventDidMount: function(info) {
             const event = info.event;
             const props = event.extendedProps || {};
+            
+            // Add status class
             let statusClass = '';
             if (props.status) {
-                // Ensure status is lowercase and underscores for spaces
                 statusClass = `status-${String(props.status).toLowerCase().replace(/\s+/g, '_')}`;
             }
             if (statusClass) {
                 info.el.classList.add(statusClass);
             }
-            // Tooltip
-            let tooltipContent = `<div class='p-2'><strong>${event.title}</strong><br/>`;
-            if (props.client) tooltipContent += `Client: ${props.client}<br/>`;
-            if (props.contractor) tooltipContent += `Contractor: ${props.contractor}<br/>`;
-            if (props.status) tooltipContent += `Status: ${props.status}<br/>`;
-            if (props.progress !== undefined) tooltipContent += `Progress: ${props.progress}%<br/>`;
-            tooltipContent += `</div>`;
+            
+            // Add contractor class
+            if (props.contractor_id) {
+                info.el.classList.add(`contractor-${props.contractor_id}`);
+            }
+            
+            // Enhanced tooltip
+            let tooltipContent = `
+                <div class='p-2'>
+                    <strong>${event.title}</strong><br/>
+                    <strong>Contract Details:</strong><br/>
+                    Contract Number: ${props.contract_number}<br/>
+                    Contractor: ${props.contractor || 'N/A'}<br/>
+                    <strong>Project Details:</strong><br/>
+                    Room: ${props.room || 'N/A'}<br/>
+                    Scope: ${props.scope || 'N/A'}<br/>
+                    Status: ${props.status || 'N/A'}<br/>
+                    Progress: ${props.progress || 0}%<br/>
+                </div>
+            `;
             info.el.title = tooltipContent.replace(/<br\/>/g, '\n');
         },
         eventClick: function(info) {
-            // Optionally show modal/details
+            // Show detailed modal with all information
+            const props = info.event.extendedProps || {};
+            const modalContent = `
+                <div class="modal fade" id="eventModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">${info.event.title}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <h6>Contract Information</h6>
+                                <p>Contract Number: ${props.contract_number}<br/>
+                                Contractor: ${props.contractor || 'N/A'}</p>
+                                
+                                <h6>Project Details</h6>
+                                <p>Room: ${props.room || 'N/A'}<br/>
+                                Scope: ${props.scope || 'N/A'}<br/>
+                                Status: ${props.status || 'N/A'}<br/>
+                                Progress: ${props.progress || 0}%</p>
+                                
+                                <h6>Timeline</h6>
+                                <p>Start: ${info.event.start.toLocaleDateString()}<br/>
+                                End: ${info.event.end.toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            const existingModal = document.getElementById('eventModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add new modal to body
+            document.body.insertAdjacentHTML('beforeend', modalContent);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+            modal.show();
         }
     });
     calendar.render();
