@@ -93,10 +93,10 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             @if($material->images && count($material->images) > 0)
-                                                <img src="{{ Storage::url($material->images[0]) }}" 
-                                                    alt="{{ $material->name }}" 
-                                                    class="img-thumbnail mr-2" 
-                                                    style="width: 50px; height: 50px; object-fit: cover;">
+                                                <img src="{{ asset('storage/' . $material->images[0]->path) }}"
+                                                     alt="{{ $material->name }}"
+                                                     class="img-thumbnail mr-2"
+                                                     style="width: 150px; height: 150px; object-fit: contain; background: #fff; border: 2px solid #e0e0e0;">
                                             @endif
                                             <div>
                                                 <strong>{{ $material->name }}</strong>
@@ -480,24 +480,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add supplier prices modal functionality
     const viewSupplierButtons = document.querySelectorAll('.view-suppliers');
 
+    // Get the correct base URL for API
+    const apiBase = "{{ url('api/materials') }}";
+
     viewSupplierButtons.forEach(button => {
         button.addEventListener('click', async function() {
             const materialId = this.dataset.materialId;
             try {
-                const response = await fetch(`/api/materials/${materialId}/suppliers`);
+                const response = await fetch(`${apiBase}/${materialId}/suppliers`);
                 const data = await response.json();
-                
+                const suppliers = data.suppliers || [];
+                const basePrice = parseFloat(data.base_price) || 0;
                 const tbody = document.getElementById('supplierPricesBody');
                 tbody.innerHTML = '';
                 
-                data.suppliers.forEach(supplier => {
-                    const variance = calculateVariance(supplier.pivot.price, data.base_price);
+                suppliers.forEach(supplier => {
+                    const variance = calculateVariance(supplier.price, basePrice);
                     const row = `
                         <tr>
                             <td>${supplier.company_name}</td>
-                            <td>₱${parseFloat(supplier.pivot.price).toFixed(2)}</td>
-                            <td>${supplier.pivot.lead_time || 'N/A'}</td>
-                            <td>${new Date(supplier.pivot.updated_at).toLocaleDateString()}</td>
+                            <td>₱${supplier.price ? parseFloat(supplier.price).toFixed(2) : 'N/A'}</td>
+                            <td>${supplier.lead_time || 'N/A'}</td>
+                            <td>${supplier.last_updated ? new Date(supplier.last_updated).toLocaleDateString() : 'N/A'}</td>
                             <td>
                                 <span class="badge ${variance.class}">
                                     ${variance.percentage}%
@@ -514,11 +518,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function calculateVariance(supplierPrice, basePrice) {
-        if (!basePrice || basePrice === 0) return { percentage: 0, class: 'bg-secondary' };
-        
+        if (!basePrice || basePrice === 0 || !supplierPrice) return { percentage: 0, class: 'bg-secondary' };
         const variance = ((supplierPrice - basePrice) / basePrice) * 100;
         const formattedVariance = variance.toFixed(2);
-        
         return {
             percentage: formattedVariance,
             class: variance < 0 ? 'bg-success' : variance > 0 ? 'bg-danger' : 'bg-secondary'

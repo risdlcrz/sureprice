@@ -316,4 +316,19 @@ class MaterialController extends Controller
 
         return response()->json($materials);
     }
+
+    public function getSuppliersForMaterial($id)
+    {
+        $material = Material::with(['suppliers'])->findOrFail($id);
+        $suppliers = $material->suppliers->map(function($supplier) {
+            return [
+                'id' => $supplier->id,
+                'company_name' => $supplier->company_name,
+                'price' => $supplier->pivot->price ?? null,
+                'lead_time' => $supplier->pivot->lead_time ?? null,
+                'last_updated' => $supplier->pivot->updated_at ?? null,
+            ];
+        });
+        return response()->json($suppliers);
+    }
 }

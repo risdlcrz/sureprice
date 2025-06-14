@@ -83,6 +83,7 @@ class ProjectTimelineController extends Controller
                     'status' => $contract->status,
                     'progress' => $contract->progress ?? 0,
                     'budget' => $contract->total_amount,
+                    'contract_number' => $contract->contract_number
                 ]
             ];
         });
@@ -110,7 +111,12 @@ class ProjectTimelineController extends Controller
                                 'room_id' => $room->id,
                                 'scope_type_id' => $scopeType->id,
                                 'estimated_days' => $scopeType->estimated_days,
-                                'status' => $contract->status
+                                'status' => $contract->status,
+                                'contractor_id' => $contract->contractor_id,
+                                'contract_number' => $contract->contract_number,
+                                'contractor' => $contract->contractor ? $contract->contractor->name : 'N/A',
+                                'room' => $room->name,
+                                'scope' => $scopeType->name
                             ],
                             'className' => 'status-' . ($contract->status ? strtolower($contract->status) : 'secondary')
                         ]);
@@ -161,7 +167,8 @@ class ProjectTimelineController extends Controller
                         'type' => 'demo',
                         'client' => 'Demo Client',
                         'status' => 'approved',
-                        'progress' => 100
+                        'progress' => 100,
+                        'contract_number' => 'CT20240001'
                     ]
                 ]
             ]);
