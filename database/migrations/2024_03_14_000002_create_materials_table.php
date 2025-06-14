@@ -20,6 +20,8 @@ return new class extends Migration
             $table->text('specifications')->nullable();
             $table->decimal('minimum_stock', 10, 2)->default(0);
             $table->decimal('current_stock', 10, 2)->default(0);
+            $table->unsignedBigInteger('category_id')->nullable();
+            $table->string('custom_category')->nullable();
             $table->timestamps();
         });
 

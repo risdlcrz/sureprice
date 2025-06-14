@@ -114,6 +114,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/materials/update-srp', [MaterialController::class, 'updateSrpPrices'])->name('materials.update-srp');
     Route::get('/api/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('api.materials.suppliers');
     Route::get('/api/materials/all', [MaterialController::class, 'getAllMaterials'])->name('api.materials.all');
+    Route::post('/materials/ajax-store', [App\Http\Controllers\MaterialController::class, 'ajaxStore'])->name('materials.ajax-store');
+    Route::get('/materials/check-code', [MaterialController::class, 'checkCode'])->name('materials.check-code');
 
     // Inquiry Routes
     Route::resource('inquiries', InquiryController::class);
