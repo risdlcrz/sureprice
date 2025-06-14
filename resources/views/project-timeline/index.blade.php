@@ -16,52 +16,91 @@
                     <!-- Contract Progress Cards -->
                     <div id="contractProgressDetails" class="row g-4">
                         @foreach($contracts as $contract)
-                            <div class="col-12 col-md-6 col-lg-4">
-                                <a href="{{ route('contracts.show', $contract->id) }}" class="card shadow-sm h-100 text-decoration-none text-dark contract-card" style="cursor:pointer; transition:box-shadow 0.2s;">
+                            <div class="col-12 col-md-12 col-lg-12 mb-4">
+                                <div class="card shadow-sm h-100">
                                     <div class="card-body">
-                                        <h5 class="card-title mb-2">{{ $contract->client->name ?? $contract->client ?? 'N/A' }} <small class="text-muted">(Client)</small></h5>
-                                        <div class="mb-2"><strong>Contractor:</strong> {{ $contract->contractor->name ?? $contract->contractor ?? 'N/A' }}</div>
-                                        <div class="mb-2"><strong>Contract Number:</strong> {{ $contract->contract_number ?? 'N/A' }}</div>
-                                        <div class="mb-2">
-                                            <strong>Status:</strong>
-                                            <span class="badge {{ $contract->status === 'APPROVED' ? 'bg-success' : 'bg-secondary' }}">
-                                                {{ strtoupper($contract->status ?? 'N/A') }}
-                                            </span>
-                                        </div>
-                                        <div class="mb-2">
-                                            <strong>Start:</strong> {{ $contract->start_date ? \Carbon\Carbon::parse($contract->start_date)->format('M d, Y') : 'N/A' }}
-                                        </div>
-                                        <div class="mb-2">
-                                            <strong>End:</strong> {{ $contract->end_date ? \Carbon\Carbon::parse($contract->end_date)->format('M d, Y') : 'N/A' }}
-                                        </div>
-                                        <div class="mb-2"><strong>Budget:</strong> ₱{{ number_format($contract->total_amount ?? 0, 2) }}</div>
-                                        <div class="mb-2">
-                                            <strong>Scope of Work:</strong>
-                                            {{ is_array($contract->scope_of_work ?? null) ? implode(', ', $contract->scope_of_work) : ($contract->scope_of_work ?? 'N/A') }}
-                                        </div>
-
-                                        @if($contract->tasks->count() > 0)
-                                            <div class="mt-3">
-                                                <button class="btn btn-link p-0" type="button" data-bs-toggle="collapse" data-bs-target="#tasksCollapse{{ $contract->id }}" aria-expanded="false" aria-controls="tasksCollapse{{ $contract->id }}">
-                                                    <i class="bi bi-list-task"></i> Show Tasks ({{ $contract->tasks->count() }})
-                                                </button>
-                                                <div class="collapse mt-2" id="tasksCollapse{{ $contract->id }}">
-                                                    @foreach($contract->tasks as $task)
-                                                        <div class="card card-body mb-2 p-2 border-0 shadow-sm">
-                                                            <strong>{{ $task->title }}</strong>
-                                                            <small class="text-muted">{{ $task->start_date->format('M d, Y') }} - {{ $task->end_date->format('M d, Y') }}</small>
-                                                            <div class="progress mt-1" style="height: 15px;">
-                                                                <div class="progress-bar bg-info" role="progressbar" style="width: {{ $task->progress ?? 0 }}%;" aria-valuenow="{{ $task->progress ?? 0 }}" aria-valuemin="0" aria-valuemax="100">{{ $task->progress ?? 0 }}%</div>
-                                                            </div>
-                                                        </div>
-                                                    @endforeach
+                                        <div class="row">
+                                            <!-- Left Column: Contract Details -->
+                                            <div class="col-md-6 border-end pe-4">
+                                                <h5 class="card-title mb-2">{{ $contract->client->name ?? $contract->client ?? 'N/A' }} <small class="text-muted">(Client)</small></h5>
+                                                <div class="mb-2"><strong>Contractor:</strong> {{ $contract->contractor->name ?? $contract->contractor ?? 'N/A' }}</div>
+                                                <div class="mb-2"><strong>Contract Number:</strong> {{ $contract->contract_number ?? 'N/A' }}</div>
+                                                <div class="mb-2">
+                                                    <strong>Status:</strong>
+                                                    <span class="badge bg-{{ $contract->status === 'APPROVED' ? 'success' : ($contract->status === 'DRAFT' ? 'secondary' : 'info') }}">
+                                                        {{ strtoupper($contract->status ?? 'N/A') }}
+                                                    </span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <strong>Start:</strong> {{ $contract->start_date ? \Carbon\Carbon::parse($contract->start_date)->format('M d, Y') : 'N/A' }}
+                                                </div>
+                                                <div class="mb-2">
+                                                    <strong>End:</strong> {{ $contract->end_date ? \Carbon\Carbon::parse($contract->end_date)->format('M d, Y') : 'N/A' }}
+                                                </div>
+                                                <div class="mb-2"><strong>Budget:</strong> ₱{{ number_format($contract->total_amount ?? 0, 2) }}</div>
+                                                <div class="mt-3">
+                                                    <a href="{{ route('contracts.show', $contract->id) }}" class="btn btn-primary btn-sm">View Full Contract</a>
                                                 </div>
                                             </div>
-                                        @else
-                                            <div class="mt-3 text-muted">No tasks defined for this contract.</div>
-                                        @endif
+
+                                            <!-- Right Column: Scope of Work & Tasks -->
+                                            <div class="col-md-6 ps-4">
+                                                <h5 class="card-title mb-3">Scope of Work & Tasks</h5>
+                                                @if($contract->rooms->count() > 0)
+                                                    @foreach($contract->rooms as $room)
+                                                        <div class="mb-3">
+                                                            <h6>Room: {{ $room->name ?? 'N/A' }}</h6>
+                                                            @if($room->scopeTypes->count() > 0)
+                                                                <div class="accordion accordion-flush" id="roomAccordion{{ $room->id }}">
+                                                                    @foreach($room->scopeTypes as $scopeType)
+                                                                        <div class="accordion-item">
+                                                                            <h2 class="accordion-header" id="headingScope{{ $room->id }}{{ $loop->parent->index }}{{ $loop->index }}">
+                                                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseScope{{ $room->id }}{{ $loop->parent->index }}{{ $loop->index }}" aria-expanded="false" aria-controls="collapseScope{{ $room->id }}{{ $loop->parent->index }}{{ $loop->index }}">
+                                                                                    <strong>{{ $scopeType->name ?? 'N/A' }}</strong> ({{ $scopeType->estimated_days ?? 0 }} days)
+                                                                                </button>
+                                                                            </h2>
+                                                                            <div id="collapseScope{{ $room->id }}{{ $loop->parent->index }}{{ $loop->index }}" class="accordion-collapse collapse {{ $loop->index == 0 ? 'show' : '' }}" aria-labelledby="headingScope{{ $room->id }}{{ $loop->parent->index }}{{ $loop->index }}" data-bs-parent="#roomAccordion{{ $room->id }}">
+                                                                                <div class="accordion-body">
+                                                                                    @if(isset($scopeType->items) && count($scopeType->items) > 0)
+                                                                                        <p class="fw-bold mb-1">Tasks:</p>
+                                                                                        <ul class="list-unstyled mb-2">
+                                                                                            @foreach($scopeType->items as $taskItem)
+                                                                                                <li>
+                                                                                                    <i class="bi bi-check-circle-fill text-success"></i> {{ $taskItem }}
+                                                                                                </li>
+                                                                                            @endforeach
+                                                                                        </ul>
+                                                                                    @else
+                                                                                        <p class="text-muted mb-2">No defined tasks for this scope.</p>
+                                                                                    @endif
+
+                                                                                    @if($scopeType->materials->count() > 0)
+                                                                                        <p class="fw-bold mb-1">Materials:</p>
+                                                                                        <ul class="list-unstyled">
+                                                                                            @foreach($scopeType->materials as $material)
+                                                                                                <li>- {{ $material->name ?? 'N/A' }}</li>
+                                                                                            @endforeach
+                                                                                        </ul>
+                                                                                    @else
+                                                                                        <p class="text-muted">No materials defined.</p>
+                                                                                    @endif
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                            @else
+                                                                <p class="text-muted">No scope types defined for this room.</p>
+                                                            @endif
+                                                        </div>
+                                                    @endforeach
+                                                @else
+                                                    <p class="text-muted">No rooms or scopes defined for this contract.</p>
+                                                @endif
+                                            </div>
+                                        </div>
                                     </div>
-                                </a>
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -121,7 +160,7 @@
     border-radius: 1rem;
 }
 .card-body {
-    background: #f9f9f9;
+    background: #fff;
 }
 .accordion-button:focus {
     box-shadow: none;
@@ -129,6 +168,23 @@
 .contract-card:hover {
     box-shadow: 0 0 0 4px #0d6efd33, 0 2px 8px rgba(0,0,0,0.08);
     border-color: #0d6efd;
+}
+.accordion-button:not(.collapsed) {
+    background-color: #e9ecef;
+    color: #495057;
+}
+.accordion-body {
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    padding: 1rem;
+}
+
+.contract-card .card-body .row .col-md-6:first-child {
+    border-right: 1px solid #dee2e6; /* Ensure a clear separator */
+}
+
+.contract-card .card-body .row .col-md-6:last-child {
+    padding-left: 1.5rem; /* Add some padding for the right column */
 }
 </style>
 @endpush
