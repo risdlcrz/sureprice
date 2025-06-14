@@ -68,11 +68,14 @@
                                             <option value="plumbing" {{ old('category', $material->category ?? '') == 'plumbing' ? 'selected' : '' }}>Plumbing</option>
                                             <option value="finishing" {{ old('category', $material->category ?? '') == 'finishing' ? 'selected' : '' }}>Finishing</option>
                                             <option value="tools" {{ old('category', $material->category ?? '') == 'tools' ? 'selected' : '' }}>Tools</option>
+                                            <option value="general" {{ old('category', $material->category ?? '') == 'general' ? 'selected' : '' }}>General</option>
                                             <option value="other" {{ old('category', $material->category ?? '') == 'other' ? 'selected' : '' }}>Other</option>
                                         </select>
                                         @error('category')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
+                                        <input type="text" class="form-control mt-2" id="custom_category" name="custom_category" placeholder="Enter custom category" style="display: none;">
+                                        <small id="custom_category_preview" class="form-text text-primary" style="display: none;"></small>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -321,6 +324,25 @@ $(document).ready(function() {
             });
         }
     };
+
+    $('#category').change(function() {
+        if ($(this).val() === 'other') {
+            $('#custom_category').show().prop('required', true);
+            $('#custom_category_preview').show();
+        } else {
+            $('#custom_category').hide().prop('required', false);
+            $('#custom_category_preview').hide();
+        }
+    });
+
+    $('#custom_category').on('input', function() {
+        var val = $(this).val();
+        if (val) {
+            $('#custom_category_preview').text('Selected Category: ' + val);
+        } else {
+            $('#custom_category_preview').text('');
+        }
+    });
 });
 </script>
 @endpush

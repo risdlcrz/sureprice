@@ -26,7 +26,8 @@ class Material extends Model
         'coverage_rate',
         'waste_factor',
         'minimum_quantity',
-        'bulk_pricing'
+        'bulk_pricing',
+        'custom_category',
     ];
 
     protected $casts = [

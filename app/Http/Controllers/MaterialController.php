@@ -96,7 +96,8 @@ class MaterialController extends Controller
                 'unit' => $validated['unit'],
                 'base_price' => $validated['base_price'],
                 'srp_price' => $validated['srp_price'],
-                'specifications' => $validated['specifications']
+                'specifications' => $validated['specifications'],
+                'custom_category' => $request->input('custom_category'),
             ]);
 
             // Handle image uploads
@@ -170,7 +171,8 @@ class MaterialController extends Controller
                 'unit' => $validated['unit'],
                 'base_price' => $validated['base_price'],
                 'srp_price' => $validated['srp_price'],
-                'specifications' => $validated['specifications']
+                'specifications' => $validated['specifications'],
+                'custom_category' => $request->input('custom_category'),
             ]);
 
             // Handle image uploads
@@ -330,5 +332,105 @@ class MaterialController extends Controller
             ];
         });
         return response()->json($suppliers);
+    }
+
+    public function getMaterialById($id)
+    {
+        $material = Material::with(['category'])->findOrFail($id);
+        return response()->json([
+            'id' => $material->id,
+            'name' => $material->name,
+            'code' => $material->code,
+            'description' => $material->description,
+            'unit' => $material->unit,
+            'base_price' => $material->base_price,
+            'srp_price' => $material->srp_price,
+            'specifications' => $material->specifications,
+            'category_name' => $material->category->name ?? 'N/A',
+            'custom_category' => $material->custom_category,
+        ]);
+    }
+
+    public function ajaxStore(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'code' => 'required|string|max:50|unique:materials,code',
+            'description' => 'nullable|string',
+            'category' => 'required|string',
+            'unit' => 'required|string',
+            'base_price' => 'required|numeric|min:0',
+            'srp_price' => 'required|numeric|min:0',
+            'specifications' => 'nullable|string',
+            'scope_types' => 'nullable|array',
+            'scope_types.*' => 'exists:scope_types,id',
+            'images.*' => 'nullable|image|max:2048'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Get or create the category
+            $category = \App\Models\Category::firstOrCreate(
+                ['slug' => $validated['category']],
+                ['name' => ucfirst($validated['category'])]
+            );
+
+            // Create a temporary material record
+            $material = Material::create([
+                'name' => $validated['name'],
+                'code' => $validated['code'],
+                'description' => $validated['description'],
+                'category_id' => $category->id,
+                'unit' => $validated['unit'],
+                'base_price' => $validated['base_price'],
+                'srp_price' => $validated['srp_price'],
+                'specifications' => $validated['specifications'],
+                'custom_category' => $request->input('custom_category'),
+            ]);
+
+            // Handle image uploads
+            if ($request->hasFile('images')) {
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store('materials', 'public');
+                    $material->images()->create(['path' => $path]);
+                }
+            }
+
+            // Sync scope types
+            if (!empty($validated['scope_types'])) {
+                $material->scopeTypes()->sync($validated['scope_types']);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'material' => [
+                    'id' => $material->id,
+                    'name' => $material->name,
+                    'code' => $material->code,
+                    'unit' => $material->unit,
+                    'base_price' => $material->base_price,
+                    'category_name' => $material->category->name
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error creating material: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create material: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function checkCode(Request $request)
+    {
+        $code = $request->query('code');
+        $exists = Material::where('code', $code)->exists();
+        
+        return response()->json(['exists' => $exists]);
     }
 }

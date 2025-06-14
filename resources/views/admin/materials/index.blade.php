@@ -91,14 +91,14 @@
                                 <tr>
                                     <td>{{ $material->code }}</td>
                                     <td>
-                                        <div class="d-flex align-items-center">
+                                        <div class="d-flex align-items-center flex-md-row flex-column">
                                             @if($material->images && count($material->images) > 0)
                                                 <img src="{{ asset('storage/' . $material->images[0]->path) }}"
                                                      alt="{{ $material->name }}"
-                                                     class="img-thumbnail mr-2"
+                                                     class="img-thumbnail mr-2 mb-2 mb-md-0"
                                                      style="width: 150px; height: 150px; object-fit: contain; background: #fff; border: 2px solid #e0e0e0;">
                                             @endif
-                                            <div>
+                                            <div class="text-center text-md-start">
                                                 <strong>{{ $material->name }}</strong>
                                                 @if($material->description)
                                                     <br>
@@ -107,7 +107,13 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td>{{ $material->category->name ?? '' }}</td>
+                                    <td>
+                                        @if(($material->category->name ?? '') === 'Other' && !empty($material->custom_category))
+                                            {{ $material->custom_category }}
+                                        @else
+                                            {{ $material->category->name ?? '' }}
+                                        @endif
+                                    </td>
                                     <td>{{ $material->unit }}</td>
                                     <td>₱{{ number_format($material->base_price, 2) }}</td>
                                     <td>
