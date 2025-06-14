@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', function() {
     deleteBtns.forEach(btn => {
         btn.addEventListener('click', function() {
             materialToDeleteId = this.dataset.id;
-            deleteForm.action = `/materials/${materialToDeleteId}`;
+            deleteForm.action = "{{ route('materials.destroy', ':id') }}".replace(':id', materialToDeleteId);
             const modal = new bootstrap.Modal(deleteModal);
             modal.show();
         });
