@@ -220,6 +220,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/', [WarrantyRequestController::class, 'store'])->name('store');
         Route::post('/{warrantyRequest}/status', [WarrantyRequestController::class, 'updateStatus'])->name('update-status');
     });
+
+    // History Dashboard Route
+    Route::get('/history-dashboard', function () {
+        return view('admin.history-dashboard');
+    })->name('history.dashboard');
 });
 
 // Payments routes
@@ -260,10 +265,6 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/notification-center', function () {
         return view('admin.notification-center');
     })->name('admin.notification');
-
-    Route::get('/history-dashboard', function () {
-        return view('admin.history-dashboard');
-    })->name('admin.history');
 
     Route::get('/analytics-dashboard', [AnalyticsController::class, 'index'])->name('admin.analytics');
 

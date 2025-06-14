@@ -7,7 +7,7 @@
         <!-- Project & Procurement Card -->
         <div class="col">
             <div class="card h-100 shadow-sm">
-                <img src="{{ asset('images/project_procurement.jpg') }}" class="card-img-top" alt="Project & Procurement" style="object-fit:cover; height:180px;">
+                <img src="{{ asset('images/project_procurement.svg') }}" class="card-img-top" alt="Project & Procurement" style="object-fit:cover; height:180px;">
                 <div class="card-body d-flex flex-column">
                     <h5 class="card-title">Project & Procurement</h5>
                     <p class="card-text">View and manage your contracts, project timelines, and procurement details.</p>
@@ -18,7 +18,7 @@
         <!-- Payments Card -->
         <div class="col">
             <div class="card h-100 shadow-sm">
-                <img src="{{ asset('images/payments.jpg') }}" class="card-img-top" alt="Payments" style="object-fit:cover; height:180px;">
+                <img src="{{ asset('images/payments.svg') }}" class="card-img-top" alt="Payments" style="object-fit:cover; height:180px;">
                 <div class="card-body d-flex flex-column">
                     <h5 class="card-title">Payments</h5>
                     <p class="card-text">Track your payment schedules, upload payment proof, and view your payment history.</p>

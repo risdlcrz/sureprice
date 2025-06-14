@@ -8,7 +8,7 @@
             <!-- Purchase Requests Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/purchase-request.jpg') }}" class="card-img-top" alt="Purchase Requests">
+                    <img src="{{ asset('images/purchase-request.svg') }}" class="card-img-top" alt="Purchase Requests">
                     <div class="card-body">
                         <h5 class="card-title">Purchase Requests</h5>
                         <p class="card-text">Create and manage purchase requests for materials and supplies.</p>
@@ -27,7 +27,7 @@
             <!-- Purchase Orders Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/purchase-order.jpg') }}" class="card-img-top" alt="Purchase Orders">
+                    <img src="{{ asset('images/purchase-order.svg') }}" class="card-img-top" alt="Purchase Orders">
                     <div class="card-body">
                         <h5 class="card-title">Purchase Orders</h5>
                         <p class="card-text">Create and manage purchase orders from approved purchase requests.</p>
@@ -46,7 +46,7 @@
             <!-- Inquiries Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/new-inquiry.jpg') }}" class="card-img-top" alt="Inquiries">
+                    <img src="{{ asset('images/new-inquiry.svg') }}" class="card-img-top" alt="Inquiries">
                     <div class="card-body">
                         <h5 class="card-title">Inquiries</h5>
                         <p class="card-text">Submit and track material inquiries and procurement requests.</p>
@@ -65,7 +65,7 @@
             <!-- Quotations (RFQ) Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/new-quotation.jpg') }}" class="card-img-top" alt="Quotations">
+                    <img src="{{ asset('images/new-quotation.svg') }}" class="card-img-top" alt="Quotations">
                     <div class="card-body">
                         <h5 class="card-title">Quotations (RFQ)</h5>
                         <p class="card-text">Create and manage requests for quotation and supplier responses.</p>
@@ -84,7 +84,7 @@
             <!-- Supplier Invitations Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/new-invitation.jpg') }}" class="card-img-top" alt="Supplier Invitations">
+                    <img src="{{ asset('images/new-invitation.svg') }}" class="card-img-top" alt="Supplier Invitations">
                     <div class="card-body">
                         <h5 class="card-title">Supplier Invitations</h5>
                         <p class="card-text">Create and manage supplier invitations for bidding opportunities.</p>
@@ -103,7 +103,7 @@
             <!-- Materials Management Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/materials.jpg') }}" class="card-img-top" alt="Materials Management">
+                    <img src="{{ asset('images/materials.svg') }}" class="card-img-top" alt="Materials Management">
                     <div class="card-body">
                         <h5 class="card-title">Materials Management</h5>
                         <p class="card-text">Manage materials inventory, specifications, and pricing information.</p>
@@ -122,7 +122,7 @@
             <!-- Suppliers Management Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/suppliers.jpg') }}" class="card-img-top" alt="Suppliers">
+                    <img src="{{ asset('images/suppliers.svg') }}" class="card-img-top" alt="Suppliers">
                     <div class="card-body">
                         <h5 class="card-title">Suppliers Management</h5>
                         <p class="card-text">Manage supplier information, relationships, and performance tracking.</p>

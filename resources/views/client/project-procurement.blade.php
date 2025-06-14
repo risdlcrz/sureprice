@@ -10,7 +10,7 @@
             <!-- Create Contract Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage1.jpg') }}" class="card-img-top" alt="Create Contract">
+                    <img src="{{ Vite::asset('resources/images/ppimage1.svg') }}" class="card-img-top" alt="Create Contract">
                     <div class="card-body">
                         <h5 class="card-title">Create Contract</h5>
                         <p class="card-text">Start a new contract and set up initial terms and conditions.</p>
@@ -24,7 +24,7 @@
             <!-- View Contracts Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage2.jpg') }}" class="card-img-top" alt="View Contracts">
+                    <img src="{{ Vite::asset('resources/images/ppimage2.svg') }}" class="card-img-top" alt="View Contracts">
                     <div class="card-body">
                         <h5 class="card-title">View Contracts</h5>
                         <p class="card-text">Access and manage your contracts, track status.</p>
@@ -38,7 +38,7 @@
             <!-- Project Timeline Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage3.jpg') }}" class="card-img-top" alt="Project Timeline">
+                    <img src="{{ Vite::asset('resources/images/ppimage3.svg') }}" class="card-img-top" alt="Project Timeline">
                     <div class="card-body">
                         <h5 class="card-title">Project Timeline</h5>
                         <p class="card-text">View and manage project schedules and timelines.</p>

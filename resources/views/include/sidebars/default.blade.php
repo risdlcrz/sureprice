@@ -41,7 +41,7 @@
         <a href="{{ route('admin.project') }}" class="btn">
             <i class="fas fa-tasks"></i>Project & Procurement
         </a>
-        <a href="{{ route('admin.history') }}" class="btn">
+        <a href="{{ route('history.dashboard') }}" class="btn">
             <i class="fas fa-history"></i>Project History
         </a>
         <a href="{{ route('admin.analytics') }}" class="btn">

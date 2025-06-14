@@ -20,16 +20,16 @@
 
 <!-- Navigation Links -->
 <div class="nav-buttons">
-    <a href="{{ route('admin.history') }}" class="btn {{ request()->routeIs('admin.history') ? 'active' : '' }}">
+    <a href="{{ route('history.dashboard') }}" class="btn {{ request()->routeIs('history.dashboard') ? 'active' : '' }}">
         <i class="fas fa-home"></i>History Dashboard
     </a>
-    <a href="{{ route('admin.past-transactions') }}" class="btn {{ request()->routeIs('admin.past-transactions') ? 'active' : '' }}">
+    <a href="{{ route('admin.project') }}" class="btn {{ request()->routeIs('admin.project') ? 'active' : '' }}">
         <i class="fas fa-folder-open"></i>Past Transactions
     </a>
-    <a href="{{ route('admin.supplier-performance') }}" class="btn {{ request()->routeIs('admin.supplier-performance') ? 'active' : '' }}">
+    <a href="{{ route('admin.procurement') }}" class="btn {{ request()->routeIs('admin.procurement') ? 'active' : '' }}">
         <i class="fas fa-chart-line"></i>Supplier Performance
     </a>
-    <a href="{{ route('admin.procurement-logs') }}" class="btn {{ request()->routeIs('admin.procurement-logs') ? 'active' : '' }}">
+    <a href="{{ route('admin.procurement') }}" class="btn {{ request()->routeIs('admin.procurement') ? 'active' : '' }}">
         <i class="fas fa-boxes-stacked"></i>Procurement Logs
     </a>
     <li class="nav-item">

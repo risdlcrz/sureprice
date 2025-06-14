@@ -8,6 +8,9 @@ use App\Http\Controllers\MaterialController;
 use Illuminate\Http\Request;
 use App\Models\Material;
 use App\Models\Supplier;
+use App\Models\Material;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +27,15 @@ use App\Models\Supplier;
 Route::prefix('project-timeline')->group(function () {
     Route::get('/events', [ProjectTimelineController::class, 'apiEvents'])->name('api.project-timeline.events');
     Route::post('/events', [ProjectTimelineController::class, 'store'])->name('api.project-timeline.events.store');
+});
+
+Route::get('/materials/search', function (Request $request) {
+    $query = $request->input('query');
+    $materials = Material::where('name', 'like', '%' . $query . '%')
+                        ->orWhere('code', 'like', '%' . $query . '%')
+                        ->with('suppliers') // Eager load suppliers
+                        ->get();
+    return response()->json($materials);
 });
 
 // Contract Routes
