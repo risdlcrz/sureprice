@@ -143,6 +143,9 @@
                         <div class="flex-grow-1">
                             <input type="text" class="form-control" id="searchInput" name="searchInput" placeholder="Search contracts or tasks...">
                         </div>
+                        <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#additionalWorkModal">
+                            <i class="bi bi-tools"></i> Request Additional Work
+                        </button>
                         <a href="{{ route('warranty-requests.index') }}" class="btn btn-warning">
                             <i class="bi bi-shield-check"></i> Warranty Requests
                         </a>
@@ -232,6 +235,91 @@
         </div>
     @endif
 @endforeach
+
+<!-- Additional Work Request Modal -->
+<div class="modal fade" id="additionalWorkModal" tabindex="-1" aria-labelledby="additionalWorkModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="additionalWorkModalLabel">Request Additional Work</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="additionalWorkForm" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label for="contractId" class="form-label">Contract</label>
+                        <select class="form-select" id="contractId" name="contract_id" required>
+                            <option value="">Select Contract</option>
+                            @foreach($contracts as $contract)
+                                <option value="{{ $contract->id }}">{{ $contract->contract_number }} - {{ $contract->client->name ?? $contract->client ?? 'N/A' }}</option>
+                            @endforeach
+                        </select>
+                        <div class="invalid-feedback">Please select a contract.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="workType" class="form-label">Work Type</label>
+                        <select class="form-select" id="workType" name="work_type" required>
+                            <option value="">Select Work Type</option>
+                            <option value="installation">Installation</option>
+                            <option value="maintenance">Maintenance</option>
+                            <option value="repair">Repair</option>
+                            <option value="upgrade">Upgrade</option>
+                            <option value="other">Other</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a work type.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Work Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                        <div class="invalid-feedback">Please provide a description.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="materials" class="form-label">Materials (comma-separated)</label>
+                        <input type="text" class="form-control" id="materials" name="materials" placeholder="e.g. Cement, Paint, Tiles" required>
+                        <div class="invalid-feedback">Please list required materials.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="estimatedHours" class="form-label">Estimated Hours</label>
+                        <input type="number" class="form-control" id="estimatedHours" name="estimated_hours" min="0.5" step="0.5" required>
+                        <div class="invalid-feedback">Please provide estimated hours.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="requiredSkills" class="form-label">Required Skills</label>
+                        <input type="text" class="form-control" id="requiredSkills" name="required_skills">
+                    </div>
+                    <div class="mb-3">
+                        <label for="laborNotes" class="form-label">Labor Notes</label>
+                        <textarea class="form-control" id="laborNotes" name="labor_notes" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3 row">
+                        <div class="col-md-6">
+                            <label for="preferredStartDate" class="form-label">Preferred Start Date</label>
+                            <input type="date" class="form-control" id="preferredStartDate" name="preferred_start_date" required>
+                            <div class="invalid-feedback">Please select a start date.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="preferredEndDate" class="form-label">Preferred End Date</label>
+                            <input type="date" class="form-control" id="preferredEndDate" name="preferred_end_date" required>
+                            <div class="invalid-feedback">Please select an end date.</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="timelineNotes" class="form-label">Timeline Notes</label>
+                        <textarea class="form-control" id="timelineNotes" name="timeline_notes" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="additionalNotes" class="form-label">Additional Notes</label>
+                        <textarea class="form-control" id="additionalNotes" name="additional_notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="submitAdditionalWorkRequest()">Submit Request</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection
 
@@ -512,6 +600,68 @@ function submitWarrantyRequest(contractId) {
             icon: 'error',
             title: 'Error!',
             text: error.message || 'Failed to submit warranty request. Please try again.',
+            confirmButtonText: 'OK'
+        });
+    })
+    .finally(() => {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    });
+}
+
+function submitAdditionalWorkRequest() {
+    const form = document.getElementById('additionalWorkForm');
+    if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        return;
+    }
+
+    const formData = new FormData(form);
+
+    // Show loading state
+    const submitBtn = document.getElementById('additionalWorkModal').querySelector('.btn-primary');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
+
+    // Submit the form data
+    fetch('/api/additional-work-requests', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: 'Your additional work request has been submitted successfully.',
+                confirmButtonText: 'OK'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Close the modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('additionalWorkModal'));
+                    modal.hide();
+                    // Reset the form
+                    form.reset();
+                    form.classList.remove('was-validated');
+                }
+            });
+        } else {
+            throw new Error(data.message || 'Something went wrong');
+        }
+    })
+    .catch(error => {
+        // Show error message
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: error.message || 'Failed to submit additional work request. Please try again.',
             confirmButtonText: 'OK'
         });
     })
