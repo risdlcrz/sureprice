@@ -19,66 +19,44 @@ class MaterialSeeder extends Seeder
         ]);
 
         $materials = [
-            [
-                'name' => 'Cement',
-                'unit' => 'bag',
-                'base_price' => 250.00,
-                'srp_price' => 300.00,
-            ],
-            [
-                'name' => 'Sand',
-                'unit' => 'cubic meter',
-                'base_price' => 800.00,
-                'srp_price' => 950.00,
-            ],
-            [
-                'name' => 'Gravel',
-                'unit' => 'cubic meter',
-                'base_price' => 900.00,
-                'srp_price' => 1050.00,
-            ],
-            [
-                'name' => 'Paint',
-                'unit' => 'gallon',
-                'base_price' => 350.00,
-                'srp_price' => 400.00,
-            ],
-            [
-                'name' => 'Tiles',
-                'unit' => 'box',
-                'base_price' => 1200.00,
-                'srp_price' => 1350.00,
-            ],
-            [
-                'name' => 'Steel Bar',
-                'unit' => 'piece',
-                'base_price' => 400.00,
-                'srp_price' => 450.00,
-            ],
-            [
-                'name' => 'Plywood',
-                'unit' => 'sheet',
-                'base_price' => 700.00,
-                'srp_price' => 800.00,
-            ],
-            [
-                'name' => 'Electrical Wire',
-                'unit' => 'roll',
-                'base_price' => 1500.00,
-                'srp_price' => 1700.00,
-            ],
-            [
-                'name' => 'PVC Pipe',
-                'unit' => 'length',
-                'base_price' => 120.00,
-                'srp_price' => 150.00,
-            ],
-            [
-                'name' => 'Nails',
-                'unit' => 'kg',
-                'base_price' => 80.00,
-                'srp_price' => 100.00,
-            ],
+            // Painting Crew
+            ['name' => 'Paint (latex/acrylic)', 'unit' => 'liters', 'base_price' => 500],
+            ['name' => 'Primer', 'unit' => 'liters', 'base_price' => 450],
+            ['name' => 'Sandpaper', 'unit' => 'sheets', 'base_price' => 25],
+            ['name' => 'Caulk', 'unit' => 'kg', 'base_price' => 300],
+            ["name" => "Painter's tape", 'unit' => 'meters', 'base_price' => 50],
+            // Drywall Finishing
+            ['name' => 'Joint compound', 'unit' => 'kg', 'base_price' => 200],
+            ['name' => 'Drywall tape', 'unit' => 'meters', 'base_price' => 30],
+            // Drywall Installation
+            ['name' => 'Gypsum board', 'unit' => 'sqm', 'base_price' => 350],
+            ['name' => 'Screws', 'unit' => 'pcs', 'base_price' => 5],
+            ['name' => 'Metal studs/channels', 'unit' => 'meters', 'base_price' => 150],
+            // Tile Installation
+            ['name' => 'Tiles', 'unit' => 'sqm', 'base_price' => 800],
+            ['name' => 'Thin-set mortar', 'unit' => 'kg', 'base_price' => 250],
+            ['name' => 'Grout', 'unit' => 'kg', 'base_price' => 300],
+            ['name' => 'Spacers', 'unit' => 'pcs', 'base_price' => 2],
+            // Cabinetry Installation
+            ['name' => 'Plywood/MDF', 'unit' => 'sqm', 'base_price' => 1200],
+            ['name' => 'Screws/nails', 'unit' => 'pcs', 'base_price' => 8],
+            ['name' => 'Adhesive', 'unit' => 'kg', 'base_price' => 400],
+            // Fireproofing
+            ['name' => 'Spray-applied fireproofing', 'unit' => 'kg', 'base_price' => 600],
+            ['name' => 'Wire mesh', 'unit' => 'sqm', 'base_price' => 200],
+            // Electrical Wiring
+            ['name' => 'Conduit', 'unit' => 'meters', 'base_price' => 150],
+            ['name' => 'Wires', 'unit' => 'meters', 'base_price' => 80],
+            ['name' => 'Junction boxes', 'unit' => 'pcs', 'base_price' => 200],
+            // Plumbing Rough In
+            ['name' => 'PVC pipes', 'unit' => 'meters', 'base_price' => 200],
+            ['name' => 'Fittings', 'unit' => 'pcs', 'base_price' => 150],
+            // Flooring Installation
+            ['name' => 'Vinyl planks', 'unit' => 'sqm', 'base_price' => 1200],
+            ['name' => 'Underlayment', 'unit' => 'sqm', 'base_price' => 150],
+            // Concrete Coating
+            ['name' => 'Epoxy coating', 'unit' => 'kg', 'base_price' => 800],
+            ['name' => 'Sealant', 'unit' => 'kg', 'base_price' => 600],
         ];
 
         foreach ($materials as $material) {

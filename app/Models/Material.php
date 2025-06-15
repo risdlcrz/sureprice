@@ -23,11 +23,13 @@ class Material extends Model
         'minimum_stock',
         'current_stock',
         'is_per_area',
+        'is_wall_material',
         'coverage_rate',
         'waste_factor',
         'minimum_quantity',
         'bulk_pricing',
         'custom_category',
+        'warranty_period',
     ];
 
     protected $casts = [
@@ -36,10 +38,12 @@ class Material extends Model
         'minimum_stock' => 'decimal:2',
         'current_stock' => 'decimal:2',
         'is_per_area' => 'boolean',
-        'coverage_rate' => 'decimal:2',
+        'is_wall_material' => 'boolean',
+        'coverage_rate' => 'float',
         'waste_factor' => 'decimal:2',
-        'minimum_quantity' => 'decimal:2',
-        'bulk_pricing' => 'array'
+        'minimum_quantity' => 'integer',
+        'bulk_pricing' => 'array',
+        'warranty_period' => 'integer',
     ];
 
     protected $with = ['category'];

@@ -144,6 +144,51 @@
                             </div>
 
                             <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <div class="form-group form-check">
+                                        <input type="checkbox" class="form-check-input" id="is_per_area" name="is_per_area" value="1"
+                                               {{ old('is_per_area', $material->is_per_area ?? false) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="is_per_area">Is Per Area Calculation</label>
+                                        <small class="form-text text-muted">Check if material quantity is calculated based on area (e.g., paint per sqm).</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group form-check" id="is_wall_material_group">
+                                        <input type="checkbox" class="form-check-input" id="is_wall_material" name="is_wall_material" value="1"
+                                               {{ old('is_wall_material', $material->is_wall_material ?? false) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="is_wall_material">Is Wall Material</label>
+                                        <small class="form-text text-muted">Check if this material is primarily used for wall areas.</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-4" id="coverage_rate_group">
+                                    <div class="form-group">
+                                        <label for="coverage_rate">Coverage Rate (unit per sqm)</label>
+                                        <input type="number" class="form-control @error('coverage_rate') is-invalid @enderror"
+                                               id="coverage_rate" name="coverage_rate" step="0.01" min="0.01"
+                                               value="{{ old('coverage_rate', $material->coverage_rate ?? '1') }}">
+                                        @error('coverage_rate')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <small class="form-text text-muted">e.g., 10 for 10 sqm per liter of paint.</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4" id="minimum_quantity_group">
+                                    <div class="form-group">
+                                        <label for="minimum_quantity">Minimum Quantity</label>
+                                        <input type="number" class="form-control @error('minimum_quantity') is-invalid @enderror"
+                                               id="minimum_quantity" name="minimum_quantity" step="1" min="0"
+                                               value="{{ old('minimum_quantity', $material->minimum_quantity ?? '1') }}">
+                                        @error('minimum_quantity')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <small class="form-text text-muted">Default quantity if not per area calculation.</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row mt-3">
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label for="suppliers">Suppliers</label>
@@ -354,6 +399,30 @@ $(document).ready(function() {
         } else {
             $('#custom_category_preview').text('');
         }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const isPerAreaCheckbox = document.getElementById('is_per_area');
+        const coverageRateGroup = document.getElementById('coverage_rate_group');
+        const minimumQuantityGroup = document.getElementById('minimum_quantity_group');
+        const isWallMaterialGroup = document.getElementById('is_wall_material_group');
+
+        function toggleVisibility() {
+            if (isPerAreaCheckbox.checked) {
+                coverageRateGroup.style.display = 'block';
+                minimumQuantityGroup.style.display = 'none';
+                isWallMaterialGroup.style.display = 'block'; // Always show for per-area as it's relevant
+            } else {
+                coverageRateGroup.style.display = 'none';
+                minimumQuantityGroup.style.display = 'block';
+                isWallMaterialGroup.style.display = 'none'; // Hide if not per area
+            }
+        }
+
+        isPerAreaCheckbox.addEventListener('change', toggleVisibility);
+
+        // Initial call to set correct visibility based on current state
+        toggleVisibility();
     });
 });
 </script>

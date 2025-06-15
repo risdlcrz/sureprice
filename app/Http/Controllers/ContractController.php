@@ -189,6 +189,9 @@ class ContractController extends Controller
             }
         }
 
+        // Prepare scope types by code (ID) for JavaScript access
+        $scopeTypesByCode = $scopeTypes->keyBy('id');
+
         // Get session data if it exists
         $sessionData = session('contract_step2', []);
         
@@ -209,7 +212,7 @@ class ContractController extends Controller
             'all_session_keys' => array_keys(session()->all())
         ]);
 
-        return view('admin.contracts.step2', compact('scopeTypes', 'sessionData'));
+        return view('admin.contracts.step2', compact('sessionData', 'scopeTypesByCode'));
     }
 
     public function storeStep2(Request $request)

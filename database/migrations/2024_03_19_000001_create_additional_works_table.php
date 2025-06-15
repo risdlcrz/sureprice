@@ -11,16 +11,10 @@ return new class extends Migration
         Schema::create('additional_works', function (Blueprint $table) {
             $table->id();
             $table->foreignId('contract_id')->constrained()->onDelete('cascade');
-            $table->string('work_type');
-            $table->text('description');
-            $table->decimal('estimated_hours', 8, 2);
-            $table->string('required_skills')->nullable();
-            $table->text('labor_notes')->nullable();
-            $table->date('preferred_start_date');
-            $table->date('preferred_end_date');
-            $table->text('timeline_notes')->nullable();
-            $table->text('additional_notes')->nullable();
+            $table->string('description');
+            $table->decimal('amount', 10, 2);
             $table->string('status')->default('pending');
+            $table->text('remarks')->nullable();
             $table->timestamps();
         });
 

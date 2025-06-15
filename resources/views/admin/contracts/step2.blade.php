@@ -253,9 +253,14 @@
                                                 <p class="mb-1">Grand Total:</p>
                                                 <h5 id="grandTotal">₱{{ number_format(session('contract_step2.grand_total', 0), 2) }}</h5>
                                             </div>
+                                            <div class="col-md-3">
+                                                <p class="mb-1">Estimated Time:</p>
+                                                <h5 id="grandTotalEstimatedDays">0 days</h5>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                                
                             </div>
 
                             <!-- Detailed Breakdown Section -->
@@ -334,526 +339,197 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-const scopeTypes = {
-    'painting_crew': {
-        id: 'painting_crew',
-        name: 'Painting Crew',
-        category: 'Painting',
-        is_wall_work: true,
-        tasks: [
-            {
-                name: 'Surface Prep',
-                labor_hours_per_sqm: 0.2, // avg of 0.15–0.25
-                description: 'Includes cleaning, sanding, priming.'
-            },
-            {
-                name: 'Paint Application',
-                labor_hours_per_sqm: 0.15, // avg of 0.1–0.2
-                description: '2 coats (cut-in + rolling).'
-            }
-        ],
-        materials: [
-            {
-                name: 'Paint (latex/acrylic)',
-                unit: 'liters',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 10,
-                waste_factor: 1.1,
-                base_price: 500
-            },
-            {
-                name: 'Primer',
-                unit: 'liters',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 12,
-                waste_factor: 1.1,
-                base_price: 450
-            },
-            {
-                name: 'Sandpaper',
-                unit: 'sheets',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 10,
-                waste_factor: 1.2,
-                base_price: 25
-            },
-            {
-                name: 'Caulk',
-                unit: 'kg',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 100,
-                waste_factor: 1.1,
-                base_price: 300
-            },
-            {
-                name: "Painter's tape",
-                unit: 'meters',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 2,
-                waste_factor: 1.1,
-                base_price: 50
-            }
-        ],
-        labor_rate: 350,
-        labor_type: 'per_area',
-        complexity_factor: 1.2,
-        estimated_days: 2
-    },
-    'drywall_finishing': {
-        id: 'drywall_finishing',
-        name: 'Drywall Finishing',
-        category: 'Painting',
-        is_wall_work: true,
-        tasks: [
-            {
-                name: 'Drywall Finishing',
-                labor_hours_per_sqm: 0.35, // avg of 0.3–0.4
-                description: 'Taping, mudding, sanding.'
-            }
-        ],
-        materials: [
-            {
-                name: 'Joint compound',
-                unit: 'kg',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 5,
-                waste_factor: 1.2,
-                base_price: 200
-            },
-            {
-                name: 'Drywall tape',
-                unit: 'meters',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 3,
-                waste_factor: 1.1,
-                base_price: 30
-            },
-            {
-                name: 'Sandpaper',
-                unit: 'sheets',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 5,
-                waste_factor: 1.2,
-                base_price: 25
-            }
-        ],
-        labor_rate: 400,
-        labor_type: 'per_area',
-        complexity_factor: 1.3,
-        estimated_days: 3
-    },
-    'drywall_installation': {
-        id: 'drywall_installation',
-        name: 'Drywall Installation',
-        category: 'Fit-outs',
-        is_wall_work: true,
-        tasks: [
-            {
-                name: 'Framing',
-                labor_hours_per_sqm: 0.4,
-                description: 'Install metal/wood studs'
-            },
-            {
-                name: 'Hanging',
-                labor_hours_per_sqm: 0.3,
-                description: 'Secure gypsum boards to studs'
-            },
-            {
-                name: 'Cutting',
-                labor_hours_per_sqm: 0.2,
-                description: 'Fit boards around outlets/doors'
-            }
-        ],
-        materials: [
-            {
-                name: 'Gypsum board',
-                unit: 'sqm',
-                is_per_area: true,
-                is_wall_material: true,
-                waste_factor: 1.1,
-                base_price: 350
-            },
-            {
-                name: 'Screws',
-                unit: 'pcs',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 0.1,
-                waste_factor: 1.2,
-                base_price: 5
-            },
-            {
-                name: 'Metal studs/channels',
-                unit: 'meters',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 0.5,
-                waste_factor: 1.1,
-                base_price: 150
-            }
-        ],
-        labor_rate: 450,
-        labor_type: 'per_area',
-        complexity_factor: 1.4,
-        estimated_days: 4
-    },
-    'tile_installation': {
-        id: 'tile_installation',
-        name: 'Tile Installation',
-        category: 'Fit-outs',
-        is_wall_work: true,
-        tasks: [
-            {
-                name: 'Tile Installation',
-                labor_hours_per_sqm: 0.5, // avg of 0.4–0.6
-                description: 'Layout, mortar, grout.'
-            }
-        ],
-        materials: [
-            {
-                name: 'Tiles',
-                unit: 'sqm',
-                is_per_area: true,
-                is_wall_material: true,
-                waste_factor: 1.1,
-                base_price: 800
-            },
-            {
-                name: 'Thin-set mortar',
-                unit: 'kg',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 4,
-                waste_factor: 1.2,
-                base_price: 250
-            },
-            {
-                name: 'Grout',
-                unit: 'kg',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 2,
-                waste_factor: 1.1,
-                base_price: 300
-            },
-            {
-                name: 'Spacers',
-                unit: 'pcs',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 12,
-                waste_factor: 1.2,
-                base_price: 2
-            }
-        ],
-        labor_rate: 500,
-        labor_type: 'per_area',
-        complexity_factor: 1.5,
-        estimated_days: 5
-    },
-    'cabinetry_installation': {
-        id: 'cabinetry_installation',
-        name: 'Cabinetry Installation',
-        category: 'Fit-outs',
-        is_wall_work: true,
-        tasks: [
-            {
-                name: 'Measurement & Assembly',
-                labor_hours_per_sqm: 0.5,
-                description: 'Verify dimensions, construct cabinets'
-            },
-            {
-                name: 'Installation',
-                labor_hours_per_sqm: 0.4,
-                description: 'Secure to walls/floor'
-            },
-            {
-                name: 'Finishing',
-                labor_hours_per_sqm: 0.2,
-                description: 'Attach hardware (handles, hinges)'
-            }
-        ],
-        materials: [
-            {
-                name: 'Plywood/MDF',
-                unit: 'sqm',
-                is_per_area: true,
-                is_wall_material: true,
-                waste_factor: 1.15,
-                base_price: 1200
-            },
-            {
-                name: 'Screws/nails',
-                unit: 'pcs',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 17,
-                waste_factor: 1.1,
-                base_price: 8
-            },
-            {
-                name: 'Adhesive',
-                unit: 'kg',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 10,
-                waste_factor: 1.2,
-                base_price: 400
-            }
-        ],
-        labor_rate: 550,
-        labor_type: 'per_area',
-        complexity_factor: 1.6,
-        estimated_days: 6
-    },
-    'fireproofing': {
-        id: 'fireproofing',
-        name: 'Fireproofing Spray',
-        category: 'MEPFS',
-        is_wall_work: true,
-        tasks: [
-            {
-                name: 'Fireproofing Spray',
-                labor_hours_per_sqm: 0.075, // avg of 0.05–0.1
-                description: 'Vertical surfaces only.'
-            }
-        ],
-        materials: [
-            {
-                name: 'Spray-applied fireproofing',
-                unit: 'kg',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 1.75,
-                waste_factor: 1.2,
-                base_price: 600
-            },
-            {
-                name: 'Wire mesh',
-                unit: 'sqm',
-                is_per_area: true,
-                is_wall_material: true,
-                waste_factor: 1.1,
-                base_price: 200
-            }
-        ],
-        labor_rate: 400,
-        labor_type: 'per_area',
-        complexity_factor: 1.4,
-        estimated_days: 3
-    },
-    'electrical_wiring': {
-        id: 'electrical_wiring',
-        name: 'Electrical Wiring',
-        category: 'MEPFS',
-        is_wall_work: true,
-        tasks: [
-            {
-                name: 'Electrical Wiring',
-                labor_hours_per_sqm: 0.125, // avg of 0.1–0.15
-                description: 'Rough-in for walls/floors.'
-            }
-        ],
-        materials: [
-            {
-                name: 'Conduit',
-                unit: 'meters',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 0.5,
-                waste_factor: 1.1,
-                base_price: 150
-            },
-            {
-                name: 'Wires',
-                unit: 'meters',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 1,
-                waste_factor: 1.2,
-                base_price: 80
-            },
-            {
-                name: 'Junction boxes',
-                unit: 'pcs',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 0.1,
-                waste_factor: 1.1,
-                base_price: 200
-            }
-        ],
-        labor_rate: 450,
-        labor_type: 'per_area',
-        complexity_factor: 1.5,
-        estimated_days: 4
-    },
-    'plumbing_rough_in': {
-        id: 'plumbing_rough_in',
-        name: 'Plumbing Pipes',
-        category: 'MEPFS',
-        is_wall_work: true,
-        tasks: [
-            {
-                name: 'Plumbing Pipes',
-                labor_hours_per_sqm: 0.175, // avg of 0.15–0.2
-                description: 'PVC/CPVC installation.'
-            }
-        ],
-        materials: [
-            {
-                name: 'PVC pipes',
-                unit: 'meters',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 0.3,
-                waste_factor: 1.1,
-                base_price: 200
-            },
-            {
-                name: 'Fittings',
-                unit: 'pcs',
-                is_per_area: true,
-                is_wall_material: true,
-                coverage_rate: 2.5,
-                waste_factor: 1.2,
-                base_price: 150
-            }
-        ],
-        labor_rate: 400,
-        labor_type: 'per_area',
-        complexity_factor: 1.3,
-        estimated_days: 3
-    },
-    'flooring_installation': {
-        id: 'flooring_installation',
-        name: 'Vinyl Flooring',
-        category: 'Infrastructure',
-        is_wall_work: false,
-        tasks: [
-            {
-                name: 'Vinyl Flooring',
-                labor_hours_per_sqm: 0.25, // avg of 0.2–0.3
-                description: 'Includes underlayment.'
-            }
-        ],
-        materials: [
-            {
-                name: 'Vinyl planks',
-                unit: 'sqm',
-                is_per_area: true,
-                is_wall_material: false,
-                waste_factor: 1.1,
-                base_price: 1200
-            },
-            {
-                name: 'Underlayment',
-                unit: 'sqm',
-                is_per_area: true,
-                is_wall_material: false,
-                waste_factor: 1.05,
-                base_price: 150
-            },
-            {
-                name: 'Adhesive',
-                unit: 'kg',
-                is_per_area: true,
-                is_wall_material: false,
-                coverage_rate: 5,
-                waste_factor: 1.2,
-                base_price: 400
-            }
-        ],
-        labor_rate: 500,
-        labor_type: 'per_area',
-        complexity_factor: 1.4,
-        estimated_days: 4
-    },
-    'concrete_coating': {
-        id: 'concrete_coating',
-        name: 'Concrete Waterproofing',
-        category: 'Infrastructure',
-        is_wall_work: false,
-        tasks: [
-            {
-                name: 'Concrete Waterproofing',
-                labor_hours_per_sqm: 0.125, // avg of 0.1–0.15
-                description: 'Epoxy/polyurethane application.'
-            }
-        ],
-        materials: [
-            {
-                name: 'Epoxy coating',
-                unit: 'kg',
-                is_per_area: true,
-                is_wall_material: false,
-                coverage_rate: 0.35,
-                waste_factor: 1.2,
-                base_price: 800
-            },
-            {
-                name: 'Sealant',
-                unit: 'kg',
-                is_per_area: true,
-                is_wall_material: false,
-                coverage_rate: 0.1,
-                waste_factor: 1.1,
-                base_price: 600
-            }
-        ],
-        labor_rate: 450,
-        labor_type: 'per_area',
-        complexity_factor: 1.3,
-        estimated_days: 3
-    }
-};
+console.log('Script is running: Top of file');
 
-const DEFAULT_CREW_SIZE = 8; // Default number of workers per crew (was 2)
-const DEFAULT_HOURS_PER_DAY = 8; // Default working hours per day
+// Debug logging
+console.log('Initializing contract step 2 page');
+
+// Ensure scopeTypes is properly initialized
+const scopeTypes = @json($scopeTypesByCode ?? []);
+console.log('Scope types loaded:', scopeTypes);
+
+const DEFAULT_CREW_SIZE = 4; // Standard crew size for most construction work
+const DEFAULT_HOURS_PER_DAY = 8; // Standard working hours
+const DEFAULT_PRODUCTIVITY_FACTOR = 0.85; // 85% productivity rate (industry standard)
+
+// Add these validation functions after the existing constants
+const MAX_DIMENSION = 100; // Maximum dimension in meters
+const MAX_AREA = 1000; // Maximum area in square meters
+const MIN_DIMENSION = 0.1; // Minimum dimension in meters
+const MAX_LABOR_RATE = 1000; // Maximum labor rate per square meter
+const MIN_LABOR_RATE = 50; // Minimum labor rate per square meter
+
+function validateDimension(value, fieldName) {
+    const num = parseFloat(value);
+    if (isNaN(num)) {
+        Swal.fire({
+            title: 'Invalid Input',
+            text: `${fieldName} must be a valid number`,
+            icon: 'error'
+        });
+        return false;
+    }
+    if (num < MIN_DIMENSION) {
+        Swal.fire({
+            title: 'Invalid Input',
+            text: `${fieldName} must be at least ${MIN_DIMENSION} meters`,
+            icon: 'error'
+        });
+        return false;
+    }
+    if (num > MAX_DIMENSION) {
+        Swal.fire({
+            title: 'Invalid Input',
+            text: `${fieldName} cannot exceed ${MAX_DIMENSION} meters`,
+            icon: 'error'
+        });
+        return false;
+    }
+    return true;
+}
+
+function validateArea(area, areaType) {
+    if (area > MAX_AREA) {
+        Swal.fire({
+            title: 'Invalid Area',
+            text: `${areaType} area cannot exceed ${MAX_AREA} square meters`,
+            icon: 'error'
+        });
+        return false;
+    }
+    return true;
+}
+
+function validateLaborRate(rate) {
+    const num = parseFloat(rate);
+    if (isNaN(num)) {
+        Swal.fire({
+            title: 'Invalid Labor Rate',
+            text: 'Labor rate must be a valid number',
+            icon: 'error'
+        });
+        return false;
+    }
+    if (num < MIN_LABOR_RATE) {
+        Swal.fire({
+            title: 'Invalid Labor Rate',
+            text: `Labor rate must be at least ₱${MIN_LABOR_RATE} per square meter`,
+            icon: 'error'
+        });
+        return false;
+    }
+    if (num > MAX_LABOR_RATE) {
+        Swal.fire({
+            title: 'Invalid Labor Rate',
+            text: `Labor rate cannot exceed ₱${MAX_LABOR_RATE} per square meter`,
+            icon: 'error'
+        });
+        return false;
+    }
+    return true;
+}
+
+function validateMaterialQuantity(quantity, materialName) {
+    const num = parseFloat(quantity);
+    if (isNaN(num)) {
+        Swal.fire({
+            title: 'Invalid Quantity',
+            text: `Quantity for ${materialName} must be a valid number`,
+            icon: 'error'
+        });
+        return false;
+    }
+    if (num <= 0) {
+        Swal.fire({
+            title: 'Invalid Quantity',
+            text: `Quantity for ${materialName} must be greater than 0`,
+            icon: 'error'
+        });
+        return false;
+    }
+    return true;
+}
 
 // Helper for key adjustments
 function getAdjustmentFactor(room, scope) {
     let factor = 1;
-    // Large room adjustment (arbitrary threshold: >50 sqm floor area)
+    
+    // Room size adjustments
     const floorArea = parseFloat(room.querySelector('input[name$="[floor_area]"]').value) || 0;
-    if (floorArea > 50) factor *= 1.15; // 15% more time
-    // High ceiling adjustment (>3m)
+    const wallArea = parseFloat(room.querySelector('input[name$="[wall_area]"]').value) || 0;
     const height = parseFloat(room.querySelector('input[name$="[height]"]').value) || 0;
-    if (scope.is_wall_work && height > 3) factor *= 1.7; // 1.5-2x, use 1.7x as average
-    // Complex design (add UI/checkbox for this if needed, for now assume not complex)
-    // if (room.querySelector('input[name$="[complex]"]').checked) factor *= 1.3;
+    
+    console.log(`getAdjustmentFactor for scope ${scope.name} (Room: ${room.dataset.roomId}): floorArea=${floorArea}, wallArea=${wallArea}, height=${height}`);
+
+    // Large room adjustment (more than 50 sqm)
+    if (floorArea > 50) factor *= 1.2; // 20% more time for large areas
+    if (floorArea > 100) factor *= 1.3; // 30% more time for very large areas
+    
+    // Height adjustments for wall work
+    if (scope.is_wall_work) {
+        if (height > 3) factor *= 1.3; // 30% more time for high walls
+        if (height > 4) factor *= 1.4; // 40% more time for very high walls
+    }
+    
+    // Complexity adjustments based on scope type
+    if (scope.complexity_factor) {
+        factor *= parseFloat(scope.complexity_factor);
+    }
+    
+    // Material-specific adjustments
+    if (scope.materials) {
+        const materials = Array.isArray(scope.materials) ? scope.materials : 
+            (typeof scope.materials === 'string' ? JSON.parse(scope.materials) : []);
+        
+        materials.forEach(material => {
+            // Add time for materials that require special handling
+            if (material.requires_curing) factor *= 1.2;
+            if (material.requires_priming) factor *= 1.15;
+            if (material.is_delicate) factor *= 1.25;
+        });
+    }
+    
+    console.log(`Adjustment factor for scope ${scope.name}: ${factor}`);
     return factor;
 }
 
 function calculateAllCosts() {
+    console.log('calculateAllCosts: Starting calculation.');
+    const allRooms = document.querySelectorAll('.room-row');
+    console.log(`calculateAllCosts: Found ${allRooms.length} room(s).`);
+
     let totalFloorArea = 0;
     let totalWallArea = 0;
     let totalLabor = 0;
     let totalEstimatedDays = 0;
     let materialsMap = new Map();
 
-    document.querySelectorAll('.room-row').forEach(room => {
+    allRooms.forEach(room => {
+        const roomId = room.dataset.roomId;
+        const roomNameInput = room.querySelector('input[name$="[name]"]');
+        const roomName = roomNameInput ? roomNameInput.value : `Room ${roomId}`; // Fallback name
         const floorArea = parseFloat(room.querySelector('input[name$="[floor_area]"]').value) || 0;
         const wallArea = parseFloat(room.querySelector('input[name$="[wall_area]"]').value) || 0;
+        console.log(`  calculateAllCosts: Processing Room ${roomName} (${roomId}): Floor Area = ${floorArea.toFixed(2)}, Wall Area = ${wallArea.toFixed(2)}`);
+        
+        // Accumulate total floor and wall areas
         totalFloorArea += floorArea;
         totalWallArea += wallArea;
+        
         let roomLabor = 0;
         let roomMaterialsCost = 0;
         let roomEstimatedDays = 0;
 
         const selectedScopes = Array.from(room.querySelectorAll('.scope-checkbox:checked')).map(cb => cb.value);
+        console.log(`  calculateAllCosts: Room ${roomName} (${roomId}) - Selected Scopes:`, selectedScopes);
 
         selectedScopes.forEach(scopeKey => {
             const scope = scopeTypes[scopeKey];
-            if (!scope) return;
+            if (!scope) {
+                console.warn(`  calculateAllCosts: Scope with key ${scopeKey} not found!`);
+                return;
+            }
+            console.log(`  calculateAllCosts:   Scope ${scope.name} (ID: ${scope.id}) - labor_rate: ${scope.labor_rate}, complexity_factor: ${scope.complexity_factor}`);
             // --- Materials ---
             const materialsArr = getScopeMaterials(scope);
             materialsArr.forEach(material => {
@@ -861,6 +537,9 @@ function calculateAllCosts() {
                 const price = parseFloat(material.srp_price ?? 0) > 0 ? parseFloat(material.srp_price) : parseFloat(material.base_price ?? 0);
                 let quantity = 0;
                 const area = material.is_wall_material ? wallArea : floorArea;
+                
+                console.log(`  calculateAllCosts:     Material ${material.name} - is_per_area: ${material.is_per_area}, is_wall_material: ${material.is_wall_material}, coverage_rate: ${material.coverage_rate}, minimum_quantity: ${material.minimum_quantity}, calculated_area: ${area.toFixed(2)}`);
+
                 if (material.is_per_area) {
                     const coverage = parseFloat(material.coverage_rate ?? 1) || 1;
                     quantity = area > 0 && coverage > 0 ? Math.ceil(area / coverage) : 0;
@@ -887,8 +566,8 @@ function calculateAllCosts() {
                     const existing = materialsMap.get(key);
                     existing.quantity += quantity;
                     existing.totalCost += totalCost;
-                    if (!existing.rooms.includes(room.querySelector('input[name$="[name]"]').value ?? `Room ${room.dataset.roomId}`)) {
-                        existing.rooms.push(room.querySelector('input[name$="[name]"]').value ?? `Room ${room.dataset.roomId}`);
+                    if (!existing.rooms.includes(roomName)) {
+                        existing.rooms.push(roomName);
                     }
                 } else {
                     materialsMap.set(key, {
@@ -898,11 +577,13 @@ function calculateAllCosts() {
                         unitCost: finalPrice,
                         quantity: quantity,
                         totalCost: totalCost,
-                        rooms: [room.querySelector('input[name$="[name]"]').value ?? `Room ${room.dataset.roomId}`],
+                        rooms: [roomName],
                         isPerArea: material.is_per_area ?? false,
-                        coverage: material.coverage_rate ?? 1
+                        coverage: material.coverage_rate ?? 1,
+                        warranty_period: material.warranty_period || null
                     });
                 }
+                console.log(`  calculateAllCosts:     Material ${material.name}: Price=${price}, Quantity=${quantity}, Total Cost=${totalCost.toFixed(2)}`);
             });
             // --- Labor ---
             const laborRate = parseFloat(scope.labor_rate ?? 0) || 0;
@@ -912,26 +593,31 @@ function calculateAllCosts() {
             let scopeLaborHours = 0;
             // Calculate labor based on tasks
             if (scope.tasks) {
+                const tasks = Array.isArray(scope.tasks) ? scope.tasks : 
+                    (typeof scope.tasks === 'string' ? JSON.parse(scope.tasks) : []);
+                
                 const laborArea = scope.is_wall_work ? wallArea : floorArea;
                 const adjustment = getAdjustmentFactor(room, scope);
-                scopeLaborHours = scope.tasks.reduce((total, task) => {
-                    return total + (task.labor_hours_per_sqm * laborArea * adjustment);
+                console.log(`  calculateAllCosts:     Scope ${scope.name} Tasks: laborArea=${laborArea}, adjustment=${adjustment}`);
+
+                scopeLaborHours = tasks.reduce((total, task) => {
+                    const taskHours = (task.labor_hours_per_sqm || 0) * laborArea;
+                    console.log(`  calculateAllCosts:       Task ${task.name}: labor_hours_per_sqm=${task.labor_hours_per_sqm}, taskHours=${taskHours.toFixed(2)}`);
+                    return total + taskHours;
                 }, 0);
                 scopeLaborCost = scopeLaborHours * laborRate;
             } else {
                 // Fallback to old calculation method if no tasks defined
                 const laborArea = scope.is_wall_work ? wallArea : floorArea;
                 scopeLaborCost = laborRate * laborArea;
+                console.log(`  calculateAllCosts:     Scope ${scope.name} (no tasks): laborArea=${laborArea}, laborRate=${laborRate}, scopeLaborCost=${scopeLaborCost.toFixed(2)}`);
+
             }
             scopeLaborCost = Math.max(minimumLaborCost, scopeLaborCost * complexityFactor);
             roomLabor += scopeLaborCost;
-            // --- Estimated Days ---
-            if (scopeLaborHours > 0) {
-                const crewSize = DEFAULT_CREW_SIZE;
-                const hoursPerDay = DEFAULT_HOURS_PER_DAY;
-                const days = scopeLaborHours / (crewSize * hoursPerDay);
-                roomEstimatedDays = Math.max(roomEstimatedDays, days);
-            }
+            console.log(`  calculateAllCosts:     Scope ${scope.name} - Final Labor Cost: ${scopeLaborCost.toFixed(2)}`);
+
+            // --- Estimated Days --- // This part is now handled by getScopeEstimatedDays called in updateScopeDaysBadges
         });
         // Update room-specific display and hidden inputs
         room.querySelector('.materials-cost').textContent = `₱${roomMaterialsCost.toFixed(2)}`;
@@ -939,18 +625,19 @@ function calculateAllCosts() {
         room.querySelector('.total-cost').textContent = `₱${(roomMaterialsCost + roomLabor).toFixed(2)}`;
         room.querySelector('.materials-cost-hidden').value = roomMaterialsCost.toFixed(2);
         room.querySelector('.labor-cost-hidden').value = roomLabor.toFixed(2);
-        // Show estimated days
-        const estimatedTimeElem = room.querySelector('.estimated-time');
-        if (estimatedTimeElem) {
-            estimatedTimeElem.textContent = `${roomEstimatedDays > 0 ? roomEstimatedDays.toFixed(1) : 0} days`;
-        }
+        console.log(`  calculateAllCosts: Room ${roomName} (${roomId}) - Room Materials: ${roomMaterialsCost.toFixed(2)}, Room Labor: ${roomLabor.toFixed(2)}`);
+
+        // Estimated Time for the room row is updated by updateScopeDaysBadges
+
         totalLabor += roomLabor;
-        totalEstimatedDays = Math.max(totalEstimatedDays, roomEstimatedDays);
+        // totalEstimatedDays is now summed up directly by updateScopeDaysBadges for the room, not globally here.
     });
     let totalMaterials = 0;
     materialsMap.forEach(material => {
         totalMaterials += material.totalCost;
     });
+    console.log(`calculateAllCosts: Total Materials across all rooms: ${totalMaterials.toFixed(2)}`);
+    console.log(`calculateAllCosts: Total Labor across all rooms: ${totalLabor.toFixed(2)}`);
     return {
         totalFloorArea,
         totalWallArea,
@@ -958,25 +645,67 @@ function calculateAllCosts() {
         totalLabor,
         grandTotal: totalMaterials + totalLabor,
         materialsMap,
-        totalEstimatedDays
+        totalEstimatedDays // This will remain 0 from this function, as room-specific badges handle days
     };
 }
 
+function calculateOverallEstimatedDays() {
+    let overallEstimatedDays = 0;
+    document.querySelectorAll('.room-row').forEach(room => {
+        const estimatedTimeElem = room.querySelector('.estimated-time');
+        if (estimatedTimeElem) {
+            const daysText = estimatedTimeElem.textContent; // e.g., "5.5 days"
+            const daysMatch = daysText.match(/([\d\.]+) day/);
+            if (daysMatch && daysMatch[1]) {
+                overallEstimatedDays += parseFloat(daysMatch[1]);
+            }
+        }
+    });
+    console.log(`calculateOverallEstimatedDays: Total estimated days from all rooms: ${overallEstimatedDays}`);
+    return overallEstimatedDays;
+}
+
 function updateProjectTimeline() {
+    console.log('updateProjectTimeline: Updating project timeline.');
     const startDateInput = document.getElementById('start_date');
     const endDateInput = document.getElementById('end_date');
-    if (!startDateInput || !startDateInput.value) return;
-    const { totalEstimatedDays } = calculateAllCosts();
+    if (!startDateInput || !startDateInput.value) {
+        console.log('updateProjectTimeline: Start date not set, skipping timeline update.');
+        return;
+    }
+    const totalEstimatedDays = calculateOverallEstimatedDays(); // Recalculate to get overall estimated days
+    console.log(`updateProjectTimeline: Total estimated days from all scopes: ${totalEstimatedDays}`);
+
     const startDate = new Date(startDateInput.value);
     const endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + Math.ceil(totalEstimatedDays));
     if (endDateInput) {
         endDateInput.value = endDate.toISOString().split('T')[0];
+        console.log(`updateProjectTimeline: End date set to ${endDateInput.value}`);
     }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('addRoomBtn')?.addEventListener('click', createRoomRow);
+    console.log('DOM Content Loaded');
+    
+    // Ensure initializeForm is called AFTER DOM is ready
+    initializeForm(); 
+
+    // Debug the add room button
+    const addRoomBtn = document.getElementById('addRoomBtn');
+    console.log('Add Room Button:', addRoomBtn);
+    
+    if (addRoomBtn) {
+        addRoomBtn.addEventListener('click', function(e) {
+            console.log('Add Room button clicked');
+            e.preventDefault();
+            createRoomRow(); // No argument, will use default empty object
+            // No saveFormData() here, it will be called by input changes or form submit
+        });
+    } else {
+        console.error('Add Room button not found!');
+    }
+    
     document.getElementById('applyToAllBtn')?.addEventListener('click', applyScopesToAll);
     // Call updateProjectTimeline when start date changes
     document.getElementById('start_date')?.addEventListener('change', updateProjectTimeline);
@@ -985,34 +714,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Call updateProjectTimeline when any scope checkbox changes (for all current and future rooms)
     document.addEventListener('change', function(e) {
         if (e.target.classList.contains('scope-checkbox')) {
+            updateScopeDaysBadges(e.target.closest('.room-row')); // Update individual room first
             updateGrandTotalAndBreakdown();
             updateProjectTimeline();
-            saveFormData();
-            updateScopeDaysBadges(e.target.closest('.room-row'));
+            saveFormData(); // Save data when scope selection changes
         } else if (e.target.classList.contains('room-dimension')) {
             calculateRoomArea(e.target);
-            updateScopeDaysBadges(e.target.closest('.room-row'));
+            // calculateRoomArea already calls updateGrandTotalAndBreakdown, saveFormData, updateScopeDaysBadges
         }
     });
 
     // Add form submission handler
     const form = document.getElementById('step2Form');
     form.addEventListener('submit', function(e) {
-        // Let the form submit normally, do not call saveFormData here
+        // It is critical to call saveFormData before form submission to ensure latest data is saved.
+        // However, since we're using XHR for save, we just let the form submit.
+        // If you were saving via an AJAX call here and preventing default form submission, this is where it'd be.
+        console.log('Form submission event detected.');
     });
-
-    // Optionally, initialize the form if needed
-    if (typeof initializeForm === 'function') {
-        initializeForm();
-    }
-    // Initial timeline update
-    updateProjectTimeline();
-    // Initial cost update after form is potentially initialized
-    updateGrandTotalAndBreakdown();
 
     // Add window unload handler to save data when navigating away
     window.addEventListener('beforeunload', function() {
-        saveFormData();
+        console.log('Window is about to unload, saving data.');
+        saveFormData(); // Ensure final data is saved
     });
 });
 
@@ -1026,6 +750,16 @@ Object.values(scopeTypes).forEach(scope => {
             scope.materials = [];
         }
     }
+    // Also ensure tasks are parsed once
+    if (typeof scope.tasks === 'string') {
+        try {
+            scope.tasks = JSON.parse(scope.tasks);
+        } catch (e) {
+            console.error('Error parsing tasks for scope:', scope.id, e);
+            scope.tasks = [];
+        }
+    }
+    console.log(`Processed scope (initial load): ${scope.name} (ID: ${scope.id}), materials type: ${typeof scope.materials}, tasks type: ${typeof scope.tasks}`);
 });
 
 const scopesByCategory = {};
@@ -1044,7 +778,6 @@ function getRoomId(room, idx) {
     return `room_${idx}_${Date.now()}`;
 }
 
-// Restore saveFormData function with stable room id
 function saveFormData() {
     const form = document.getElementById('step2Form');
     const formData = new FormData(form);
@@ -1055,15 +788,15 @@ function saveFormData() {
         total_materials: formData.get('total_materials'),
         total_labor: formData.get('total_labor'),
         grand_total: formData.get('grand_total'),
-        total_amount: formData.get('grand_total'),
-        labor_cost: formData.get('total_labor'),
-        materials_cost: formData.get('total_materials')
+        total_amount: formData.get('grand_total'), // Duplicate of grand_total for consistency
+        labor_cost: formData.get('total_labor'), // Duplicate of total_labor
+        materials_cost: formData.get('total_materials') // Duplicate of total_materials
     };
 
-    // Log the data being saved
-    console.log('Saving form data:', data);
+    const roomElements = document.querySelectorAll('.room-row');
+    console.log(`saveFormData: Found ${roomElements.length} room(s) in the DOM.`);
 
-    document.querySelectorAll('.room-row').forEach((room, idx) => {
+    roomElements.forEach((room, idx) => {
         const roomId = room.dataset.roomId;
         const roomData = {
             id: roomId,
@@ -1073,16 +806,17 @@ function saveFormData() {
             height: formData.get(`rooms[${roomId}][height]`),
             floor_area: formData.get(`rooms[${roomId}][floor_area]`),
             wall_area: formData.get(`rooms[${roomId}][wall_area]`),
-            area: formData.get(`rooms[${roomId}][area]`),
+            area: formData.get(`rooms[${roomId}][area]`), // This field is not explicitly set in your HTML for new rooms
             materials_cost: formData.get(`rooms[${roomId}][materials_cost]`),
             labor_cost: formData.get(`rooms[${roomId}][labor_cost]`),
             scope: Array.from(room.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value)
         };
         data.rooms.push(roomData);
+        console.log(`saveFormData: Added room ${roomData.name} (${roomData.id}) to save data.`);
     });
 
-    // Log the complete data being sent
-    console.log('Sending data to server:', data);
+    // Log the data being saved
+    console.log('saveFormData: Data being sent to server:', data);
 
     return fetch('{{ route("contracts.save.step2") }}', {
         method: 'POST',
@@ -1103,218 +837,44 @@ function saveFormData() {
     });
 }
 
-// Always call initializeForm on page load
-initializeForm();
-
 function initializeForm() {
-    console.log('Restoring sessionData:', sessionData);
-    // Clear existing rooms first
-    document.getElementById('roomDetails').innerHTML = '';
-
-    // If we have session data, use it to initialize the form
-    if (sessionData.rooms && (Array.isArray(sessionData.rooms) || typeof sessionData.rooms === 'object')) {
-        // Convert to array if it's an object
-        const roomsArray = Array.isArray(sessionData.rooms) ? 
-            sessionData.rooms : 
-            Object.entries(sessionData.rooms).map(([id, room]) => ({...room, id}));
-
-        roomsArray.forEach((room, idx) => {
-            const roomId = getRoomId(room, idx);
-            room.id = roomId; // Save back for future saves
-            const roomContainer = document.createElement('div');
-            roomContainer.className = 'room-row mb-4';
-            roomContainer.dataset.roomId = roomId;
-            roomContainer.innerHTML = `
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label class="form-label">Room/Area Name</label>
-                            <input type="text" class="form-control" name="rooms[${roomId}][name]" required value="${room.name || ''}">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label class="form-label">Length (m)</label>
-                            <input type="number" class="form-control room-dimension" name="rooms[${roomId}][length]" step="0.01" min="0.01" required value="${room.length || ''}">
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label class="form-label">Width (m)</label>
-                            <input type="number" class="form-control room-dimension" name="rooms[${roomId}][width]" step="0.01" min="0.01" required value="${room.width || ''}">
-                        </div>
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label class="form-label">Height (m)</label>
-                            <input type="number" class="form-control room-dimension" name="rooms[${roomId}][height]" step="0.01" min="0.01" required value="${room.height || ''}">
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label class="form-label">Floor Area (sq m)</label>
-                            <input type="number" class="form-control" name="rooms[${roomId}][floor_area]" readonly value="${room.floor_area || ''}">
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label class="form-label">Wall Area (sq m)</label>
-                            <input type="number" class="form-control" name="rooms[${roomId}][wall_area]" readonly value="${room.wall_area || ''}">
-                        </div>
-                    </div>
-                    <div class="col-md-3 d-flex align-items-end">
-                        <div class="form-group w-100">
-                            <label class="form-label visually-hidden">Remove Room</label>
-                            <button type="button" class="btn btn-danger w-100" onclick="removeRoom(this)">
-                                <i class="fas fa-trash"></i> Remove Room
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <input type="hidden" name="rooms[${roomId}][materials_cost]" class="materials-cost-hidden" value="${room.materials_cost || 0}">
-                <input type="hidden" name="rooms[${roomId}][labor_cost]" class="labor-cost-hidden" value="${room.labor_cost || 0}">
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <h6 class="mb-3">Scope of Work</h6>
-                        <div class="accordion" id="scopeAccordion${roomId}">
-                            ${Object.entries(scopesByCategory).map(([category, scopes], categoryIndex) => `
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header">
-                                        <button class="accordion-button ${categoryIndex > 0 ? 'collapsed' : ''}" type="button" 
-                                            data-bs-toggle="collapse" 
-                                            data-bs-target="#category${roomId}${categoryIndex}"
-                                            aria-expanded="${categoryIndex === 0}">
-                                            ${category}
-                                        </button>
-                                    </h2>
-                                    <div id="category${roomId}${categoryIndex}" 
-                                        class="accordion-collapse collapse ${categoryIndex === 0 ? 'show' : ''}"
-                                        data-bs-parent="#scopeAccordion${roomId}">
-                                        <div class="accordion-body">
-                                            <div class="row">
-                                                ${scopes.map(scope => `
-                                                    <div class="col-md-6">
-                                                        <div class="scope-item mb-4">
-                                                            <div class="form-check">
-                                                                <input type="checkbox" class="form-check-input scope-checkbox" 
-                                                                    name="rooms[${roomId}][scope][]" 
-                                                                    value="${scope.id}" 
-                                                                    id="scope_${scope.id}_${roomId}" 
-                                                                    ${room.scope && room.scope.includes(scope.id.toString()) ? 'checked' : ''}>
-                                                                <label class="form-check-label" for="scope_${scope.id}_${roomId}">
-                                                                    <strong>${scope.name}</strong>
-                                                                    <span class="badge bg-info ms-2 days-badge" data-scope-id="${scope.id}"></span>
-                                                                </label>
-                                                            </div>
-                                                            <div class="ms-4 mt-2">
-                                                                <small class="text-muted">Materials:</small>
-                                                                <ul class="list-unstyled small">
-                                                                    ${(scope.materials && getScopeMaterials(scope).length > 0) ? getScopeMaterials(scope).map(material => {
-                                                                        const name = material.name || 'Unnamed Material';
-                                                                        // Determine the price to display, prioritizing srp_price if greater than 0, else base_price
-                                                                        const displayPrice = parseFloat(material.srp_price ?? 0) > 0 ? parseFloat(material.srp_price) : parseFloat(material.base_price ?? 0);
-                                                                        const unit = material.unit || 'pcs';
-                                                                        return `<li>${name} - ₱${displayPrice.toFixed(2)}</li>`;
-                                                                    }).filter(Boolean).join('') : '<li><em>No materials assigned</em></li>'}
-                                                                </ul>
-                                                                <small class="text-muted">Tasks:</small>
-                                                                <ul class="list-unstyled small">
-                                                                    ${(scope.tasks && scope.tasks.length > 0) ? scope.tasks.map(task => `
-                                                                        <li><i class=\"fas fa-check-circle text-success\"></i> ${task.name}</li>
-                                                                    `).join('') : '<li><em>No tasks listed</em></li>'}
-                                                                </ul>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                `).join('')}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                </div>
-                <div class="room-summary mt-3">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <p class="mb-1">Materials Cost:</p>
-                            <h6 class="materials-cost">₱${parseFloat(room.materials_cost || 0).toFixed(2)}</h6>
-                        </div>
-                        <div class="col-md-4">
-                            <p class="mb-1">Labor Cost:</p>
-                            <h6 class="labor-cost">₱${parseFloat(room.labor_cost || 0).toFixed(2)}</h6>
-                        </div>
-                        <div class="col-md-4">
-                            <p class="mb-1">Total Cost:</p>
-                            <h6 class="total-cost">₱${(parseFloat(room.materials_cost || 0) + parseFloat(room.labor_cost || 0)).toFixed(2)}</h6>
-                        </div>
-                        <div class="col-md-4">
-                            <p class="mb-1">Estimated Time:</p>
-                            <h6 class="estimated-time">0 days</h6>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('roomDetails').appendChild(roomContainer);
-            // Add event listeners for the new room
-            const dimensionInputs = roomContainer.querySelectorAll('.room-dimension');
-            dimensionInputs.forEach(input => {
-                input.addEventListener('input', () => calculateRoomArea(input));
-            });
-            updateScopeDaysBadges(roomContainer);
+    console.log('Initializing form with session data.');
+    if (sessionData.rooms && sessionData.rooms.length > 0) {
+        sessionData.rooms.forEach(room => {
+            createRoomRow(room); // Pass existing room data
         });
+    } else {
+        createRoomRow(); // Create a default room if no session data
     }
-
-    // Initialize timeline dates from session if available
-    if (sessionData.start_date) {
-        document.getElementById('start_date').value = sessionData.start_date;
-    }
-    if (sessionData.end_date) {
-        document.getElementById('end_date').value = sessionData.end_date;
-    }
-
-    // Initialize hidden fields from session if available
-    if (sessionData.total_materials) {
-        document.getElementById('total_materials').value = sessionData.total_materials;
-    }
-    if (sessionData.total_labor) {
-        document.getElementById('total_labor').value = sessionData.total_labor;
-    }
-    if (sessionData.grand_total) {
-        document.getElementById('grand_total').value = sessionData.grand_total;
-    }
-
-    // Update all calculations
+    // Initial timeline update and cost update after form is potentially initialized
     updateGrandTotalAndBreakdown();
     updateProjectTimeline();
 }
 
-function createRoomRow() {
+function createRoomRow(initialRoomData = {}) {
+    console.log('Creating new room row', initialRoomData);
     const roomContainer = document.createElement('div');
     roomContainer.className = 'room-row mb-4';
-    const roomId = Date.now();
+    const roomId = initialRoomData.id || Date.now(); // Use existing ID or generate new
     roomContainer.dataset.roomId = roomId;
     roomContainer.innerHTML = `
         <div class="row">
             <div class="col-md-4">
                 <div class="form-group">
                     <label class="form-label">Room/Area Name</label>
-                    <input type="text" class="form-control" name="rooms[${roomId}][name]" required>
+                    <input type="text" class="form-control" name="rooms[${roomId}][name]" required value="${initialRoomData.name || `Room ${document.querySelectorAll('.room-row').length + 1}`}">
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="form-group">
                     <label class="form-label">Length (m)</label>
-                    <input type="number" class="form-control room-dimension" name="rooms[${roomId}][length]" step="0.01" min="0.01" required>
+                    <input type="number" class="form-control room-dimension" name="rooms[${roomId}][length]" step="0.01" min="0.01" required value="${initialRoomData.length || 1}">
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="form-group">
                     <label class="form-label">Width (m)</label>
-                    <input type="number" class="form-control room-dimension" name="rooms[${roomId}][width]" step="0.01" min="0.01" required>
+                    <input type="number" class="form-control room-dimension" name="rooms[${roomId}][width]" step="0.01" min="0.01" required value="${initialRoomData.width || 1}">
                 </div>
             </div>
         </div>
@@ -1322,19 +882,19 @@ function createRoomRow() {
             <div class="col-md-3">
                 <div class="form-group">
                     <label class="form-label">Height (m)</label>
-                    <input type="number" class="form-control room-dimension" name="rooms[${roomId}][height]" step="0.01" min="0.01" required>
+                    <input type="number" class="form-control room-dimension" name="rooms[${roomId}][height]" step="0.01" min="0.01" required value="${initialRoomData.height || 1}">
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="form-group">
                     <label class="form-label">Floor Area (sq m)</label>
-                    <input type="number" class="form-control" name="rooms[${roomId}][floor_area]" readonly>
+                    <input type="number" class="form-control" name="rooms[${roomId}][floor_area]" readonly value="${initialRoomData.floor_area || '0.00'}">
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="form-group">
                     <label class="form-label">Wall Area (sq m)</label>
-                    <input type="number" class="form-control" name="rooms[${roomId}][wall_area]" readonly>
+                    <input type="number" class="form-control" name="rooms[${roomId}][wall_area]" readonly value="${initialRoomData.wall_area || '0.00'}">
                 </div>
             </div>
             <div class="col-md-3 d-flex align-items-end">
@@ -1346,8 +906,8 @@ function createRoomRow() {
                 </div>
             </div>
         </div>
-        <input type="hidden" name="rooms[${roomId}][materials_cost]" class="materials-cost-hidden" value="0">
-        <input type="hidden" name="rooms[${roomId}][labor_cost]" class="labor-cost-hidden" value="0">
+        <input type="hidden" name="rooms[${roomId}][materials_cost]" class="materials-cost-hidden" value="${initialRoomData.materials_cost || 0}">
+        <input type="hidden" name="rooms[${roomId}][labor_cost]" class="labor-cost-hidden" value="${initialRoomData.labor_cost || 0}">
         <div class="row mt-3">
             <div class="col-12">
                 <h6 class="mb-3">Scope of Work</h6>
@@ -1374,18 +934,17 @@ function createRoomRow() {
                                                         <input type="checkbox" class="form-check-input scope-checkbox" 
                                                             name="rooms[${roomId}][scope][]" 
                                                             value="${scope.id}" 
-                                                            id="scope_${scope.id}_${roomId}">
+                                                            id="scope_${scope.id}_${roomId}" 
+                                                            ${initialRoomData.scope && initialRoomData.scope.includes(scope.id.toString()) ? 'checked' : ''}> <!-- Re-add check for session data -->
                                                         <label class="form-check-label" for="scope_${scope.id}_${roomId}">
                                                             <strong>${scope.name}</strong>
-                                                            <span class="badge bg-info ms-2 days-badge" data-scope-id="${scope.id}"></span>
                                                         </label>
                                                     </div>
                                                     <div class="ms-4 mt-2">
                                                         <small class="text-muted">Materials:</small>
                                                         <ul class="list-unstyled small">
-                                                            ${(scope.materials && getScopeMaterials(scope).length > 0) ? getScopeMaterials(scope).map(material => {
+                                                            ${(scope.materials && scope.materials.length > 0) ? scope.materials.map(material => {
                                                                 const name = material.name || 'Unnamed Material';
-                                                                // Determine the price to display, prioritizing srp_price if greater than 0, else base_price
                                                                 const displayPrice = parseFloat(material.srp_price ?? 0) > 0 ? parseFloat(material.srp_price) : parseFloat(material.base_price ?? 0);
                                                                 const unit = material.unit || 'pcs';
                                                                 return `<li>${name} - ₱${displayPrice.toFixed(2)}</li>`;
@@ -1393,10 +952,22 @@ function createRoomRow() {
                                                         </ul>
                                                         <small class="text-muted">Tasks:</small>
                                                         <ul class="list-unstyled small">
-                                                            ${(scope.tasks && scope.tasks.length > 0) ? scope.tasks.map(task => `
-                                                                <li><i class=\"fas fa-check-circle text-success\"></i> ${task.name}</li>
-                                                            `).join('') : '<li><em>No tasks listed</em></li>'}
+                                                            ${(() => {
+                                                                if (!scope.tasks) return '<li><em>No tasks listed</em></li>';
+                                                                const tasks = Array.isArray(scope.tasks) ? scope.tasks : 
+                                                                    (typeof scope.tasks === 'string' ? JSON.parse(scope.tasks) : []);
+                                                                return tasks.length > 0 ? 
+                                                                    tasks.map(task => {
+                                                                        console.log(`Task in loop: ${JSON.stringify(task)}`); // Log task details
+                                                                        return `<li><i class="fas fa-check-circle text-success"></i> ${task.name || 'Unnamed Task'}</li>`;
+                                                                    }).join('') : 
+                                                                    '<li><em>No tasks listed</em></li>';
+                                                            })()}
                                                         </ul>
+                                                        <div class="ms-4 mt-2">
+                                                            <small class="text-muted">Estimated Time:</small>
+                                                            <span class="badge bg-info ms-2 days-badge" data-scope-id="${scope.id}"></span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1413,30 +984,44 @@ function createRoomRow() {
             <div class="row">
                 <div class="col-md-4">
                     <p class="mb-1">Materials Cost:</p>
-                    <h6 class="materials-cost">₱0.00</h6>
+                    <h6 class="materials-cost">₱${parseFloat(initialRoomData.materials_cost || 0).toFixed(2)}</h6>
                 </div>
                 <div class="col-md-4">
                     <p class="mb-1">Labor Cost:</p>
-                    <h6 class="labor-cost">₱0.00</h6>
+                    <h6 class="labor-cost">₱${parseFloat(initialRoomData.labor_cost || 0).toFixed(2)}</h6>
                 </div>
                 <div class="col-md-4">
                     <p class="mb-1">Total Cost:</p>
-                    <h6 class="total-cost">₱0.00</h6>
+                    <h6 class="total-cost">₱${(parseFloat(initialRoomData.materials_cost || 0) + parseFloat(initialRoomData.labor_cost || 0)).toFixed(2)}</h6>
                 </div>
                 <div class="col-md-4">
                     <p class="mb-1">Estimated Time:</p>
-                    <h6 class="estimated-time">0 days</h6>
+                    <h6 class="estimated-time">${initialRoomData.estimated_time || '0'} days</h6>
                 </div>
             </div>
         </div>
     `;
     document.getElementById('roomDetails').appendChild(roomContainer);
+
     // Add event listeners for the new room
     const dimensionInputs = roomContainer.querySelectorAll('.room-dimension');
     dimensionInputs.forEach(input => {
         input.addEventListener('input', () => calculateRoomArea(input));
     });
+
+    // Trigger initial calculation after adding the room to ensure areas are computed.
+    // We can simulate an input event on one of the dimension fields.
+    const lengthInput = roomContainer.querySelector('input[name$="[length]"]');
+    if (lengthInput) {
+        calculateRoomArea(lengthInput);
+    }
+
+    // It's crucial to call updateScopeDaysBadges after room areas are calculated.
     updateScopeDaysBadges(roomContainer);
+    updateGrandTotalAndBreakdown(); // Force update global totals
+    updateProjectTimeline(); // Force update timeline
+
+    console.log('New room row created and initial calculations triggered.');
 }
 
 function removeRoom(button) {
@@ -1455,23 +1040,32 @@ function calculateRoomArea(input) {
     const floorAreaInput = roomRow.querySelector('input[name$="[floor_area]"]');
     const wallAreaInput = roomRow.querySelector('input[name$="[wall_area]"]');
 
-    if (lengthInput.value && widthInput.value && heightInput.value) {
-        const length = parseFloat(lengthInput.value);
-        const width = parseFloat(widthInput.value);
-        const height = parseFloat(heightInput.value);
-        
-        // Calculate floor area
-        const floorArea = length * width;
-        floorAreaInput.value = floorArea.toFixed(2);
-        
-        // Calculate wall area (perimeter * height)
-        const wallArea = 2 * (length + width) * height;
-        wallAreaInput.value = wallArea.toFixed(2);
-        
-        updateGrandTotalAndBreakdown();
-        saveFormData();
-        updateScopeDaysBadges(roomRow);
+    // Validate dimensions
+    if (!validateDimension(lengthInput.value, 'Length') ||
+        !validateDimension(widthInput.value, 'Width') ||
+        !validateDimension(heightInput.value, 'Height')) {
+        return;
     }
+
+    const length = parseFloat(lengthInput.value);
+    const width = parseFloat(widthInput.value);
+    const height = parseFloat(heightInput.value);
+    
+    // Calculate areas
+    const floorArea = length * width;
+    const wallArea = 2 * (length + width) * height;
+
+    // Validate areas
+    if (!validateArea(floorArea, 'Floor') || !validateArea(wallArea, 'Wall')) {
+        return;
+    }
+
+    floorAreaInput.value = floorArea.toFixed(2);
+    wallAreaInput.value = wallArea.toFixed(2);
+    
+    updateGrandTotalAndBreakdown();
+    saveFormData();
+    updateScopeDaysBadges(roomRow);
 }
 
 function applyScopesToAll() {
@@ -1489,12 +1083,14 @@ function applyScopesToAll() {
             checkbox.checked = selectedScopes.includes(checkbox.value);
         });
         // Recalculate costs for this room after applying scopes
+        calculateRoomArea(room.querySelector('input[name$="[length]"]')); // Trigger calculation for each room
     });
-    updateGrandTotalAndBreakdown(); // Call once after applying to all rooms
-    saveFormData();
+    // updateGrandTotalAndBreakdown(); // This will be called by calculateRoomArea
+    // saveFormData(); // This will be called by calculateRoomArea
 }
 
 function updateGrandTotalAndBreakdown() {
+    console.log('Calculating all costs for grand total and breakdown.');
     const { totalFloorArea, totalWallArea, totalMaterials, totalLabor, grandTotal, materialsMap } = calculateAllCosts();
 
     // Calculate materials cost from breakdown (materialsMap) - already done in calculateAllCosts
@@ -1508,11 +1104,15 @@ function updateGrandTotalAndBreakdown() {
     document.getElementById('grandTotalMaterials').textContent = `₱${totalMaterials.toFixed(2)}`;
     document.getElementById('grandTotalLabor').textContent = `₱${totalLabor.toFixed(2)}`;
     document.getElementById('grandTotal').textContent = `₱${(totalMaterials + totalLabor).toFixed(2)}`;
+    document.getElementById('grandTotalEstimatedDays').textContent = `${calculateOverallEstimatedDays()} day${calculateOverallEstimatedDays() > 1 ? 's' : ''}`;
 
     document.getElementById('total_area').value = (totalFloorArea + totalWallArea).toFixed(2);
     document.getElementById('total_materials').value = totalMaterials.toFixed(2);
     document.getElementById('total_labor').value = totalLabor.toFixed(2);
     document.getElementById('grand_total').value = (totalMaterials + totalLabor).toFixed(2);
+
+    console.log(`Grand Totals: Area=${totalFloorArea.toFixed(2)}, Materials=₱${totalMaterials.toFixed(2)}, Labor=₱${totalLabor.toFixed(2)}, Grand=₱${(totalMaterials + totalLabor).toFixed(2)}`);
+    console.log(`Number of rooms found by updateGrandTotalAndBreakdown: ${document.querySelectorAll('.room-row').length}`); // Added log
 
     // Update breakdown
     const tableBody = document.getElementById('breakdownTableBody');
@@ -1536,7 +1136,7 @@ function updateGrandTotalAndBreakdown() {
             <td>${material.warranty_period ? material.warranty_period + ' months' : 'No warranty'}</td>
             <td>
                 <button type="button" class="btn btn-sm btn-info" 
-                    onclick="showMaterialDetails('${material.name}', ${JSON.stringify(material.rooms).replace(/'/g, "\\'")})">
+                    onclick="showMaterialDetails('${material.name}', ${JSON.stringify(material.rooms).replace(/'/g, "\'")})">
                     <i class="fas fa-info-circle"></i> Details
                 </button>
             </td>
@@ -1547,7 +1147,7 @@ function updateGrandTotalAndBreakdown() {
     document.getElementById('breakdownTotalLabor').textContent = `₱${totalLabor.toFixed(2)}`;
     document.getElementById('breakdownGrandTotal').textContent = `₱${(totalMaterials + totalLabor).toFixed(2)}`;
 
-    updateProjectTimeline(); // Ensure timeline updates after all costs
+    // updateProjectTimeline(); // Ensure timeline updates after all costs - this is now called from calculateRoomArea and initializeForm
 }
 
 function showMaterialDetails(materialName, rooms) {
@@ -1576,7 +1176,7 @@ function getScopeMaterials(scope) {
     try {
         // If it's a string, try to parse it as JSON
         if (typeof scope.materials === 'string') {
-            console.log('Parsing materials JSON string:', scope.materials);
+            // console.log('Parsing materials JSON string:', scope.materials);
             materialsArray = JSON.parse(scope.materials);
         } 
         // If it's already an array, use it directly
@@ -1599,7 +1199,13 @@ function getScopeMaterials(scope) {
                 return null;
             }
             // Log the material object here to inspect its structure
-            console.log('Material object in getScopeMaterials:', material);
+            // console.log('Material object in getScopeMaterials:', material.name, 'Warranty Period:', material.warranty_period, 'Type:', typeof material.warranty_period); // REMOVED LOG
+
+            // Validate material quantity
+            const quantity = material.minimum_quantity || 1;
+            if (!validateMaterialQuantity(quantity, material.name)) {
+                return null;
+            }
 
             // Handle bulk pricing
             let bulkPricing = [];
@@ -1628,7 +1234,8 @@ function getScopeMaterials(scope) {
                 coverage_rate: parseFloat(material.coverage_rate || 1),
                 minimum_quantity: parseInt(material.minimum_quantity || 1),
                 waste_factor: parseFloat(material.waste_factor || 1.1),
-                bulk_pricing: bulkPricing
+                bulk_pricing: bulkPricing,
+                warranty_period: material.warranty_period || null // Ensure warranty period is passed
             };
         }).filter(m => m !== null);
     } catch (e) {
@@ -1641,47 +1248,71 @@ function getScopeMaterials(scope) {
 function getScopeEstimatedDays(scope, room) {
     const floorArea = parseFloat(room.querySelector('input[name$="[floor_area]"]').value) || 0;
     const wallArea = parseFloat(room.querySelector('input[name$="[wall_area]"]').value) || 0;
+    
+    // Validate labor rate
+    if (!validateLaborRate(scope.labor_rate)) {
+        return 0;
+    }
+
     const adjustment = getAdjustmentFactor(room, scope);
     const crewSize = DEFAULT_CREW_SIZE;
     const hoursPerDay = DEFAULT_HOURS_PER_DAY;
+    const productivityFactor = DEFAULT_PRODUCTIVITY_FACTOR;
+    
+    console.log(`Calculating days for scope: ${scope.name} (Room: ${room.dataset.roomId})`);
+    console.log(`  Floor Area: ${floorArea}, Wall Area: ${wallArea}, Adjustment: ${adjustment}`);
+
     let totalLaborHours = 0;
+    
+    // Calculate based on tasks if available
     if (scope.tasks) {
+        const tasks = Array.isArray(scope.tasks) ? scope.tasks : 
+            (typeof scope.tasks === 'string' ? JSON.parse(scope.tasks) : []);
+        
+        tasks.forEach(task => {
+            const laborArea = scope.is_wall_work ? wallArea : floorArea;
+            const baseHours = (task.labor_hours_per_sqm || 0) * laborArea;
+            totalLaborHours += baseHours;
+            console.log(`    Task: ${task.name}, labor_hours_per_sqm: ${task.labor_hours_per_sqm}, laborArea: ${laborArea}, baseHours: ${baseHours}`);
+        });
+    } else {
+        // Fallback calculation based on area and scope type
         const laborArea = scope.is_wall_work ? wallArea : floorArea;
-        totalLaborHours = scope.tasks.reduce((total, task) => {
-            return total + (task.labor_hours_per_sqm * laborArea * adjustment);
-        }, 0);
+        const baseRate = scope.labor_rate || 0.5; // Default 0.5 hours per sqm if not specified
+        totalLaborHours = laborArea * baseRate;
+        console.log(`    Fallback calculation: laborArea=${laborArea}, baseRate=${baseRate}, totalLaborHours=${totalLaborHours}`);
     }
-    if (totalLaborHours > 0 && crewSize > 0 && hoursPerDay > 0) {
-        return Math.max(1, Math.ceil(totalLaborHours / (crewSize * hoursPerDay)));
-    }
-    return 1;
+    
+    console.log(`  Total Labor Hours (raw): ${totalLaborHours}`);
+
+    // Apply adjustments and productivity factor
+    totalLaborHours *= adjustment;
+    totalLaborHours /= productivityFactor;
+    
+    console.log(`  Total Labor Hours (adjusted): ${totalLaborHours}`);
+
+    // Calculate days considering crew size and working hours
+    let days = totalLaborHours / (crewSize * hoursPerDay);
+    
+    // Round up to nearest half day
+    days = Math.ceil(days * 2) / 2;
+    
+    // Ensure minimum of 0.5 days for any work
+    const finalDays = Math.max(0.5, days);
+    console.log(`  Calculated Days: ${finalDays} (raw days: ${days})`);
+    return finalDays;
 }
 
-// Update the code that renders the scope/service card in each room
-// Find the section where the scope checkboxes and badges are rendered, and update it like this:
-
-// ... inside the function that renders each scope/service in a room ...
-// Example (pseudo-code, adapt to your rendering logic):
-//
-// <div class="scope-card">
-//   <input type="checkbox" ...>
-//   <label>Vinyl Flooring</label>
-//   <span class="badge badge-info days-badge">4 days</span>
-//   ...
-// </div>
-//
-// Change to:
-//
-//   <span class="badge badge-info days-badge" data-scope-id="${scope.id}"></span>
-//
-// Then, after rendering, call updateScopeDaysBadges(room) to update all badges for that room.
-
 function updateScopeDaysBadges(room) {
+    console.log(`Updating scope days badges for Room: ${room.dataset.roomId}`);
     const scopeCheckboxes = room.querySelectorAll('.scope-checkbox');
+    let totalDays = 0;
+    
     scopeCheckboxes.forEach(cb => {
         const scope = scopeTypes[cb.value];
         let badge = null;
-        // Try to find badge in the label next to the checkbox
+        
+        // Find the badge element
         if (cb.nextElementSibling && cb.nextElementSibling.querySelector && cb.nextElementSibling.querySelector('.days-badge')) {
             badge = cb.nextElementSibling.querySelector('.days-badge');
         } else if (cb.parentElement && cb.parentElement.querySelector('.days-badge')) {
@@ -1689,12 +1320,24 @@ function updateScopeDaysBadges(room) {
         } else {
             badge = room.querySelector(`.days-badge[data-scope-id="${cb.value}"]`);
         }
+        
         if (scope && badge) {
             const days = getScopeEstimatedDays(scope, room);
+            console.log(`  Scope ${scope.name} (ID: ${scope.id}) - Days: ${days}, Checked: ${cb.checked}`);
+            if (cb.checked) {
+                totalDays += days;
+            }
             badge.textContent = `${days} day${days > 1 ? 's' : ''}`;
             badge.style.display = '';
         }
     });
+    
+    // Update the room's total estimated time
+    const estimatedTimeElem = room.querySelector('.estimated-time');
+    if (estimatedTimeElem) {
+        estimatedTimeElem.textContent = `${totalDays} day${totalDays > 1 ? 's' : ''}`;
+        console.log(`  Room Total Estimated Time: ${totalDays} days`);
+    }
 }
 </script>
 @endpush
