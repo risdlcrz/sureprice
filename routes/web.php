@@ -333,6 +333,7 @@ Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->
     Route::get('/procurement/history', [ProcurementController::class, 'projectHistory'])->name('procurement.history');
     Route::get('/procurement/analytics', [ProcurementController::class, 'analyticsDashboard'])->name('procurement.analytics');
     Route::get('/procurement/notification-hub', [ProcurementController::class, 'notificationHub'])->name('procurement.notification');
+    Route::get('/procurement/supplier-rankings', [AnalyticsController::class, 'supplierRankings'])->name('procurement.suppliers.rankings');
 });
 
 // Procurement routes

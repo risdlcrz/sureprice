@@ -17,7 +17,7 @@
 
         <!-- Card 2: Supplier Performance Records -->
         <div class="col">
-            <div class="card h-100 shadow-sm" onclick="window.location.href = '{{ route('admin.procurement') }}';" style="cursor:pointer;">
+            <div class="card h-100 shadow-sm" onclick="window.location.href = '{{ route('suppliers.rankings') }}';" style="cursor:pointer;">
                 <img src="{{ asset('images/historydash2.svg') }}" class="card-img-top" alt="Supplier Performance Records" style="height: 150px; object-fit: contain;">
                 <div class="card-body">
                     <h5 class="card-title">Supplier Performance Records</h5>
