@@ -17,7 +17,10 @@ return new class extends Migration
             $table->string('name');
             $table->decimal('length', 10, 2);
             $table->decimal('width', 10, 2);
+            $table->decimal('height', 10, 2)->nullable();
             $table->decimal('area', 10, 2);
+            $table->decimal('floor_area', 10, 2)->nullable();
+            $table->decimal('wall_area', 10, 2)->nullable();
             $table->timestamps();
         });
     }

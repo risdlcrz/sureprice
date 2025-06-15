@@ -253,15 +253,14 @@
                             </div>
 
                             <!-- Scope & Materials Review -->
-                            <div class="review-section">
+                            <div class="review-section mt-4">
                                 <h6>Scope & Materials</h6>
-                                @if(session('contract_step2.rooms') && count(session('contract_step2.rooms')) > 0)
                                 <div class="table-responsive">
-                                    <table class="table table-sm">
-                                        <thead>
+                                    <table class="table table-bordered table-striped">
+                                        <thead class="table-light">
                                             <tr>
                                                 <th>Room/Area</th>
-                                                <th>Area</th>
+                                                <th>Area (sq m)</th>
                                                 <th>Scopes</th>
                                                 <th>Materials Cost</th>
                                                 <th>Labor Cost</th>
@@ -269,40 +268,54 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach(session('contract_step2.rooms') as $room)
-                                            <tr>
-                                                <td>{{ $room['name'] ?? 'Unnamed Room' }}</td>
-                                                <td>{{ number_format($room['area'] ?? 0, 2) }} sq m</td>
-                                                <td>
-                                                    @if(isset($room['scope']) && is_array($room['scope']))
-                                                        @foreach($room['scope'] as $scope)
-                                                            {{ $scope }}<br>
-                                                        @endforeach
-                                                    @else
-                                                        No scopes selected
-                                                    @endif
-                                                </td>
-                                                <td>₱{{ number_format($room['materials_cost'] ?? 0, 2) }}</td>
-                                                <td>₱{{ number_format($room['labor_cost'] ?? 0, 2) }}</td>
-                                                <td>₱{{ number_format(($room['materials_cost'] ?? 0) + ($room['labor_cost'] ?? 0), 2) }}</td>
-                                            </tr>
-                                            @endforeach
-                                            <tr class="table-secondary">
-                                                <td colspan="3" class="text-end"><strong>Grand Total:</strong></td>
-                                                <td>₱{{ number_format(session('contract_step2.materials_cost', 0), 2) }}</td>
-                                                <td>₱{{ number_format(session('contract_step2.labor_cost', 0), 2) }}</td>
-                                                <td>₱{{ number_format(session('contract_step2.total_amount', 0), 2) }}</td>
-                                            </tr>
+                                            @php
+                                                $rooms = $contractStep2Data['rooms'] ?? [];
+                                                // Add a log for debugging the rooms data
+                                                Log::info('Step 4 Blade: rooms data', ['rooms' => $rooms]);
+                                            @endphp
+                                            @forelse($rooms as $room)
+                                                @php
+                                                    // Add a log for debugging each room
+                                                    Log::info('Step 4 Blade: individual room data', ['room' => $room]);
+                                                @endphp
+                                                <tr>
+                                                    <td>{{ $room['name'] ?? 'N/A' }}</td>
+                                                    <td>{{ number_format($room['floor_area'] ?? 0, 2) }}</td>
+                                                    <td>
+                                                        @if(isset($room['scope']) && is_array($room['scope']))
+                                                            @foreach($room['scope'] as $scopeId)
+                                                                @if(isset($scopeTypesByCode[$scopeId]))
+                                                                    <span class="badge bg-primary">{{ $scopeTypesByCode[$scopeId]->name }}</span><br>
+                                                                @endif
+                                                            @endforeach
+                                                        @else
+                                                            No Scopes Selected
+                                                        @endif
+                                                    </td>
+                                                    <td>₱{{ number_format($room['materials_cost'] ?? 0, 2) }}</td>
+                                                    <td>₱{{ number_format($room['labor_cost'] ?? 0, 2) }}</td>
+                                                    <td>₱{{ number_format(($room['materials_cost'] ?? 0) + ($room['labor_cost'] ?? 0), 2) }}</td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="6" class="text-center">No rooms and scopes added for this contract.</td>
+                                                </tr>
+                                            @endforelse
                                         </tbody>
+                                        <tfoot class="table-light">
+                                            <tr>
+                                                <td colspan="3" class="text-end"><strong>Grand Total:</strong></td>
+                                                <td><strong>₱{{ number_format($contractStep2Data['total_materials'] ?? 0, 2) }}</strong></td>
+                                                <td><strong>₱{{ number_format($contractStep2Data['total_labor'] ?? 0, 2) }}</strong></td>
+                                                <td><strong>₱{{ number_format($contractStep2Data['grand_total'] ?? 0, 2) }}</strong></td>
+                                            </tr>
+                                        </tfoot>
                                     </table>
                                 </div>
-                                @else
-                                <div class="alert alert-warning">No room/scope information found</div>
-                                @endif
                             </div>
 
-                            <!-- Terms Review -->
-                            <div class="review-section">
+                            <!-- Terms & Conditions Review -->
+                            <div class="review-section mt-4">
                                 <h6>Terms & Conditions</h6>
                                 <div class="row">
                                     <div class="col-md-6">

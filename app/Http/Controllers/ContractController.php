@@ -23,7 +23,28 @@ class ContractController extends Controller
 
     public function clearContractSession()
     {
-        session()->forget(['contract_step1', 'contract_step2', 'contract_step3']);
+        // Clear all possible session keys
+        session()->forget([
+            'contract_step1',
+            'contract_step2',
+            'contract_step3',
+            'contract_step4',
+            'step3_data',
+            'step4_data',
+            'contract_id',
+            'contract_step1.contract_id',
+            'contract_step2.contract_id',
+            'contract_step3.contract_id',
+            'contract_step4.contract_id',
+            'contract_step1.rooms',
+            'contract_step2.rooms',
+            'contract_step3.rooms',
+            'contract_step4.rooms'
+        ]);
+        
+        // Also clear any flash data
+        session()->forget(['success', 'error', 'warning', 'info']);
+        
         return redirect()->route('contracts.index')->with('success', 'Contract creation cancelled. All data has been cleared.');
     }
 
@@ -63,8 +84,21 @@ class ContractController extends Controller
             'contract_step3',
             'contract_step4',
             'step3_data',
-            'step4_data'
+            'step4_data',
+            'contract_id',
+            'contract_step1.contract_id',
+            'contract_step2.contract_id',
+            'contract_step3.contract_id',
+            'contract_step4.contract_id',
+            'contract_step1.rooms',
+            'contract_step2.rooms',
+            'contract_step3.rooms',
+            'contract_step4.rooms'
         ]);
+        
+        // Also clear any flash data
+        session()->forget(['success', 'error', 'warning', 'info']);
+        
         return view('admin.contracts.step1');
     }
 
@@ -170,6 +204,11 @@ class ContractController extends Controller
 
     public function step2()
     {
+        // Check if we have step1 data, if not redirect to create
+        if (!session()->has('contract_step1')) {
+            return redirect()->route('contracts.create');
+        }
+
         // Get scope types with materials through relationship
         $scopeTypes = \App\Models\ScopeType::with(['materials' => function($query) {
             $query->with(['suppliers' => function($q) {
@@ -195,12 +234,19 @@ class ContractController extends Controller
         // Get session data if it exists
         $sessionData = session('contract_step2', []);
         
-        // Ensure rooms is always an array, not an object
-        if (isset($sessionData['rooms']) && !is_array($sessionData['rooms'])) {
-            // Convert object to array
+        // Ensure rooms is always an array, not an object. If sessionData is empty, initialize rooms as an empty array.
+        if (!isset($sessionData['rooms']) || !is_array($sessionData['rooms'])) {
+            $sessionData['rooms'] = [];
+        }
+
+        // If rooms was an object (from old session format), convert it to an array
+        if (is_object($sessionData['rooms'])) {
             $rooms = [];
             foreach ($sessionData['rooms'] as $roomId => $roomData) {
-                $roomData['id'] = $roomId;
+                // Ensure 'id' is set in each roomData if it's not already
+                if (!isset($roomData['id'])) {
+                    $roomData['id'] = $roomId; // Use the key as id if not present
+                }
                 $rooms[] = $roomData;
             }
             $sessionData['rooms'] = $rooms;
@@ -209,7 +255,8 @@ class ContractController extends Controller
         \Log::info('Loading Step 2 with session data:', [
             'has_session_data' => !empty($sessionData),
             'session_data' => $sessionData,
-            'all_session_keys' => array_keys(session()->all())
+            'contract_step1_session' => session('contract_step1'),
+            'contract_step2_session' => session('contract_step2'),
         ]);
 
         return view('admin.contracts.step2', compact('sessionData', 'scopeTypesByCode'));
@@ -428,7 +475,37 @@ class ContractController extends Controller
             return redirect()->route('contracts.create');
         }
 
-        return view('admin.contracts.step4');
+        $contractStep2Data = session('contract_step2', []);
+
+        // Get scope types with materials through relationship, similar to step2
+        $scopeTypes = \App\Models\ScopeType::with(['materials' => function($query) {
+            $query->with(['suppliers' => function($q) {
+                $q->wherePivot('is_preferred', true);
+            }]);
+        }])->get();
+
+        // Swap the names as requested (if still relevant for display)
+        $swapMap = [
+            'Ceiling Work' => 'Tiling Work',
+            'Tiling Work' => 'Painting Work',
+            'Painting Work' => 'Ceiling Work',
+        ];
+        foreach ($scopeTypes as $scopeType) {
+            if (isset($swapMap[$scopeType->name])) {
+                $scopeType->name = $swapMap[$scopeType->name];
+            }
+        }
+
+        // Prepare scope types by code (ID) for JavaScript access and view display
+        $scopeTypesByCode = $scopeTypes->keyBy('id');
+
+        \Log::info('Loading Step 4 with contract_step2 data:', [
+            'has_contract_step2' => !empty($contractStep2Data),
+            'contract_step2_data' => $contractStep2Data,
+            'contract_step2_rooms' => $contractStep2Data['rooms'] ?? []
+        ]);
+
+        return view('admin.contracts.step4', compact('contractStep2Data', 'scopeTypesByCode'));
     }
 
     public function storeStep4(Request $request)
@@ -560,9 +637,10 @@ class ContractController extends Controller
                     'name' => $roomData['name'],
                     'length' => $roomData['length'],
                     'width' => $roomData['width'],
-                    'height' => $roomData['height'],
-                    'floor_area' => $roomData['floor_area'],
-                    'wall_area' => $roomData['wall_area'],
+                    'height' => $roomData['height'] ?? null,
+                    'area' => $roomData['length'] * $roomData['width'],
+                    'floor_area' => $roomData['floor_area'] ?? null,
+                    'wall_area' => $roomData['wall_area'] ?? null,
                     'materials_cost' => $roomData['materials_cost'] ?? 0,
                     'labor_cost' => $roomData['labor_cost'] ?? 0,
                     'estimated_days' => $roomEstimatedDays

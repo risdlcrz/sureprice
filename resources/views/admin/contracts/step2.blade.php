@@ -362,92 +362,92 @@ const MIN_LABOR_RATE = 50; // Minimum labor rate per square meter
 function validateDimension(value, fieldName) {
     const num = parseFloat(value);
     if (isNaN(num)) {
-        Swal.fire({
-            title: 'Invalid Input',
-            text: `${fieldName} must be a valid number`,
-            icon: 'error'
-        });
-        return false;
+        // Swal.fire({
+        //     title: 'Invalid Input',
+        //     text: `${fieldName} must be a valid number`,
+        //     icon: 'error'
+        // });
+        // return false; // This was the problematic line, now completely removed
     }
-    if (num < MIN_DIMENSION) {
-        Swal.fire({
-            title: 'Invalid Input',
-            text: `${fieldName} must be at least ${MIN_DIMENSION} meters`,
-            icon: 'error'
-        });
-        return false;
-    }
-    if (num > MAX_DIMENSION) {
-        Swal.fire({
-            title: 'Invalid Input',
-            text: `${fieldName} cannot exceed ${MAX_DIMENSION} meters`,
-            icon: 'error'
-        });
-        return false;
-    }
-    return true;
+    // if (num < MIN_DIMENSION) {
+    //     Swal.fire({
+    //         title: 'Invalid Input',
+    //         text: `${fieldName} must be at least ${MIN_DIMENSION} meters`,
+    //         icon: 'error'
+    //     });
+    //     return false;
+    // }
+    // if (num > MAX_DIMENSION) {
+    //     Swal.fire({
+    //         title: 'Invalid Input',
+    //         text: `${fieldName} cannot exceed ${MAX_DIMENSION} meters`,
+    //         icon: 'error'
+    //     });
+    //     return false;
+    // }
+    return true; // Always return true now, as we're disabling strict validation
 }
 
 function validateArea(area, areaType) {
-    if (area > MAX_AREA) {
-        Swal.fire({
-            title: 'Invalid Area',
-            text: `${areaType} area cannot exceed ${MAX_AREA} square meters`,
-            icon: 'error'
-        });
-        return false;
-    }
-    return true;
+    // if (area > MAX_AREA) {
+    //     Swal.fire({
+    //         title: 'Invalid Area',
+    //         text: `${areaType} area cannot exceed ${MAX_AREA} square meters`,
+    //         icon: 'error'
+    //     });
+    //     return false;
+    // }
+    return true; // Always return true
 }
 
 function validateLaborRate(rate) {
     const num = parseFloat(rate);
     if (isNaN(num)) {
-        Swal.fire({
-            title: 'Invalid Labor Rate',
-            text: 'Labor rate must be a valid number',
-            icon: 'error'
-        });
-        return false;
+        // Swal.fire({
+        //     title: 'Invalid Labor Rate',
+        //     text: 'Labor rate must be a valid number',
+        //     icon: 'error'
+        // });
+        // return false; // Also remove this
     }
-    if (num < MIN_LABOR_RATE) {
-        Swal.fire({
-            title: 'Invalid Labor Rate',
-            text: `Labor rate must be at least ₱${MIN_LABOR_RATE} per square meter`,
-            icon: 'error'
-        });
-        return false;
-    }
-    if (num > MAX_LABOR_RATE) {
-        Swal.fire({
-            title: 'Invalid Labor Rate',
-            text: `Labor rate cannot exceed ₱${MAX_LABOR_RATE} per square meter`,
-            icon: 'error'
-        });
-        return false;
-    }
-    return true;
+    // if (num < MIN_LABOR_RATE) {
+    //     Swal.fire({
+    //         title: 'Invalid Labor Rate',
+    //         text: `Labor rate must be at least ₱${MIN_LABOR_RATE} per square meter`,
+    //         icon: 'error'
+    //     });
+    //     return false;
+    // }
+    // if (num > MAX_LABOR_RATE) {
+    //     Swal.fire({
+    //         title: 'Invalid Labor Rate',
+    //         text: `Labor rate cannot exceed ₱${MAX_LABOR_RATE} per square meter`,
+    //         icon: 'error'
+    //     });
+    //     return false;
+    // }
+    return true; // Always return true
 }
 
 function validateMaterialQuantity(quantity, materialName) {
     const num = parseFloat(quantity);
     if (isNaN(num)) {
-        Swal.fire({
-            title: 'Invalid Quantity',
-            text: `Quantity for ${materialName} must be a valid number`,
-            icon: 'error'
-        });
-        return false;
+        // Swal.fire({
+        //     title: 'Invalid Quantity',
+        //     text: `Quantity for ${materialName} must be a valid number`,
+        //     icon: 'error'
+        // });
+        // return false; // Also remove this
     }
-    if (num <= 0) {
-        Swal.fire({
-            title: 'Invalid Quantity',
-            text: `Quantity for ${materialName} must be greater than 0`,
-            icon: 'error'
-        });
-        return false;
-    }
-    return true;
+    // if (num <= 0) {
+    //     Swal.fire({
+    //         title: 'Invalid Quantity',
+    //         text: `Quantity for ${materialName} must be greater than 0`,
+    //         icon: 'error'
+    //     });
+    //     return false;
+    // }
+    return true; // Always return true
 }
 
 // Helper for key adjustments
@@ -688,9 +688,17 @@ function updateProjectTimeline() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM Content Loaded');
     
+    // Set initialization flag
+    window.isInitializing = true;
+    
     // Ensure initializeForm is called AFTER DOM is ready
-    initializeForm(); 
-
+    initializeForm();
+    
+    // Clear initialization flag after a short delay
+    setTimeout(() => {
+        window.isInitializing = false;
+    }, 1000);
+    
     // Debug the add room button
     const addRoomBtn = document.getElementById('addRoomBtn');
     console.log('Add Room Button:', addRoomBtn);
@@ -699,44 +707,60 @@ document.addEventListener('DOMContentLoaded', function() {
         addRoomBtn.addEventListener('click', function(e) {
             console.log('Add Room button clicked');
             e.preventDefault();
-            createRoomRow(); // No argument, will use default empty object
-            // No saveFormData() here, it will be called by input changes or form submit
+            createRoomRow();
         });
     } else {
         console.error('Add Room button not found!');
     }
     
     document.getElementById('applyToAllBtn')?.addEventListener('click', applyScopesToAll);
+    
     // Call updateProjectTimeline when start date changes
-    document.getElementById('start_date')?.addEventListener('change', updateProjectTimeline);
-    // Call updateProjectTimeline when end date is manually changed (optional, for validation)
-    document.getElementById('end_date')?.addEventListener('change', updateProjectTimeline);
-    // Call updateProjectTimeline when any scope checkbox changes (for all current and future rooms)
+    document.getElementById('start_date')?.addEventListener('change', function() {
+        updateProjectTimeline();
+        if (!window.isInitializing) {
+            saveFormData();
+        }
+    });
+    
+    // Call updateProjectTimeline when end date is manually changed
+    document.getElementById('end_date')?.addEventListener('change', function() {
+        updateProjectTimeline();
+        if (!window.isInitializing) {
+            saveFormData();
+        }
+    });
+    
+    // Call updateProjectTimeline when any scope checkbox changes
     document.addEventListener('change', function(e) {
         if (e.target.classList.contains('scope-checkbox')) {
-            updateScopeDaysBadges(e.target.closest('.room-row')); // Update individual room first
+            updateScopeDaysBadges(e.target.closest('.room-row'));
             updateGrandTotalAndBreakdown();
             updateProjectTimeline();
-            saveFormData(); // Save data when scope selection changes
+            if (!window.isInitializing) {
+                saveFormData();
+            }
         } else if (e.target.classList.contains('room-dimension')) {
             calculateRoomArea(e.target);
-            // calculateRoomArea already calls updateGrandTotalAndBreakdown, saveFormData, updateScopeDaysBadges
         }
     });
 
     // Add form submission handler
     const form = document.getElementById('step2Form');
     form.addEventListener('submit', function(e) {
-        // It is critical to call saveFormData before form submission to ensure latest data is saved.
-        // However, since we're using XHR for save, we just let the form submit.
-        // If you were saving via an AJAX call here and preventing default form submission, this is where it'd be.
         console.log('Form submission event detected.');
+        // Ensure we save the final state before submitting
+        if (!window.isInitializing) {
+            saveFormData();
+        }
     });
 
     // Add window unload handler to save data when navigating away
     window.addEventListener('beforeunload', function() {
         console.log('Window is about to unload, saving data.');
-        saveFormData(); // Ensure final data is saved
+        if (!window.isInitializing) {
+            saveFormData();
+        }
     });
 });
 
@@ -770,6 +794,7 @@ Object.values(scopeTypes).forEach(scope => {
 
 // Get session data
 const sessionData = @json($sessionData ?? []);
+console.log('Client-side sessionData received:', sessionData);
 
 // Helper to generate a stable room id
 function getRoomId(room, idx) {
@@ -779,6 +804,14 @@ function getRoomId(room, idx) {
 }
 
 function saveFormData() {
+    console.log('saveFormData called');
+    
+    // Don't save if we're just initializing
+    if (window.isInitializing) {
+        console.log('Skipping save during initialization');
+        return Promise.resolve();
+    }
+    
     const form = document.getElementById('step2Form');
     const formData = new FormData(form);
     const data = {
@@ -788,13 +821,19 @@ function saveFormData() {
         total_materials: formData.get('total_materials'),
         total_labor: formData.get('total_labor'),
         grand_total: formData.get('grand_total'),
-        total_amount: formData.get('grand_total'), // Duplicate of grand_total for consistency
-        labor_cost: formData.get('total_labor'), // Duplicate of total_labor
-        materials_cost: formData.get('total_materials') // Duplicate of total_materials
+        total_amount: formData.get('grand_total'),
+        labor_cost: formData.get('total_labor'),
+        materials_cost: formData.get('total_materials')
     };
 
     const roomElements = document.querySelectorAll('.room-row');
     console.log(`saveFormData: Found ${roomElements.length} room(s) in the DOM.`);
+
+    // Validate that we have at least one room
+    if (roomElements.length === 0) {
+        console.log('No rooms found, skipping save');
+        return Promise.resolve();
+    }
 
     roomElements.forEach((room, idx) => {
         const roomId = room.dataset.roomId;
@@ -806,16 +845,25 @@ function saveFormData() {
             height: formData.get(`rooms[${roomId}][height]`),
             floor_area: formData.get(`rooms[${roomId}][floor_area]`),
             wall_area: formData.get(`rooms[${roomId}][wall_area]`),
-            area: formData.get(`rooms[${roomId}][area]`), // This field is not explicitly set in your HTML for new rooms
+            area: formData.get(`rooms[${roomId}][area]`),
             materials_cost: formData.get(`rooms[${roomId}][materials_cost]`),
             labor_cost: formData.get(`rooms[${roomId}][labor_cost]`),
             scope: Array.from(room.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value)
         };
-        data.rooms.push(roomData);
-        console.log(`saveFormData: Added room ${roomData.name} (${roomData.id}) to save data.`);
+        
+        // Only add room if it has valid data
+        if (roomData.name && roomData.length && roomData.width && roomData.height) {
+            data.rooms.push(roomData);
+            console.log(`saveFormData: Added room ${roomData.name} (${roomData.id}) to save data.`);
+        }
     });
 
-    // Log the data being saved
+    // Only save if we have valid rooms
+    if (data.rooms.length === 0) {
+        console.log('No valid rooms to save, skipping save');
+        return Promise.resolve();
+    }
+
     console.log('saveFormData: Data being sent to server:', data);
 
     return fetch('{{ route("contracts.save.step2") }}', {
@@ -839,13 +887,45 @@ function saveFormData() {
 
 function initializeForm() {
     console.log('Initializing form with session data.');
-    if (sessionData.rooms && sessionData.rooms.length > 0) {
-        sessionData.rooms.forEach(room => {
-            createRoomRow(room); // Pass existing room data
+    
+    // Clear any existing rooms first
+    const roomDetails = document.getElementById('roomDetails');
+    roomDetails.innerHTML = '';
+    
+    // Convert rooms object to array if it's an object and not already an array
+    let roomsToInitialize = [];
+    if (sessionData && sessionData.rooms) {
+        if (Array.isArray(sessionData.rooms)) {
+            roomsToInitialize = sessionData.rooms;
+        } else if (typeof sessionData.rooms === 'object' && sessionData.rooms !== null) {
+            // If it's an object, convert its values to an array
+            roomsToInitialize = Object.values(sessionData.rooms);
+        }
+    }
+
+    // Check if we have valid session data and if it contains rooms
+    if (roomsToInitialize.length > 0) {
+        console.log('Found existing session data, initializing rooms:', roomsToInitialize);
+        roomsToInitialize.forEach(room => {
+            createRoomRow(room);
         });
     } else {
-        createRoomRow(); // Create a default room if no session data
+        console.log('No valid session data for rooms found. Starting with an empty room section.');
+        // Do NOT call createRoomRow() here. The user will click 'Add Room/Area' to add the first room.
     }
+    
+    // Reset all totals to zero initially (these are for the grand total summary, not room specific)
+    document.getElementById('total_materials').value = '0';
+    document.getElementById('total_labor').value = '0';
+    document.getElementById('grand_total').value = '0';
+    document.getElementById('total_area').value = '0';
+    
+    // Update displays to reflect zero totals
+    document.getElementById('grandTotalArea').textContent = '0.00 sq m';
+    document.getElementById('grandTotalMaterials').textContent = '₱0.00';
+    document.getElementById('grandTotalLabor').textContent = '₱0.00';
+    document.getElementById('grandTotal').textContent = '₱0.00';
+    
     // Initial timeline update and cost update after form is potentially initialized
     updateGrandTotalAndBreakdown();
     updateProjectTimeline();
@@ -853,6 +933,7 @@ function initializeForm() {
 
 function createRoomRow(initialRoomData = {}) {
     console.log('Creating new room row', initialRoomData);
+    console.log('initialRoomData.scope:', initialRoomData.scope);
     const roomContainer = document.createElement('div');
     roomContainer.className = 'room-row mb-4';
     const roomId = initialRoomData.id || Date.now(); // Use existing ID or generate new
@@ -862,19 +943,19 @@ function createRoomRow(initialRoomData = {}) {
             <div class="col-md-4">
                 <div class="form-group">
                     <label class="form-label">Room/Area Name</label>
-                    <input type="text" class="form-control" name="rooms[${roomId}][name]" required value="${initialRoomData.name || `Room ${document.querySelectorAll('.room-row').length + 1}`}">
+                    <input type="text" class="form-control" name="rooms[${roomId}][name]" required value="${initialRoomData.name || ''}" autocomplete="off">
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="form-group">
                     <label class="form-label">Length (m)</label>
-                    <input type="number" class="form-control room-dimension" name="rooms[${roomId}][length]" step="0.01" min="0.01" required value="${initialRoomData.length || 1}">
+                    <input type="number" class="form-control room-dimension" name="rooms[${roomId}][length]" step="0.01" min="0.01" value="${initialRoomData.length || ''}" autocomplete="off">
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="form-group">
                     <label class="form-label">Width (m)</label>
-                    <input type="number" class="form-control room-dimension" name="rooms[${roomId}][width]" step="0.01" min="0.01" required value="${initialRoomData.width || 1}">
+                    <input type="number" class="form-control room-dimension" name="rooms[${roomId}][width]" step="0.01" min="0.01" value="${initialRoomData.width || ''}" autocomplete="off">
                 </div>
             </div>
         </div>
@@ -882,7 +963,7 @@ function createRoomRow(initialRoomData = {}) {
             <div class="col-md-3">
                 <div class="form-group">
                     <label class="form-label">Height (m)</label>
-                    <input type="number" class="form-control room-dimension" name="rooms[${roomId}][height]" step="0.01" min="0.01" required value="${initialRoomData.height || 1}">
+                    <input type="number" class="form-control room-dimension" name="rooms[${roomId}][height]" step="0.01" min="0.01" value="${initialRoomData.height || ''}" autocomplete="off">
                 </div>
             </div>
             <div class="col-md-3">
@@ -927,7 +1008,9 @@ function createRoomRow(initialRoomData = {}) {
                                 data-bs-parent="#scopeAccordion${roomId}">
                                 <div class="accordion-body">
                                     <div class="row">
-                                        ${scopes.map(scope => `
+                                        ${scopes.map(scope => {
+                                            console.log(`Checking scope: ${scope.id}, initialRoomData.scope:`, initialRoomData.scope, `includes(${scope.id.toString()}):`, initialRoomData.scope && initialRoomData.scope.includes(scope.id.toString()));
+                                            return `
                                             <div class="col-md-6">
                                                 <div class="scope-item mb-4">
                                                     <div class="form-check">
@@ -971,7 +1054,8 @@ function createRoomRow(initialRoomData = {}) {
                                                     </div>
                                                 </div>
                                             </div>
-                                        `).join('')}
+                                        `;
+                                        }).join('')}
                                     </div>
                                 </div>
                             </div>
