@@ -26,7 +26,7 @@ class SupplierInvitationController extends Controller
     {
         $contracts = Contract::with(['client', 'contractor'])
             ->where('status', 'approved')
-            ->orderBy('contract_id')
+            ->orderBy('contract_number')
             ->get();
         $materials = Material::orderBy('name')->get();
         $suppliers = \App\Models\Supplier::orderBy('company_name')->get();
@@ -36,7 +36,7 @@ class SupplierInvitationController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'contract_id' => 'required|exists:contracts,id',
+            'contract_id' => 'nullable|exists:contracts,id',
             'company_name' => 'required|string|max:255',
             'contact_name' => 'required|string|max:255',
             'email' => 'required|email',
@@ -82,7 +82,7 @@ class SupplierInvitationController extends Controller
         }
 
         $contracts = Contract::where('status', 'approved')
-            ->orderBy('contract_id')
+            ->orderBy('contract_number')
             ->get();
         $materials = Material::all();
         $suppliers = \App\Models\Supplier::orderBy('company_name')->get();
@@ -97,7 +97,7 @@ class SupplierInvitationController extends Controller
         }
 
         $validated = $request->validate([
-            'contract_id' => 'required|exists:contracts,id',
+            'contract_id' => 'nullable|exists:contracts,id',
             'company_name' => 'required|string|max:255',
             'contact_name' => 'required|string|max:255',
             'email' => 'required|email',

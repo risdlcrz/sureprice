@@ -32,6 +32,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProjectTimelineController;
 use App\Http\Controllers\WarrantyRequestController;
+use App\Http\Controllers\BudgetController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -317,3 +318,13 @@ Route::prefix('search')->group(function () {
 
 // API Routes for Warranty Requests
 Route::post('/api/warranty-requests', [WarrantyRequestController::class, 'store'])->middleware('auth');
+
+// Budget Tracking Routes
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+    Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
+    Route::get('/budgets/{contract}', [BudgetController::class, 'show'])->name('budgets.show');
+    Route::get('/budgets/{contract}/export', [BudgetController::class, 'exportReport'])->name('budgets.export');
+    Route::get('/budgets/alerts', [BudgetController::class, 'getBudgetAlerts'])->name('budgets.alerts');
+});
+
+// Supplier creation is now handled via sign up. Remove or redirect any suppliers.create routes.

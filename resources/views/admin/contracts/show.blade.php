@@ -3,6 +3,11 @@
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <div class="container mt-4">
+    <!-- Status Alert -->
+    <div id="statusAlert" class="alert alert-success" style="display: none;" role="alert">
+        Contract status updated successfully!
+    </div>
+
     @php
         $isClient = auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client';
     @endphp
@@ -46,11 +51,6 @@
                 <i class="bi bi-arrow-left"></i> Back to List
             </a>
         </div>
-    </div>
-
-    <!-- Status Update Success Message -->
-    <div id="statusAlert" class="alert alert-success" style="display: none;" role="alert">
-        Contract status updated successfully
     </div>
 
     @if(session('success'))
@@ -382,21 +382,33 @@ function updateStatus(status) {
     const token = document.querySelector('meta[name="csrf-token"]');
     if (!token) {
         console.error('CSRF token meta tag not found');
-        alert('Error: CSRF token not found. Please refresh the page and try again.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'CSRF token not found. Please refresh the page and try again.'
+        });
         return;
     }
 
     const csrfToken = token.getAttribute('content');
     if (!csrfToken) {
         console.error('CSRF token is empty');
-        alert('Error: CSRF token is empty. Please refresh the page and try again.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'CSRF token is empty. Please refresh the page and try again.'
+        });
         return;
     }
 
-    console.log('Updating contract status:', {
-        status: status,
-        url: "{{ url('contracts/' . $contract->id . '/status') }}",
-        token: csrfToken.substring(0, 8) + '...' // Log only first 8 chars for security
+    // Show loading state
+    Swal.fire({
+        title: 'Updating Status',
+        text: 'Please wait...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
     });
     
     fetch("{{ url('contracts/' . $contract->id . '/status') }}", {
@@ -422,22 +434,26 @@ function updateStatus(status) {
     })
     .then(data => {
         if (data.success) {
-            // Show success message
-            const alert = document.getElementById('statusAlert');
-            alert.style.display = 'block';
-            setTimeout(() => {
-                alert.style.display = 'none';
-                // Reload the page to reflect the new status
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Contract status updated successfully!',
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => {
                 window.location.reload();
-            }, 1000);
+            });
         } else {
-            console.error('Error updating status:', data);
-            alert('Error updating status: ' + (data.message || 'Unknown error'));
+            throw new Error(data.message || 'Unknown error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error updating status: ' + error.message);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error updating status: ' + error.message
+        });
     });
 }
 

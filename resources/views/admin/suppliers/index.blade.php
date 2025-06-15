@@ -7,9 +7,14 @@
             <div class="card shadow">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h4 class="card-title mb-0">Suppliers</h4>
-                    <a href="{{ route('suppliers.create') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add New Supplier
-                    </a>
+                    <div>
+                        <a href="{{ route('supplier-invitations.create') }}" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Invite Supplier
+                        </a>
+                        <a href="{{ route('supplier-invitations.index') }}" class="btn btn-outline-secondary ms-2">
+                            <i class="fas fa-list"></i> View Invitations
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <!-- Search and Filters -->
@@ -54,7 +59,7 @@
                                     <th>Contact Person</th>
                                     <th>Contact Info</th>
                                     <th>Address</th>
-                                    <th>Materials</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -68,56 +73,27 @@
                                     <td>
                                         <div>
                                             <i class="fas fa-envelope"></i> {{ $supplier->email }}<br>
-                                            <i class="fas fa-phone"></i> {{ $supplier->phone }}
+                                            <i class="fas fa-phone"></i> {{ $supplier->mobile_number }}
                                         </div>
                                     </td>
                                     <td>
                                         <div>
                                             {{ $supplier->city }}, {{ $supplier->state }}<br>
-                                            <small class="text-muted">{{ $supplier->address }}</small>
+                                            <small class="text-muted">{{ $supplier->street }}</small>
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="badge badge-secondary text-dark">
-                                            {{ $supplier->materials_count ?? 0 }} materials
+                                        <span class="badge bg-{{ $supplier->status === 'approved' ? 'success' : ($supplier->status === 'pending' ? 'warning' : 'danger') }}">
+                                            {{ ucfirst($supplier->status) }}
                                         </span>
-                                        @if($supplier->materials && $supplier->materials->count() > 0)
-                                            <div class="mt-1">
-                                                <small class="text-muted">
-                                                    {{ $supplier->materials->take(3)->pluck('name')->implode(', ') }}
-                                                    @if($supplier->materials->count() > 3)
-                                                        +{{ $supplier->materials->count() - 3 }} more
-                                                    @endif
-                                                </small>
-                                            </div>
-                                            <div class="mt-1">
-                                                <small class="text-muted">
-                                                    Top categories: 
-                                                    {{ $supplier->materials->groupBy('category.name')->take(2)->map(function($items, $cat) {
-                                                        return $cat;
-                                                    })->implode(', ') }}
-                                                </small>
-                                            </div>
-                                        @endif
                                     </td>
                                     <td>
                                         <div class="btn-group">
-                                            <a href="{{ route('suppliers.show', $supplier->id) }}" 
+                                            <a href="{{ route('companies.show', $supplier->id) }}" 
                                                 class="btn btn-sm btn-info" 
                                                 title="View">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <a href="{{ route('suppliers.edit', $supplier->id) }}" 
-                                                class="btn btn-sm btn-primary" 
-                                                title="Edit">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <button type="button" 
-                                                class="btn btn-sm btn-danger delete-supplier" 
-                                                data-id="{{ $supplier->id }}"
-                                                title="Delete">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
                                         </div>
                                     </td>
                                 </tr>

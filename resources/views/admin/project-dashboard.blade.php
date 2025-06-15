@@ -139,23 +139,7 @@
             </div>
 
             <!-- Supplier Invitations Card -->
-            <div class="col">
-                <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage7.svg') }}" class="card-img-top" alt="Supplier Invitations">
-                    <div class="card-body">
-                        <h5 class="card-title">Supplier Invitations</h5>
-                        <p class="card-text">Invite and manage supplier registrations and qualifications.</p>
-                    </div>
-                    <div class="card-footer d-flex gap-2">
-                        <a href="{{ route('supplier-invitations.create') }}" class="btn btn-primary flex-grow-1">
-                            <i class="fas fa-plus"></i> New Invitation
-                        </a>
-                        <a href="{{ route('supplier-invitations.index') }}" class="btn btn-secondary flex-grow-1">
-                            <i class="fas fa-list"></i> View All
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <!-- Removed the entire card block for Supplier Invitations -->
 
             <!-- Quotation Management Card -->
             <div class="col">
@@ -201,14 +185,17 @@
                     <img src="{{ Vite::asset('resources/images/ppimage10.png') }}" class="card-img-top" alt="Suppliers">
                     <div class="card-body">
                         <h5 class="card-title">Suppliers Management</h5>
-                        <p class="card-text">Manage supplier information, relationships, and performance tracking.</p>
+                        <p class="card-text">Manage supplier information, relationships, performance tracking, and send invitations to new suppliers.</p>
                     </div>
                     <div class="card-footer d-flex gap-2">
-                        <a href="{{ route('suppliers.create') }}" class="btn btn-primary flex-grow-1">
-                            <i class="fas fa-plus"></i> New Supplier
+                        <a href="{{ route('supplier-invitations.create') }}" class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-paper-plane"></i> Invite Supplier
                         </a>
-                        <a href="{{ route('suppliers.index') }}" class="btn btn-secondary flex-grow-1">
-                            <i class="fas fa-list"></i> View All
+                        <a href="{{ route('supplier-invitations.index') }}" class="btn btn-secondary flex-grow-1">
+                            <i class="fas fa-list"></i> View Invitations
+                        </a>
+                        <a href="{{ route('register') }}" class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-user-plus"></i> Sign Up as Supplier
                         </a>
                     </div>
                 </div>

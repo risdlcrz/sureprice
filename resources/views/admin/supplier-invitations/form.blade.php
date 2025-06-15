@@ -18,38 +18,17 @@
 
                         <!-- Contract Selection -->
                         <div class="mb-4">
-                            <label for="contract_id" class="form-label">Contract</label>
-                            <select name="contract_id" id="contract_id" class="form-control @error('contract_id') is-invalid @enderror" required>
+                            <label for="contract_id" class="form-label">Contract (optional)</label>
+                            <select name="contract_id" id="contract_id" class="form-control @error('contract_id') is-invalid @enderror">
                                 <option value="">Select Contract</option>
                                 @foreach($contracts as $contract)
                                     <option value="{{ $contract->id }}" 
                                             {{ old('contract_id', $invitation->contract_id ?? '') == $contract->id ? 'selected' : '' }}>
-                                        {{ $contract->contract_id }}
+                                        {{ $contract->contract_number }} - {{ $contract->title }}
                                     </option>
                                 @endforeach
                             </select>
                             @error('contract_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <!-- Supplier Selection -->
-                        <div class="mb-4">
-                            <label for="supplier_id" class="form-label">Supplier</label>
-                            <select name="supplier_id" id="supplier_id" class="form-control @error('supplier_id') is-invalid @enderror" required>
-                                <option value="">Select Supplier</option>
-                                @foreach($suppliers as $supplier)
-                                    <option value="{{ $supplier->id }}" 
-                                        data-company-name="{{ $supplier->company_name }}"
-                                        data-contact-name="{{ $supplier->contact_person }}"
-                                        data-email="{{ $supplier->email }}"
-                                        data-phone="{{ $supplier->phone }}"
-                                        {{ old('supplier_id', $invitation->supplier_id ?? '') == $supplier->id ? 'selected' : '' }}>
-                                        {{ $supplier->company_name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('supplier_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

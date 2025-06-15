@@ -29,9 +29,9 @@ class Delivery extends Model
 
     protected $casts = [
         'delivery_date' => 'date',
-        'total_units' => 'integer',
-        'defective_units' => 'integer',
-        'wastage_units' => 'integer',
+        'total_units' => 'decimal:2',
+        'defective_units' => 'decimal:2',
+        'wastage_units' => 'decimal:2',
         'is_on_time' => 'boolean',
         'actual_cost' => 'decimal:2',
         'estimated_cost' => 'decimal:2'
@@ -57,7 +57,7 @@ class Delivery extends Model
         return $this->belongsTo(SupplierEvaluation::class);
     }
 
-    public function getDefectRateAttribute()
+    public function getDefectRateAttribute(): float
     {
         if ($this->total_units == 0) {
             return 0;
@@ -65,7 +65,7 @@ class Delivery extends Model
         return ($this->defective_units / $this->total_units) * 100;
     }
 
-    public function getWastageRateAttribute()
+    public function getWastageRateAttribute(): float
     {
         if ($this->total_units == 0) {
             return 0;
@@ -73,12 +73,17 @@ class Delivery extends Model
         return ($this->wastage_units / $this->total_units) * 100;
     }
 
-    public function getCostVarianceAttribute()
+    public function getCostVarianceAttribute(): float
     {
         if ($this->estimated_cost == 0) {
             return 0;
         }
         return (($this->actual_cost - $this->estimated_cost) / $this->estimated_cost) * 100;
+    }
+
+    public function getGoodUnitsAttribute(): float
+    {
+        return $this->total_units - $this->defective_units - $this->wastage_units;
     }
 
     public function getStatusColorAttribute()
