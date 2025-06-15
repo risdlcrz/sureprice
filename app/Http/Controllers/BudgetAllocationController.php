@@ -21,8 +21,22 @@ class BudgetAllocationController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
         
-        // Get selected contract or default to the latest one
+        // Initialize variables
         $selectedContract = null;
+        $totalSpent = 0;
+        $recentTransactions = collect();
+        $monthlyData = new stdClass();
+        $weeklyData = new stdClass();
+        $categoryData = new stdClass();
+        $supplierData = new stdClass();
+
+        // Initialize empty data structures
+        foreach (['monthlyData', 'weeklyData', 'categoryData', 'supplierData'] as $var) {
+            ${$var}->labels = [];
+            ${$var}->values = [];
+        }
+        
+        // Get selected contract or default to the latest one
         $contractId = $request->input('contract_id');
         
         if ($contractId) {
@@ -44,50 +58,105 @@ class BudgetAllocationController extends Controller
             // Calculate total spent
             $totalSpent = $selectedContract->transactions->sum('amount');
 
-            // Prepare data for charts
-            $monthlyData = $this->prepareMonthlyData($selectedContract);
-            $weeklyData = $this->prepareWeeklyData($selectedContract);
-            $categoryData = $this->prepareCategoryData($selectedContract);
-            $supplierData = $this->prepareSupplierData($selectedContract);
+            // Get filter parameters
+            $type = $request->input('type', 'all');
+            $dateFrom = $request->input('date_from');
+            $dateTo = $request->input('date_to');
+            $amountFrom = $request->input('amount_from');
+            $amountTo = $request->input('amount_to');
 
-            // Get recent transactions with optimized query
-            $recentTransactions = collect();
-            
-            // Get recent POs with optimized query
-            $recentPOs = $selectedContract->purchaseOrders()
+            // Base query for POs
+            $poQuery = $selectedContract->purchaseOrders()
                 ->with('supplier')
-                ->where('status', 'approved')
-                ->latest('created_at')
-                ->take(10)
-                ->get()
-                ->map(function($po) {
-                    return (object)[
-                        'date' => $po->created_at,
-                        'description' => "PO #{$po->po_number} - " . ($po->supplier->company_name ?? 'Unknown Supplier'),
-                        'amount' => (float)$po->total_amount,
-                        'type' => 'purchase_order'
-                    ];
-                });
+                ->where('status', 'approved');
+
+            // Base query for transactions
+            $transactionQuery = $selectedContract->transactions();
+
+            // Apply date filters if provided
+            if ($dateFrom) {
+                $poQuery->where('created_at', '>=', $dateFrom);
+                $transactionQuery->where('date', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $poQuery->where('created_at', '<=', $dateTo);
+                $transactionQuery->where('date', '<=', $dateTo);
+            }
+
+            // Get recent POs with optimized query
+            if ($type === 'all' || $type === 'purchase_order') {
+                $recentPOs = $poQuery->latest('created_at')
+                    ->take(10)
+                    ->get()
+                    ->map(function($po) {
+                        return (object)[
+                            'id' => $po->id,
+                            'date' => $po->created_at,
+                            'description' => "PO #{$po->po_number} - " . ($po->supplier->company_name ?? 'Unknown Supplier'),
+                            'amount' => (float)$po->total_amount,
+                            'type' => 'purchase_order',
+                            'status' => $po->status,
+                            'payment_status' => $po->payment_status ?? 'pending',
+                            'notes' => $po->notes,
+                            'supplier' => $po->supplier,
+                            'items' => $po->items
+                        ];
+                    });
+            } else {
+                $recentPOs = collect();
+            }
 
             // Get recent regular transactions with optimized query
-            $recentRegularTransactions = $selectedContract->transactions()
-                ->latest('date')
-                ->take(10)
-                ->get()
-                ->map(function($transaction) {
-                    return (object)[
-                        'date' => $transaction->date,
-                        'description' => $transaction->description,
-                        'amount' => (float)$transaction->amount,
-                        'type' => 'transaction'
-                    ];
+            if ($type === 'all' || $type === 'transaction') {
+                $recentRegularTransactions = $transactionQuery->latest('date')
+                    ->take(10)
+                    ->get()
+                    ->map(function($transaction) {
+                        return (object)[
+                            'id' => $transaction->id,
+                            'date' => $transaction->date,
+                            'description' => $transaction->description,
+                            'amount' => (float)$transaction->amount,
+                            'type' => 'transaction',
+                            'status' => $transaction->status ?? 'completed',
+                            'payment_status' => $transaction->payment_status ?? 'completed',
+                            'notes' => $transaction->notes,
+                            'category' => $transaction->category
+                        ];
+                    });
+            } else {
+                $recentRegularTransactions = collect();
+            }
+
+            // Apply amount filters if provided
+            if ($amountFrom) {
+                $recentPOs = $recentPOs->filter(function($po) use ($amountFrom) {
+                    return $po->amount >= $amountFrom;
                 });
+                $recentRegularTransactions = $recentRegularTransactions->filter(function($transaction) use ($amountFrom) {
+                    return $transaction->amount >= $amountFrom;
+                });
+            }
+            if ($amountTo) {
+                $recentPOs = $recentPOs->filter(function($po) use ($amountTo) {
+                    return $po->amount <= $amountTo;
+                });
+                $recentRegularTransactions = $recentRegularTransactions->filter(function($transaction) use ($amountTo) {
+                    return $transaction->amount <= $amountTo;
+                });
+            }
 
             // Combine and sort all transactions
             $recentTransactions = $recentPOs->concat($recentRegularTransactions)
                 ->sortByDesc('date')
                 ->take(10)
                 ->values();
+
+            // Prepare data for charts
+            $monthlyData = $this->prepareMonthlySpendingData($selectedContract);
+            $weeklyData = $this->prepareWeeklySpendingData($selectedContract);
+            $categoryData = $this->prepareCategoryBreakdown($selectedContract);
+            $supplierData = $this->prepareSupplierBreakdown($selectedContract);
         } elseif ($contracts->isNotEmpty()) {
             $selectedContract = Contract::with([
                 'client',
@@ -103,47 +172,6 @@ class BudgetAllocationController extends Controller
                 'purchaseOrders.supplier',
                 'purchaseOrders.items.material.category'
             ])->findOrFail($contracts->first()->id);
-        }
-
-        if ($selectedContract) {
-            // Calculate budget metrics
-            $totalBudget = (float)$selectedContract->total_amount;
-            
-            // Calculate total spent from POs and transactions
-            $approvedPOTotal = $selectedContract->purchaseOrders
-                ->sum(function($po) {
-                    return (float)$po->total_amount;
-                });
-            
-            $transactionsTotal = $selectedContract->transactions
-                ->sum(function($transaction) {
-                    return (float)$transaction->amount;
-                });
-            
-            $totalSpent = $approvedPOTotal + $transactionsTotal;
-            
-            // Prepare spending chart data (both monthly and weekly)
-            $monthlyData = $this->prepareMonthlySpendingData($selectedContract);
-            $weeklyData = $this->prepareWeeklySpendingData($selectedContract);
-            
-            // Prepare cost breakdown data (both by category and supplier)
-            $categoryData = $this->prepareCategoryBreakdown($selectedContract);
-            $supplierData = $this->prepareSupplierBreakdown($selectedContract);
-
-        } else {
-            $totalBudget = 0;
-            $totalSpent = 0;
-            $recentTransactions = collect();
-            $monthlyData = new stdClass();
-            $weeklyData = new stdClass();
-            $categoryData = new stdClass();
-            $supplierData = new stdClass();
-            
-            // Initialize empty data structures
-            foreach (['monthlyData', 'weeklyData', 'categoryData', 'supplierData'] as $var) {
-                ${$var}->labels = [];
-                ${$var}->values = [];
-            }
         }
 
         return view('admin.budget-allocation', compact(

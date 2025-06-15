@@ -10,9 +10,6 @@
                 <button class="btn btn-outline-primary" onclick="window.print()">
                     <i class="fas fa-print me-2"></i>Print Report
                 </button>
-                <button class="btn btn-outline-success" id="exportExcel">
-                    <i class="fas fa-file-excel me-2"></i>Export to Excel
-                </button>
             </div>
         </div>
 
@@ -322,23 +319,121 @@
                                 @forelse($recentTransactions as $transaction)
                                     <div class="list-group-item">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <div>
+                                            <div class="flex-grow-1">
                                                 <div class="d-flex align-items-center">
-                                                    <i class="fas {{ $transaction->type === 'purchase_order' ? 'fa-shopping-cart' : 'fa-exchange-alt' }} me-2 
-                                                              text-{{ $transaction->type === 'purchase_order' ? 'primary' : 'success' }}"></i>
+                                                    <div class="me-3">
+                                                        @if($transaction->type === 'purchase_order')
+                                                            <div class="bg-primary bg-opacity-10 p-2 rounded">
+                                                                <i class="fas fa-shopping-cart text-primary"></i>
+                                                            </div>
+                                                        @else
+                                                            <div class="bg-success bg-opacity-10 p-2 rounded">
+                                                                <i class="fas fa-exchange-alt text-success"></i>
+                                                            </div>
+                                                        @endif
+                                                    </div>
                                                     <div>
-                                                        <div class="fw-bold">{{ Carbon\Carbon::parse($transaction->date)->format('M d, Y') }}</div>
-                                                        <small class="text-muted">{{ $transaction->description }}</small>
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="fw-bold">{{ Carbon\Carbon::parse($transaction->date)->format('M d, Y') }}</div>
+                                                            <div class="ms-2">
+                                                                @if($transaction->payment_status === 'pending')
+                                                                    <span class="badge bg-warning">Pending</span>
+                                                                @elseif($transaction->payment_status === 'completed')
+                                                                    <span class="badge bg-success">Paid</span>
+                                                                @elseif($transaction->payment_status === 'overdue')
+                                                                    <span class="badge bg-danger">Overdue</span>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <small class="text-muted">{{ $transaction->description }}</small>
+                                                            @if($transaction->type === 'purchase_order')
+                                                                <span class="badge bg-info">Purchase Order</span>
+                                                            @endif
+                                                        </div>
+                                                        @if($transaction->notes)
+                                                            <div class="mt-1">
+                                                                <small class="text-muted"><i class="fas fa-sticky-note me-1"></i>{{ $transaction->notes }}</small>
+                                                            </div>
+                                                        @endif
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="text-end">
-                                                <div class="fw-bold text-{{ $transaction->amount > 10000 ? 'danger' : 'success' }}">
-                                                    ₱{{ number_format($transaction->amount, 2) }}
+                                                <div class="d-flex align-items-center justify-content-end gap-2">
+                                                    <div>
+                                                        <div class="fw-bold">₱{{ number_format($transaction->amount, 2) }}</div>
+                                                        @php
+                                                            $budgetImpact = ($transaction->amount / $selectedContract->total_amount) * 100;
+                                                        @endphp
+                                                        <small class="text-muted">{{ number_format($budgetImpact, 1) }}% of budget</small>
+                                                    </div>
+                                                    <button class="btn btn-sm btn-link p-0" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#transactionModal{{ $transaction->id }}">
+                                                        <i class="fas fa-info-circle"></i>
+                                                    </button>
                                                 </div>
-                                                @if($transaction->type === 'purchase_order')
-                                                    <span class="badge bg-info">Purchase Order</span>
-                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Transaction Details Modal -->
+                                    <div class="modal fade" id="transactionModal{{ $transaction->id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">
+                                                        @if($transaction->type === 'purchase_order')
+                                                            Purchase Order Details
+                                                        @else
+                                                            Transaction Details
+                                                        @endif
+                                                    </h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <h6>Basic Information</h6>
+                                                        <p class="mb-1"><strong>Date:</strong> {{ Carbon\Carbon::parse($transaction->date)->format('M d, Y') }}</p>
+                                                        <p class="mb-1"><strong>Type:</strong> {{ ucfirst($transaction->type) }}</p>
+                                                        <p class="mb-1"><strong>Amount:</strong> ₱{{ number_format($transaction->amount, 2) }}</p>
+                                                        <p class="mb-1"><strong>Budget Impact:</strong> {{ number_format($budgetImpact, 1) }}% of total budget</p>
+                                                        <p class="mb-1"><strong>Status:</strong> {{ ucfirst($transaction->status) }}</p>
+                                                        <p class="mb-1"><strong>Payment Status:</strong> {{ ucfirst($transaction->payment_status) }}</p>
+                                                    </div>
+
+                                                    @if($transaction->type === 'purchase_order')
+                                                        <div class="mb-3">
+                                                            <h6>Purchase Order Details</h6>
+                                                            <p class="mb-1"><strong>PO Number:</strong> {{ $transaction->description }}</p>
+                                                            <p class="mb-1"><strong>Supplier:</strong> {{ $transaction->supplier->company_name ?? 'N/A' }}</p>
+                                                            @if($transaction->items)
+                                                                <div class="mt-2">
+                                                                    <h6>Items</h6>
+                                                                    <ul class="list-unstyled">
+                                                                        @foreach($transaction->items as $item)
+                                                                            <li class="mb-1">
+                                                                                {{ $item->material->name ?? 'N/A' }} - 
+                                                                                {{ $item->quantity }} x ₱{{ number_format($item->unit_price, 2) }}
+                                                                            </li>
+                                                                        @endforeach
+                                                                    </ul>
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+
+                                                    @if($transaction->notes)
+                                                        <div class="mb-3">
+                                                            <h6>Notes</h6>
+                                                            <p class="mb-0">{{ $transaction->notes }}</p>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -368,12 +463,6 @@ document.addEventListener('DOMContentLoaded', function() {
         initSpendingChart();
         initBreakdownChart();
         initBudgetDonut();
-
-        // Export to Excel functionality
-        document.getElementById('exportExcel').addEventListener('click', function() {
-            // Add Excel export logic here
-            alert('Excel export functionality will be implemented here');
-        });
     @endif
 });
 
