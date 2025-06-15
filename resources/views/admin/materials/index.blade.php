@@ -80,6 +80,7 @@
                                     <th>Base Price</th>
                                     <th>SRP</th>
                                     <th>Suppliers</th>
+                                    <th>Warranty</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -136,6 +137,7 @@
                                             View Suppliers
                                         </button>
                                     </td>
+                                    <td>{{ $material->warranty_period ? $material->warranty_period . ' months' : 'No warranty' }}</td>
                                     <td>
                                         <div class="btn-group">
                                             <a href="{{ route('materials.show', $material->id) }}" 

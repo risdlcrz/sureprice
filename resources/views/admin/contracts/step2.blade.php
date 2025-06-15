@@ -271,6 +271,7 @@
                                                 <th>Unit Cost</th>
                                                 <th>Quantity</th>
                                                 <th>Total Cost</th>
+                                                <th>Warranty</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -815,7 +816,7 @@ const scopeTypes = {
     }
 };
 
-const DEFAULT_CREW_SIZE = 2; // Default number of workers per crew
+const DEFAULT_CREW_SIZE = 8; // Default number of workers per crew (was 2)
 const DEFAULT_HOURS_PER_DAY = 8; // Default working hours per day
 
 // Helper for key adjustments
@@ -1532,6 +1533,7 @@ function updateGrandTotalAndBreakdown() {
             <td>₱${material.unitCost.toFixed(2)}</td>
             <td>${material.quantity.toFixed(2)} ${material.unit}${material.coverage ? ` (1 ${material.unit} covers ${material.coverage} sqm)` : ''}</td>
             <td>₱${material.totalCost.toFixed(2)}</td>
+            <td>${material.warranty_period ? material.warranty_period + ' months' : 'No warranty'}</td>
             <td>
                 <button type="button" class="btn btn-sm btn-info" 
                     onclick="showMaterialDetails('${material.name}', ${JSON.stringify(material.rooms).replace(/'/g, "\\'")})">

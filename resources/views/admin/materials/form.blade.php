@@ -114,6 +114,18 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
+                                        <label for="warranty_period">Warranty Period (months)</label>
+                                        <input type="number" class="form-control @error('warranty_period') is-invalid @enderror" 
+                                            id="warranty_period" name="warranty_period" min="0" step="1"
+                                            value="{{ old('warranty_period', $material->warranty_period ?? '') }}">
+                                        @error('warranty_period')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <small class="form-text text-muted">Leave blank if no warranty.</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
                                         <label for="srp_price">SRP Price</label>
                                         <div class="input-group">
                                             <div class="input-group-prepend">

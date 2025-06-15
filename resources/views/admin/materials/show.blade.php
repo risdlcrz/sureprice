@@ -52,6 +52,9 @@
                         <span class="text-muted">No suppliers</span>
                     @endif
                 </dd>
+
+                <dt class="col-sm-3">Warranty</dt>
+                <dd class="col-sm-9">{{ $material->warranty_period ? $material->warranty_period . ' months' : 'No warranty' }}</dd>
             </dl>
             <a href="{{ route('materials.index') }}" class="btn btn-secondary">Back to List</a>
         </div>
