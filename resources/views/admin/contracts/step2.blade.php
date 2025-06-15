@@ -962,17 +962,127 @@ function calculateAllCosts() {
     };
 }
 
+// --- Task Sequencing and Parallelism Logic (using actual scope keys) ---
+const TASK_SEQUENCE = [
+    // MEPFS Rough-in and Fireproofing (parallel group 1)
+    "electrical_wiring", // Electrical Wiring
+    "plumbing_rough_in", // Plumbing Pipes
+    "fireproofing",      // Fireproofing Spray
+    // Drywall Hanging and Flooring (parallel group 2)
+    "drywall_installation", // Drywall Installation
+    "flooring_installation", // Vinyl Flooring
+    "tile_installation",     // Tile Installation
+    // Drywall Finishing (sequential)
+    "drywall_finishing", // Drywall Finishing
+    // Painting and Cabinetry (parallel group 3)
+    "painting_crew", // Painting Crew
+    "cabinetry_installation" // Cabinetry Installation
+];
+
+const GROUPINGS = [
+    ["electrical_wiring", "plumbing_rough_in", "fireproofing"],
+    ["drywall_installation", "flooring_installation", "tile_installation"],
+    ["drywall_finishing"],
+    ["painting_crew", "cabinetry_installation"]
+];
+
+const DEPENDENCIES = {
+    // Drywall Finishing after all MEPFS and fireproofing
+    "drywall_finishing": ["electrical_wiring", "plumbing_rough_in", "fireproofing", "drywall_installation"],
+    // Painting after Drywall Finishing
+    "painting_crew": ["drywall_finishing"],
+    // Flooring after Painting
+    "flooring_installation": ["painting_crew"],
+    "tile_installation": ["painting_crew"],
+    // Cabinetry after Flooring
+    "cabinetry_installation": ["flooring_installation", "tile_installation"]
+};
+
+function getSelectedScopesForRoom(room) {
+    return new Set(Array.from(room.querySelectorAll('.scope-checkbox:checked')).map(cb => cb.value));
+}
+
+function getTaskDaysForRoom(taskKey, room) {
+    const scope = scopeTypes[taskKey];
+    if (!scope) return 0;
+    return getScopeEstimatedDays(scope, room);
+}
+
+function calculateProjectTimeline() {
+    const rooms = Array.from(document.querySelectorAll('.room-row'));
+    if (rooms.length === 0) return 0;
+
+    // Build per-room timelines: { roomId: { taskKey: {start, end, duration} } }
+    const roomTimelines = {};
+    rooms.forEach(room => {
+        const roomId = room.dataset.roomId;
+        const selected = getSelectedScopesForRoom(room);
+        // Only consider tasks in the defined sequence
+        let endTimes = {};
+        let timeline = {};
+        for (const taskKey of TASK_SEQUENCE) {
+            if (!selected.has(taskKey)) continue;
+            // Get duration for this task in this room
+            const duration = getTaskDaysForRoom(taskKey, room);
+            // Determine start time: max end of dependencies, or end of previous task
+            let start = 0;
+            if (DEPENDENCIES[taskKey]) {
+                start = Math.max(...DEPENDENCIES[taskKey].map(dep => endTimes[dep] || 0));
+            } else {
+                // If not first, start after previous selected task
+                const prevTaskIdx = TASK_SEQUENCE.slice(0, TASK_SEQUENCE.indexOf(taskKey)).reverse().find(tk => tk in endTimes);
+                if (prevTaskIdx) start = endTimes[prevTaskIdx];
+            }
+            const end = start + duration;
+            timeline[taskKey] = { start, end, duration };
+            endTimes[taskKey] = end;
+        }
+        roomTimelines[roomId] = timeline;
+    });
+
+    // --- Single Room: project duration is end of last task ---
+    if (rooms.length === 1) {
+        const timeline = Object.values(roomTimelines)[0];
+        if (!timeline || Object.keys(timeline).length === 0) return 0;
+        // End of the last selected task
+        const lastEnd = Math.max(...Object.values(timeline).map(t => t.end));
+        return lastEnd;
+    }
+
+    // --- Multi-Room: parallel groups ---
+    // For each group, find the max duration among all rooms for that group, then sum in order
+    let totalDuration = 0;
+    for (const group of GROUPINGS) {
+        let maxGroupEnd = 0;
+        for (const timeline of Object.values(roomTimelines)) {
+            // For this room, group duration is the sum of durations of selected tasks in this group, in sequence (with dependencies)
+            let groupTasks = group.filter(taskKey => timeline[taskKey]);
+            if (groupTasks.length === 0) continue;
+            // For this group, the end time is the end of the last task in the group (since dependencies are respected)
+            let groupEnd = Math.max(...groupTasks.map(taskKey => timeline[taskKey].end));
+            let groupStart = Math.min(...groupTasks.map(taskKey => timeline[taskKey].start));
+            let groupDuration = groupEnd - groupStart;
+            maxGroupEnd = Math.max(maxGroupEnd, groupDuration);
+        }
+        totalDuration += maxGroupEnd;
+    }
+    return totalDuration;
+}
+
 function updateProjectTimeline() {
     const startDateInput = document.getElementById('start_date');
     const endDateInput = document.getElementById('end_date');
     if (!startDateInput || !startDateInput.value) return;
-    const { totalEstimatedDays } = calculateAllCosts();
+    const totalEstimatedDays = calculateProjectTimeline();
     const startDate = new Date(startDateInput.value);
     const endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + Math.ceil(totalEstimatedDays));
     if (endDateInput) {
         endDateInput.value = endDate.toISOString().split('T')[0];
     }
+    document.querySelectorAll('.estimated-time').forEach(elem => {
+        elem.textContent = `${totalEstimatedDays > 0 ? totalEstimatedDays.toFixed(1) : 0} days`;
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {

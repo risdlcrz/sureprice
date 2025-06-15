@@ -558,6 +558,7 @@ class ContractController extends Controller
                     'length' => $roomData['length'],
                     'width' => $roomData['width'],
                     'height' => $roomData['height'],
+                    'area' => ($roomData['floor_area'] ?? 0) + ($roomData['wall_area'] ?? 0),
                     'floor_area' => $roomData['floor_area'],
                     'wall_area' => $roomData['wall_area'],
                     'materials_cost' => $roomData['materials_cost'] ?? 0,
