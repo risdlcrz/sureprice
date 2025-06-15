@@ -9,22 +9,41 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class PaymentController extends Controller
 {
     public function index()
     {
-        // Get paginated payments
-        $pagedPayments = Payment::with(['contract', 'attachment'])
-            ->orderBy('due_date')
-            ->paginate(15);
-            
-        // Group the current page's payments by contract
-        $grouped = $pagedPayments->getCollection()->groupBy('contract_id');
-            
+        // Get all payments, eager load contract relationship
+        $allPayments = Payment::with(['contract', 'attachment'])->orderBy('due_date')->get();
+
+        // Group all payments by contract for accurate 'next due' calculation
+        $groupedAllPayments = $allPayments->groupBy('contract_id');
+
+        // Prepare data for the view, calculating next due payment for each contract
+        $contractsWithPayments = collect();
+        foreach ($groupedAllPayments as $contractId => $paymentsForContract) {
+            $contract = $paymentsForContract->first()->contract; // Get the contract model
+            $nextDue = $paymentsForContract->where('status', '!=', 'paid')->sortBy('due_date')->first();
+
+            $contractsWithPayments->push((object)[
+                'contract' => $contract,
+                'payments' => $paymentsForContract->sortBy('due_date'), // Ensure payments are sorted for display
+                'nextDue' => $nextDue,
+            ]);
+        }
+
+        // Manually paginate the contractsWithPayments collection
+        $perPage = 15;
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $currentItems = $contractsWithPayments->slice(($currentPage - 1) * $perPage, $perPage)->all();
+        $pagedContracts = new LengthAwarePaginator($currentItems, $contractsWithPayments->count(), $perPage, $currentPage, [
+            'path' => LengthAwarePaginator::resolveCurrentPath()
+        ]);
+
         return view('payments.index', [
-            'grouped' => $grouped,
-            'payments' => $pagedPayments // Pass the original paginator for links
+            'pagedContracts' => $pagedContracts, // Pass the paginated contracts with their payments and nextDue
         ]);
     }
 

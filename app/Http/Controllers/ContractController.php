@@ -1089,7 +1089,7 @@ class ContractController extends Controller
                             'material_name' => $materialName,
                             'unit' => $units[$index] ?? 'pcs',
                             'supplier_id' => isset($supplierIds[$index]) ? $supplierIds[$index] : null,
-                            'supplier_name' => null,
+                            'supplier_name' => isset($supplierIds[$index]) ? Supplier::find($supplierIds[$index])->company_name : null,
                             'quantity' => $quantities[$index],
                             'amount' => $amounts[$index],
                             'total' => $quantities[$index] * $amounts[$index]
@@ -1227,8 +1227,8 @@ class ContractController extends Controller
                     'material_id' => $materialId,
                     'material_name' => $material->name,
                     'unit' => $unit,
-                    'supplier_id' => $supplierIds[$index] ?? null,
-                    'supplier_name' => $supplierNames[$index] ?? ($supplier ? $supplier->name : null),
+                    'supplier_id' => $supplier ? $supplier->id : null,
+                    'supplier_name' => $supplier ? $supplier->company_name : null,
                     'quantity' => $quantities[$index],
                     'amount' => $amounts[$index],
                     'total' => $quantities[$index] * $amounts[$index]

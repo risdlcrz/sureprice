@@ -40,6 +40,54 @@ class BudgetAllocationController extends Controller
                 'purchaseOrders.supplier',
                 'purchaseOrders.items.material.category'
             ])->findOrFail($contractId);
+
+            // Calculate total spent
+            $totalSpent = $selectedContract->transactions->sum('amount');
+
+            // Prepare data for charts
+            $monthlyData = $this->prepareMonthlyData($selectedContract);
+            $weeklyData = $this->prepareWeeklyData($selectedContract);
+            $categoryData = $this->prepareCategoryData($selectedContract);
+            $supplierData = $this->prepareSupplierData($selectedContract);
+
+            // Get recent transactions with optimized query
+            $recentTransactions = collect();
+            
+            // Get recent POs with optimized query
+            $recentPOs = $selectedContract->purchaseOrders()
+                ->with('supplier')
+                ->where('status', 'approved')
+                ->latest('created_at')
+                ->take(10)
+                ->get()
+                ->map(function($po) {
+                    return (object)[
+                        'date' => $po->created_at,
+                        'description' => "PO #{$po->po_number} - " . ($po->supplier->company_name ?? 'Unknown Supplier'),
+                        'amount' => (float)$po->total_amount,
+                        'type' => 'purchase_order'
+                    ];
+                });
+
+            // Get recent regular transactions with optimized query
+            $recentRegularTransactions = $selectedContract->transactions()
+                ->latest('date')
+                ->take(10)
+                ->get()
+                ->map(function($transaction) {
+                    return (object)[
+                        'date' => $transaction->date,
+                        'description' => $transaction->description,
+                        'amount' => (float)$transaction->amount,
+                        'type' => 'transaction'
+                    ];
+                });
+
+            // Combine and sort all transactions
+            $recentTransactions = $recentPOs->concat($recentRegularTransactions)
+                ->sortByDesc('date')
+                ->take(10)
+                ->values();
         } elseif ($contracts->isNotEmpty()) {
             $selectedContract = Contract::with([
                 'client',
@@ -74,35 +122,6 @@ class BudgetAllocationController extends Controller
             
             $totalSpent = $approvedPOTotal + $transactionsTotal;
             
-            // Recent transactions (combining POs and regular transactions)
-            $recentTransactions = collect();
-            
-            // Add POs as transactions
-            foreach ($selectedContract->purchaseOrders->take(5) as $po) {
-                $recentTransactions->push((object)[
-                    'date' => $po->created_at,
-                    'description' => "PO #{$po->po_number} - " . ($po->supplier->name ?? 'Unknown Supplier'),
-                    'amount' => (float)$po->total_amount,
-                    'type' => 'purchase_order'
-                ]);
-            }
-            
-            // Add regular transactions
-            foreach ($selectedContract->transactions->take(5) as $transaction) {
-                $recentTransactions->push((object)[
-                    'date' => $transaction->date,
-                    'description' => $transaction->description,
-                    'amount' => (float)$transaction->amount,
-                    'type' => 'transaction'
-                ]);
-            }
-            
-            // Sort and limit transactions
-            $recentTransactions = $recentTransactions
-                ->sortByDesc('date')
-                ->take(5)
-                ->values();
-
             // Prepare spending chart data (both monthly and weekly)
             $monthlyData = $this->prepareMonthlySpendingData($selectedContract);
             $weeklyData = $this->prepareWeeklySpendingData($selectedContract);
@@ -130,13 +149,12 @@ class BudgetAllocationController extends Controller
         return view('admin.budget-allocation', compact(
             'contracts',
             'selectedContract',
-            'recentTransactions',
-            'totalBudget',
             'totalSpent',
             'monthlyData',
             'weeklyData',
             'categoryData',
-            'supplierData'
+            'supplierData',
+            'recentTransactions'
         ));
     }
 
@@ -312,6 +330,83 @@ class BudgetAllocationController extends Controller
 
         $data->labels = array_keys($topSuppliers);
         $data->values = array_values($topSuppliers);
+
+        return $data;
+    }
+
+    private function prepareSupplierData($contract)
+    {
+        $data = new stdClass();
+        
+        // Group items by supplier and calculate totals
+        $supplierTotals = $contract->items()
+            ->whereNotNull('supplier_id')
+            ->select('supplier_id', 'supplier_name', DB::raw('SUM(total) as total_amount'))
+            ->groupBy('supplier_id', 'supplier_name')
+            ->get();
+
+        $data->labels = $supplierTotals->pluck('supplier_name')->toArray();
+        $data->values = $supplierTotals->pluck('total_amount')->toArray();
+
+        return $data;
+    }
+
+    private function prepareMonthlyData($contract)
+    {
+        $data = new stdClass();
+        
+        // Get transactions grouped by month
+        $monthlyTransactions = $contract->transactions()
+            ->select(DB::raw('DATE_FORMAT(date, "%Y-%m") as month'), DB::raw('SUM(amount) as total'))
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get();
+
+        $data->labels = $monthlyTransactions->pluck('month')->map(function($month) {
+            return Carbon::createFromFormat('Y-m', $month)->format('M Y');
+        })->toArray();
+        
+        $data->values = $monthlyTransactions->pluck('total')->toArray();
+
+        return $data;
+    }
+
+    private function prepareWeeklyData($contract)
+    {
+        $data = new stdClass();
+        
+        // Get transactions grouped by week
+        $weeklyTransactions = $contract->transactions()
+            ->select(DB::raw('YEARWEEK(date) as week'), DB::raw('SUM(amount) as total'))
+            ->groupBy('week')
+            ->orderBy('week')
+            ->get();
+
+        $data->labels = $weeklyTransactions->pluck('week')->map(function($week) {
+            $year = substr($week, 0, 4);
+            $weekNum = substr($week, 4);
+            return "Week $weekNum, $year";
+        })->toArray();
+        
+        $data->values = $weeklyTransactions->pluck('total')->toArray();
+
+        return $data;
+    }
+
+    private function prepareCategoryData($contract)
+    {
+        $data = new stdClass();
+        
+        // Group items by material category and calculate totals
+        $categoryTotals = $contract->items()
+            ->join('materials', 'contract_items.material_id', '=', 'materials.id')
+            ->join('categories', 'materials.category_id', '=', 'categories.id')
+            ->select('categories.name', DB::raw('SUM(contract_items.total) as total_amount'))
+            ->groupBy('categories.name')
+            ->get();
+
+        $data->labels = $categoryTotals->pluck('name')->toArray();
+        $data->values = $categoryTotals->pluck('total_amount')->toArray();
 
         return $data;
     }

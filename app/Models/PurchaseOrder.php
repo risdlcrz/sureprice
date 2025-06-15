@@ -72,6 +72,11 @@ class PurchaseOrder extends Model
         return $this->belongsTo(Contract::class, 'contract_id');
     }
 
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
     public function getStatusColorAttribute()
     {
         return [

@@ -43,6 +43,11 @@ class Transaction extends Model
         return $this->belongsTo(Payment::class);
     }
 
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

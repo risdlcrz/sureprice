@@ -2,23 +2,25 @@
 
 @section('content')
 @php
-    $grouped = $payments->groupBy('contract_id');
+    // Old variables, no longer needed in this structure
+    // $grouped = $payments->groupBy('contract_id');
 @endphp
 <div class="container">
     <h1>Payments</h1>
-    @foreach($grouped as $contractId => $contractPayments)
+    @foreach($pagedContracts as $contractData)
     @php
-        $contract = $contractPayments->first()->contract;
-        $nextDue = $contractPayments->where('status', '!=', 'paid')->sortBy('due_date')->first();
+        $contract = $contractData->contract;
+        $nextDue = $contractData->nextDue;
+        $contractPayments = $contractData->payments;
     @endphp
     
     <div class="card mb-4">
         <div class="card-header">
-            <h5 class="mb-0">{{ $contract->title ?? 'Contract #'.$contractId }}</h5>
+            <h5 class="mb-0">{{ $contract->title ?? 'Contract #'.$contract->id }}</h5>
         </div>
         
         @if($nextDue)
-        <div class="alert alert-info m-3 mb-0">
+        <div class="next-payment-info m-3 mb-0">
             <strong>Next Payment Due:</strong> ₱{{ number_format($nextDue->amount, 2) }} on {{ $nextDue->due_date->format('M d, Y') }}
             @if($nextDue->isOverdue())
                 <span class="badge bg-danger ms-2">Overdue</span>
@@ -87,7 +89,7 @@
 
     <!-- Pagination Links -->
     <div class="d-flex justify-content-center">
-        {{ $payments->links() }}
+        {{ $pagedContracts->links() }}
     </div>
 </div>
 @endsection 
