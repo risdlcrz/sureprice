@@ -79,6 +79,11 @@ class Payment extends Model
         return $this->morphOne(\App\Models\Attachment::class, 'attachable');
     }
 
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
     // Scopes
     public function scopePending($query)
     {

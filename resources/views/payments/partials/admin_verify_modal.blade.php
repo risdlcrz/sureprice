@@ -40,6 +40,9 @@
           <div class="mb-3">
             <label for="admin_reference_number_{{ $payment->id }}" class="form-label">Reference Number</label>
             <input type="text" class="form-control" name="admin_reference_number" id="admin_reference_number_{{ $payment->id }}" required>
+            <div class="invalid-feedback" id="reference_number_error_{{ $payment->id }}" style="display: none;">
+              Reference number does not match the client's submission.
+            </div>
           </div>
           <div class="mb-3">
             <label for="admin_received_amount_{{ $payment->id }}" class="form-label">Amount Received</label>
@@ -56,9 +59,25 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-success">Submit Verification</button>
+          <button type="submit" class="btn btn-success" onclick="return validateReferenceNumber({{ $payment->id }})">Submit Verification</button>
         </div>
       </form>
     </div>
   </div>
-</div> 
+</div>
+
+<script>
+function validateReferenceNumber(paymentId) {
+  const clientReference = '{{ $payment->client_reference_number }}';
+  const adminReference = document.getElementById('admin_reference_number_' + paymentId).value;
+  const errorDiv = document.getElementById('reference_number_error_' + paymentId);
+  
+  if (clientReference && adminReference && clientReference !== adminReference) {
+    errorDiv.style.display = 'block';
+    return false;
+  }
+  
+  errorDiv.style.display = 'none';
+  return true;
+}
+</script> 

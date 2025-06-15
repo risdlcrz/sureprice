@@ -137,34 +137,39 @@ class PaymentController extends Controller
                 // Log transaction creation
                 Log::info('Transaction created successfully', [
                     'transaction_id' => $transaction->id,
-                    'payment_id' => $payment->id
+                    'payment_id' => $payment->id,
+                    'transaction_data' => $transaction->toArray()
                 ]);
-            } catch (\Exception $e) {
-                Log::error('Failed to create transaction', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-                throw $e;
-            }
 
-            // Check if all contract payments are paid
-            if ($payment->contract) {
-                $unpaidPayments = $payment->contract->payments()
-                    ->where('status', '!=', 'paid')
-                    ->count();
+                // Check if all contract payments are paid
+                if ($payment->contract) {
+                    $unpaidPayments = $payment->contract->payments()
+                        ->where('status', '!=', 'paid')
+                        ->count();
 
-                if ($unpaidPayments === 0) {
-                    $payment->contract->update(['status' => 'completed']);
-                    Log::info('Contract marked as completed', [
-                        'contract_id' => $payment->contract_id
-                    ]);
+                    if ($unpaidPayments === 0) {
+                        $payment->contract->update(['status' => 'completed']);
+                        Log::info('Contract marked as completed', [
+                            'contract_id' => $payment->contract_id
+                        ]);
+                    }
                 }
+
+                DB::commit();
+
+                return redirect()->route('payments.index')
+                               ->with('success', 'Payment #' . $payment->payment_number . ' has been marked as paid successfully.');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Failed to create transaction', [
+                    'payment_id' => $payment->id,
+                    'error_message' => $e->getMessage(),
+                    'error_trace' => $e->getTraceAsString()
+                ]);
+
+                return redirect()->back()
+                               ->with('error', 'Failed to create transaction: ' . $e->getMessage());
             }
-
-            DB::commit();
-
-            return redirect()->route('payments.index')
-                           ->with('success', 'Payment #' . $payment->payment_number . ' has been marked as paid successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -318,28 +323,73 @@ class PaymentController extends Controller
             'admin_notes' => 'nullable|string',
         ]);
 
-        $data = $request->only([
-            'admin_payment_method',
-            'admin_reference_number',
-            'admin_received_amount',
-            'admin_received_date',
-            'admin_notes',
-        ]);
+        try {
+            DB::beginTransaction();
 
-        if ($request->hasFile('admin_payment_proof')) {
-            $file = $request->file('admin_payment_proof');
-            $path = $file->store('payment_proofs', 'public');
-            $data['admin_payment_proof'] = $path;
+            $data = $request->only([
+                'admin_payment_method',
+                'admin_reference_number',
+                'admin_received_amount',
+                'admin_received_date',
+                'admin_notes',
+            ]);
+
+            if ($request->hasFile('admin_payment_proof')) {
+                $file = $request->file('admin_payment_proof');
+                $path = $file->store('payment_proofs', 'public');
+                $data['admin_payment_proof'] = $path;
+            }
+
+            $payment->update($data);
+
+            // If all details match, mark as paid and create transaction
+            if ($payment->canBeMarkedPaid()) {
+                // Update payment status
+                $payment->status = 'paid';
+                $payment->paid_date = now();
+                $payment->reference_number = $payment->admin_reference_number;
+                $payment->marked_paid_by = auth()->id();
+                $payment->save();
+
+                // Create transaction record
+                $transaction = Transaction::create([
+                    'payment_id' => $payment->id,
+                    'contract_id' => $payment->contract_id,
+                    'date' => now(),
+                    'amount' => $payment->amount,
+                    'type' => 'payment',
+                    'reference_number' => $payment->admin_reference_number,
+                    'description' => 'Payment for Contract #' . ($payment->contract ? $payment->contract->contract_number : 'N/A') . ' - ' . 
+                                   ($payment->description ?? 'Payment #' . $payment->payment_number),
+                    'status' => 'completed',
+                    'created_by' => auth()->id()
+                ]);
+
+                // Check if all contract payments are paid
+                if ($payment->contract) {
+                    $unpaidPayments = $payment->contract->payments()
+                        ->where('status', '!=', 'paid')
+                        ->count();
+
+                    if ($unpaidPayments === 0) {
+                        $payment->contract->update(['status' => 'completed']);
+                    }
+                }
+
+                DB::commit();
+                return redirect()->back()->with('success', 'Payment validated and marked as paid.');
+            }
+
+            DB::commit();
+            return redirect()->back()->with('info', 'Admin proof submitted. Waiting for details to match for validation.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to process admin proof', [
+                'payment_id' => $payment->id,
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'Failed to process admin proof: ' . $e->getMessage());
         }
-
-        $payment->update($data);
-
-        // If all details match, mark as paid
-        if ($payment->canBeMarkedPaid()) {
-            $payment->markAsPaid($payment->admin_reference_number);
-            return redirect()->back()->with('success', 'Payment validated and marked as paid.');
-        }
-
-        return redirect()->back()->with('info', 'Admin proof submitted. Waiting for details to match for validation.');
     }
 } 

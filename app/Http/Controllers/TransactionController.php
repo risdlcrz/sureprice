@@ -11,7 +11,16 @@ class TransactionController extends Controller
 {
     public function index()
     {
-        $transactions = \App\Models\Transaction::with('payment')->orderBy('date', 'desc')->paginate(15);
+        $query = Transaction::with(['payment', 'contract', 'creator']);
+
+        // If user is not admin, only show their transactions
+        if (auth()->user()->user_type !== 'admin') {
+            $query->whereHas('contract', function($q) {
+                $q->where('client_id', auth()->user()->party->id);
+            });
+        }
+
+        $transactions = $query->orderBy('date', 'desc')->paginate(15);
         return view('transactions.index', compact('transactions'));
     }
 
