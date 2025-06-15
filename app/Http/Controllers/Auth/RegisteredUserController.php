@@ -61,15 +61,15 @@ class RegisteredUserController extends Controller
             // Redirect based on role/designation after login
             if ($type === 'employee') {
                 if ($employee->role === 'procurement') {
-                    return redirect()->route('procurement_dashboard');
-                } elseif ($employee->role === 'warehouse') {
-                    return redirect()->route('warehousing_dashboard');
+                    return redirect()->route('procurement.dashboard');
+                } elseif ($employee->role === 'warehousing') {
+                    return redirect()->route('warehousing.dashboard');
                 }
             } elseif ($type === 'company') {
                 if ($company->designation === 'client') {
-                    return redirect()->route('client_dashboard');
+                    return redirect()->route('client.dashboard');
                 } elseif ($company->designation === 'supplier') {
-                    return redirect()->route('supplier_dashboard');
+                    return redirect()->route('supplier.dashboard');
                 }
             }
 
@@ -95,7 +95,7 @@ class RegisteredUserController extends Controller
             'username' => 'required|string|max:50|unique:users',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|confirmed',
-            'role' => 'required|in:procurement,warehouse',
+            'role' => 'required|in:procurement,warehousing',
             'type' => 'required|in:employee,company'
         ]);
     }

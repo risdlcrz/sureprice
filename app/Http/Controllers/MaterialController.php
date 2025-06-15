@@ -490,4 +490,50 @@ class MaterialController extends Controller
         
         return response()->json(['exists' => $exists]);
     }
+
+    public function procurementIndex(Request $request)
+    {
+        $query = Material::with(['category', 'suppliers']);
+
+        // Search
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('code', 'like', "%$search%")
+                  ->orWhere('description', 'like', "%$search%")
+                  ->orWhereHas('category', function($cat) use ($search) {
+                      $cat->where('name', 'like', "%$search%")
+                          ->orWhere('slug', 'like', "%$search%")
+                          ->orWhere('description', 'like', "%$search%") ;
+                  });
+            });
+        }
+
+        // Category filter
+        if ($request->filled('category')) {
+            $category = $request->input('category');
+            $query->whereHas('category', function($q) use ($category) {
+                $q->where('slug', $category);
+            });
+        }
+
+        // Sorting
+        $sort = $request->input('sort', 'created_at');
+        $allowedSorts = ['name', 'code', 'base_price', 'created_at'];
+        if (!in_array($sort, $allowedSorts)) {
+            $sort = 'created_at';
+        }
+        $query->orderBy($sort, $sort === 'created_at' ? 'asc' : 'asc');
+
+        // Per page
+        $perPage = (int) $request->input('per_page', 10);
+        if (!in_array($perPage, [10, 25, 50, 100])) {
+            $perPage = 10;
+        }
+
+        $materials = $query->paginate($perPage)->appends($request->all());
+
+        return view('procurement.inventory-dashboard', compact('materials'));
+    }
 }

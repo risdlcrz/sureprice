@@ -42,6 +42,14 @@ class AuthenticatedSessionController extends Controller
             // Redirect based on user type
             if ($user->user_type === 'admin') {
                 return redirect()->route('admin.dbadmin');
+            } elseif ($user->user_type === 'employee') {
+                if ($user->role === 'procurement') {
+                    return redirect()->route('procurement.dashboard');
+                } elseif ($user->role === 'warehousing') {
+                    return redirect()->route('warehousing.dashboard');
+                }
+                // Default redirect for other employee roles if any
+                return redirect()->route('home'); // Or a generic employee dashboard if exists
             } elseif ($user->user_type === 'company') {
                 // Check if the company exists and its status
                 $company = $user->company;

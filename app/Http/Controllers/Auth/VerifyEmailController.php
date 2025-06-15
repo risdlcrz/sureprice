@@ -32,7 +32,17 @@ class VerifyEmailController extends Controller
      */
     private function getRedirectBasedOnUserType($user): RedirectResponse
     {
-        
+        // For employees, redirect based on role
+        if ($user->user_type === 'employee') {
+            if ($user->role === 'procurement') {
+                return redirect()->route('procurement.dashboard');
+            } elseif ($user->role === 'warehousing') {
+                return redirect()->route('warehousing.dashboard');
+            }
+            // Fallback for other employee roles after verification if needed
+            return redirect()->route('home'); 
+        }
+
         // For company users, check approval status and designation
         if ($user->user_type === 'company') {
             $company = $user->company;

@@ -18,7 +18,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'role',
         'user_type',
-        'force_password_change',
         'email_verified_at',
         'last_login_at'
     ];
@@ -30,7 +29,6 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'force_password_change' => 'boolean',
         'last_login_at' => 'datetime',
     ];
 

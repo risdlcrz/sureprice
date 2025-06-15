@@ -289,12 +289,6 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/admin/transactions', [App\Http\Controllers\TransactionController::class, 'index'])->name('admin.transactions');
 });
 
-// Password Change Routes
-Route::get('/change-password', [App\Http\Controllers\Auth\ChangePasswordController::class, 'showChangeForm'])
-    ->name('change.password.form');
-Route::post('/change-password', [App\Http\Controllers\Auth\ChangePasswordController::class, 'update'])
-    ->name('change.password.update');
-
 // Supplier Evaluation Routes
 Route::get('/admin/suppliers/{supplier}/latest-evaluation', [SupplierRankingController::class, 'getLatestEvaluation'])
     ->name('admin.suppliers.latest-evaluation');
@@ -330,3 +324,27 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 });
 
 // Supplier creation is now handled via sign up. Remove or redirect any suppliers.create routes.
+
+// Procurement Routes
+Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->group(function () {
+    Route::get('/procurement/dashboard', [ProcurementController::class, 'index'])->name('procurement.dashboard');
+    Route::get('/procurement/projects', [ProcurementController::class, 'projectDashboard'])->name('procurement.projects');
+    Route::get('/procurement/inventory', [ProcurementController::class, 'inventoryDashboard'])->name('procurement.inventory');
+    Route::get('/procurement/history', [ProcurementController::class, 'projectHistory'])->name('procurement.history');
+    Route::get('/procurement/analytics', [ProcurementController::class, 'analyticsDashboard'])->name('procurement.analytics');
+    Route::get('/procurement/notification-hub', [ProcurementController::class, 'notificationHub'])->name('procurement.notification');
+});
+
+// Procurement routes
+Route::prefix('procurement')->name('procurement.')->group(function () {
+    // Inventory Management Routes
+    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+    Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
+    Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
+    Route::get('/inventory/{inventory}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
+    Route::put('/inventory/{inventory}', [InventoryController::class, 'update'])->name('inventory.update');
+    Route::delete('/inventory/{inventory}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
+    Route::post('/inventory/{inventory}/adjust-stock', [InventoryController::class, 'adjustStock'])->name('inventory.adjust-stock');
+    Route::get('/inventory/low-stock', [InventoryController::class, 'lowStock'])->name('inventory.low-stock');
+    Route::get('/inventory/expiring', [InventoryController::class, 'expiring'])->name('inventory.expiring');
+});

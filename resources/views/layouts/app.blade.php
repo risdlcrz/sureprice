@@ -52,6 +52,8 @@
                     @include('include.sidebars.project')
                 @elseif(request()->is('admin/analytics*'))
                     @include('include.sidebars.analytics')
+                @elseif(auth()->check() && auth()->user()->user_type === 'employee' && auth()->user()->role === 'procurement')
+                    @include('include.sidebars.procurement')
                 @else
                     @include('include.sidebars.default')
                 @endif
@@ -66,6 +68,8 @@
                 @include('include.sidebars.project')
             @elseif(request()->is('admin/analytics*'))
                 @include('include.sidebars.analytics')
+            @elseif(auth()->check() && auth()->user()->user_type === 'employee' && auth()->user()->role === 'procurement')
+                @include('include.sidebars.procurement')
             @else
                 @include('include.sidebars.default')
             @endif

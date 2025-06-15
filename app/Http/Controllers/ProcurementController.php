@@ -8,6 +8,10 @@ use App\Models\Inquiry;
 use App\Models\Quotation;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
+use App\Models\Contract;
+use App\Models\Inventory;
+use App\Models\Project;
+use App\Models\Notification;
 
 class ProcurementController extends Controller
 {
@@ -38,12 +42,75 @@ class ProcurementController extends Controller
             ->take(5)
             ->get();
 
-        return view('admin.procurement-dashboard', compact(
+        return view('procurement.dashboard', compact(
             'recentInvitations',
             'recentInquiries',
             'recentQuotations',
             'recentPurchaseOrders',
             'recentPurchaseRequests'
         ));
+    }
+
+    public function projectDashboard()
+    {
+        $projects = Project::with(['contract', 'client'])
+            ->latest()
+            ->get();
+
+        return view('procurement.project-dashboard', compact('projects'));
+    }
+
+    public function inventoryDashboard()
+    {
+        $inventories = Inventory::with(['material.category'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        $lowStockItems = Inventory::lowStock()->count();
+        $expiringItems = Inventory::expiring()->count();
+        $totalItems = Inventory::count();
+
+        return view('procurement.inventory-dashboard', compact('inventories', 'lowStockItems', 'expiringItems', 'totalItems'));
+    }
+
+    public function projectHistory()
+    {
+        $projects = Project::with(['contract', 'client'])
+            ->where('status', 'completed')
+            ->latest()
+            ->get();
+
+        return view('procurement.project-history', compact('projects'));
+    }
+
+    public function analyticsDashboard()
+    {
+        // Get analytics data
+        $totalProjects = Project::count();
+        $activeProjects = Project::where('status', 'active')->count();
+        $completedProjects = Project::where('status', 'completed')->count();
+        
+        $totalPurchaseOrders = PurchaseOrder::count();
+        $pendingPurchaseOrders = PurchaseOrder::where('status', 'pending')->count();
+        $approvedPurchaseOrders = PurchaseOrder::where('status', 'approved')->count();
+
+        return view('procurement.analytics-dashboard', compact(
+            'totalProjects',
+            'activeProjects',
+            'completedProjects',
+            'totalPurchaseOrders',
+            'pendingPurchaseOrders',
+            'approvedPurchaseOrders'
+        ));
+    }
+
+    public function notificationHub()
+    {
+        // You can fetch procurement-specific notifications here
+        $notifications = Notification::where('for_role', 'procurement')
+                                     ->orWhere('for_user_id', auth()->id())
+                                     ->latest()->get();
+
+        return view('procurement.notification-hub', compact('notifications'));
     }
 } 

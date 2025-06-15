@@ -7,11 +7,11 @@
 <!-- Profile Section -->
 <div class="profile-container">
     <div class="label">Logged in as</div>
-    @if(auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client')
-        <div class="username">{{ auth()->user()->company->contact_person }}</div>
-        <div class="role">Client</div>
+    @if(auth()->check())
+        <div class="username">{{ auth()->user()->getDisplayNameAttribute() }}</div>
+        <div class="role">{{ ucfirst(auth()->user()->role) }}</div>
     @else
-        <div class="username">Main Admin</div>
+        <div class="username">Guest</div>
     @endif
     <i class="fas fa-user-circle profile-icon"></i>
 </div>
