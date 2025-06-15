@@ -27,14 +27,30 @@ class Payment extends Model
         'created_by',
         'approved_by',
         'approved_at',
-        'marked_paid_by'
+        'marked_paid_by',
+        'client_payment_proof',
+        'client_payment_method',
+        'client_reference_number',
+        'client_paid_amount',
+        'client_paid_date',
+        'client_notes',
+        'admin_payment_proof',
+        'admin_payment_method',
+        'admin_reference_number',
+        'admin_received_amount',
+        'admin_received_date',
+        'admin_notes',
     ];
 
     protected $casts = [
         'due_date' => 'date',
         'paid_date' => 'date',
         'approved_at' => 'datetime',
-        'amount' => 'decimal:2'
+        'amount' => 'decimal:2',
+        'client_paid_amount' => 'decimal:2',
+        'client_paid_date' => 'date',
+        'admin_received_amount' => 'decimal:2',
+        'admin_received_date' => 'date',
     ];
 
     // Relationships
@@ -118,6 +134,24 @@ class Payment extends Model
             return 0;
         }
         return now()->diffInDays($this->due_date);
+    }
+
+    public function isForVerification()
+    {
+        return $this->status === 'for_verification';
+    }
+
+    public function markForVerification()
+    {
+        $this->update(['status' => 'for_verification']);
+    }
+
+    public function canBeMarkedPaid()
+    {
+        return $this->status === 'for_verification' &&
+            $this->client_paid_amount == $this->admin_received_amount &&
+            $this->client_reference_number == $this->admin_reference_number &&
+            $this->client_payment_method == $this->admin_payment_method;
     }
 
     // Static methods

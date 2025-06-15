@@ -71,6 +71,9 @@
                         <div class="row mb-4">
                             <div class="col-12">
                                 <h4>Request Items</h4>
+                                <div class="mb-2">
+                                    <input type="text" id="materialTableSearch" class="form-control" placeholder="Search material in table...">
+                                </div>
                                 <div class="table-responsive">
                                     <table class="table table-bordered" id="itemsTable">
                                         <thead>
@@ -397,6 +400,23 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!projectRelatedRadio.checked) {
         projectRelatedFields.style.display = 'none';
     }
+
+    const searchInput = document.getElementById('materialTableSearch');
+    searchInput.addEventListener('input', function() {
+        const filter = this.value.toLowerCase();
+        document.querySelectorAll('#itemsTable tbody tr').forEach(function(row) {
+            const materialCell = row.querySelector('td:first-child input, td:first-child');
+            let text = '';
+            if (materialCell) {
+                if (materialCell.tagName === 'INPUT') {
+                    text = materialCell.value.toLowerCase();
+                } else {
+                    text = materialCell.textContent.toLowerCase();
+                }
+            }
+            row.style.display = text.includes(filter) ? '' : 'none';
+        });
+    });
 });
 </script>
 @endpush

@@ -53,6 +53,8 @@
                                 <span class="badge bg-success">Paid</span>
                             @elseif($payment->isOverdue())
                                 <span class="badge bg-danger">Overdue</span>
+                            @elseif($payment->status === 'for_verification')
+                                <span class="badge bg-info">For Verification</span>
                             @else
                                 <span class="badge bg-warning">Pending</span>
                             @endif
@@ -67,21 +69,12 @@
                             @endif
                         </td>
                         <td>
-                            @if($payment->status !== 'paid')
-                                @if(auth()->user()->user_type === 'admin')
-                                    <form method="POST" action="{{ route('payments.markAsPaid', $payment) }}" class="d-flex gap-2">
-                                        @csrf
-                                        <button type="submit" class="btn btn-success btn-sm">Mark as Paid</button>
-                                    </form>
-                                @else
-                                    <form method="POST" action="{{ route('payments.uploadProof', $payment) }}" class="d-flex gap-2" enctype="multipart/form-data">
-                                        @csrf
-                                        <input type="text" name="reference_number" class="form-control form-control-sm" 
-                                               placeholder="Reference #" required style="width: 120px;">
-                                        <input type="file" name="payment_proof" class="form-control form-control-sm" required>
-                                        <button type="submit" class="btn btn-primary btn-sm">Upload Proof</button>
-                                    </form>
-                                @endif
+                            @if($payment->status === 'for_verification' && auth()->user()->user_type === 'admin')
+                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#adminVerifyModal{{ $payment->id }}">Verify</button>
+                                @include('payments.partials.admin_verify_modal', ['payment' => $payment])
+                            @elseif($payment->status !== 'paid' && auth()->user()->user_type !== 'admin')
+                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#clientPayModal{{ $payment->id }}">Pay</button>
+                                @include('payments.partials.client_pay_modal', ['payment' => $payment])
                             @endif
                         </td>
                     </tr>

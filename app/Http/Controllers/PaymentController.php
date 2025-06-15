@@ -275,4 +275,71 @@ class PaymentController extends Controller
 
         return redirect()->back()->with('success', 'Payment proof uploaded successfully.');
     }
+
+    public function submitClientProof(Request $request, Payment $payment)
+    {
+        $request->validate([
+            'client_payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'client_payment_method' => 'required|string',
+            'client_reference_number' => 'required|string',
+            'client_paid_amount' => 'required|numeric',
+            'client_paid_date' => 'required|date',
+            'client_notes' => 'nullable|string',
+        ]);
+
+        $data = $request->only([
+            'client_payment_method',
+            'client_reference_number',
+            'client_paid_amount',
+            'client_paid_date',
+            'client_notes',
+        ]);
+
+        if ($request->hasFile('client_payment_proof')) {
+            $file = $request->file('client_payment_proof');
+            $path = $file->store('payment_proofs', 'public');
+            $data['client_payment_proof'] = $path;
+        }
+
+        $payment->update($data);
+        $payment->markForVerification();
+
+        return redirect()->back()->with('success', 'Payment proof submitted for verification.');
+    }
+
+    public function submitAdminProof(Request $request, Payment $payment)
+    {
+        $request->validate([
+            'admin_payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'admin_payment_method' => 'required|string',
+            'admin_reference_number' => 'required|string',
+            'admin_received_amount' => 'required|numeric',
+            'admin_received_date' => 'required|date',
+            'admin_notes' => 'nullable|string',
+        ]);
+
+        $data = $request->only([
+            'admin_payment_method',
+            'admin_reference_number',
+            'admin_received_amount',
+            'admin_received_date',
+            'admin_notes',
+        ]);
+
+        if ($request->hasFile('admin_payment_proof')) {
+            $file = $request->file('admin_payment_proof');
+            $path = $file->store('payment_proofs', 'public');
+            $data['admin_payment_proof'] = $path;
+        }
+
+        $payment->update($data);
+
+        // If all details match, mark as paid
+        if ($payment->canBeMarkedPaid()) {
+            $payment->markAsPaid($payment->admin_reference_number);
+            return redirect()->back()->with('success', 'Payment validated and marked as paid.');
+        }
+
+        return redirect()->back()->with('info', 'Admin proof submitted. Waiting for details to match for validation.');
+    }
 } 
