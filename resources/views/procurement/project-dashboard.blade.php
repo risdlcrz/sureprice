@@ -195,6 +195,22 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Past Transactions Card -->
+            <div class="col">
+                <div class="card h-100">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3135/3135715.png" class="card-img-top" alt="Past Transactions">
+                    <div class="card-body">
+                        <h5 class="card-title">Past Transactions</h5>
+                        <p class="card-text">View all past material/service transactions and analytics.</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ route('transactions.past') }}" target="_blank" class="btn btn-info w-100">
+                            <i class="fas fa-chart-bar"></i> Past Transactions
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Recent Activities Section -->

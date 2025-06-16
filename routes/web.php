@@ -124,6 +124,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/update-srp', [MaterialController::class, 'updateSrpPrices'])->name('update-srp');
         Route::post('/ajax-store', [MaterialController::class, 'ajaxStore'])->name('ajax-store');
         Route::get('/check-code', [MaterialController::class, 'checkCode'])->name('check-code');
+        Route::get('/{material}/transactions', [MaterialController::class, 'transactions'])->name('materials.transactions');
     });
 
     // API Material Routes
@@ -173,6 +174,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete'])->name('purchase-orders.complete');
 
     // Transaction Routes
+    Route::get('/transactions/past', [\App\Http\Controllers\TransactionController::class, 'pastTransactions'])->name('transactions.past');
     Route::resource('transactions', \App\Http\Controllers\TransactionController::class);
 
     // Add procurement routes

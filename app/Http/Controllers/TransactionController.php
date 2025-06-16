@@ -76,4 +76,33 @@ class TransactionController extends Controller
         $transaction->delete();
         return redirect()->route('transactions.index')->with('success', 'Transaction deleted successfully.');
     }
+
+    public function pastTransactions(Request $request)
+    {
+        dd('You are in the pastTransactions method!');
+        // Fetch all purchase request items (could also include purchase orders, etc.)
+        $items = \App\Models\PurchaseRequestItem::with(['material', 'supplier'])
+            ->orderByDesc('created_at')
+            ->get();
+
+        // Frequency by material/service
+        $frequency = $items->groupBy('material_id')->map(function($group) {
+            return [
+                'material' => $group->first()->material->name ?? 'Unknown',
+                'count' => $group->count()
+            ];
+        })->values();
+
+        // Monthly forecast (count per month)
+        $monthly = $items->groupBy(function($item) {
+            return $item->created_at->format('Y-m');
+        })->map(function($group, $month) {
+            return [
+                'month' => $month,
+                'count' => $group->count()
+            ];
+        })->sortBy('month')->values();
+
+        return view('transactions.past', compact('items', 'frequency', 'monthly'));
+    }
 } 

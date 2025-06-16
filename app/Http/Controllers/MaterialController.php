@@ -536,4 +536,24 @@ class MaterialController extends Controller
 
         return view('procurement.inventory-dashboard', compact('materials'));
     }
+
+    public function transactions($id)
+    {
+        $items = \App\Models\PurchaseRequestItem::with(['supplier'])
+            ->where('material_id', $id)
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get()
+            ->map(function($item) {
+                return [
+                    'date' => $item->created_at->format('Y-m-d'),
+                    'supplier' => $item->supplier ? $item->supplier->company_name : null,
+                    'price' => $item->estimated_unit_price,
+                    'quantity' => $item->quantity,
+                    'total' => $item->total_amount,
+                    'notes' => $item->notes,
+                ];
+            });
+        return response()->json($items);
+    }
 }
