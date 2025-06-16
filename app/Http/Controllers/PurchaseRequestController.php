@@ -49,7 +49,36 @@ class PurchaseRequestController extends Controller
             }
         }
         
-        return view('admin.purchase-requests.create', compact('materials', 'suppliers', 'contracts', 'projects', 'prefillItems'));
+        $bestSuppliers = [];
+        foreach ($materials as $material) {
+            $best = null;
+            $reason = '';
+            // If there is a preferred supplier, use that
+            $preferred = $material->suppliers->first(function($s) {
+                return isset($s->pivot) && !empty($s->pivot->is_preferred);
+            });
+            if ($preferred) {
+                $best = $preferred;
+                $reason = 'Preferred supplier';
+            } else {
+                // Otherwise, use the supplier with the lowest price
+                $lowest = $material->suppliers->sortBy(function($s) {
+                    return $s->pivot->price ?? INF;
+                })->first();
+                if ($lowest) {
+                    $best = $lowest;
+                    $price = $lowest->pivot->price ?? null;
+                    $reason = $price ? ('Best price: ₱' . number_format($price, 2)) : 'Best available supplier';
+                }
+            }
+            if ($best) {
+                $bestSuppliers[$material->id] = [
+                    'id' => $best->id,
+                    'reason' => $reason
+                ];
+            }
+        }
+        return view('admin.purchase-requests.create', compact('materials', 'suppliers', 'contracts', 'projects', 'prefillItems', 'bestSuppliers'));
     }
 
     public function store(Request $request)

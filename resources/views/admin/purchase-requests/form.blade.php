@@ -109,18 +109,25 @@
                                                 <div class="col-md-2">
                                                     <label>Supplier</label>
                                                     <div class="input-group">
-                                                        <select class="form-select supplier-select" name="items[{{ $index }}][supplier_id]">
+                                                        <select class="form-select supplier-select select2" name="items[{{ $index }}][supplier_id]">
                                                             <option value="">Select Supplier</option>
-                                                            @foreach($suppliers ?? [] as $supplier)
-                                                                <option value="{{ $supplier->id }}">
-                                                                    {{ $supplier->company_name }}@if(!empty($supplier->is_preferred) && $supplier->is_preferred) ★@endif
-                                                                </option>
-                                                            @endforeach
+                                                            @php
+                                                                $matId = $item->material_id ?? null;
+                                                                $best = $matId && isset($bestSuppliers[$matId]) ? $bestSuppliers[$matId] : null;
+                                                            @endphp
+                                                            @if(isset($item) && $item->supplier)
+                                                                <option value="{{ $item->supplier->id }}" selected>{{ $item->supplier->company_name }}</option>
+                                                            @elseif($best)
+                                                                <option value="{{ $best['id'] }}" selected>{{ $suppliers->firstWhere('id', $best['id'])->company_name ?? 'Best Supplier' }}</option>
+                                                            @endif
                                                         </select>
                                                         <button type="button" class="btn btn-info supplier-view-btn" disabled>
                                                             <i class="fas fa-eye"></i>
                                                         </button>
                                                     </div>
+                                                    @if($best)
+                                                        <div class="text-success small mt-1">{{ $best['reason'] }}</div>
+                                                    @endif
                                                 </div>
                                                 <div class="col-md-2">
                                                     <label>Description</label>
@@ -206,7 +213,12 @@
     </div>
 @endsection
 
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+@endpush
+
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     let itemIndex = {{ isset($purchaseRequest) ? $purchaseRequest->items->count() : 0 }};
 
@@ -234,18 +246,14 @@
                     <div class="col-md-2">
                         <label>Supplier</label>
                         <div class="input-group">
-                            <select class="form-select supplier-select" name="items[${itemIndex}][supplier_id]">
+                            <select class="form-select supplier-select select2" name="items[${itemIndex}][supplier_id]">
                                 <option value="">Select Supplier</option>
-                                @foreach($suppliers ?? [] as $supplier)
-                                    <option value="{{ $supplier->id }}">
-                                        {{ $supplier->company_name }}@if(!empty($supplier->is_preferred) && $supplier->is_preferred) ★@endif
-                                    </option>
-                                @endforeach
                             </select>
                             <button type="button" class="btn btn-info supplier-view-btn" disabled>
                                 <i class="fas fa-eye"></i>
                             </button>
                         </div>
+                        <div class="best-supplier-reason text-success small mt-1"></div>
                     </div>
                     <div class="col-md-2">
                         <label>Description</label>
@@ -377,6 +385,182 @@
             if (supplierIdInput) {
                 supplierIdInput.value = e.target.value;
             }
+        }
+    });
+
+    $(document).ready(function() {
+        // Initialize Select2 for existing supplier selects
+        $('.supplier-select').select2({
+            placeholder: 'Search for suppliers...',
+            allowClear: true,
+            ajax: {
+                url: '{{ route("admin.suppliers.search") }}',
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        search: params.term,
+                        page: params.page || 1
+                    };
+                },
+                processResults: function(data, params) {
+                    params.page = params.page || 1;
+                    return {
+                        results: data.data.map(function(item) {
+                            return {
+                                id: item.id,
+                                text: item.company_name
+                            };
+                        }),
+                        pagination: {
+                            more: data.current_page < data.last_page
+                        }
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 2,
+            templateResult: formatSupplier,
+            templateSelection: formatSupplierSelection
+        });
+
+        function formatSupplier(supplier) {
+            if (supplier.loading) {
+                return supplier.text;
+            }
+            return $('<span>' + supplier.text + '</span>');
+        }
+
+        function formatSupplierSelection(supplier) {
+            return supplier.text;
+        }
+
+        // Update the add-item template to include Select2
+        const itemTemplate = `
+            <div class="item-row mb-4">
+                <div class="row">
+                    <div class="col-md-2">
+                        <label>Material</label>
+                        <select class="form-select material-select" name="items[__INDEX__][material_id]" required>
+                            <option value="">Select Material</option>
+                            @foreach($materials ?? [] as $material)
+                                <option value="{{ $material->id }}"
+                                    data-description="{{ $material->description }}"
+                                    data-unit="{{ $material->unit }}"
+                                    data-price="{{ $material->base_price }}"
+                                    data-specifications="{{ $material->specifications }}"
+                                    data-suppliers='@json($material->suppliers->map(fn($s) => ["id"=>$s->id,"name"=>$s->company_name,"is_preferred"=>$s->pivot->is_preferred??false]))'>
+                                    {{ $material->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <input type="hidden" name="items[__INDEX__][supplier_id]" class="supplier-id" />
+                        <div class="supplier-name text-info small mt-1"></div>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Supplier</label>
+                        <div class="input-group">
+                            <select class="form-select supplier-select select2" name="items[__INDEX__][supplier_id]">
+                                <option value="">Select Supplier</option>
+                            </select>
+                            <button type="button" class="btn btn-info supplier-view-btn" disabled>
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        <div class="best-supplier-reason text-success small mt-1"></div>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Description</label>
+                        <input type="text" class="form-control" name="items[__INDEX__][description]" required>
+                    </div>
+                    <div class="col-md-1">
+                        <label>Qty</label>
+                        <input type="number" class="form-control item-quantity" name="items[__INDEX__][quantity]" min="0.01" step="0.01" required>
+                    </div>
+                    <div class="col-md-1">
+                        <label>Unit</label>
+                        <input type="text" class="form-control" name="items[__INDEX__][unit]" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Unit Price</label>
+                        <input type="number" class="form-control item-unit-price" name="items[__INDEX__][estimated_unit_price]" min="0.01" step="0.01" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Total</label>
+                        <input type="number" class="form-control item-total" name="items[__INDEX__][total_amount]" readonly required>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Specifications</label>
+                        <input type="text" class="form-control" name="items[__INDEX__][specifications]">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="button" class="btn btn-danger remove-item"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Update the add-item click handler to initialize Select2 for new items
+        $('#add-item').click(function() {
+            const itemIndex = $('.item-row').length;
+            const newItem = itemTemplate.replace(/__INDEX__/g, itemIndex);
+            $('#items-container').append(newItem);
+            
+            // Initialize Select2 for the new supplier select
+            $(`select[name="items[${itemIndex}][supplier_id]"]`).select2({
+                placeholder: 'Search for suppliers...',
+                allowClear: true,
+                ajax: {
+                    url: '{{ route("admin.suppliers.search") }}',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            search: params.term,
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.data.map(function(item) {
+                                return {
+                                    id: item.id,
+                                    text: item.company_name
+                                };
+                            }),
+                            pagination: {
+                                more: data.current_page < data.last_page
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 2,
+                templateResult: formatSupplier,
+                templateSelection: formatSupplierSelection
+            });
+        });
+    });
+
+    // In the JS, when a material is selected, set the best supplier and show the reason
+    $(document).on('change', '.material-select', function() {
+        var $row = $(this).closest('.item-row');
+        var matId = $(this).val();
+        var best = window.materialBestSuppliers && window.materialBestSuppliers[matId];
+        var $supplierSelect = $row.find('.supplier-select');
+        var $reasonDiv = $row.find('.best-supplier-reason');
+        if (best) {
+            // Set the supplier select
+            var exists = $supplierSelect.find('option[value="'+best.id+'"]').length > 0;
+            if (!exists) {
+                $supplierSelect.append('<option value="'+best.id+'">Best Supplier</option>');
+            }
+            $supplierSelect.val(best.id).trigger('change');
+            $reasonDiv.text(best.reason);
+        } else {
+            $supplierSelect.val('').trigger('change');
+            $reasonDiv.text('');
         }
     });
 </script>
