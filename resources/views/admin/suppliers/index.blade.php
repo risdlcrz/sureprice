@@ -89,7 +89,7 @@
                                     </td>
                                     <td>
                                         <div class="btn-group">
-                                            <a href="{{ route('companies.show', $supplier->id) }}" 
+                                            <a href="{{ route('admin.companies.show', $supplier->id) }}" 
                                                 class="btn btn-sm btn-info" 
                                                 title="View">
                                                 <i class="fas fa-eye"></i>

@@ -131,12 +131,12 @@ class RegisteredUserController extends Controller
             'bank_account_number' => 'nullable|string|max:50',
 
             // Multiple file uploads validated here
-            'dti_sec_registration' => 'required|file|mimes:pdf,jpg,png|max:2048',
-            'accreditations_certifications' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
-            'business_permit_mayor_permit' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
-            'valid_id_owner_rep' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
-            'company_profile_portfolio' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
-            'sample_price_list' => 'nullable|file|mimes:pdf,jpg,png|max:2048',
+            'dti_sec_registration' => 'required|file|mimes:pdf,jpg,png|max:10240',
+            'accreditations_certifications' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
+            'business_permit_mayor_permit' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
+            'valid_id_owner_rep' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
+            'company_profile_portfolio' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
+            'sample_price_list' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
 
             'agree_terms' => 'required|accepted',
             'agree_contact' => 'nullable|accepted',

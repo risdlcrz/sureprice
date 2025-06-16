@@ -10,7 +10,7 @@
             <!-- Create Contract Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage1.svg') }}" class="card-img-top" alt="Create Contract">
+                    <img src="{{ Vite::asset('resources/Images/ppimage1.jpg') }}" class="card-img-top" alt="Create Contract">
                     <div class="card-body">
                         <h5 class="card-title">Create Contract</h5>
                         <p class="card-text">Start a new contract and set up initial terms and conditions.</p>
@@ -24,7 +24,7 @@
             <!-- View Contracts Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage2.svg') }}" class="card-img-top" alt="View Contracts">
+                    <img src="{{ Vite::asset('resources/Images/ppimage2.jpg') }}" class="card-img-top" alt="View Contracts">
                     <div class="card-body">
                         <h5 class="card-title">View Contracts</h5>
                         <p class="card-text">Access and manage existing contracts, track status and approvals.</p>
@@ -82,7 +82,7 @@
             <!-- Purchase Requests Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage5.svg') }}" class="card-img-top" alt="Purchase Requests">
+                    <img src="{{ Vite::asset('resources/Images/ppimage5.jpg') }}" class="card-img-top" alt="Purchase Requests">
                     <div class="card-body">
                         <h5 class="card-title">Purchase Requests</h5>
                         <p class="card-text">Create and manage purchase requests for materials and supplies.</p>
@@ -101,7 +101,7 @@
             <!-- Purchase Orders Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage4.svg') }}" class="card-img-top" alt="Purchase Orders">
+                    <img src="{{ Vite::asset('resources/Images/ppimage4.jpg') }}" class="card-img-top" alt="Purchase Orders">
                     <div class="card-body">
                         <h5 class="card-title">Purchase Orders</h5>
                         <p class="card-text">Create and manage purchase orders from approved purchase requests.</p>
@@ -120,7 +120,7 @@
             <!-- Inquiries Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage6.svg') }}" class="card-img-top" alt="Inquiries">
+                    <img src="{{ Vite::asset('resources/Images/ppimage6.jpg') }}" class="card-img-top" alt="Inquiries">
                     <div class="card-body">
                         <h5 class="card-title">Inquiries</h5>
                         <p class="card-text">Submit and track material inquiries and procurement requests.</p>
@@ -139,7 +139,7 @@
             <!-- Quotation Management Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage8.svg') }}" class="card-img-top" alt="Quotation Management">
+                    <img src="{{ Vite::asset('resources/Images/ppimage8.jpg') }}" class="card-img-top" alt="Quotation Management">
                     <div class="card-body">
                         <h5 class="card-title">Quotation Management</h5>
                         <p class="card-text">Create and manage RFQs, compare supplier quotations, and track responses.</p>
@@ -177,20 +177,20 @@
             <!-- Suppliers Management Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage10.png') }}" class="card-img-top" alt="Suppliers">
+                    <img src="{{ Vite::asset('resources/images/ppimage10.png') }}" class="card-img-top" alt="Suppliers" style="object-fit:cover;width:100%;height:220px;">
                     <div class="card-body">
                         <h5 class="card-title">Suppliers Management</h5>
                         <p class="card-text">Manage supplier information, relationships, performance tracking, and send invitations to new suppliers.</p>
                         </div>
-                    <div class="card-footer d-flex gap-2">
+                    <div class="card-footer d-flex flex-column flex-md-row gap-2">
                         <a href="{{ route('supplier-invitations.create') }}" class="btn btn-primary flex-grow-1">
                             <i class="fas fa-paper-plane"></i> Invite Supplier
                         </a>
                         <a href="{{ route('supplier-invitations.index') }}" class="btn btn-secondary flex-grow-1">
                             <i class="fas fa-list"></i> View Invitations
                         </a>
-                        <a href="{{ route('register') }}" class="btn btn-primary flex-grow-1">
-                            <i class="fas fa-user-plus"></i> Sign Up as Supplier
+                        <a href="{{ route('suppliers.index') }}" class="btn btn-primary flex-grow-1">
+                            <i class="fas fa-eye"></i> View Supplier
                         </a>
                     </div>
                 </div>
