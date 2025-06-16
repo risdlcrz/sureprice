@@ -156,6 +156,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Supplier Routes
     Route::resource('suppliers', SupplierController::class);
+    Route::get('/admin/suppliers/search', [SupplierController::class, 'search'])->name('admin.suppliers.search');
 
     // Purchase Requests
     Route::resource('purchase-requests', PurchaseRequestController::class);

@@ -107,6 +107,22 @@
                                                         <div class="supplier-name text-info small mt-1"></div>
                                                     </div>
                                                 <div class="col-md-2">
+                                                    <label>Supplier</label>
+                                                    <div class="input-group">
+                                                        <select class="form-select supplier-select" name="items[{{ $index }}][supplier_id]">
+                                                            <option value="">Select Supplier</option>
+                                                            @foreach($suppliers ?? [] as $supplier)
+                                                                <option value="{{ $supplier->id }}">
+                                                                    {{ $supplier->company_name }}@if(!empty($supplier->is_preferred) && $supplier->is_preferred) ★@endif
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                        <button type="button" class="btn btn-info supplier-view-btn" disabled>
+                                                            <i class="fas fa-eye"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2">
                                                     <label>Description</label>
                                                     <input type="text" class="form-control" name="items[{{ $index }}][description]" value="{{ $item->description }}" required>
                                                 </div>
@@ -214,8 +230,22 @@
                                 </option>
                                 @endforeach
                             </select>
-                            <input type="hidden" name="items[${itemIndex}][supplier_id]" class="supplier-id" />
-                            <div class="supplier-name text-info small mt-1"></div>
+                    </div>
+                    <div class="col-md-2">
+                        <label>Supplier</label>
+                        <div class="input-group">
+                            <select class="form-select supplier-select" name="items[${itemIndex}][supplier_id]">
+                                <option value="">Select Supplier</option>
+                                @foreach($suppliers ?? [] as $supplier)
+                                    <option value="{{ $supplier->id }}">
+                                        {{ $supplier->company_name }}@if(!empty($supplier->is_preferred) && $supplier->is_preferred) ★@endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="btn btn-info supplier-view-btn" disabled>
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="col-md-2">
                         <label>Description</label>
@@ -260,6 +290,14 @@
         if (e.target.classList.contains('remove-item') || e.target.closest('.remove-item')) {
             const row = e.target.closest('.item-row');
             row.remove();
+        }
+        
+        if (e.target.classList.contains('supplier-view-btn') || e.target.closest('.supplier-view-btn')) {
+            const row = e.target.closest('.item-row');
+            const supplierId = row.querySelector('select[name$="[supplier_id]"]').value;
+            if (supplierId) {
+                window.open(`/admin/suppliers/${supplierId}`, '_blank');
+            }
         }
     });
 
@@ -315,19 +353,29 @@
                 if (row.querySelector('input[name$="[specifications]"]')) {
                     row.querySelector('input[name$="[specifications]"]').value = option.dataset.specifications || '';
                 }
-                // Auto supplier fill-in
-                const suppliers = JSON.parse(option.getAttribute('data-suppliers') || '[]');
-                let preferred = suppliers.find(s => s.is_preferred);
-                if (!preferred && suppliers.length > 0) preferred = suppliers[0];
-                const supplierIdInput = row.querySelector('.supplier-id');
-                const supplierNameDiv = row.querySelector('.supplier-name');
-                if (preferred) {
-                    supplierIdInput.value = preferred.id;
-                    supplierNameDiv.textContent = 'Supplier: ' + preferred.name;
-                } else {
-                    supplierIdInput.value = '';
-                    supplierNameDiv.textContent = 'No supplier found';
+                
+                // Auto-select preferred supplier if available
+                const supplierSelect = row.querySelector('select[name$="[supplier_id]"]');
+                const preferredSupplier = Array.from(supplierSelect.options).find(opt => 
+                    opt.dataset.isPreferred === 'true'
+                );
+                if (preferredSupplier) {
+                    supplierSelect.value = preferredSupplier.value;
+                    const viewBtn = row.querySelector('.supplier-view-btn');
+                    viewBtn.disabled = false;
                 }
+            }
+        }
+        
+        if (e.target.matches('select[name^="items"][name$="[supplier_id]"]')) {
+            const row = e.target.closest('.item-row');
+            const viewBtn = row.querySelector('.supplier-view-btn');
+            viewBtn.disabled = !e.target.value;
+            
+            // Update the hidden supplier_id field
+            const supplierIdInput = row.querySelector('input[name$="[supplier_id]"]');
+            if (supplierIdInput) {
+                supplierIdInput.value = e.target.value;
             }
         }
     });

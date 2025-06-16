@@ -97,13 +97,19 @@ class SupplierController extends Controller
 
     public function search(Request $request)
     {
-        $query = $request->get('q');
+        $query = $request->get('search');
+        $page = $request->get('page', 1);
+        $perPage = 10;
         
-        return Supplier::where('company_name', 'like', "%{$query}%")
-            ->orWhere('contact_person', 'like', "%{$query}%")
-            ->orWhere('email', 'like', "%{$query}%")
-            ->limit(10)
-            ->get();
+        $suppliers = \App\Models\Company::where('designation', 'supplier')
+            ->where(function($q) use ($query) {
+                $q->where('company_name', 'like', "%{$query}%")
+                  ->orWhere('contact_person', 'like', "%{$query}%")
+                  ->orWhere('email', 'like', "%{$query}%");
+            })
+            ->paginate($perPage, ['*'], 'page', $page);
+            
+        return response()->json($suppliers);
     }
 
     public function show(Supplier $supplier)
