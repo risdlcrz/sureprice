@@ -12,7 +12,7 @@
             <!-- Create Contract Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage1.svg') }}" class="card-img-top" alt="Create Contract">
+                    <img src="{{ asset('Images/ppimage1.jpg') }}" class="card-img-top" alt="Create Contract">
                     <div class="card-body">
                         <h5 class="card-title">Create Contract</h5>
                         <p class="card-text">Start a new contract and set up initial terms and conditions.</p>
@@ -26,7 +26,7 @@
             <!-- View Contracts Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage2.svg') }}" class="card-img-top" alt="View Contracts">
+                    <img src="{{ asset('Images/ppimage2.jpg') }}" class="card-img-top" alt="View Contracts">
                     <div class="card-body">
                         <h5 class="card-title">View Contracts</h5>
                         <p class="card-text">Access and manage existing contracts, track status and approvals.</p>
@@ -40,7 +40,7 @@
             <!-- Project Timeline Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage3.svg') }}" class="card-img-top" alt="Project Timeline">
+                    <img src="{{ asset('Images/ppimage3.jpg') }}" class="card-img-top" alt="Project Timeline">
                     <div class="card-body">
                         <h5 class="card-title">Project Timeline</h5>
                         <p class="card-text">View and manage project schedules and timelines.</p>
@@ -84,7 +84,7 @@
             <!-- Purchase Requests Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage5.svg') }}" class="card-img-top" alt="Purchase Requests">
+                    <img src="{{ asset('Images/ppimage4.jpg') }}" class="card-img-top" alt="Purchase Requests">
                     <div class="card-body">
                         <h5 class="card-title">Purchase Requests</h5>
                         <p class="card-text">Create and manage purchase requests for materials and supplies.</p>
@@ -103,7 +103,7 @@
             <!-- Purchase Orders Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage4.svg') }}" class="card-img-top" alt="Purchase Orders">
+                    <img src="{{ asset('Images/ppimage5.jpg') }}" class="card-img-top" alt="Purchase Orders">
                     <div class="card-body">
                         <h5 class="card-title">Purchase Orders</h5>
                         <p class="card-text">Create and manage purchase orders from approved purchase requests.</p>
@@ -122,7 +122,7 @@
             <!-- Inquiries Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage6.svg') }}" class="card-img-top" alt="Inquiries">
+                    <img src="{{ asset('Images/ppimage6.jpg') }}" class="card-img-top" alt="Inquiries">
                     <div class="card-body">
                         <h5 class="card-title">Inquiries</h5>
                         <p class="card-text">Submit and track material inquiries and procurement requests.</p>

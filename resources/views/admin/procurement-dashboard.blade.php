@@ -65,7 +65,7 @@
             <!-- Quotations (RFQ) Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/new-quotation.svg') }}" class="card-img-top" alt="Quotations">
+                    <img src="{{ asset('Images/new-quotation.jpg') }}" class="card-img-top" alt="Quotations">
                     <div class="card-body">
                         <h5 class="card-title">Quotations (RFQ)</h5>
                         <p class="card-text">Create and manage requests for quotation and supplier responses.</p>
@@ -103,7 +103,7 @@
             <!-- Materials Management Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/materials.svg') }}" class="card-img-top" alt="Materials Management">
+                    <img src="{{ asset('Images/materials.jpg') }}" class="card-img-top" alt="Materials Management">
                     <div class="card-body">
                         <h5 class="card-title">Materials Management</h5>
                         <p class="card-text">Manage materials inventory, specifications, and pricing information.</p>
@@ -122,7 +122,7 @@
             <!-- Suppliers Management Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/suppliers.svg') }}" class="card-img-top" alt="Suppliers">
+                    <img src="{{ asset('Images/suppliers.jpg') }}" class="card-img-top" alt="Suppliers">
                     <div class="card-body">
                         <h5 class="card-title">Suppliers Management</h5>
                         <p class="card-text">Manage supplier information, relationships, and performance tracking.</p>
