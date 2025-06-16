@@ -30,6 +30,7 @@ body {
     border-bottom-right-radius: 20px;
     z-index: 1000;
     box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
 }
 
 .content {
@@ -103,6 +104,11 @@ body {
 .nav-buttons {
     width: 100%;
     padding: 10px 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
 }
 
 .nav-buttons .btn {
