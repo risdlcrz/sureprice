@@ -252,27 +252,36 @@ class PurchaseRequestController extends Controller
 
     public function approve(PurchaseRequest $purchaseRequest)
     {
-        if ($purchaseRequest->status !== 'pending') {
-            return back()->with('error', 'Cannot approve a purchase request that is not pending.');
+        // Ensure only admin can approve/reject
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized action.');
         }
 
-        try {
-            $purchaseRequest->update(['status' => 'approved']);
-            return back()->with('success', 'Purchase request approved successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Error approving purchase request: ' . $e->getMessage());
+        if ($purchaseRequest->status !== 'pending') {
+            return back()->with('error', 'Only pending purchase requests can be approved.');
         }
+
+        $purchaseRequest->update(['status' => 'approved']);
+
+        return redirect()->route('purchase-requests.show', $purchaseRequest)
+            ->with('success', 'Purchase request approved successfully.');
     }
 
     public function reject(PurchaseRequest $purchaseRequest)
     {
+        // Ensure only admin can approve/reject
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         if ($purchaseRequest->status !== 'pending') {
-            return back()->with('error', 'Cannot reject a purchase request that is not pending.');
+            return back()->with('error', 'Only pending purchase requests can be rejected.');
         }
 
         $purchaseRequest->update(['status' => 'rejected']);
 
-        return back()->with('success', 'Purchase request rejected successfully.');
+        return redirect()->route('purchase-requests.show', $purchaseRequest)
+            ->with('success', 'Purchase request rejected.');
     }
 
     public function generateFromContract(Request $request)

@@ -15,15 +15,23 @@
                             @method('PUT')
                         @endif
 
-                        <!-- Project Information -->
-                        <div class="section-container">
+                        <!-- Quotation Type Toggle -->
+                        <div class="section-container mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="standaloneToggle" name="is_standalone" value="1" {{ old('is_standalone', isset($quotation) && !$quotation->purchase_request_id ? 'checked' : '') }}>
+                                <label class="form-check-label" for="standaloneToggle">Standalone Quotation (not linked to a Purchase Request)</label>
+                            </div>
+                        </div>
+
+                        <!-- Purchase Request Information -->
+                        <div class="section-container" id="purchaseRequestSection">
                             <h5 class="section-title">Purchase Request Information</h5>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="purchase_request_id">Purchase Request</label>
                                         <select class="form-control @error('purchase_request_id') is-invalid @enderror" 
-                                            id="purchase_request_id" name="purchase_request_id" required>
+                                            id="purchase_request_id" name="purchase_request_id">
                                             <option value="">Select Purchase Request</option>
                                             @foreach($purchaseRequests as $pr)
                                                 <option value="{{ $pr->id }}" 
@@ -49,6 +57,52 @@
                                         @enderror
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Manual Material Selection Section -->
+                        <div class="section-container mt-4" id="manualMaterialSection" style="display: none;">
+                            <h5 class="section-title">Select Materials</h5>
+                            <div class="mb-3">
+                                <label for="material_search" class="form-label">Search Materials</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="material_search" placeholder="Search by name or code">
+                                    <button class="btn btn-outline-secondary" type="button" id="clear_material_search">Clear</button>
+                                </div>
+                                <div id="material_search_results" class="list-group mt-2" style="max-height: 200px; overflow-y: auto; display: none;"></div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-bordered" id="selectedMaterialsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Material</th>
+                                            <th>Quantity</th>
+                                            <th>Unit</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Materials will be added here dynamically -->
+                                        @if(isset($quotation) && !$quotation->purchase_request_id && $quotation->materials->isNotEmpty())
+                                            @foreach($quotation->materials as $material)
+                                                <tr data-material-id="{{ $material->id }}">
+                                                    <td>
+                                                        {{ $material->name }}
+                                                        <input type="hidden" name="materials[{{ $material->id }}][id]" value="{{ $material->id }}">
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" name="materials[{{ $material->id }}][quantity]" class="form-control form-control-sm" value="{{ $material->pivot->quantity }}" min="0.01" step="0.01" required>
+                                                    </td>
+                                                    <td>{{ $material->unit }}</td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-danger btn-sm remove-material">Remove</button>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        @endif
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 
@@ -97,7 +151,7 @@
                         </div>
 
                         <!-- Materials from Purchase Request -->
-                        <div class="section-container mt-4">
+                        <div class="section-container mt-4" id="prMaterialsSection">
                             <h5 class="section-title">Materials from Purchase Request</h5>
                             <div id="prMaterials" class="table-responsive">
                                 <table class="table">
@@ -110,7 +164,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @if(isset($quotation))
+                                        @if(isset($quotation) && $quotation->purchase_request_id)
                                             @foreach($quotation->purchaseRequest->items as $item)
                                             <tr>
                                                 <td>{{ $item->material->name }}</td>
@@ -337,169 +391,205 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $(document).ready(function() {
-    $('#suppliers').select2({
-        placeholder: 'Select suppliers',
-        allowClear: true,
-        width: '100%'
-    });
-    // Show notes field for each selected supplier
-    $('#suppliers').on('change', function() {
-        const selected = $(this).val() || [];
-        const allSuppliers = @json($suppliers);
-        const notesDiv = $('#selectedSuppliersNotes');
-        notesDiv.html('');
-        selected.forEach(function(supplierId) {
-            const supplier = allSuppliers.find(s => s.id == supplierId);
-            if (!supplier) return;
-            notesDiv.append(`
-                <div class="supplier-notes-item card mb-2" data-supplier-id="${supplier.id}">
-                <div class="card-body py-2">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                                <strong>${supplier.company_name ?? supplier.name}</strong>
-                            <input type="hidden" name="suppliers[]" value="${supplier.id}">
-                            <br>
-                                <small class="text-muted">${supplier.email} | ${supplier.phone ?? ''}</small>
-                        </div>
-                            <div class="col-md-6">
-                            <input type="text" class="form-control form-control-sm" 
-                                name="supplier_notes[${supplier.id}]" 
-                                placeholder="Notes for this supplier">
-                        </div>
-                        </div>
-                    </div>
-                </div>
-            `);
-        });
-    });
-    // Trigger change on page load if editing
-    $('#suppliers').trigger('change');
-});
+    const standaloneToggle = document.getElementById('standaloneToggle');
+    const purchaseRequestSection = document.getElementById('purchaseRequestSection');
+    const prMaterialsSection = document.getElementById('prMaterialsSection');
+    const manualMaterialSection = document.getElementById('manualMaterialSection');
+    const purchaseRequestId = document.getElementById('purchase_request_id');
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Handle Purchase Request Selection
-    const prSelect = document.getElementById('purchase_request_id');
-    const prMaterialsTable = document.querySelector('#prMaterials tbody');
+    function toggleQuotationTypeSections() {
+        if (standaloneToggle.checked) {
+            purchaseRequestSection.style.display = 'none';
+            prMaterialsSection.style.display = 'none';
+            manualMaterialSection.style.display = 'block';
+            purchaseRequestId.removeAttribute('required');
+            purchaseRequestId.value = ''; // Clear PR selection when going standalone
+            // Optionally clear PR materials display if any
+            document.querySelector('#prMaterials tbody').innerHTML = '';
 
-    prSelect.addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        const materials = JSON.parse(selectedOption.dataset.materials || '[]');
-        
-        prMaterialsTable.innerHTML = materials.map(item => `
-            <tr>
-                <td>${item.material.name}</td>
-                <td>${item.quantity}</td>
-                <td>${item.material.unit}</td>
-                <td>
-                    ${typeof item.total_amount !== 'undefined' ? item.total_amount : (typeof item.quantity !== 'undefined' && typeof item.estimated_unit_price !== 'undefined' ? (item.quantity * item.estimated_unit_price).toFixed(2) : '')}
-                </td>
-            </tr>
-        `).join('');
-    });
+            // Make sure manual materials are required if standalone
+            $('#selectedMaterialsTable tbody input[name^="materials"]').each(function() {
+                $(this).prop('required', true);
+            });
 
-    // Remove supplier search input event handler and debounce
-    // Only use the button click handler below
+        } else {
+            purchaseRequestSection.style.display = 'block';
+            prMaterialsSection.style.display = 'block';
+            manualMaterialSection.style.display = 'none';
+            purchaseRequestId.setAttribute('required', 'required');
 
-    // Add supplier when selected from search results (handled in button click handler)
-    // Remove supplier
-    const selectedSuppliers = document.getElementById('selectedSuppliers');
-    selectedSuppliers.addEventListener('click', function(e) {
-        if (e.target.closest('.remove-supplier')) {
-            e.target.closest('.supplier-item').remove();
+            // Make sure manual materials are not required if not standalone
+            $('#selectedMaterialsTable tbody input[name^="materials"]').each(function() {
+                $(this).prop('required', false);
+            });
+
+            // If a PR is selected, populate its materials
+            const selectedPrOption = purchaseRequestId.options[purchaseRequestId.selectedIndex];
+            if (selectedPrOption && selectedPrOption.value) {
+                const prMaterials = JSON.parse(selectedPrOption.dataset.materials || '[]');
+                populatePrMaterialsTable(prMaterials);
+            }
+        }
+    }
+
+    // Populate PR Materials Table
+    function populatePrMaterialsTable(items) {
+        let html = '';
+        if (items.length > 0) {
+            items.forEach(item => {
+                const totalAmount = (item.quantity && item.estimated_unit_price) ? (item.quantity * item.estimated_unit_price).toFixed(2) : '&mdash;';
+                html += `
+                    <tr>
+                        <td>${item.material.name}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.material.unit}</td>
+                        <td>${totalAmount}</td>
+                    </tr>
+                `;
+            });
+        } else {
+            html = `<tr><td colspan="4" class="text-center text-muted">No materials in this Purchase Request.</td></tr>`;
+        }
+        document.querySelector('#prMaterials tbody').innerHTML = html;
+    }
+
+
+    // Initial toggle state and PR materials load
+    toggleQuotationTypeSections();
+    if (purchaseRequestId.value) {
+        const selectedPrOption = purchaseRequestId.options[purchaseRequestId.selectedIndex];
+        const prMaterials = JSON.parse(selectedPrOption.dataset.materials || '[]');
+        populatePrMaterialsTable(prMaterials);
+    }
+
+    // Listen for changes on the toggle
+    standaloneToggle.addEventListener('change', toggleQuotationTypeSections);
+
+    // Listen for changes on the Purchase Request dropdown
+    purchaseRequestId.addEventListener('change', function() {
+        const selectedPrOption = this.options[this.selectedIndex];
+        if (selectedPrOption && selectedPrOption.value) {
+            const prMaterials = JSON.parse(selectedPrOption.dataset.materials || '[]');
+            populatePrMaterialsTable(prMaterials);
+        } else {
+            document.querySelector('#prMaterials tbody').innerHTML = '<tr><td colspan="4" class="text-center text-muted">Select a Purchase Request to view materials.</td></tr>';
         }
     });
 
-    // Remove attachment
-    document.querySelectorAll('.remove-attachment').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (!confirm('Are you sure you want to remove this attachment?')) return;
 
-            const quotationId = this.dataset.quotation;
-            const attachmentId = this.dataset.attachment;
+    // Material Search Logic
+    const materialSearchInput = document.getElementById('material_search');
+    const materialSearchResults = document.getElementById('material_search_results');
+    const selectedMaterialsTableBody = document.querySelector('#selectedMaterialsTable tbody');
+    const suppliersSelect = document.getElementById('suppliers');
+    const selectedMaterialIds = new Set();
 
-            fetch('/api/quotations/remove-attachment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({
-                    quotation_id: quotationId,
-                    attachment_id: attachmentId
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    this.closest('tr').remove();
+    // Function to add material to the table
+    function addMaterialToTable(material) {
+        if (selectedMaterialIds.has(material.id)) {
+            alert('Material already added to the quotation.');
+            return;
+        }
+
+        const row = `
+            <tr data-material-id="${material.id}">
+                <td>
+                    ${material.name} (${material.code})
+                    <input type="hidden" name="materials[${material.id}][id]" value="${material.id}">
+                </td>
+                <td>
+                    <input type="number" name="materials[${material.id}][quantity]" class="form-control form-control-sm" value="1" min="0.01" step="0.01" required>
+                </td>
+                <td>${material.unit || 'Pcs'}</td>
+                <td>
+                    <button type="button" class="btn btn-danger btn-sm remove-material">Remove</button>
+                </td>
+            </tr>
+        `;
+        selectedMaterialsTableBody.insertAdjacentHTML('beforeend', row);
+        selectedMaterialIds.add(material.id);
+
+        // Ensure the quantity input is required when added
+        const newRow = selectedMaterialsTableBody.querySelector(`tr[data-material-id="${material.id}"]`);
+        if (newRow) {
+            newRow.querySelector('input[name^="materials"]').setAttribute('required', 'required');
+        }
+
+    }
+
+    materialSearchInput.addEventListener('keyup', async function() {
+        const query = this.value;
+        const selectedSupplierIds = Array.from(suppliersSelect.selectedOptions).map(option => option.value);
+
+        if (query.length > 2 && selectedSupplierIds.length > 0) {
+            materialSearchResults.style.display = 'block';
+            materialSearchResults.innerHTML = '<a href="#" class="list-group-item list-group-item-action disabled">Searching...</a>';
+
+            try {
+                const response = await fetch(`/api/materials/search-by-supplier?query=${query}&suppliers=${selectedSupplierIds.join(',')}`);
+                const materials = await response.json();
+
+                if (materials.length > 0) {
+                    materialSearchResults.innerHTML = '';
+                    materials.forEach(material => {
+                        const materialItem = document.createElement('a');
+                        materialItem.href = '#';
+                        materialItem.classList.add('list-group-item', 'list-group-item-action');
+                        materialItem.textContent = `${material.name} (${material.unit || 'Pcs'}) - ₱${material.price || 'N/A'}`;
+                        materialItem.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            addMaterialToTable(material);
+                            materialSearchInput.value = ''; // Clear search input
+                            materialSearchResults.style.display = 'none'; // Hide results
+                        });
+                        materialSearchResults.appendChild(materialItem);
+                    });
                 } else {
-                    alert('Failed to remove attachment');
+                    materialSearchResults.innerHTML = '<a href="#" class="list-group-item list-group-item-action disabled">No materials found for selected suppliers.</a>';
                 }
-            });
-        });
+            } catch (error) {
+                console.error('Error searching materials:', error);
+                materialSearchResults.innerHTML = '<a href="#" class="list-group-item list-group-item-action disabled text-danger">Error searching materials.</a>';
+            }
+        } else if (selectedSupplierIds.length === 0) {
+            materialSearchResults.style.display = 'block';
+            materialSearchResults.innerHTML = '<a href="#" class="list-group-item list-group-item-action disabled text-warning">Select at least one supplier to search for materials.</a>';
+        } else {
+            materialSearchResults.style.display = 'none';
+            materialSearchResults.innerHTML = '';
+        }
+    });
+
+    // Clear search button
+    document.getElementById('clear_material_search').addEventListener('click', function() {
+        materialSearchInput.value = '';
+        materialSearchResults.style.display = 'none';
+        materialSearchResults.innerHTML = '';
+    });
+
+    // Remove Material (dynamic event listener)
+    selectedMaterialsTableBody.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-material')) {
+            const materialId = e.target.closest('tr').dataset.materialId;
+            selectedMaterialIds.delete(parseInt(materialId));
+            e.target.closest('tr').remove();
+        }
+    });
+
+    // Initialize Select2 for suppliers dropdown
+    $('#suppliers').select2({
+        theme: 'bootstrap4',
+        placeholder: 'Select Suppliers',
+        allowClear: true
+    });
+
+    // Re-run material search if suppliers change and there's a query
+    $('#suppliers').on('change', function() {
+        if (materialSearchInput.value.length > 2) {
+            materialSearchInput.dispatchEvent(new Event('keyup'));
+        }
     });
 });
-
-document.getElementById('searchSupplierBtn').addEventListener('click', function() {
-    const query = document.getElementById('supplierSearch').value;
-    fetch(`/api/suppliers/search?q=${encodeURIComponent(query)}`)
-        .then(response => response.json())
-        .then(data => {
-            const resultsDiv = document.getElementById('supplierSearchResults');
-            resultsDiv.innerHTML = '';
-            if (data.length === 0) {
-                resultsDiv.innerHTML = '<div class="alert alert-warning">No suppliers found.</div>';
-            } else {
-                data.forEach(supplier => {
-                    const div = document.createElement('div');
-                    div.className = 'list-group-item list-group-item-action';
-                    div.style.cursor = 'pointer';
-                    div.innerHTML = `<strong>${supplier.company_name}</strong> <br>
-                        <small>${supplier.email} | ${supplier.phone || ''}</small>`;
-                    div.onclick = function() {
-                        addSupplierToList(supplier);
-                        resultsDiv.style.display = 'none';
-                    };
-                    resultsDiv.appendChild(div);
-                });
-            }
-            resultsDiv.style.display = 'block';
-        });
-});
-
-function addSupplierToList(supplier) {
-    // Prevent duplicates
-    if (document.querySelector(`#selectedSuppliers input[value='${supplier.id}']`)) return;
-    const container = document.getElementById('selectedSuppliers');
-    const card = document.createElement('div');
-    card.className = 'supplier-item card mb-2';
-    card.innerHTML = `
-        <div class="card-body py-2">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <strong>${supplier.company_name}</strong>
-                    <input type="hidden" name="suppliers[]" value="${supplier.id}">
-                    <br>
-                    <small class="text-muted">${supplier.email} | ${supplier.phone || ''}</small>
-                </div>
-                <div class="col-md-5">
-                    <input type="text" class="form-control form-control-sm"
-                        name="supplier_notes[${supplier.id}]"
-                        placeholder="Notes for this supplier">
-                </div>
-                <div class="col-md-1">
-                    <button type="button" class="btn btn-danger btn-sm remove-supplier">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
-    card.querySelector('.remove-supplier').onclick = function() {
-        card.remove();
-    };
-    container.appendChild(card);
-}
 </script>
 @endpush
 @endsection 

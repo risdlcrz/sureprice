@@ -205,6 +205,11 @@ class PurchaseOrderController extends Controller
 
     public function updateStatus(Request $request, PurchaseOrder $purchaseOrder)
     {
+        // Ensure only admin can update status
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $validated = $request->validate([
             'status' => 'required|in:pending,approved,rejected'
         ]);
@@ -234,6 +239,11 @@ class PurchaseOrderController extends Controller
 
     public function complete(Request $request, PurchaseOrder $purchaseOrder)
     {
+        // Ensure only admin can complete
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         if ($purchaseOrder->status !== 'approved') {
             return response()->json(['error' => 'Only approved purchase orders can be completed'], 422);
         }

@@ -33,6 +33,17 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProjectTimelineController;
 use App\Http\Controllers\WarrantyRequestController;
 use App\Http\Controllers\BudgetController;
+use App\Http\Controllers\Supplier\SupplierMaterialController;
+use App\Http\Controllers\Supplier\SupplierDashboardController;
+use App\Http\Controllers\Supplier\SupplierQuotationController;
+use App\Http\Controllers\Warehouse\WarehouseDashboardController;
+use App\Http\Controllers\Warehouse\WarehouseInventoryController;
+use App\Http\Controllers\Warehouse\WarehouseDeliveryController;
+use App\Http\Controllers\Warehouse\WarehouseReportController;
+use App\Http\Controllers\Procurement\ProcurementDashboardController;
+use App\Http\Controllers\Procurement\ProcurementRfqController;
+use App\Http\Controllers\Procurement\ProcurementOrderController;
+use App\Http\Controllers\Procurement\ProcurementSupplierController;
 
 // Home route redirect to login
 Route::get('/', function () {
@@ -132,6 +143,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/search', [MaterialController::class, 'apiSearch'])->name('search');
         Route::get('/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('suppliers');
         Route::get('/all', [MaterialController::class, 'getAllMaterials'])->name('all');
+        Route::get('/search-by-supplier', [MaterialController::class, 'searchBySupplier'])->name('search-by-supplier');
     });
 
     // Inquiry Routes
@@ -142,8 +154,6 @@ Route::middleware(['auth'])->group(function () {
     // Quotation Routes
     Route::resource('quotations', QuotationController::class);
     Route::post('/api/quotations/{quotation}/send', [QuotationController::class, 'send']);
-    Route::post('/api/quotations/{quotation}/approve', [QuotationController::class, 'approve']);
-    Route::post('/api/quotations/{quotation}/reject', [QuotationController::class, 'reject']);
     Route::post('/api/quotations/remove-attachment', [QuotationController::class, 'removeAttachment']);
     Route::get('/api/quotations/search', [QuotationController::class, 'search'])->name('quotations.search');
     Route::get('/quotations/attachment/{attachment}/download', [QuotationController::class, 'downloadAttachment'])->name('quotations.attachment.download');
@@ -161,17 +171,12 @@ Route::middleware(['auth'])->group(function () {
 
     // Purchase Requests
     Route::resource('purchase-requests', PurchaseRequestController::class);
-    Route::post('purchase-requests/{purchaseRequest}/approve', [PurchaseRequestController::class, 'approve'])->name('purchase-requests.approve');
-    Route::post('purchase-requests/{purchaseRequest}/reject', [PurchaseRequestController::class, 'reject'])->name('purchase-requests.reject');
-    Route::post('purchase-requests/{purchaseRequest}/status', [PurchaseRequestController::class, 'updateStatus'])->name('purchase-requests.update-status');
     Route::get('/api/purchase-requests/{purchaseRequest}/items', [PurchaseRequestController::class, 'getItems'])->name('api.purchase-requests.items');
     Route::post('/purchase-requests/generate-from-contract', [App\Http\Controllers\PurchaseRequestController::class, 'generateFromContract'])->name('purchase-requests.generate-from-contract');
 
     // Purchase Orders
     Route::resource('purchase-orders', PurchaseOrderController::class);
-    Route::post('purchase-orders/{purchaseOrder}/status', [PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
     Route::get('purchase-orders/{id}/json', [App\Http\Controllers\PurchaseOrderController::class, 'showJson'])->name('purchase-orders.json');
-    Route::post('purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete'])->name('purchase-orders.complete');
 
     // Transaction Routes
     Route::get('/transactions/past', [\App\Http\Controllers\TransactionController::class, 'pastTransactions'])->name('transactions.past');
@@ -229,6 +234,16 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/history-dashboard', function () {
         return view('admin.history-dashboard');
     })->name('history.dashboard');
+
+    // Warehouse Routes
+    Route::middleware(['role:warehouse'])->prefix('warehouse')->name('warehouse.')->group(function () {
+        Route::get('/dashboard', [WarehouseDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/stock-alerts', [WarehouseDashboardController::class, 'getStockAlerts'])->name('stock-alerts');
+        Route::get('/stock-movements', [WarehouseDashboardController::class, 'getStockMovements'])->name('stock-movements');
+        Route::resource('deliveries', WarehouseDeliveryController::class);
+        Route::resource('inventory', WarehouseInventoryController::class);
+        Route::resource('reports', WarehouseReportController::class);
+    });
 });
 
 // Payments routes
@@ -266,6 +281,19 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::resource('information-management', InformationManagementController::class);
     Route::post('information-management/import', [InformationManagementController::class, 'import'])->name('information-management.import');
     Route::get('information-management/template/download', [InformationManagementController::class, 'template'])->name('information-management.template');
+
+    // Quotation Approval/Rejection for Admin
+    Route::post('/api/quotations/{quotation}/approve', [QuotationController::class, 'approve'])->name('quotations.approve');
+    Route::post('/api/quotations/{quotation}/reject', [QuotationController::class, 'reject'])->name('quotations.reject');
+
+    // Purchase Request Approval/Rejection & Status Update for Admin
+    Route::post('purchase-requests/{purchaseRequest}/approve', [PurchaseRequestController::class, 'approve'])->name('purchase-requests.approve');
+    Route::post('purchase-requests/{purchaseRequest}/reject', [PurchaseRequestController::class, 'reject'])->name('purchase-requests.reject');
+    Route::post('purchase-requests/{purchaseRequest}/status', [PurchaseRequestController::class, 'updateStatus'])->name('purchase-requests.update-status');
+
+    // Purchase Order Status Update/Completion for Admin
+    Route::post('purchase-orders/{purchaseOrder}/status', [PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
+    Route::post('purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete'])->name('purchase-orders.complete');
 
     // Other admin routes
     Route::get('/notification-center', function () {
@@ -329,26 +357,47 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 // Supplier creation is now handled via sign up. Remove or redirect any suppliers.create routes.
 
 // Procurement Routes
-Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->group(function () {
-    Route::get('/procurement/dashboard', [ProcurementController::class, 'index'])->name('procurement.dashboard');
-    Route::get('/procurement/projects', [ProcurementController::class, 'projectDashboard'])->name('procurement.projects');
-    Route::get('/procurement/inventory', [ProcurementController::class, 'inventoryDashboard'])->name('procurement.inventory');
-    Route::get('/procurement/history', [ProcurementController::class, 'projectHistory'])->name('procurement.history');
-    Route::get('/procurement/analytics', [ProcurementController::class, 'analyticsDashboard'])->name('procurement.analytics');
-    Route::get('/procurement/notification-hub', [ProcurementController::class, 'notificationHub'])->name('procurement.notification');
-    Route::get('/procurement/supplier-rankings', [AnalyticsController::class, 'supplierRankings'])->name('procurement.suppliers.rankings');
+Route::middleware(['auth', 'role:procurement'])->prefix('procurement')->name('procurement.')->group(function () {
+    Route::get('/dashboard', [ProcurementDashboardController::class, 'index'])->name('dashboard');
+    
+    // RFQ Routes
+    Route::get('/rfqs', [ProcurementRfqController::class, 'index'])->name('rfqs.index');
+    Route::get('/rfqs/create', [ProcurementRfqController::class, 'create'])->name('rfqs.create');
+    Route::post('/rfqs', [ProcurementRfqController::class, 'store'])->name('rfqs.store');
+    Route::get('/rfqs/{rfq}', [ProcurementRfqController::class, 'show'])->name('rfqs.show');
+    Route::get('/rfqs/{rfq}/edit', [ProcurementRfqController::class, 'edit'])->name('rfqs.edit');
+    Route::put('/rfqs/{rfq}', [ProcurementRfqController::class, 'update'])->name('rfqs.update');
+    Route::delete('/rfqs/{rfq}', [ProcurementRfqController::class, 'destroy'])->name('rfqs.destroy');
+    
+    // Order Routes
+    Route::get('/orders', [ProcurementOrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/create', [ProcurementOrderController::class, 'create'])->name('orders.create');
+    Route::post('/orders', [ProcurementOrderController::class, 'store'])->name('orders.store');
+    Route::get('/orders/{order}', [ProcurementOrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}/edit', [ProcurementOrderController::class, 'edit'])->name('orders.edit');
+    Route::put('/orders/{order}', [ProcurementOrderController::class, 'update'])->name('orders.update');
+    Route::delete('/orders/{order}', [ProcurementOrderController::class, 'destroy'])->name('orders.destroy');
+    
+    // Supplier Routes
+    Route::get('/suppliers', [ProcurementSupplierController::class, 'index'])->name('suppliers.index');
+    Route::get('/suppliers/create', [ProcurementSupplierController::class, 'create'])->name('suppliers.create');
+    Route::post('/suppliers', [ProcurementSupplierController::class, 'store'])->name('suppliers.store');
+    Route::get('/suppliers/{supplier}', [ProcurementSupplierController::class, 'show'])->name('suppliers.show');
+    Route::get('/suppliers/{supplier}/edit', [ProcurementSupplierController::class, 'edit'])->name('suppliers.edit');
+    Route::put('/suppliers/{supplier}', [ProcurementSupplierController::class, 'update'])->name('suppliers.update');
+    Route::delete('/suppliers/{supplier}', [ProcurementSupplierController::class, 'destroy'])->name('suppliers.destroy');
 });
 
-// Procurement routes
-Route::prefix('procurement')->name('procurement.')->group(function () {
-    // Inventory Management Routes
-    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
-    Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
-    Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
-    Route::get('/inventory/{inventory}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
-    Route::put('/inventory/{inventory}', [InventoryController::class, 'update'])->name('inventory.update');
-    Route::delete('/inventory/{inventory}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
-    Route::post('/inventory/{inventory}/adjust-stock', [InventoryController::class, 'adjustStock'])->name('inventory.adjust-stock');
-    Route::get('/inventory/low-stock', [InventoryController::class, 'lowStock'])->name('inventory.low-stock');
-    Route::get('/inventory/expiring', [InventoryController::class, 'expiring'])->name('inventory.expiring');
+// Supplier Material Routes
+Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'verified', 'role:supplier'])->group(function () {
+    Route::resource('materials', SupplierMaterialController::class);
+    Route::get('dashboard', [SupplierDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/ranking', [SupplierDashboardController::class, 'ranking'])->name('ranking');
+
+    // Supplier Quotation Routes
+    Route::prefix('quotations')->name('quotations.')->group(function () {
+        Route::get('/', [SupplierQuotationController::class, 'index'])->name('index');
+        Route::get('/{quotation}', [SupplierQuotationController::class, 'show'])->name('show');
+        Route::post('/{quotation}/respond', [SupplierQuotationController::class, 'respond'])->name('respond');
+    });
 });

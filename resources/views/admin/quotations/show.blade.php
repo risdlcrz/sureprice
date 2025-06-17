@@ -30,23 +30,27 @@
                 </div>
 
                 <div class="card-body">
-                    <!-- Purchase Request Information -->
+                    <!-- Quotation Details -->
                     <div class="section mb-4">
-                        <h5 class="section-title">Purchase Request Information</h5>
+                        <h5 class="section-title">Quotation Details</h5>
                         <div class="row">
                             <div class="col-md-6">
                                 <table class="table table-sm">
                                     <tr>
-                                        <th width="30%">PR Number:</th>
-                                        <td>PR-{{ $quotation->purchaseRequest->id }}</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Department:</th>
-                                        <td>{{ $quotation->purchaseRequest->department }}</td>
+                                        <th width="30%">RFQ Number:</th>
+                                        <td>{{ $quotation->rfq_number }}</td>
                                     </tr>
                                     <tr>
                                         <th>Due Date:</th>
                                         <td>{{ $quotation->due_date->format('M d, Y') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Status:</th>
+                                        <td>
+                                            <span class="badge badge-{{ $quotation->status_color }}">
+                                                {{ ucfirst($quotation->status) }}
+                                            </span>
+                                        </td>
                                     </tr>
                                 </table>
                             </div>
@@ -69,9 +73,34 @@
                         </div>
                     </div>
 
+                    <!-- Purchase Request Information (Conditional) -->
+                    @if($quotation->purchase_request_id)
+                    <div class="section mb-4">
+                        <h5 class="section-title">Purchase Request Information</h5>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <table class="table table-sm">
+                                    <tr>
+                                        <th width="20%">PR Number:</th>
+                                        <td>PR-{{ $quotation->purchaseRequest->id }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Department:</th>
+                                        <td>{{ $quotation->purchaseRequest->department }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Purpose:</th>
+                                        <td>{{ $quotation->purchaseRequest->purpose ?? 'N/A' }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
                     <!-- Materials -->
                     <div class="section mb-4">
-                        <h5 class="section-title">Materials</h5>
+                        <h5 class="section-title">Materials for Quotation</h5>
                         <div class="table-responsive">
                             <table class="table table-bordered">
                                 <thead>
@@ -79,18 +108,35 @@
                                         <th>Material</th>
                                         <th>Quantity</th>
                                         <th>Unit</th>
-                                        <th>Total</th>
+                                        @if(!$quotation->purchase_request_id)
+                                        <th>Specifications</th>
+                                        @endif
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($quotation->purchaseRequest->items as $item)
+                                    @if($quotation->purchase_request_id)
+                                        @foreach($quotation->purchaseRequest->items as $item)
+                                        <tr>
+                                            <td>{{ $item->material->name }} ({{ $item->material->code }})</td>
+                                            <td>{{ $item->quantity }}</td>
+                                            <td>{{ $item->material->unit }}</td>
+                                        </tr>
+                                        @endforeach
+                                    @else
+                                        @foreach($quotation->materials as $material)
+                                        <tr>
+                                            <td>{{ $material->name }} ({{ $material->code }})</td>
+                                            <td>{{ $material->pivot->quantity }}</td>
+                                            <td>{{ $material->unit }}</td>
+                                            <td>{{ $material->pivot->specifications ?? 'N/A' }}</td>
+                                        </tr>
+                                        @endforeach
+                                    @endif
+                                    @if(($quotation->purchase_request_id && $quotation->purchaseRequest->items->isEmpty()) || (!$quotation->purchase_request_id && $quotation->materials->isEmpty()))
                                     <tr>
-                                        <td>{{ $item->material->name }}</td>
-                                        <td>{{ $item->quantity }}</td>
-                                        <td>{{ $item->material->unit }}</td>
-                                        <td>{{ $item->total_amount }}</td>
+                                        <td colspan="4" class="text-center text-muted">No materials attached to this quotation.</td>
                                     </tr>
-                                    @endforeach
+                                    @endif
                                 </tbody>
                             </table>
                         </div>

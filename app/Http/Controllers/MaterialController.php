@@ -6,6 +6,9 @@ use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use App\Models\QuotationAttachment;
+use App\Models\QuotationResponseAttachment;
+use App\Models\Supplier;
 
 class MaterialController extends Controller
 {
@@ -368,12 +371,7 @@ class MaterialController extends Controller
 
     public function getAllMaterials()
     {
-        $materials = Material::with(['category'])
-            ->select('id', 'code', 'name', 'unit', 'base_price', 'srp_price', 'category_id')
-            ->orderBy('name')
-            ->get();
-
-        return response()->json($materials);
+        return response()->json(Material::all());
     }
 
     public function getSuppliersForMaterial($id)
@@ -555,5 +553,23 @@ class MaterialController extends Controller
                 ];
             });
         return response()->json($items);
+    }
+
+    public function searchBySupplier(Request $request)
+    {
+        $query = $request->input('query');
+        $supplierIds = explode(',', $request->input('suppliers'));
+
+        $materials = Material::where(function ($q) use ($query) {
+                $q->where('name', 'like', "%$query%")
+                  ->orWhere('code', 'like', "%$query%");
+            })
+            ->whereHas('suppliers', function ($q) use ($supplierIds) {
+                $q->whereIn('suppliers.id', $supplierIds);
+            })
+            ->with('category') // Eager load category for material details
+            ->get();
+
+        return response()->json($materials);
     }
 }

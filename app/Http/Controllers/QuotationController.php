@@ -79,7 +79,8 @@ class QuotationController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'purchase_request_id' => 'required|exists:purchase_requests,id',
+            'purchase_request_id' => 'nullable|exists:purchase_requests,id',
+            'is_standalone' => 'sometimes|boolean',
             'due_date' => 'required|date|after:today',
             'suppliers' => 'required|array',
             'suppliers.*' => 'exists:suppliers,id',
@@ -89,8 +90,24 @@ class QuotationController extends Controller
             'payment_terms' => 'nullable|string',
             'delivery_terms' => 'nullable|string',
             'validity_period' => 'nullable|string',
-            'attachments.*' => 'nullable|file|max:10240'
+            'attachments.*' => 'nullable|file|max:10240',
+            'materials' => 'array', // For standalone quotations
+            'materials.*.id' => 'required_with:materials|exists:materials,id',
+            'materials.*.quantity' => 'required_with:materials|numeric|min:0.01',
         ]);
+
+        // Validate material requirements based on quotation type
+        if ($request->boolean('is_standalone')) {
+            $request->validate([
+                'materials' => 'required|array|min:1', // Materials are required for standalone
+            ]);
+            $purchaseRequestId = null; // No PR for standalone
+        } else {
+            $request->validate([
+                'purchase_request_id' => 'required|exists:purchase_requests,id', // PR is required if not standalone
+            ]);
+            $purchaseRequestId = $validated['purchase_request_id'];
+        }
 
         // Generate sequential RFQ number
         $lastQuotation = Quotation::orderByDesc('id')->first();
@@ -102,7 +119,7 @@ class QuotationController extends Controller
         $rfqNumber = 'RFQ-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
 
         $quotation = Quotation::create([
-            'purchase_request_id' => $validated['purchase_request_id'],
+            'purchase_request_id' => $purchaseRequestId,
             'due_date' => $validated['due_date'],
             'notes' => $validated['notes'],
             'payment_terms' => $validated['payment_terms'],
@@ -119,6 +136,15 @@ class QuotationController extends Controller
             ]);
         }
 
+        // Attach materials for standalone quotations
+        if ($request->boolean('is_standalone') && !empty($validated['materials'])) {
+            $materialSyncData = [];
+            foreach ($validated['materials'] as $materialData) {
+                $materialSyncData[$materialData['id']] = ['quantity' => $materialData['quantity']];
+            }
+            $quotation->materials()->sync($materialSyncData);
+        }
+
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = $file->store('quotations/' . $quotation->id);
@@ -129,10 +155,13 @@ class QuotationController extends Controller
             }
         }
 
-        // Set total_amount from PR items
-        $purchaseRequest = PurchaseRequest::with('items')->find($validated['purchase_request_id']);
-        $totalAmount = $purchaseRequest->items->sum('total_amount');
-        $quotation->total_amount = $totalAmount;
+        // Set total_amount (if applicable, though for RFQ it's usually later)
+        // For now, this can be null or calculated based on PR if not standalone
+        if (!$request->boolean('is_standalone') && $purchaseRequestId) {
+            $purchaseRequest = PurchaseRequest::with('items')->find($purchaseRequestId);
+            $totalAmount = $purchaseRequest->items->sum('total_amount');
+            $quotation->total_amount = $totalAmount;
+        }
         $quotation->save();
 
         return redirect()->route('quotations.index')
@@ -169,7 +198,8 @@ class QuotationController extends Controller
         }
 
         $validated = $request->validate([
-            'purchase_request_id' => 'required|exists:purchase_requests,id',
+            'purchase_request_id' => 'nullable|exists:purchase_requests,id',
+            'is_standalone' => 'sometimes|boolean',
             'due_date' => 'required|date|after:today',
             'suppliers' => 'required|array',
             'suppliers.*' => 'exists:suppliers,id',
@@ -179,11 +209,30 @@ class QuotationController extends Controller
             'payment_terms' => 'nullable|string',
             'delivery_terms' => 'nullable|string',
             'validity_period' => 'nullable|string',
-            'attachments.*' => 'nullable|file|max:10240'
+            'attachments.*' => 'nullable|file|max:10240',
+            'materials' => 'array',
+            'materials.*.id' => 'required_with:materials|exists:materials,id',
+            'materials.*.quantity' => 'required_with:materials|numeric|min:0.01',
         ]);
 
+        // Conditional validation for materials based on quotation type
+        $isStandalone = $request->boolean('is_standalone');
+        $purchaseRequestId = null;
+
+        if ($isStandalone) {
+            $request->validate([
+                'materials' => 'required|array|min:1',
+            ]);
+        } else {
+            $request->validate([
+                'purchase_request_id' => 'required|exists:purchase_requests,id',
+            ]);
+            $purchaseRequestId = $validated['purchase_request_id'];
+        }
+
+        // Update quotation details
         $quotation->update([
-            'purchase_request_id' => $validated['purchase_request_id'],
+            'purchase_request_id' => $purchaseRequestId,
             'due_date' => $validated['due_date'],
             'notes' => $validated['notes'],
             'payment_terms' => $validated['payment_terms'],
@@ -200,6 +249,18 @@ class QuotationController extends Controller
         }
         $quotation->suppliers()->sync($supplierSync);
 
+        // Sync materials based on quotation type
+        if ($isStandalone) {
+            $materialSyncData = [];
+            foreach ($validated['materials'] as $materialData) {
+                $materialSyncData[$materialData['id']] = ['quantity' => $materialData['quantity']];
+            }
+            $quotation->materials()->sync($materialSyncData);
+        } else {
+            // If not standalone, clear any direct materials attached previously
+            $quotation->materials()->detach();
+        }
+
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
                 $path = $file->store('quotations/' . $quotation->id);
@@ -210,10 +271,14 @@ class QuotationController extends Controller
             }
         }
 
-        // Set total_amount from PR items
-        $purchaseRequest = PurchaseRequest::with('items')->find($validated['purchase_request_id']);
-        $totalAmount = $purchaseRequest->items->sum('total_amount');
-        $quotation->total_amount = $totalAmount;
+        // Set total_amount (if applicable, though for RFQ it's usually later)
+        if (!$isStandalone && $purchaseRequestId) {
+            $purchaseRequest = PurchaseRequest::with('items')->find($purchaseRequestId);
+            $totalAmount = $purchaseRequest->items->sum('total_amount');
+            $quotation->total_amount = $totalAmount;
+        } else {
+            $quotation->total_amount = null;
+        }
         $quotation->save();
 
         return redirect()->route('quotations.index')
@@ -251,39 +316,46 @@ class QuotationController extends Controller
 
     public function approve(Request $request, Quotation $quotation)
     {
-        if ($quotation->status !== 'responded') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only responded RFQs can be approved.'
-            ]);
+        // Ensure only admin can approve/reject
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized action.');
         }
 
-        $validated = $request->validate([
-            'supplier_id' => 'required|exists:suppliers,id',
-            'amount' => 'required|numeric|min:0',
+        $request->validate([
+            'status' => 'required|in:approved,rejected',
+            'admin_notes' => 'nullable|string',
         ]);
 
         $quotation->update([
-            'status' => 'approved',
-            'awarded_supplier_id' => $validated['supplier_id'],
-            'awarded_amount' => $validated['amount'],
+            'status' => $request->status,
+            'admin_notes' => $request->admin_notes,
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
         ]);
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'message' => 'Quotation has been ' . $request->status . '.',
+            'quotation' => $quotation->fresh()
+        ]);
     }
 
     public function reject(Quotation $quotation)
     {
-        if ($quotation->status !== 'responded') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only responded RFQs can be rejected.'
-            ]);
+        // Ensure only admin can approve/reject
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'Unauthorized action.');
         }
 
-        $quotation->update(['status' => 'rejected']);
+        $quotation->update([
+            'status' => 'rejected',
+            'approved_by' => auth()->id(), // Admin who rejected
+            'approved_at' => now(),
+        ]);
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'message' => 'Quotation has been rejected.',
+            'quotation' => $quotation->fresh()
+        ]);
     }
 
     public function removeAttachment(Request $request)
