@@ -46,9 +46,7 @@
             </div>
 
             <div class="w-100 d-flex flex-column align-items-center mt-2 mobile-nav-buttons">
-                @if(request()->routeIs('history.dashboard'))
-                    @include('include.sidebars.history')
-                @elseif(request()->is('admin/project*'))
+                @if(request()->is('admin/project*'))
                     @include('include.sidebars.project')
                 @elseif(request()->is('admin/analytics*'))
                     @include('include.sidebars.analytics')
@@ -62,9 +60,7 @@
 
         <!-- Desktop Sidebar -->
         <div class="left-header d-none d-md-flex">
-            @if(request()->routeIs('history.dashboard'))
-                @include('include.sidebars.history')
-            @elseif(request()->is('admin/project*'))
+            @if(request()->is('admin/project*'))
                 @include('include.sidebars.project')
             @elseif(request()->is('admin/analytics*'))
                 @include('include.sidebars.analytics')

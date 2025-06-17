@@ -7,7 +7,7 @@
     <div class="row row-cols-1 row-cols-md-3 g-4">
         <!-- Card 1: Past Transactions -->
         <div class="col">
-            <div class="card h-100 shadow-sm" onclick="window.location.href = '{{ route('admin.project') }}';" style="cursor:pointer;">
+            <div class="card h-100 shadow-sm" onclick="window.location.href = '{{ route('admin.transactions') }}';" style="cursor:pointer;">
                 <img src="{{ asset('images/historydash1.svg') }}" class="card-img-top" alt="Past Transactions" style="height: 150px; object-fit: contain;">
                 <div class="card-body">
                     <h5 class="card-title">Past Transactions</h5>
