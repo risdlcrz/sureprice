@@ -29,8 +29,13 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_online' => 'boolean',
+        'last_seen_at' => 'datetime',
         'last_login_at' => 'datetime',
     ];
+
+    protected $appends = ['is_online'];
 
     // Relationships
     public function employee()
@@ -78,5 +83,15 @@ class User extends Authenticatable implements MustVerifyEmail
         }
         
         return false;
+    }
+
+    public function getIsOnlineAttribute()
+    {
+        return $this->last_seen_at && $this->last_seen_at->diffInMinutes(now()) < 5;
+    }
+
+    public function updateLastSeen()
+    {
+        $this->update(['last_seen_at' => now()]);
     }
 }

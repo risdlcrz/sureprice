@@ -39,6 +39,7 @@ use App\Http\Controllers\Warehouse\WarehouseDashboardController;
 use App\Http\Controllers\Warehouse\WarehouseInventoryController;
 use App\Http\Controllers\Warehouse\WarehouseDeliveryController;
 use App\Http\Controllers\Warehouse\WarehouseReportController;
+use App\Http\Controllers\ChatController;
 // Home route redirect to login
 Route::get('/', function () {
     return redirect()->route('login.form');
@@ -217,6 +218,13 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('inventory', WarehouseInventoryController::class);
         Route::resource('reports', WarehouseReportController::class);
     });
+    // Chat routes
+    Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
+    Route::get('/chat/{conversation}', [ChatController::class, 'show'])->name('chat.show');
+    Route::post('/chat/{conversation}/messages', [ChatController::class, 'store'])->name('chat.store');
+    Route::post('/chat/messages/{message}/read', [ChatController::class, 'markAsRead'])->name('chat.markAsRead');
+    Route::get('/chat/users', [ChatController::class, 'users'])->name('chat.users');
+    Route::get('/chat/start/{userId}', [ChatController::class, 'start'])->name('chat.start');
 });
 // Payments routes
 Route::middleware(['auth'])->group(function () {

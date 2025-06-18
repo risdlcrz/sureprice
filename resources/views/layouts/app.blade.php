@@ -135,5 +135,89 @@
             {{-- Removed Transactions link from navbar --}}
         @endif
     @endauth
+
+    <!-- Messenger Floating Button and Popup Chat -->
+    <style>
+        #messenger-fab {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            z-index: 1050;
+            background: #2563eb;
+            color: #fff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #messenger-fab:hover {
+            background: #1d4ed8;
+        }
+        #messenger-popup {
+            position: fixed;
+            bottom: 100px;
+            right: 32px;
+            width: 380px;
+            height: 540px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            z-index: 1051;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #messenger-popup-header {
+            background: #2563eb;
+            color: #fff;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        #messenger-popup iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+        @media (max-width: 500px) {
+            #messenger-popup {
+                width: 98vw;
+                right: 1vw;
+                height: 80vh;
+                bottom: 80px;
+            }
+        }
+    </style>
+    <div id="messenger-fab" title="Open Messenger">
+        <i class="fab fa-facebook-messenger fa-2x"></i>
+    </div>
+    <div id="messenger-popup">
+        <div id="messenger-popup-header">
+            <span>Messenger</span>
+            <button id="messenger-popup-close" class="btn btn-sm btn-light" style="color:#2563eb;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <iframe src="{{ route('chat.index', ['popup' => 1]) }}" allow="camera; microphone"></iframe>
+    </div>
+    <script>
+        const fab = document.getElementById('messenger-fab');
+        const popup = document.getElementById('messenger-popup');
+        const closeBtn = document.getElementById('messenger-popup-close');
+        fab.addEventListener('click', () => {
+            popup.style.display = 'flex';
+            fab.style.display = 'none';
+        });
+        closeBtn.addEventListener('click', () => {
+            popup.style.display = 'none';
+            fab.style.display = 'flex';
+        });
+    </script>
 </body>
 </html>
