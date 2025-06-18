@@ -120,7 +120,7 @@ class ClientController extends Controller
         ->latest()
         ->get();
 
-        return view('client.dashboard', compact('user', 'company', 'contracts'));
+        return view('payments.client-dashboard', compact('user', 'company', 'contracts'));
     }
 
     /**

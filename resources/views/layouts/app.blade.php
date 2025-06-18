@@ -210,13 +210,27 @@
         const fab = document.getElementById('messenger-fab');
         const popup = document.getElementById('messenger-popup');
         const closeBtn = document.getElementById('messenger-popup-close');
+        const iframe = popup.querySelector('iframe');
+
         fab.addEventListener('click', () => {
             popup.style.display = 'flex';
             fab.style.display = 'none';
         });
+
         closeBtn.addEventListener('click', () => {
             popup.style.display = 'none';
             fab.style.display = 'flex';
+        });
+
+        // Listen for messages from the iframe
+        window.addEventListener('message', function(event) {
+            if (event.data === 'enlarge-chat') {
+                // Open chat in new tab
+                window.open('{{ route('chat.index') }}', '_blank');
+                // Close the popup
+                popup.style.display = 'none';
+                fab.style.display = 'flex';
+            }
         });
     </script>
 </body>

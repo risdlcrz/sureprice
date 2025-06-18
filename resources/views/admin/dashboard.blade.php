@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container py-5">
-    <h1>Supplier Dashboard</h1>
-    <p>Welcome to the supplier dashboard.</p>
+    <h1>Admin Dashboard</h1>
+    <p>Welcome to the admin dashboard.</p>
 </div>
 @endsection 

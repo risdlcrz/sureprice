@@ -1,229 +1,160 @@
-@extends(request('popup') ? 'layouts.chat-popup' : 'layouts.app')
+@extends(request('popup') ? 'layouts.chat-popup' : 'layouts.chat')
 
 @section('content')
-@if(request('popup'))
-    {{-- Popup: Show only the conversation list as before --}}
-    <div class="flex h-screen bg-gray-100">
-        <div class="w-full max-w-md mx-auto bg-white h-full shadow-lg rounded-lg flex flex-col relative">
-            <!-- Header -->
-            <div class="flex items-center justify-between px-4 py-3 border-b">
-                <div class="flex items-center gap-2">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-0">Chats</h2>
-                    <button class="btn btn-link p-0 m-0" id="new-message-btn" title="New Message" style="color:#2563eb;">
-                        <i class="fas fa-edit fa-lg"></i>
-                    </button>
+<div class="container-fluid h-100" style="height:100vh;">
+    <div class="row h-100" style="height:100vh;">
+        <!-- Left Sidebar -->
+        <div class="col-3 d-flex flex-column p-0 border-end bg-white" style="height:100vh;min-width:300px;max-width:350px;">
+            <div class="d-flex align-items-center justify-content-between px-3 py-3 border-bottom">
+                <div></div>
+                <div>
+                    <button class="btn btn-light btn-sm me-2" id="enlarge-btn" title="Open in new tab"><i class="fas fa-external-link-alt"></i></button>
+                    <button class="btn btn-success btn-sm" id="new-message-btn" title="New Message"><i class="fas fa-edit"></i></button>
                 </div>
-                <button class="btn btn-link p-0 m-0" id="enlarge-btn" title="Open in new tab" style="color:#2563eb;">
-                    <i class="fas fa-external-link-alt fa-lg"></i>
-                </button>
             </div>
-            <!-- Search Bar -->
-            <div class="px-4 py-2 border-b bg-gray-50">
-                <input type="text" class="form-control rounded-full px-4 py-2" id="conversation-search" placeholder="Search Messenger...">
+            <div class="px-3 py-2 border-bottom">
+                <input type="text" class="form-control" placeholder="Search Messenger...">
             </div>
-            <!-- Tabs (only All and Unread) -->
-            <div class="flex items-center px-4 py-2 border-b bg-gray-50 gap-4">
-                <button class="tab-btn active" data-tab="all">All</button>
-                <button class="tab-btn" data-tab="unread">Unread</button>
+            <div class="d-flex px-3 py-2 border-bottom gap-3">
+                <button class="btn btn-link p-0 text-success fw-bold">All</button>
+                <button class="btn btn-link p-0 text-secondary">Unread</button>
             </div>
-            <!-- Conversation List -->
-            <div class="flex-1 overflow-y-auto bg-white" id="conversation-list">
-                @forelse($conversations as $conversation)
-                <a href="{{ route('chat.show', array_merge([$conversation['id']], request('popup') ? ['popup' => 1] : [])) }}"
-                   class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 border-b transition group">
-                    <div class="relative">
-                        <img src="{{ $conversation['other_user']['avatar'] ?? asset('images/default-avatar.png') }}"
-                             alt="{{ $conversation['other_user']['name'] }}"
-                             class="w-12 h-12 rounded-full object-cover border border-gray-200">
-                        @if($conversation['other_user']['is_online'])
-                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
-                        @endif
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-base font-semibold text-gray-900 truncate">{{ $conversation['other_user']['name'] }}</h3>
-                            @if($conversation['last_message'])
-                            <span class="text-xs text-gray-400">
-                                {{ $conversation['last_message']['created_at']->diffForHumans() }}
-                            </span>
-                            @endif
+            <div class="flex-grow-1 overflow-auto" style="background:#f8f9fa;">
+                <div class="list-group list-group-flush">
+                    @forelse($conversations as $conversation)
+                        @php $popup = request('popup') ? ['popup' => 1] : []; @endphp
+                        <a href="{{ route('chat.show', array_merge(['conversation' => $conversation['id']], $popup)) }}" class="list-group-item list-group-item-action d-flex align-items-center {{ isset($activeConversationId) && $activeConversationId == $conversation['id'] ? 'bg-success text-white' : '' }}">
+                            <img src="{{ $conversation['other_user']['avatar'] ?? asset('images/default-avatar.png') }}" class="rounded-circle me-3" width="48" height="48">
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">{{ $conversation['other_user']['name'] }}</div>
+                                @if($conversation['last_message'])
+                                    <small>{{ $conversation['last_message']['message'] }} &middot; {{ $conversation['last_message']['created_at']->diffForHumans() }}</small>
+                                @endif
+                            </div>
+                        </a>
+                    @empty
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-comments fa-2x mb-2"></i>
+                            <div>No conversations yet.</div>
                         </div>
-                        @if($conversation['last_message'])
-                        <div class="flex items-center gap-2">
-                            <p class="text-sm text-gray-600 truncate flex-1">
-                                {{ $conversation['last_message']['message'] }}
-                            </p>
-                            @if($conversation['last_message']['status'] === 'sent')
-                                <i class="fas fa-check text-gray-300 text-xs"></i>
-                            @elseif($conversation['last_message']['status'] === 'delivered')
-                                <i class="fas fa-check-double text-blue-300 text-xs"></i>
-                            @elseif($conversation['last_message']['status'] === 'read')
-                                <i class="fas fa-check-double text-blue-500 text-xs"></i>
-                            @endif
-                        </div>
-                        @endif
-                    </div>
-                </a>
-                @empty
-                <div class="flex flex-col items-center justify-center h-full text-gray-400">
-                    <i class="fas fa-comments fa-3x mb-2"></i>
-                    <p>No conversations yet.</p>
+                    @endforelse
                 </div>
-                @endforelse
             </div>
         </div>
-
-        <!-- New Message Modal -->
-        <div class="modal fade" id="newMessageModal" tabindex="-1" aria-labelledby="newMessageModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-scrollable">
-            <div class="modal-content">
-              <div class="modal-header">
+        <!-- Center Chat Area -->
+        <div class="col-6 d-flex flex-column p-0" style="height:100vh;min-width:400px;">
+            <!-- Chat Header -->
+            <div class="d-flex align-items-center justify-content-between px-4 py-3 border-bottom bg-white">
+                <div class="d-flex align-items-center">
+                    <img src="https://randomuser.me/api/portraits/men/1.jpg" class="rounded-circle me-3" width="48" height="48">
+                    <div>
+                        <div class="fw-bold">modus operandi</div>
+                        <small>Patricia Anne Dela Cruz <span class="fw-bold">Attachment</span></small>
+                    </div>
+                </div>
+                <div class="d-flex gap-3">
+                    <button class="btn btn-link text-success"><i class="fas fa-phone fa-lg"></i></button>
+                    <button class="btn btn-link text-success"><i class="fas fa-video fa-lg"></i></button>
+                    <button class="btn btn-link text-success"><i class="fas fa-info-circle fa-lg"></i></button>
+                </div>
+            </div>
+            <!-- Messages -->
+            <div class="flex-grow-1 px-4 py-3 overflow-auto" style="background:#f4f6fb;">
+                <!-- Example messages -->
+                <div class="d-flex flex-column gap-3">
+                    <div class="align-self-end">
+                        <div class="bg-success text-white rounded-pill px-4 py-2 mb-1" style="max-width:60%;">Sige sige</div>
+                        <div class="bg-success text-white rounded-pill px-4 py-2 mb-1" style="max-width:60%;">So yung button mag rereddirect sa buong page?</div>
+                        <div class="bg-success text-white rounded-pill px-4 py-2" style="max-width:60%;">ay sige sige wag na ganto?</div>
+                    </div>
+                    <div class="align-self-start">
+                        <div class="bg-light text-dark rounded-pill px-4 py-2 mb-1" style="max-width:60%;">YUS</div>
+                        <div class="bg-light text-dark rounded-pill px-4 py-2 mb-1" style="max-width:60%;">pwede naman both</div>
+                        <div class="bg-light text-dark rounded-pill px-4 py-2" style="max-width:60%;">para mas accessible</div>
+                    </div>
+                </div>
+            </div>
+            <!-- Message Input -->
+            <div class="border-top bg-white px-4 py-3">
+                <form class="d-flex align-items-center gap-2">
+                    <button class="btn btn-link text-success" type="button"><i class="fas fa-plus fa-lg"></i></button>
+                    <button class="btn btn-link text-success" type="button"><i class="fas fa-image fa-lg"></i></button>
+                    <button class="btn btn-link text-success" type="button"><i class="fas fa-sticky-note fa-lg"></i></button>
+                    <button class="btn btn-link text-success" type="button"><i class="fas fa-gift fa-lg"></i></button>
+                    <input type="text" class="form-control rounded-pill" placeholder="Aa">
+                    <button class="btn btn-link text-success" type="button"><i class="far fa-smile fa-lg"></i></button>
+                    <button class="btn btn-link text-success" type="button"><i class="fas fa-thumbs-up fa-lg"></i></button>
+                </form>
+            </div>
+        </div>
+        @if(!request('popup'))
+        <!-- Right Sidebar (hide in popup) -->
+        <div class="col-3 d-flex flex-column p-0 border-start bg-white" style="height:100vh;min-width:300px;max-width:350px;">
+            <div class="d-flex flex-column align-items-center py-4 border-bottom">
+                <img src="https://randomuser.me/api/portraits/men/1.jpg" class="rounded-circle mb-2" width="72" height="72">
+                <div class="fw-bold">modus operandi</div>
+            </div>
+            <div class="p-4">
+                <div class="mb-4">
+                    <button class="btn btn-light w-100 mb-2"><i class="fas fa-bell me-2"></i>Mute</button>
+                    <button class="btn btn-light w-100"><i class="fas fa-search me-2"></i>Search</button>
+                </div>
+                <div class="mb-4">
+                    <div class="fw-bold mb-2">Chat info</div>
+                    <div class="mb-2">Customize chat</div>
+                    <div class="mb-2">Chat members</div>
+                </div>
+                <div>
+                    <div class="fw-bold mb-2">Media, files and links</div>
+                    <div class="mb-2"><i class="fas fa-photo-video me-2"></i>Media</div>
+                    <div><i class="fas fa-file-alt me-2"></i>Files</div>
+                </div>
+            </div>
+        </div>
+        @endif
+    </div>
+</div>
+<!-- New Message Modal -->
+<div class="modal fade" id="newMessageModal" tabindex="-1" aria-labelledby="newMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
                 <h5 class="modal-title" id="newMessageModalLabel">Start New Conversation</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
+            </div>
+            <div class="modal-body">
                 <input type="text" class="form-control mb-3" id="user-search-input" placeholder="Search users...">
                 <div id="user-list-container">
-                  <div class="text-center text-muted">Loading users...</div>
+                    <div class="text-center text-muted">Type to search for users...</div>
                 </div>
-              </div>
             </div>
-          </div>
         </div>
     </div>
-@else
-    {{-- Full page: Messenger-style layout with sidebar and main area --}}
-    <div class="flex h-screen bg-gray-100">
-        <!-- Sidebar (Conversation List) -->
-        <div class="w-full max-w-sm bg-white h-full shadow-lg flex flex-col relative border-r">
-            <div class="flex items-center justify-between px-4 py-3 border-b">
-                <div class="flex items-center gap-2">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-0">Chats</h2>
-                    <button class="btn btn-link p-0 m-0" id="new-message-btn" title="New Message" style="color:#2563eb;">
-                        <i class="fas fa-edit fa-lg"></i>
-                    </button>
-                </div>
-            </div>
-            <div class="px-4 py-2 border-b bg-gray-50">
-                <input type="text" class="form-control rounded-full px-4 py-2" id="conversation-search" placeholder="Search Messenger...">
-            </div>
-            <div class="flex items-center px-4 py-2 border-b bg-gray-50 gap-4">
-                <button class="tab-btn active" data-tab="all">All</button>
-                <button class="tab-btn" data-tab="unread">Unread</button>
-            </div>
-            <div class="flex-1 overflow-y-auto bg-white" id="conversation-list">
-                @forelse($conversations as $conversation)
-                <a href="{{ route('chat.show', [$conversation['id']]) }}"
-                   class="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 border-b transition group">
-                    <div class="relative">
-                        <img src="{{ $conversation['other_user']['avatar'] ?? asset('images/default-avatar.png') }}"
-                             alt="{{ $conversation['other_user']['name'] }}"
-                             class="w-12 h-12 rounded-full object-cover border border-gray-200">
-                        @if($conversation['other_user']['is_online'])
-                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
-                        @endif
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-base font-semibold text-gray-900 truncate">{{ $conversation['other_user']['name'] }}</h3>
-                            @if($conversation['last_message'])
-                            <span class="text-xs text-gray-400">
-                                {{ $conversation['last_message']['created_at']->diffForHumans() }}
-                            </span>
-                            @endif
-                        </div>
-                        @if($conversation['last_message'])
-                        <div class="flex items-center gap-2">
-                            <p class="text-sm text-gray-600 truncate flex-1">
-                                {{ $conversation['last_message']['message'] }}
-                            </p>
-                            @if($conversation['last_message']['status'] === 'sent')
-                                <i class="fas fa-check text-gray-300 text-xs"></i>
-                            @elseif($conversation['last_message']['status'] === 'delivered')
-                                <i class="fas fa-check-double text-blue-300 text-xs"></i>
-                            @elseif($conversation['last_message']['status'] === 'read')
-                                <i class="fas fa-check-double text-blue-500 text-xs"></i>
-                            @endif
-                        </div>
-                        @endif
-                    </div>
-                </a>
-                @empty
-                <div class="flex flex-col items-center justify-center h-full text-gray-400">
-                    <i class="fas fa-comments fa-3x mb-2"></i>
-                    <p>No conversations yet.</p>
-                </div>
-                @endforelse
-            </div>
-        </div>
-        <!-- Main Area (Empty by default) -->
-        <div class="flex-1 flex items-center justify-center bg-gray-50">
-            <div class="text-center">
-                <i class="fas fa-comments fa-4x mb-4 text-gray-300"></i>
-                <h3 class="text-xl font-semibold text-gray-700">No conversation selected</h3>
-                <p class="text-gray-500">Select a conversation to start messaging</p>
-            </div>
-        </div>
-        <!-- New Message Modal -->
-        <div class="modal fade" id="newMessageModal" tabindex="-1" aria-labelledby="newMessageModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-scrollable">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="newMessageModalLabel">Start New Conversation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                <input type="text" class="form-control mb-3" id="user-search-input" placeholder="Search users...">
-                <div id="user-list-container">
-                  <div class="text-center text-muted">Loading users...</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-    </div>
-@endif
-
-@push('styles')
-<style>
-.tab-btn {
-    background: none;
-    border: none;
-    outline: none;
-    font-weight: 500;
-    color: #888;
-    padding: 0 8px 4px 8px;
-    border-bottom: 2px solid transparent;
-    transition: color 0.2s, border-color 0.2s;
-    cursor: pointer;
-}
-.tab-btn.active {
-    color: #2563eb;
-    border-bottom: 2px solid #2563eb;
-}
-</style>
-@endpush
-
+</div>
 @push('scripts')
 <script>
-$(function() {
-    // Tabs (only All is functional)
-    $('.tab-btn').on('click', function() {
-        $('.tab-btn').removeClass('active');
-        $(this).addClass('active');
-        // Only All is functional for now
+    // Enlarge button (only in popup)
+    $('#enlarge-btn').on('click', function() {
+        if (window.parent !== window) {
+            window.parent.postMessage('enlarge-chat', '*');
+        } else {
+            window.open('{{ route('chat.index') }}', '_blank');
+        }
     });
     // New Message Modal
     $('#new-message-btn').on('click', function() {
         $('#newMessageModal').modal('show');
-        loadUserList();
+        $('#user-search-input').val('');
+        $('#user-list-container').html('<div class="text-center text-muted">Type to search for users...</div>');
     });
     $('#user-search-input').on('input', function() {
-        loadUserList($(this).val());
-    });
-    function loadUserList(query = '') {
-        $('#user-list-container').html('<div class="text-center text-muted">Loading users...</div>');
-        $.get('/chat/users', {q: query}, function(data) {
+        let query = $(this).val();
+        if (query.length < 2) {
+            $('#user-list-container').html('<div class="text-center text-muted">Type to search for users...</div>');
+            return;
+        }
+        $('#user-list-container').html('<div class="text-center text-muted">Searching...</div>');
+        $.get('{{ route('chat.users') }}', {q: query}, function(data) {
             let html = '';
             if (data.length === 0) {
                 html = '<div class="text-center text-muted">No users found.</div>';
@@ -242,24 +173,15 @@ $(function() {
             }
             $('#user-list-container').html(html);
         });
-    }
+    });
     $(document).on('click', '.start-chat-btn', function() {
         const userId = $(this).closest('.user-list-item').data('user-id');
-        window.location.href = `/chat/start/${userId}`;
+        let url = '/chat/start/' + userId;
+        @if(request('popup'))
+            url += '?popup=1';
+        @endif
+        window.location.href = url;
     });
-    // Conversation search (client-side filter)
-    $('#conversation-search').on('input', function() {
-        const q = $(this).val().toLowerCase();
-        $('#conversation-list a').each(function() {
-            const text = $(this).text().toLowerCase();
-            $(this).toggle(text.indexOf(q) !== -1);
-        });
-    });
-    // Enlarge button (only in popup)
-    $('#enlarge-btn').on('click', function() {
-        window.open('/chat', '_blank');
-    });
-});
 </script>
 @endpush
 @endsection 

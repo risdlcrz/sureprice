@@ -40,6 +40,8 @@ use App\Http\Controllers\Warehouse\WarehouseInventoryController;
 use App\Http\Controllers\Warehouse\WarehouseDeliveryController;
 use App\Http\Controllers\Warehouse\WarehouseReportController;
 use App\Http\Controllers\ChatController;
+
+
 // Home route redirect to login
 Route::get('/', function () {
     return redirect()->route('login.form');
@@ -236,7 +238,7 @@ Route::middleware(['auth'])->group(function () {
 });
 // Client Routes
 Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefix('client')->name('client.')->group(function () {
-    Route::get('/dashboard', [ClientController::class, 'dashboard'])->name('dashboard');
+    Route::redirect('/dashboard', '/client/payments/dashboard')->name('dashboard');
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments');
     Route::get('/payments/dashboard', [PaymentController::class, 'dashboard'])->name('payments.dashboard');
     Route::get('/project-procurement', [ClientController::class, 'projectProcurement'])->name('project.procurement');
@@ -341,3 +343,12 @@ Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'verified', \A
         Route::post('/{quotation}/respond', [SupplierQuotationController::class, 'respond'])->name('respond');
     });
 });
+// Admin Dashboard
+Route::get('/admin/dashboard', function () {
+    return view('admin.dashboard');
+})->name('admin.dashboard');
+
+// Supplier Dashboard
+Route::get('/supplier/dashboard', function () {
+    return view('supplier.dashboard');
+})->name('supplier.dashboard');

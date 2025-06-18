@@ -1,4 +1,4 @@
-@extends(request('popup') ? 'layouts.chat-popup' : 'layouts.app')
+@extends(request('popup') ? 'layouts.chat-popup' : 'layouts.chat')
 
 @section('content')
 @if(request('popup'))
@@ -8,17 +8,9 @@
         </div>
     </div>
 @else
-    <div class="flex h-screen bg-gray-100">
+    <div class="flex flex-1 bg-white">
         <!-- Sidebar (Conversation List) -->
         <div class="w-full max-w-sm bg-white h-full shadow-lg flex flex-col relative border-r">
-            <div class="flex items-center justify-between px-4 py-3 border-b">
-                <div class="flex items-center gap-2">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-0">Chats</h2>
-                    <button class="btn btn-link p-0 m-0" id="new-message-btn" title="New Message" style="color:#2563eb;">
-                        <i class="fas fa-edit fa-lg"></i>
-                    </button>
-                </div>
-            </div>
             <div class="px-4 py-2 border-b bg-gray-50">
                 <input type="text" class="form-control rounded-full px-4 py-2" id="conversation-search" placeholder="Search Messenger...">
             </div>
@@ -70,25 +62,26 @@
         <div class="flex-1 flex flex-col">
             @include('chat._chat_area', ['conversation' => $conversation, 'messages' => $messages, 'otherUser' => $otherUser])
         </div>
-        <!-- New Message Modal -->
-        <div class="modal fade" id="newMessageModal" tabindex="-1" aria-labelledby="newMessageModalLabel" aria-hidden="true">
-          <div class="modal-dialog modal-dialog-scrollable">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title" id="newMessageModalLabel">Start New Conversation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body">
-                <input type="text" class="form-control mb-3" id="user-search-input" placeholder="Search users...">
-                <div id="user-list-container">
-                  <div class="text-center text-muted">Loading users...</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
     </div>
 @endif
+
+<!-- New Message Modal -->
+<div class="modal fade" id="newMessageModal" tabindex="-1" aria-labelledby="newMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newMessageModalLabel">Start New Conversation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control mb-3" id="user-search-input" placeholder="Search users...">
+                <div id="user-list-container">
+                    <div class="text-center text-muted">Loading users...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @include('chat._chat_area_js') 
