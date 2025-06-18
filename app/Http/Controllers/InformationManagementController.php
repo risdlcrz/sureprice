@@ -220,7 +220,8 @@ class InformationManagementController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt'
+            'csv_file' => 'required|file|mimes:csv,txt',
+            'type' => 'required|in:employee,contractor'
         ]);
 
         try {
@@ -232,7 +233,7 @@ class InformationManagementController extends Controller
             // Remove header row
             $headers = array_shift($csvData);
 
-            $type = $request->input('type', 'employee'); // Get the type from the request
+            $type = $request->input('type');
 
             foreach ($csvData as $row) {
                 // Skip empty rows
@@ -265,29 +266,26 @@ class InformationManagementController extends Controller
                     $existingUser = User::where('email', $email)->orWhere('username', $username)->first();
                     if ($existingUser) {
                         \Log::info('Skipping existing employee during import:', ['email' => $email, 'username' => $username]);
-                        continue; // Skip existing users
+                        continue;
                     }
 
+                    // Create user and employee records
                     $user = User::create([
-                        'name' => $firstName . ' ' . $lastName,
-                        'email' => $email,
                         'username' => $username,
+                        'email' => $email,
                         'password' => Hash::make($password),
-                        'user_type' => 'employee',
-                        'role' => $role,
+                        'user_type' => 'employee'
                     ]);
 
                     Employee::create([
                         'user_id' => $user->id,
                         'first_name' => $firstName,
                         'last_name' => $lastName,
-                        'email' => $email,
-                        'username' => $username,
-                        'role' => $role,
+                        'role' => $role
                     ]);
+
                 } else if ($type === 'contractor') {
-                    \Log::info('Processing contractor row:', $row);
-                    // Contractor data expected: First Name, Last Name, Email, Username, Password, Company Name, Phone, Street, Barangay, City, State, Postal
+                    // Contractor data expected: First Name, Last Name, Email, Username, Password, Company Name, Phone, Street, City, Province, Zip Code
                     $firstName = $row[0] ?? null;
                     $lastName = $row[1] ?? null;
                     $email = $row[2] ?? null;
@@ -296,13 +294,12 @@ class InformationManagementController extends Controller
                     $companyName = $row[5] ?? null;
                     $phone = $row[6] ?? null;
                     $street = $row[7] ?? null;
-                    $barangay = $row[8] ?? null;
-                    $city = $row[9] ?? null;
-                    $state = $row[10] ?? null;
-                    $postal = $row[11] ?? null;
+                    $city = $row[8] ?? null;
+                    $province = $row[9] ?? null;
+                    $zipCode = $row[10] ?? null;
 
                     // Basic validation for critical fields
-                    if (!$firstName || !$lastName || !$email || !$username || !$password || !$companyName || !$phone) {
+                    if (!$firstName || !$lastName || !$email || !$username || !$password || !$companyName) {
                         \Log::warning('Skipping contractor row due to missing critical data:', $row);
                         continue;
                     }
@@ -311,69 +308,40 @@ class InformationManagementController extends Controller
                     $existingUser = User::where('email', $email)->orWhere('username', $username)->first();
                     if ($existingUser) {
                         \Log::info('Skipping existing contractor during import:', ['email' => $email, 'username' => $username]);
-                        continue; // Skip existing users
+                        continue;
                     }
 
+                    // Create user and employee records with contractor role
                     $user = User::create([
-                        'name' => $firstName . ' ' . $lastName,
-                        'email' => $email,
                         'username' => $username,
+                        'email' => $email,
                         'password' => Hash::make($password),
-                        'user_type' => 'employee', // Contractors are also 'employees' in the User table, but with a 'contractor' role
-                        'role' => 'contractor',
+                        'user_type' => 'employee'
                     ]);
 
-                    $employee = Employee::create([
+                    Employee::create([
                         'user_id' => $user->id,
                         'first_name' => $firstName,
                         'last_name' => $lastName,
-                        'email' => $email,
-                        'username' => $username,
                         'role' => 'contractor',
                         'company_name' => $companyName,
                         'phone' => $phone,
                         'street' => $street,
-                        'barangay' => $barangay,
                         'city' => $city,
-                        'state' => $state,
-                        'postal' => $postal,
+                        'state' => $province,
+                        'postal' => $zipCode
                     ]);
-
-                    $company = Company::create([
-                        'user_id' => $user->id,
-                        'company_name' => $companyName,
-                        'contact_person' => $firstName . ' ' . $lastName,
-                        'email' => $email,
-                        'username' => $username,
-                        'mobile_number' => $phone,
-                        'street' => $street,
-                        'city' => $city,
-                        'province' => $state,
-                        'zip_code' => $postal,
-                        'supplier_type' => 'Contractor',
-                        'designation' => 'contractor',
-                        'status' => 'pending', // or 'approved' if you want them visible immediately
-                    ]);
-
-                    \Log::info('Successfully created contractor:', [
-                        'user_id' => $user->id,
-                        'employee_id' => $employee->id,
-                        'company_id' => $company->id,
-                        'email' => $email,
-                        'username' => $username
-                    ]);
-                } else {
-                    \Log::warning('Unknown import type encountered:', ['type' => $type]);
-                    return back()->with('error', 'Unknown import type. Please use a valid template.');
                 }
             }
 
             DB::commit();
-            return back()->with('success', 'Data imported successfully!');
+            return redirect()->route('information-management.index')
+                           ->with('success', 'Data imported successfully');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error importing data: ' . $e->getMessage());
+            \Log::error('Import failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to import data: ' . $e->getMessage());
         }
     }
 

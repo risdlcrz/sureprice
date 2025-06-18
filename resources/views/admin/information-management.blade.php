@@ -85,9 +85,18 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- Instructions and Template Download will go here -->
-                    <p>Please ensure your CSV file follows the correct format for the data you are importing. You can download a template below.</p>
+                    <!-- Instructions -->
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading"><i class="fas fa-info-circle"></i> Instructions</h6>
+                        <ol class="mb-0">
+                            <li>Download the appropriate template file below</li>
+                            <li>Fill in the required information in the template</li>
+                            <li>Save the file as CSV format</li>
+                            <li>Upload the filled template using the form below</li>
+                        </ol>
+                    </div>
                     
+                    <!-- Template Downloads -->
                     <h6 class="mt-4">Download CSV Template:</h6>
                     <div class="d-flex gap-2 mb-4">
                         <a href="{{ route('information-management.template', ['type' => 'employee']) }}" class="btn btn-info btn-sm">
@@ -100,13 +109,29 @@
 
                     <hr>
 
+                    <!-- Upload Form -->
                     <h6 class="mt-4">Upload Your CSV File:</h6>
                     <form action="{{ route('information-management.import') }}" method="POST" enctype="multipart/form-data" id="csvUploadForm">
                         @csrf
-                        <input type="hidden" name="type" value="{{ $type === 'company' ? 'contractor' : 'employee' }}" id="importType">
+                        <div class="mb-3">
+                            <label for="import_type" class="form-label">Select Import Type:</label>
+                            <select class="form-select" name="type" id="import_type" required>
+                                <option value="employee">Employee</option>
+                                <option value="contractor">Contractor</option>
+                            </select>
+                        </div>
                         <div class="mb-3">
                             <label for="csv_file" class="form-label">Choose CSV File:</label>
                             <input type="file" name="csv_file" id="csv_file" class="form-control" accept=".csv" required>
+                        </div>
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Important Notes</h6>
+                            <ul class="mb-0">
+                                <li>All fields marked with * are required</li>
+                                <li>For employees, role must be either 'procurement' or 'warehousing'</li>
+                                <li>Email addresses must be unique</li>
+                                <li>Usernames must be unique</li>
+                            </ul>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -237,7 +262,7 @@
 
     <!-- Pagination -->
     <div class="d-flex justify-content-center mt-4">
-        {{ $items->links() }}
+        {{ $items->appends(['type' => $type, 'role' => $role, 'search' => $search])->links() }}
     </div>
 </div>
 
