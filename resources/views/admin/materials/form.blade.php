@@ -33,12 +33,8 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="code">Material Code</label>
-                                        <input type="text" class="form-control @error('code') is-invalid @enderror" 
-                                            id="code" name="code" 
-                                            value="{{ old('code', $material->code ?? '') }}" required>
-                                        @error('code')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                        @enderror
+                                        <input type="text" class="form-control" id="code" name="code" value="{{ old('code', $material->code ?? '') }}" readonly placeholder="Auto-generated after save">
+                                        <small class="form-text text-muted">Material code will be generated automatically.</small>
                                     </div>
                                 </div>
                             </div>

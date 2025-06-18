@@ -69,7 +69,6 @@ class MaterialController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:50|unique:materials,code',
             'description' => 'nullable|string',
             'category' => 'required|string',
             'unit' => 'required|string',
@@ -99,7 +98,6 @@ class MaterialController extends Controller
 
             $material = Material::create([
                 'name' => $validated['name'],
-                'code' => $validated['code'],
                 'description' => $validated['description'],
                 'category_id' => $category->id,
                 'unit' => $validated['unit'],
@@ -154,7 +152,7 @@ class MaterialController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'required|string|max:50|unique:materials,code,' . $material->id,
+            'code' => 'sometimes|string|max:50|unique:materials,code,' . $material->id,
             'description' => 'nullable|string',
             'category' => 'required|string',
             'unit' => 'required|string',
@@ -184,7 +182,6 @@ class MaterialController extends Controller
 
             $material->update([
                 'name' => $validated['name'],
-                'code' => $validated['code'],
                 'description' => $validated['description'],
                 'category_id' => $category->id,
                 'unit' => $validated['unit'],
