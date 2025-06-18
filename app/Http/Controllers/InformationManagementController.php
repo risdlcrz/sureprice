@@ -255,6 +255,10 @@ class InformationManagementController extends Controller
                 $province = $row[10] ?? null;
                 $zipCode = $row[11] ?? null;
 
+                // Capitalize first and last names
+                $firstName = ucfirst(strtolower($firstName));
+                $lastName = ucfirst(strtolower($lastName));
+
                 // Basic validation for critical fields
                 if (!$firstName || !$lastName || !$email || !$username || !$password || !$role) {
                     \Log::warning('Skipping row due to missing critical data:', $row);
@@ -333,7 +337,6 @@ class InformationManagementController extends Controller
                 'Email',
                 'Password',
             ];
-
             $sampleRow = [
                 'procurement',
                 'John',
@@ -344,33 +347,21 @@ class InformationManagementController extends Controller
             ];
             $filename = 'employee_template.csv';
         } else if ($type === 'contractor') {
-            // Contractor specific headers and sample data will go here
-            // For now, it can be empty or have placeholder values
             $headers = [
+                'Role',
                 'First Name',
                 'Last Name',
-                'Email',
                 'Username',
+                'Email',
                 'Password',
-                'Company Name',
-                'Phone',
-                'Street',
-                'City',
-                'Province',
-                'Zip Code',
             ];
             $sampleRow = [
+                'contractor',
                 'Jane',
                 'Smith',
-                'jane.smith@example.com',
                 'janesmith',
+                'jane.smith@example.com',
                 'password123',
-                'ABC Construction',
-                '09123456789',
-                '123 Main St',
-                'Quezon City',
-                'Metro Manila',
-                '1100',
             ];
             $filename = 'contractor_template.csv';
         } else {
