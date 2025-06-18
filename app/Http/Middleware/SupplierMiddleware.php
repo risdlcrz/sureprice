@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class ProcurementMiddleware
+class SupplierMiddleware
 {
     /**
      * Handle an incoming request.
@@ -24,15 +24,15 @@ class ProcurementMiddleware
         $user = Auth::user();
         
         // Check role in users table first
-        if ($user->role === 'procurement') {
+        if ($user->role === 'supplier') {
             return $next($request);
         }
         
         // If not found in users table, check in employees table
-        if ($user->employee && $user->employee->role === 'procurement') {
+        if ($user->employee && $user->employee->role === 'supplier') {
             return $next($request);
         }
 
-        return redirect()->route('login.form')->with('error', 'Unauthorized access. Procurement role required.');
+        return redirect()->route('login.form')->with('error', 'Unauthorized access. Supplier role required.');
     }
 } 

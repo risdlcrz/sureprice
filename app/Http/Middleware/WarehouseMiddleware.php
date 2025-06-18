@@ -17,10 +17,22 @@ class WarehouseMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if (Auth::check() && Auth::user()->role === 'warehouse') {
+        if (!Auth::check()) {
+            return redirect()->route('login.form')->with('error', 'Please login first.');
+        }
+
+        $user = Auth::user();
+        
+        // Check role in users table first
+        if ($user->role === 'warehousing') {
+            return $next($request);
+        }
+        
+        // If not found in users table, check in employees table
+        if ($user->employee && $user->employee->role === 'warehousing') {
             return $next($request);
         }
 
-        return redirect()->route('login.form')->with('error', 'Unauthorized access. Warehouse role required.');
+        return redirect()->route('login.form')->with('error', 'Unauthorized access. Warehousing role required.');
     }
 } 

@@ -57,7 +57,7 @@
     </div>
     <!-- Card 6 -->
     <div class="col">
-        <div class="card" onclick="window.location.href='{{ route('admin.inventory') }}';" style="cursor:pointer;">
+        <div class="card" onclick="window.location.href='{{ route('inventory.index') }}';" style="cursor:pointer;">
             <img src="{{ asset('Images/imagecard6.jpg') }}" alt="Image 6" class="card-img-top">
             <div class="card-body">
                 <h5 class="card-title">Inventory Management</h5>

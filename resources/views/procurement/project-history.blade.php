@@ -27,7 +27,7 @@
 
         <!-- Card 3: Procurement Logs -->
         <div class="col">
-            <div class="card h-100 shadow-sm" onclick="window.location.href = '{{ route('admin.procurement') }}';" style="cursor:pointer;">
+            <div class="card h-100 shadow-sm" onclick="window.location.href = '{{ route('procurement.dashboard') }}';" style="cursor:pointer;">
                 <img src="{{ asset('images/historydash3.svg') }}" class="card-img-top" alt="Procurement Logs" style="height: 150px; object-fit: contain;">
                 <div class="card-body">
                     <h5 class="card-title">Procurement Logs</h5>

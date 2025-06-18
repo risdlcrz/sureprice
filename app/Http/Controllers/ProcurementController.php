@@ -113,4 +113,22 @@ class ProcurementController extends Controller
 
         return view('procurement.notification-hub', compact('notifications'));
     }
+
+    public function inventoryCreate()
+    {
+        // Return a view for creating a new inventory item
+        return view('procurement.inventory-create');
+    }
+
+    public function inventoryLowStock()
+    {
+        // Return a view or data for low stock items
+        return view('procurement.inventory-low-stock');
+    }
+
+    public function inventoryExpiring()
+    {
+        // Return a view or data for expiring items
+        return view('procurement.inventory-expiring');
+    }
 } 

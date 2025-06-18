@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const mobileNumberField = document.querySelector('input[name="mobile_number"]');
     const telephoneNumberField = document.querySelector('input[name="telephone_number"]');
     const errorMessages = document.querySelectorAll('.error-message');
+    const registrationForm = document.getElementById('registrationForm');
 
     // ===== Show/hide Other Supplier Type field =====
     if (supplierType) {
@@ -17,6 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 otherSupplierType.style.display = 'none';
                 otherSupplierType.querySelector('input').removeAttribute('required');
+                otherSupplierType.querySelector('input').value = '';
             }
         });
 
@@ -88,45 +90,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    const errors = {};
-    document.querySelectorAll('.error-message').forEach(el => {
-        const fieldName = el.getAttribute('data-field');
-        errors[fieldName] = el.textContent;
-    });
-
-    if (errors.username || errors.email) {
-        const errorMessages = [];
-        if (errors.username) errorMessages.push(errors.username);
-        if (errors.email) errorMessages.push(errors.email);
-
-        showNotification(errorMessages.join('<br>'), 'error');
-    }
-
-    // Notification function
-    function showNotification(message, type = 'success') {
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle"></i>
-                <span>${message}</span>
-            </div>
-            <div class="progress-bar"></div>
-        `;
-
-        document.body.appendChild(notification);
-
-        setTimeout(() => {
-            notification.style.transform = 'translateY(-100%)';
-            setTimeout(() => notification.remove(), 500);
-        }, 5000);
-
-        notification.addEventListener('click', () => {
-            notification.style.transform = 'translateY(-100%)';
-            setTimeout(() => notification.remove(), 500);
-        });
-    }
-
     // ===== Enhanced File Upload Handling =====
     document.querySelectorAll('input[type="file"]').forEach(input => {
         const idMappings = {
@@ -161,47 +124,245 @@ document.addEventListener('DOMContentLoaded', function () {
             previewContainer.innerHTML = '';
 
             if (this.files && this.files.length > 0) {
+                const file = this.files[0];
+                
+                // Validate file type
+                const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+                if (!allowedTypes.includes(file.type)) {
+                    showNotification('Please select only PDF, JPG, or PNG files.', 'error');
+                    this.value = '';
+                    return;
+                }
+
+                // Validate file size (10MB max)
+                const maxSize = 10 * 1024 * 1024; // 10MB
+                if (file.size > maxSize) {
+                    showNotification('File size must be less than 10MB.', 'error');
+                    this.value = '';
+                    return;
+                }
+
+                // Update UI to show file is selected
                 if (uploadText) {
-                    uploadText.textContent = this.files[0].name;
-                    uploadText.style.color = '#333';
-                    uploadText.style.fontWeight = '500';
+                    uploadText.textContent = file.name;
+                    uploadText.classList.add('has-file');
                 }
 
                 if (uploadIcon) {
-                    uploadIcon.style.color = '#4CAF50';
+                    uploadIcon.style.color = '#02912d';
+                }
+
+                if (uploadLabel) {
+                    uploadLabel.classList.add('has-file');
                 }
 
                 previewContainer.style.display = 'block';
+                previewContainer.classList.add('show');
 
-                Array.from(this.files).forEach(file => {
-                    const previewItem = document.createElement('div');
-                    previewItem.className = 'file-preview-item';
+                const previewItem = document.createElement('div');
+                previewItem.className = 'file-preview-item';
 
-                    previewItem.innerHTML = `
-                        <span class="file-preview-name">${file.name}</span>
-                        <span class="file-preview-remove" title="Remove file">×</span>
-                    `;
+                previewItem.innerHTML = `
+                    <span class="file-preview-name">${file.name}</span>
+                    <span class="file-preview-remove" title="Remove file">×</span>
+                `;
 
-                    previewContainer.appendChild(previewItem);
+                previewContainer.appendChild(previewItem);
 
-                    previewItem.querySelector('.file-preview-remove').addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        input.value = '';
+                previewItem.querySelector('.file-preview-remove').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    input.value = '';
 
-                        if (uploadText) {
-                            uploadText.textContent = 'Choose file (PDF, JPG, PNG)';
-                            uploadText.style.color = '#555';
-                            uploadText.style.fontWeight = 'normal';
-                        }
+                    if (uploadText) {
+                        uploadText.textContent = 'Choose file (PDF, JPG, PNG)';
+                        uploadText.classList.remove('has-file');
+                    }
 
-                        if (uploadIcon) {
-                            uploadIcon.style.color = '#555';
-                        }
+                    if (uploadIcon) {
+                        uploadIcon.style.color = '#555';
+                    }
 
-                        previewContainer.style.display = 'none';
-                    });
+                    if (uploadLabel) {
+                        uploadLabel.classList.remove('has-file');
+                    }
+
+                    previewContainer.style.display = 'none';
+                    previewContainer.classList.remove('show');
                 });
+
+                // Show success notification
+                showNotification(`File "${file.name}" selected successfully!`, 'success');
             }
         });
     });
+
+    // ===== Form Validation Enhancement =====
+    if (registrationForm) {
+        registrationForm.addEventListener('submit', function(e) {
+            let hasClientSideErrors = false;
+            const requiredFields = this.querySelectorAll('[required]');
+            const errorMessages = [];
+
+            // Custom required file fields (now handled in JS)
+            const requiredFileFields = [
+                'dti_sec_registration',
+                'business_permit_mayor_permit',
+                'valid_id_owner_rep'
+            ];
+            requiredFileFields.forEach(fieldId => {
+                const fileInput = document.getElementById(fieldId);
+                const formGroup = fileInput?.closest('.form-group');
+                if (fileInput && (!fileInput.files || fileInput.files.length === 0)) {
+                    hasClientSideErrors = true;
+                    if (formGroup) {
+                        formGroup.classList.add('has-error');
+                        let errorSpan = formGroup.querySelector('.error-message');
+                        if (!errorSpan) {
+                            errorSpan = document.createElement('span');
+                            errorSpan.className = 'error-message';
+                            formGroup.appendChild(errorSpan);
+                        }
+                        errorSpan.innerHTML = `<i class="fas fa-exclamation-circle"></i> This document is required`;
+                        errorSpan.style.display = 'flex';
+                    }
+                    errorMessages.push(`${fieldId.replace(/_/g, ' ')} is required`);
+                }
+            });
+
+            // Clear previous error styling and messages (but preserve server-side errors)
+            document.querySelectorAll('.form-group').forEach(group => {
+                group.classList.remove('has-error');
+                const existingError = group.querySelector('.error-message');
+                if (existingError && !existingError.hasAttribute('data-server-error')) {
+                    existingError.remove();
+                }
+            });
+
+            // Check required fields (non-file)
+            requiredFields.forEach(field => {
+                if (field.type !== 'file') {
+                    if (!field.value.trim()) {
+                        const formGroup = field.closest('.form-group');
+                        if (formGroup) {
+                            formGroup.classList.add('has-error');
+                            hasClientSideErrors = true;
+                            const label = formGroup.querySelector('label');
+                            const fieldName = label ? label.textContent.replace('*', '').trim() : 'Required field';
+                            let errorSpan = formGroup.querySelector('.error-message');
+                            if (!errorSpan) {
+                                errorSpan = document.createElement('span');
+                                errorSpan.className = 'error-message';
+                                formGroup.appendChild(errorSpan);
+                            }
+                            errorSpan.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${fieldName} is required`;
+                            errorSpan.style.display = 'flex';
+                            errorMessages.push(`${fieldName} is required`);
+                        }
+                    }
+                }
+            });
+
+            // Check password confirmation
+            const password = this.querySelector('input[name="password"]');
+            const passwordConfirmation = this.querySelector('input[name="password_confirmation"]');
+            if (password && passwordConfirmation && password.value !== passwordConfirmation.value) {
+                const formGroup = passwordConfirmation.closest('.form-group');
+                if (formGroup) {
+                    formGroup.classList.add('has-error');
+                    hasClientSideErrors = true;
+                }
+                let errorSpan = formGroup.querySelector('.error-message');
+                if (!errorSpan) {
+                    errorSpan = document.createElement('span');
+                    errorSpan.className = 'error-message';
+                    formGroup.appendChild(errorSpan);
+                }
+                errorSpan.innerHTML = '<i class="fas fa-exclamation-circle"></i> Password confirmation does not match';
+                errorSpan.style.display = 'flex';
+                errorMessages.push('Password confirmation does not match');
+            }
+
+            // Only prevent submission if there are client-side validation errors
+            if (hasClientSideErrors) {
+                e.preventDefault();
+                const errorText = errorMessages.length > 0 ? 
+                    `Please fix the following errors:<br>• ${errorMessages.slice(0, 3).join('<br>• ')}` :
+                    'Please fill in all required fields correctly.';
+                showNotification(errorText, 'error');
+                const firstError = document.querySelector('.form-group.has-error');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                return false;
+            }
+            // If no client-side errors, allow form submission to proceed
+        });
+    }
+
+    // ===== Real-time validation feedback =====
+    document.querySelectorAll('input, select, textarea').forEach(field => {
+        field.addEventListener('blur', function() {
+            const formGroup = this.closest('.form-group');
+            if (formGroup) {
+                if (this.hasAttribute('required') && !this.value.trim()) {
+                    formGroup.classList.add('has-error');
+                } else {
+                    formGroup.classList.remove('has-error');
+                }
+            }
+        });
+
+        field.addEventListener('input', function() {
+            const formGroup = this.closest('.form-group');
+            if (formGroup && formGroup.classList.contains('has-error')) {
+                if (this.value.trim()) {
+                    formGroup.classList.remove('has-error');
+                }
+            }
+        });
+    });
+
+    // ===== Enhanced Error Display =====
+    const errors = {};
+    document.querySelectorAll('.error-message').forEach(el => {
+        const fieldName = el.getAttribute('data-field');
+        errors[fieldName] = el.textContent;
+    });
+
+    if (errors.username || errors.email) {
+        const errorMessages = [];
+        if (errors.username) errorMessages.push(errors.username);
+        if (errors.email) errorMessages.push(errors.email);
+
+        showNotification(errorMessages.join('<br>'), 'error');
+    }
+
+    // ===== Notification function =====
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle"></i>
+                <span>${message}</span>
+            </div>
+            <div class="progress-bar"></div>
+        `;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.style.transform = 'translateY(-100%)';
+            setTimeout(() => notification.remove(), 500);
+        }, 5000);
+
+        notification.addEventListener('click', () => {
+            notification.style.transform = 'translateY(-100%)';
+            setTimeout(() => notification.remove(), 500);
+        });
+    }
+
+    // ===== Auto-save form data to localStorage =====
+    // Removed localStorage functionality to prevent form data persistence
+    // Users can use browser's built-in form autofill if needed
 });

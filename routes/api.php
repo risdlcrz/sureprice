@@ -8,9 +8,6 @@ use App\Http\Controllers\MaterialController;
 use Illuminate\Http\Request;
 use App\Models\Material;
 use App\Models\Supplier;
-use App\Models\Material;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------

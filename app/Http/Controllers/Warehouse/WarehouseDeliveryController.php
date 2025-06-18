@@ -46,7 +46,7 @@ class WarehouseDeliveryController extends Controller
     public function process(Request $request, Delivery $delivery)
     {
         // Ensure only warehouse role can process deliveries
-        if (!auth()->user()->hasRole('warehouse')) {
+        if (!auth()->user()->hasRole('warehousing')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -96,4 +96,7 @@ class WarehouseDeliveryController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Delivery processed successfully',
+        ]);
+    }
+}
  

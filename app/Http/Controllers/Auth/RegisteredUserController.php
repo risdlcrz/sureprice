@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class RegisteredUserController extends Controller
 {
@@ -31,20 +32,31 @@ class RegisteredUserController extends Controller
     {
         $type = $request->input('type'); // expect 'employee' or 'company'
 
+        // Validate first, before starting transaction
+        try {
+            if ($type === 'employee') {
+                $validated = $this->validateEmployee($request);
+            } elseif ($type === 'company') {
+                $validated = $this->validateCompany($request);
+            } else {
+                return back()->withInput()->withErrors(['type' => 'Invalid registration type.']);
+            }
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->validator)->withInput();
+        }
+
         DB::beginTransaction();
 
         try {
             if ($type === 'employee') {
-                $validated = $this->validateEmployee($request);
                 $user = $this->createUser($validated, 'employee');
                 $employee = $this->createEmployeeRecord($user->id, $validated);
             } elseif ($type === 'company') {
-                $validated = $this->validateCompany($request);
                 $user = $this->createUser($validated, 'company');
                 $company = $this->createCompanyRecord($user->id, $validated);
                 $this->handleFileUploads($company, $request);
             } else {
-                return back()->withErrors(['type' => 'Invalid registration type.'])->withInput();
+                return back()->withInput()->withErrors(['type' => 'Invalid registration type.']);
             }
 
             event(new Registered($user));
@@ -132,9 +144,9 @@ class RegisteredUserController extends Controller
 
             // Multiple file uploads validated here
             'dti_sec_registration' => 'required|file|mimes:pdf,jpg,png|max:10240',
+            'business_permit_mayor_permit' => 'required|file|mimes:pdf,jpg,png|max:10240',
+            'valid_id_owner_rep' => 'required|file|mimes:pdf,jpg,png|max:10240',
             'accreditations_certifications' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
-            'business_permit_mayor_permit' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
-            'valid_id_owner_rep' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
             'company_profile_portfolio' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
             'sample_price_list' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
 

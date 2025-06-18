@@ -47,7 +47,7 @@
         <a href="{{ route('admin.analytics') }}" class="btn">
             <i class="fas fa-chart-bar"></i>Analytics
         </a>
-        <a href="{{ route('admin.inventory') }}" class="btn">
+        <a href="{{ route('inventory.index') }}" class="btn">
             <i class="fas fa-boxes"></i>Inventory
         </a>
         <a href="{{ route('admin.transactions') }}" class="btn">

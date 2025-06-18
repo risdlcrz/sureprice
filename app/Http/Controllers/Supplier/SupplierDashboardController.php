@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Supplier;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
+use App\Models\PurchaseOrder;
 use App\Models\SupplierRanking;
 use App\Models\OrderEvaluation;
 use Illuminate\Support\Facades\DB;
@@ -21,28 +21,28 @@ class SupplierDashboardController extends Controller
             ->first();
 
         // Get completed orders count
-        $completedOrders = Order::where('supplier_id', $supplier->id)
+        $completedOrders = PurchaseOrder::where('supplier_id', $supplier->id)
             ->where('status', 'completed')
             ->count();
 
         // Calculate on-time delivery rate
-        $totalDeliveries = Order::where('supplier_id', $supplier->id)
+        $totalDeliveries = PurchaseOrder::where('supplier_id', $supplier->id)
             ->where('status', 'completed')
             ->count();
-        $onTimeDeliveries = Order::where('supplier_id', $supplier->id)
+        $onTimeDeliveries = PurchaseOrder::where('supplier_id', $supplier->id)
             ->where('status', 'completed')
             ->where('delivery_date', '<=', DB::raw('expected_delivery_date'))
             ->count();
         $onTimeRate = $totalDeliveries > 0 ? round(($onTimeDeliveries / $totalDeliveries) * 100) : 0;
 
         // Calculate average delivery time
-        $averageDeliveryTime = Order::where('supplier_id', $supplier->id)
+        $averageDeliveryTime = PurchaseOrder::where('supplier_id', $supplier->id)
             ->where('status', 'completed')
             ->whereNotNull('delivery_date')
             ->avg(DB::raw('DATEDIFF(delivery_date, created_at)'));
 
         // Get late deliveries count
-        $lateDeliveries = Order::where('supplier_id', $supplier->id)
+        $lateDeliveries = PurchaseOrder::where('supplier_id', $supplier->id)
             ->where('status', 'completed')
             ->where('delivery_date', '>', DB::raw('expected_delivery_date'))
             ->count();
@@ -52,7 +52,7 @@ class SupplierDashboardController extends Controller
             $query->where('supplier_id', $supplier->id);
         })->avg('quality_rating');
 
-        $returnRate = Order::where('supplier_id', $supplier->id)
+        $returnRate = PurchaseOrder::where('supplier_id', $supplier->id)
             ->where('status', 'completed')
             ->where('has_returns', true)
             ->count();
