@@ -36,7 +36,7 @@ class InformationManagementController extends Controller
                 });
 
             $items = $query->paginate(10);
-            $roles = ['procurement', 'warehousing'];
+            $roles = ['procurement', 'warehousing', 'contractor'];
         } else {
             $query = Company::with('user')
                 ->when($search, function ($query) use ($search) {
@@ -241,97 +241,68 @@ class InformationManagementController extends Controller
                     continue;
                 }
 
-                if ($type === 'employee') {
-                    // Employee data expected: First Name, Last Name, Email, Username, Password, Role (procurement/warehousing)
-                    $firstName = $row[0] ?? null;
-                    $lastName = $row[1] ?? null;
-                    $email = $row[2] ?? null;
-                    $username = $row[3] ?? null;
-                    $password = $row[4] ?? null;
-                    $role = $row[5] ?? null;
+                // Unified import: Role, First Name, Last Name, Username, Email, Password, [Company Name, Phone, Street, City, Province, Zip Code]
+                $role = $row[0] ?? null;
+                $firstName = $row[1] ?? null;
+                $lastName = $row[2] ?? null;
+                $username = $row[3] ?? null;
+                $email = $row[4] ?? null;
+                $password = $row[5] ?? null;
+                $companyName = $row[6] ?? null;
+                $phone = $row[7] ?? null;
+                $street = $row[8] ?? null;
+                $city = $row[9] ?? null;
+                $province = $row[10] ?? null;
+                $zipCode = $row[11] ?? null;
 
-                    // Basic validation for critical fields
-                    if (!$firstName || !$lastName || !$email || !$username || !$password || !$role) {
-                        \Log::warning('Skipping employee row due to missing critical data:', $row);
-                        continue;
-                    }
+                // Basic validation for critical fields
+                if (!$firstName || !$lastName || !$email || !$username || !$password || !$role) {
+                    \Log::warning('Skipping row due to missing critical data:', $row);
+                    continue;
+                }
 
-                    // Ensure role is valid for employees
-                    if (!in_array($role, ['procurement', 'warehousing'])) {
-                        \Log::warning('Skipping employee row due to invalid role:', $row);
-                        continue;
-                    }
+                // Only allow valid roles
+                if (!in_array($role, ['procurement', 'warehousing', 'contractor'])) {
+                    \Log::warning('Skipping row due to invalid role:', $row);
+                    continue;
+                }
 
-                    // Check if user already exists by email or username
-                    $existingUser = User::where('email', $email)->orWhere('username', $username)->first();
-                    if ($existingUser) {
-                        \Log::info('Skipping existing employee during import:', ['email' => $email, 'username' => $username]);
-                        continue;
-                    }
+                // Check if user already exists by email or username
+                $existingUser = User::where('email', $email)->orWhere('username', $username)->first();
+                if ($existingUser) {
+                    \Log::info('Skipping existing user during import:', ['email' => $email, 'username' => $username]);
+                    continue;
+                }
 
-                    // Create user and employee records
-                    $user = User::create([
-                        'username' => $username,
-                        'email' => $email,
-                        'password' => Hash::make($password),
-                        'user_type' => 'employee'
-                    ]);
+                // Create user
+                $user = User::create([
+                    'username' => $username,
+                    'email' => $email,
+                    'password' => Hash::make($password),
+                    'user_type' => 'employee',
+                    'name' => $firstName . ' ' . $lastName,
+                ]);
 
-                    Employee::create([
-                        'user_id' => $user->id,
-                        'first_name' => $firstName,
-                        'last_name' => $lastName,
-                        'role' => $role
-                    ]);
-
-                } else if ($type === 'contractor') {
-                    // Contractor data expected: First Name, Last Name, Email, Username, Password, Company Name, Phone, Street, City, Province, Zip Code
-                    $firstName = $row[0] ?? null;
-                    $lastName = $row[1] ?? null;
-                    $email = $row[2] ?? null;
-                    $username = $row[3] ?? null;
-                    $password = $row[4] ?? null;
-                    $companyName = $row[5] ?? null;
-                    $phone = $row[6] ?? null;
-                    $street = $row[7] ?? null;
-                    $city = $row[8] ?? null;
-                    $province = $row[9] ?? null;
-                    $zipCode = $row[10] ?? null;
-
-                    // Basic validation for critical fields
-                    if (!$firstName || !$lastName || !$email || !$username || !$password || !$companyName) {
-                        \Log::warning('Skipping contractor row due to missing critical data:', $row);
-                        continue;
-                    }
-
-                    // Check if user already exists by email or username
-                    $existingUser = User::where('email', $email)->orWhere('username', $username)->first();
-                    if ($existingUser) {
-                        \Log::info('Skipping existing contractor during import:', ['email' => $email, 'username' => $username]);
-                        continue;
-                    }
-
-                    // Create user and employee records with contractor role
-                    $user = User::create([
-                        'username' => $username,
-                        'email' => $email,
-                        'password' => Hash::make($password),
-                        'user_type' => 'employee'
-                    ]);
-
-                    Employee::create([
-                        'user_id' => $user->id,
-                        'first_name' => $firstName,
-                        'last_name' => $lastName,
-                        'role' => 'contractor',
+                // Prepare employee data
+                $employeeData = [
+                    'user_id' => $user->id,
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'role' => $role,
+                    'username' => $username,
+                    'email' => $email,
+                ];
+                if ($role === 'contractor') {
+                    $employeeData = array_merge($employeeData, [
                         'company_name' => $companyName,
                         'phone' => $phone,
                         'street' => $street,
                         'city' => $city,
                         'state' => $province,
-                        'postal' => $zipCode
+                        'postal' => $zipCode,
                     ]);
                 }
+                Employee::create($employeeData);
             }
 
             DB::commit();
@@ -355,21 +326,21 @@ class InformationManagementController extends Controller
 
         if ($type === 'employee') {
             $headers = [
+                'Role',
                 'First Name',
                 'Last Name',
-                'Email',
                 'Username',
+                'Email',
                 'Password',
-                'Role (procurement/warehousing)'
             ];
 
             $sampleRow = [
+                'procurement',
                 'John',
                 'Doe',
-                'john.doe@example.com',
                 'johndoe',
+                'john.doe@example.com',
                 'password123',
-                'procurement'
             ];
             $filename = 'employee_template.csv';
         } else if ($type === 'contractor') {
