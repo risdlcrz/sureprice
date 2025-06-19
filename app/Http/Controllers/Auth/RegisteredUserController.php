@@ -68,7 +68,7 @@ class RegisteredUserController extends Controller
                 if ($employee->role === 'procurement') {
                     return redirect()->route('procurement.dashboard');
                 } elseif ($employee->role === 'warehousing') {
-                    return redirect()->route('warehousing.dashboard');
+                    return redirect()->route('warehouse.dashboard');
                 }
             } elseif ($type === 'company') {
                 if ($company->designation === 'client') {

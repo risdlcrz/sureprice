@@ -46,7 +46,7 @@ class AuthenticatedSessionController extends Controller
                 if ($user->role === 'procurement') {
                     return redirect()->route('procurement.dashboard');
                 } elseif ($user->role === 'warehousing') {
-                    return redirect()->route('warehousing.dashboard');
+                    return redirect()->route('warehouse.dashboard');
                 }
                 // Default redirect for other employee roles if any
                 return redirect()->route('home'); // Or a generic employee dashboard if exists

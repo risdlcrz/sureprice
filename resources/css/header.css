@@ -131,7 +131,8 @@ body {
 }
 
 .nav-buttons .btn:hover {
-    background-color: #ffffff;
+    background-color: #017a25;
+    color: #fff;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
@@ -190,7 +191,8 @@ body {
 }
 
 .logout-container .btn:hover {
-    background-color: #ffffff;
+    background-color: #017a25;
+    color: #fff;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
@@ -263,7 +265,8 @@ body {
 }
 
 .mobile-nav-buttons .btn:hover {
-    background-color: #ffffff;
+    background-color: #017a25;
+    color: #fff;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }

@@ -11,6 +11,9 @@
                         <a href="{{ route('supplier-invitations.create') }}" class="btn btn-primary">
                             <i class="fas fa-paper-plane"></i> Invite Supplier
                         </a>
+                        <a href="{{ route('information-management.index', ['type' => 'company']) }}" class="btn btn-outline-primary ms-2">
+                            <i class="fas fa-eye"></i> View Suppliers
+                        </a>
                         <a href="{{ route('supplier-invitations.index') }}" class="btn btn-outline-secondary ms-2">
                             <i class="fas fa-list"></i> View Invitations
                         </a>

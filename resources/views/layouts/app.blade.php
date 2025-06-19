@@ -25,6 +25,96 @@
     @stack('styles')
 
     @vite(['resources/css/messages.css', 'resources/js/app.js'])
+
+    <!-- Add Inter Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: #f7f9fb;
+            color: #222;
+        }
+        .app-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: row;
+        }
+        .left-header {
+            background: #1b5e20;
+            min-width: 220px;
+            max-width: 260px;
+            padding: 2rem 1rem 2rem 1rem;
+            border-radius: 0 2rem 2rem 0;
+            box-shadow: 2px 0 16px 0 rgba(0,0,0,0.04);
+        }
+        .left-header .nav-link, .left-header button, .left-header a {
+            color: #fff;
+            font-size: 1.1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 0.5rem;
+            padding: 0.75rem 1rem;
+            transition: background 0.2s;
+        }
+        .left-header .nav-link.active, .left-header .nav-link:hover, .left-header button:hover, .left-header a:hover {
+            background: #388e3c;
+            color: #fff;
+        }
+        .content {
+            flex: 1;
+            padding: 2.5rem 2rem 2rem 2rem;
+            background: #f7f9fb;
+            border-radius: 2rem 0 0 2rem;
+            min-height: 100vh;
+        }
+        .navbar, .mobile-topbar {
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            box-shadow: 0 2px 8px 0 rgba(0,0,0,0.03);
+            border-radius: 0 0 1rem 1rem;
+            padding: 1rem 2rem;
+            margin-bottom: 2rem;
+        }
+        .navbar .logo, .mobile-topbar .logo {
+            font-weight: 600;
+            font-size: 1.5rem;
+            color: #1b5e20;
+        }
+        .btn, .btn-primary, .btn-secondary {
+            border-radius: 2rem !important;
+            font-weight: 500;
+            font-size: 1rem;
+            padding: 0.5rem 1.5rem;
+        }
+        .card, .modal-content {
+            border-radius: 1.5rem;
+            box-shadow: 0 2px 16px 0 rgba(0,0,0,0.06);
+            border: none;
+        }
+        .modal-header, .modal-footer {
+            border: none;
+            background: #f7f9fb;
+            border-radius: 1.5rem 1.5rem 0 0;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #1b5e20;
+        }
+        .form-control, .form-select {
+            border-radius: 0.75rem;
+            border: 1px solid #cfd8dc;
+            font-size: 1rem;
+            padding: 0.75rem 1rem;
+        }
+        .alert {
+            border-radius: 1rem;
+            font-size: 1rem;
+        }
+        @media (max-width: 900px) {
+            .app-container { flex-direction: column; }
+            .left-header { max-width: 100vw; min-width: 0; border-radius: 0; }
+            .content { border-radius: 0; padding: 1rem; }
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -120,10 +210,10 @@
             mobileMenu.classList.toggle('active');
         }
 
-        // Auto-hide alerts after 5 seconds
+        // Auto-hide alerts after 5 seconds, except those with .alert-static
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
-                const alerts = document.querySelectorAll('.alert');
+                const alerts = document.querySelectorAll('.alert:not(.alert-static)');
                 alerts.forEach(function(alert) {
                     const bsAlert = new bootstrap.Alert(alert);
                     bsAlert.close();

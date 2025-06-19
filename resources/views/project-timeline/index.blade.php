@@ -245,6 +245,15 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <!-- Info box for clients about additional work rules -->
+                <div class="alert alert-info alert-static" style="font-size: 1rem;">
+                    <strong>Please Note:</strong>
+                    <ol class="mb-0">
+                        <li>If you request additional work <b>within the original contract time period</b>, you will only be charged for the <b>material cost</b>.</li>
+                        <li>If the additional work <b>extends the original contract time period</b>, you will be charged for both <b>labor cost and material cost</b>.</li>
+                        <li>If you request additional work <b>after the contract period has ended</b>, a <b>new contract</b> must be created, as work can only be performed within the allotted contract period.</li>
+                    </ol>
+                </div>
                 <form id="additionalWorkForm" class="needs-validation" novalidate>
                     <div class="mb-3">
                         <label for="contractId" class="form-label">Contract</label>
