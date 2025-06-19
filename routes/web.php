@@ -283,9 +283,7 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::post('purchase-orders/{purchaseOrder}/status', [PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
     Route::post('purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete'])->name('purchase-orders.complete');
     // Other admin routes
-    Route::get('/notification-center', function () {
-        return view('admin.notification-center');
-    })->name('admin.notification');
+    Route::get('/notification-center', [\App\Http\Controllers\AdminController::class, 'notificationCenter'])->name('admin.notification');
     Route::get('/analytics-dashboard', [AnalyticsController::class, 'index'])->name('admin.analytics');
     Route::get('/supplier-rankings', [AnalyticsController::class, 'supplierRankings'])->name('admin.supplier-rankings');
     Route::get('/supplier-rankings/top', [AnalyticsController::class, 'getTopSuppliers'])->name('admin.supplier-rankings.top');

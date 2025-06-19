@@ -66,6 +66,13 @@ public function show(Company $company)
     
     return view('admin.companies.show', compact('company'));
 }
+
+public function notificationCenter()
+{
+    // Fetch the latest 50 activities for the notification hub
+    $activities = \App\Models\Activity::latest()->take(50)->get();
+    return view('admin.notification', compact('activities'));
+}
 }
 
 
