@@ -23,6 +23,8 @@
     
     <!-- Additional Styles -->
     @stack('styles')
+
+    @vite(['resources/css/messages.css', 'resources/js/app.js'])
 </head>
 <body>
     <div class="app-container">
@@ -128,6 +130,9 @@
                 });
             }, 5000);
         });
+
+        window.PUSHER_APP_KEY = "{{ env('PUSHER_APP_KEY') }}";
+        window.PUSHER_APP_CLUSTER = "{{ env('PUSHER_APP_CLUSTER') }}";
     </script>
 
     @auth

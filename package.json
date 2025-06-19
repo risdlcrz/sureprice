@@ -26,6 +26,8 @@
         "@fullcalendar/timeline": "^6.1.17",
         "@popperjs/core": "^2.11.8",
         "frappe-gantt": "^1.0.3",
+        "laravel-echo": "^2.1.6",
+        "pusher-js": "^8.4.0",
         "tippy.js": "^6.3.7"
     }
 }

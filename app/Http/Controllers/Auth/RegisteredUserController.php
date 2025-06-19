@@ -59,16 +59,9 @@ class RegisteredUserController extends Controller
                 return back()->withInput()->withErrors(['type' => 'Invalid registration type.']);
             }
 
-            event(new Registered($user));
-
             Auth::login($user);
 
             DB::commit();
-
-            if (!$user->hasVerifiedEmail()) {
-                return redirect()->route('verification.notice')
-                    ->with('success', 'Registration complete! Please verify your email first.');
-            }
 
             // Redirect based on role/designation after login
             if ($type === 'employee') {
@@ -92,10 +85,12 @@ class RegisteredUserController extends Controller
             DB::rollBack();
             Log::error($type . ' registration failed', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'input' => $request->except('password')
             ]);
 
-            return back()->withInput()->withErrors(['error' => 'Registration failed. Please try again.']);
+            // Show the actual error to the user for debugging
+            return back()->withInput()->withErrors(['error' => 'Registration failed: ' . $e->getMessage()]);
         }
     }
 
@@ -220,14 +215,14 @@ class RegisteredUserController extends Controller
             'years_operation' => $data['years_operation'] ?? null,
             'business_size' => $data['business_size'] ?? null,
             'service_areas' => $data['service_areas'] ?? null,
-            'vat_registered' => $data['vat_registered'],
-            'use_sureprice' => $data['use_sureprice'],
+            'vat_registered' => $data['vat_registered'] ?? 0,
+            'use_sureprice' => $data['use_sureprice'] ?? 0,
             'payment_terms' => $data['payment_terms'] ?? null,
             'status' => 'pending',
         ]);
 
-        // Create bank details if provided
-        if (!empty($data['bank_name']) && !empty($data['bank_account_name']) && !empty($data['bank_account_number'])) {
+        // Defensive: Only create bank details if all are present and not null
+        if (!empty($data['bank_name']) && !empty($data['bank_account_name']) && !empty($data['bank_account_number']) && method_exists($company, 'bankDetails')) {
             $company->bankDetails()->create([
                 'bank_name' => $data['bank_name'],
                 'account_name' => $data['bank_account_name'],
@@ -250,9 +245,8 @@ class RegisteredUserController extends Controller
         ];
 
         foreach ($documentFields as $inputName => $docType) {
-            if ($request->hasFile($inputName)) {
+            if ($request->hasFile($inputName) && $request->file($inputName)) {
                 $file = $request->file($inputName);
-                
                 // Store file in public disk under company_docs directory
                 $path = $file->store("company_docs/{$company->id}", 'public');
 
@@ -260,7 +254,7 @@ class RegisteredUserController extends Controller
                     throw new \Exception("Failed to store file for $docType.");
                 }
 
-                CompanyDocument::create([
+                \App\Models\CompanyDocument::create([
                     'company_id' => $company->id,
                     'type' => $docType,
                     'path' => $path,

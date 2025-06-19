@@ -22,3 +22,22 @@ window.Gantt = Gantt;
 window.tippy = tippy;
 
 // Add any global JavaScript functionality here 
+
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+
+window.Pusher = Pusher;
+
+const key = window.PUSHER_APP_KEY || '';
+const cluster = window.PUSHER_APP_CLUSTER || '';
+
+if (key && cluster) {
+    window.Echo = new Echo({
+        broadcaster: 'pusher',
+        key: key,
+        cluster: cluster,
+        forceTLS: true
+    });
+} else {
+    window.Echo = null; // fallback: no real-time
+} 

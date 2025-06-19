@@ -28,6 +28,9 @@
         <a href="{{ route('client.payments') }}" class="btn">
             <i class="fas fa-money-check-alt"></i>Payments
         </a>
+        <a href="{{ route('messages.index') }}" class="btn">
+            <i class="fas fa-comments"></i>Messages
+        </a>
     @else
         <a href="{{ route('admin.dbadmin') }}" class="btn">
             <i class="fas fa-home"></i>Dashboard
@@ -55,6 +58,9 @@
         </a>
         <a href="{{ route('payments.index') }}" class="btn">
             <i class="fas fa-money-check-alt"></i>Payments
+        </a>
+        <a href="{{ route('messages.index') }}" class="btn">
+            <i class="fas fa-comments"></i>Messages
         </a>
     @endif
 </div>

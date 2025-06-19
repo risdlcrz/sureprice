@@ -220,6 +220,11 @@
       <div class="notification-content">
         <i class="fas fa-exclamation-circle"></i>
         <span>Registration failed. Please check the form for errors.</span>
+        <ul style="margin: 0 0 0 1.5rem; padding: 0;">
+          @foreach ($errors->all() as $error)
+            <li>{{ $error }}</li>
+          @endforeach
+        </ul>
       </div>
       <div class="progress-bar"></div>
     </div>

@@ -1,15 +1,15 @@
 <?php
 
 namespace App\Models;
-use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+// use Illuminate\Auth\MustVerifyEmail as MustVerifyEmailTrait;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable // implements MustVerifyEmail
 {
-    use Notifiable,  MustVerifyEmailTrait;
+    use Notifiable; // ,  MustVerifyEmailTrait;
 
     protected $fillable = [
         'name',
@@ -54,8 +54,14 @@ class User extends Authenticatable implements MustVerifyEmail
         return match ($this->user_type) {
             'employee' => $this->employee?->first_name . ' ' . $this->employee?->last_name,
             'company' => $this->company?->company_name,
-            default => $this->first_name . ' ' . $this->last_name,
+            default => $this->name,
         };
+    }
+
+    // Add a name accessor for backward compatibility
+    public function getNameAttribute($value)
+    {
+        return $value ?: $this->getDisplayNameAttribute();
     }
 
     // Scope for filtering by role

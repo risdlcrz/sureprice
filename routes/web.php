@@ -39,6 +39,7 @@ use App\Http\Controllers\Warehouse\WarehouseDashboardController;
 use App\Http\Controllers\Warehouse\WarehouseInventoryController;
 use App\Http\Controllers\Warehouse\WarehouseDeliveryController;
 use App\Http\Controllers\Warehouse\WarehouseReportController;
+use App\Http\Controllers\MessageController;
 // Home route redirect to login
 Route::get('/', function () {
     return redirect()->route('login.form');
@@ -217,6 +218,11 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('inventory', WarehouseInventoryController::class);
         Route::resource('reports', WarehouseReportController::class);
     });
+    // Message routes
+    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
+    Route::post('/messages/start', [MessageController::class, 'startConversation'])->name('messages.start');
+    Route::get('/messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');
+    Route::post('/messages/{conversation}', [MessageController::class, 'store'])->name('messages.store');
 });
 // Payments routes
 Route::middleware(['auth'])->group(function () {
