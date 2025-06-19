@@ -92,95 +92,90 @@ class MessageController extends Controller
 
     public function startConversation(Request $request)
     {
-        // Only allow clients to start conversations
         $user = Auth::user();
-        
-        \Log::info('MessageController::startConversation called', [
-            'user_id' => $user->id,
-            'user_type' => $user->user_type,
-            'role' => $user->role,
-            'company_designation' => $user->company?->designation ?? 'no company',
-            'admin_id' => $request->admin_id,
-            'message' => $request->message
-        ]);
-        
-        if ($user->user_type !== 'company' || !$user->company || $user->company->designation !== 'client') {
-            \Log::warning('Unauthorized user tried to start conversation', [
-                'user_id' => $user->id,
-                'user_type' => $user->user_type
+
+        // Allow both admin and client to start a conversation
+        if ($user->user_type === 'admin') {
+            $request->validate([
+                'client_id' => 'required|exists:users,id',
+                'message' => 'required|string|max:1000'
             ]);
-            return redirect()->back()->with('error', 'Only clients can start new conversations.');
-        }
 
-        $request->validate([
-            'admin_id' => 'required|exists:users,id',
-            'message' => 'required|string|max:1000'
-        ]);
+            // Verify the selected user is a client
+            $client = \App\Models\User::where('id', $request->client_id)
+                ->where('user_type', 'company')
+                ->whereHas('company', function($q){ $q->where('designation', 'client'); })
+                ->first();
+            if (!$client) {
+                return redirect()->back()->with('error', 'Selected client is not valid.');
+            }
 
-        // Verify the selected user is an admin
-        $admin = \App\Models\User::where('id', $request->admin_id)
-            ->where('user_type', 'admin')
-            ->where('role', 'admin')
-            ->first();
+            // Check if conversation already exists
+            $existingConversation = Conversation::where('client_id', $request->client_id)
+                ->where('admin_id', $user->id)
+                ->first();
+            if ($existingConversation) {
+                $message = $existingConversation->messages()->create([
+                    'sender_id' => $user->id,
+                    'content' => $request->message
+                ]);
+                $existingConversation->update(['last_message_at' => now()]);
+                event(new \App\Events\NewMessage($message));
+                return redirect()->route('messages.show', $existingConversation);
+            }
 
-        if (!$admin) {
-            \Log::warning('Invalid admin selected', [
-                'admin_id' => $request->admin_id
+            // Create new conversation
+            $conversation = Conversation::create([
+                'client_id' => $request->client_id,
+                'admin_id' => $user->id,
+                'status' => 'active'
             ]);
-            return redirect()->back()->with('error', 'Selected admin is not valid.');
-        }
-
-        // Check if conversation already exists
-        $existingConversation = Conversation::where('client_id', $user->id)
-            ->where('admin_id', $request->admin_id)
-            ->first();
-
-        if ($existingConversation) {
-            \Log::info('Adding message to existing conversation', [
-                'conversation_id' => $existingConversation->id
-            ]);
-            
-            // Add message to existing conversation
-            $message = $existingConversation->messages()->create([
+            $message = $conversation->messages()->create([
                 'sender_id' => $user->id,
                 'content' => $request->message
             ]);
-
-            $existingConversation->update(['last_message_at' => now()]);
-            
-            // Broadcast the new message event
+            $conversation->update(['last_message_at' => now()]);
             event(new \App\Events\NewMessage($message));
-
-            return redirect()->route('messages.show', $existingConversation);
+            return redirect()->route('messages.show', $conversation);
         }
-
-        \Log::info('Creating new conversation', [
-            'client_id' => $user->id,
-            'admin_id' => $request->admin_id
-        ]);
-
-        // Create new conversation
-        $conversation = Conversation::create([
-            'client_id' => $user->id,
-            'admin_id' => $request->admin_id,
-            'status' => 'active'
-        ]);
-
-        $message = $conversation->messages()->create([
-            'sender_id' => $user->id,
-            'content' => $request->message
-        ]);
-
-        $conversation->update(['last_message_at' => now()]);
-
-        // Broadcast the new message event
-        event(new \App\Events\NewMessage($message));
-
-        \Log::info('New conversation created successfully', [
-            'conversation_id' => $conversation->id,
-            'message_id' => $message->id
-        ]);
-
-        return redirect()->route('messages.show', $conversation);
+        // Client logic (as before)
+        if ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
+            $request->validate([
+                'admin_id' => 'required|exists:users,id',
+                'message' => 'required|string|max:1000'
+            ]);
+            $admin = \App\Models\User::where('id', $request->admin_id)
+                ->where('user_type', 'admin')
+                ->where('role', 'admin')
+                ->first();
+            if (!$admin) {
+                return redirect()->back()->with('error', 'Selected admin is not valid.');
+            }
+            $existingConversation = Conversation::where('client_id', $user->id)
+                ->where('admin_id', $request->admin_id)
+                ->first();
+            if ($existingConversation) {
+                $message = $existingConversation->messages()->create([
+                    'sender_id' => $user->id,
+                    'content' => $request->message
+                ]);
+                $existingConversation->update(['last_message_at' => now()]);
+                event(new \App\Events\NewMessage($message));
+                return redirect()->route('messages.show', $existingConversation);
+            }
+            $conversation = Conversation::create([
+                'client_id' => $user->id,
+                'admin_id' => $request->admin_id,
+                'status' => 'active'
+            ]);
+            $message = $conversation->messages()->create([
+                'sender_id' => $user->id,
+                'content' => $request->message
+            ]);
+            $conversation->update(['last_message_at' => now()]);
+            event(new \App\Events\NewMessage($message));
+            return redirect()->route('messages.show', $conversation);
+        }
+        return redirect()->back()->with('error', 'You are not allowed to start a conversation.');
     }
 } 

@@ -22,7 +22,11 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Messages</h5>
                     @if(auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client')
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModalClient">
+                            New Message
+                        </button>
+                    @elseif(auth()->user()->user_type === 'admin')
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newMessageModalAdmin">
                             New Message
                         </button>
                     @endif
@@ -69,12 +73,12 @@
 </div>
 
 @if(auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client')
-    <!-- New Message Modal -->
-    <div class="modal fade" id="newMessageModal" tabindex="-1" aria-labelledby="newMessageModalLabel" aria-hidden="true">
+    <!-- New Message Modal for Client -->
+    <div class="modal fade" id="newMessageModalClient" tabindex="-1" aria-labelledby="newMessageModalLabelClient" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="newMessageModalLabel">New Message</h5>
+                    <h5 class="modal-title" id="newMessageModalLabelClient">New Message</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="{{ route('messages.start') }}" method="POST">
@@ -86,6 +90,42 @@
                                 <option value="">Choose an admin...</option>
                                 @foreach(\App\Models\User::where('user_type', 'admin')->where('role', 'admin')->get() as $admin)
                                     <option value="{{ $admin->id }}">{{ $admin->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Message</label>
+                            <textarea class="form-control" id="message" name="message" rows="3" required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Send Message</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endif
+
+@if(auth()->user()->user_type === 'admin')
+    <!-- New Message Modal for Admin -->
+    <div class="modal fade" id="newMessageModalAdmin" tabindex="-1" aria-labelledby="newMessageModalLabelAdmin" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newMessageModalLabelAdmin">New Message</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ route('messages.start') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="client_id" class="form-label">Select Client</label>
+                            <select class="form-select" id="client_id" name="client_id" required>
+                                <option value="">Choose a client...</option>
+                                @foreach(\App\Models\User::where('user_type', 'company')->whereHas('company', function($q){ $q->where('designation', 'client'); })->get() as $client)
+                                    <option value="{{ $client->id }}">{{ $client->name }}</option>
                                 @endforeach
                             </select>
                         </div>
