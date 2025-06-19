@@ -221,8 +221,12 @@ Route::middleware(['auth'])->group(function () {
     // Message routes
     Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
     Route::post('/messages/start', [MessageController::class, 'startConversation'])->name('messages.start');
-    Route::get('/messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');
     Route::post('/messages/{conversation}', [MessageController::class, 'store'])->name('messages.store');
+    Route::delete('/messages/{conversation}', [MessageController::class, 'destroy'])->name('messages.destroy');
+    Route::delete('/messages/message/{message}', [MessageController::class, 'destroyMessage'])->name('messages.message.destroy');
+    Route::delete('/messages/attachment/{message}', [MessageController::class, 'removeAttachment'])->name('messages.attachment.remove');
+    // Make company search for chat available to all authenticated users (admin check in controller)
+    Route::get('/admin/companies/search-for-chat', [\App\Http\Controllers\CompanyController::class, 'searchForChat'])->name('admin.companies.search-for-chat');
 });
 // Payments routes
 Route::middleware(['auth'])->group(function () {

@@ -12,7 +12,8 @@ class Message extends Model
         'sender_id',
         'content',
         'is_read',
-        'read_at'
+        'read_at',
+        'image'
     ];
 
     protected $casts = [

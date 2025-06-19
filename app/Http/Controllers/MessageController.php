@@ -14,55 +14,48 @@ class MessageController extends Controller
         $this->middleware('auth');
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
-        
-        // Debug logging
-        \Log::info('MessageController::index called', [
-            'user_id' => $user->id,
-            'user_type' => $user->user_type,
-            'role' => $user->role,
-            'company_designation' => $user->company?->designation ?? 'no company'
-        ]);
-        
-        // Handle different user types
+        // Fetch all conversations for sidebar
         if ($user->user_type === 'admin') {
             $conversations = Conversation::where('admin_id', $user->id);
         } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
             $conversations = Conversation::where('client_id', $user->id);
         } else {
-            // For other user types, return empty conversations
-            $conversations = Conversation::where('id', 0); // This will return no results
+            $conversations = Conversation::where('id', 0);
         }
-        
         $conversations = $conversations->with(['messages' => function ($query) {
             $query->latest();
         }, 'client', 'admin'])->latest('last_message_at')->get();
 
-        \Log::info('Conversations found', [
-            'count' => $conversations->count(),
-            'conversations' => $conversations->pluck('id')->toArray()
-        ]);
-
-        return view('messages.index', compact('conversations'));
-    }
-
-    public function show(Conversation $conversation)
-    {
-        $this->authorize('view', $conversation);
-        
-        $messages = $conversation->messages()
-            ->with('sender')
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        // Mark unread messages as read
-        $messages->where('is_read', false)
-            ->where('sender_id', '!=', Auth::id())
-            ->each->markAsRead();
-
-        return view('messages.show', compact('conversation', 'messages'));
+        $conversation = null;
+        $messages = null;
+        $conversationId = $request->query('conversation');
+        if ($conversationId) {
+            $conversation = $conversations->where('id', $conversationId)->first();
+            if ($conversation) {
+                $messages = $conversation->messages()
+                    ->with('sender')
+                    ->orderBy('created_at', 'asc')
+                    ->get(['*']);
+                // Mark unread messages as read
+                $messages->where('is_read', false)
+                    ->where('sender_id', '!=', $user->id)
+                    ->each->markAsRead();
+            }
+        } elseif ($conversations->count() > 0) {
+            // Optionally, auto-select the first conversation
+            $conversation = $conversations->first();
+            $messages = $conversation->messages()
+                ->with('sender')
+                ->orderBy('created_at', 'asc')
+                ->get(['*']);
+            $messages->where('is_read', false)
+                ->where('sender_id', '!=', $user->id)
+                ->each->markAsRead();
+        }
+        return view('messages.index', compact('conversations', 'conversation', 'messages'));
     }
 
     public function store(Request $request, Conversation $conversation)
@@ -70,12 +63,23 @@ class MessageController extends Controller
         $this->authorize('view', $conversation);
 
         $request->validate([
-            'content' => 'required|string|max:1000'
+            'content' => 'nullable|string|max:1000',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:4096'
         ]);
+
+        if (!$request->filled('content') && !$request->hasFile('image')) {
+            return back()->withErrors(['content' => 'Please enter a message or attach an image.'])->withInput();
+        }
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('messages', 'public');
+        }
 
         $message = $conversation->messages()->create([
             'sender_id' => Auth::id(),
-            'content' => $request->content
+            'content' => $request->content,
+            'image' => $imagePath
         ]);
 
         $conversation->update(['last_message_at' => now()]);
@@ -177,5 +181,47 @@ class MessageController extends Controller
             return redirect()->route('messages.show', $conversation);
         }
         return redirect()->back()->with('error', 'You are not allowed to start a conversation.');
+    }
+
+    public function destroy(Conversation $conversation)
+    {
+        $this->authorize('view', $conversation);
+        try {
+            $conversation->messages()->delete();
+            $conversation->delete();
+            return redirect()->route('messages.index')->with('success', 'Conversation deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('messages.index')->with('error', 'Failed to delete conversation.');
+        }
+    }
+
+    public function destroyMessage(Message $message)
+    {
+        $user = Auth::user();
+        if ($message->sender_id !== $user->id && $user->user_type !== 'admin') {
+            abort(403);
+        }
+        $message->delete();
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+        return back()->with('success', 'Message deleted.');
+    }
+
+    public function removeAttachment(Message $message)
+    {
+        $user = Auth::user();
+        if ($message->sender_id !== $user->id && $user->user_type !== 'admin') {
+            abort(403);
+        }
+        if ($message->image) {
+            \Storage::disk('public')->delete($message->image);
+            $message->image = null;
+            $message->save();
+        }
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+        return back()->with('success', 'Attachment removed.');
     }
 } 
