@@ -12,13 +12,11 @@ class SupplierMaterialController extends Controller
 {
     public function index(Request $request)
     {
-        $supplier = Auth::user()->supplier; // Get the authenticated supplier
-
-        if (!$supplier) {
+        $supplier = Auth::user()->company;
+        if (!$supplier || $supplier->designation !== 'supplier') {
             abort(403, 'You are not associated with a supplier account.');
         }
-
-        $query = $supplier->materials(); // Get materials associated with this supplier
+        $query = $supplier->materials();
 
         // Add filters and search if needed, similar to other index methods
         if ($request->filled('search')) {
@@ -36,19 +34,21 @@ class SupplierMaterialController extends Controller
 
     public function create()
     {
-        // Ensure the authenticated user is a supplier
         if (!Auth::user()->hasRole('supplier')) {
             abort(403, 'Unauthorized action.');
         }
-
-        return view('supplier.materials.create');
+        $supplier = Auth::user()->company;
+        if (!$supplier || $supplier->designation !== 'supplier') {
+            abort(403, 'You are not associated with a supplier account.');
+        }
+        $categories = \App\Models\Category::orderBy('name')->get();
+        return view('supplier.materials.create', compact('categories'));
     }
 
     public function store(Request $request)
     {
-        $supplier = Auth::user()->supplier;
-
-        if (!$supplier) {
+        $supplier = Auth::user()->company;
+        if (!$supplier || $supplier->designation !== 'supplier') {
             abort(403, 'You are not associated with a supplier account.');
         }
 
@@ -77,23 +77,18 @@ class SupplierMaterialController extends Controller
 
     public function edit(Material $material)
     {
-        $supplier = Auth::user()->supplier;
-
-        if (!$supplier || !$supplier->materials->contains($material->id)) {
+        $supplier = Auth::user()->company;
+        if (!$supplier || $supplier->designation !== 'supplier' || !$supplier->materials->contains($material->id)) {
             abort(403, 'You are not authorized to edit this material.');
         }
-        
-        // Get the pivot data (price) for this supplier and material
         $pivotData = $supplier->materials()->where('material_id', $material->id)->first()->pivot;
-
         return view('supplier.materials.edit', compact('material', 'pivotData'));
     }
 
     public function update(Request $request, Material $material)
     {
-        $supplier = Auth::user()->supplier;
-
-        if (!$supplier || !$supplier->materials->contains($material->id)) {
+        $supplier = Auth::user()->company;
+        if (!$supplier || $supplier->designation !== 'supplier' || !$supplier->materials->contains($material->id)) {
             abort(403, 'You are not authorized to update this material.');
         }
 
@@ -120,15 +115,11 @@ class SupplierMaterialController extends Controller
 
     public function destroy(Material $material)
     {
-        $supplier = Auth::user()->supplier;
-
-        if (!$supplier || !$supplier->materials->contains($material->id)) {
+        $supplier = Auth::user()->company;
+        if (!$supplier || $supplier->designation !== 'supplier' || !$supplier->materials->contains($material->id)) {
             abort(403, 'You are not authorized to delete this material.');
         }
-
-        // Detach the material from the supplier (don't delete the material itself if others use it)
         $supplier->materials()->detach($material->id);
-
         return redirect()->route('supplier.materials.index')
             ->with('success', 'Material removed from your listings successfully.');
     }

@@ -122,26 +122,51 @@ class SupplierDashboardController extends Controller
 
     public function editProfile()
     {
-        $supplier = Auth::user()->supplier;
-        return view('supplier.edit-profile', compact('supplier'));
+        $supplier = Auth::user()->company;
+        $bankDetails = $supplier->bankDetails;
+        $documents = $supplier->documents->keyBy('type');
+        return view('supplier.edit-profile', compact('supplier', 'bankDetails', 'documents'));
     }
 
     public function updateProfile(Request $request)
     {
-        $supplier = Auth::user()->supplier;
+        $supplier = Auth::user()->company;
         $validated = $request->validate([
+            'username' => 'required|string|max:50',
             'company_name' => 'required|string|max:255',
+            'supplier_type' => 'required|string',
+            'other_supplier_type' => 'nullable|string|max:100',
+            'designation' => 'required|string',
+            'business_reg_no' => 'nullable|string|max:100',
             'contact_person' => 'required|string|max:255',
             'email' => 'required|email|max:255',
-            'phone' => 'required|string|max:50',
-            'address' => 'required|string|max:255',
-            'tax_number' => 'nullable|string|max:100',
-            'registration_number' => 'nullable|string|max:100',
+            'mobile_number' => 'required|string|max:20',
+            'telephone_number' => 'nullable|string|max:20',
+            'street' => 'required|string|max:255',
+            'barangay' => 'required|string|max:100',
+            'city' => 'required|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'postal' => 'nullable|string|max:10',
+            'years_operation' => 'nullable|numeric|min:0',
+            'primary_products_services' => 'nullable|string',
+            'service_areas' => 'nullable|string',
+            'business_size' => 'nullable|string',
+            'payment_terms' => 'nullable|string',
+            'vat_registered' => 'required|in:0,1',
+            'use_sureprice' => 'required|in:0,1',
+            'bank_name' => 'nullable|string|max:100',
+            'bank_account_name' => 'nullable|string|max:100',
+            'bank_account_number' => 'nullable|string|max:50',
         ]);
-        // Save changes as pending (e.g., in a pending_changes JSON column or set status to 'pending_update')
-        $supplier->pending_changes = json_encode($validated);
-        $supplier->status = 'pending_update';
-        $supplier->save();
-        return redirect()->route('supplier.dashboard')->with('success', 'Profile update submitted for admin approval.');
+        // Directly update the company record
+        $supplier->update($validated);
+        // Save or update bank details
+        $supplier->bankDetails()->updateOrCreate([], [
+            'bank_name' => $request->input('bank_name'),
+            'account_name' => $request->input('bank_account_name'),
+            'account_number' => $request->input('bank_account_number'),
+        ]);
+        // (Optional) Trigger admin notification here
+        return redirect()->route('supplier.dashboard')->with('success', 'Profile updated successfully.');
     }
 }

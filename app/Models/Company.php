@@ -58,4 +58,11 @@ class Company extends Model
     {
         return $this->hasOne(BankDetail::class);
     }
+
+    public function materials()
+    {
+        return $this->belongsToMany(\App\Models\Material::class, 'company_material', 'company_id', 'material_id')
+            ->withPivot(['price', 'is_preferred'])
+            ->withTimestamps();
+    }
 }

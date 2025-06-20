@@ -33,7 +33,7 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="code">Material Code</label>
-                                        <input type="text" class="form-control" id="code" name="code" value="{{ old('code', $material->code ?? '') }}" readonly placeholder="Auto-generated after save">
+                                        <input type="text" class="form-control" id="code" name="code" value="{{ old('code', $material->code ?? '') }}" readonly required>
                                         <small class="form-text text-muted">Material code will be generated automatically.</small>
                                     </div>
                                 </div>
@@ -57,17 +57,13 @@
                                     <div class="form-group">
                                         <label for="category">Category</label>
                                         <select class="form-control @error('category') is-invalid @enderror" 
-                                            id="category" name="category" required>
+                                            id="category" name="category_id" required>
                                             <option value="">Select Category</option>
-                                            <option value="construction" {{ old('category', $material->category ?? '') == 'construction' ? 'selected' : '' }}>Construction</option>
-                                            <option value="electrical" {{ old('category', $material->category ?? '') == 'electrical' ? 'selected' : '' }}>Electrical</option>
-                                            <option value="plumbing" {{ old('category', $material->category ?? '') == 'plumbing' ? 'selected' : '' }}>Plumbing</option>
-                                            <option value="finishing" {{ old('category', $material->category ?? '') == 'finishing' ? 'selected' : '' }}>Finishing</option>
-                                            <option value="tools" {{ old('category', $material->category ?? '') == 'tools' ? 'selected' : '' }}>Tools</option>
-                                            <option value="general" {{ old('category', $material->category ?? '') == 'general' ? 'selected' : '' }}>General</option>
-                                            <option value="other" {{ old('category', $material->category ?? '') == 'other' ? 'selected' : '' }}>Other</option>
+                                            @foreach($categories as $category)
+                                                <option value="{{ $category->id }}" {{ old('category_id', $material->category_id ?? '') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                                            @endforeach
                                         </select>
-                                        @error('category')
+                                        @error('category_id')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                         <input type="text" class="form-control mt-2" id="custom_category" name="custom_category" placeholder="Enter custom category" style="display: none;">
@@ -461,6 +457,27 @@ $(document).ready(function() {
 
         // Initial call to set correct visibility based on current state
         toggleVisibility();
+    });
+
+    function slugify(text) {
+        return text.toString().toLowerCase().replace(/\s+/g, '-')
+            .replace(/[^\w\-]+/g, '')
+            .replace(/\-\-+/g, '-')
+            .replace(/^-+/, '')
+            .replace(/-+$/, '');
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        const categorySelect = document.getElementById('category');
+        const codeInput = document.getElementById('code');
+        function updateCode() {
+            const cat = categorySelect.options[categorySelect.selectedIndex]?.text || '';
+            if (cat) {
+                codeInput.value = (cat.substring(0,3).toUpperCase() + '-' + Math.floor(1000 + Math.random() * 9000));
+            } else {
+                codeInput.value = '';
+            }
+        }
+        categorySelect.addEventListener('change', updateCode);
     });
 });
 </script>

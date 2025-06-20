@@ -354,6 +354,9 @@ Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'verified', \A
         Route::get('/{quotation}', [SupplierQuotationController::class, 'show'])->name('show');
         Route::post('/{quotation}/respond', [SupplierQuotationController::class, 'respond'])->name('respond');
     });
+    // Add missing supplier profile edit/update routes
+    Route::get('profile/edit', [SupplierDashboardController::class, 'editProfile'])->name('profile.edit');
+    Route::put('profile/update', [SupplierDashboardController::class, 'updateProfile'])->name('profile.update');
 });
 // Admin Supplier Profile Update Review Routes
 Route::middleware(['auth', 'admin'])->prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {

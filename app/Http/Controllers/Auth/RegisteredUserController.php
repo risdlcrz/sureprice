@@ -59,27 +59,21 @@ class RegisteredUserController extends Controller
                 return back()->withInput()->withErrors(['type' => 'Invalid registration type.']);
             }
 
-            Auth::login($user);
+            // Do not log in the user after registration
+            // Auth::login($user);
 
             DB::commit();
 
-            // Redirect based on role/designation after login
+            // Redirect to login with banner for both client and supplier
+            if ($type === 'company' && in_array($company->designation, ['client', 'supplier'])) {
+                return redirect()->route('login.form')->with('success', 'Sign up successful, wait for approval');
+            }
             if ($type === 'employee') {
-                if ($employee->role === 'procurement') {
-                    return redirect()->route('procurement.dashboard');
-                } elseif ($employee->role === 'warehousing') {
-                    return redirect()->route('warehouse.dashboard');
-                }
-            } elseif ($type === 'company') {
-                if ($company->designation === 'client') {
-                    return redirect()->route('client.dashboard');
-                } elseif ($company->designation === 'supplier') {
-                    return redirect()->route('supplier.dashboard');
-                }
+                return redirect()->route('login.form')->with('success', 'Sign up successful, wait for approval');
             }
 
             // fallback redirect
-            return redirect()->route('home');
+            return redirect()->route('login.form')->with('success', 'Sign up successful, wait for approval');
 
         } catch (\Exception $e) {
             DB::rollBack();

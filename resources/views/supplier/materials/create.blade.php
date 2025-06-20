@@ -19,8 +19,20 @@
                             @enderror
                         </div>
                         <div class="mb-3">
+                            <label for="category_id" class="form-label">Category</label>
+                            <select class="form-select @error('category_id') is-invalid @enderror" id="category_id" name="category_id" required>
+                                <option value="">Select Category</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('category_id')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="mb-3">
                             <label for="code" class="form-label">Material Code</label>
-                            <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code" value="{{ old('code') }}" required>
+                            <input type="text" class="form-control @error('code') is-invalid @enderror" id="code" name="code" value="{{ old('code') }}" readonly required>
                             @error('code')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -46,19 +58,6 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
-                        {{-- You might want to add a category selection here if categories are relevant for suppliers --}}
-                        {{-- <div class="mb-3">
-                            <label for="category_id" class="form-label">Category</label>
-                            <select class="form-select @error('category_id') is-invalid @enderror" id="category_id" name="category_id">
-                                <option value="">Select Category</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
-                                @endforeach
-                            </select>
-                            @error('category_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div> --}}
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary">Add Material</button>
                             <a href="{{ route('supplier.materials.index') }}" class="btn btn-secondary mt-2">Cancel</a>
@@ -69,4 +68,22 @@
         </div>
     </div>
 </div>
-@endsection 
+@endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const categorySelect = document.getElementById('category_id');
+        const codeInput = document.getElementById('code');
+        function updateCode() {
+            const cat = categorySelect.options[categorySelect.selectedIndex]?.text || '';
+            if (cat) {
+                codeInput.value = (cat.substring(0,3).toUpperCase() + '-' + Math.floor(1000 + Math.random() * 9000));
+            } else {
+                codeInput.value = '';
+            }
+        }
+        categorySelect.addEventListener('change', updateCode);
+    });
+</script>
+@endpush 

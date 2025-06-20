@@ -225,24 +225,35 @@
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         @if($item->status === 'pending')
-                                        <form action="{{ route('admin.companies.approve', $item->id) }}" 
-                                              method="POST" 
-                                              class="d-inline">
-                                            @csrf
-                                            <button type="submit" 
-                                                    class="btn btn-sm btn-success" 
-                                                    title="Approve"
-                                                    onclick="return confirm('Are you sure you want to approve this company?')">
+                                            <!-- Approve Button triggers modal -->
+                                            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#approveModal{{ $item->id }}" title="Approve">
                                                 <i class="fas fa-check"></i>
                                             </button>
-                                        </form>
-                                        <button type="button" 
-                                                class="btn btn-sm btn-danger" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#rejectModal{{ $item->id }}" 
-                                                title="Reject">
-                                            <i class="fas fa-times"></i>
-                                        </button>
+                                            <!-- Approve Modal -->
+                                            <div class="modal fade" id="approveModal{{ $item->id }}" tabindex="-1">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Approve {{ $item->company_name }}</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p>Are you sure you want to approve this company?</p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <form action="{{ route('admin.companies.approve', $item->id) }}" method="POST">
+                                                                @csrf
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                                <button type="submit" class="btn btn-success">Approve</button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Existing reject button/modal remains unchanged -->
+                                            <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $item->id }}" title="Reject">
+                                                <i class="fas fa-times"></i>
+                                            </button>
                                         @endif
                                     </div>
                                 </td>
