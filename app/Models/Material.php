@@ -89,6 +89,11 @@ class Material extends Model
         return $this->hasMany(Inventory::class);
     }
 
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(\App\Models\StockMovement::class);
+    }
+
     public function scopeTypes()
     {
         return $this->belongsToMany(ScopeType::class, 'scope_type_material');

@@ -36,29 +36,52 @@ class WarehouseReportController extends Controller
         if ($request->filled('stock_status')) {
             switch ($request->stock_status) {
                 case 'low':
-                    $query->whereColumn('stock', '<', 'minimum_stock');
+                    $query->whereColumn('current_stock', '<', 'minimum_stock');
                     break;
                 case 'out':
-                    $query->where('stock', 0);
+                    $query->where('current_stock', 0);
                     break;
                 case 'normal':
-                    $query->whereColumn('stock', '>=', 'minimum_stock');
+                    $query->whereColumn('current_stock', '>=', 'minimum_stock');
                     break;
             }
         }
 
         $materials = $query->get();
+        return view('warehouse.reports.inventory-web', compact('materials'));
+    }
 
-        // Generate PDF
-        $pdf = PDF::loadView('warehouse.reports.inventory-pdf', compact('materials'));
+    public function inventoryPdf(Request $request)
+    {
+        $query = Material::with(['category', 'stockMovements']);
 
+        // Apply filters
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
+
+        if ($request->filled('stock_status')) {
+            switch ($request->stock_status) {
+                case 'low':
+                    $query->whereColumn('current_stock', '<', 'minimum_stock');
+                    break;
+                case 'out':
+                    $query->where('current_stock', 0);
+                    break;
+                case 'normal':
+                    $query->whereColumn('current_stock', '>=', 'minimum_stock');
+                    break;
+            }
+        }
+
+        $materials = $query->get();
+        $pdf = \PDF::loadView('warehouse.reports.inventory-pdf', compact('materials'));
         // Save report record
         $report = Report::create([
             'type' => 'warehouse_inventory',
             'generated_by_id' => auth()->id(),
             'parameters' => $request->all()
         ]);
-
         return $pdf->download('inventory-report-' . now()->format('Y-m-d') . '.pdf');
     }
 
@@ -80,17 +103,33 @@ class WarehouseReportController extends Controller
         }
 
         $movements = $query->latest()->get();
+        return view('warehouse.reports.movements-web', compact('movements'));
+    }
 
-        // Generate PDF
-        $pdf = PDF::loadView('warehouse.reports.movements-pdf', compact('movements'));
+    public function movementsPdf(Request $request)
+    {
+        $query = StockMovement::with(['material', 'material.category']);
 
-        // Save report record
+        // Apply filters
+        if ($request->filled('date_range')) {
+            $dates = explode(' - ', $request->date_range);
+            $query->whereBetween('created_at', [
+                Carbon::parse($dates[0])->startOfDay(),
+                Carbon::parse($dates[1])->endOfDay()
+            ]);
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        $movements = $query->latest()->get();
+        $pdf = \PDF::loadView('warehouse.reports.movements-pdf', compact('movements'));
         $report = Report::create([
             'type' => 'warehouse_movements',
             'generated_by_id' => auth()->id(),
             'parameters' => $request->all()
         ]);
-
         return $pdf->download('stock-movements-report-' . now()->format('Y-m-d') . '.pdf');
     }
 
@@ -116,28 +155,37 @@ class WarehouseReportController extends Controller
         }
 
         $deliveries = $query->latest()->get();
+        return view('warehouse.reports.deliveries-web', compact('deliveries'));
+    }
 
-        // Calculate statistics
-        $stats = [
-            'total_deliveries' => $deliveries->count(),
-            'on_time_deliveries' => $deliveries->where('status', 'completed')
-                ->where('delivery_date', '<=', DB::raw('expected_date'))
-                ->count(),
-            'total_items' => $deliveries->sum('items_count'),
-            'by_status' => $deliveries->groupBy('status')
-                ->map->count()
-        ];
+    public function deliveriesPdf(Request $request)
+    {
+        $query = Delivery::with(['items', 'items.material']);
 
-        // Generate PDF
-        $pdf = PDF::loadView('warehouse.reports.deliveries-pdf', compact('deliveries', 'stats'));
+        // Apply filters
+        if ($request->filled('date_range')) {
+            $dates = explode(' - ', $request->date_range);
+            $query->whereBetween('expected_date', [
+                Carbon::parse($dates[0])->startOfDay(),
+                Carbon::parse($dates[1])->endOfDay()
+            ]);
+        }
 
-        // Save report record
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $deliveries = $query->latest()->get();
+        $pdf = \PDF::loadView('warehouse.reports.deliveries-pdf', compact('deliveries'));
         $report = Report::create([
             'type' => 'warehouse_deliveries',
             'generated_by_id' => auth()->id(),
             'parameters' => $request->all()
         ]);
-
         return $pdf->download('deliveries-report-' . now()->format('Y-m-d') . '.pdf');
     }
 
@@ -156,7 +204,6 @@ class WarehouseReportController extends Controller
 
         $movements = $query->get();
 
-        // Calculate usage statistics
         $usageStats = $movements->groupBy('material_id')
             ->map(function ($group) {
                 return [
@@ -168,17 +215,85 @@ class WarehouseReportController extends Controller
             })
             ->sortByDesc('total_out');
 
-        // Generate PDF
-        $pdf = PDF::loadView('warehouse.reports.usage-pdf', compact('usageStats'));
+        return view('warehouse.reports.usage-web', ['usageStats' => $usageStats]);
+    }
 
-        // Save report record
+    public function usagePdf(Request $request)
+    {
+        $query = StockMovement::with(['material', 'material.category']);
+
+        // Apply filters
+        if ($request->filled('date_range')) {
+            $dates = explode(' - ', $request->date_range);
+            $query->whereBetween('created_at', [
+                Carbon::parse($dates[0])->startOfDay(),
+                Carbon::parse($dates[1])->endOfDay()
+            ]);
+        }
+
+        $movements = $query->get();
+
+        $usageStats = $movements->groupBy('material_id')
+            ->map(function ($group) {
+                return [
+                    'material' => $group->first()->material,
+                    'total_out' => $group->where('type', 'out')->sum('quantity'),
+                    'total_in' => $group->where('type', 'in')->sum('quantity'),
+                    'net_change' => $group->where('type', 'in')->sum('quantity') - $group->where('type', 'out')->sum('quantity')
+                ];
+            })
+            ->sortByDesc('total_out');
+
+        $pdf = \PDF::loadView('warehouse.reports.usage-pdf', ['usageStats' => $usageStats]);
         $report = Report::create([
             'type' => 'warehouse_usage',
             'generated_by_id' => auth()->id(),
             'parameters' => $request->all()
         ]);
-
         return $pdf->download('material-usage-report-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    public function analytics(Request $request)
+    {
+        // Inventory levels (all materials)
+        $materials = \App\Models\Material::with('category')->get();
+
+        // Most used materials per project (by outgoing stock movements)
+        $mostUsedByProject = \App\Models\StockMovement::where('type', 'out')
+            ->with(['material', 'material.category'])
+            ->selectRaw('material_id, reference_number, SUM(quantity) as total_used')
+            ->groupBy('material_id', 'reference_number')
+            ->orderByDesc('total_used')
+            ->get();
+
+        // Monthly usage trends (all materials)
+        $monthlyTrends = \App\Models\StockMovement::where('type', 'out')
+            ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, material_id, SUM(quantity) as total_used')
+            ->groupBy('year', 'month', 'material_id')
+            ->orderBy('year')->orderBy('month')
+            ->get();
+
+        return view('warehouse.reports.analytics', compact('materials', 'mostUsedByProject', 'monthlyTrends'));
+    }
+
+    public function analyticsPdf(Request $request)
+    {
+        // Use the same data as the analytics page
+        $materials = \App\Models\Material::with('category')->get();
+        $mostUsedByProject = \App\Models\StockMovement::where('type', 'out')
+            ->with(['material', 'material.category'])
+            ->selectRaw('material_id, reference_number, SUM(quantity) as total_used')
+            ->groupBy('material_id', 'reference_number')
+            ->orderByDesc('total_used')
+            ->get();
+        $monthlyTrends = \App\Models\StockMovement::where('type', 'out')
+            ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, material_id, SUM(quantity) as total_used')
+            ->groupBy('year', 'month', 'material_id')
+            ->orderBy('year')->orderBy('month')
+            ->get();
+
+        $pdf = \PDF::loadView('warehouse.reports.analytics-pdf', compact('materials', 'mostUsedByProject', 'monthlyTrends'));
+        return $pdf->download('warehouse-analytics-' . now()->format('Y-m-d') . '.pdf');
     }
 
     public function download(Report $report)
@@ -196,5 +311,10 @@ class WarehouseReportController extends Controller
             default:
                 abort(404);
         }
+    }
+
+    public function show($id)
+    {
+        abort(404, 'Individual report view not available.');
     }
 } 
