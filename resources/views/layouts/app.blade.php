@@ -144,6 +144,8 @@
                     @include('include.sidebars.analytics')
                 @elseif(auth()->check() && auth()->user()->user_type === 'employee' && auth()->user()->role === 'procurement')
                     @include('include.sidebars.procurement')
+                @elseif(auth()->check() && auth()->user()->user_type === 'employee' && auth()->user()->role === 'warehousing')
+                    @include('include.sidebars.warehousing')
                 @else
                     @include('include.sidebars.default')
                 @endif
@@ -158,6 +160,8 @@
                 @include('include.sidebars.analytics')
             @elseif(auth()->check() && auth()->user()->user_type === 'employee' && auth()->user()->role === 'procurement')
                 @include('include.sidebars.procurement')
+            @elseif(auth()->check() && auth()->user()->user_type === 'employee' && auth()->user()->role === 'warehousing')
+                @include('include.sidebars.warehousing')
             @else
                 @include('include.sidebars.default')
             @endif

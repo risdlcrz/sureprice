@@ -71,7 +71,7 @@
                                             @endif
                                         </div>
                                         <small class="message-time mt-1 {{ $message->sender_id === auth()->id() ? 'text-white-50' : 'text-muted' }}" style="font-size: 0.85rem; opacity: 0.7;">
-                                            {{ $message->created_at->format('g:i A') }}
+                                            {{ $message->created_at->timezone('Asia/Manila')->format('g:i A') }}
                                             @if($message->is_read && $message->sender_id === auth()->id())
                                                 <span class="ms-1">✓✓</span>
                                             @endif
@@ -106,7 +106,11 @@
 <div id="contextMenu" class="position-fixed bg-white border rounded shadow-sm" style="display:none; z-index:9999; min-width:140px;"></div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/timezone.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/utc.js"></script>
 <script>
+    dayjs.extend(dayjs_plugin_utc);
     // Scroll to bottom of messages container
     const messagesContainer = document.querySelector('.messages-container');
     if (messagesContainer) {

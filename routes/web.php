@@ -225,6 +225,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/messages/{conversation}', [MessageController::class, 'destroy'])->name('messages.destroy');
     Route::delete('/messages/message/{message}', [MessageController::class, 'destroyMessage'])->name('messages.message.destroy');
     Route::delete('/messages/attachment/{message}', [MessageController::class, 'removeAttachment'])->name('messages.attachment.remove');
+    Route::get('/messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');
     // Make company search for chat available to all authenticated users (admin check in controller)
     Route::get('/admin/companies/search-for-chat', [\App\Http\Controllers\CompanyController::class, 'searchForChat'])->name('admin.companies.search-for-chat');
 });

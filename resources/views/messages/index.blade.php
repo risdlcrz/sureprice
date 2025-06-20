@@ -401,7 +401,7 @@ body, html {
                                     <div class="mt-2"><img src="{{ asset('storage/' . $message->image) }}" alt="attachment" style="max-width: 180px; max-height: 180px; border-radius: 8px;"></div>
                                 @endif
                             </div>
-                            <div class="messenger-message-time">{{ $message->created_at->format('g:i A') }}</div>
+                            <div class="messenger-message-time">{{ $message->created_at->timezone('Asia/Manila')->format('g:i A') }}</div>
                         </div>
                     </div>
                 @endforeach
@@ -705,43 +705,45 @@ $(function() {
     const fileInput = document.getElementById('fileInput');
     const attachBtn = document.getElementById('attachBtn');
     const preview = document.getElementById('attachmentPreview');
-    attachBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        fileInput.click();
-    });
-    fileInput.addEventListener('change', function(e) {
-        const file = fileInput.files[0];
-        if (file) {
-            if (!file.type.startsWith('image/')) {
-                alert('Only image files are allowed.');
-                fileInput.value = '';
-                preview.innerHTML = '';
-                preview.style.display = 'none';
-                return;
-            }
-            if (file.size > 4 * 1024 * 1024) {
-                alert('Image must be less than 4MB.');
-                fileInput.value = '';
-                preview.innerHTML = '';
-                preview.style.display = 'none';
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                preview.innerHTML = `<div style='display:flex;align-items:center;gap:8px;'><img src='${ev.target.result}' style='max-width:60px;max-height:60px;border-radius:8px;'><button type='button' id='removeAttachmentBtn' class='btn btn-sm btn-light' style='border-radius:50%;'><i class='bi bi-x-lg'></i></button></div>`;
-                preview.style.display = '';
-                document.getElementById('removeAttachmentBtn').onclick = function() {
+    if (fileInput && attachBtn && preview) {
+        attachBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            fileInput.click();
+        });
+        fileInput.addEventListener('change', function(e) {
+            const file = fileInput.files[0];
+            if (file) {
+                if (!file.type.startsWith('image/')) {
+                    alert('Only image files are allowed.');
                     fileInput.value = '';
                     preview.innerHTML = '';
                     preview.style.display = 'none';
+                    return;
+                }
+                if (file.size > 4 * 1024 * 1024) {
+                    alert('Image must be less than 4MB.');
+                    fileInput.value = '';
+                    preview.innerHTML = '';
+                    preview.style.display = 'none';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    preview.innerHTML = `<div style='display:flex;align-items:center;gap:8px;'><img src='${ev.target.result}' style='max-width:60px;max-height:60px;border-radius:8px;'><button type='button' id='removeAttachmentBtn' class='btn btn-sm btn-light' style='border-radius:50%;'><i class='bi bi-x-lg'></i></button></div>`;
+                    preview.style.display = '';
+                    document.getElementById('removeAttachmentBtn').onclick = function() {
+                        fileInput.value = '';
+                        preview.innerHTML = '';
+                        preview.style.display = 'none';
+                    };
                 };
-            };
-            reader.readAsDataURL(file);
-        } else {
-            preview.innerHTML = '';
-            preview.style.display = 'none';
-        }
-    });
+                reader.readAsDataURL(file);
+            } else {
+                preview.innerHTML = '';
+                preview.style.display = 'none';
+            }
+        });
+    }
 });
 </script>
 @endpush 

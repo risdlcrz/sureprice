@@ -35,7 +35,7 @@ class NewMessage implements ShouldBroadcast
                 'content' => $this->message->content,
                 'sender_id' => $this->message->sender_id,
                 'sender_name' => $this->message->sender->name,
-                'created_at' => $this->message->created_at->format('g:i A'),
+                'created_at' => $this->message->created_at->toIso8601String(),
                 'is_read' => $this->message->is_read,
                 'image' => $this->message->image
             ]

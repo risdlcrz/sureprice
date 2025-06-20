@@ -30,7 +30,7 @@ class CompanyController extends Controller
         }
         $results = $query->limit(15)->get()->map(function($company) {
             return [
-                'id' => $company->id,
+                'id' => $company->user_id,
                 'text' => $company->company_name,
                 'designation' => ucfirst($company->designation),
                 'contact_person' => $company->contact_person,
