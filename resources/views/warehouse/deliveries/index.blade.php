@@ -51,6 +51,7 @@
                         <th>Date</th>
                         <th>Status</th>
                         <th>Items</th>
+                        <th>Warehouse</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -70,6 +71,7 @@
                             </span>
                         </td>
                         <td>{{ $delivery->items_count }} items</td>
+                        <td>{{ $delivery->warehouse->name ?? '' }}</td>
                         <td>
                             <a href="{{ route('warehouse.deliveries.show', $delivery) }}" 
                                class="btn btn-sm btn-primary">
@@ -79,7 +81,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center text-muted">No deliveries found</td>
+                        <td colspan="7" class="text-center text-muted">No deliveries found</td>
                     </tr>
                     @endforelse
                 </tbody>

@@ -25,6 +25,10 @@ class SupplierMiddleware
         
         // Check role in users table first
         if ($user->role === 'supplier') {
+            // Check supplier approval status
+            if ($user->supplier && $user->supplier->status !== 'approved') {
+                return redirect()->route('pending.approval');
+            }
             return $next($request);
         }
         

@@ -355,3 +355,10 @@ Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'verified', \A
         Route::post('/{quotation}/respond', [SupplierQuotationController::class, 'respond'])->name('respond');
     });
 });
+// Admin Supplier Profile Update Review Routes
+Route::middleware(['auth', 'admin'])->prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {
+    Route::get('pending-updates', [\App\Http\Controllers\SupplierController::class, 'pendingUpdates'])->name('pending-updates');
+    Route::get('review-update/{id}', [\App\Http\Controllers\SupplierController::class, 'reviewUpdate'])->name('review-update');
+    Route::post('approve-update/{id}', [\App\Http\Controllers\SupplierController::class, 'approveUpdate'])->name('approve-update');
+    Route::post('reject-update/{id}', [\App\Http\Controllers\SupplierController::class, 'rejectUpdate'])->name('reject-update');
+});

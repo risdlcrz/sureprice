@@ -90,12 +90,31 @@
                 </thead>
                 <tbody>
                     @forelse($recentReports as $report)
+                    @php
+                        $downloadRoute = null;
+                        switch ($report->type) {
+                            case 'warehouse_inventory':
+                                $downloadRoute = route('warehouse.reports.inventory.pdf', $report->parameters ?? []);
+                                break;
+                            case 'warehouse_movements':
+                                $downloadRoute = route('warehouse.reports.movements.pdf', $report->parameters ?? []);
+                                break;
+                            case 'warehouse_deliveries':
+                                $downloadRoute = route('warehouse.reports.deliveries.pdf', $report->parameters ?? []);
+                                break;
+                            case 'warehouse_usage':
+                                $downloadRoute = route('warehouse.reports.usage.pdf', $report->parameters ?? []);
+                                break;
+                            default:
+                                $downloadRoute = '#';
+                        }
+                    @endphp
                     <tr>
                         <td>{{ $report->type }}</td>
                         <td>{{ $report->generated_by->name }}</td>
                         <td>{{ $report->created_at->format('M d, Y H:i') }}</td>
                         <td>
-                            <a href="{{ route('warehouse.reports.download', $report) }}" class="btn btn-sm btn-primary">Download</a>
+                            <a href="{{ $downloadRoute }}" class="btn btn-sm btn-primary">Download</a>
                         </td>
                     </tr>
                     @empty

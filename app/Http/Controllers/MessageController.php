@@ -22,12 +22,14 @@ class MessageController extends Controller
             $conversations = Conversation::where('admin_id', $user->id);
         } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
             $conversations = Conversation::where('client_id', $user->id);
+        } elseif ($user->user_type === 'supplier' && $user->supplier) {
+            $conversations = Conversation::where('supplier_id', $user->supplier->id);
         } else {
             $conversations = Conversation::where('id', 0);
         }
         $conversations = $conversations->with(['messages' => function ($query) {
             $query->latest();
-        }, 'client', 'admin'])->latest('last_message_at')->get();
+        }, 'client', 'admin', 'supplier'])->latest('last_message_at')->get();
 
         $conversation = null;
         $messages = null;
@@ -98,51 +100,82 @@ class MessageController extends Controller
     {
         $user = Auth::user();
 
-        // Allow both admin and client to start a conversation
+        // Admin starts conversation with client or supplier
         if ($user->user_type === 'admin') {
-            $request->validate([
-                'client_id' => 'required|exists:users,id',
-                'message' => 'required|string|max:1000'
-            ]);
-
-            // Verify the selected user is a client
-            $client = \App\Models\User::where('id', $request->client_id)
-                ->where('user_type', 'company')
-                ->whereHas('company', function($q){ $q->where('designation', 'client'); })
-                ->first();
-            if (!$client) {
-                return redirect()->back()->with('error', 'Selected client is not valid.');
-            }
-
-            // Check if conversation already exists
-            $existingConversation = Conversation::where('client_id', $request->client_id)
-                ->where('admin_id', $user->id)
-                ->first();
-            if ($existingConversation) {
-                $message = $existingConversation->messages()->create([
+            if ($request->has('client_id')) {
+                $request->validate([
+                    'client_id' => 'required|exists:users,id',
+                    'message' => 'required|string|max:1000'
+                ]);
+                $client = \App\Models\User::where('id', $request->client_id)
+                    ->where('user_type', 'company')
+                    ->whereHas('company', function($q){ $q->where('designation', 'client'); })
+                    ->first();
+                if (!$client) {
+                    return redirect()->back()->with('error', 'Selected client is not valid.');
+                }
+                $existingConversation = Conversation::where('client_id', $request->client_id)
+                    ->where('admin_id', $user->id)
+                    ->whereNull('supplier_id')
+                    ->first();
+                if ($existingConversation) {
+                    $message = $existingConversation->messages()->create([
+                        'sender_id' => $user->id,
+                        'content' => $request->message
+                    ]);
+                    $existingConversation->update(['last_message_at' => now()]);
+                    event(new \App\Events\NewMessage($message));
+                    return redirect()->route('messages.show', $existingConversation);
+                }
+                $conversation = Conversation::create([
+                    'client_id' => $request->client_id,
+                    'admin_id' => $user->id,
+                    'status' => 'active'
+                ]);
+                $message = $conversation->messages()->create([
                     'sender_id' => $user->id,
                     'content' => $request->message
                 ]);
-                $existingConversation->update(['last_message_at' => now()]);
+                $conversation->update(['last_message_at' => now()]);
                 event(new \App\Events\NewMessage($message));
-                return redirect()->route('messages.show', $existingConversation);
+                return redirect()->route('messages.show', $conversation);
+            } elseif ($request->has('supplier_id')) {
+                $request->validate([
+                    'supplier_id' => 'required|exists:suppliers,id',
+                    'message' => 'required|string|max:1000'
+                ]);
+                $supplier = \App\Models\Supplier::find($request->supplier_id);
+                if (!$supplier) {
+                    return redirect()->back()->with('error', 'Selected supplier is not valid.');
+                }
+                $existingConversation = Conversation::where('supplier_id', $request->supplier_id)
+                    ->where('admin_id', $user->id)
+                    ->whereNull('client_id')
+                    ->first();
+                if ($existingConversation) {
+                    $message = $existingConversation->messages()->create([
+                        'sender_id' => $user->id,
+                        'content' => $request->message
+                    ]);
+                    $existingConversation->update(['last_message_at' => now()]);
+                    event(new \App\Events\NewMessage($message));
+                    return redirect()->route('messages.show', $existingConversation);
+                }
+                $conversation = Conversation::create([
+                    'supplier_id' => $request->supplier_id,
+                    'admin_id' => $user->id,
+                    'status' => 'active'
+                ]);
+                $message = $conversation->messages()->create([
+                    'sender_id' => $user->id,
+                    'content' => $request->message
+                ]);
+                $conversation->update(['last_message_at' => now()]);
+                event(new \App\Events\NewMessage($message));
+                return redirect()->route('messages.show', $conversation);
             }
-
-            // Create new conversation
-            $conversation = Conversation::create([
-                'client_id' => $request->client_id,
-                'admin_id' => $user->id,
-                'status' => 'active'
-            ]);
-            $message = $conversation->messages()->create([
-                'sender_id' => $user->id,
-                'content' => $request->message
-            ]);
-            $conversation->update(['last_message_at' => now()]);
-            event(new \App\Events\NewMessage($message));
-            return redirect()->route('messages.show', $conversation);
         }
-        // Client logic (as before)
+        // Client logic
         if ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
             $request->validate([
                 'admin_id' => 'required|exists:users,id',
@@ -157,6 +190,7 @@ class MessageController extends Controller
             }
             $existingConversation = Conversation::where('client_id', $user->id)
                 ->where('admin_id', $request->admin_id)
+                ->whereNull('supplier_id')
                 ->first();
             if ($existingConversation) {
                 $message = $existingConversation->messages()->create([
@@ -169,6 +203,45 @@ class MessageController extends Controller
             }
             $conversation = Conversation::create([
                 'client_id' => $user->id,
+                'admin_id' => $request->admin_id,
+                'status' => 'active'
+            ]);
+            $message = $conversation->messages()->create([
+                'sender_id' => $user->id,
+                'content' => $request->message
+            ]);
+            $conversation->update(['last_message_at' => now()]);
+            event(new \App\Events\NewMessage($message));
+            return redirect()->route('messages.show', $conversation);
+        }
+        // Supplier logic
+        if ($user->user_type === 'supplier' && $user->supplier) {
+            $request->validate([
+                'admin_id' => 'required|exists:users,id',
+                'message' => 'required|string|max:1000'
+            ]);
+            $admin = \App\Models\User::where('id', $request->admin_id)
+                ->where('user_type', 'admin')
+                ->where('role', 'admin')
+                ->first();
+            if (!$admin) {
+                return redirect()->back()->with('error', 'Selected admin is not valid.');
+            }
+            $existingConversation = Conversation::where('supplier_id', $user->supplier->id)
+                ->where('admin_id', $request->admin_id)
+                ->whereNull('client_id')
+                ->first();
+            if ($existingConversation) {
+                $message = $existingConversation->messages()->create([
+                    'sender_id' => $user->id,
+                    'content' => $request->message
+                ]);
+                $existingConversation->update(['last_message_at' => now()]);
+                event(new \App\Events\NewMessage($message));
+                return redirect()->route('messages.show', $existingConversation);
+            }
+            $conversation = Conversation::create([
+                'supplier_id' => $user->supplier->id,
                 'admin_id' => $request->admin_id,
                 'status' => 'active'
             ]);
@@ -215,7 +288,7 @@ class MessageController extends Controller
             abort(403);
         }
         if ($message->image) {
-            \Storage::disk('public')->delete($message->image);
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($message->image);
             $message->image = null;
             $message->save();
         }

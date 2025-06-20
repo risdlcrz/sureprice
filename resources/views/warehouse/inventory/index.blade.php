@@ -14,10 +14,25 @@
         </div>
     </div>
 
+    <!-- Warehouse Selector -->
+    <form method="GET" action="{{ route('warehouse.inventory.index') }}" class="mb-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label for="warehouse_id" class="form-label">Warehouse</label>
+                <select name="warehouse_id" id="warehouse_id" class="form-select" onchange="this.form.submit()">
+                    @foreach($warehouses as $warehouse)
+                        <option value="{{ $warehouse->id }}" {{ $warehouseId == $warehouse->id ? 'selected' : '' }}>{{ $warehouse->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+    </form>
+
     <!-- Filters -->
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <form action="{{ route('warehouse.inventory.index') }}" method="GET" class="row g-3 align-items-end">
+                <input type="hidden" name="warehouse_id" value="{{ $warehouseId }}">
                 <div class="col-md-3">
                     <label for="category" class="form-label">Category</label>
                     <select name="category" id="category" class="form-select">
@@ -59,44 +74,58 @@
                         <th>Category</th>
                         <th>Code</th>
                         <th>Current Stock</th>
-                        <th>Minimum Stock</th>
+                        <th>Threshold</th>
                         <th>Status</th>
+                        <th>Warehouse</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($materials as $material)
+                    @forelse($paginatedStocks as $stock)
                         <tr>
-                            <td class="fw-semibold">{{ $material->name }}</td>
-                            <td>{{ $material->category->name }}</td>
-                            <td><span class="badge bg-secondary">{{ $material->code }}</span></td>
-                            <td>{{ $material->current_stock }}</td>
-                            <td>{{ $material->minimum_stock }}</td>
+                            <td class="fw-semibold">{{ $stock->material->name }}</td>
+                            <td>{{ $stock->material->category->name ?? '-' }}</td>
+                            <td><span class="badge bg-secondary">{{ $stock->material->code }}</span></td>
+                            <td>{{ $stock->current_stock }}</td>
                             <td>
-                                @if($material->current_stock == 0)
-                                    <span class="badge rounded-pill bg-danger">Out of Stock</span>
-                                @elseif($material->current_stock < $material->minimum_stock)
-                                    <span class="badge rounded-pill bg-warning text-dark">Low Stock</span>
+                                @if($stock->threshold > 0)
+                                    {{ $stock->threshold }}
                                 @else
-                                    <span class="badge rounded-pill bg-success">Normal</span>
+                                    {{ floor($stock->current_stock * 0.2) }} <span class="text-muted">(20%)</span>
                                 @endif
                             </td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-outline-info" onclick="showStockHistory({{ $material->id }})">
+                                @if(isset($stock))
+                                    @php
+                                        $currentStock = $stock->current_stock ?? 0;
+                                        $threshold = $stock->threshold > 0 ? $stock->threshold : floor($currentStock * 0.2);
+                                    @endphp
+                                    @if($currentStock == 0)
+                                        <span class="badge rounded-pill bg-danger">Out of Stock</span>
+                                    @elseif($currentStock < $threshold)
+                                        <span class="badge rounded-pill bg-warning text-dark">Low Stock</span>
+                                    @else
+                                        <span class="badge rounded-pill bg-success">Normal</span>
+                                    @endif
+                                @endif
+                            </td>
+                            <td>{{ $stock->warehouse->name ?? '' }}</td>
+                            <td>
+                                <a href="{{ route('warehouse.inventory.history', ['material' => $stock->material_id, 'warehouse_id' => $stock->warehouse_id]) }}" class="btn btn-sm btn-outline-info">
                                     <i class="fas fa-history"></i> View History
-                                </button>
+                                </a>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted">No materials found</td>
+                            <td colspan="8" class="text-center text-muted">No materials found</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
         <div class="card-footer bg-white border-0 py-3">
-            {{ $materials->links() }}
+            {{ $paginatedStocks->appends(request()->except('page'))->links() }}
         </div>
     </div>
 </div>
@@ -107,6 +136,7 @@
         <div class="modal-content">
             <form action="{{ route('warehouse.inventory.add-stock') }}" method="POST">
                 @csrf
+                <input type="hidden" name="warehouse_id" value="{{ $warehouseId }}">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="fas fa-plus me-1"></i> Add Stock</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -145,6 +175,7 @@
         <div class="modal-content">
             <form action="{{ route('warehouse.inventory.update-stock') }}" method="POST">
                 @csrf
+                <input type="hidden" name="warehouse_id" value="{{ $warehouseId }}">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="fas fa-edit me-1"></i> Adjust Stock</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -170,6 +201,12 @@
                     <div class="mb-3">
                         <label for="adjust_quantity" class="form-label">Quantity</label>
                         <input type="number" name="quantity" id="adjust_quantity" class="form-control" min="0" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="adjust_threshold" class="form-label">Threshold</label>
+                        <input type="number" name="threshold" id="adjust_threshold" class="form-control" min="0" 
+                            value="{{ old('threshold', isset($stock) && $stock->threshold ? $stock->threshold : (isset($stock) ? floor($stock->current_stock * 0.2) : 0)) }}">
+                        <small class="text-muted">Default is 20% of current stock. You can edit this value.</small>
                     </div>
                     <div class="mb-3">
                         <label for="adjust_notes" class="form-label">Notes</label>

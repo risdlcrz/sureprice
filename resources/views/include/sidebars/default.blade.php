@@ -35,9 +35,19 @@
         <a href="{{ route('admin.dbadmin') }}" class="btn">
             <i class="fas fa-home"></i>Dashboard
         </a>
+        @if(auth()->user()->role === 'admin')
         <a href="{{ route('information-management.index') }}" class="btn">
             <i class="fas fa-folder-open"></i>Information Management
         </a>
+        <a href="{{ route('admin.suppliers.pending-updates') }}" class="btn">
+            <i class="fas fa-user-clock"></i>Supplier Profile Updates
+        </a>
+        @endif
+        @if(auth()->user()->role === 'supplier')
+        <a href="{{ route('supplier.profile.edit') }}" class="btn">
+            <i class="fas fa-user-edit"></i>Edit My Information
+        </a>
+        @endif
         <a href="{{ route('admin.notification') }}" class="btn">
             <i class="fas fa-bell"></i>Notification Hub
         </a>

@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         ScopeTypeSeeder::class,
         ScopeTypeMaterialSeeder::class,
         SyncEmployeesToUsersSeeder::class,
+        WarehouseSeeder::class,
     ]);
 }
 }

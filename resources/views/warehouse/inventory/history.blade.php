@@ -18,22 +18,22 @@
             <div class="row g-4">
                 <div class="col-md-3">
                     <h6 class="text-muted mb-1">Current Stock</h6>
-                    <h3 class="mb-0 fw-bold">{{ $material->current_stock }}</h3>
+                    <h3 class="mb-0 fw-bold">{{ $stock ? $stock->current_stock : 0 }}</h3>
                 </div>
                 <div class="col-md-3">
-                    <h6 class="text-muted mb-1">Minimum Stock</h6>
-                    <h3 class="mb-0 fw-bold">{{ $material->minimum_stock }}</h3>
+                    <h6 class="text-muted mb-1">Threshold</h6>
+                    <h3 class="mb-0 fw-bold">{{ $stock ? $stock->threshold : 0 }}</h3>
                 </div>
                 <div class="col-md-3">
-                    <h6 class="text-muted mb-1">Category</h6>
-                    <h3 class="mb-0 fw-bold">{{ $material->category->name }}</h3>
+                    <h6 class="text-muted mb-1">Warehouse</h6>
+                    <h3 class="mb-0 fw-bold">{{ $stock && $stock->warehouse ? $stock->warehouse->name : '-' }}</h3>
                 </div>
                 <div class="col-md-3">
                     <h6 class="text-muted mb-1">Status</h6>
                     <h3 class="mb-0">
-                        @if($material->current_stock <= 0)
+                        @if(!$stock || $stock->current_stock <= 0)
                             <span class="badge rounded-pill bg-danger">Out of Stock</span>
-                        @elseif($material->current_stock < $material->minimum_stock)
+                        @elseif($stock->current_stock < $stock->threshold)
                             <span class="badge rounded-pill bg-warning text-dark">Low Stock</span>
                         @else
                             <span class="badge rounded-pill bg-success">Normal</span>

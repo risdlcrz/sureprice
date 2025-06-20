@@ -117,4 +117,43 @@ class SupplierController extends Controller
         $supplier->load(['materials.category']);
         return view('admin.suppliers.show', compact('supplier'));
     }
+
+    // List suppliers with pending updates
+    public function pendingUpdates()
+    {
+        $suppliers = \App\Models\Supplier::where('status', 'pending_update')->get();
+        return view('admin.suppliers.pending-updates', compact('suppliers'));
+    }
+
+    // Show a single supplier's pending update
+    public function reviewUpdate($id)
+    {
+        $supplier = \App\Models\Supplier::findOrFail($id);
+        $pending = $supplier->pending_changes ? json_decode($supplier->pending_changes, true) : null;
+        return view('admin.suppliers.review-update', compact('supplier', 'pending'));
+    }
+
+    // Approve the pending update
+    public function approveUpdate($id)
+    {
+        $supplier = \App\Models\Supplier::findOrFail($id);
+        if ($supplier->pending_changes) {
+            $changes = json_decode($supplier->pending_changes, true);
+            $supplier->fill($changes);
+            $supplier->status = 'approved';
+            $supplier->pending_changes = null;
+            $supplier->save();
+        }
+        return redirect()->route('admin.suppliers.pending-updates')->with('success', 'Supplier update approved.');
+    }
+
+    // Reject the pending update
+    public function rejectUpdate($id)
+    {
+        $supplier = \App\Models\Supplier::findOrFail($id);
+        $supplier->status = 'approved';
+        $supplier->pending_changes = null;
+        $supplier->save();
+        return redirect()->route('admin.suppliers.pending-updates')->with('success', 'Supplier update rejected.');
+    }
 } 

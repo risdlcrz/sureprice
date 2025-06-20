@@ -8,12 +8,14 @@ use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\Stock;
+use Illuminate\Support\Facades\Auth;
 
 class WarehouseDeliveryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Delivery::with(['items', 'items.material']);
+        $query = Delivery::with(['items', 'items.material', 'warehouse']);
 
         // Apply filters
         if ($request->filled('type')) {
@@ -39,14 +41,14 @@ class WarehouseDeliveryController extends Controller
 
     public function show(Delivery $delivery)
     {
-        $delivery->load(['items.material', 'items.material.category']);
+        $delivery->load(['items.material', 'items.material.category', 'warehouse']);
         return view('warehouse.deliveries.show', compact('delivery'));
     }
 
     public function process(Request $request, Delivery $delivery)
     {
-        // Ensure only warehouse role can process deliveries
-        if (!auth()->user()->hasRole('warehousing')) {
+        $user = Auth::user();
+        if (!$user || !($user->role === 'warehousing')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -56,11 +58,13 @@ class WarehouseDeliveryController extends Controller
             'received_quantities' => 'required|array'
         ]);
 
-        DB::transaction(function() use ($request, $delivery) {
+        $warehouseId = $delivery->warehouse_id;
+
+        DB::transaction(function() use ($request, $delivery, $warehouseId) {
             // Update delivery status
             $delivery->status = $request->status;
             $delivery->processed_at = now();
-            $delivery->processed_by_id = auth()->id();
+            $delivery->processed_by_id = Auth::id();
             $delivery->notes = $request->notes;
             $delivery->save();
 
@@ -70,17 +74,32 @@ class WarehouseDeliveryController extends Controller
                 $receivedQuantity = min($quantity, $item->quantity);
 
                 if ($receivedQuantity > 0) {
-                    // Create stock movement
+                    // Get or create stock for this material in this warehouse
+                    $stock = Stock::firstOrCreate([
+                        'warehouse_id' => $warehouseId,
+                        'material_id' => $item->material_id,
+                    ], [
+                        'current_stock' => 0,
+                        'minimum_stock' => 0,
+                    ]);
+                    $oldStock = $stock->current_stock;
+                    // Update stock based on delivery type
+                    if ($delivery->type === 'incoming') {
+                        $stock->current_stock += $receivedQuantity;
+                    } else {
+                        $stock->current_stock -= $receivedQuantity;
+                    }
+                    $stock->save();
+                    // Create stock movement for the correct warehouse
                     StockMovement::create([
                         'material_id' => $item->material_id,
                         'type' => ($delivery->type === 'incoming' ? 'in' : 'out'),
                         'quantity' => $receivedQuantity,
-                        'previous_stock' => $item->material->current_stock,
-                        'new_stock' => $delivery->type === 'incoming' 
-                            ? $item->material->current_stock + $receivedQuantity 
-                            : $item->material->current_stock - $receivedQuantity,
+                        'previous_stock' => $oldStock,
+                        'new_stock' => $stock->current_stock,
                         'reference_number' => $delivery->delivery_number,
-                        'notes' => "Processed from delivery #" . $delivery->delivery_number
+                        'notes' => "Processed from delivery #" . $delivery->delivery_number,
+                        'warehouse_id' => $warehouseId,
                     ]);
                 }
             }
@@ -90,6 +109,19 @@ class WarehouseDeliveryController extends Controller
             'success' => true,
             'message' => 'Delivery processed successfully',
         ]);
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            // ... other fields ...
+            'warehouse_id' => 'required|exists:warehouses,id',
+        ]);
+        $delivery = Delivery::create([
+            // ... other fields ...
+            'warehouse_id' => $request->warehouse_id,
+        ]);
+        // ... rest of logic ...
     }
 }
  

@@ -11,6 +11,7 @@ class Conversation extends Model
     protected $fillable = [
         'client_id',
         'admin_id',
+        'supplier_id',
         'status',
         'last_message_at'
     ];
@@ -29,6 +30,11 @@ class Conversation extends Model
         return $this->belongsTo(User::class, 'admin_id');
     }
 
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+
     public function messages(): HasMany
     {
         return $this->hasMany(Message::class);
@@ -36,6 +42,10 @@ class Conversation extends Model
 
     public function getOtherParticipant(User $user): User
     {
-        return $user->id === $this->client_id ? $this->admin : $this->client;
+        if ($this->supplier_id) {
+            return $user->id === $this->admin_id ? $this->supplier : $this->admin;
+        } else {
+            return $user->id === $this->client_id ? $this->admin : $this->client;
+        }
     }
 } 
