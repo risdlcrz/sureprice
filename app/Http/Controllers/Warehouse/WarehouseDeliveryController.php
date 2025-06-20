@@ -82,13 +82,6 @@ class WarehouseDeliveryController extends Controller
                         'reference_number' => $delivery->delivery_number,
                         'notes' => "Processed from delivery #" . $delivery->delivery_number
                     ]);
-
-                    // Update material stock
-                    if ($delivery->type === 'incoming') {
-                        $item->material->increment('current_stock', $receivedQuantity);
-                    } else {
-                        $item->material->decrement('current_stock', $receivedQuantity);
-                    }
                 }
             }
         });
