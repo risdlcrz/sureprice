@@ -1,40 +1,42 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="container py-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <div>
-            <h1 class="h3 mb-0">Stock Movement History</h1>
-            <p class="text-muted mb-0">{{ $material->name }}</p>
+            <h1 class="fw-bold mb-1">Stock Movement History</h1>
+            <p class="text-muted mb-0 fs-5">{{ $material->name }}</p>
         </div>
-        <a href="{{ route('warehouse.inventory.index') }}" class="btn btn-secondary">Back to Inventory</a>
+        <a href="{{ route('warehouse.inventory.index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Inventory
+        </a>
     </div>
 
     <!-- Material Info Card -->
-    <div class="card mb-4">
+    <div class="card shadow-sm mb-4">
         <div class="card-body">
-            <div class="row">
+            <div class="row g-4">
                 <div class="col-md-3">
                     <h6 class="text-muted mb-1">Current Stock</h6>
-                    <h3 class="mb-0">{{ $material->current_stock }}</h3>
+                    <h3 class="mb-0 fw-bold">{{ $material->current_stock }}</h3>
                 </div>
                 <div class="col-md-3">
                     <h6 class="text-muted mb-1">Minimum Stock</h6>
-                    <h3 class="mb-0">{{ $material->minimum_stock }}</h3>
+                    <h3 class="mb-0 fw-bold">{{ $material->minimum_stock }}</h3>
                 </div>
                 <div class="col-md-3">
                     <h6 class="text-muted mb-1">Category</h6>
-                    <h3 class="mb-0">{{ $material->category->name }}</h3>
+                    <h3 class="mb-0 fw-bold">{{ $material->category->name }}</h3>
                 </div>
                 <div class="col-md-3">
                     <h6 class="text-muted mb-1">Status</h6>
                     <h3 class="mb-0">
                         @if($material->current_stock <= 0)
-                            <span class="badge bg-danger">Out of Stock</span>
+                            <span class="badge rounded-pill bg-danger">Out of Stock</span>
                         @elseif($material->current_stock < $material->minimum_stock)
-                            <span class="badge bg-warning">Low Stock</span>
+                            <span class="badge rounded-pill bg-warning text-dark">Low Stock</span>
                         @else
-                            <span class="badge bg-success">Normal</span>
+                            <span class="badge rounded-pill bg-success">Normal</span>
                         @endif
                     </h3>
                 </div>
@@ -43,13 +45,13 @@
     </div>
 
     <!-- Movement History Table -->
-    <div class="card">
-        <div class="card-header bg-white py-3">
-            <h5 class="mb-0">Movement History</h5>
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom-0">
+            <h5 class="mb-0 fw-semibold"><i class="fas fa-history me-1"></i> Movement History</h5>
         </div>
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
                     <tr>
                         <th>Date</th>
                         <th>Reference</th>
@@ -64,9 +66,9 @@
                     @forelse($movements as $movement)
                     <tr>
                         <td>{{ $movement->created_at->format('M d, Y H:i') }}</td>
-                        <td>{{ $movement->reference_number }}</td>
+                        <td><span class="badge bg-secondary">{{ $movement->reference_number }}</span></td>
                         <td>
-                            <span class="badge bg-{{ $movement->type === 'in' ? 'success' : 'danger' }}">
+                            <span class="badge rounded-pill bg-{{ $movement->type === 'in' ? 'success' : 'danger' }}">
                                 {{ ucfirst($movement->type) }}
                             </span>
                         </td>
@@ -83,7 +85,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="card-footer">
+        <div class="card-footer bg-white border-0 py-3">
             {{ $movements->links() }}
         </div>
     </div>

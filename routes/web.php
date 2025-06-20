@@ -216,6 +216,19 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/stock-movements', [WarehouseDashboardController::class, 'getStockMovements'])->name('stock-movements');
         Route::resource('deliveries', WarehouseDeliveryController::class);
         Route::resource('inventory', WarehouseInventoryController::class);
+        Route::post('inventory/add-stock', [WarehouseInventoryController::class, 'addStock'])->name('inventory.add-stock');
+        Route::post('inventory/update-stock', [WarehouseInventoryController::class, 'updateStock'])->name('inventory.update-stock');
+        Route::get('inventory/history/{material}', [WarehouseInventoryController::class, 'history'])->name('inventory.history');
+        Route::get('reports/analytics', [WarehouseReportController::class, 'analytics'])->name('reports.analytics');
+        Route::get('reports/analytics/pdf', [WarehouseReportController::class, 'analyticsPdf'])->name('reports.analytics.pdf');
+        Route::get('reports/inventory', [WarehouseReportController::class, 'inventory'])->name('reports.inventory');
+        Route::get('reports/movements', [WarehouseReportController::class, 'movements'])->name('reports.movements');
+        Route::get('reports/deliveries', [WarehouseReportController::class, 'deliveries'])->name('reports.deliveries');
+        Route::get('reports/usage', [WarehouseReportController::class, 'usage'])->name('reports.usage');
+        Route::get('reports/inventory/pdf', [WarehouseReportController::class, 'inventoryPdf'])->name('reports.inventory.pdf');
+        Route::get('reports/movements/pdf', [WarehouseReportController::class, 'movementsPdf'])->name('reports.movements.pdf');
+        Route::get('reports/deliveries/pdf', [WarehouseReportController::class, 'deliveriesPdf'])->name('reports.deliveries.pdf');
+        Route::get('reports/usage/pdf', [WarehouseReportController::class, 'usagePdf'])->name('reports.usage.pdf');
         Route::resource('reports', WarehouseReportController::class);
     });
     // Message routes

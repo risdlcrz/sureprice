@@ -14,7 +14,7 @@
                     <h5 class="card-title">Inventory Report</h5>
                     <p class="card-text text-muted">Generate detailed inventory reports including stock levels, low stock items, and stock movements.</p>
                     <div class="mt-4">
-                        <a href="{{ route('warehouse.reports.inventory') }}" class="btn btn-primary">Generate Report</a>
+                        <a href="{{ route('warehouse.reports.inventory') }}" class="btn btn-primary">View</a>
                     </div>
                 </div>
             </div>
@@ -27,7 +27,7 @@
                     <h5 class="card-title">Stock Movement Report</h5>
                     <p class="card-text text-muted">Track all stock movements including incoming and outgoing deliveries, adjustments, and returns.</p>
                     <div class="mt-4">
-                        <a href="{{ route('warehouse.reports.movements') }}" class="btn btn-primary">Generate Report</a>
+                        <a href="{{ route('warehouse.reports.movements') }}" class="btn btn-primary">View</a>
                     </div>
                 </div>
             </div>
@@ -40,7 +40,7 @@
                     <h5 class="card-title">Delivery Report</h5>
                     <p class="card-text text-muted">View delivery statistics, on-time delivery rates, and delivery performance metrics.</p>
                     <div class="mt-4">
-                        <a href="{{ route('warehouse.reports.deliveries') }}" class="btn btn-primary">Generate Report</a>
+                        <a href="{{ route('warehouse.reports.deliveries') }}" class="btn btn-primary">View</a>
                     </div>
                 </div>
             </div>
@@ -53,7 +53,20 @@
                     <h5 class="card-title">Material Usage Report</h5>
                     <p class="card-text text-muted">Analyze material usage patterns, popular items, and consumption trends.</p>
                     <div class="mt-4">
-                        <a href="{{ route('warehouse.reports.usage') }}" class="btn btn-primary">Generate Report</a>
+                        <a href="{{ route('warehouse.reports.usage') }}" class="btn btn-primary">View</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics & Trends Report Card -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Analytics & Trends</h5>
+                    <p class="card-text text-muted">Interactive charts for inventory levels, most used materials per project, and monthly usage trends.</p>
+                    <div class="mt-4">
+                        <a href="{{ route('warehouse.reports.analytics') }}" class="btn btn-info">View Analytics</a>
                     </div>
                 </div>
             </div>
