@@ -35,6 +35,7 @@ use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\Supplier\SupplierMaterialController;
 use App\Http\Controllers\Supplier\SupplierDashboardController;
 use App\Http\Controllers\Supplier\SupplierQuotationController;
+use App\Http\Controllers\Supplier\SupplierPerformanceController;
 use App\Http\Controllers\Warehouse\WarehouseDashboardController;
 use App\Http\Controllers\Warehouse\WarehouseInventoryController;
 use App\Http\Controllers\Warehouse\WarehouseDeliveryController;
@@ -351,8 +352,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
 // Supplier Material Routes
 Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'verified', \App\Http\Middleware\SupplierMiddleware::class])->group(function () {
     Route::resource('materials', SupplierMaterialController::class);
-    Route::get('dashboard', [SupplierDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/ranking', [SupplierDashboardController::class, 'ranking'])->name('ranking');
+    Route::get('/dashboard', [SupplierDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/materials', [SupplierMaterialController::class, 'index'])->name('materials.index');
+    Route::get('/quotations', [SupplierQuotationController::class, 'index'])->name('quotations.index');
+    Route::get('/performance', [SupplierPerformanceController::class, 'index'])->name('ranking');
     // Supplier Quotation Routes
     Route::prefix('quotations')->name('quotations.')->group(function () {
         Route::get('/', [SupplierQuotationController::class, 'index'])->name('index');

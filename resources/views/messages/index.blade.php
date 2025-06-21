@@ -341,11 +341,15 @@ body, html {
     <!-- Sidebar -->
     <div class="messenger-sidebar">
         <div class="messenger-sidebar-header">
-            <h3>Chats</h3>
-            <button class="btn btn-primary btn-sm" style="border-radius:50%;padding:6px 10px;" data-bs-toggle="modal" data-bs-target="#newMessageModalAdmin"><i class="bi bi-plus-lg"></i></button>
+            <h3>Messages</h3>
+            @if(Auth::user()->user_type === 'admin' || (Auth::user()->user_type === 'company' && Auth::user()->company) )
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#startConversationModal" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">
+                    <i class="fas fa-plus"></i>
+                </button>
+            @endif
         </div>
         <div class="messenger-search">
-            <input type="text" placeholder="Search Messenger..." id="sidebarSearchInput" autocomplete="off">
+            <input type="text" id="messenger-search-input" placeholder="Search Messenger...">
             <i class="bi bi-search"></i>
             <div id="sidebarSearchResults" class="list-group position-absolute w-100" style="z-index: 1000; display: none; top: 38px;"></div>
         </div>
@@ -354,7 +358,13 @@ body, html {
                 <a href="{{ route('messages.index', ['conversation' => $sideConversation->id]) }}" class="messenger-chat-item @if(isset($conversation) && $sideConversation->id == $conversation->id) active @endif">
                     <img src="https://ui-avatars.com/api/?name={{ urlencode($sideConversation->getOtherParticipant(auth()->user())->name) }}&background=0D8ABC&color=fff" class="messenger-chat-avatar">
                     <div class="messenger-chat-info">
-                        <div class="messenger-chat-name">{{ $sideConversation->getOtherParticipant(auth()->user())->name }}</div>
+                        <div class="messenger-chat-name">
+                            @if($sideConversation->getOtherParticipant(auth()->user()))
+                                {{ $sideConversation->getOtherParticipant(auth()->user())->name ?? $sideConversation->getOtherParticipant(auth()->user())->company_name }}
+                            @else
+                                [Deleted User]
+                            @endif
+                        </div>
                         <div class="messenger-chat-preview">
                             @if($sideConversation->messages->count() > 0)
                                 {{ Str::limit($sideConversation->messages->first()->content, 30) }}
@@ -513,6 +523,70 @@ body, html {
     </div>
 </div>
 <div id="contextMenu" class="position-fixed bg-white border rounded shadow-sm" style="display:none; z-index:9999; min-width:140px;"></div>
+<!-- Start Conversation Modal -->
+<div class="modal fade" id="startConversationModal" tabindex="-1" aria-labelledby="startConversationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="startConversationModalLabel">Start Conversation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form action="{{ route('messages.start') }}" method="POST">
+                    @csrf
+                    @if(Auth::user()->user_type === 'admin')
+                        <div class="mb-3">
+                            <label for="company_id" class="form-label">Start conversation with</label>
+                            <select class="form-control" id="company_id" name="company_id" required>
+                                <option value="">Select Company</option>
+                                <optgroup label="Clients">
+                                    @foreach(\App\Models\Company::where('designation', 'client')->get() as $client)
+                                        <option value="{{ $client->id }}">{{ $client->company_name }}</option>
+                                    @endforeach
+                                </optgroup>
+                                <optgroup label="Suppliers">
+                                    @foreach(\App\Models\Supplier::all() as $supplier)
+                                        <option value="{{ $supplier->id }}">{{ $supplier->company_name }}</option>
+                                    @endforeach
+                                </optgroup>
+                            </select>
+                        </div>
+                    @elseif(Auth::user()->user_type === 'company' && Auth::user()->company && Auth::user()->company->designation === 'client')
+                        <div class="mb-3">
+                            <label for="admin_id" class="form-label">Start conversation with</label>
+                            <select class="form-control" id="admin_id" name="admin_id" required>
+                                <option value="">Select Admin</option>
+                                @foreach(\App\Models\User::where('user_type', 'admin')->get() as $admin)
+                                    <option value="{{ $admin->id }}">{{ $admin->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @elseif(Auth::user()->user_type === 'company' && Auth::user()->company && Auth::user()->company->designation === 'supplier')
+                        <div class="mb-3">
+                            <label for="admin_id" class="form-label">Start conversation with Admin</label>
+                            <select class="form-control" id="admin_id" name="admin_id" required>
+                                <option value="">Select Admin</option>
+                                @foreach(\App\Models\User::where('user_type', 'admin')->get() as $admin)
+                                    <option value="{{ $admin->id }}">{{ $admin->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
+
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message</label>
+                        <textarea class="form-control" id="message" name="message" rows="3" required></textarea>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Send Message</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection 
 
 @push('scripts')

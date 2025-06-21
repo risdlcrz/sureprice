@@ -362,8 +362,35 @@ console.log('Script is running: Top of file');
 // Debug logging
 console.log('Initializing contract step 2 page');
 
-// Use only the keyed object and convert to array for iteration
 const scopeTypesByCode = {!! json_encode($scopeTypesByCode ?? []) !!};
+
+// Ensure materials and tasks are consistently arrays right after loading
+for (const scopeId in scopeTypesByCode) {
+    if (Object.prototype.hasOwnProperty.call(scopeTypesByCode, scopeId)) {
+        const scope = scopeTypesByCode[scopeId];
+        ['tasks', 'materials'].forEach(prop => {
+            // First, if it's a string, try to parse it
+            if (typeof scope[prop] === 'string') {
+                try {
+                    scope[prop] = JSON.parse(scope[prop]);
+                } catch (e) {
+                    console.error(`Error parsing ${prop} for scope:`, scope.id, e);
+                    scope[prop] = [];
+                }
+            }
+            
+            // Next, if it's a non-array object, convert it to an array
+            if (scope[prop] && typeof scope[prop] === 'object' && !Array.isArray(scope[prop])) {
+                scope[prop] = Object.values(scope[prop]);
+            } 
+            // Finally, if it's missing or null, ensure it's an empty array
+            else if (!scope[prop]) {
+                scope[prop] = [];
+            }
+        });
+    }
+}
+
 const scopeTypes = Object.values(scopeTypesByCode); // Convert to array for iteration
 console.log('Scope types (array) loaded:', scopeTypes);
 console.log('Scope types (keyed) loaded:', scopeTypesByCode);
@@ -371,16 +398,16 @@ console.log('Scope types (keyed) loaded:', scopeTypesByCode);
 // Debug: Check if scope data has materials and tasks
 console.log('=== SCOPE DATA DEBUG ===');
 scopeTypes.forEach(scope => {
-    console.log(`Processed scope (initial load): ${scope.name} (ID: ${scope.id}), materials type: ${typeof scope.materials}, tasks type: ${typeof scope.tasks}`);
-    if (scope.materials) {
-        console.log(`  - Materials: ${Array.isArray(scope.materials) ? scope.materials.length : 'not array'}`);
-        if (Array.isArray(scope.materials) && scope.materials.length > 0) {
+    console.log(`Processed scope (initial load): ${scope.name} (ID: ${scope.id}), materials is array: ${Array.isArray(scope.materials)}, tasks is array: ${Array.isArray(scope.tasks)}`);
+    if (Array.isArray(scope.materials)) {
+        console.log(`  - Materials: ${scope.materials.length}`);
+        if (scope.materials.length > 0) {
             console.log(`  - First material:`, scope.materials[0]);
         }
     }
-    if (scope.tasks) {
+    if (Array.isArray(scope.tasks)) {
         console.log(`  - Tasks: ${Array.isArray(scope.tasks) ? scope.tasks.length : 'not array'}`);
-        if (Array.isArray(scope.tasks) && scope.tasks.length > 0) {
+        if (scope.tasks.length > 0) {
             console.log(`  - First task:`, scope.tasks[0]);
         }
     }
@@ -1090,7 +1117,7 @@ function createRoomRow(initialRoomData = {}) {
                                                             name="rooms[${roomId}][scope][]" 
                                                             value="${scope.id}" 
                                                             id="scope_${scope.id}_${roomId}" 
-                                                            ${initialRoomData.scope && initialRoomData.scope.includes(scope.id.toString()) ? 'checked' : ''}> <!-- Re-add check for session data -->
+                                                            ${initialRoomData.scope && initialRoomData.scope.includes(scope.id.toString()) ? 'checked' : ''}>
                                                         <label class="form-check-label" for="scope_${scope.id}_${roomId}">
                                                             <strong>${scope.name}</strong>
                                                         </label>
@@ -1163,7 +1190,7 @@ function createRoomRow(initialRoomData = {}) {
         updateScopeDaysBadges(roomContainer);
         updateGrandTotalAndBreakdown(); // Force update global totals
         updateProjectTimeline(); // Force update timeline
-    }, 200);
+    }, 50);
 
     console.log('New room row created and initial calculations triggered.');
 }
@@ -1213,7 +1240,7 @@ function calculateRoomArea(input) {
     // Add a small delay to ensure areas are updated before updating badges
     setTimeout(() => {
         updateScopeDaysBadges(roomRow);
-    }, 100);
+    }, 50);
 }
 
 function applyScopesToAll() {
@@ -1231,10 +1258,13 @@ function applyScopesToAll() {
             checkbox.checked = selectedScopes.includes(checkbox.value);
         });
         // Recalculate costs for this room after applying scopes
-        calculateRoomArea(room.querySelector('input[name$="[length]"]')); // Trigger calculation for each room
+        updateScopeDaysBadges(room);
     });
-    // updateGrandTotalAndBreakdown(); // This will be called by calculateRoomArea
-    // saveFormData(); // This will be called by calculateRoomArea
+    // A short delay to allow re-calculation to finish before saving
+    setTimeout(() => {
+        updateGrandTotalAndBreakdown();
+        saveFormData();
+    }, 100);
 }
 
 function updateGrandTotalAndBreakdown() {

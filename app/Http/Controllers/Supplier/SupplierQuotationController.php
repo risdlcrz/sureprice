@@ -13,7 +13,11 @@ class SupplierQuotationController extends Controller
 {
     public function index(Request $request)
     {
-        $supplierId = Auth::user()->supplier->id; // Assuming a supplier is logged in
+        $supplier = Auth::user()->company;
+        if (!$supplier || $supplier->designation !== 'supplier') {
+            abort(403, 'You are not associated with a supplier account.');
+        }
+        $supplierId = $supplier->id;
 
         $query = Quotation::whereHas('suppliers', function ($q) use ($supplierId) {
                 $q->where('supplier_id', $supplierId);
@@ -32,7 +36,10 @@ class SupplierQuotationController extends Controller
 
     public function show(Quotation $quotation)
     {
-        $supplier = Auth::user()->supplier;
+        $supplier = Auth::user()->company;
+        if (!$supplier || $supplier->designation !== 'supplier') {
+            abort(403, 'You are not associated with a supplier account.');
+        }
 
         // Ensure the quotation is for the logged-in supplier
         if (!$quotation->suppliers->contains($supplier->id)) {
@@ -66,7 +73,10 @@ class SupplierQuotationController extends Controller
 
     public function respond(Request $request, Quotation $quotation)
     {
-        $supplier = Auth::user()->supplier;
+        $supplier = Auth::user()->company;
+        if (!$supplier || $supplier->designation !== 'supplier') {
+            abort(403, 'You are not associated with a supplier account.');
+        }
 
         // Ensure the quotation is for the logged-in supplier
         if (!$quotation->suppliers->contains($supplier->id)) {

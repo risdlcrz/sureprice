@@ -32,7 +32,7 @@ class Conversation extends Model
 
     public function supplier(): BelongsTo
     {
-        return $this->belongsTo(Supplier::class, 'supplier_id');
+        return $this->belongsTo(Company::class, 'supplier_id');
     }
 
     public function messages(): HasMany
@@ -40,12 +40,14 @@ class Conversation extends Model
         return $this->hasMany(Message::class);
     }
 
-    public function getOtherParticipant(User $user): User
+    public function getOtherParticipant(User $user)
     {
         if ($this->supplier_id) {
-            return $user->id === $this->admin_id ? $this->supplier : $this->admin;
+            $other = $user->id === $this->admin_id ? $this->supplier : $this->admin;
         } else {
-            return $user->id === $this->client_id ? $this->admin : $this->client;
+            $other = $user->id === $this->client_id ? $this->admin : $this->client;
         }
+
+        return $other ?? null;
     }
 } 

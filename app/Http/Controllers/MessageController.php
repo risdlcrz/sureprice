@@ -22,8 +22,8 @@ class MessageController extends Controller
             $conversations = Conversation::where('admin_id', $user->id);
         } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
             $conversations = Conversation::where('client_id', $user->id);
-        } elseif ($user->user_type === 'supplier' && $user->supplier) {
-            $conversations = Conversation::where('supplier_id', $user->supplier->id);
+        } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
+            $conversations = Conversation::where('supplier_id', $user->company->id);
         } else {
             $conversations = Conversation::where('id', 0);
         }
@@ -215,22 +215,25 @@ class MessageController extends Controller
             return redirect()->route('messages.show', $conversation);
         }
         // Supplier logic
-        if ($user->user_type === 'supplier' && $user->supplier) {
+        if ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
             $request->validate([
                 'admin_id' => 'required|exists:users,id',
                 'message' => 'required|string|max:1000'
             ]);
+
             $admin = \App\Models\User::where('id', $request->admin_id)
                 ->where('user_type', 'admin')
-                ->where('role', 'admin')
                 ->first();
+
             if (!$admin) {
                 return redirect()->back()->with('error', 'Selected admin is not valid.');
             }
-            $existingConversation = Conversation::where('supplier_id', $user->supplier->id)
+
+            $existingConversation = Conversation::where('supplier_id', $user->company->id)
                 ->where('admin_id', $request->admin_id)
                 ->whereNull('client_id')
                 ->first();
+
             if ($existingConversation) {
                 $message = $existingConversation->messages()->create([
                     'sender_id' => $user->id,
@@ -240,11 +243,13 @@ class MessageController extends Controller
                 event(new \App\Events\NewMessage($message));
                 return redirect()->route('messages.show', $existingConversation);
             }
+
             $conversation = Conversation::create([
-                'supplier_id' => $user->supplier->id,
+                'supplier_id' => $user->company->id,
                 'admin_id' => $request->admin_id,
                 'status' => 'active'
             ]);
+
             $message = $conversation->messages()->create([
                 'sender_id' => $user->id,
                 'content' => $request->message
@@ -253,7 +258,7 @@ class MessageController extends Controller
             event(new \App\Events\NewMessage($message));
             return redirect()->route('messages.show', $conversation);
         }
-        return redirect()->back()->with('error', 'You are not allowed to start a conversation.');
+        return redirect()->back()->with('error', 'Could not start conversation.');
     }
 
     public function destroy(Conversation $conversation)
@@ -296,5 +301,39 @@ class MessageController extends Controller
             return response()->json(['success' => true]);
         }
         return back()->with('success', 'Attachment removed.');
+    }
+
+    public function show(Conversation $conversation)
+    {
+        $this->authorize('view', $conversation);
+
+        $user = Auth::user();
+        
+        // Fetch all conversations for the sidebar
+        if ($user->user_type === 'admin') {
+            $conversations = Conversation::where('admin_id', $user->id);
+        } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
+            $conversations = Conversation::where('client_id', $user->id);
+        } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
+            $conversations = Conversation::where('supplier_id', $user->company->id);
+        } else {
+            $conversations = collect();
+        }
+        $conversations = $conversations->with(['messages' => function ($query) {
+            $query->latest();
+        }, 'client', 'admin', 'supplier'])->latest('last_message_at')->get();
+
+        // Get messages for the selected conversation
+        $messages = $conversation->messages()
+            ->with('sender')
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        // Mark unread messages as read
+        $messages->where('is_read', false)
+            ->where('sender_id', '!=', $user->id)
+            ->each->markAsRead();
+
+        return view('messages.index', compact('conversations', 'conversation', 'messages'));
     }
 } 

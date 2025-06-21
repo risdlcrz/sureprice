@@ -12,7 +12,13 @@ class ConversationPolicy
 
     public function view(User $user, Conversation $conversation)
     {
-        return $user->id === $conversation->client_id || $user->id === $conversation->admin_id || ($conversation->supplier_id && $user->supplier && $user->supplier->id === $conversation->supplier_id);
+        $isParticipant = $user->id === $conversation->client_id || $user->id === $conversation->admin_id;
+
+        if ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
+            $isParticipant = $isParticipant || $user->company->id === $conversation->supplier_id;
+        }
+
+        return $isParticipant;
     }
 
     public function create(User $user)
@@ -22,6 +28,12 @@ class ConversationPolicy
 
     public function update(User $user, Conversation $conversation)
     {
-        return $user->id === $conversation->client_id || $user->id === $conversation->admin_id || ($conversation->supplier_id && $user->supplier && $user->supplier->id === $conversation->supplier_id);
+        $isParticipant = $user->id === $conversation->client_id || $user->id === $conversation->admin_id;
+
+        if ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
+            $isParticipant = $isParticipant || $user->company->id === $conversation->supplier_id;
+        }
+
+        return $isParticipant;
     }
 } 
