@@ -21,14 +21,12 @@
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css" rel="stylesheet">
-    @vite(['resources/css/header.css', 'resources/css/login.css', 'resources/js/app.js'])
+    
+    <!-- Consolidated Vite assets - load app.js only once -->
+    @vite(['resources/css/header.css', 'resources/css/login.css', 'resources/css/messages.css', 'resources/css/app.css', 'resources/js/app.js'])
     
     <!-- Additional Styles -->
     @stack('styles')
-
-    @vite('resources/css/app.css')
-
-    @vite(['resources/css/messages.css', 'resources/js/app.js'])
 
     <!-- Add Inter Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">

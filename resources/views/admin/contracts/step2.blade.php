@@ -168,23 +168,78 @@
         font-size: 1.1em;
         font-weight: 500;
     }
-    
-    /* Ensure days badges are always visible */
-    .days-badge {
-        display: inline-block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        font-size: 0.875em;
-        font-weight: 500;
-        padding: 0.25em 0.5em;
-        border-radius: 0.25rem;
-        background-color: #17a2b8 !important;
-        color: white !important;
-        margin-left: 0.5rem;
+
+    /* Custom Accordion - No Bootstrap dependencies */
+    .custom-accordion {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        overflow: hidden;
+        margin-bottom: 1rem;
     }
-    
-    .days-badge:empty {
-        display: none !important;
+
+    .custom-accordion-item {
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .custom-accordion-item:last-child {
+        border-bottom: none;
+    }
+
+    .custom-accordion-header {
+        background-color: #f8f9fa;
+        border: none;
+        padding: 1rem 1.25rem;
+        font-weight: 500;
+        color: #344767;
+        cursor: pointer;
+        width: 100%;
+        text-align: left;
+        transition: all 0.2s ease;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .custom-accordion-header:hover {
+        background-color: #e7f3ff;
+        color: #0d6efd;
+    }
+
+    .custom-accordion-header.active {
+        background-color: #e7f3ff;
+        color: #0d6efd;
+    }
+
+    .custom-accordion-header::after {
+        content: '▼';
+        font-size: 0.8em;
+        transition: transform 0.2s ease;
+    }
+
+    .custom-accordion-header.active::after {
+        transform: rotate(180deg);
+    }
+
+    .custom-accordion-body {
+        background-color: #fff;
+        padding: 1.25rem;
+        display: none;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .custom-accordion-body.show {
+        display: block;
+    }
+
+    /* Ensure scope items don't interfere */
+    .scope-item {
+        position: relative;
+        z-index: 1;
+    }
+
+    .scope-item .form-check {
+        position: relative;
+        z-index: 2;
     }
 </style>
 @endpush
@@ -362,67 +417,9 @@ console.log('Script is running: Top of file');
 // Debug logging
 console.log('Initializing contract step 2 page');
 
-const scopeTypesByCode = {!! json_encode($scopeTypesByCode ?? []) !!};
-
-// Ensure materials and tasks are consistently arrays right after loading
-for (const scopeId in scopeTypesByCode) {
-    if (Object.prototype.hasOwnProperty.call(scopeTypesByCode, scopeId)) {
-        const scope = scopeTypesByCode[scopeId];
-        ['tasks', 'materials'].forEach(prop => {
-            // First, if it's a string, try to parse it
-            if (typeof scope[prop] === 'string') {
-                try {
-                    scope[prop] = JSON.parse(scope[prop]);
-                } catch (e) {
-                    console.error(`Error parsing ${prop} for scope:`, scope.id, e);
-                    scope[prop] = [];
-                }
-            }
-            
-            // Next, if it's a non-array object, convert it to an array
-            if (scope[prop] && typeof scope[prop] === 'object' && !Array.isArray(scope[prop])) {
-                scope[prop] = Object.values(scope[prop]);
-            } 
-            // Finally, if it's missing or null, ensure it's an empty array
-            else if (!scope[prop]) {
-                scope[prop] = [];
-            }
-        });
-    }
-}
-
-const scopeTypes = Object.values(scopeTypesByCode); // Convert to array for iteration
-console.log('Scope types (array) loaded:', scopeTypes);
-console.log('Scope types (keyed) loaded:', scopeTypesByCode);
-
-// Debug: Check if scope data has materials and tasks
-console.log('=== SCOPE DATA DEBUG ===');
-scopeTypes.forEach(scope => {
-    console.log(`Processed scope (initial load): ${scope.name} (ID: ${scope.id}), materials is array: ${Array.isArray(scope.materials)}, tasks is array: ${Array.isArray(scope.tasks)}`);
-    if (Array.isArray(scope.materials)) {
-        console.log(`  - Materials: ${scope.materials.length}`);
-        if (scope.materials.length > 0) {
-            console.log(`  - First material:`, scope.materials[0]);
-        }
-    }
-    if (Array.isArray(scope.tasks)) {
-        console.log(`  - Tasks: ${Array.isArray(scope.tasks) ? scope.tasks.length : 'not array'}`);
-        if (scope.tasks.length > 0) {
-            console.log(`  - First task:`, scope.tasks[0]);
-        }
-    }
-});
-console.log('=== END SCOPE DATA DEBUG ===');
-
-// Test getScopeMaterials function
-if (scopeTypes.length > 0) {
-    const firstScope = scopeTypes[0];
-    console.log('=== TESTING getScopeMaterials ===');
-    console.log('Testing with first scope:', firstScope.name);
-    const materials = getScopeMaterials(firstScope);
-    console.log('getScopeMaterials result:', materials);
-    console.log('=== END TESTING getScopeMaterials ===');
-}
+// Ensure scopeTypes is properly initialized
+const scopeTypes = @json($scopeTypesByCode ?? []);
+console.log('Scope types loaded:', scopeTypes);
 
 const DEFAULT_CREW_SIZE = 4; // Standard crew size for most construction work
 const DEFAULT_HOURS_PER_DAY = 8; // Standard working hours
@@ -434,6 +431,50 @@ const MAX_AREA = 1000; // Maximum area in square meters
 const MIN_DIMENSION = 0.1; // Minimum dimension in meters
 const MAX_LABOR_RATE = 1000; // Maximum labor rate per square meter
 const MIN_LABOR_RATE = 50; // Minimum labor rate per square meter
+
+function initializeAccordions() {
+    // This listener is on the document, so it only needs to be added once.
+    // It will handle clicks on any .custom-accordion-header added now or in the future.
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('custom-accordion-header')) {
+            e.preventDefault();
+            e.stopPropagation(); // Prevent event bubbling
+            
+            const header = e.target;
+            const accordion = header.closest('.custom-accordion');
+            const targetId = header.getAttribute('data-target');
+            const target = document.querySelector(targetId);
+            
+            if (!target || !accordion) return;
+            
+            const isActive = header.classList.contains('active');
+            
+            // First, close all other accordions in the same group
+            accordion.querySelectorAll('.custom-accordion-header').forEach(h => {
+                if (h !== header) {
+                    h.classList.remove('active');
+                    h.setAttribute('aria-expanded', 'false');
+                    const otherTarget = document.querySelector(h.getAttribute('data-target'));
+                    if (otherTarget) {
+                        otherTarget.classList.remove('show');
+                    }
+                }
+            });
+            
+            // Then, toggle the clicked accordion
+            if (!isActive) {
+                header.classList.add('active');
+                header.setAttribute('aria-expanded', 'true');
+                target.classList.add('show');
+            } else {
+                header.classList.remove('active');
+                header.setAttribute('aria-expanded', 'false');
+                target.classList.remove('show');
+            }
+        }
+    });
+    console.log('Global accordion click listener initialized.');
+}
 
 function validateDimension(value, fieldName) {
     const num = parseFloat(value);
@@ -596,28 +637,20 @@ function calculateAllCosts() {
         let roomMaterialsCost = 0;
         let roomEstimatedDays = 0;
 
-        let roomMaterials = 0;
-        
-        // Get selected scopes for this room
-        const selectedScopes = Array.from(room.querySelectorAll('input[type="checkbox"]:checked'))
-            .map(cb => scopeTypesByCode[cb.value])
-            .filter(Boolean);
-        
-        console.log(`  calculateAllCosts:   Room ${room.dataset.roomId} has ${selectedScopes.length} selected scopes.`);
+        const selectedScopes = Array.from(room.querySelectorAll('.scope-checkbox:checked')).map(cb => cb.value);
+        console.log(`  calculateAllCosts: Room ${roomName} (${roomId}) - Selected Scopes:`, selectedScopes);
 
-        selectedScopes.forEach(scope => {
-            if (!scope) return;
-            
-            // --- FIX: Use the materials from the current scope object, not the global scopeTypes mapping ---
-            const materials = getScopeMaterials(scope);
-            
-            console.log(`  calculateAllCosts:     Scope ${scope.name} has ${materials.length} materials.`);
-
-            materials.forEach(material => {
-                if (!material.base_price || isNaN(material.base_price)) {
-                    console.warn(`Skipping material with invalid price: ${material.name}`);
-                    return;
-                }
+        selectedScopes.forEach(scopeKey => {
+            const scope = scopeTypes[scopeKey];
+            if (!scope) {
+                console.warn(`  calculateAllCosts: Scope with key ${scopeKey} not found!`);
+                return;
+            }
+            console.log(`  calculateAllCosts:   Scope ${scope.name} (ID: ${scope.id}) - labor_rate: ${scope.labor_rate}, complexity_factor: ${scope.complexity_factor}`);
+            // --- Materials ---
+            const materialsArr = getScopeMaterials(scope);
+            materialsArr.forEach(material => {
+                if (!material || typeof material !== 'object') return;
                 const price = parseFloat(material.srp_price ?? 0) > 0 ? parseFloat(material.srp_price) : parseFloat(material.base_price ?? 0);
                 let quantity = 0;
                 const area = material.is_wall_material ? wallArea : floorArea;
@@ -677,17 +710,18 @@ function calculateAllCosts() {
             let scopeLaborHours = 0;
             // Calculate labor based on tasks
             if (scope.tasks) {
-                const tasks = getScopeTasks(scope);
+                const tasks = Array.isArray(scope.tasks) ? scope.tasks : 
+                    (typeof scope.tasks === 'string' ? JSON.parse(scope.tasks) : []);
                 
                 const laborArea = scope.is_wall_work ? wallArea : floorArea;
                 const adjustment = getAdjustmentFactor(room, scope);
                 console.log(`  calculateAllCosts:     Scope ${scope.name} Tasks: laborArea=${laborArea}, adjustment=${adjustment}`);
 
-                tasks.forEach(task => {
+                scopeLaborHours = tasks.reduce((total, task) => {
                     const taskHours = (task.labor_hours_per_sqm || 0) * laborArea;
                     console.log(`  calculateAllCosts:       Task ${task.name}: labor_hours_per_sqm=${task.labor_hours_per_sqm}, taskHours=${taskHours.toFixed(2)}`);
-                    scopeLaborHours += taskHours;
-                });
+                    return total + taskHours;
+                }, 0);
                 scopeLaborCost = scopeLaborHours * laborRate;
             } else {
                 // Fallback to old calculation method if no tasks defined
@@ -771,6 +805,9 @@ function updateProjectTimeline() {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM Content Loaded');
     
+    // Initialize custom accordions once
+    initializeAccordions();
+    
     // Set initialization flag
     window.isInitializing = true;
     
@@ -817,11 +854,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Call updateProjectTimeline when any scope checkbox changes
     document.addEventListener('change', function(e) {
         if (e.target.classList.contains('scope-checkbox')) {
-            const roomRow = e.target.closest('.room-row');
-            
-            // The setTimeout was causing a race condition with Bootstrap's accordion.
-            // Running these updates synchronously resolves the issue.
-            updateScopeDaysBadges(roomRow);
+            updateScopeDaysBadges(e.target.closest('.room-row'));
             updateGrandTotalAndBreakdown();
             updateProjectTimeline();
             if (!window.isInitializing) {
@@ -851,32 +884,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Ensure materials and tasks are consistently arrays
-scopeTypes.forEach(scope => {
-    ['tasks', 'materials'].forEach(prop => {
-        // First, if it's a string, try to parse it
-        if (typeof scope[prop] === 'string') {
-            try {
-                scope[prop] = JSON.parse(scope[prop]);
-            } catch (e) {
-                console.error(`Error parsing ${prop} for scope:`, scope.id, e);
-                scope[prop] = [];
-            }
+// Ensure materials are parsed for each scope type
+Object.values(scopeTypes).forEach(scope => {
+    if (typeof scope.materials === 'string') {
+        try {
+            scope.materials = JSON.parse(scope.materials);
+        } catch (e) {
+            console.error('Error parsing materials for scope:', scope.id, e);
+            scope.materials = [];
         }
-        
-        // Next, if it's a non-array object, convert it to an array
-        if (scope[prop] && typeof scope[prop] === 'object' && !Array.isArray(scope[prop])) {
-            scope[prop] = Object.values(scope[prop]);
-        } 
-        // Finally, if it's missing, ensure it's an empty array
-        else if (!scope[prop]) {
-            scope[prop] = [];
+    }
+    // Also ensure tasks are parsed once
+    if (typeof scope.tasks === 'string') {
+        try {
+            scope.tasks = JSON.parse(scope.tasks);
+        } catch (e) {
+            console.error('Error parsing tasks for scope:', scope.id, e);
+            scope.tasks = [];
         }
-    });
+    }
+    console.log(`Processed scope (initial load): ${scope.name} (ID: ${scope.id}), materials type: ${typeof scope.materials}, tasks type: ${typeof scope.tasks}`);
 });
 
 const scopesByCategory = {};
-scopeTypes.forEach(scope => {
+Object.values(scopeTypes).forEach(scope => {
     if (!scopesByCategory[scope.category]) scopesByCategory[scope.category] = [];
     scopesByCategory[scope.category].push(scope);
 });
@@ -976,45 +1007,37 @@ function saveFormData() {
 
 function initializeForm() {
     console.log('Initializing form with session data.');
-    
-    // Clear any existing rooms first
     const roomDetails = document.getElementById('roomDetails');
-    roomDetails.innerHTML = '';
-    
     // Convert rooms object to array if it's an object and not already an array
     let roomsToInitialize = [];
     if (sessionData && sessionData.rooms) {
         if (Array.isArray(sessionData.rooms)) {
             roomsToInitialize = sessionData.rooms;
         } else if (typeof sessionData.rooms === 'object' && sessionData.rooms !== null) {
-            // If it's an object, convert its values to an array
             roomsToInitialize = Object.values(sessionData.rooms);
         }
     }
-
-    // Check if we have valid session data and if it contains rooms
     if (roomsToInitialize.length > 0) {
+        roomDetails.innerHTML = '';
         console.log('Found existing session data, initializing rooms:', roomsToInitialize);
         roomsToInitialize.forEach(room => {
             createRoomRow(room);
         });
+        initializeAccordions(); // re-attach handlers
     } else {
-        console.log('No valid session data for rooms found. Starting with an empty room section.');
-        // Do NOT call createRoomRow() here. The user will click 'Add Room/Area' to add the first room.
+        // Do NOT clear the DOM if no session data
+        console.log('No valid session data for rooms found. Leaving initial HTML.');
     }
-    
     // Reset all totals to zero initially (these are for the grand total summary, not room specific)
     document.getElementById('total_materials').value = '0';
     document.getElementById('total_labor').value = '0';
     document.getElementById('grand_total').value = '0';
     document.getElementById('total_area').value = '0';
-    
     // Update displays to reflect zero totals
     document.getElementById('grandTotalArea').textContent = '0.00 sq m';
     document.getElementById('grandTotalMaterials').textContent = '₱0.00';
     document.getElementById('grandTotalLabor').textContent = '₱0.00';
     document.getElementById('grandTotal').textContent = '₱0.00';
-    
     // Initial timeline update and cost update after form is potentially initialized
     updateGrandTotalAndBreakdown();
     updateProjectTimeline();
@@ -1022,12 +1045,6 @@ function initializeForm() {
 
 function createRoomRow(initialRoomData = {}) {
     console.log('Creating new room row', initialRoomData);
-    
-    // Ensure scope is always an array
-    if (!initialRoomData.scope || !Array.isArray(initialRoomData.scope)) {
-        initialRoomData.scope = [];
-    }
-    
     console.log('initialRoomData.scope:', initialRoomData.scope);
     const roomContainer = document.createElement('div');
     roomContainer.className = 'room-row mb-4';
@@ -1087,60 +1104,64 @@ function createRoomRow(initialRoomData = {}) {
         <div class="row mt-3">
             <div class="col-12">
                 <h6 class="mb-3">Scope of Work</h6>
-                <div class="accordion" id="scopeAccordion${roomId}">
+                <div class="custom-accordion" id="scopeAccordion${roomId}">
                     ${Object.entries(scopesByCategory).map(([category, scopes], categoryIndex) => `
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="heading${roomId}${categoryIndex}">
-                                <button class="accordion-button ${categoryIndex > 0 ? 'collapsed' : ''}" type="button" 
-                                    data-bs-toggle="collapse" 
-                                    data-bs-target="#category${roomId}${categoryIndex}"
-                                    aria-expanded="${categoryIndex === 0}"
-                                    aria-controls="category${roomId}${categoryIndex}">
-                                    ${category}
-                                </button>
-                            </h2>
-                            <div id="category${roomId}${categoryIndex}" 
-                                class="accordion-collapse collapse ${categoryIndex === 0 ? 'show' : ''}"
-                                aria-labelledby="heading${roomId}${categoryIndex}"
-                                data-bs-parent="#scopeAccordion${roomId}">
-                                <div class="accordion-body">
-                                    <div class="row">
-                                        ${scopes.map(scope => {
-                                            const scopeMaterials = getScopeMaterials(scope);
-                                            const scopeTasks = getScopeTasks(scope);
-                                            console.log(`Checking scope: ${scope.id}, initialRoomData.scope:`, initialRoomData.scope, `includes(${scope.id.toString()}):`, initialRoomData.scope && initialRoomData.scope.includes(scope.id.toString()));
-                                            return `
-                                            <div class="col-md-6">
-                                                <div class="scope-item mb-4">
-                                                    <div class="form-check">
-                                                        <input type="checkbox" class="form-check-input scope-checkbox" 
-                                                            name="rooms[${roomId}][scope][]" 
-                                                            value="${scope.id}" 
-                                                            id="scope_${scope.id}_${roomId}" 
-                                                            ${initialRoomData.scope && initialRoomData.scope.includes(scope.id.toString()) ? 'checked' : ''}>
-                                                        <label class="form-check-label" for="scope_${scope.id}_${roomId}">
-                                                            <strong>${scope.name}</strong>
-                                                        </label>
-                                                    </div>
+                        <div class="custom-accordion-item">
+                            <div class="custom-accordion-header ${categoryIndex === 0 ? 'active' : ''}" 
+                                 data-target="#custom-collapse-${roomId}-${categoryIndex}" 
+                                 aria-expanded="${categoryIndex === 0}">
+                                ${category}
+                            </div>
+                            <div id="custom-collapse-${roomId}-${categoryIndex}" class="custom-accordion-body ${categoryIndex === 0 ? 'show' : ''}">
+                                <div class="row">
+                                    ${scopes.map(scope => {
+                                        console.log(`Checking scope: ${scope.id}, initialRoomData.scope:`, initialRoomData.scope, `includes(${scope.id.toString()}):`, initialRoomData.scope && initialRoomData.scope.includes(scope.id.toString()));
+                                        return `
+                                        <div class="col-md-6">
+                                            <div class="scope-item mb-4">
+                                                <div class="form-check">
+                                                    <input type="checkbox" class="form-check-input scope-checkbox" 
+                                                        name="rooms[${roomId}][scope][]" 
+                                                        value="${scope.id}" 
+                                                        id="scope_${scope.id}_${roomId}" 
+                                                        ${initialRoomData.scope && initialRoomData.scope.includes(scope.id.toString()) ? 'checked' : ''}> <!-- Re-add check for session data -->
+                                                    <label class="form-check-label" for="scope_${scope.id}_${roomId}">
+                                                        <strong>${scope.name}</strong>
+                                                    </label>
+                                                </div>
+                                                <div class="ms-4 mt-2">
+                                                    <small class="text-muted">Materials:</small>
+                                                    <ul class="list-unstyled small">
+                                                        ${(scope.materials && scope.materials.length > 0) ? scope.materials.map(material => {
+                                                            const name = material.name || 'Unnamed Material';
+                                                            const displayPrice = parseFloat(material.srp_price ?? 0) > 0 ? parseFloat(material.srp_price) : parseFloat(material.base_price ?? 0);
+                                                            const unit = material.unit || 'pcs';
+                                                            return `<li>${name} - ₱${displayPrice.toFixed(2)}</li>`;
+                                                        }).filter(Boolean).join('') : '<li><em>No materials assigned</em></li>'}
+                                                    </ul>
+                                                    <small class="text-muted">Tasks:</small>
+                                                    <ul class="list-unstyled small">
+                                                        ${(() => {
+                                                            if (!scope.tasks) return '<li><em>No tasks listed</em></li>';
+                                                            const tasks = Array.isArray(scope.tasks) ? scope.tasks : 
+                                                                (typeof scope.tasks === 'string' ? JSON.parse(scope.tasks) : []);
+                                                            return tasks.length > 0 ? 
+                                                                tasks.map(task => {
+                                                                    console.log(`Task in loop: ${JSON.stringify(task)}`); // Log task details
+                                                                    return `<li><i class="fas fa-check-circle text-success"></i> ${task.name || 'Unnamed Task'}</li>`;
+                                                                }).join('') : 
+                                                                '<li><em>No tasks listed</em></li>';
+                                                        })()}
+                                                    </ul>
                                                     <div class="ms-4 mt-2">
-                                                        <small class="text-muted">Materials:</small>
-                                                        <ul class="list-unstyled small">
-                                                            ${scopeMaterials.length > 0 ? scopeMaterials.map(material => `<li>${material.name || 'Unnamed Material'} - ₱${(parseFloat(material.srp_price ?? 0) > 0 ? parseFloat(material.srp_price) : parseFloat(material.base_price ?? 0)).toFixed(2)}</li>`).join('') : '<li><em>No materials assigned</em></li>'}
-                                                        </ul>
-                                                        <small class="text-muted">Tasks:</small>
-                                                        <ul class="list-unstyled small">
-                                                            ${scopeTasks.length > 0 ? scopeTasks.map(task => `<li><i class="fas fa-check-circle text-success"></i> ${task.name || 'Unnamed Task'}</li>`).join('') : '<li><em>No tasks listed</em></li>'}
-                                                        </ul>
-                                                        <div class="ms-4 mt-2">
-                                                            <small class="text-muted">Estimated Time:</small>
-                                                            <span class="badge bg-info ms-2 days-badge" data-scope-id="${scope.id}"></span>
-                                                        </div>
+                                                        <small class="text-muted">Estimated Time:</small>
+                                                        <span class="badge bg-info ms-2 days-badge" data-scope-id="${scope.id}"></span>
                                                     </div>
                                                 </div>
                                             </div>
-                                        `;
-                                        }).join('')}
-                                    </div>
+                                        </div>
+                                    `;
+                                    }).join('')}
                                 </div>
                             </div>
                         </div>
@@ -1171,6 +1192,13 @@ function createRoomRow(initialRoomData = {}) {
     `;
     document.getElementById('roomDetails').appendChild(roomContainer);
 
+    // Initialize accordion for the new room
+    const newAccordion = roomContainer.querySelector('.custom-accordion');
+    if (newAccordion) {
+        // Custom accordion is already initialized globally, no need for additional setup
+        console.log('New room custom accordion created');
+    }
+
     // Add event listeners for the new room
     const dimensionInputs = roomContainer.querySelectorAll('.room-dimension');
     dimensionInputs.forEach(input => {
@@ -1185,12 +1213,9 @@ function createRoomRow(initialRoomData = {}) {
     }
 
     // It's crucial to call updateScopeDaysBadges after room areas are calculated.
-    // Add a small delay to ensure calculations are complete
-    setTimeout(() => {
-        updateScopeDaysBadges(roomContainer);
-        updateGrandTotalAndBreakdown(); // Force update global totals
-        updateProjectTimeline(); // Force update timeline
-    }, 50);
+    updateScopeDaysBadges(roomContainer);
+    updateGrandTotalAndBreakdown(); // Force update global totals
+    updateProjectTimeline(); // Force update timeline
 
     console.log('New room row created and initial calculations triggered.');
 }
@@ -1236,11 +1261,7 @@ function calculateRoomArea(input) {
     
     updateGrandTotalAndBreakdown();
     saveFormData();
-    
-    // Add a small delay to ensure areas are updated before updating badges
-    setTimeout(() => {
-        updateScopeDaysBadges(roomRow);
-    }, 50);
+    updateScopeDaysBadges(roomRow);
 }
 
 function applyScopesToAll() {
@@ -1258,13 +1279,10 @@ function applyScopesToAll() {
             checkbox.checked = selectedScopes.includes(checkbox.value);
         });
         // Recalculate costs for this room after applying scopes
-        updateScopeDaysBadges(room);
+        calculateRoomArea(room.querySelector('input[name$="[length]"]')); // Trigger calculation for each room
     });
-    // A short delay to allow re-calculation to finish before saving
-    setTimeout(() => {
-        updateGrandTotalAndBreakdown();
-        saveFormData();
-    }, 100);
+    // updateGrandTotalAndBreakdown(); // This will be called by calculateRoomArea
+    // saveFormData(); // This will be called by calculateRoomArea
 }
 
 function updateGrandTotalAndBreakdown() {
@@ -1422,28 +1440,6 @@ function getScopeMaterials(scope) {
     }
 }
 
-function getScopeTasks(scope) {
-    if (!scope || !scope.tasks) {
-        return [];
-    }
-    if (Array.isArray(scope.tasks)) {
-        return scope.tasks;
-    }
-    if (typeof scope.tasks === 'object' && scope.tasks !== null) {
-        return Object.values(scope.tasks);
-    }
-    if (typeof scope.tasks === 'string') {
-        try {
-            const parsed = JSON.parse(scope.tasks);
-            return Array.isArray(parsed) ? parsed : Object.values(parsed);
-        } catch (e) {
-            console.error('Error parsing scope tasks JSON:', e);
-            return [];
-        }
-    }
-    return [];
-}
-
 // Add this helper to calculate estimated days for a scope in a room
 function getScopeEstimatedDays(scope, room) {
     const floorArea = parseFloat(room.querySelector('input[name$="[floor_area]"]').value) || 0;
@@ -1466,7 +1462,8 @@ function getScopeEstimatedDays(scope, room) {
     
     // Calculate based on tasks if available
     if (scope.tasks) {
-        const tasks = getScopeTasks(scope);
+        const tasks = Array.isArray(scope.tasks) ? scope.tasks : 
+            (typeof scope.tasks === 'string' ? JSON.parse(scope.tasks) : []);
         
         tasks.forEach(task => {
             const laborArea = scope.is_wall_work ? wallArea : floorArea;
@@ -1508,34 +1505,16 @@ function updateScopeDaysBadges(room) {
     let totalDays = 0;
     
     scopeCheckboxes.forEach(cb => {
-        const scope = scopeTypesByCode[cb.value];
+        const scope = scopeTypes[cb.value];
         let badge = null;
         
-        // Try multiple strategies to find the badge element
-        const scopeId = cb.value;
-        
-        // Strategy 1: Look for badge with data-scope-id attribute
-        badge = room.querySelector(`.days-badge[data-scope-id="${scopeId}"]`);
-        
-        // Strategy 2: If not found, look in the parent scope-item div
-        if (!badge) {
-            const scopeItem = cb.closest('.scope-item');
-            if (scopeItem) {
-                badge = scopeItem.querySelector('.days-badge');
-            }
-        }
-        
-        // Strategy 3: Look in the next sibling element
-        if (!badge && cb.nextElementSibling) {
+        // Find the badge element
+        if (cb.nextElementSibling && cb.nextElementSibling.querySelector && cb.nextElementSibling.querySelector('.days-badge')) {
             badge = cb.nextElementSibling.querySelector('.days-badge');
-        }
-        
-        // Strategy 4: Look in the parent form-check element
-        if (!badge) {
-            const formCheck = cb.closest('.form-check');
-            if (formCheck) {
-                badge = formCheck.querySelector('.days-badge');
-            }
+        } else if (cb.parentElement && cb.parentElement.querySelector('.days-badge')) {
+            badge = cb.parentElement.querySelector('.days-badge');
+        } else {
+            badge = room.querySelector(`.days-badge[data-scope-id="${cb.value}"]`);
         }
         
         if (scope && badge) {
@@ -1544,36 +1523,15 @@ function updateScopeDaysBadges(room) {
             if (cb.checked) {
                 totalDays += days;
             }
-            
-            // Update badge content with proper formatting
-            if (days === 0.5) {
-                badge.textContent = '0.5 day';
-            } else if (days === 1) {
-                badge.textContent = '1 day';
-            } else {
-                badge.textContent = `${days} days`;
-            }
-            
-            // Ensure badge is visible
-            badge.style.display = 'inline-block';
-            badge.style.visibility = 'visible';
-            
-            console.log(`  Updated badge for scope ${scope.name}: "${badge.textContent}"`);
-        } else {
-            console.warn(`  Could not find badge for scope ${scope ? scope.name : 'unknown'} (ID: ${scopeId})`);
+            badge.textContent = `${days} day${days > 1 ? 's' : ''}`;
+            badge.style.display = '';
         }
     });
     
     // Update the room's total estimated time
     const estimatedTimeElem = room.querySelector('.estimated-time');
     if (estimatedTimeElem) {
-        if (totalDays === 0.5) {
-            estimatedTimeElem.textContent = '0.5 day';
-        } else if (totalDays === 1) {
-            estimatedTimeElem.textContent = '1 day';
-        } else {
-            estimatedTimeElem.textContent = `${totalDays} days`;
-        }
+        estimatedTimeElem.textContent = `${totalDays} day${totalDays > 1 ? 's' : ''}`;
         console.log(`  Room Total Estimated Time: ${totalDays} days`);
     }
 }
