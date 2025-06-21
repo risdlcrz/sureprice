@@ -1,5 +1,27 @@
 @extends('layouts.app')
 
+@push('styles')
+<style>
+    #inventoryTable .badge {
+        position: static;
+        display: inline-block;
+        transform: none;
+    }
+
+    .card-body .badge {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+    }
+
+    .inventory-status-badge {
+        position: static !important;
+        display: inline-block !important;
+        transform: none !important;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -14,7 +36,6 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <!-- Statistics Cards -->
                     <div class="row mb-4">
                         <div class="col-md-4">
                             <div class="small-box bg-info">
@@ -51,7 +72,6 @@
                         </div>
                     </div>
 
-                    <!-- Search and Filter -->
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="input-group">
@@ -73,7 +93,6 @@
                         </div>
                     </div>
 
-                    <!-- Inventory Table -->
                     <div class="table-responsive">
                         <table class="table table-bordered table-hover" id="inventoryTable">
                             <thead>
@@ -113,7 +132,7 @@
                                                         break;
                                                 }
                                             @endphp
-                                            <span class="badge {{ $statusClass }}">
+                                            <span class="badge inventory-status-badge {{ $statusClass }}">
                                                 {{ ucfirst($inventory->status) }}
                                             </span>
                                         @else
@@ -138,7 +157,6 @@
                                             </form>
                                         </div>
 
-                                        <!-- Adjust Stock Modal -->
                                         <div class="modal fade" id="adjustStockModal{{ $inventory->id }}" tabindex="-1" role="dialog">
                                             <div class="modal-dialog" role="document">
                                                 <div class="modal-content">
@@ -182,7 +200,6 @@
                         </table>
                     </div>
 
-                    <!-- Pagination -->
                     <div class="mt-4">
                         {{ $inventories->links() }}
                     </div>
@@ -195,7 +212,6 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Search functionality
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('keyup', function() {
