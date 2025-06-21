@@ -20,7 +20,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const ctx = document.getElementById('budgetChart').getContext('2d');
-        const chartData = @json($chartData);
+        const chartData = JSON.parse('@json($chartData)');
 
         const labels = chartData.map(item => item.label);
         const budgetData = chartData.map(item => item.budget);

@@ -180,7 +180,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const ctx = document.getElementById('monthlyMovementsChart').getContext('2d');
-    const monthlyData = @json($monthlyMovements);
+    const monthlyData = JSON.parse('@json($monthlyMovements)');
     const months = monthlyData.map(item => {
         const date = new Date();
         date.setMonth(item.month - 1);

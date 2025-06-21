@@ -270,7 +270,9 @@ Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->
     Route::get('/analytics/price-analysis', [AnalyticsController::class, 'priceAnalysis'])->name('analytics.price-analysis');
     Route::get('/notifications', [ProcurementController::class, 'notificationHub'])->name('notification');
     Route::get('/inventory/create', [ProcurementController::class, 'inventoryCreate'])->name('inventory.create');
+    Route::post('/inventory', [ProcurementController::class, 'inventoryStore'])->name('inventory.store');
     Route::get('/inventory/{inventory}/edit', [ProcurementController::class, 'inventoryEdit'])->name('inventory.edit');
+    Route::put('/inventory/{inventory}', [ProcurementController::class, 'inventoryUpdate'])->name('inventory.update');
     Route::delete('/inventory/{inventory}', [ProcurementController::class, 'inventoryDestroy'])->name('inventory.destroy');
     Route::post('/inventory/{inventory}/adjust-stock', [ProcurementController::class, 'inventoryAdjustStock'])->name('inventory.adjust-stock');
     Route::get('/inventory/low-stock', [ProcurementController::class, 'inventoryLowStock'])->name('inventory.low-stock');

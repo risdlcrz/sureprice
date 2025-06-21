@@ -12,6 +12,11 @@ use App\Models\Contract;
 use App\Models\Inventory;
 use App\Models\Project;
 use App\Models\Notification;
+use App\Models\Category;
+use App\Models\Material;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class ProcurementController extends Controller
 {
@@ -107,8 +112,8 @@ class ProcurementController extends Controller
     public function notificationHub()
     {
         // You can fetch procurement-specific notifications here
-        $notifications = Notification::where('for_role', 'procurement')
-                                     ->orWhere('for_user_id', auth()->id())
+        $notifications = \App\Models\Notification::where('for_role', 'procurement')
+                                     ->orWhere('for_user_id', Auth::id())
                                      ->latest()->get();
 
         return view('procurement.notification-hub', compact('notifications'));
@@ -118,6 +123,158 @@ class ProcurementController extends Controller
     {
         // Return a view for creating a new inventory item
         return view('procurement.inventory-create');
+    }
+
+    public function inventoryStore(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'material_name' => 'required|string|max:255',
+            'category_name' => 'required|string|max:255',
+            'quantity' => 'required|numeric|min:0',
+            'unit' => 'required|string|max:50',
+            'location' => 'nullable|string|max:255',
+            'status' => 'required|in:active,inactive,obsolete',
+            'last_restock_date' => 'nullable|date',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        DB::transaction(function () use ($request) {
+            $category = Category::firstOrCreate(['name' => $request->input('category_name')]);
+
+            $material = Material::firstOrCreate(
+                ['name' => $request->input('material_name'), 'category_id' => $category->id],
+                ['unit' => $request->input('unit')]
+            );
+
+            $inventory = Inventory::create([
+                'material_id' => $material->id,
+                'quantity' => $request->input('quantity'),
+                'unit' => $request->input('unit'),
+                'location' => $request->input('location'),
+                'status' => $request->input('status', 'active'),
+                'last_restock_date' => $request->input('last_restock_date'),
+            ]);
+
+            $material->increment('current_stock', $request->input('quantity'));
+        });
+
+        return redirect()->route('procurement.inventory.index')
+            ->with('success', 'Inventory item added successfully.');
+    }
+
+    public function inventoryEdit(Inventory $inventory)
+    {
+        return view('procurement.inventory-edit', compact('inventory'));
+    }
+
+    public function inventoryUpdate(Request $request, Inventory $inventory)
+    {
+        $validator = Validator::make($request->all(), [
+            'material_name' => 'required|string|max:255',
+            'category_name' => 'required|string|max:255',
+            'quantity' => 'required|numeric|min:0',
+            'unit' => 'required|string|max:50',
+            'location' => 'nullable|string|max:255',
+            'status' => 'required|in:active,inactive,obsolete',
+            'last_restock_date' => 'nullable|date',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        DB::transaction(function () use ($request, $inventory) {
+            $oldQuantity = $inventory->quantity;
+
+            $category = Category::firstOrCreate(['name' => $request->input('category_name')]);
+
+            $material = $inventory->material;
+            $material->update([
+                'name' => $request->input('material_name'),
+                'category_id' => $category->id,
+                'unit' => $request->input('unit'),
+            ]);
+
+            $inventory->update([
+                'quantity' => $request->input('quantity'),
+                'unit' => $request->input('unit'),
+                'location' => $request->input('location'),
+                'status' => $request->input('status'),
+                'last_restock_date' => $request->input('last_restock_date'),
+            ]);
+
+            // Adjust stock based on the quantity change
+            $quantityDifference = $request->input('quantity') - $oldQuantity;
+            $material->increment('current_stock', $quantityDifference);
+        });
+
+        return redirect()->route('procurement.inventory.index')
+            ->with('success', 'Inventory item updated successfully.');
+    }
+
+    public function inventoryDestroy(Inventory $inventory)
+    {
+        DB::transaction(function () use ($inventory) {
+            $material = $inventory->material;
+
+            if ($material) {
+                $material->decrement('current_stock', $inventory->quantity);
+            }
+
+            $inventory->delete();
+        });
+
+        return redirect()->route('procurement.inventory.index')
+            ->with('success', 'Inventory item deleted successfully.');
+    }
+
+    public function inventoryAdjustStock(Request $request, Inventory $inventory)
+    {
+        $validator = Validator::make($request->all(), [
+            'quantity' => 'required|numeric|min:0',
+            'operation' => 'required|in:add,subtract',
+            'notes' => 'nullable|string',
+        ]);
+
+        $validator->after(function ($validator) use ($request, $inventory) {
+            if ($request->operation === 'subtract' && $request->quantity > $inventory->quantity) {
+                $validator->errors()->add('quantity', 'Cannot subtract more than the available quantity.');
+            }
+        });
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        DB::transaction(function () use ($request, $inventory) {
+            $adjustment_quantity = $request->input('quantity');
+            $operation = $request->input('operation');
+            $material = $inventory->material;
+
+            if ($operation === 'add') {
+                $inventory->increment('quantity', $adjustment_quantity);
+                if ($material) {
+                    $material->increment('current_stock', $adjustment_quantity);
+                }
+            } elseif ($operation === 'subtract') {
+                $inventory->decrement('quantity', $adjustment_quantity);
+                if ($material) {
+                    $material->decrement('current_stock', $adjustment_quantity);
+                }
+            }
+        });
+
+        return redirect()->route('procurement.inventory.index')
+            ->with('success', 'Stock adjusted successfully.');
     }
 
     public function inventoryLowStock()

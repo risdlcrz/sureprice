@@ -149,8 +149,8 @@ const palette = [
 
 // Inventory Levels Chart
 const inventoryLevelsCtx = document.getElementById('inventoryLevelsChart').getContext('2d');
-const inventoryLabels = @json($stocks->pluck('material.name'));
-const inventoryData = @json($stocks->pluck('current_stock'));
+const inventoryLabels = JSON.parse('@json($stocks->pluck("material.name"))');
+const inventoryData = JSON.parse('@json($stocks->pluck("current_stock"))');
 new Chart(inventoryLevelsCtx, {
     type: 'bar',
     data: {
@@ -184,7 +184,7 @@ new Chart(inventoryLevelsCtx, {
 
 // Most Used Materials per Project Chart
 const mostUsedCtx = document.getElementById('mostUsedMaterialsChart').getContext('2d');
-const mostUsedRaw = @json($mostUsedByProject);
+const mostUsedRaw = JSON.parse('@json($mostUsedByProject)');
 const projectGroups = {};
 mostUsedRaw.forEach(item => {
     if (!projectGroups[item.reference_number]) projectGroups[item.reference_number] = [];
@@ -232,7 +232,7 @@ new Chart(mostUsedCtx, {
 
 // Monthly Usage Trends Chart
 const monthlyTrendsCtx = document.getElementById('monthlyTrendsChart').getContext('2d');
-const monthlyRaw = @json($monthlyTrends);
+const monthlyRaw = JSON.parse('@json($monthlyTrends)');
 const months = [...new Set(monthlyRaw.map(item => `${item.year}-${String(item.month).padStart(2, '0')}`))];
 const materialNames = [...new Set(monthlyRaw.map(item => item.material ? item.material.name : 'Unknown'))];
 const materialMap = {};

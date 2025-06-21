@@ -73,7 +73,7 @@
 
         const ctx = document.getElementById('priceTrendChart');
         if (ctx) {
-            const priceData = @json($priceData);
+            const priceData = JSON.parse('@json($priceData)');
 
             const datasets = priceData.map((material, index) => {
                 const color = `hsl(${(index * 137.508) % 360}, 50%, 50%)`;

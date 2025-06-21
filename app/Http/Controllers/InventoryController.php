@@ -49,7 +49,7 @@ class InventoryController extends Controller
         }
 
         DB::transaction(function () use ($request) {
-            $inventory = Inventory::create($request->all());
+            $inventory = Inventory::create($request->except('status') + ['status' => $request->input('status', 'active')]);
             
             // Update material's current stock
             $material = Material::find($request->material_id);

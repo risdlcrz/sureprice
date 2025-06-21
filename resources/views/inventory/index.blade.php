@@ -93,22 +93,37 @@
                                 <tr>
                                     <td>{{ $inventory->material->name }}</td>
                                     <td>{{ $inventory->material->category->name }}</td>
-                                    <td>
-                                        <span class="badge {{ $inventory->isLowStock() ? 'badge-warning' : 'badge-success' }}">
-                                            {{ $inventory->quantity }}
-                                        </span>
-                                    </td>
+                                    <td>{{ $inventory->quantity }}</td>
                                     <td>{{ $inventory->unit }}</td>
                                     <td>{{ $inventory->location ?? 'N/A' }}</td>
                                     <td>
-                                        <span class="badge badge-{{ $inventory->status === 'active' ? 'success' : ($inventory->status === 'inactive' ? 'warning' : 'danger') }}">
-                                            {{ ucfirst($inventory->status) }}
-                                        </span>
+                                        @if($inventory->status)
+                                            @php
+                                                $statusClass = '';
+                                                switch ($inventory->status) {
+                                                    case 'active':
+                                                        $statusClass = 'bg-success';
+                                                        break;
+                                                    case 'inactive':
+                                                        $statusClass = 'bg-warning';
+                                                        break;
+                                                    case 'obsolete':
+                                                    case 'danger':
+                                                        $statusClass = 'bg-danger';
+                                                        break;
+                                                }
+                                            @endphp
+                                            <span class="badge {{ $statusClass }}">
+                                                {{ ucfirst($inventory->status) }}
+                                            </span>
+                                        @else
+                                            N/A
+                                        @endif
                                     </td>
                                     <td>{{ $inventory->last_restock_date ? $inventory->last_restock_date->format('M d, Y') : 'N/A' }}</td>
                                     <td>
                                         <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-info" data-toggle="modal" data-target="#adjustStockModal{{ $inventory->id }}">
+                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#adjustStockModal{{ $inventory->id }}">
                                                 <i class="fas fa-balance-scale"></i>
                                             </button>
                                             <a href="{{ route('inventory.edit', $inventory) }}" class="btn btn-sm btn-primary">
@@ -131,7 +146,7 @@
                                                         @csrf
                                                         <div class="modal-header">
                                                             <h5 class="modal-title">Adjust Stock - {{ $inventory->material->name }}</h5>
-                                                            <button type="button" class="close" data-dismiss="modal">
+                                                            <button type="button" class="close" data-bs-dismiss="modal">
                                                                 <span>&times;</span>
                                                             </button>
                                                         </div>
@@ -153,7 +168,7 @@
                                                             </div>
                                                         </div>
                                                         <div class="modal-footer">
-                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                                                             <button type="submit" class="btn btn-primary">Save Changes</button>
                                                         </div>
                                                     </form>

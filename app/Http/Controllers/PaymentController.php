@@ -7,6 +7,7 @@ use App\Models\Contract;
 use App\Models\PurchaseOrder;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -58,7 +59,7 @@ class PaymentController extends Controller
         try {
             DB::beginTransaction();
 
-            $payment->approve(auth()->user());
+            $payment->approve(Auth::user());
 
             // If this is a contract payment, check if all payments are approved
             if ($payment->contract_id) {
@@ -116,14 +117,14 @@ class PaymentController extends Controller
                 'payment_number' => $payment->payment_number,
                 'current_status' => $payment->status,
                 'reference_number' => $referenceNumber,
-                'user_id' => auth()->id()
+                'user_id' => Auth::id()
             ]);
 
             // Update payment status
             $payment->status = 'paid';
             $payment->paid_date = now();
             $payment->reference_number = $referenceNumber;
-            $payment->marked_paid_by = auth()->id();
+            $payment->marked_paid_by = Auth::id();
 
             // Log before saving payment
             Log::info('About to save payment', [
@@ -150,7 +151,7 @@ class PaymentController extends Controller
                     'description' => 'Payment for Contract #' . ($payment->contract ? $payment->contract->contract_number : 'N/A') . ' - ' . 
                                    ($payment->description ?? 'Payment #' . $payment->payment_number),
                     'status' => 'completed',
-                    'created_by' => auth()->id()
+                    'created_by' => Auth::id()
                 ]);
 
                 // Log transaction creation
@@ -247,7 +248,7 @@ class PaymentController extends Controller
      */
     public function dashboard()
     {
-        $client = auth()->user()->party;
+        $client = Auth::user()->party;
         
         // Get client's payments
         $payments = Payment::whereHas('contract', function ($query) use ($client) {
@@ -367,7 +368,7 @@ class PaymentController extends Controller
                 $payment->status = 'paid';
                 $payment->paid_date = now();
                 $payment->reference_number = $payment->admin_reference_number;
-                $payment->marked_paid_by = auth()->id();
+                $payment->marked_paid_by = Auth::id();
                 $payment->save();
 
                 // Create transaction record
@@ -381,7 +382,7 @@ class PaymentController extends Controller
                     'description' => 'Payment for Contract #' . ($payment->contract ? $payment->contract->contract_number : 'N/A') . ' - ' . 
                                    ($payment->description ?? 'Payment #' . $payment->payment_number),
                     'status' => 'completed',
-                    'created_by' => auth()->id()
+                    'created_by' => Auth::id()
                 ]);
 
                 // Check if all contract payments are paid
