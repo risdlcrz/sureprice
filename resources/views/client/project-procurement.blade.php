@@ -38,7 +38,7 @@
             <!-- Project Timeline Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage3.svg') }}" class="card-img-top" alt="Project Timeline">
+                    <img src="{{ asset('resources/images/ppimage3.svg') }}" class="card-img-top" alt="Project Timeline">
                     <div class="card-body">
                         <h5 class="card-title">Project Timeline</h5>
                         <p class="card-text">View and manage project schedules and timelines.</p>

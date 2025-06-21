@@ -11,7 +11,7 @@
             <!-- Create Contract Card -->
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 hover-shadow">
-                    <img src="{{ Vite::asset('resources/Images/ppimage1.jpg') }}" class="card-img-top rounded-top-4" alt="Create Contract" style="object-fit:cover; height:180px;">
+                    <img src="{{ asset('resources/Images/ppimage1.jpg') }}" class="card-img-top rounded-top-4" alt="Create Contract" style="object-fit:cover; height:180px;">
                     <div class="card-body">
                         <h5 class="card-title fw-semibold">Create Contract</h5>
                         <p class="card-text text-muted">Start a new contract and set up initial terms and conditions.</p>
@@ -24,7 +24,7 @@
             <!-- View Contracts Card -->
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 hover-shadow">
-                    <img src="{{ Vite::asset('resources/Images/ppimage2.jpg') }}" class="card-img-top rounded-top-4" alt="View Contracts" style="object-fit:cover; height:180px;">
+                    <img src="{{ asset('resources/Images/ppimage2.jpg') }}" class="card-img-top rounded-top-4" alt="View Contracts" style="object-fit:cover; height:180px;">
                     <div class="card-body">
                         <h5 class="card-title fw-semibold">View Contracts</h5>
                         <p class="card-text text-muted">Access and manage existing contracts, track status and approvals.</p>
@@ -37,7 +37,7 @@
             <!-- Project Timeline Card -->
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 hover-shadow">
-                    <img src="{{ Vite::asset('resources/Images/ppimage3.jpg') }}" class="card-img-top rounded-top-4" alt="Project Timeline" style="object-fit:cover; height:180px;">
+                    <img src="{{ asset('resources/Images/ppimage3.jpg') }}" class="card-img-top rounded-top-4" alt="Project Timeline" style="object-fit:cover; height:180px;">
                     <div class="card-body">
                         <h5 class="card-title fw-semibold">Project Timeline</h5>
                         <p class="card-text text-muted">Visualize project schedules, milestones, and deadlines.</p>
@@ -57,7 +57,7 @@
             <!-- Purchase Requests Card -->
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 hover-shadow">
-                    <img src="{{ Vite::asset('resources/Images/ppimage4.jpg') }}" class="card-img-top rounded-top-4" alt="Purchase Requests" style="object-fit:cover; height:180px;">
+                    <img src="{{ asset('resources/Images/ppimage4.jpg') }}" class="card-img-top rounded-top-4" alt="Purchase Requests" style="object-fit:cover; height:180px;">
                     <div class="card-body">
                         <h5 class="card-title fw-semibold">Purchase Requests</h5>
                         <p class="card-text text-muted">Create and manage purchase requests for materials and supplies.</p>
@@ -71,7 +71,7 @@
             <!-- Purchase Orders Card -->
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 hover-shadow">
-                    <img src="{{ Vite::asset('resources/Images/ppimage5.jpg') }}" class="card-img-top rounded-top-4" alt="Purchase Orders" style="object-fit:cover; height:180px;">
+                    <img src="{{ asset('resources/Images/ppimage5.jpg') }}" class="card-img-top rounded-top-4" alt="Purchase Orders" style="object-fit:cover; height:180px;">
                     <div class="card-body">
                         <h5 class="card-title fw-semibold">Purchase Orders</h5>
                         <p class="card-text text-muted">Create and manage purchase orders from approved purchase requests.</p>
@@ -85,7 +85,7 @@
             <!-- Inquiries Card -->
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 hover-shadow">
-                    <img src="{{ Vite::asset('resources/Images/ppimage7.jpg') }}" class="card-img-top rounded-top-4" alt="Inquiries" style="object-fit:cover; height:180px;">
+                    <img src="{{ asset('resources/Images/ppimage7.jpg') }}" class="card-img-top rounded-top-4" alt="Inquiries" style="object-fit:cover; height:180px;">
                     <div class="card-body">
                         <h5 class="card-title fw-semibold">Inquiries</h5>
                         <p class="card-text text-muted">Submit and track material inquiries and procurement requests.</p>
@@ -99,7 +99,7 @@
             <!-- Quotation Management Card -->
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 hover-shadow mt-4">
-                    <img src="{{ Vite::asset('resources/Images/ppimage8.jpg') }}" class="card-img-top rounded-top-4" alt="Quotation Management" style="object-fit:cover; height:180px;">
+                    <img src="{{ asset('resources/Images/ppimage8.jpg') }}" class="card-img-top rounded-top-4" alt="Quotation Management" style="object-fit:cover; height:180px;">
                     <div class="card-body">
                         <h5 class="card-title fw-semibold">Quotation Management</h5>
                         <p class="card-text text-muted">Create and manage RFQs, compare supplier quotations, and track responses.</p>
@@ -113,7 +113,7 @@
             <!-- Materials Management Card -->
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 hover-shadow mt-4">
-                    <img src="{{ Vite::asset('resources/Images/ppimage9.jpg') }}" class="card-img-top rounded-top-4" alt="Materials Management" style="object-fit:cover; height:180px;">
+                    <img src="{{ asset('resources/Images/ppimage9.jpg') }}" class="card-img-top rounded-top-4" alt="Materials Management" style="object-fit:cover; height:180px;">
                     <div class="card-body">
                         <h5 class="card-title fw-semibold">Materials Management</h5>
                         <p class="card-text text-muted">Manage materials inventory, specifications, and pricing information.</p>
@@ -127,7 +127,7 @@
             <!-- Supplier Management Card -->
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 hover-shadow">
-                    <img src="{{ Vite::asset('resources/Images/ppimage10.jpg') }}" class="card-img-top rounded-top-4" alt="Supplier Management" style="object-fit:cover; height:180px;">
+                    <img src="{{ asset('resources/Images/ppimage10.jpg') }}" class="card-img-top rounded-top-4" alt="Supplier Management" style="object-fit:cover; height:180px;">
                     <div class="card-body">
                         <h5 class="card-title fw-semibold">Supplier Management</h5>
                         <p class="card-text text-muted">Manage supplier information, relationships, performance tracking, and send invitations to new suppliers.</p>

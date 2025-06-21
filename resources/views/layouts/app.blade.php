@@ -23,7 +23,11 @@
     <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css" rel="stylesheet">
     
     <!-- Consolidated Vite assets - load app.js only once -->
-    @vite(['resources/css/header.css', 'resources/css/login.css', 'resources/css/messages.css', 'resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="{{ asset('resources/css/header.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/login.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/messages.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/app.css') }}">
+    <script src="{{ asset('resources/js/app.js') }}"></script>
     
     <!-- Additional Styles -->
     @stack('styles')
@@ -123,7 +127,7 @@
         <!-- Mobile Top Header -->
         <div class="mobile-topbar d-md-none d-flex">
             <div class="d-flex align-items-center gap-2">
-                <img src="{{ Vite::asset('resources/images/gdc_logo.png') }}" alt="Logo" style="height: 40px;">
+                <img src="{{ asset('resources/images/gdc_logo.png') }}" alt="Logo" style="height: 40px;">
                 <strong>GEOCON</strong>
             </div>
             <button class="btn btn-success" onclick="toggleMobileMenu()">
