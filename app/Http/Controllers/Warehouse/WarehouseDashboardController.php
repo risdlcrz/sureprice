@@ -18,7 +18,7 @@ class WarehouseDashboardController extends Controller
         $totalMaterials = Material::count();
         
         // Get low stock materials (less than 10% of minimum stock)
-        $lowStockMaterials = Material::whereRaw('stock < (minimum_stock * 0.1)')
+        $lowStockMaterials = Material::whereRaw('current_stock < (minimum_stock * 0.1)')
             ->with('category')
             ->get();
             
@@ -36,7 +36,7 @@ class WarehouseDashboardController extends Controller
             ->get();
             
         // Get stock value statistics
-        $stockValue = Material::sum(DB::raw('stock * unit_price'));
+        $stockValue = Material::sum(DB::raw('current_stock * base_price'));
         
         // Get monthly stock movements
         $monthlyMovements = StockMovement::select(
@@ -60,17 +60,17 @@ class WarehouseDashboardController extends Controller
     
     public function getStockAlerts()
     {
-        $alerts = Material::whereRaw('stock < minimum_stock')
+        $alerts = Material::whereRaw('current_stock < minimum_stock')
             ->with('category')
             ->get()
             ->map(function ($material) {
                 return [
                     'id' => $material->id,
                     'name' => $material->name,
-                    'current_stock' => $material->stock,
+                    'current_stock' => $material->current_stock,
                     'minimum_stock' => $material->minimum_stock,
                     'category' => $material->category->name,
-                    'status' => $material->stock < ($material->minimum_stock * 0.1) ? 'critical' : 'warning'
+                    'status' => $material->current_stock < ($material->minimum_stock * 0.1) ? 'critical' : 'warning'
                 ];
             });
             

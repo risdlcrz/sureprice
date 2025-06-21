@@ -23,13 +23,13 @@ class WarehouseInventoryController extends Controller
         if ($request->filled('stock_status')) {
             switch ($request->stock_status) {
                 case 'low':
-                    $query->whereColumn('stock', '<', 'minimum_stock');
+                    $query->whereColumn('current_stock', '<', 'minimum_stock');
                     break;
                 case 'out':
-                    $query->where('stock', 0);
+                    $query->where('current_stock', 0);
                     break;
                 case 'normal':
-                    $query->whereColumn('stock', '>=', 'minimum_stock');
+                    $query->whereColumn('current_stock', '>=', 'minimum_stock');
                     break;
             }
         }
@@ -58,8 +58,8 @@ class WarehouseInventoryController extends Controller
 
         DB::transaction(function() use ($request) {
             $material = Material::findOrFail($request->material_id);
-            $oldStock = $material->stock;
-            $material->stock += $request->quantity;
+            $oldStock = $material->current_stock;
+            $material->current_stock += $request->quantity;
             $material->save();
 
             // Record stock movement
@@ -68,7 +68,7 @@ class WarehouseInventoryController extends Controller
                 'type' => 'in',
                 'quantity' => $request->quantity,
                 'previous_stock' => $oldStock,
-                'new_stock' => $material->stock,
+                'new_stock' => $material->current_stock,
                 'notes' => $request->notes,
                 'reference_number' => 'STK-' . strtoupper(uniqid())
             ]);
@@ -89,22 +89,22 @@ class WarehouseInventoryController extends Controller
 
         DB::transaction(function() use ($request) {
             $material = Material::findOrFail($request->material_id);
-            $oldStock = $material->stock;
+            $oldStock = $material->current_stock;
 
             switch ($request->adjustment_type) {
                 case 'add':
-                    $material->stock += $request->quantity;
+                    $material->current_stock += $request->quantity;
                     $type = 'in';
                     break;
                 case 'remove':
-                    if ($request->quantity > $material->stock) {
+                    if ($request->quantity > $material->current_stock) {
                         throw new \Exception('Cannot remove more stock than available');
                     }
-                    $material->stock -= $request->quantity;
+                    $material->current_stock -= $request->quantity;
                     $type = 'out';
                     break;
                 case 'set':
-                    $material->stock = $request->quantity;
+                    $material->current_stock = $request->quantity;
                     $type = $request->quantity > $oldStock ? 'in' : 'out';
                     break;
             }
@@ -117,7 +117,7 @@ class WarehouseInventoryController extends Controller
                 'type' => $type,
                 'quantity' => abs($request->quantity - $oldStock),
                 'previous_stock' => $oldStock,
-                'new_stock' => $material->stock,
+                'new_stock' => $material->current_stock,
                 'notes' => $request->notes,
                 'reference_number' => 'STK-' . strtoupper(uniqid())
             ]);

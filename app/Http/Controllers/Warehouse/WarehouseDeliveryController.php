@@ -75,19 +75,19 @@ class WarehouseDeliveryController extends Controller
                         'material_id' => $item->material_id,
                         'type' => ($delivery->type === 'incoming' ? 'in' : 'out'),
                         'quantity' => $receivedQuantity,
-                        'previous_stock' => $item->material->stock,
+                        'previous_stock' => $item->material->current_stock,
                         'new_stock' => $delivery->type === 'incoming' 
-                            ? $item->material->stock + $receivedQuantity 
-                            : $item->material->stock - $receivedQuantity,
+                            ? $item->material->current_stock + $receivedQuantity 
+                            : $item->material->current_stock - $receivedQuantity,
                         'reference_number' => $delivery->delivery_number,
                         'notes' => "Processed from delivery #" . $delivery->delivery_number
                     ]);
 
                     // Update material stock
                     if ($delivery->type === 'incoming') {
-                        $item->material->increment('stock', $receivedQuantity);
+                        $item->material->increment('current_stock', $receivedQuantity);
                     } else {
-                        $item->material->decrement('stock', $receivedQuantity);
+                        $item->material->decrement('current_stock', $receivedQuantity);
                     }
                 }
             }

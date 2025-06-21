@@ -16,7 +16,7 @@
             <div class="row">
                 <div class="col-md-3">
                     <h6 class="text-muted mb-1">Current Stock</h6>
-                    <h3 class="mb-0">{{ $material->stock }}</h3>
+                    <h3 class="mb-0">{{ $material->current_stock }}</h3>
                 </div>
                 <div class="col-md-3">
                     <h6 class="text-muted mb-1">Minimum Stock</h6>
@@ -29,9 +29,9 @@
                 <div class="col-md-3">
                     <h6 class="text-muted mb-1">Status</h6>
                     <h3 class="mb-0">
-                        @if($material->stock <= 0)
+                        @if($material->current_stock <= 0)
                             <span class="badge bg-danger">Out of Stock</span>
-                        @elseif($material->stock < $material->minimum_stock)
+                        @elseif($material->current_stock < $material->minimum_stock)
                             <span class="badge bg-warning">Low Stock</span>
                         @else
                             <span class="badge bg-success">Normal</span>

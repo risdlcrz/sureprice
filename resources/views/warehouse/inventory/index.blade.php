@@ -77,15 +77,15 @@
                                 <div class="text-sm text-gray-500">{{ $material->code }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">{{ $material->stock }}</div>
+                                <div class="text-sm text-gray-900">{{ $material->current_stock }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm text-gray-500">{{ $material->minimum_stock }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                @if($material->stock == 0)
+                                @if($material->current_stock == 0)
                                     <span class="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">Out of Stock</span>
-                                @elseif($material->stock < $material->minimum_stock)
+                                @elseif($material->current_stock < $material->minimum_stock)
                                     <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Low Stock</span>
                                 @else
                                     <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Normal</span>
