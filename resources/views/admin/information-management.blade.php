@@ -205,8 +205,7 @@
                             @else
                                 <td>{{ $item->company_name }}</td>
                                 <td>
-                                    <span class="badge bg-{{ $item->designation === 'client' ? 'info' : 'primary' }}">
-                                        <i class="fas fa-{{ $item->designation === 'client' ? 'user-tie' : 'truck' }} me-1"></i>
+                                    <span class="role-badge role-{{ strtolower($item->designation) }}">
                                         {{ ucfirst($item->designation) }}
                                     </span>
                                 </td>
@@ -214,13 +213,13 @@
                                 <td>{{ $item->email }}</td>
                                 <td>{{ $item->mobile_number }}</td>
                                 <td>
-                                    <span class="badge bg-{{ $item->status === 'approved' ? 'success' : ($item->status === 'pending' ? 'warning' : 'danger') }}">
+                                    <span class="status-badge status-{{ strtolower($item->status) }}">
                                         {{ ucfirst($item->status) }}
                                     </span>
                                 </td>
                                 <td class="actions">
                                     <div class="d-flex justify-content-end gap-2">
-                                        <a href="{{ route('admin.companies.show', $item->id) }}" 
+                                        <a href="{{ route('admin.companies.show', $item->id) }}"
                                            class="btn btn-sm btn-info" title="View">
                                             <i class="fas fa-eye"></i>
                                         </a>
@@ -250,10 +249,32 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <!-- Existing reject button/modal remains unchanged -->
+
+                                            <!-- Reject Button triggers modal -->
                                             <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $item->id }}" title="Reject">
                                                 <i class="fas fa-times"></i>
                                             </button>
+                                            <!-- Reject Modal -->
+                                            <div class="modal fade" id="rejectModal{{ $item->id }}" tabindex="-1">
+                                                <div class="modal-dialog">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">Reject {{ $item->company_name }}</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <p>Are you sure you want to reject this company?</p>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <form action="{{ route('admin.companies.reject', $item->id) }}" method="POST">
+                                                                @csrf
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                                <button type="submit" class="btn btn-danger">Reject</button>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         @endif
                                     </div>
                                 </td>
@@ -595,6 +616,27 @@
     background-color: #f8f9fa;
 }
 
+.status-badge {
+    padding: 0.25em 0.5em;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+    font-weight: 600;
+}
+
+.status-approved {
+    background-color: #198754;
+    color: white;
+}
+
+.status-pending {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.status-rejected {
+    background-color: #dc3545;
+    color: white;
+}
 
 </style>
 @endpush

@@ -94,6 +94,11 @@ class Contract extends Model
         return $this->belongsTo(Party::class, 'client_id');
     }
 
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
     public function property(): BelongsTo
     {
         return $this->belongsTo(Property::class);

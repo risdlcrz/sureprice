@@ -18,6 +18,7 @@ class InformationManagementController extends Controller
         $type = $request->get('type', 'employee');
         $role = $request->get('role', 'all');
         $search = $request->get('search', '');
+        $roles = [];
 
         if ($type === 'employee') {
             $query = Employee::with('user')
@@ -37,7 +38,7 @@ class InformationManagementController extends Controller
 
             $items = $query->paginate(10);
             $roles = ['procurement', 'warehousing', 'contractor'];
-        } else {
+        } else { // type === 'company'
             $query = Company::with('user')
                 ->when($search, function ($query) use ($search) {
                     return $query->where(function ($q) use ($search) {
@@ -49,9 +50,14 @@ class InformationManagementController extends Controller
                           });
                     });
                 });
+            
+            // The 'role' filter is for employees, so we should only filter companies by their 'supplier_type' if needed
+            if ($request->has('role') && in_array($request->role, ['client', 'supplier'])) {
+                $query->where('supplier_type', $request->role);
+            }
 
             $items = $query->paginate(10);
-            $roles = [];
+            // $roles is empty for companies as it's not applicable
         }
 
         return view('admin.information-management', compact('items', 'type', 'role', 'search', 'roles'));

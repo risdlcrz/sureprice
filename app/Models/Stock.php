@@ -9,7 +9,7 @@ class Stock extends Model
         'warehouse_id',
         'material_id',
         'current_stock',
-        'minimum_stock',
+        'threshold',
     ];
 
     public function warehouse()
