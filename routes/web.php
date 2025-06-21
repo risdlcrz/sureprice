@@ -265,6 +265,9 @@ Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->
     Route::get('/inventory', [ProcurementController::class, 'inventoryDashboard'])->name('inventory.index');
     Route::get('/history', [ProcurementController::class, 'projectHistory'])->name('history');
     Route::get('/analytics', [ProcurementController::class, 'analyticsDashboard'])->name('analytics');
+    Route::get('/analytics/transactions', [AnalyticsController::class, 'transactions'])->name('analytics.transactions');
+    Route::get('/analytics/budget-allocation', [AnalyticsController::class, 'budgetAllocation'])->name('analytics.budget-allocation');
+    Route::get('/analytics/price-analysis', [AnalyticsController::class, 'priceAnalysis'])->name('analytics.price-analysis');
     Route::get('/notifications', [ProcurementController::class, 'notificationHub'])->name('notification');
     Route::get('/inventory/create', [ProcurementController::class, 'inventoryCreate'])->name('inventory.create');
     Route::get('/inventory/{inventory}/edit', [ProcurementController::class, 'inventoryEdit'])->name('inventory.edit');

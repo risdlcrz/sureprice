@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class Project extends Model
 {
@@ -28,6 +30,16 @@ class Project extends Model
     public function contracts()
     {
         return $this->hasMany(Contract::class);
+    }
+
+    public function contract(): HasOne
+    {
+        return $this->hasOne(Contract::class);
+    }
+
+    public function client(): HasOneThrough
+    {
+        return $this->hasOneThrough(Party::class, Contract::class, 'project_id', 'id', 'id', 'client_id');
     }
 
     public function inquiries()

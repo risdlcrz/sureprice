@@ -1,5 +1,15 @@
 @extends('layouts.app')
 
+@push('styles')
+<style>
+    .badge {
+        position: static !important;
+        display: inline-block;
+        margin-left: 10px;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="content">
     <div class="page-header d-flex justify-content-between align-items-center">

@@ -9,7 +9,11 @@ use App\Models\StockMovement;
 use App\Models\Report;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Stock;
+use App\Models\Warehouse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class WarehouseReportController extends Controller
 {
@@ -26,60 +30,84 @@ class WarehouseReportController extends Controller
 
     public function inventory(Request $request)
     {
-        $query = Material::with(['category', 'stockMovements']);
+        $warehouses = Warehouse::all();
+        $selectedWarehouseId = $request->input('warehouse_id', $warehouses->first()->id ?? null);
+
+        $query = Stock::with(['material.category'])
+            ->where('warehouse_id', $selectedWarehouseId);
 
         // Apply filters
         if ($request->filled('category')) {
-            $query->where('category_id', $request->category);
+            $query->whereHas('material', function ($q) use ($request) {
+                $q->where('category_id', $request->category);
+            });
         }
 
         if ($request->filled('stock_status')) {
             switch ($request->stock_status) {
                 case 'low':
-                    $query->whereColumn('current_stock', '<', 'minimum_stock');
+                    $query->where(function ($q) {
+                        $q->where('current_stock', '<', DB::raw('threshold'))
+                          ->orWhere('current_stock', '<', DB::raw('current_stock * 0.2'));
+                    });
                     break;
                 case 'out':
                     $query->where('current_stock', 0);
                     break;
                 case 'normal':
-                    $query->whereColumn('current_stock', '>=', 'minimum_stock');
+                    $query->where(function ($q) {
+                        $q->where('current_stock', '>=', DB::raw('threshold'))
+                          ->orWhere('current_stock', '>=', DB::raw('current_stock * 0.2'));
+                    });
                     break;
             }
         }
 
-        $materials = $query->get();
-        return view('warehouse.reports.inventory-web', compact('materials'));
+        $stocks = $query->get();
+        return view('warehouse.reports.inventory-web', compact('stocks', 'warehouses', 'selectedWarehouseId'));
     }
 
     public function inventoryPdf(Request $request)
     {
-        $query = Material::with(['category', 'stockMovements']);
+        $warehouses = Warehouse::all();
+        $selectedWarehouseId = $request->input('warehouse_id', $warehouses->first()->id ?? null);
+
+        $query = Stock::with(['material.category'])
+            ->where('warehouse_id', $selectedWarehouseId);
 
         // Apply filters
         if ($request->filled('category')) {
-            $query->where('category_id', $request->category);
+            $query->whereHas('material', function ($q) use ($request) {
+                $q->where('category_id', $request->category);
+            });
         }
 
         if ($request->filled('stock_status')) {
             switch ($request->stock_status) {
                 case 'low':
-                    $query->whereColumn('current_stock', '<', 'minimum_stock');
+                    $query->where(function ($q) {
+                        $q->where('current_stock', '<', DB::raw('threshold'))
+                          ->orWhere('current_stock', '<', DB::raw('current_stock * 0.2'));
+                    });
                     break;
                 case 'out':
                     $query->where('current_stock', 0);
                     break;
                 case 'normal':
-                    $query->whereColumn('current_stock', '>=', 'minimum_stock');
+                    $query->where(function ($q) {
+                        $q->where('current_stock', '>=', DB::raw('threshold'))
+                          ->orWhere('current_stock', '>=', DB::raw('current_stock * 0.2'));
+                    });
                     break;
             }
         }
 
-        $materials = $query->get();
-        $pdf = \PDF::loadView('warehouse.reports.inventory-pdf', compact('materials'));
+        $stocks = $query->get();
+        $pdf = Pdf::loadView('warehouse.reports.inventory-pdf', compact('stocks', 'warehouses', 'selectedWarehouseId'));
         // Save report record
         $report = Report::create([
             'type' => 'warehouse_inventory',
-            'generated_by_id' => auth()->id(),
+            'generated_by_id' => Auth::id(),
             'parameters' => $request->all()
         ]);
         return $pdf->download('inventory-report-' . now()->format('Y-m-d') . '.pdf');
@@ -124,10 +152,10 @@ class WarehouseReportController extends Controller
         }
 
         $movements = $query->latest()->get();
-        $pdf = \PDF::loadView('warehouse.reports.movements-pdf', compact('movements'));
+        $pdf = Pdf::loadView('warehouse.reports.movements-pdf', compact('movements'));
         $report = Report::create([
             'type' => 'warehouse_movements',
-            'generated_by_id' => auth()->id(),
+            'generated_by_id' => Auth::id(),
             'parameters' => $request->all()
         ]);
         return $pdf->download('stock-movements-report-' . now()->format('Y-m-d') . '.pdf');
@@ -180,10 +208,10 @@ class WarehouseReportController extends Controller
         }
 
         $deliveries = $query->latest()->get();
-        $pdf = \PDF::loadView('warehouse.reports.deliveries-pdf', compact('deliveries'));
+        $pdf = Pdf::loadView('warehouse.reports.deliveries-pdf', compact('deliveries'));
         $report = Report::create([
             'type' => 'warehouse_deliveries',
-            'generated_by_id' => auth()->id(),
+            'generated_by_id' => Auth::id(),
             'parameters' => $request->all()
         ]);
         return $pdf->download('deliveries-report-' . now()->format('Y-m-d') . '.pdf');
@@ -244,10 +272,10 @@ class WarehouseReportController extends Controller
             })
             ->sortByDesc('total_out');
 
-        $pdf = \PDF::loadView('warehouse.reports.usage-pdf', ['usageStats' => $usageStats]);
+        $pdf = Pdf::loadView('warehouse.reports.usage-pdf', ['usageStats' => $usageStats]);
         $report = Report::create([
             'type' => 'warehouse_usage',
-            'generated_by_id' => auth()->id(),
+            'generated_by_id' => Auth::id(),
             'parameters' => $request->all()
         ]);
         return $pdf->download('material-usage-report-' . now()->format('Y-m-d') . '.pdf');
@@ -255,8 +283,15 @@ class WarehouseReportController extends Controller
 
     public function analytics(Request $request)
     {
-        // Inventory levels (all materials)
-        $materials = \App\Models\Material::with('category')->get();
+        $selectedWarehouseId = $request->input('warehouse_id');
+        
+        $stocksQuery = Stock::with('material.category');
+
+        if ($selectedWarehouseId) {
+            $stocksQuery->where('warehouse_id', $selectedWarehouseId);
+        }
+
+        $stocks = $stocksQuery->get();
 
         // Most used materials per project (by outgoing stock movements)
         $mostUsedByProject = \App\Models\StockMovement::where('type', 'out')
@@ -273,26 +308,52 @@ class WarehouseReportController extends Controller
             ->orderBy('year')->orderBy('month')
             ->get();
 
-        return view('warehouse.reports.analytics', compact('materials', 'mostUsedByProject', 'monthlyTrends'));
+        return view('warehouse.reports.analytics', [
+            'stocks' => $stocks,
+            'mostUsedByProject' => $mostUsedByProject,
+            'monthlyTrends' => $monthlyTrends,
+            'warehouses' => Warehouse::all(),
+            'selectedWarehouseId' => $selectedWarehouseId
+        ]);
     }
 
     public function analyticsPdf(Request $request)
     {
-        // Use the same data as the analytics page
-        $materials = \App\Models\Material::with('category')->get();
+        $selectedWarehouseId = $request->input('warehouse_id');
+        
+        $stocksQuery = Stock::with('material.category');
+
+        if ($selectedWarehouseId) {
+            $stocksQuery->where('warehouse_id', $selectedWarehouseId);
+        }
+
+        $stocks = $stocksQuery->get();
+
+        // Most used materials per project (by outgoing stock movements)
         $mostUsedByProject = \App\Models\StockMovement::where('type', 'out')
             ->with(['material', 'material.category'])
             ->selectRaw('material_id, reference_number, SUM(quantity) as total_used')
             ->groupBy('material_id', 'reference_number')
             ->orderByDesc('total_used')
             ->get();
+
+        // Monthly usage trends (all materials)
         $monthlyTrends = \App\Models\StockMovement::where('type', 'out')
             ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, material_id, SUM(quantity) as total_used')
             ->groupBy('year', 'month', 'material_id')
             ->orderBy('year')->orderBy('month')
             ->get();
 
-        $pdf = \PDF::loadView('warehouse.reports.analytics-pdf', compact('materials', 'mostUsedByProject', 'monthlyTrends'));
+        $pdf = Pdf::loadView('warehouse.reports.analytics-pdf', [
+            'stocks' => $stocks,
+            'mostUsedByProject' => $mostUsedByProject,
+            'monthlyTrends' => $monthlyTrends
+        ]);
+        $report = Report::create([
+            'type' => 'warehouse_analytics',
+            'generated_by_id' => Auth::id(),
+            'parameters' => $request->all()
+        ]);
         return $pdf->download('warehouse-analytics-' . now()->format('Y-m-d') . '.pdf');
     }
 
@@ -308,6 +369,8 @@ class WarehouseReportController extends Controller
                 return $this->deliveries(new Request($report->parameters));
             case 'warehouse_usage':
                 return $this->usage(new Request($report->parameters));
+            case 'warehouse_analytics':
+                return $this->analytics(new Request($report->parameters));
             default:
                 abort(404);
         }

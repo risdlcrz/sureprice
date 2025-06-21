@@ -11,7 +11,7 @@
     <div class="row">
         <!-- Active Purchase Orders Card -->
         <div class="col-md-6 col-lg-3 mb-4">
-            <a href="{{ route('admin.transactions') }}" class="text-decoration-none">
+            <a href="{{ route('procurement.analytics.transactions') }}" class="text-decoration-none">
                 <div class="card h-100">
                     <img src="{{ asset('images/aimage1.svg') }}" class="card-img-top" alt="Purchase Orders">
                     <div class="card-body">
@@ -24,7 +24,7 @@
 
         <!-- Budget Allocation Card -->
         <div class="col-md-6 col-lg-3 mb-4">
-            <a href="{{ route('admin.budget-allocation') }}" class="text-decoration-none">
+            <a href="{{ route('procurement.analytics.budget-allocation') }}" class="text-decoration-none">
                 <div class="card h-100">
                     <img src="{{ asset('images/aimage2.svg') }}" class="card-img-top" alt="Budget">
                     <div class="card-body">
@@ -37,7 +37,7 @@
 
         <!-- Supplier Rankings Card -->
         <div class="col-md-6 col-lg-3 mb-4">
-            <a href="{{ route('admin.supplier-rankings') }}" class="text-decoration-none">
+            <a href="{{ route('procurement.suppliers.rankings') }}" class="text-decoration-none">
                 <div class="card h-100">
                     <img src="{{ asset('images/aimage3.svg') }}" class="card-img-top" alt="Suppliers">
                     <div class="card-body">
@@ -50,7 +50,7 @@
 
         <!-- Price Trend Analysis Card -->
         <div class="col-md-6 col-lg-3 mb-4">
-            <a href="{{ route('admin.price-analysis') }}" class="text-decoration-none">
+            <a href="{{ route('procurement.analytics.price-analysis') }}" class="text-decoration-none">
                 <div class="card h-100">
                     <img src="{{ asset('images/aimage4.svg') }}" class="card-img-top" alt="Price Trend">
                     <div class="card-body">

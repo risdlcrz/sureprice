@@ -119,13 +119,16 @@
                         @forelse($recentPurchaseRequests as $request)
                         <a href="{{ route('purchase-requests.show', $request->id) }}" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">{{ $request->request_number }}</h6>
-                                <small>{{ $request->created_at->diffForHumans() }}</small>
+                                <div>
+                                    <h6 class="mb-1">{{ $request->request_number }}</h6>
+                                    <p class="mb-0">Status:</p>
+                                    <p class="mb-0">Total: ₱{{ number_format($request->total_amount, 2) }}</p>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-{{ $request->status_color }}">{{ ucfirst($request->status) }}</span>
+                                    <div class="text-muted"><small>{{ $request->created_at->diffForHumans() }}</small></div>
+                                </div>
                             </div>
-                            <p class="mb-1">
-                                Status: <span class="badge bg-{{ $request->status_color }}">{{ ucfirst($request->status) }}</span><br>
-                                Total: ₱{{ number_format($request->total_amount, 2) }}
-                            </p>
                         </a>
                         @empty
                         <div class="list-group-item">
@@ -148,13 +151,16 @@
                         @forelse($recentPurchaseOrders as $order)
                         <a href="{{ route('purchase-orders.show', $order->id) }}" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">{{ $order->po_number }}</h6>
-                                <small>{{ $order->created_at->diffForHumans() }}</small>
+                                <div>
+                                    <h6 class="mb-1">{{ $order->po_number }}</h6>
+                                    <p class="mb-0">Supplier: {{ $order->supplier->name }}</p>
+                                    <p class="mb-0">Status:</p>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-{{ $order->status_color }}">{{ ucfirst($order->status) }}</span>
+                                    <div class="text-muted"><small>{{ $order->created_at->diffForHumans() }}</small></div>
+                                </div>
                             </div>
-                            <p class="mb-1">
-                                Supplier: {{ $order->supplier->name }}<br>
-                                Status: <span class="badge bg-{{ $order->status_color }}">{{ ucfirst($order->status) }}</span>
-                            </p>
                         </a>
                         @empty
                         <div class="list-group-item">

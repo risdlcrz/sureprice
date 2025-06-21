@@ -15,7 +15,9 @@ class WarehouseDeliveryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Delivery::with(['items', 'items.material', 'warehouse']);
+        $query = Delivery::with(['warehouse'])
+            ->withCount('items')
+            ->latest();
 
         // Apply filters
         if ($request->filled('type')) {
@@ -34,7 +36,7 @@ class WarehouseDeliveryController extends Controller
             ]);
         }
 
-        $deliveries = $query->latest()->paginate(10);
+        $deliveries = $query->paginate(15);
 
         return view('warehouse.deliveries.index', compact('deliveries'));
     }

@@ -1,5 +1,13 @@
 @extends('layouts.app')
 
+@push('styles')
+<style>
+    .table .badge {
+        position: static !important;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid py-4">
     <div class="row">
@@ -79,6 +87,7 @@
                                     <th>Unit</th>
                                     <th>Base Price</th>
                                     <th>SRP</th>
+                                    <th>Status</th>
                                     <th>Suppliers</th>
                                     <th>Warranty</th>
                                     <th>Actions</th>
@@ -106,11 +115,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        @if(($material->category->name ?? '') === 'Other' && !empty($material->custom_category))
-                                            {{ $material->custom_category }}
-                                        @else
-                                            {{ $material->category->name ?? '' }}
-                                        @endif
+                                        {{ $material->category->name ?? 'N/A' }}
                                     </td>
                                     <td>{{ $material->unit }}</td>
                                     <td>₱{{ number_format($material->base_price, 2) }}</td>
@@ -124,6 +129,20 @@
                                             @endphp
                                             <small class="ms-2 text-muted">({{ number_format($markup, 1) }}%)</small>
                                         </div>
+                                    </td>
+                                    <td>
+                                        @php
+                                            $status = 'In Stock';
+                                            $color = 'success';
+                                            if ($material->current_stock <= 0) {
+                                                $status = 'Out of Stock';
+                                                $color = 'danger';
+                                            } elseif ($material->current_stock < $material->minimum_stock) {
+                                                $status = 'Low Stock';
+                                                $color = 'warning';
+                                            }
+                                        @endphp
+                                        <span class="badge bg-{{ $color }}">{{ $status }}</span>
                                     </td>
                                     <td>
                                         <button type="button" 

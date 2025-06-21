@@ -115,6 +115,55 @@ class ProcurementSeeder extends Seeder
             }
         }
 
-        $this->command->info('Procurement cycle (PR, PO, Delivery) seeded successfully!');
+        foreach ($materials as $material) {
+            $basePrice = $material->srp_price ?? rand(100, 1000);
+
+            // Create 5-10 historical purchase orders for each material over the last 6 months
+            for ($i = 0; $i < rand(5, 10); $i++) {
+                $date = Carbon::now()->subMonths(rand(0, 6))->subDays(rand(0, 30));
+                $supplier = $suppliers->random();
+                $prTotal = 0;
+
+                // Create a dummy Purchase Request
+                $pr = PurchaseRequest::create([
+                    'request_number' => 'PR-HIST-' . time() . '-' . $material->id . '-' . $i,
+                    'requested_by' => $employees->random()->user_id,
+                    'status' => 'approved',
+                    'notes' => 'Historical purchase request for ' . $material->name,
+                ]);
+
+                // Create a Purchase Order
+                $po = PurchaseOrder::create([
+                    'po_number' => 'PO-HIST-' . time() . '-' . $pr->id,
+                    'purchase_request_id' => $pr->id,
+                    'supplier_id' => $supplier->id,
+                    'total_amount' => 0, // Will be updated
+                    'status' => 'completed',
+                    'delivery_date' => $date->copy()->addDays(14),
+                    'payment_terms' => 'Net 30',
+                    'shipping_terms' => 'FOB Destination',
+                    'created_at' => $date,
+                    'updated_at' => $date,
+                ]);
+
+                // Fluctuate price slightly (+/- 15%)
+                $price = $basePrice * (1 + (rand(-15, 15) / 100));
+                $quantity = rand(10, 100);
+                $total = $quantity * $price;
+
+                PurchaseOrderItem::create([
+                    'purchase_order_id' => $po->id,
+                    'material_id' => $material->id,
+                    'quantity' => $quantity,
+                    'unit_price' => $price,
+                    'total_price' => $total,
+                ]);
+
+                $po->total_amount = $total;
+                $po->save();
+            }
+        }
+
+        $this->command->info('Historical procurement data seeded successfully!');
     }
 } 

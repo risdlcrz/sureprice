@@ -15,8 +15,8 @@ class WarehouseInventoryController extends Controller
 {
     public function index(Request $request)
     {
-        // Only allow 'Main Warehouse' and '2nd Warehouse' as options
-        $warehouses = \App\Models\Warehouse::whereIn('name', ['Main Warehouse', '2nd Warehouse'])->get();
+        // Get all available warehouses
+        $warehouses = \App\Models\Warehouse::all();
         if ($warehouses->isEmpty()) {
             abort(404, 'No warehouses found.');
         }

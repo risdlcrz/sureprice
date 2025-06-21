@@ -81,7 +81,13 @@
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
                                             <div class="fw-semibold">Delivery #{{ $delivery->delivery_number }}</div>
-                                            <div class="text-muted small">Expected: {{ $delivery->expected_date->format('M d, Y') }}</div>
+                                            <div class="text-muted small">Expected: 
+                                                @if($delivery->delivery_date)
+                                                    {{ $delivery->delivery_date->format('M d, Y') }}
+                                                @else
+                                                    Not set
+                                                @endif
+                                            </div>
                                         </div>
                                         <span class="badge bg-warning text-dark">{{ ucfirst($delivery->status) }}</span>
                                     </div>
@@ -108,8 +114,14 @@
                                 <div class="border rounded p-3">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
-                                            <div class="fw-semibold">{{ $movement->material->name }}</div>
-                                            <div class="text-muted small">{{ $movement->created_at->format('M d, Y H:i') }}</div>
+                                            <div class="fw-semibold">{{ $movement->material->name ?? 'Unknown Material' }}</div>
+                                            <div class="text-muted small">
+                                                @if($movement->created_at)
+                                                    {{ $movement->created_at->format('M d, Y H:i') }}
+                                                @else
+                                                    Date not available
+                                                @endif
+                                            </div>
                                         </div>
                                         <span class="badge {{ $movement->type === 'in' ? 'bg-success' : 'bg-danger' }}">{{ $movement->type === 'in' ? 'In' : 'Out' }}</span>
                                     </div>
@@ -137,7 +149,7 @@
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
                                             <div class="fw-semibold">{{ $material->name }}</div>
-                                            <div class="text-muted small">{{ $material->category->name }}</div>
+                                            <div class="text-muted small">{{ $material->category->name ?? 'No Category' }}</div>
                                         </div>
                                         <span class="badge bg-danger">Critical</span>
                                     </div>

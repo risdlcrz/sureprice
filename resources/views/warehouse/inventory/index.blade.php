@@ -1,5 +1,15 @@
 @extends('layouts.app')
 
+@push('styles')
+<style>
+    .table .badge {
+        position: static;
+        display: inline-block;
+        transform: none;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container py-5">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
@@ -83,42 +93,40 @@
                 <tbody>
                     @forelse($paginatedStocks as $stock)
                         <tr>
-                            <td class="fw-semibold">{{ $stock->material->name }}</td>
+                            <td class="fw-semibold">{{ $stock->material->name ?? 'N/A' }}</td>
                             <td>{{ $stock->material->category->name ?? '-' }}</td>
-                            <td><span class="badge bg-secondary">{{ $stock->material->code }}</span></td>
+                            <td>{{ $stock->material->code ?? '-' }}</td>
                             <td>{{ $stock->current_stock }}</td>
                             <td>
                                 @if($stock->threshold > 0)
                                     {{ $stock->threshold }}
                                 @else
-                                    {{ floor($stock->current_stock * 0.2) }} <span class="text-muted">(20%)</span>
+                                    {{ floor($stock->current_stock * 0.2) }} <span class="text-muted">(auto)</span>
                                 @endif
                             </td>
                             <td>
-                                @if(isset($stock))
-                                    @php
-                                        $currentStock = $stock->current_stock ?? 0;
-                                        $threshold = $stock->threshold > 0 ? $stock->threshold : floor($currentStock * 0.2);
-                                    @endphp
-                                    @if($currentStock == 0)
-                                        <span class="badge rounded-pill bg-danger">Out of Stock</span>
-                                    @elseif($currentStock < $threshold)
-                                        <span class="badge rounded-pill bg-warning text-dark">Low Stock</span>
-                                    @else
-                                        <span class="badge rounded-pill bg-success">Normal</span>
-                                    @endif
+                                @php
+                                    $currentStock = $stock->current_stock ?? 0;
+                                    $threshold = $stock->threshold > 0 ? $stock->threshold : floor($currentStock * 0.2);
+                                @endphp
+                                @if($currentStock <= 0)
+                                    <span class="badge rounded-pill bg-danger">Out of Stock</span>
+                                @elseif($currentStock < $threshold)
+                                    <span class="badge rounded-pill bg-warning text-dark">Low Stock</span>
+                                @else
+                                    <span class="badge rounded-pill bg-success">Normal</span>
                                 @endif
                             </td>
-                            <td>{{ $stock->warehouse->name ?? '' }}</td>
+                            <td>{{ $stock->warehouse->name ?? '-' }}</td>
                             <td>
-                                <a href="{{ route('warehouse.inventory.history', ['material' => $stock->material_id, 'warehouse_id' => $stock->warehouse_id]) }}" class="btn btn-sm btn-outline-info">
+                                <a href="{{ route('warehouse.inventory.history', ['material' => $stock->material->id, 'warehouse_id' => $stock->warehouse_id]) }}" class="btn btn-sm btn-outline-info">
                                     <i class="fas fa-history"></i> View History
                                 </a>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center text-muted">No materials found</td>
+                            <td colspan="8" class="text-center py-4 text-muted">No materials found in this warehouse.</td>
                         </tr>
                     @endforelse
                 </tbody>

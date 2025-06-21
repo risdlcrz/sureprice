@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Models\QuotationAttachment;
 use App\Models\QuotationResponseAttachment;
@@ -14,7 +15,7 @@ class MaterialController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Material::with(['category', 'suppliers']);
+        $query = Material::with(['category', 'suppliers', 'scopeTypes']);
 
         // Search
         if ($request->filled('search')) {
@@ -62,7 +63,8 @@ class MaterialController extends Controller
     {
         $suppliers = \App\Models\Supplier::all();
         $scopeTypes = \App\Models\ScopeType::orderBy('name')->get();
-        return view('admin.materials.form', compact('suppliers', 'scopeTypes'));
+        $categories = \App\Models\Category::orderBy('name')->get();
+        return view('admin.materials.form', compact('suppliers', 'scopeTypes', 'categories'));
     }
 
     public function store(Request $request)
@@ -70,7 +72,7 @@ class MaterialController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'category' => 'required|string',
+            'category_id' => 'required|exists:categories,id',
             'unit' => 'required|string',
             'base_price' => 'required|numeric|min:0',
             'srp_price' => 'required|numeric|min:0',
@@ -90,16 +92,10 @@ class MaterialController extends Controller
         try {
             DB::beginTransaction();
 
-            // Get or create the category
-            $category = \App\Models\Category::firstOrCreate(
-                ['slug' => $validated['category']],
-                ['name' => ucfirst($validated['category'])]
-            );
-
             $material = Material::create([
                 'name' => $validated['name'],
                 'description' => $validated['description'],
-                'category_id' => $category->id,
+                'category_id' => $validated['category_id'],
                 'unit' => $validated['unit'],
                 'base_price' => $validated['base_price'],
                 'srp_price' => $validated['srp_price'],
@@ -136,7 +132,7 @@ class MaterialController extends Controller
                 ->with('success', 'Material created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error creating material: ' . $e->getMessage());
+            Log::error('Error creating material: ' . $e->getMessage());
             return back()->with('error', 'Error creating material: ' . $e->getMessage())->withInput();
         }
     }
@@ -145,7 +141,8 @@ class MaterialController extends Controller
     {
         $suppliers = \App\Models\Supplier::all();
         $scopeTypes = \App\Models\ScopeType::orderBy('name')->get();
-        return view('admin.materials.form', compact('material', 'suppliers', 'scopeTypes'));
+        $categories = \App\Models\Category::orderBy('name')->get();
+        return view('admin.materials.form', compact('material', 'suppliers', 'scopeTypes', 'categories'));
     }
 
     public function update(Request $request, Material $material)
@@ -154,7 +151,7 @@ class MaterialController extends Controller
             'name' => 'required|string|max:255',
             'code' => 'sometimes|string|max:50|unique:materials,code,' . $material->id,
             'description' => 'nullable|string',
-            'category' => 'required|string',
+            'category_id' => 'required|exists:categories,id',
             'unit' => 'required|string',
             'base_price' => 'required|numeric|min:0',
             'srp_price' => 'required|numeric|min:0',
@@ -174,16 +171,10 @@ class MaterialController extends Controller
         try {
             DB::beginTransaction();
 
-            // Get or create the category
-            $category = \App\Models\Category::firstOrCreate(
-                ['slug' => $validated['category']],
-                ['name' => ucfirst($validated['category'])]
-            );
-
             $material->update([
                 'name' => $validated['name'],
                 'description' => $validated['description'],
-                'category_id' => $category->id,
+                'category_id' => $validated['category_id'],
                 'unit' => $validated['unit'],
                 'base_price' => $validated['base_price'],
                 'srp_price' => $validated['srp_price'],
@@ -216,7 +207,7 @@ class MaterialController extends Controller
                 ->with('success', 'Material updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error updating material: ' . $e->getMessage());
+            Log::error('Error updating material: ' . $e->getMessage());
             return back()->with('error', 'Failed to update material: ' . $e->getMessage())->withInput();
         }
     }
@@ -251,7 +242,7 @@ class MaterialController extends Controller
                 ->with('success', 'Material deleted successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error deleting material: ' . $e->getMessage());
+            Log::error('Error deleting material: ' . $e->getMessage());
             
             if (request()->ajax()) {
                 return response()->json([
@@ -285,7 +276,7 @@ class MaterialController extends Controller
 
             return response()->json($materials);
         } catch (\Exception $e) {
-            \Log::error('Material search error: ' . $e->getMessage());
+            Log::error('Material search error: ' . $e->getMessage());
             return response()->json(['error' => 'An error occurred while searching materials'], 500);
         }
     }
@@ -345,7 +336,7 @@ class MaterialController extends Controller
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error updating SRP prices: ' . $e->getMessage());
+            Log::error('Error updating SRP prices: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update SRP prices: ' . $e->getMessage()
@@ -409,7 +400,7 @@ class MaterialController extends Controller
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:materials,code',
             'description' => 'nullable|string',
-            'category' => 'required|string',
+            'category_id' => 'required|exists:categories,id',
             'unit' => 'required|string',
             'base_price' => 'required|numeric|min:0',
             'srp_price' => 'required|numeric|min:0',
@@ -422,18 +413,12 @@ class MaterialController extends Controller
         try {
             DB::beginTransaction();
 
-            // Get or create the category
-            $category = \App\Models\Category::firstOrCreate(
-                ['slug' => $validated['category']],
-                ['name' => ucfirst($validated['category'])]
-            );
-
             // Create a temporary material record
             $material = Material::create([
                 'name' => $validated['name'],
                 'code' => $validated['code'],
                 'description' => $validated['description'],
-                'category_id' => $category->id,
+                'category_id' => $validated['category_id'],
                 'unit' => $validated['unit'],
                 'base_price' => $validated['base_price'],
                 'srp_price' => $validated['srp_price'],
@@ -470,7 +455,7 @@ class MaterialController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error creating material: ' . $e->getMessage());
+            Log::error('Error creating material: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create material: ' . $e->getMessage()

@@ -60,9 +60,26 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="fw-bold mb-0" style="letter-spacing: -1px;">Warehouse Analytics & Trends</h1>
-        <a href="{{ route('warehouse.reports.analytics.pdf') }}" class="btn btn-outline-primary d-none d-lg-inline-block">
+        <a href="{{ route('warehouse.reports.analytics.pdf', request()->query()) }}" class="btn btn-outline-primary d-none d-lg-inline-block">
             <i class="fas fa-file-pdf me-1"></i> Download PDF
         </a>
+    </div>
+
+    <!-- Warehouse Selector -->
+    <div class="glass-card p-3 mb-4">
+        <form method="GET" action="{{ route('warehouse.reports.analytics') }}" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label for="warehouse_id" class="form-label fw-semibold">Select Warehouse</label>
+                <select name="warehouse_id" id="warehouse_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Warehouses</option>
+                    @foreach($warehouses as $warehouse)
+                        <option value="{{ $warehouse->id }}" {{ $selectedWarehouseId == $warehouse->id ? 'selected' : '' }}>
+                            {{ $warehouse->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </form>
     </div>
 
     <!-- Summary Stats -->
@@ -70,13 +87,13 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="col-12 col-md-4">
             <div class="glass-card summary-stat">
                 <div class="stat-label">Total Materials</div>
-                <div class="stat-value">{{ $materials->count() }}</div>
+                <div class="stat-value">{{ $stocks->pluck('material')->unique()->count() }}</div>
             </div>
         </div>
         <div class="col-12 col-md-4">
             <div class="glass-card summary-stat">
                 <div class="stat-label">Total Stock</div>
-                <div class="stat-value">{{ number_format($materials->sum('current_stock'), 0) }}</div>
+                <div class="stat-value">{{ number_format($stocks->sum('current_stock'), 0) }}</div>
             </div>
         </div>
         <div class="col-12 col-md-4">
@@ -117,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 
     <!-- Floating PDF Download Button -->
-    <a href="{{ route('warehouse.reports.analytics.pdf') }}" class="fab-download d-lg-none" title="Download PDF">
+    <a href="{{ route('warehouse.reports.analytics.pdf', request()->query()) }}" class="fab-download d-lg-none" title="Download PDF">
         <i class="fas fa-file-pdf"></i>
     </a>
 </div>
@@ -132,8 +149,8 @@ const palette = [
 
 // Inventory Levels Chart
 const inventoryLevelsCtx = document.getElementById('inventoryLevelsChart').getContext('2d');
-const inventoryLabels = @json($materials->pluck('name'));
-const inventoryData = @json($materials->pluck('current_stock'));
+const inventoryLabels = @json($stocks->pluck('material.name'));
+const inventoryData = @json($stocks->pluck('current_stock'));
 new Chart(inventoryLevelsCtx, {
     type: 'bar',
     data: {

@@ -1,5 +1,13 @@
 @extends('layouts.app')
 
+@push('styles')
+<style>
+    .table .badge {
+        position: static !important;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -64,18 +72,27 @@
                                 {{ ucfirst($delivery->type) }}
                             </span>
                         </td>
-                        <td>{{ $delivery->expected_date->format('M d, Y') }}</td>
+                        <td>{{ $delivery->delivery_date ? $delivery->delivery_date->format('M d, Y') : 'N/A' }}</td>
                         <td>
-                            <span class="badge bg-{{ $delivery->status_color }}">
-                                {{ ucfirst($delivery->status) }}
-                            </span>
+                            @php
+                                $statusColors = [
+                                    'pending' => 'secondary',
+                                    'processing' => 'primary',
+                                    'shipped' => 'info',
+                                    'completed' => 'success',
+                                    'cancelled' => 'danger',
+                                    'received' => 'success',
+                                ];
+                                $color = $statusColors[$delivery->status] ?? 'dark';
+                            @endphp
+                            <span class="badge bg-{{ $color }}">{{ ucfirst($delivery->status) }}</span>
                         </td>
-                        <td>{{ $delivery->items_count }} items</td>
-                        <td>{{ $delivery->warehouse->name ?? '' }}</td>
+                        <td>{{ $delivery->items_count }} {{ Str::plural('item', $delivery->items_count) }}</td>
+                        <td>{{ $delivery->warehouse->name ?? 'N/A' }}</td>
                         <td>
                             <a href="{{ route('warehouse.deliveries.show', $delivery) }}" 
-                               class="btn btn-sm btn-primary">
-                                {{ $delivery->status === 'pending' ? 'Process' : 'View' }}
+                               class="btn btn-sm btn-{{ in_array($delivery->status, ['pending', 'processing']) ? 'primary' : 'secondary' }}">
+                                {{ in_array($delivery->status, ['pending', 'processing']) ? 'Process' : 'View' }}
                             </a>
                         </td>
                     </tr>

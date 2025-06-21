@@ -56,7 +56,7 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="category">Category</label>
-                                        <select class="form-control @error('category') is-invalid @enderror" 
+                                        <select class="form-control @error('category_id') is-invalid @enderror" 
                                             id="category" name="category_id" required>
                                             <option value="">Select Category</option>
                                             @foreach($categories as $category)

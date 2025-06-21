@@ -52,6 +52,11 @@ class Delivery extends Model
         return $this->hasMany(DeliveryItem::class);
     }
 
+    public function warehouse(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
     public function supplierEvaluation(): BelongsTo
     {
         return $this->belongsTo(SupplierEvaluation::class);
