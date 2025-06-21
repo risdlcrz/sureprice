@@ -72,7 +72,8 @@
                             <div class="col-12">
                                 <h4>Request Items</h4>
                                 <div class="mb-2">
-                                    <input type="text" id="materialTableSearch" class="form-control" placeholder="Search material in table...">
+                                    <input type="text" id="materialMasterSearch" class="form-control" placeholder="Search and add material from master list...">
+                                    <div id="materialMasterSearchResults" class="list-group position-absolute w-100" style="z-index: 2000;"></div>
                                 </div>
                                 <div class="table-responsive">
                                     <table class="table table-bordered" id="itemsTable">
@@ -91,12 +92,32 @@
                                             </tr>
                                         </thead>
                                         <tbody id="items-container">
+                                            @php
+                                                $prefillItems = [];
+                                                if(request('material_id')) {
+                                                    $material = \App\Models\Material::find(request('material_id'));
+                                                    if ($material) {
+                                                        $prefillItems[] = [
+                                                            'material_id' => $material->id,
+                                                            'material_name' => $material->name,
+                                                            'description' => $material->description,
+                                                            'quantity' => 1,
+                                                            'unit' => $material->unit,
+                                                            'estimated_unit_price' => $material->srp_price ?? $material->base_price,
+                                                            'total_amount' => $material->srp_price ?? $material->base_price,
+                                                            'preferred_brand' => '',
+                                                            'preferred_supplier_id' => '',
+                                                            'notes' => '',
+                                                        ];
+                                                    }
+                                                }
+                                            @endphp
                                             @if(isset($prefillItems) && count($prefillItems) > 0)
                                                 @foreach($prefillItems as $index => $item)
                                                     <tr class="item-row">
                                                         <td>
                                                             <div class="material-search-container position-relative">
-                                                                <input type="text" class="form-control material-search-input" placeholder="Search material..." value="{{ $item['material_name'] ?? (App\Models\Material::find($item['material_id'])->name ?? '') }}" required>
+                                                                <input type="text" class="form-control material-search-input" placeholder="Search material..." value="{{ $item['material_name'] ?? '' }}" required>
                                                                 <input type="hidden" class="material-id-input" name="items[{{ $index }}][material_id]" value="{{ $item['material_id'] }}" required>
                                                                 <div class="material-search-results list-group position-absolute w-100" style="z-index: 1000;"></div>
                                                                 <div class="invalid-feedback">Please select a material.</div>
@@ -123,12 +144,16 @@
                                                         <td>
                                                             <select name="items[{{ $index }}][preferred_supplier_id]" class="form-control supplier-select" required>
                                                                 <option value="">Select Supplier</option>
+                                                                @foreach($material->suppliers ?? [] as $supplier)
+                                                                    <option value="{{ $supplier->id }}">{{ $supplier->company_name ?? $supplier->name }}</option>
+                                                                @endforeach
                                                             </select>
                                                         </td>
                                                         <td>
                                                             <input type="text" name="items[{{ $index }}][notes]" class="form-control" value="{{ $item['notes'] }}">
                                                         </td>
                                                         <td>
+                                                            <button type="button" class="btn btn-warning btn-sm replace-material">Replace</button>
                                                             <button type="button" class="btn btn-danger btn-sm remove-row">
                                                                 <i class="fas fa-trash"></i>
                                                             </button>
@@ -208,6 +233,23 @@
     </div>
 </div>
 
+<!-- Material Search Modal -->
+<div class="modal fade" id="materialSearchModal" tabindex="-1" aria-labelledby="materialSearchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="materialSearchModalLabel">Select Material</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="modalMaterialSearchInput" class="form-control mb-2" placeholder="Search materials...">
+        <div id="modalMaterialSearchResults" class="list-group" style="max-height: 300px; overflow-y: auto;"></div>
+        <div id="modalMaterialSearchWarning" class="alert alert-warning mt-2 d-none"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 @push('scripts')
 <script>
 const baseUrl = '{{ url("/") }}';
@@ -215,6 +257,87 @@ const baseUrl = '{{ url("/") }}';
 // Ensure these are globally available or passed to functions as needed
 window.suppliers = @json($suppliers ?? []);
 window.materials = @json($materials ?? []);
+
+let materialModalMode = 'add'; // 'add' or 'replace'
+let materialModalTargetRow = null;
+
+function isMaterialInTable(materialId) {
+    return Array.from(document.querySelectorAll('.material-id-input')).some(input => input.value == materialId);
+}
+
+function addMaterialRowFromMaster(material) {
+    if (isMaterialInTable(material.id)) {
+        showMaterialModalWarning('Material already in the table!');
+        return;
+    }
+    let rowCount = document.querySelectorAll('.item-row').length;
+    const templateRow = document.querySelector('.item-row');
+    const newRow = templateRow.cloneNode(true);
+    newRow.querySelectorAll('input, select').forEach(input => {
+        input.name = input.name.replace(/\[\d+\]/, `[${rowCount}]`);
+        input.value = '';
+        input.classList.remove('is-invalid');
+    });
+    newRow.querySelector('.material-search-input').value = `${material.name} (${material.code})`;
+    newRow.querySelector('.material-id-input').value = material.id;
+    newRow.querySelector('.unit').value = material.unit;
+    newRow.querySelector('.unit-price').value = material.srp_price || material.base_price;
+    newRow.querySelector('.total-amount').value = '';
+    newRow.querySelector('.supplier-select').innerHTML = '<option value="">Select Supplier</option>';
+    if (material.suppliers && material.suppliers.length > 0) {
+        material.suppliers.forEach(supplier => {
+            const option = document.createElement('option');
+            option.value = supplier.id;
+            option.textContent = supplier.name;
+            newRow.querySelector('.supplier-select').appendChild(option);
+        });
+    }
+    document.getElementById('items-container').appendChild(newRow);
+    setupMaterialSearch(newRow);
+    setupRowCalculations(newRow);
+}
+
+function replaceMaterialInRow(row, material) {
+    if (isMaterialInTable(material.id)) {
+        showMaterialModalWarning('Material already in the table!');
+        return;
+    }
+    row.querySelector('.material-search-input').value = `${material.name} (${material.code})`;
+    row.querySelector('.material-id-input').value = material.id;
+    row.querySelector('.unit').value = material.unit;
+    row.querySelector('.unit-price').value = material.srp_price || material.base_price;
+    row.querySelector('.supplier-select').innerHTML = '<option value="">Select Supplier</option>';
+    if (material.suppliers && material.suppliers.length > 0) {
+        material.suppliers.forEach(supplier => {
+            const option = document.createElement('option');
+            option.value = supplier.id;
+            option.textContent = supplier.name;
+            row.querySelector('.supplier-select').appendChild(option);
+        });
+    }
+}
+
+function showMaterialModalWarning(msg) {
+    const warn = document.getElementById('modalMaterialSearchWarning');
+    warn.textContent = msg;
+    warn.classList.remove('d-none');
+}
+function clearMaterialModalWarning() {
+    const warn = document.getElementById('modalMaterialSearchWarning');
+    warn.textContent = '';
+    warn.classList.add('d-none');
+}
+
+function openMaterialModal(mode, targetRow = null) {
+    materialModalMode = mode;
+    materialModalTargetRow = targetRow;
+    document.getElementById('modalMaterialSearchInput').value = '';
+    document.getElementById('modalMaterialSearchResults').innerHTML = '';
+    clearMaterialModalWarning();
+    const modal = new bootstrap.Modal(document.getElementById('materialSearchModal'));
+    modal.show();
+    setTimeout(() => document.getElementById('modalMaterialSearchInput').focus(), 300);
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Show/hide project related fields
@@ -417,6 +540,57 @@ document.addEventListener('DOMContentLoaded', function() {
             row.style.display = text.includes(filter) ? '' : 'none';
         });
     });
+
+    // Top searchbar opens modal
+    document.getElementById('materialMasterSearch').addEventListener('focus', function() {
+        openMaterialModal('add');
+    });
+    // Replace button opens modal
+    document.getElementById('items-container').addEventListener('click', function(e) {
+        if (e.target.classList.contains('replace-material')) {
+            openMaterialModal('replace', e.target.closest('.item-row'));
+        }
+    });
+    // Modal search logic
+    document.getElementById('modalMaterialSearchInput').addEventListener('input', function() {
+        const query = this.value.trim().toLowerCase();
+        const resultsDiv = document.getElementById('modalMaterialSearchResults');
+        resultsDiv.innerHTML = '';
+        clearMaterialModalWarning();
+        if (query.length < 2) return;
+        const matches = window.materials.filter(mat =>
+            mat.name.toLowerCase().includes(query) ||
+            (mat.code && mat.code.toLowerCase().includes(query))
+        );
+        if (matches.length === 0) {
+            resultsDiv.innerHTML = '<div class="list-group-item">No materials found</div>';
+            return;
+        }
+        matches.forEach(material => {
+            const item = document.createElement('a');
+            item.href = '#';
+            item.classList.add('list-group-item', 'list-group-item-action');
+            item.dataset.materialId = material.id;
+            item.textContent = `${material.name} (${material.code || ''}) - ${material.unit}`;
+            item.dataset.material = JSON.stringify(material);
+            resultsDiv.appendChild(item);
+        });
+    });
+    // Modal select logic
+    document.getElementById('modalMaterialSearchResults').addEventListener('click', function(e) {
+        if (e.target.classList.contains('list-group-item-action')) {
+            e.preventDefault();
+            const material = JSON.parse(e.target.dataset.material);
+            if (materialModalMode === 'add') {
+                addMaterialRowFromMaster(material);
+            } else if (materialModalMode === 'replace' && materialModalTargetRow) {
+                replaceMaterialInRow(materialModalTargetRow, material);
+            }
+            bootstrap.Modal.getInstance(document.getElementById('materialSearchModal')).hide();
+        }
+    });
+    // Hide warning on modal close
+    document.getElementById('materialSearchModal').addEventListener('hidden.bs.modal', clearMaterialModalWarning);
 });
 </script>
 @endpush

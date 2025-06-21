@@ -85,4 +85,14 @@ class User extends Authenticatable // implements MustVerifyEmail
         
         return false;
     }
+
+    public function isAdmin()
+    {
+        return ($this->role ?? $this->user_type ?? null) === 'admin';
+    }
+
+    public function isSupplier()
+    {
+        return ($this->role ?? $this->user_type ?? null) === 'supplier';
+    }
 }

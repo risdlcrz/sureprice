@@ -191,42 +191,94 @@
                                                 <th>Supplier</th>
                                                 <th>Total Amount</th>
                                                 <th>Status</th>
+                                                <th>Payment Status</th>
                                                 <th>Created Date</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @if($purchaseRequest->purchaseOrders)
-                                                @foreach($purchaseRequest->purchaseOrders as $po)
-                                                    <tr>
-                                                        <td>{{ $po->po_number }}</td>
-                                                        <td>{{ $po->supplier->company_name }}</td>
-                                                        <td class="text-right">{{ $po->total_amount ? number_format($po->total_amount, 2) : 'N/A' }}</td>
-                                                        <td>
-                                                            <span class="badge badge-{{ $po->status === 'pending' ? 'warning' : ($po->status === 'approved' ? 'success' : 'danger') }}">
-                                                                {{ ucfirst($po->status) }}
-                                                            </span>
-                                                        </td>
-                                                        <td>{{ $po->created_at->format('M d, Y') }}</td>
-                                                        <td>
-                                                            <a href="{{ route('purchase-orders.show', $po) }}" class="btn btn-sm btn-info">
-                                                                <i class="fas fa-eye"></i>
-                                                            </a>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            @else
+                                            @foreach($purchaseRequest->purchaseOrders as $po)
+                                                @php $poPayment = $po->payments->last(); @endphp
                                                 <tr>
-                                                    <td colspan="6" class="text-center">No purchase orders found</td>
+                                                    <td>{{ $po->po_number }}</td>
+                                                    <td>{{ $po->supplier->company_name }}</td>
+                                                    <td class="text-right">{{ $po->total_amount ? number_format($po->total_amount, 2) : 'N/A' }}</td>
+                                                    <td>
+                                                        <span class="badge bg-{{ $po->status_color }}">
+                                                            {{ ucfirst($po->status) }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        @if($poPayment)
+                                                            <span class="badge bg-{{ $poPayment->status === 'verified' ? 'success' : ($poPayment->status === 'for_verification' ? 'info' : ($poPayment->status === 'rejected' ? 'danger' : 'secondary')) }}">
+                                                                {{ ucfirst($poPayment->status) }}
+                                                            </span>
+                                                        @else
+                                                            <span class="badge bg-secondary">Unpaid</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>{{ $po->created_at->format('M d, Y') }}</td>
+                                                    <td>
+                                                        <a href="{{ route('purchase-orders.show', $po) }}" class="btn btn-sm btn-info">View</a>
+                                                        @if(auth()->user()->isAdmin() && (!$poPayment || $poPayment->status === 'rejected'))
+                                                            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#submitPaymentModal{{ $po->id }}">Pay</button>
+                                                            <!-- Payment Modal for this PO -->
+                                                            <div class="modal fade" id="submitPaymentModal{{ $po->id }}" tabindex="-1">
+                                                              <div class="modal-dialog">
+                                                                <div class="modal-content">
+                                                                  <form method="POST" action="{{ route('purchase-orders.payments.store', $po) }}" enctype="multipart/form-data">
+                                                                    @csrf
+                                                                    <div class="modal-header">
+                                                                      <h5 class="modal-title">Submit Payment to Supplier</h5>
+                                                                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                    </div>
+                                                                    <div class="modal-body">
+                                                                      <div class="mb-3">
+                                                                        <label>Amount</label>
+                                                                        <input type="number" name="amount" class="form-control" value="{{ $po->total_amount }}" required>
+                                                                      </div>
+                                                                      <div class="mb-3">
+                                                                        <label>Payment Method</label>
+                                                                        <select name="payment_method" class="form-control" required>
+                                                                          <option value="bank_transfer">Bank Transfer</option>
+                                                                          <option value="check">Check</option>
+                                                                          <option value="cash">Cash</option>
+                                                                        </select>
+                                                                      </div>
+                                                                      <div class="mb-3">
+                                                                        <label>Reference Number</label>
+                                                                        <input type="text" name="admin_reference_number" class="form-control" required>
+                                                                      </div>
+                                                                      <div class="mb-3">
+                                                                        <label>Date Paid</label>
+                                                                        <input type="date" name="admin_paid_date" class="form-control" value="{{ now()->toDateString() }}" required>
+                                                                      </div>
+                                                                      <div class="mb-3">
+                                                                        <label>Proof of Payment</label>
+                                                                        <input type="file" name="admin_proof" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
+                                                                      </div>
+                                                                      <div class="mb-3">
+                                                                        <label>Notes (optional)</label>
+                                                                        <textarea name="admin_notes" class="form-control"></textarea>
+                                                                      </div>
+                                                                    </div>
+                                                                    <div class="modal-footer">
+                                                                      <button type="submit" class="btn btn-primary">Submit for Verification</button>
+                                                                    </div>
+                                                                  </form>
+                                                                </div>
+                                                              </div>
+                                                            </div>
+                                                        @endif
+                                                    </td>
                                                 </tr>
-                                            @endif
+                                            @endforeach
                                         </tbody>
                                     </table>
+                                </div>
+                            </div>
                         </div>
-                        </div>
-                        </div>
-                        @endif
-                    </div>
+                    @endif
                 </div>
             </div>
         </div>

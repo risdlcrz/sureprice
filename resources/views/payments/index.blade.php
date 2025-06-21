@@ -106,5 +106,40 @@
     <div class="d-flex justify-content-center">
         {{ $pagedContracts->links() }}
     </div>
+
+    <h2>PO Payments</h2>
+    <div class="card mb-4">
+        <div class="card-header">Purchase Order Payments</div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>PO #</th>
+                            <th>Supplier</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date Paid</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(App\Models\PurchaseOrderPayment::latest()->take(20)->get() as $poPayment)
+                            <tr>
+                                <td><a href="{{ route('purchase-orders.show', $poPayment->purchaseOrder) }}">{{ $poPayment->purchaseOrder->po_number }}</a></td>
+                                <td>{{ $poPayment->purchaseOrder->supplier->company_name ?? '-' }}</td>
+                                <td>₱{{ number_format($poPayment->amount, 2) }}</td>
+                                <td><span class="badge bg-{{ $poPayment->status === 'verified' ? 'success' : ($poPayment->status === 'for_verification' ? 'info' : ($poPayment->status === 'rejected' ? 'danger' : 'secondary')) }}">{{ ucfirst($poPayment->status) }}</span></td>
+                                <td>{{ $poPayment->admin_paid_date }}</td>
+                                <td>
+                                    <a href="{{ route('purchase-orders.show', $poPayment->purchaseOrder) }}" class="btn btn-sm btn-info">View PO</a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 @endsection 

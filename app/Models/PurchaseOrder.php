@@ -77,6 +77,11 @@ class PurchaseOrder extends Model
         return $this->hasMany(Transaction::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(\App\Models\PurchaseOrderPayment::class);
+    }
+
     public function getStatusColorAttribute()
     {
         return [

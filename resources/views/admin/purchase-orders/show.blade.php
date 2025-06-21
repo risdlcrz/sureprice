@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+    @php
+        $payment = $purchaseOrder->payments->last();
+    @endphp
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>Purchase Order Details</h1>
@@ -10,7 +13,7 @@
                         <i class="fas fa-edit"></i> Edit
                     </a>
                 @endif
-                @if($purchaseOrder->status === 'approved')
+                @if($purchaseOrder->status === 'approved' && $payment && $payment->status === 'verified')
                     <button type="button" class="btn btn-success" 
                             data-bs-toggle="modal" 
                             data-bs-target="#completePurchaseOrderModal"
@@ -411,4 +414,107 @@
     });
     </script>
     @endpush
+
+    <div class="mb-3">
+        @if($purchaseOrder->status === 'approved' && (!$payment || $payment->status === 'rejected') && auth()->user()->isAdmin())
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#submitPaymentModal">Submit Payment to Supplier</button>
+        @endif
+        @if($payment && $payment->status === 'for_verification' && auth()->user()->isSupplier())
+            <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#verifyPaymentModal">Verify Admin Payment</button>
+        @endif
+        @if($payment)
+            <div class="mt-2">
+                <strong>Payment Status:</strong> <span class="badge bg-{{ $payment->status === 'verified' ? 'success' : ($payment->status === 'for_verification' ? 'info' : ($payment->status === 'rejected' ? 'danger' : 'secondary')) }}">{{ ucfirst($payment->status) }}</span>
+                <br>
+                <strong>Amount:</strong> ₱{{ number_format($payment->amount, 2) }}<br>
+                <strong>Method:</strong> {{ ucfirst($payment->payment_method) }}<br>
+                <strong>Reference #:</strong> {{ $payment->admin_reference_number }}<br>
+                <strong>Date Paid:</strong> {{ $payment->admin_paid_date }}<br>
+                <strong>Proof:</strong> <a href="{{ asset('storage/' . $payment->admin_proof) }}" target="_blank">View</a><br>
+                <strong>Admin Notes:</strong> {{ $payment->admin_notes }}<br>
+                @if($payment->supplier_notes)
+                    <strong>Supplier Notes:</strong> {{ $payment->supplier_notes }}<br>
+                @endif
+            </div>
+        @endif
+    </div>
+    <!-- Admin Submit Payment Modal -->
+    <div class="modal fade" id="submitPaymentModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form method="POST" action="{{ route('purchase-orders.payments.store', $purchaseOrder) }}" enctype="multipart/form-data">
+            @csrf
+            <div class="modal-header">
+              <h5 class="modal-title">Submit Payment to Supplier</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label>Amount</label>
+                <input type="number" name="amount" class="form-control" value="{{ $purchaseOrder->total_amount }}" required>
+              </div>
+              <div class="mb-3">
+                <label>Payment Method</label>
+                <select name="payment_method" class="form-control" required>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="check">Check</option>
+                  <option value="cash">Cash</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label>Reference Number</label>
+                <input type="text" name="admin_reference_number" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label>Date Paid</label>
+                <input type="date" name="admin_paid_date" class="form-control" value="{{ now()->toDateString() }}" required>
+              </div>
+              <div class="mb-3">
+                <label>Proof of Payment</label>
+                <input type="file" name="admin_proof" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
+              </div>
+              <div class="mb-3">
+                <label>Notes (optional)</label>
+                <textarea name="admin_notes" class="form-control"></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="submit" class="btn btn-primary">Submit for Verification</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    @if($payment && $payment->status === 'for_verification' && auth()->user()->isSupplier())
+        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#verifyPaymentModal">Verify Admin Payment</button>
+        <!-- Supplier Verify Payment Modal -->
+        <div class="modal fade" id="verifyPaymentModal" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="POST" action="{{ route('purchase-order-payments.verify', $payment) }}">
+                @csrf
+                <div class="modal-header">
+                  <h5 class="modal-title">Verify Admin Payment</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <p><strong>Amount:</strong> ₱{{ number_format($payment->amount, 2) }}</p>
+                  <p><strong>Method:</strong> {{ ucfirst($payment->payment_method) }}</p>
+                  <p><strong>Reference #:</strong> {{ $payment->admin_reference_number }}</p>
+                  <p><strong>Date Paid:</strong> {{ $payment->admin_paid_date }}</p>
+                  <p><strong>Proof:</strong> <a href="{{ asset('storage/' . $payment->admin_proof) }}" target="_blank">View</a></p>
+                  <div class="mb-3">
+                    <label>Notes (optional)</label>
+                    <textarea name="supplier_notes" class="form-control"></textarea>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button name="action" value="verify" class="btn btn-success">Verify</button>
+                  <button name="action" value="reject" class="btn btn-danger">Reject</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+    @endif
 @endsection 

@@ -41,6 +41,7 @@ use App\Http\Controllers\Warehouse\WarehouseInventoryController;
 use App\Http\Controllers\Warehouse\WarehouseDeliveryController;
 use App\Http\Controllers\Warehouse\WarehouseReportController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\PurchaseOrderPaymentController;
 // Home route redirect to login
 Route::get('/', function () {
     return redirect()->route('login.form');
@@ -242,6 +243,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');
     // Make company search for chat available to all authenticated users (admin check in controller)
     Route::get('/admin/companies/search-for-chat', [\App\Http\Controllers\CompanyController::class, 'searchForChat'])->name('admin.companies.search-for-chat');
+    // Purchase Order Payment Routes
+    Route::post('/purchase-orders/{po}/payments', [PurchaseOrderPaymentController::class, 'store'])->name('purchase-orders.payments.store');
+    Route::post('/purchase-order-payments/{payment}/verify', [PurchaseOrderPaymentController::class, 'verify'])->name('purchase-order-payments.verify');
 });
 // Payments routes
 Route::middleware(['auth'])->group(function () {
