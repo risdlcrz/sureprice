@@ -23,7 +23,7 @@
                                 </div>
                             </div>
                             @if($sideConversation->messages->where('is_read', false)->where('sender_id', '!=', auth()->id())->count() > 0)
-                                <span class="badge bg-primary rounded-pill ms-2">{{ $sideConversation->messages->where('is_read', false)->where('sender_id', '!=', auth()->id())->count() }}</span>
+                                <span class="message-badge bg-primary rounded-pill ms-2">{{ $sideConversation->messages->where('is_read', false)->where('sender_id', '!=', auth()->id())->count() }}</span>
                             @endif
                         </a>
                     @endforeach

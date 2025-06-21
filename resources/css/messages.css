@@ -63,7 +63,7 @@
 }
 
 /* Unread message indicator */
-.badge {
+.message-badge {
     position: absolute;
     top: -5px;
     right: -5px;
