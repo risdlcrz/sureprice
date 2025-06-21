@@ -12,11 +12,18 @@
         $contract = $contractData->contract;
         $nextDue = $contractData->nextDue;
         $contractPayments = $contractData->payments;
+        $allPaid = $contractPayments->every(fn($p) => strtolower(trim($p->status)) === 'paid');
+        $forVerification = $contractPayments->contains(fn($p) => strtolower(trim($p->status)) === 'for_verification');
     @endphp
     
     <div class="card mb-4">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">{{ $contract->title ?? 'Contract #'.$contract->id }}</h5>
+            @if($allPaid)
+                <span class="badge bg-success">Paid</span>
+            @elseif($forVerification)
+                <span class="badge bg-info">For Verification</span>
+            @endif
         </div>
         
         @if($nextDue)
@@ -51,21 +58,29 @@
                         <td>₱{{ number_format($payment->amount, 2) }}</td>
                         <td>{{ $payment->due_date ? $payment->due_date->format('Y-m-d') : '' }}</td>
                         <td>
-                            @if($payment->status === 'paid')
+                            @php
+                                $status = trim(strtolower($payment->status));
+                            @endphp
+                            @if($status === 'paid')
                                 <span class="badge bg-success">Paid</span>
+                            @elseif($status === 'for_verification')
+                                <span class="badge bg-info">For Verification</span>
                             @elseif($payment->isOverdue())
                                 <span class="badge bg-danger">Overdue</span>
-                            @elseif($payment->status === 'for_verification')
-                                <span class="badge bg-info">For Verification</span>
                             @else
-                                <span class="badge bg-warning">Pending</span>
+                                <span class="badge bg-secondary">{{ ucfirst(str_replace('_', ' ', $status)) ?: 'Pending' }}</span>
                             @endif
                         </td>
-                        <td>{{ $payment->payment_method ?? 'bank_transfer' }}</td>
-                        <td>{{ $payment->reference_number ?? '-' }}</td>
+                        <td>{{ $payment->payment_method ?? '-' }}</td>
+                        <td>{{ $payment->client_reference_number ?? $payment->reference_number ?? '-' }}</td>
                         <td>
-                            @if($payment->attachment)
-                                <a href="{{ asset('storage/' . $payment->attachment->path) }}" class="btn btn-sm btn-link">View Proof</a>
+                            @php 
+                                $proof_path = $payment->client_payment_proof ?? ($payment->attachment ? $payment->attachment->path : null);
+                            @endphp
+                            @if($proof_path)
+                                <a href="{{ asset('storage/' . $proof_path) }}" target="_blank">
+                                    <img src="{{ asset('storage/' . $proof_path) }}" alt="Proof" width="100">
+                                </a>
                             @else
                                 -
                             @endif

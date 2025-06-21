@@ -26,7 +26,19 @@ class PaymentController extends Controller
         $contractsWithPayments = collect();
         foreach ($groupedAllPayments as $contractId => $paymentsForContract) {
             $contract = $paymentsForContract->first()->contract; // Get the contract model
+            if (!$contract) continue;
+
             $nextDue = $paymentsForContract->where('status', '!=', 'paid')->sortBy('due_date')->first();
+            
+            // Re-evaluate contract status based on its payments
+            if ($paymentsForContract->every('status', '==', 'paid')) {
+                $contract->status = 'completed';
+            } elseif ($paymentsForContract->contains('status', 'for_verification')) {
+                $contract->status = 'for_verification';
+            } else {
+                $contract->status = 'ongoing'; // Or whatever default status is appropriate
+            }
+            $contract->save();
 
             $contractsWithPayments->push((object)[
                 'contract' => $contract,
