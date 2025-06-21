@@ -492,18 +492,16 @@ class ScopeTypeSeeder extends Seeder
             unset($scopeData['materials_data']);
             unset($scopeData['tasks']);
             
-            $scope = ScopeType::updateOrCreate(
-                ['code' => $scopeData['code']],
-                [
-                    'name' => $scopeData['name'],
-                    'category' => $scopeData['category'],
-                    'is_wall_work' => $scopeData['is_wall_work'],
-                    'estimated_days' => $scopeData['estimated_days'],
-                    'labor_rate' => $scopeData['labor_rate'],
-                    'complexity_factor' => $scopeData['complexity_factor'],
-                    'tasks' => json_encode($tasks)
-                ]
-            );
+            $scope = ScopeType::create([
+                'code' => $scopeData['code'],
+                'name' => $scopeData['name'],
+                'category' => $scopeData['category'],
+                'is_wall_work' => $scopeData['is_wall_work'],
+                'estimated_days' => $scopeData['estimated_days'],
+                'labor_rate' => $scopeData['labor_rate'],
+                'complexity_factor' => $scopeData['complexity_factor'],
+                'tasks' => json_encode($tasks)
+            ]);
 
             // Create and attach materials
             foreach ($materialsData as $materialData) {
@@ -521,11 +519,10 @@ class ScopeTypeSeeder extends Seeder
                     ]
                 );
 
-                // Use syncWithoutDetaching to avoid duplicate attachments
-                $scope->materials()->syncWithoutDetaching([$material->id => [
+                $scope->materials()->attach($material->id, [
                     'created_at' => now(),
                     'updated_at' => now()
-                ]]);
+                ]);
             }
         }
     }

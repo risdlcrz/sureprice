@@ -28,7 +28,7 @@ class AdminSeeder extends Seeder
                 'user_type' => 'admin',
                 'role' => 'admin',
             ],
-                    ];
+        ];
 
         foreach ($admins as $admin) {
             User::updateOrCreate(
