@@ -68,5 +68,5 @@
 @endsection
 
 @push('styles')
-    @vite(['resources/css/dbadmin.css'])
+<link rel="stylesheet" href="{{ asset('resources/css/dbadmin.css') }}">
 @endpush

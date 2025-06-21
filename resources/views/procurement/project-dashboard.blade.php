@@ -13,7 +13,7 @@
             <!-- Purchase Requests Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/Images/ppimage5.jpg') }}" class="card-img-top" alt="Purchase Requests">
+                    <img src="{{ asset('resources/Images/ppimage5.jpg') }}" class="card-img-top" alt="Purchase Requests">
                     <div class="card-body">
                         <h5 class="card-title">Purchase Requests</h5>
                         <p class="card-text">Create and manage purchase requests for materials and supplies.</p>
@@ -32,7 +32,7 @@
             <!-- Purchase Orders Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/Images/ppimage4.jpg') }}" class="card-img-top" alt="Purchase Orders">
+                    <img src="{{ asset('resources/Images/ppimage4.jpg') }}" class="card-img-top" alt="Purchase Orders">
                     <div class="card-body">
                         <h5 class="card-title">Purchase Orders</h5>
                         <p class="card-text">Create and manage purchase orders from approved purchase requests.</p>
@@ -51,7 +51,7 @@
             <!-- Inquiries Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/Images/ppimage6.jpg') }}" class="card-img-top" alt="Inquiries">
+                    <img src="{{ asset('resources/Images/ppimage6.jpg') }}" class="card-img-top" alt="Inquiries">
                     <div class="card-body">
                         <h5 class="card-title">Inquiries</h5>
                         <p class="card-text">Submit and track material inquiries and procurement requests.</p>
@@ -70,7 +70,7 @@
             <!-- Quotation Management Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/Images/ppimage8.jpg') }}" class="card-img-top" alt="Quotation Management">
+                    <img src="{{ asset('resources/Images/ppimage8.jpg') }}" class="card-img-top" alt="Quotation Management">
                     <div class="card-body">
                         <h5 class="card-title">Quotation Management</h5>
                         <p class="card-text">Create and manage RFQs, compare supplier quotations, and track responses.</p>
@@ -89,7 +89,7 @@
             <!-- Materials Management Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage9.svg') }}" class="card-img-top" alt="Materials Management">
+                    <img src="{{ asset('resources/images/ppimage9.svg') }}" class="card-img-top" alt="Materials Management">
                 <div class="card-body">
                         <h5 class="card-title">Materials Management</h5>
                         <p class="card-text">Manage materials inventory, specifications, and pricing information.</p>
@@ -108,7 +108,7 @@
             <!-- Suppliers Management Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ Vite::asset('resources/images/ppimage10.png') }}" class="card-img-top" alt="Suppliers" style="object-fit:cover;width:100%;height:220px;">
+                    <img src="{{ asset('resources/images/ppimage10.png') }}" class="card-img-top" alt="Suppliers" style="object-fit:cover;width:100%;height:220px;">
                     <div class="card-body">
                         <h5 class="card-title">Suppliers Management</h5>
                         <p class="card-text">Manage supplier information, relationships, performance tracking, and send invitations to new suppliers.</p>
