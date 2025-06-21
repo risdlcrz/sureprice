@@ -341,7 +341,7 @@ Route::prefix('search')->group(function () {
 // API Routes for Warranty Requests
 Route::post('/api/warranty-requests', [WarrantyRequestController::class, 'store'])->middleware('auth');
 // Budget Tracking Routes
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
     Route::get('/budgets/{contract}', [BudgetController::class, 'show'])->name('budgets.show');
     Route::get('/budgets/{contract}/export', [BudgetController::class, 'exportReport'])->name('budgets.export');
@@ -364,7 +364,7 @@ Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'verified', \A
     Route::put('profile/update', [SupplierDashboardController::class, 'updateProfile'])->name('profile.update');
 });
 // Admin Supplier Profile Update Review Routes
-Route::middleware(['auth', 'admin'])->prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {
+Route::middleware(['auth', AdminMiddleware::class])->prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {
     Route::get('pending-updates', [\App\Http\Controllers\SupplierController::class, 'pendingUpdates'])->name('pending-updates');
     Route::get('review-update/{id}', [\App\Http\Controllers\SupplierController::class, 'reviewUpdate'])->name('review-update');
     Route::post('approve-update/{id}', [\App\Http\Controllers\SupplierController::class, 'approveUpdate'])->name('approve-update');

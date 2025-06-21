@@ -31,6 +31,25 @@
         <a href="{{ route('messages.index') }}" class="btn">
             <i class="fas fa-comments"></i>Messages
         </a>
+    @elseif(auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'supplier')
+        <a href="{{ route('supplier.dashboard') }}" class="btn">
+            <i class="fas fa-home"></i>Dashboard
+        </a>
+        <a href="{{ route('supplier.materials.index') }}" class="btn">
+            <i class="fas fa-boxes"></i>My Materials
+        </a>
+        <a href="{{ route('supplier.quotations.index') }}" class="btn">
+            <i class="fas fa-file-invoice"></i>Quotations
+        </a>
+        <a href="{{ route('supplier.ranking') }}" class="btn">
+            <i class="fas fa-chart-line"></i>Performance
+        </a>
+        <a href="{{ route('supplier.profile.edit') }}" class="btn">
+            <i class="fas fa-user-edit"></i>Edit My Information
+        </a>
+        <a href="{{ route('messages.index') }}" class="btn">
+            <i class="fas fa-comments"></i>Messages
+        </a>
     @else
         <a href="{{ route('admin.dbadmin') }}" class="btn">
             <i class="fas fa-home"></i>Dashboard
@@ -41,11 +60,6 @@
         </a>
         <a href="{{ route('admin.suppliers.pending-updates') }}" class="btn">
             <i class="fas fa-user-clock"></i>Supplier Profile Updates
-        </a>
-        @endif
-        @if(auth()->user()->role === 'supplier')
-        <a href="{{ route('supplier.profile.edit') }}" class="btn">
-            <i class="fas fa-user-edit"></i>Edit My Information
         </a>
         @endif
         <a href="{{ route('admin.notification') }}" class="btn">

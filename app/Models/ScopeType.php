@@ -17,11 +17,14 @@ class ScopeType extends Model
         'labor_type',
         'minimum_labor_cost',
         'complexity_factor',
-        'labor_hours_per_unit'
+        'labor_hours_per_unit',
+        'is_wall_work',
+        'tasks'
     ];
 
     protected $casts = [
         'items' => 'array',
+        'tasks' => 'array',
         'labor_rate' => 'decimal:2',
         'estimated_days' => 'integer',
         'labor_type' => 'string',
@@ -34,7 +37,7 @@ class ScopeType extends Model
     {
         return $this->belongsToMany(Material::class, 'scope_type_material')
                     ->withPivot(['id'])
-                    ->select('materials.id', 'materials.name', 'materials.unit', 'materials.base_price', 'materials.srp_price', 'materials.is_per_area', 'materials.is_wall_material', 'materials.coverage_rate', 'materials.minimum_quantity', 'materials.waste_factor', 'materials.bulk_pricing', 'materials.warranty_period')
+                        ->select('materials.id', 'materials.name', 'materials.unit', 'materials.base_price', 'materials.srp_price', 'materials.is_per_area', 'materials.is_wall_material', 'materials.coverage_rate', 'materials.minimum_quantity', 'materials.waste_factor', 'materials.bulk_pricing', 'materials.warranty_period')
                     ->withTimestamps();
     }
 

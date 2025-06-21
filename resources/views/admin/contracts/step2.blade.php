@@ -168,6 +168,24 @@
         font-size: 1.1em;
         font-weight: 500;
     }
+    
+    /* Ensure days badges are always visible */
+    .days-badge {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        font-size: 0.875em;
+        font-weight: 500;
+        padding: 0.25em 0.5em;
+        border-radius: 0.25rem;
+        background-color: #17a2b8 !important;
+        color: white !important;
+        margin-left: 0.5rem;
+    }
+    
+    .days-badge:empty {
+        display: none !important;
+    }
 </style>
 @endpush
 
@@ -344,9 +362,40 @@ console.log('Script is running: Top of file');
 // Debug logging
 console.log('Initializing contract step 2 page');
 
-// Ensure scopeTypes is properly initialized
-const scopeTypes = @json($scopeTypesByCode ?? []);
-console.log('Scope types loaded:', scopeTypes);
+// Use only the keyed object and convert to array for iteration
+const scopeTypesByCode = {!! json_encode($scopeTypesByCode ?? []) !!};
+const scopeTypes = Object.values(scopeTypesByCode); // Convert to array for iteration
+console.log('Scope types (array) loaded:', scopeTypes);
+console.log('Scope types (keyed) loaded:', scopeTypesByCode);
+
+// Debug: Check if scope data has materials and tasks
+console.log('=== SCOPE DATA DEBUG ===');
+scopeTypes.forEach(scope => {
+    console.log(`Processed scope (initial load): ${scope.name} (ID: ${scope.id}), materials type: ${typeof scope.materials}, tasks type: ${typeof scope.tasks}`);
+    if (scope.materials) {
+        console.log(`  - Materials: ${Array.isArray(scope.materials) ? scope.materials.length : 'not array'}`);
+        if (Array.isArray(scope.materials) && scope.materials.length > 0) {
+            console.log(`  - First material:`, scope.materials[0]);
+        }
+    }
+    if (scope.tasks) {
+        console.log(`  - Tasks: ${Array.isArray(scope.tasks) ? scope.tasks.length : 'not array'}`);
+        if (Array.isArray(scope.tasks) && scope.tasks.length > 0) {
+            console.log(`  - First task:`, scope.tasks[0]);
+        }
+    }
+});
+console.log('=== END SCOPE DATA DEBUG ===');
+
+// Test getScopeMaterials function
+if (scopeTypes.length > 0) {
+    const firstScope = scopeTypes[0];
+    console.log('=== TESTING getScopeMaterials ===');
+    console.log('Testing with first scope:', firstScope.name);
+    const materials = getScopeMaterials(firstScope);
+    console.log('getScopeMaterials result:', materials);
+    console.log('=== END TESTING getScopeMaterials ===');
+}
 
 const DEFAULT_CREW_SIZE = 4; // Standard crew size for most construction work
 const DEFAULT_HOURS_PER_DAY = 8; // Standard working hours
@@ -520,20 +569,28 @@ function calculateAllCosts() {
         let roomMaterialsCost = 0;
         let roomEstimatedDays = 0;
 
-        const selectedScopes = Array.from(room.querySelectorAll('.scope-checkbox:checked')).map(cb => cb.value);
-        console.log(`  calculateAllCosts: Room ${roomName} (${roomId}) - Selected Scopes:`, selectedScopes);
+        let roomMaterials = 0;
+        
+        // Get selected scopes for this room
+        const selectedScopes = Array.from(room.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(cb => scopeTypesByCode[cb.value])
+            .filter(Boolean);
+        
+        console.log(`  calculateAllCosts:   Room ${room.dataset.roomId} has ${selectedScopes.length} selected scopes.`);
 
-        selectedScopes.forEach(scopeKey => {
-            const scope = scopeTypes[scopeKey];
-            if (!scope) {
-                console.warn(`  calculateAllCosts: Scope with key ${scopeKey} not found!`);
-                return;
-            }
-            console.log(`  calculateAllCosts:   Scope ${scope.name} (ID: ${scope.id}) - labor_rate: ${scope.labor_rate}, complexity_factor: ${scope.complexity_factor}`);
-            // --- Materials ---
-            const materialsArr = getScopeMaterials(scope);
-            materialsArr.forEach(material => {
-                if (!material || typeof material !== 'object') return;
+        selectedScopes.forEach(scope => {
+            if (!scope) return;
+            
+            // --- FIX: Use the materials from the current scope object, not the global scopeTypes mapping ---
+            const materials = getScopeMaterials(scope);
+            
+            console.log(`  calculateAllCosts:     Scope ${scope.name} has ${materials.length} materials.`);
+
+            materials.forEach(material => {
+                if (!material.base_price || isNaN(material.base_price)) {
+                    console.warn(`Skipping material with invalid price: ${material.name}`);
+                    return;
+                }
                 const price = parseFloat(material.srp_price ?? 0) > 0 ? parseFloat(material.srp_price) : parseFloat(material.base_price ?? 0);
                 let quantity = 0;
                 const area = material.is_wall_material ? wallArea : floorArea;
@@ -593,18 +650,17 @@ function calculateAllCosts() {
             let scopeLaborHours = 0;
             // Calculate labor based on tasks
             if (scope.tasks) {
-                const tasks = Array.isArray(scope.tasks) ? scope.tasks : 
-                    (typeof scope.tasks === 'string' ? JSON.parse(scope.tasks) : []);
+                const tasks = getScopeTasks(scope);
                 
                 const laborArea = scope.is_wall_work ? wallArea : floorArea;
                 const adjustment = getAdjustmentFactor(room, scope);
                 console.log(`  calculateAllCosts:     Scope ${scope.name} Tasks: laborArea=${laborArea}, adjustment=${adjustment}`);
 
-                scopeLaborHours = tasks.reduce((total, task) => {
+                tasks.forEach(task => {
                     const taskHours = (task.labor_hours_per_sqm || 0) * laborArea;
                     console.log(`  calculateAllCosts:       Task ${task.name}: labor_hours_per_sqm=${task.labor_hours_per_sqm}, taskHours=${taskHours.toFixed(2)}`);
-                    return total + taskHours;
-                }, 0);
+                    scopeLaborHours += taskHours;
+                });
                 scopeLaborCost = scopeLaborHours * laborRate;
             } else {
                 // Fallback to old calculation method if no tasks defined
@@ -734,7 +790,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Call updateProjectTimeline when any scope checkbox changes
     document.addEventListener('change', function(e) {
         if (e.target.classList.contains('scope-checkbox')) {
-            updateScopeDaysBadges(e.target.closest('.room-row'));
+            const roomRow = e.target.closest('.room-row');
+            
+            // The setTimeout was causing a race condition with Bootstrap's accordion.
+            // Running these updates synchronously resolves the issue.
+            updateScopeDaysBadges(roomRow);
             updateGrandTotalAndBreakdown();
             updateProjectTimeline();
             if (!window.isInitializing) {
@@ -764,30 +824,32 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Ensure materials are parsed for each scope type
-Object.values(scopeTypes).forEach(scope => {
-    if (typeof scope.materials === 'string') {
-        try {
-            scope.materials = JSON.parse(scope.materials);
-        } catch (e) {
-            console.error('Error parsing materials for scope:', scope.id, e);
-            scope.materials = [];
+// Ensure materials and tasks are consistently arrays
+scopeTypes.forEach(scope => {
+    ['tasks', 'materials'].forEach(prop => {
+        // First, if it's a string, try to parse it
+        if (typeof scope[prop] === 'string') {
+            try {
+                scope[prop] = JSON.parse(scope[prop]);
+            } catch (e) {
+                console.error(`Error parsing ${prop} for scope:`, scope.id, e);
+                scope[prop] = [];
+            }
         }
-    }
-    // Also ensure tasks are parsed once
-    if (typeof scope.tasks === 'string') {
-        try {
-            scope.tasks = JSON.parse(scope.tasks);
-        } catch (e) {
-            console.error('Error parsing tasks for scope:', scope.id, e);
-            scope.tasks = [];
+        
+        // Next, if it's a non-array object, convert it to an array
+        if (scope[prop] && typeof scope[prop] === 'object' && !Array.isArray(scope[prop])) {
+            scope[prop] = Object.values(scope[prop]);
+        } 
+        // Finally, if it's missing, ensure it's an empty array
+        else if (!scope[prop]) {
+            scope[prop] = [];
         }
-    }
-    console.log(`Processed scope (initial load): ${scope.name} (ID: ${scope.id}), materials type: ${typeof scope.materials}, tasks type: ${typeof scope.tasks}`);
+    });
 });
 
 const scopesByCategory = {};
-Object.values(scopeTypes).forEach(scope => {
+scopeTypes.forEach(scope => {
     if (!scopesByCategory[scope.category]) scopesByCategory[scope.category] = [];
     scopesByCategory[scope.category].push(scope);
 });
@@ -933,6 +995,12 @@ function initializeForm() {
 
 function createRoomRow(initialRoomData = {}) {
     console.log('Creating new room row', initialRoomData);
+    
+    // Ensure scope is always an array
+    if (!initialRoomData.scope || !Array.isArray(initialRoomData.scope)) {
+        initialRoomData.scope = [];
+    }
+    
     console.log('initialRoomData.scope:', initialRoomData.scope);
     const roomContainer = document.createElement('div');
     roomContainer.className = 'room-row mb-4';
@@ -995,20 +1063,24 @@ function createRoomRow(initialRoomData = {}) {
                 <div class="accordion" id="scopeAccordion${roomId}">
                     ${Object.entries(scopesByCategory).map(([category, scopes], categoryIndex) => `
                         <div class="accordion-item">
-                            <h2 class="accordion-header">
+                            <h2 class="accordion-header" id="heading${roomId}${categoryIndex}">
                                 <button class="accordion-button ${categoryIndex > 0 ? 'collapsed' : ''}" type="button" 
                                     data-bs-toggle="collapse" 
                                     data-bs-target="#category${roomId}${categoryIndex}"
-                                    aria-expanded="${categoryIndex === 0}">
+                                    aria-expanded="${categoryIndex === 0}"
+                                    aria-controls="category${roomId}${categoryIndex}">
                                     ${category}
                                 </button>
                             </h2>
                             <div id="category${roomId}${categoryIndex}" 
                                 class="accordion-collapse collapse ${categoryIndex === 0 ? 'show' : ''}"
+                                aria-labelledby="heading${roomId}${categoryIndex}"
                                 data-bs-parent="#scopeAccordion${roomId}">
                                 <div class="accordion-body">
                                     <div class="row">
                                         ${scopes.map(scope => {
+                                            const scopeMaterials = getScopeMaterials(scope);
+                                            const scopeTasks = getScopeTasks(scope);
                                             console.log(`Checking scope: ${scope.id}, initialRoomData.scope:`, initialRoomData.scope, `includes(${scope.id.toString()}):`, initialRoomData.scope && initialRoomData.scope.includes(scope.id.toString()));
                                             return `
                                             <div class="col-md-6">
@@ -1026,26 +1098,11 @@ function createRoomRow(initialRoomData = {}) {
                                                     <div class="ms-4 mt-2">
                                                         <small class="text-muted">Materials:</small>
                                                         <ul class="list-unstyled small">
-                                                            ${(scope.materials && scope.materials.length > 0) ? scope.materials.map(material => {
-                                                                const name = material.name || 'Unnamed Material';
-                                                                const displayPrice = parseFloat(material.srp_price ?? 0) > 0 ? parseFloat(material.srp_price) : parseFloat(material.base_price ?? 0);
-                                                                const unit = material.unit || 'pcs';
-                                                                return `<li>${name} - ₱${displayPrice.toFixed(2)}</li>`;
-                                                            }).filter(Boolean).join('') : '<li><em>No materials assigned</em></li>'}
+                                                            ${scopeMaterials.length > 0 ? scopeMaterials.map(material => `<li>${material.name || 'Unnamed Material'} - ₱${(parseFloat(material.srp_price ?? 0) > 0 ? parseFloat(material.srp_price) : parseFloat(material.base_price ?? 0)).toFixed(2)}</li>`).join('') : '<li><em>No materials assigned</em></li>'}
                                                         </ul>
                                                         <small class="text-muted">Tasks:</small>
                                                         <ul class="list-unstyled small">
-                                                            ${(() => {
-                                                                if (!scope.tasks) return '<li><em>No tasks listed</em></li>';
-                                                                const tasks = Array.isArray(scope.tasks) ? scope.tasks : 
-                                                                    (typeof scope.tasks === 'string' ? JSON.parse(scope.tasks) : []);
-                                                                return tasks.length > 0 ? 
-                                                                    tasks.map(task => {
-                                                                        console.log(`Task in loop: ${JSON.stringify(task)}`); // Log task details
-                                                                        return `<li><i class="fas fa-check-circle text-success"></i> ${task.name || 'Unnamed Task'}</li>`;
-                                                                    }).join('') : 
-                                                                    '<li><em>No tasks listed</em></li>';
-                                                            })()}
+                                                            ${scopeTasks.length > 0 ? scopeTasks.map(task => `<li><i class="fas fa-check-circle text-success"></i> ${task.name || 'Unnamed Task'}</li>`).join('') : '<li><em>No tasks listed</em></li>'}
                                                         </ul>
                                                         <div class="ms-4 mt-2">
                                                             <small class="text-muted">Estimated Time:</small>
@@ -1101,9 +1158,12 @@ function createRoomRow(initialRoomData = {}) {
     }
 
     // It's crucial to call updateScopeDaysBadges after room areas are calculated.
-    updateScopeDaysBadges(roomContainer);
-    updateGrandTotalAndBreakdown(); // Force update global totals
-    updateProjectTimeline(); // Force update timeline
+    // Add a small delay to ensure calculations are complete
+    setTimeout(() => {
+        updateScopeDaysBadges(roomContainer);
+        updateGrandTotalAndBreakdown(); // Force update global totals
+        updateProjectTimeline(); // Force update timeline
+    }, 200);
 
     console.log('New room row created and initial calculations triggered.');
 }
@@ -1149,7 +1209,11 @@ function calculateRoomArea(input) {
     
     updateGrandTotalAndBreakdown();
     saveFormData();
-    updateScopeDaysBadges(roomRow);
+    
+    // Add a small delay to ensure areas are updated before updating badges
+    setTimeout(() => {
+        updateScopeDaysBadges(roomRow);
+    }, 100);
 }
 
 function applyScopesToAll() {
@@ -1328,6 +1392,28 @@ function getScopeMaterials(scope) {
     }
 }
 
+function getScopeTasks(scope) {
+    if (!scope || !scope.tasks) {
+        return [];
+    }
+    if (Array.isArray(scope.tasks)) {
+        return scope.tasks;
+    }
+    if (typeof scope.tasks === 'object' && scope.tasks !== null) {
+        return Object.values(scope.tasks);
+    }
+    if (typeof scope.tasks === 'string') {
+        try {
+            const parsed = JSON.parse(scope.tasks);
+            return Array.isArray(parsed) ? parsed : Object.values(parsed);
+        } catch (e) {
+            console.error('Error parsing scope tasks JSON:', e);
+            return [];
+        }
+    }
+    return [];
+}
+
 // Add this helper to calculate estimated days for a scope in a room
 function getScopeEstimatedDays(scope, room) {
     const floorArea = parseFloat(room.querySelector('input[name$="[floor_area]"]').value) || 0;
@@ -1350,8 +1436,7 @@ function getScopeEstimatedDays(scope, room) {
     
     // Calculate based on tasks if available
     if (scope.tasks) {
-        const tasks = Array.isArray(scope.tasks) ? scope.tasks : 
-            (typeof scope.tasks === 'string' ? JSON.parse(scope.tasks) : []);
+        const tasks = getScopeTasks(scope);
         
         tasks.forEach(task => {
             const laborArea = scope.is_wall_work ? wallArea : floorArea;
@@ -1393,16 +1478,34 @@ function updateScopeDaysBadges(room) {
     let totalDays = 0;
     
     scopeCheckboxes.forEach(cb => {
-        const scope = scopeTypes[cb.value];
+        const scope = scopeTypesByCode[cb.value];
         let badge = null;
         
-        // Find the badge element
-        if (cb.nextElementSibling && cb.nextElementSibling.querySelector && cb.nextElementSibling.querySelector('.days-badge')) {
+        // Try multiple strategies to find the badge element
+        const scopeId = cb.value;
+        
+        // Strategy 1: Look for badge with data-scope-id attribute
+        badge = room.querySelector(`.days-badge[data-scope-id="${scopeId}"]`);
+        
+        // Strategy 2: If not found, look in the parent scope-item div
+        if (!badge) {
+            const scopeItem = cb.closest('.scope-item');
+            if (scopeItem) {
+                badge = scopeItem.querySelector('.days-badge');
+            }
+        }
+        
+        // Strategy 3: Look in the next sibling element
+        if (!badge && cb.nextElementSibling) {
             badge = cb.nextElementSibling.querySelector('.days-badge');
-        } else if (cb.parentElement && cb.parentElement.querySelector('.days-badge')) {
-            badge = cb.parentElement.querySelector('.days-badge');
-        } else {
-            badge = room.querySelector(`.days-badge[data-scope-id="${cb.value}"]`);
+        }
+        
+        // Strategy 4: Look in the parent form-check element
+        if (!badge) {
+            const formCheck = cb.closest('.form-check');
+            if (formCheck) {
+                badge = formCheck.querySelector('.days-badge');
+            }
         }
         
         if (scope && badge) {
@@ -1411,15 +1514,36 @@ function updateScopeDaysBadges(room) {
             if (cb.checked) {
                 totalDays += days;
             }
-            badge.textContent = `${days} day${days > 1 ? 's' : ''}`;
-            badge.style.display = '';
+            
+            // Update badge content with proper formatting
+            if (days === 0.5) {
+                badge.textContent = '0.5 day';
+            } else if (days === 1) {
+                badge.textContent = '1 day';
+            } else {
+                badge.textContent = `${days} days`;
+            }
+            
+            // Ensure badge is visible
+            badge.style.display = 'inline-block';
+            badge.style.visibility = 'visible';
+            
+            console.log(`  Updated badge for scope ${scope.name}: "${badge.textContent}"`);
+        } else {
+            console.warn(`  Could not find badge for scope ${scope ? scope.name : 'unknown'} (ID: ${scopeId})`);
         }
     });
     
     // Update the room's total estimated time
     const estimatedTimeElem = room.querySelector('.estimated-time');
     if (estimatedTimeElem) {
-        estimatedTimeElem.textContent = `${totalDays} day${totalDays > 1 ? 's' : ''}`;
+        if (totalDays === 0.5) {
+            estimatedTimeElem.textContent = '0.5 day';
+        } else if (totalDays === 1) {
+            estimatedTimeElem.textContent = '1 day';
+        } else {
+            estimatedTimeElem.textContent = `${totalDays} days`;
+        }
         console.log(`  Room Total Estimated Time: ${totalDays} days`);
     }
 }

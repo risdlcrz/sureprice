@@ -23,7 +23,17 @@ class SupplierMiddleware
 
         $user = Auth::user();
         
-        // Check role in users table first
+        // Check if user is a company with supplier designation
+        if ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
+            // Check supplier approval status
+            if ($user->company->status !== 'approved') {
+                Auth::logout();
+                return redirect()->route('login.form')->with('error', 'Your account is not approved yet.');
+            }
+            return $next($request);
+        }
+        
+        // Check role in users table (for backward compatibility)
         if ($user->role === 'supplier') {
             // Check supplier approval status
             if ($user->supplier && $user->supplier->status !== 'approved') {

@@ -210,26 +210,16 @@ class ContractController extends Controller
         }
 
         // Get scope types with materials through relationship
-        $scopeTypes = \App\Models\ScopeType::with(['materials' => function($query) {
-            $query->with(['suppliers' => function($q) {
-                $q->wherePivot('is_preferred', true);
-            }]);
-        }])->get();
-
-        // Swap the names as requested
-        $swapMap = [
-            'Ceiling Work' => 'Tiling Work',
-            'Tiling Work' => 'Painting Work',
-            'Painting Work' => 'Ceiling Work',
-        ];
-        foreach ($scopeTypes as $scopeType) {
-            if (isset($swapMap[$scopeType->name])) {
-                $scopeType->name = $swapMap[$scopeType->name];
+        $scopeTypes = \App\Models\ScopeType::with('materials')->get()->map(function ($scope) {
+            // Manually ensure tasks is an array, as the model cast might not apply here.
+            if (is_string($scope->tasks)) {
+                $scope->tasks = json_decode($scope->tasks, true);
             }
-        }
+            return $scope;
+        });
 
-        // Prepare scope types by code (ID) for JavaScript access
-        $scopeTypesByCode = $scopeTypes->keyBy('id');
+        // Prepare scope types by code (ID) for JavaScript access, AND pass the original collection
+        $scopeTypesForJs = $scopeTypes->keyBy('id');
 
         // Get session data if it exists
         $sessionData = session('contract_step2', []);
@@ -259,7 +249,11 @@ class ContractController extends Controller
             'contract_step2_session' => session('contract_step2'),
         ]);
 
-        return view('admin.contracts.step2', compact('sessionData', 'scopeTypesByCode'));
+        return view('admin.contracts.step2', [
+            'scopeTypes' => $scopeTypes, // Pass the raw collection for iteration
+            'scopeTypesByCode' => $scopeTypesForJs, // Pass the keyed object for lookups
+            'sessionData' => $sessionData
+        ]);
     }
 
     public function storeStep2(Request $request)
@@ -478,23 +472,13 @@ class ContractController extends Controller
         $contractStep2Data = session('contract_step2', []);
 
         // Get scope types with materials through relationship, similar to step2
-        $scopeTypes = \App\Models\ScopeType::with(['materials' => function($query) {
-            $query->with(['suppliers' => function($q) {
-                $q->wherePivot('is_preferred', true);
-            }]);
-        }])->get();
-
-        // Swap the names as requested (if still relevant for display)
-        $swapMap = [
-            'Ceiling Work' => 'Tiling Work',
-            'Tiling Work' => 'Painting Work',
-            'Painting Work' => 'Ceiling Work',
-        ];
-        foreach ($scopeTypes as $scopeType) {
-            if (isset($swapMap[$scopeType->name])) {
-                $scopeType->name = $swapMap[$scopeType->name];
+        $scopeTypes = \App\Models\ScopeType::with('materials')->get()->map(function ($scope) {
+            // Manually ensure tasks is an array, as the model cast might not apply here.
+            if (is_string($scope->tasks)) {
+                $scope->tasks = json_decode($scope->tasks, true);
             }
-        }
+            return $scope;
+        });
 
         // Prepare scope types by code (ID) for JavaScript access and view display
         $scopeTypesByCode = $scopeTypes->keyBy('id');
