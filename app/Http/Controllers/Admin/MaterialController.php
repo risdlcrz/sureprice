@@ -20,7 +20,7 @@ class MaterialController extends Controller
     public function show(Material $material)
     {
         $suppliers = Company::where('designation', 'supplier')->orderBy('company_name')->get();
-        $linkedSupplierIds = $material->suppliers()->pluck('companies.id')->toArray();
+        $linkedSupplierIds = $material->suppliers()->pluck('company_id')->toArray();
 
         return view('admin.materials.show', compact('material', 'suppliers', 'linkedSupplierIds'));
     }
