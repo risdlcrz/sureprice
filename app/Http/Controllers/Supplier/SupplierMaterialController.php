@@ -132,11 +132,11 @@ class SupplierMaterialController extends Controller
         }
         $term = $request->input('term');
 
-        $existingMaterialIds = $supplier->materials->pluck('id')->toArray();
+        $existingMaterialIds = $supplier->materials()->pluck('materials.id')->toArray();
 
         $materials = Material::where('name', 'LIKE', "%{$term}%")
             ->whereNotIn('id', $existingMaterialIds)
-            ->select('id', 'name', 'code', 'unit')
+            ->select('id', 'name', 'code', 'unit', 'srp_price', 'base_price')
             ->limit(10)
             ->get();
 

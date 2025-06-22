@@ -79,14 +79,16 @@
                                 @csrf
                                 <div class="mb-3">
                                     <label for="material_search" class="form-label">Search for Material</label>
-                                    <input type="text" class="form-control" id="material_search" placeholder="Start typing to search for materials...">
+                                    <input type="text" class="form-control" id="material_search" placeholder="Start typing to search for materials..." autocomplete="off">
                                     <input type="hidden" id="material_id" name="material_id">
+                                    <div id="material_search_results" class="list-group mt-2"></div>
                                 </div>
                                 <div id="material_details" class="mb-3" style="display: none;">
                                     <h5>Selected Material</h5>
                                     <p><strong>Name:</strong> <span id="selected_material_name"></span></p>
                                     <p><strong>Code:</strong> <span id="selected_material_code"></span></p>
                                     <p><strong>Unit:</strong> <span id="selected_material_unit"></span></p>
+                                    <p><strong>Suggested Retail Price (SRP):</strong> ₱<span id="selected_material_srp"></span></p>
                                 </div>
                                 <div class="mb-3">
                                     <label for="link_price" class="form-label">Your Unit Price (₱)</label>
@@ -128,29 +130,49 @@
         const materialSearchInput = document.getElementById('material_search');
         const materialIdInput = document.getElementById('material_id');
         const materialDetailsDiv = document.getElementById('material_details');
+        const searchResultsDiv = document.getElementById('material_search_results');
 
-        // Basic autocomplete
         materialSearchInput.addEventListener('keyup', function() {
             const searchTerm = this.value;
+            
             if (searchTerm.length < 2) {
-                // simple clear, you may want a dropdown
+                searchResultsDiv.innerHTML = '';
+                materialDetailsDiv.style.display = 'none';
+                materialIdInput.value = '';
                 return; 
             }
 
             fetch(`{{ route('supplier.materials.search') }}?term=${searchTerm}`)
                 .then(response => response.json())
                 .then(data => {
-                    // This is a simplified autocomplete. 
-                    // A real implementation would use a library like typeahead.js or awesomplete
-                    // For now, we just take the first result for simplicity
-                    if(data.length > 0) {
-                        const material = data[0];
-                        materialSearchInput.value = material.name;
-                        materialIdInput.value = material.id;
-                        document.getElementById('selected_material_name').innerText = material.name;
-                        document.getElementById('selected_material_code').innerText = material.code;
-                        document.getElementById('selected_material_unit').innerText = material.unit;
-                        materialDetailsDiv.style.display = 'block';
+                    searchResultsDiv.innerHTML = ''; // Clear previous results
+                    if (data.length > 0) {
+                        data.forEach(material => {
+                            const resultItem = document.createElement('a');
+                            resultItem.href = '#';
+                            resultItem.classList.add('list-group-item', 'list-group-item-action');
+                            resultItem.innerHTML = `<strong>${material.name}</strong> <small class="text-muted">(${material.code})</small>`;
+                            
+                            resultItem.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                // Populate the form
+                                materialSearchInput.value = material.name;
+                                materialIdInput.value = material.id;
+                                document.getElementById('selected_material_name').innerText = material.name;
+                                document.getElementById('selected_material_code').innerText = material.code;
+                                document.getElementById('selected_material_unit').innerText = material.unit;
+                                const srp = material.srp_price || material.base_price || '0.00';
+                                document.getElementById('selected_material_srp').innerText = parseFloat(srp).toFixed(2);
+                                
+                                // Show details and hide results
+                                materialDetailsDiv.style.display = 'block';
+                                searchResultsDiv.innerHTML = '';
+                            });
+                            
+                            searchResultsDiv.appendChild(resultItem);
+                        });
+                    } else {
+                        searchResultsDiv.innerHTML = '<div class="list-group-item">No materials found.</div>';
                     }
                 });
         });

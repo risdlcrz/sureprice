@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="{{ asset('resources/css/login.css') }}">
     <link rel="stylesheet" href="{{ asset('resources/css/messages.css') }}">
     <link rel="stylesheet" href="{{ asset('resources/css/app.css') }}">
-    <script src="{{ asset('resources/js/app.js') }}"></script>
+    <script src="{{ asset('resources/js/app.js') }}" type="module"></script>
     
     <!-- Additional Styles -->
     @stack('styles')
@@ -127,7 +127,7 @@
         <!-- Mobile Top Header -->
         <div class="mobile-topbar d-md-none d-flex">
             <div class="d-flex align-items-center gap-2">
-                <img src="{{ asset('resources/images/gdc_logo.png') }}" alt="Logo" style="height: 40px;">
+                <img src="{{ asset('images/gdc_logo.png') }}" alt="Logo" style="height: 40px;">
                 <strong>GEOCON</strong>
             </div>
             <button class="btn btn-success" onclick="toggleMobileMenu()">

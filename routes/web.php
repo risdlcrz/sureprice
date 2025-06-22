@@ -42,6 +42,7 @@ use App\Http\Controllers\Warehouse\WarehouseDeliveryController;
 use App\Http\Controllers\Warehouse\WarehouseReportController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PurchaseOrderPaymentController;
+use App\Http\Controllers\Admin\MaterialController as AdminMaterialController;
 // Home route redirect to login
 Route::get('/', function () {
     return redirect()->route('login.form');
@@ -377,4 +378,10 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin/suppliers')->
     Route::get('review-update/{id}', [\App\Http\Controllers\SupplierController::class, 'reviewUpdate'])->name('review-update');
     Route::post('approve-update/{id}', [\App\Http\Controllers\SupplierController::class, 'approveUpdate'])->name('approve-update');
     Route::post('reject-update/{id}', [\App\Http\Controllers\SupplierController::class, 'rejectUpdate'])->name('reject-update');
+});
+
+// Admin Material Routes
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('materials', AdminMaterialController::class);
+    Route::post('materials/{material}/suppliers', [AdminMaterialController::class, 'updateSuppliers'])->name('materials.suppliers.update');
 });
