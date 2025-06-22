@@ -111,7 +111,7 @@ class RegisteredUserController extends Controller
             'contact_person' => 'required|string|max:100',
             'mobile_number' => 'required|string|max:20',
             'telephone_number' => 'nullable|string|max:20',
-            'supplier_type' => 'required|in:Individual,Contractor,Material Supplier,Equipment Rental,Other',
+            'supplier_type' => 'required|in:Construction & Engineering,Architecture & Design,Real Estate & Property Development,Manufacturing,Wholesale & Distribution,Retail & E-Commerce,Information Technology & Software,Telecommunications,Healthcare & Medical,Logistics & Transportation,Energy & Utilities,Financial Services,Legal & Compliance,Education & Training,Marketing & Advertising,Hospitality & Tourism,Government & Public Sector,Nonprofit / NGO,Other',
             'designation' => 'required|in:client,supplier',
             'business_reg_no' => 'nullable|string|max:100',
             'street' => 'required|string|max:255',
@@ -127,7 +127,7 @@ class RegisteredUserController extends Controller
             'use_sureprice' => 'required|in:0,1',
 
             // Bank details
-            'bank_name' => 'nullable|string|max:100',
+            'bank_name' => 'nullable|in:BDO,BPI,MetroBank,PNB,Security Bank,Union Bank,RCBC,China Bank',
             'bank_account_name' => 'nullable|string|max:100',
             'bank_account_number' => 'nullable|string|max:50',
 

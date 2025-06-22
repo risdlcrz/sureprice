@@ -134,7 +134,7 @@ class SupplierDashboardController extends Controller
         $validated = $request->validate([
             'username' => 'required|string|max:50',
             'company_name' => 'required|string|max:255',
-            'supplier_type' => 'required|string',
+            'supplier_type' => 'required|in:Construction & Engineering,Architecture & Design,Real Estate & Property Development,Manufacturing,Wholesale & Distribution,Retail & E-Commerce,Information Technology & Software,Telecommunications,Healthcare & Medical,Logistics & Transportation,Energy & Utilities,Financial Services,Legal & Compliance,Education & Training,Marketing & Advertising,Hospitality & Tourism,Government & Public Sector,Nonprofit / NGO,Other',
             'other_supplier_type' => 'nullable|string|max:100',
             'designation' => 'required|string',
             'business_reg_no' => 'nullable|string|max:100',
@@ -154,7 +154,7 @@ class SupplierDashboardController extends Controller
             'payment_terms' => 'nullable|string',
             'vat_registered' => 'required|in:0,1',
             'use_sureprice' => 'required|in:0,1',
-            'bank_name' => 'nullable|string|max:100',
+            'bank_name' => 'nullable|in:BDO,BPI,MetroBank,PNB,Security Bank,Union Bank,RCBC,China Bank',
             'bank_account_name' => 'nullable|string|max:100',
             'bank_account_number' => 'nullable|string|max:50',
         ]);
