@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="stylesheet" href="{{ asset('resources/css/login.css') }}">
-  <script src="{{ asset('resources/js/login.js') }}"></script>
+  @vite(['resources/css/login.css', 'resources/js/login.js'])
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Admin Center</title>
