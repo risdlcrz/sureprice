@@ -42,27 +42,19 @@
                             </div>
                         </div>
 
-                        <!-- Contract Selection (initially hidden) -->
-                        <div class="row mb-4" id="projectRelatedFields" style="display: none;">
+                        <!-- Contract Selection (always visible for project-related) -->
+                        <div class="row mb-4" id="projectRelatedFields">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="contract_id">Contract</label>
-                                    @if(request('contract_id'))
-                                        @php
-                                            $selectedContract = $contracts->firstWhere('id', request('contract_id'));
-                                        @endphp
-                                        <input type="text" class="form-control bg-light" value="{{ $selectedContract ? ($selectedContract->contract_number . ' - ' . ($selectedContract->name ?? $selectedContract->title ?? '') ) : '' }}" readonly>
-                                        <input type="hidden" name="contract_id" value="{{ request('contract_id') }}">
-                                    @else
-                                        <select name="contract_id" id="contract_id" class="form-control">
-                                            <option value="">Select a contract</option>
-                                            @foreach($contracts as $contract)
-                                                <option value="{{ $contract->id }}" {{ (request('contract_id') == $contract->id) ? 'selected' : '' }}>
-                                                    {{ $contract->contract_number }} - {{ $contract->name ?? $contract->title ?? '' }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    @endif
+                                    <label for="contract_id">Search Contract</label>
+                                    <select name="contract_id" id="contract_id" class="form-control">
+                                        <option value="">Select a contract</option>
+                                        @foreach($contracts as $contract)
+                                            <option value="{{ $contract->id }}" {{ (request('contract_id') == $contract->id) ? 'selected' : '' }}>
+                                                {{ $contract->contract_number }} - {{ $contract->name ?? $contract->title ?? '' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -92,27 +84,32 @@
                                             </tr>
                                         </thead>
                                         <tbody id="items-container">
-                                            @php
-                                                // Use $prefillItems from the controller only
-                                            @endphp
                                             @if(isset($prefillItems) && count($prefillItems) > 0)
                                                 @foreach($prefillItems as $index => $item)
+                                                    @php
+                                                        $materialObj = $materials->firstWhere('id', $item['material_id']);
+                                                    @endphp
                                                     <tr class="item-row">
                                                         <td>
-                                                            <input type="text" class="form-control" name="items[{{ $index }}][material_name]" value="{{ $item['material_name'] ?? '' }}" readonly>
-                                                            <input type="hidden" class="material-id-input" name="items[{{ $index }}][material_id]" value="{{ $item['material_id'] }}" required>
+                                                            {{ $materialObj->name ?? $item['material_name'] ?? '' }}
+                                                            <input type="hidden" name="items[{{ $index }}][material_id]" value="{{ $item['material_id'] }}">
                                                         </td>
                                                         <td>
-                                                            <input type="text" name="items[{{ $index }}][description]" class="form-control" value="{{ $item['description'] }}" required>
+                                                            @if(!empty($materialObj->description))
+                                                                {{ $materialObj->description }}
+                                                                <input type="hidden" name="items[{{ $index }}][description]" value="{{ $materialObj->description }}">
+                                                            @else
+                                                                <input type="hidden" name="items[{{ $index }}][description]" value="">
+                                                            @endif
                                                         </td>
                                                         <td>
-                                                            <input type="number" name="items[{{ $index }}][quantity]" class="form-control quantity" step="0.01" value="{{ $item['quantity'] }}" required>
+                                                            <input type="number" name="items[{{ $index }}][quantity]" class="form-control quantity" step="0.01" value="{{ $item['quantity'] }}" required readonly>
                                                         </td>
                                                         <td>
                                                             <input type="text" name="items[{{ $index }}][unit]" class="form-control unit" value="{{ $item['unit'] }}" readonly>
                                                         </td>
                                                         <td>
-                                                            <input type="number" name="items[{{ $index }}][estimated_unit_price]" class="form-control unit-price" step="0.01" value="{{ $item['estimated_unit_price'] }}" required>
+                                                            <input type="number" name="items[{{ $index }}][estimated_unit_price]" class="form-control unit-price" step="0.01" value="{{ $item['estimated_unit_price'] }}" required readonly>
                                                         </td>
                                                         <td>
                                                             <input type="number" name="items[{{ $index }}][total_amount]" class="form-control total-amount" value="{{ $item['total_amount'] }}" readonly>
@@ -123,9 +120,6 @@
                                                         <td>
                                                             <select name="items[{{ $index }}][preferred_supplier_id]" class="form-control supplier-select" required>
                                                                 <option value="">Select Supplier</option>
-                                                                @php
-                                                                    $materialObj = $materials->firstWhere('id', $item['material_id']);
-                                                                @endphp
                                                                 @if($materialObj && $materialObj->suppliers)
                                                                     @foreach($materialObj->suppliers as $supplier)
                                                                         <option value="{{ $supplier->id }}" {{ (isset($item['preferred_supplier_id']) && $item['preferred_supplier_id'] == $supplier->id) ? 'selected' : '' }}>{{ $supplier->company_name ?? $supplier->name }}</option>
@@ -146,12 +140,9 @@
                                                 @endforeach
                                             @else
                                             <tr class="item-row">
+                                                <td></td>
                                                 <td>
-                                                    <input type="text" class="form-control" name="items[0][material_name]" readonly>
-                                                    <input type="hidden" class="material-id-input" name="items[0][material_id]" required>
-                                                </td>
-                                                <td>
-                                                    <input type="text" name="items[0][description]" class="form-control" required>
+                                                    <input type="text" name="items[0][description]" class="form-control">
                                                 </td>
                                                 <td>
                                                     <input type="number" name="items[0][quantity]" class="form-control quantity" step="0.01" required>
