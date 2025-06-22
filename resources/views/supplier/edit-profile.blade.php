@@ -24,13 +24,34 @@
                 </div>
                 <div class="col-md-6">
                     <label for="supplier_type" class="form-label">Type of Company</label>
+                    @php
+                        $company_types = [
+                            'Construction & Engineering',
+                            'Architecture & Design',
+                            'Real Estate & Property Development',
+                            'Manufacturing',
+                            'Wholesale & Distribution',
+                            'Retail & E-Commerce',
+                            'Information Technology & Software',
+                            'Telecommunications',
+                            'Healthcare & Medical',
+                            'Logistics & Transportation',
+                            'Energy & Utilities',
+                            'Financial Services',
+                            'Legal & Compliance',
+                            'Education & Training',
+                            'Marketing & Advertising',
+                            'Hospitality & Tourism',
+                            'Government & Public Sector',
+                            'Nonprofit / NGO',
+                            'Other'
+                        ];
+                    @endphp
                     <select class="form-select" id="supplier_type" name="supplier_type" required>
                         <option value="">Select company type</option>
-                        <option value="Individual" {{ old('supplier_type', $supplier->supplier_type) == 'Individual' ? 'selected' : '' }}>Individual</option>
-                        <option value="Contractor" {{ old('supplier_type', $supplier->supplier_type) == 'Contractor' ? 'selected' : '' }}>Contractor</option>
-                        <option value="Material Supplier" {{ old('supplier_type', $supplier->supplier_type) == 'Material Supplier' ? 'selected' : '' }}>Material Supplier</option>
-                        <option value="Equipment Rental" {{ old('supplier_type', $supplier->supplier_type) == 'Equipment Rental' ? 'selected' : '' }}>Equipment Rental</option>
-                        <option value="Other" {{ old('supplier_type', $supplier->supplier_type) == 'Other' ? 'selected' : '' }}>Other</option>
+                        @foreach($company_types as $type)
+                            <option value="{{ $type }}" {{ old('supplier_type', $supplier->supplier_type) == $type ? 'selected' : '' }}>{{ $type }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="col-md-6" id="other_supplier_type_group" style="{{ old('supplier_type', $supplier->supplier_type) == 'Other' ? '' : 'display:none;' }}">

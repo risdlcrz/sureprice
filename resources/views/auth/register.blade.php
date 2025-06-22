@@ -337,15 +337,36 @@
           <div class="form-row">
             <div class="form-group @error('supplier_type') has-error @enderror">
               <label for="supplier_type">Type of Company</label>
+                @php
+                    $company_types = [
+                        'Construction & Engineering',
+                        'Architecture & Design',
+                        'Real Estate & Property Development',
+                        'Manufacturing',
+                        'Wholesale & Distribution',
+                        'Retail & E-Commerce',
+                        'Information Technology & Software',
+                        'Telecommunications',
+                        'Healthcare & Medical',
+                        'Logistics & Transportation',
+                        'Energy & Utilities',
+                        'Financial Services',
+                        'Legal & Compliance',
+                        'Education & Training',
+                        'Marketing & Advertising',
+                        'Hospitality & Tourism',
+                        'Government & Public Sector',
+                        'Nonprofit / NGO',
+                        'Other'
+                    ];
+                @endphp
               <div class="select-with-icon">
                 <i class="fas fa-tag"></i>
                 <select id="supplier_type" name="supplier_type" required>
                   <option value="">Select company type</option>
-                  <option value="Individual" {{ old('supplier_type') == 'Individual' ? 'selected' : '' }}>Individual</option>
-                  <option value="Contractor" {{ old('supplier_type') == 'Contractor' ? 'selected' : '' }}>Contractor</option>
-                  <option value="Material Supplier" {{ old('supplier_type') == 'Material Supplier' ? 'selected' : '' }}>Material Supplier</option>
-                  <option value="Equipment Rental" {{ old('supplier_type') == 'Equipment Rental' ? 'selected' : '' }}>Equipment Rental</option>
-                  <option value="Other" {{ old('supplier_type') == 'Other' ? 'selected' : '' }}>Other</option>
+                    @foreach($company_types as $type)
+                        <option value="{{ $type }}" {{ old('supplier_type') == $type ? 'selected' : '' }}>{{ $type }}</option>
+                    @endforeach
                 </select>
               </div>
               @error('supplier_type')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
