@@ -64,7 +64,7 @@
                             <div class="col-12">
                                 <h4>Request Items</h4>
                                 <div class="mb-2">
-                                    <input type="text" id="materialMasterSearch" class="form-control" placeholder="Search and add material from master list...">
+                                    <input type="text" id="materialMasterSearch" class="form-control" placeholder="Search for material in purchase request...">
                                     <div id="materialMasterSearchResults" class="list-group position-absolute w-100" style="z-index: 2000;"></div>
                                 </div>
                                 <div class="table-responsive">
@@ -131,8 +131,10 @@
                                                             <input type="text" name="items[{{ $index }}][notes]" class="form-control" value="{{ $item['notes'] }}">
                                                         </td>
                                                         <td>
-                                                            <button type="button" class="btn btn-warning btn-sm replace-material">Replace</button>
-                                                            <button type="button" class="btn btn-danger btn-sm remove-row">
+                                                            <button type="button" class="btn btn-outline-secondary btn-sm replace-material" title="Replace Material">
+                                                                <i class="fas fa-exchange-alt"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-danger btn-sm remove-row" title="Remove">
                                                                 <i class="fas fa-trash"></i>
                                                             </button>
                                                         </td>
@@ -221,6 +223,28 @@
   </div>
 </div>
 
+<!-- Material Replace Modal -->
+<div class="modal fade" id="replaceMaterialModal" tabindex="-1" aria-labelledby="replaceMaterialModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="replaceMaterialModalLabel">Replace Material</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="replaceMaterialSearchInput" class="form-control mb-2" placeholder="Search materials...">
+        <div id="replaceMaterialSearchResults" class="list-group" style="max-height: 300px; overflow-y: auto;"></div>
+        <div id="replaceMaterialWarning" class="alert alert-warning mt-2 d-none"></div>
+        <div id="replaceMaterialConfirmSection" class="d-none mt-3">
+            <h6>Confirm Replacement</h6>
+            <div id="replaceMaterialSummary"></div>
+            <button type="button" class="btn btn-primary mt-2" id="confirmReplaceMaterialBtn">Confirm Replace</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 @push('scripts')
 <script>
 const baseUrl = '{{ url("/") }}';
@@ -231,6 +255,8 @@ window.materials = @json($materials ?? []);
 
 let materialModalMode = 'add'; // 'add' or 'replace'
 let materialModalTargetRow = null;
+let replaceTargetRow = null;
+let selectedReplaceMaterial = null;
 
 function isMaterialInTable(materialId) {
     return Array.from(document.querySelectorAll('.material-id-input')).some(input => input.value == materialId);
@@ -323,32 +349,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const itemsContainer = document.getElementById('items-container'); // Get the tbody for items
 
     document.getElementById('addRow').addEventListener('click', function() {
+        const itemsContainer = document.getElementById('items-container');
         const templateRow = document.querySelector('.item-row');
         if (!templateRow) {
             console.error("No template row found. Please ensure at least one .item-row exists initially or provide a hidden template.");
             return;
         }
-
-        const newRow = templateRow.cloneNode(true); // Clone the first row
-        
-        // Clear values and update names for new row
-        newRow.querySelectorAll('input, select').forEach(input => {
-            input.name = input.name.replace(/\[\d+\]/, `[${rowCount}]`);
-            input.value = '';
-            input.classList.remove('is-invalid'); // Clear validation styles
+        // Clone the first row
+        const newRow = templateRow.cloneNode(true);
+        // Determine the new index
+        let maxIndex = 0;
+        itemsContainer.querySelectorAll('.item-row').forEach(row => {
+            const input = row.querySelector('input[name^="items["]');
+            if (input) {
+                const match = input.name.match(/items\[(\d+)\]/);
+                if (match && parseInt(match[1]) > maxIndex) {
+                    maxIndex = parseInt(match[1]);
+                }
+            }
         });
-
-        // Clear search input and hidden material ID for the new row
-        newRow.querySelector('.material-name').value = '';
-        newRow.querySelector('.material-id-input').value = '';
-        newRow.querySelector('.material-search-results').innerHTML = '';
-        newRow.querySelector('.unit').value = ''; // Clear unit
-        newRow.querySelector('.total-amount').value = ''; // Clear total amount
-        newRow.querySelector('.supplier-select').innerHTML = '<option value="">Select Supplier</option>'; // Clear suppliers
-
+        const newIndex = maxIndex + 1;
+        // Update all input/select names and clear values
+        newRow.querySelectorAll('input, select').forEach(input => {
+            input.name = input.name.replace(/items\[\d+\]/, `items[${newIndex}]`);
+            if (input.type === 'text' || input.type === 'number') input.value = '';
+            if (input.tagName === 'SELECT') input.selectedIndex = 0;
+        });
+        // Clear any plain text in the first two columns (material/description)
+        newRow.querySelectorAll('td').forEach((td, i) => {
+            if (i === 0 || i === 1) td.innerHTML = '';
+        });
+        // Add the new row to the table
         itemsContainer.appendChild(newRow);
-        setupRowCalculations(newRow); // Initialize calculations for the new row
-        rowCount++;
+        // Re-initialize search and calculation for the new row
+        if (newRow.querySelector('.material-name')) {
+            setupMaterialSearch(newRow);
+        }
+        setupRowCalculations(newRow);
     });
 
     // Remove row
@@ -415,54 +452,55 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         }, 300);
 
-        searchInput.addEventListener('input', performSearch);
+        // Only add event listeners if the element exists
+        if (searchInput) {
+            searchInput.addEventListener('input', performSearch);
+            searchInput.addEventListener('change', function() {
+                if (searchInput.value.trim() === '') {
+                    materialIdInput.value = '';
+                    unitInput.value = '';
+                    unitPriceInput.value = '';
+                    supplierSelect.innerHTML = '<option value="">Select Supplier</option>'; // Clear suppliers
+                    const quantityInput = container.querySelector('.quantity');
+                    const event = new Event('input', { bubbles: true });
+                    quantityInput.dispatchEvent(event); // Trigger recalculation
+                }
+            });
+        }
+        if (searchResultsDiv) {
+            searchResultsDiv.addEventListener('click', function(e) {
+                if (e.target.classList.contains('list-group-item-action')) {
+                    e.preventDefault();
+                    const selectedResult = e.target;
+                    const materialId = selectedResult.dataset.materialId;
+                    const materialName = selectedResult.dataset.materialName;
+                    const materialCode = selectedResult.dataset.materialCode;
+                    const unit = selectedResult.dataset.unit;
+                    const price = selectedResult.dataset.price;
+                    const suppliers = JSON.parse(selectedResult.dataset.suppliers);
 
-        // Handle selection from search results
-        searchResultsDiv.addEventListener('click', function(e) {
-            if (e.target.classList.contains('list-group-item-action')) {
-                e.preventDefault();
-                const selectedResult = e.target;
-                const materialId = selectedResult.dataset.materialId;
-                const materialName = selectedResult.dataset.materialName;
-                const materialCode = selectedResult.dataset.materialCode;
-                const unit = selectedResult.dataset.unit;
-                const price = selectedResult.dataset.price;
-                const suppliers = JSON.parse(selectedResult.dataset.suppliers);
+                    searchInput.value = `${materialName} (${materialCode})`; // Display full name in input
+                    materialIdInput.value = materialId;
+                    unitInput.value = unit;
+                    unitPriceInput.value = price;
+                    searchResultsDiv.innerHTML = ''; // Clear results
 
-                searchInput.value = `${materialName} (${materialCode})`; // Display full name in input
-                materialIdInput.value = materialId;
-                unitInput.value = unit;
-                unitPriceInput.value = price;
-                searchResultsDiv.innerHTML = ''; // Clear results
+                    // Populate preferred supplier dropdown
+                    supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
+                    suppliers.forEach(supplier => {
+                        const option = document.createElement('option');
+                        option.value = supplier.id;
+                        option.textContent = supplier.name;
+                        supplierSelect.appendChild(option);
+                    });
 
-                // Populate preferred supplier dropdown
-                supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
-                suppliers.forEach(supplier => {
-                    const option = document.createElement('option');
-                    option.value = supplier.id;
-                    option.textContent = supplier.name;
-                    supplierSelect.appendChild(option);
-                });
-
-                // Trigger change to recalculate total
-                const quantityInput = container.querySelector('.quantity');
-                const event = new Event('input', { bubbles: true });
-                quantityInput.dispatchEvent(event);
-            }
-        });
-
-        // Clear hidden ID and unit if search input is cleared
-        searchInput.addEventListener('change', function() {
-            if (searchInput.value.trim() === '') {
-                materialIdInput.value = '';
-                unitInput.value = '';
-                unitPriceInput.value = '';
-                supplierSelect.innerHTML = '<option value="">Select Supplier</option>'; // Clear suppliers
-                const quantityInput = container.querySelector('.quantity');
-                const event = new Event('input', { bubbles: true });
-                quantityInput.dispatchEvent(event); // Trigger recalculation
-            }
-        });
+                    // Trigger change to recalculate total
+                    const quantityInput = container.querySelector('.quantity');
+                    const event = new Event('input', { bubbles: true });
+                    quantityInput.dispatchEvent(event);
+                }
+            });
+        }
     }
 
     // Function to set up quantity and unit price calculations for a row
@@ -484,7 +522,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize search and calculations for all existing rows
     document.querySelectorAll('.item-row').forEach(row => {
-        setupMaterialSearch(row);
+        // Only setup search if the row has a .material-name input (i.e., addable/searchable rows)
+        if (row.querySelector('.material-name')) {
+            setupMaterialSearch(row);
+        }
         setupRowCalculations(row);
     });
 
@@ -493,73 +534,126 @@ document.addEventListener('DOMContentLoaded', function() {
         projectRelatedFields.style.display = 'none';
     }
 
-    const searchInput = document.getElementById('materialTableSearch');
-    searchInput.addEventListener('input', function() {
-        const filter = this.value.toLowerCase();
-        document.querySelectorAll('#itemsTable tbody tr').forEach(function(row) {
-            const materialCell = row.querySelector('td:first-child input, td:first-child');
-            let text = '';
-            if (materialCell) {
-                if (materialCell.tagName === 'INPUT') {
-                    text = materialCell.value.toLowerCase();
-                } else {
+    // The top search bar should only filter table rows by material name
+    const searchInput = document.getElementById('materialMasterSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const filter = this.value.toLowerCase();
+            document.querySelectorAll('#itemsTable tbody tr').forEach(function(row) {
+                // Only filter by the plain text in the first cell (material name)
+                const materialCell = row.querySelector('td:first-child');
+                let text = '';
+                if (materialCell) {
                     text = materialCell.textContent.toLowerCase();
                 }
-            }
-            row.style.display = text.includes(filter) ? '' : 'none';
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
         });
+    }
+
+    // Replace button opens modal
+    $(document).on('click', '.replace-material', function() {
+        replaceTargetRow = $(this).closest('tr');
+        selectedReplaceMaterial = null;
+        $('#replaceMaterialSearchInput').val('');
+        $('#replaceMaterialSearchResults').empty();
+        $('#replaceMaterialWarning').addClass('d-none').text('');
+        $('#replaceMaterialConfirmSection').addClass('d-none');
+        $('#replaceMaterialSummary').empty();
+        $('#replaceMaterialModal').modal('show');
     });
 
-    // Top searchbar opens modal
-    document.getElementById('materialMasterSearch').addEventListener('focus', function() {
-        openMaterialModal('add');
-    });
-    // Replace button opens modal
-    document.getElementById('items-container').addEventListener('click', function(e) {
-        if (e.target.classList.contains('replace-material')) {
-            openMaterialModal('replace', e.target.closest('.item-row'));
-        }
-    });
-    // Modal search logic
-    document.getElementById('modalMaterialSearchInput').addEventListener('input', function() {
-        const query = this.value.trim().toLowerCase();
-        const resultsDiv = document.getElementById('modalMaterialSearchResults');
-        resultsDiv.innerHTML = '';
-        clearMaterialModalWarning();
+    // Helper to get display price (always base price)
+    function getMaterialBasePrice(material) {
+        const base = parseFloat(material.base_price);
+        if (!isNaN(base) && base > 0) return base;
+        return 0;
+    }
+
+    $('#replaceMaterialSearchInput').on('input', function() {
+        const query = $(this).val().trim().toLowerCase();
+        const resultsDiv = $('#replaceMaterialSearchResults');
+        resultsDiv.empty();
+        $('#replaceMaterialWarning').addClass('d-none').text('');
+        $('#replaceMaterialConfirmSection').addClass('d-none');
+        $('#replaceMaterialSummary').empty();
         if (query.length < 2) return;
         const matches = window.materials.filter(mat =>
             mat.name.toLowerCase().includes(query) ||
             (mat.code && mat.code.toLowerCase().includes(query))
         );
         if (matches.length === 0) {
-            resultsDiv.innerHTML = '<div class="list-group-item">No materials found</div>';
+            resultsDiv.html('<div class="list-group-item">No materials found</div>');
             return;
         }
         matches.forEach(material => {
-            const item = document.createElement('a');
-            item.href = '#';
-            item.classList.add('list-group-item', 'list-group-item-action');
-            item.dataset.materialId = material.id;
-            item.textContent = `${material.name} (${material.code || ''}) - ${material.unit}`;
-            item.dataset.material = JSON.stringify(material);
-            resultsDiv.appendChild(item);
+            const price = getMaterialBasePrice(material);
+            const item = $('<a href="#" class="list-group-item list-group-item-action"></a>');
+            item.text(`${material.name} (${material.code || ''}) - ${material.unit} - ₱${parseFloat(price).toFixed(2)}`);
+            item.data('material', material);
+            resultsDiv.append(item);
         });
     });
-    // Modal select logic
-    document.getElementById('modalMaterialSearchResults').addEventListener('click', function(e) {
-        if (e.target.classList.contains('list-group-item-action')) {
-            e.preventDefault();
-            const material = JSON.parse(e.target.dataset.material);
-            if (materialModalMode === 'add') {
-                addMaterialRowFromMaster(material);
-            } else if (materialModalMode === 'replace' && materialModalTargetRow) {
-                replaceMaterialInRow(materialModalTargetRow, material);
-            }
-            bootstrap.Modal.getInstance(document.getElementById('materialSearchModal')).hide();
+
+    $('#replaceMaterialSearchResults').on('click', '.list-group-item-action', function(e) {
+        e.preventDefault();
+        selectedReplaceMaterial = $(this).data('material');
+        // Compute new quantity and total using contract dimensions if available
+        let contractQuantity = 1;
+        if (window.contractRoomArea && selectedReplaceMaterial.is_per_area && selectedReplaceMaterial.coverage_rate) {
+            contractQuantity = Math.ceil(window.contractRoomArea / selectedReplaceMaterial.coverage_rate);
+        } else if (selectedReplaceMaterial.minimum_quantity) {
+            contractQuantity = selectedReplaceMaterial.minimum_quantity;
         }
+        const unitPrice = getMaterialBasePrice(selectedReplaceMaterial);
+        const total = (contractQuantity * unitPrice).toFixed(2);
+        // Show confirmation section
+        $('#replaceMaterialSummary').html(`
+            <strong>Material:</strong> ${selectedReplaceMaterial.name}<br>
+            <strong>Description:</strong> ${selectedReplaceMaterial.description || ''}<br>
+            <strong>Unit:</strong> ${selectedReplaceMaterial.unit}<br>
+            <strong>Quantity:</strong> ${contractQuantity}<br>
+            <strong>Base Price:</strong> ₱${unitPrice.toFixed(2)}<br>
+            <strong>Total:</strong> ₱${total}
+        `);
+        $('#replaceMaterialConfirmSection').removeClass('d-none');
+        // Store for confirm
+        selectedReplaceMaterial._computedQuantity = contractQuantity;
+        selectedReplaceMaterial._computedTotal = total;
     });
-    // Hide warning on modal close
-    document.getElementById('materialSearchModal').addEventListener('hidden.bs.modal', clearMaterialModalWarning);
+
+    $('#confirmReplaceMaterialBtn').on('click', function() {
+        if (!replaceTargetRow || !selectedReplaceMaterial) return;
+        // Find the index for this row
+        const index = replaceTargetRow.index();
+        // Update the Material cell (plain text + hidden input)
+        replaceTargetRow.find('td').eq(0).html(`
+            ${selectedReplaceMaterial.name}
+            <input type="hidden" name="items[${index}][material_id]" value="${selectedReplaceMaterial.id}">
+        `);
+        // Update the Description cell (plain text + hidden input)
+        replaceTargetRow.find('td').eq(1).html(`
+            ${(selectedReplaceMaterial.description || '')}
+            <input type="hidden" name="items[${index}][description]" value="${selectedReplaceMaterial.description || ''}">
+        `);
+        // Always use computed quantity from modal (contract area if per-area)
+        replaceTargetRow.find('input[name="items['+index+'][quantity]"]').val(selectedReplaceMaterial._computedQuantity);
+        // Always use base price for estimated unit price
+        const basePrice = getMaterialBasePrice(selectedReplaceMaterial);
+        replaceTargetRow.find('input[name="items['+index+'][unit]"]').val(selectedReplaceMaterial.unit);
+        replaceTargetRow.find('input[name="items['+index+'][estimated_unit_price]"]').val(basePrice);
+        // Update total amount
+        replaceTargetRow.find('input[name="items['+index+'][total_amount]"]').val(selectedReplaceMaterial._computedTotal);
+        // Optionally update suppliers dropdown
+        const supplierSelect = replaceTargetRow.find('select.supplier-select');
+        supplierSelect.empty().append('<option value="">Select Supplier</option>');
+        if (selectedReplaceMaterial.suppliers && selectedReplaceMaterial.suppliers.length > 0) {
+            selectedReplaceMaterial.suppliers.forEach(supplier => {
+                supplierSelect.append(`<option value="${supplier.id}">${supplier.name}</option>`);
+            });
+        }
+        $('#replaceMaterialModal').modal('hide');
+    });
 });
 </script>
 @endpush
