@@ -95,4 +95,14 @@ class User extends Authenticatable // implements MustVerifyEmail
     {
         return ($this->role ?? $this->user_type ?? null) === 'supplier';
     }
+
+    protected static function booted()
+    {
+        parent::booted();
+        static::created(function ($user) {
+            if ($user->user_type === 'supplier') {
+                \App\Models\Supplier::firstOrCreate(['user_id' => $user->id], ['company_name' => $user->name]);
+            }
+        });
+    }
 }

@@ -47,6 +47,21 @@ class PurchaseRequestController extends Controller
                     ];
                 }
             }
+        } elseif ($request->has('material_id')) {
+            $material = $materials->firstWhere('id', $request->material_id);
+            if ($material) {
+                $prefillItems[] = [
+                    'material_id' => $material->id,
+                    'description' => $material->description ?? $material->name,
+                    'quantity' => 1,
+                    'unit' => $material->unit,
+                    'estimated_unit_price' => $material->base_price,
+                    'total_amount' => $material->base_price,
+                    'notes' => '',
+                    'preferred_brand' => null,
+                    'preferred_supplier_id' => null
+                ];
+            }
         }
         
         $bestSuppliers = [];
@@ -84,6 +99,16 @@ class PurchaseRequestController extends Controller
     public function store(Request $request)
     {
         \Log::info('PurchaseRequestController@store called', ['request' => $request->all()]);
+        // Normalize empty preferred_supplier_id to null before validation
+        if ($request->has('items')) {
+            $items = collect($request->input('items'))->map(function ($item) {
+                if (isset($item['preferred_supplier_id']) && ($item['preferred_supplier_id'] === '' || $item['preferred_supplier_id'] === 0 || $item['preferred_supplier_id'] === '0')) {
+                    $item['preferred_supplier_id'] = null;
+                }
+                return $item;
+            })->toArray();
+            $request->merge(['items' => $items]);
+        }
         $validated = $request->validate([
             'is_project_related' => 'required|boolean',
             'contract_id' => 'nullable|exists:contracts,id',
@@ -97,8 +122,19 @@ class PurchaseRequestController extends Controller
             'items.*.estimated_unit_price' => 'required|numeric|min:0',
             'items.*.notes' => 'nullable|string',
             'items.*.preferred_brand' => 'nullable|string',
-            'items.*.preferred_supplier_id' => 'required|exists:suppliers,id',
+            'items.*.preferred_supplier_id' => 'nullable|exists:suppliers,id',
         ]);
+
+        // Custom validation: preferred_supplier_id must be a supplier for the selected material
+        foreach ($validated['items'] as $idx => $item) {
+            if (!empty($item['preferred_supplier_id'])) {
+                $material = \App\Models\Material::with('suppliers')->find($item['material_id']);
+                $supplierIds = $material ? $material->suppliers->pluck('id')->map(fn($id) => (string)$id) : collect();
+                if (!$material || !$supplierIds->contains((string)$item['preferred_supplier_id'])) {
+                    return back()->withErrors(["items.$idx.preferred_supplier_id" => 'The selected supplier is not valid for the chosen material.'])->withInput();
+                }
+            }
+        }
 
         // Custom validation: require contract_id if is_project_related
         if ($validated['is_project_related'] && empty($validated['contract_id'])) {
@@ -179,6 +215,16 @@ class PurchaseRequestController extends Controller
             return back()->with('error', 'Cannot update a purchase request that is not pending.');
         }
 
+        // Normalize empty preferred_supplier_id to null before validation
+        if ($request->has('items')) {
+            $items = collect($request->input('items'))->map(function ($item) {
+                if (isset($item['preferred_supplier_id']) && ($item['preferred_supplier_id'] === '' || $item['preferred_supplier_id'] === 0 || $item['preferred_supplier_id'] === '0')) {
+                    $item['preferred_supplier_id'] = null;
+                }
+                return $item;
+            })->toArray();
+            $request->merge(['items' => $items]);
+        }
         $validated = $request->validate([
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
@@ -190,7 +236,7 @@ class PurchaseRequestController extends Controller
             'items.*.estimated_unit_price' => 'required|numeric|min:0',
             'items.*.notes' => 'nullable|string',
             'items.*.preferred_brand' => 'nullable|string',
-            'items.*.preferred_supplier_id' => 'required|exists:suppliers,id'
+            'items.*.preferred_supplier_id' => 'nullable|exists:suppliers,id'
         ]);
 
         DB::beginTransaction();

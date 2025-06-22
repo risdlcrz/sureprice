@@ -142,9 +142,9 @@
                                     <td>{{ $inventory->last_restock_date ? $inventory->last_restock_date->format('M d, Y') : 'N/A' }}</td>
                                     <td>
                                         <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#adjustStockModal{{ $inventory->id }}">
-                                                <i class="fas fa-balance-scale"></i>
-                                            </button>
+                                            <a href="{{ route('purchase-requests.create', ['material_id' => $inventory->material->id]) }}" class="btn btn-sm btn-success" title="Request Restock">
+                                                <i class="fas fa-plus"></i>
+                                            </a>
                                             <a href="{{ route('inventory.edit', $inventory) }}" class="btn btn-sm btn-primary">
                                                 <i class="fas fa-edit"></i>
                                             </a>
@@ -155,43 +155,6 @@
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </form>
-                                        </div>
-
-                                        <div class="modal fade" id="adjustStockModal{{ $inventory->id }}" tabindex="-1" role="dialog">
-                                            <div class="modal-dialog" role="document">
-                                                <div class="modal-content">
-                                                    <form action="{{ route('inventory.adjust-stock', $inventory) }}" method="POST">
-                                                        @csrf
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title">Adjust Stock - {{ $inventory->material->name }}</h5>
-                                                            <button type="button" class="close" data-bs-dismiss="modal">
-                                                                <span>&times;</span>
-                                                            </button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <div class="form-group">
-                                                                <label>Operation</label>
-                                                                <select name="operation" class="form-control" required>
-                                                                    <option value="add">Add Stock</option>
-                                                                    <option value="subtract">Subtract Stock</option>
-                                                                </select>
-                                                            </div>
-                                                            <div class="form-group">
-                                                                <label>Quantity</label>
-                                                                <input type="number" name="quantity" class="form-control" step="0.01" required>
-                                                            </div>
-                                                            <div class="form-group">
-                                                                <label>Notes</label>
-                                                                <textarea name="notes" class="form-control" rows="3"></textarea>
-                                                            </div>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                            <button type="submit" class="btn btn-primary">Save Changes</button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
                                         </div>
                                     </td>
                                 </tr>

@@ -47,14 +47,14 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label for="contract_id">Search Contract</label>
-                                    <select name="contract_id" id="contract_id" class="form-control">
-                                        <option value="">Select a contract</option>
-                                        @foreach($contracts as $contract)
-                                            <option value="{{ $contract->id }}" {{ (request('contract_id') == $contract->id) ? 'selected' : '' }}>
-                                                {{ $contract->contract_number }} - {{ $contract->name ?? $contract->title ?? '' }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                                        <select name="contract_id" id="contract_id" class="form-control">
+                                            <option value="">Select a contract</option>
+                                            @foreach($contracts as $contract)
+                                                <option value="{{ $contract->id }}" {{ (request('contract_id') == $contract->id) ? 'selected' : '' }}>
+                                                    {{ $contract->contract_number }} - {{ $contract->name ?? $contract->title ?? '' }}
+                                                </option>
+                                            @endforeach
+                                        </select>
                                 </div>
                             </div>
                         </div>
@@ -95,18 +95,13 @@
                                                             <input type="hidden" name="items[{{ $index }}][material_id]" value="{{ $item['material_id'] }}">
                                                         </td>
                                                         <td>
-                                                            @if(!empty($materialObj->description))
-                                                                {{ $materialObj->description }}
-                                                                <input type="hidden" name="items[{{ $index }}][description]" value="{{ $materialObj->description }}">
-                                                            @else
-                                                                <input type="hidden" name="items[{{ $index }}][description]" value="">
-                                                            @endif
+                                                            <input type="text" name="items[{{ $index }}][description]" class="form-control" value="{{ !empty($materialObj->description) ? $materialObj->description : '' }}" placeholder="Enter description (required)">
                                                         </td>
                                                         <td>
-                                                            <input type="number" name="items[{{ $index }}][quantity]" class="form-control quantity" step="0.01" value="{{ $item['quantity'] }}" required readonly>
+                                                            <input type="number" name="items[{{ $index }}][quantity]" class="form-control quantity" step="0.01" value="{{ $item['quantity'] }}" required>
                                                         </td>
                                                         <td>
-                                                            <input type="text" name="items[{{ $index }}][unit]" class="form-control unit" value="{{ $item['unit'] }}" readonly>
+                                                            <input type="text" name="items[{{ $index }}][unit]" class="form-control unit" value="{{ $item['unit'] ?? $materialObj->unit ?? '' }}" readonly>
                                                         </td>
                                                         <td>
                                                             <input type="number" name="items[{{ $index }}][estimated_unit_price]" class="form-control unit-price" step="0.01" value="{{ $item['estimated_unit_price'] }}" required readonly>
@@ -118,7 +113,7 @@
                                                             <input type="text" name="items[{{ $index }}][preferred_brand]" class="form-control" value="{{ $item['preferred_brand'] }}">
                                                         </td>
                                                         <td>
-                                                            <select name="items[{{ $index }}][preferred_supplier_id]" class="form-control supplier-select" required>
+                                                            <select name="items[{{ $index }}][preferred_supplier_id]" class="form-control supplier-select" @if(!$materialObj || !$materialObj->suppliers || $materialObj->suppliers->isEmpty()) disabled @endif>
                                                                 <option value="">Select Supplier</option>
                                                                 @if($materialObj && $materialObj->suppliers)
                                                                     @foreach($materialObj->suppliers as $supplier)
@@ -454,7 +449,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Only add event listeners if the element exists
         if (searchInput) {
-            searchInput.addEventListener('input', performSearch);
+        searchInput.addEventListener('input', performSearch);
             searchInput.addEventListener('change', function() {
                 if (searchInput.value.trim() === '') {
                     materialIdInput.value = '';
@@ -468,38 +463,38 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         if (searchResultsDiv) {
-            searchResultsDiv.addEventListener('click', function(e) {
-                if (e.target.classList.contains('list-group-item-action')) {
-                    e.preventDefault();
-                    const selectedResult = e.target;
-                    const materialId = selectedResult.dataset.materialId;
-                    const materialName = selectedResult.dataset.materialName;
-                    const materialCode = selectedResult.dataset.materialCode;
-                    const unit = selectedResult.dataset.unit;
-                    const price = selectedResult.dataset.price;
-                    const suppliers = JSON.parse(selectedResult.dataset.suppliers);
+        searchResultsDiv.addEventListener('click', function(e) {
+            if (e.target.classList.contains('list-group-item-action')) {
+                e.preventDefault();
+                const selectedResult = e.target;
+                const materialId = selectedResult.dataset.materialId;
+                const materialName = selectedResult.dataset.materialName;
+                const materialCode = selectedResult.dataset.materialCode;
+                const unit = selectedResult.dataset.unit;
+                const price = selectedResult.dataset.price;
+                const suppliers = JSON.parse(selectedResult.dataset.suppliers);
 
-                    searchInput.value = `${materialName} (${materialCode})`; // Display full name in input
-                    materialIdInput.value = materialId;
-                    unitInput.value = unit;
-                    unitPriceInput.value = price;
-                    searchResultsDiv.innerHTML = ''; // Clear results
+                searchInput.value = `${materialName} (${materialCode})`; // Display full name in input
+                materialIdInput.value = materialId;
+                unitInput.value = unit;
+                unitPriceInput.value = price;
+                searchResultsDiv.innerHTML = ''; // Clear results
 
-                    // Populate preferred supplier dropdown
-                    supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
-                    suppliers.forEach(supplier => {
-                        const option = document.createElement('option');
-                        option.value = supplier.id;
-                        option.textContent = supplier.name;
-                        supplierSelect.appendChild(option);
-                    });
+                // Populate preferred supplier dropdown
+                supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
+                suppliers.forEach(supplier => {
+                    const option = document.createElement('option');
+                    option.value = supplier.id;
+                    option.textContent = supplier.name;
+                    supplierSelect.appendChild(option);
+                });
 
-                    // Trigger change to recalculate total
-                    const quantityInput = container.querySelector('.quantity');
-                    const event = new Event('input', { bubbles: true });
-                    quantityInput.dispatchEvent(event);
-                }
-            });
+                // Trigger change to recalculate total
+                const quantityInput = container.querySelector('.quantity');
+                const event = new Event('input', { bubbles: true });
+                quantityInput.dispatchEvent(event);
+            }
+        });
         }
     }
 
@@ -524,7 +519,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.item-row').forEach(row => {
         // Only setup search if the row has a .material-name input (i.e., addable/searchable rows)
         if (row.querySelector('.material-name')) {
-            setupMaterialSearch(row);
+        setupMaterialSearch(row);
         }
         setupRowCalculations(row);
     });
@@ -537,18 +532,18 @@ document.addEventListener('DOMContentLoaded', function() {
     // The top search bar should only filter table rows by material name
     const searchInput = document.getElementById('materialMasterSearch');
     if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            const filter = this.value.toLowerCase();
-            document.querySelectorAll('#itemsTable tbody tr').forEach(function(row) {
+    searchInput.addEventListener('input', function() {
+        const filter = this.value.toLowerCase();
+        document.querySelectorAll('#itemsTable tbody tr').forEach(function(row) {
                 // Only filter by the plain text in the first cell (material name)
                 const materialCell = row.querySelector('td:first-child');
-                let text = '';
-                if (materialCell) {
+            let text = '';
+            if (materialCell) {
                     text = materialCell.textContent.toLowerCase();
-                }
-                row.style.display = text.includes(filter) ? '' : 'none';
-            });
+            }
+            row.style.display = text.includes(filter) ? '' : 'none';
         });
+    });
     }
 
     // Replace button opens modal
@@ -596,7 +591,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     $('#replaceMaterialSearchResults').on('click', '.list-group-item-action', function(e) {
-        e.preventDefault();
+            e.preventDefault();
         selectedReplaceMaterial = $(this).data('material');
         // Compute new quantity and total using contract dimensions if available
         let contractQuantity = 1;

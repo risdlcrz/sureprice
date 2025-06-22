@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Inventory;
 
 class Material extends Model
 {
@@ -107,6 +108,47 @@ class Material extends Model
             if (empty($material->code)) {
                 $material->code = static::generateUniqueCode();
             }
+        });
+
+        // Sync to inventory on create
+        static::created(function ($material) {
+            if (!Inventory::where('material_id', $material->id)->exists()) {
+                Inventory::create([
+                    'material_id' => $material->id,
+                    'quantity' => 0,
+                    'unit' => $material->unit,
+                    'location' => null,
+                    'status' => 'active',
+                    'minimum_threshold' => 0,
+                ]);
+            }
+        });
+
+        // Sync to inventory on update
+        static::updated(function ($material) {
+            $inventory = Inventory::where('material_id', $material->id)->first();
+            if ($inventory) {
+                // Update unit if changed
+                if ($inventory->unit !== $material->unit) {
+                    $inventory->unit = $material->unit;
+                    $inventory->save();
+                }
+            } else {
+                // If inventory record is missing, create it
+                Inventory::create([
+                    'material_id' => $material->id,
+                    'quantity' => 0,
+                    'unit' => $material->unit,
+                    'location' => null,
+                    'status' => 'active',
+                    'minimum_threshold' => 0,
+                ]);
+            }
+        });
+
+        // Remove inventory on material delete
+        static::deleting(function ($material) {
+            Inventory::where('material_id', $material->id)->delete();
         });
     }
 
