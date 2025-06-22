@@ -122,9 +122,7 @@ class MaterialController extends Controller
             }
 
             // Attach scope types if any
-            if (!empty($validated['scope_types'])) {
-                $material->scopeTypes()->attach($validated['scope_types']);
-            }
+            $material->scopeTypes()->sync($validated['scope_types'] ?? []);
 
             DB::commit();
 

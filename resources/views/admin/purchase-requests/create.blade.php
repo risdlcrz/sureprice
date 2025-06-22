@@ -99,12 +99,8 @@
                                                 @foreach($prefillItems as $index => $item)
                                                     <tr class="item-row">
                                                         <td>
-                                                            <div class="material-search-container position-relative">
-                                                                <input type="text" class="form-control material-search-input" placeholder="Search material..." value="{{ $item['material_name'] ?? '' }}" required>
-                                                                <input type="hidden" class="material-id-input" name="items[{{ $index }}][material_id]" value="{{ $item['material_id'] }}" required>
-                                                                <div class="material-search-results list-group position-absolute w-100" style="z-index: 1000;"></div>
-                                                                <div class="invalid-feedback">Please select a material.</div>
-                                                            </div>
+                                                            <input type="text" class="form-control" name="items[{{ $index }}][material_name]" value="{{ $item['material_name'] ?? '' }}" readonly>
+                                                            <input type="hidden" class="material-id-input" name="items[{{ $index }}][material_id]" value="{{ $item['material_id'] }}" required>
                                                         </td>
                                                         <td>
                                                             <input type="text" name="items[{{ $index }}][description]" class="form-control" value="{{ $item['description'] }}" required>
@@ -151,12 +147,8 @@
                                             @else
                                             <tr class="item-row">
                                                 <td>
-                                                    <div class="material-search-container position-relative">
-                                                        <input type="text" class="form-control material-search-input" placeholder="Search material..." required>
-                                                        <input type="hidden" class="material-id-input" name="items[0][material_id]" required>
-                                                        <div class="material-search-results list-group position-absolute w-100" style="z-index: 1000;"></div>
-                                                        <div class="invalid-feedback">Please select a material.</div>
-                                                    </div>
+                                                    <input type="text" class="form-control" name="items[0][material_name]" readonly>
+                                                    <input type="hidden" class="material-id-input" name="items[0][material_id]" required>
                                                 </td>
                                                 <td>
                                                     <input type="text" name="items[0][description]" class="form-control" required>
@@ -266,7 +258,7 @@ function addMaterialRowFromMaster(material) {
         input.value = '';
         input.classList.remove('is-invalid');
     });
-    newRow.querySelector('.material-search-input').value = `${material.name} (${material.code})`;
+    newRow.querySelector('.material-name').value = `${material.name} (${material.code})`;
     newRow.querySelector('.material-id-input').value = material.id;
     newRow.querySelector('.unit').value = material.unit;
     newRow.querySelector('.unit-price').value = material.srp_price || material.base_price;
@@ -281,7 +273,6 @@ function addMaterialRowFromMaster(material) {
         });
     }
     document.getElementById('items-container').appendChild(newRow);
-    setupMaterialSearch(newRow);
     setupRowCalculations(newRow);
 }
 
@@ -290,7 +281,7 @@ function replaceMaterialInRow(row, material) {
         showMaterialModalWarning('Material already in the table!');
         return;
     }
-    row.querySelector('.material-search-input').value = `${material.name} (${material.code})`;
+    row.querySelector('.material-name').value = `${material.name} (${material.code})`;
     row.querySelector('.material-id-input').value = material.id;
     row.querySelector('.unit').value = material.unit;
     row.querySelector('.unit-price').value = material.srp_price || material.base_price;
@@ -357,7 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // Clear search input and hidden material ID for the new row
-        newRow.querySelector('.material-search-input').value = '';
+        newRow.querySelector('.material-name').value = '';
         newRow.querySelector('.material-id-input').value = '';
         newRow.querySelector('.material-search-results').innerHTML = '';
         newRow.querySelector('.unit').value = ''; // Clear unit
@@ -365,7 +356,6 @@ document.addEventListener('DOMContentLoaded', function() {
         newRow.querySelector('.supplier-select').innerHTML = '<option value="">Select Supplier</option>'; // Clear suppliers
 
         itemsContainer.appendChild(newRow);
-        setupMaterialSearch(newRow); // Initialize search for the new row
         setupRowCalculations(newRow); // Initialize calculations for the new row
         rowCount++;
     });
@@ -392,7 +382,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Setup Material Search functionality
     function setupMaterialSearch(container) {
-        const searchInput = container.querySelector('.material-search-input');
+        const searchInput = container.querySelector('.material-name');
         const materialIdInput = container.querySelector('.material-id-input');
         const searchResultsDiv = container.querySelector('.material-search-results');
         const unitInput = container.querySelector('.unit');
