@@ -46,15 +46,13 @@
                         <div class="row mb-4" id="projectRelatedFields">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="contract_id">Search Contract</label>
-                                        <select name="contract_id" id="contract_id" class="form-control">
-                                            <option value="">Select a contract</option>
-                                            @foreach($contracts as $contract)
-                                                <option value="{{ $contract->id }}" {{ (request('contract_id') == $contract->id) ? 'selected' : '' }}>
-                                                    {{ $contract->contract_number }} - {{ $contract->name ?? $contract->title ?? '' }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                    <label for="contract_search">Search Contract</label>
+                                    <input type="text" id="contract_search" class="form-control" placeholder="Search contracts by number or name...">
+                                    <div id="contract_search_results" class="list-group position-absolute w-100" style="z-index: 2000; max-height: 200px; overflow-y: auto;"></div>
+                                    <input type="hidden" name="contract_id" id="contract_id" value="{{ request('contract_id') }}">
+                                    <div id="selected_contract_info" class="mt-2 p-2 bg-light rounded" style="display: none;">
+                                        <strong>Selected Contract:</strong> <span id="contract_display"></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -87,21 +85,21 @@
                                             @if(isset($prefillItems) && count($prefillItems) > 0)
                                                 @foreach($prefillItems as $index => $item)
                                                     @php
-                                                        $materialObj = $materials->firstWhere('id', $item['material_id']);
+                                                        $materialObj = $item['material_obj'];
                                                     @endphp
                                                     <tr class="item-row">
                                                         <td>
-                                                            {{ $materialObj->name ?? $item['material_name'] ?? '' }}
+                                                            {{ $item['material_name'] }}
                                                             <input type="hidden" name="items[{{ $index }}][material_id]" value="{{ $item['material_id'] }}">
                                                         </td>
                                                         <td>
-                                                            <input type="text" name="items[{{ $index }}][description]" class="form-control" value="{{ !empty($materialObj->description) ? $materialObj->description : '' }}" placeholder="Enter description (required)">
+                                                            <input type="text" name="items[{{ $index }}][description]" class="form-control" value="{{ $item['description'] }}" placeholder="Enter description (required)">
                                                         </td>
                                                         <td>
                                                             <input type="number" name="items[{{ $index }}][quantity]" class="form-control quantity" step="0.01" value="{{ $item['quantity'] }}" required>
                                                         </td>
                                                         <td>
-                                                            <input type="text" name="items[{{ $index }}][unit]" class="form-control unit" value="{{ $item['unit'] ?? $materialObj->unit ?? '' }}" readonly>
+                                                            <input type="text" name="items[{{ $index }}][unit]" class="form-control unit" value="{{ $item['unit'] }}" readonly>
                                                         </td>
                                                         <td>
                                                             <input type="number" name="items[{{ $index }}][estimated_unit_price]" class="form-control unit-price" step="0.01" value="{{ $item['estimated_unit_price'] }}" required readonly>
@@ -165,6 +163,9 @@
                                                     <input type="text" name="items[0][notes]" class="form-control">
                                                 </td>
                                                 <td>
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm replace-material" title="Replace Material">
+                                                        <i class="fas fa-exchange-alt"></i>
+                                                    </button>
                                                     <button type="button" class="btn btn-danger btn-sm remove-row">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
@@ -247,6 +248,7 @@ const baseUrl = '{{ url("/") }}';
 // Ensure these are globally available or passed to functions as needed
 window.suppliers = @json($suppliers ?? []);
 window.materials = @json($materials ?? []);
+window.contracts = @json($contracts ?? []);
 
 let materialModalMode = 'add'; // 'add' or 'replace'
 let materialModalTargetRow = null;
@@ -339,6 +341,165 @@ document.addEventListener('DOMContentLoaded', function() {
         projectRelatedFields.style.display = this.checked ? 'flex' : 'none';
     });
 
+    // Contract search functionality
+    const contractSearch = document.getElementById('contract_search');
+    const contractSearchResults = document.getElementById('contract_search_results');
+    const contractIdInput = document.getElementById('contract_id');
+    const selectedContractInfo = document.getElementById('selected_contract_info');
+    const contractDisplay = document.getElementById('contract_display');
+
+    // Set initial contract if provided
+    if (contractIdInput.value) {
+        const contract = window.contracts.find(c => c.id == contractIdInput.value);
+        if (contract) {
+            contractSearch.value = `${contract.contract_number} - ${contract.name || contract.title || ''}`;
+            contractDisplay.textContent = `${contract.contract_number} - ${contract.name || contract.title || ''}`;
+            selectedContractInfo.style.display = 'block';
+            loadContractMaterials(contract.id);
+        }
+    }
+
+    contractSearch.addEventListener('input', function() {
+        const query = this.value.trim();
+        contractSearchResults.innerHTML = '';
+        
+        if (query.length < 2) {
+            contractSearchResults.style.display = 'none';
+            return;
+        }
+
+        const matches = window.contracts.filter(contract => 
+            contract.contract_number.toLowerCase().includes(query.toLowerCase()) ||
+            (contract.name && contract.name.toLowerCase().includes(query.toLowerCase())) ||
+            (contract.title && contract.title.toLowerCase().includes(query.toLowerCase()))
+        );
+
+        if (matches.length > 0) {
+            matches.forEach(contract => {
+                const item = document.createElement('a');
+                item.href = '#';
+                item.classList.add('list-group-item', 'list-group-item-action');
+                item.textContent = `${contract.contract_number} - ${contract.name || contract.title || ''}`;
+                item.dataset.contractId = contract.id;
+                item.dataset.contractNumber = contract.contract_number;
+                item.dataset.contractName = contract.name || contract.title || '';
+                contractSearchResults.appendChild(item);
+            });
+            contractSearchResults.style.display = 'block';
+        } else {
+            contractSearchResults.innerHTML = '<div class="list-group-item">No contracts found</div>';
+            contractSearchResults.style.display = 'block';
+        }
+    });
+
+    contractSearchResults.addEventListener('click', function(e) {
+        if (e.target.classList.contains('list-group-item-action')) {
+            e.preventDefault();
+            const contractId = e.target.dataset.contractId;
+            const contractNumber = e.target.dataset.contractNumber;
+            const contractName = e.target.dataset.contractName;
+            
+            contractIdInput.value = contractId;
+            contractSearch.value = `${contractNumber} - ${contractName}`;
+            contractDisplay.textContent = `${contractNumber} - ${contractName}`;
+            selectedContractInfo.style.display = 'block';
+            contractSearchResults.style.display = 'none';
+            
+            // Load materials from contract
+            loadContractMaterials(contractId);
+        }
+    });
+
+    // Hide contract search results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!contractSearch.contains(e.target) && !contractSearchResults.contains(e.target)) {
+            contractSearchResults.style.display = 'none';
+        }
+    });
+
+    function loadContractMaterials(contractId) {
+        fetch(`${baseUrl}/api/contracts/${contractId}/items`)
+            .then(response => response.json())
+            .then(data => {
+                const itemsContainer = document.getElementById('items-container');
+                itemsContainer.innerHTML = ''; // Clear existing items
+                
+                if (data.length === 0) {
+                    // If no items, add a single empty row
+                    document.getElementById('addRow').click();
+                    return;
+                }
+
+                data.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    row.className = 'item-row';
+                    
+                    const materialName = item.material ? item.material.name : (item.material_name || 'N/A');
+                    const materialId = item.material ? item.material.id : (item.material_id || '');
+                    const description = item.description || (item.material ? item.material.description : '');
+                    const unit = item.unit || (item.material ? item.material.unit : '');
+                    const unitPrice = item.amount || (item.material ? (item.material.srp_price || item.material.base_price) : 0);
+                    const totalAmount = item.total || (item.quantity * unitPrice);
+
+                    row.innerHTML = `
+                        <td>
+                            ${materialName}
+                            <input type="hidden" name="items[${index}][material_id]" value="${materialId}">
+                        </td>
+                        <td>
+                            <input type="text" name="items[${index}][description]" class="form-control" value="${description}" placeholder="Enter description (required)">
+                        </td>
+                        <td>
+                            <input type="number" name="items[${index}][quantity]" class="form-control quantity" step="0.01" value="${item.quantity}" required>
+                        </td>
+                        <td>
+                            <input type="text" name="items[${index}][unit]" class="form-control unit" value="${unit}" readonly>
+                        </td>
+                        <td>
+                            <input type="number" name="items[${index}][estimated_unit_price]" class="form-control unit-price" step="0.01" value="${unitPrice}" required>
+                        </td>
+                        <td>
+                            <input type="number" name="items[${index}][total_amount]" class="form-control total-amount" value="${totalAmount.toFixed(2)}" readonly>
+                        </td>
+                        <td>
+                            <input type="text" name="items[${index}][preferred_brand]" class="form-control">
+                        </td>
+                        <td>
+                            <select name="items[${index}][preferred_supplier_id]" class="form-control supplier-select">
+                                <option value="">Select Supplier</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" name="items[${index}][notes]" class="form-control" value="From contract">
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-outline-secondary btn-sm replace-material" title="Replace Material">
+                                <i class="fas fa-exchange-alt"></i>
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm remove-row" title="Remove">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    itemsContainer.appendChild(row);
+                    setupRowCalculations(row);
+                    
+                    const supplierSelect = row.querySelector('.supplier-select');
+                    if (item.material && item.material.suppliers && item.material.suppliers.length > 0) {
+                        item.material.suppliers.forEach(supplier => {
+                            const option = document.createElement('option');
+                            option.value = supplier.id;
+                            option.textContent = supplier.company_name || supplier.name;
+                            supplierSelect.appendChild(option);
+                        });
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading contract materials:', error);
+            });
+    }
+
     // Add new row
     let rowCount = document.querySelectorAll('.item-row').length; // Start rowCount based on existing rows
     const itemsContainer = document.getElementById('items-container'); // Get the tbody for items
@@ -353,7 +514,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clone the first row
         const newRow = templateRow.cloneNode(true);
         // Determine the new index
-        let maxIndex = 0;
+        let maxIndex = -1;
         itemsContainer.querySelectorAll('.item-row').forEach(row => {
             const input = row.querySelector('input[name^="items["]');
             if (input) {
@@ -365,21 +526,26 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         const newIndex = maxIndex + 1;
         // Update all input/select names and clear values
-        newRow.querySelectorAll('input, select').forEach(input => {
-            input.name = input.name.replace(/items\[\d+\]/, `items[${newIndex}]`);
-            if (input.type === 'text' || input.type === 'number') input.value = '';
-            if (input.tagName === 'SELECT') input.selectedIndex = 0;
+        newRow.querySelectorAll('input, select, textarea').forEach(input => {
+            if (input.name) {
+                input.name = input.name.replace(/items\[\d+\]/, `items[${newIndex}]`);
+            }
+            if (input.type === 'text' || input.type === 'number' || input.tagName === 'TEXTAREA') {
+                input.value = '';
+            }
+            if (input.tagName === 'SELECT') {
+                input.selectedIndex = 0;
+            }
+            input.classList.remove('is-invalid');
         });
-        // Clear any plain text in the first two columns (material/description)
-        newRow.querySelectorAll('td').forEach((td, i) => {
-            if (i === 0 || i === 1) td.innerHTML = '';
-        });
-        // Add the new row to the table
+        
+        const firstCell = newRow.querySelector('td:first-child');
+        firstCell.innerHTML = '';
+
+        const secondCell = newRow.querySelector('td:nth-child(2)');
+        secondCell.querySelector('input').placeholder = "Enter description (required)";
+
         itemsContainer.appendChild(newRow);
-        // Re-initialize search and calculation for the new row
-        if (newRow.querySelector('.material-name')) {
-            setupMaterialSearch(newRow);
-        }
         setupRowCalculations(newRow);
     });
 
@@ -626,11 +792,8 @@ document.addEventListener('DOMContentLoaded', function() {
             ${selectedReplaceMaterial.name}
             <input type="hidden" name="items[${index}][material_id]" value="${selectedReplaceMaterial.id}">
         `);
-        // Update the Description cell (plain text + hidden input)
-        replaceTargetRow.find('td').eq(1).html(`
-            ${(selectedReplaceMaterial.description || '')}
-            <input type="hidden" name="items[${index}][description]" value="${selectedReplaceMaterial.description || ''}">
-        `);
+        // Update the Description cell (input field)
+        replaceTargetRow.find('input[name="items['+index+'][description]"]').val(selectedReplaceMaterial.description || '');
         // Always use computed quantity from modal (contract area if per-area)
         replaceTargetRow.find('input[name="items['+index+'][quantity]"]').val(selectedReplaceMaterial._computedQuantity);
         // Always use base price for estimated unit price
@@ -644,7 +807,7 @@ document.addEventListener('DOMContentLoaded', function() {
         supplierSelect.empty().append('<option value="">Select Supplier</option>');
         if (selectedReplaceMaterial.suppliers && selectedReplaceMaterial.suppliers.length > 0) {
             selectedReplaceMaterial.suppliers.forEach(supplier => {
-                supplierSelect.append(`<option value="${supplier.id}">${supplier.name}</option>`);
+                supplierSelect.append(`<option value="${supplier.id}">${supplier.company_name || supplier.name}</option>`);
             });
         }
         $('#replaceMaterialModal').modal('hide');

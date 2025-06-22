@@ -31,19 +31,22 @@ class PurchaseRequestController extends Controller
         
         $prefillItems = [];
         if ($request->has('contract_id')) {
-            $contract = \App\Models\Contract::with('items')->find($request->contract_id);
-            if ($contract) {
+            $contract = \App\Models\Contract::with('items.material.suppliers')->find($request->contract_id);
+            if ($contract && $contract->items->isNotEmpty()) {
                 foreach ($contract->items as $item) {
+                    $material = $materials->firstWhere('id', $item->material_id);
                     $prefillItems[] = [
                         'material_id' => $item->material_id,
-                        'description' => $item->material_name ?? $item->description,
+                        'material_name' => $item->material_name,
+                        'description' => $item->description ?? $item->material_name,
                         'quantity' => $item->quantity,
                         'unit' => $item->unit,
                         'estimated_unit_price' => $item->amount,
                         'total_amount' => $item->total,
                         'notes' => 'From contract',
                         'preferred_brand' => null,
-                        'preferred_supplier_id' => null
+                        'preferred_supplier_id' => null,
+                        'material_obj' => $material,
                     ];
                 }
             }

@@ -183,6 +183,7 @@
     const apiBase = "{{ url('api') }}";
     const suppliers = @json($suppliers ?? []);
     const purchaseRequests = @json($purchaseRequests);
+    let currentPurchaseRequestItems = []; // To store items from the selected PR
 
     function getSupplierNameById(id) {
         const supplier = suppliers.find(s => s.id == id);
@@ -190,7 +191,7 @@
     }
 
     function getUniqueSuppliers(items) {
-        const supplierIds = items.map(i => i.supplier_id).filter(Boolean);
+        const supplierIds = items.map(i => i.preferred_supplier_id).filter(Boolean);
         return [...new Set(supplierIds)];
     }
 
@@ -216,7 +217,7 @@
         tbody.innerHTML = '';
         let totalAmount = 0;
         items.forEach((item, index) => {
-            if (filterSupplierId && item.supplier_id != filterSupplierId) return;
+            if (filterSupplierId && item.preferred_supplier_id != filterSupplierId) return;
             const quantity = parseInt(item.quantity) || 0;
             const unitPrice = parseFloat(item.estimated_unit_price || item.unit_price) || 0;
             const totalPrice = quantity * unitPrice;
@@ -267,6 +268,7 @@
             fetch(`${apiBase}/purchase-requests/${purchaseRequestId}/items`)
                 .then(response => response.json())
                 .then(data => {
+                    currentPurchaseRequestItems = data; // Store for reuse
                     // Add .material if missing (for compatibility)
                     data.forEach(item => {
                         if (!item.material && item.material_id && purchaseRequests) {
@@ -279,31 +281,34 @@
                     });
                     const uniqueSuppliers = getUniqueSuppliers(data);
                     renderSupplierDropdown(uniqueSuppliers);
-                    // Only render items table when supplier is selected
-                    document.getElementById('supplier_id').addEventListener('change', function() {
-                        renderItemsTable(data, this.value);
-                    });
-                    // Clear items table until supplier is chosen
-                    renderItemsTable([], null);
+
+                    // If only one supplier, auto-select it and trigger change to filter
+                    if (uniqueSuppliers.length === 1) {
+                        const supplierSelect = document.getElementById('supplier_id');
+                        supplierSelect.value = uniqueSuppliers[0];
+                        supplierSelect.dispatchEvent(new Event('change'));
+                    } else {
+                        // Otherwise, show all items
+                        renderItemsTable(data, null);
+                    }
                 })
                 .catch(error => {
                     console.error('Error:', error);
                     alert('Error loading purchase request items');
                 });
         } else {
+            currentPurchaseRequestItems = []; // Clear stored items
             renderItemsTable([]);
             renderSupplierDropdown([]);
         }
     });
 
-    // Collapsible Supplier Details
-    let supplierDetailsVisible = false;
-    const detailsDiv = document.getElementById('supplier-details');
-    const infoDiv = document.getElementById('supplier-info');
-    const toggleBtn = document.getElementById('toggle-supplier-details');
-
     document.getElementById('supplier_id').addEventListener('change', function() {
         const supplierId = this.value;
+        
+        // Filter the stored items instead of fetching again
+        renderItemsTable(currentPurchaseRequestItems, supplierId);
+
         const supplier = suppliers.find(s => s.id == supplierId);
         if (supplier) {
             infoDiv.innerHTML = `
@@ -321,6 +326,12 @@
             infoDiv.innerHTML = '';
         }
     });
+
+    // Collapsible Supplier Details
+    let supplierDetailsVisible = false;
+    const detailsDiv = document.getElementById('supplier-details');
+    const infoDiv = document.getElementById('supplier-info');
+    const toggleBtn = document.getElementById('toggle-supplier-details');
 
     toggleBtn.addEventListener('click', function() {
         supplierDetailsVisible = !supplierDetailsVisible;

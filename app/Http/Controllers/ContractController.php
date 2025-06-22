@@ -1670,7 +1670,7 @@ class ContractController extends Controller
      */
     public function getItems($contractId)
     {
-        $contract = Contract::with(['items.material', 'items.supplier'])->findOrFail($contractId);
+        $contract = Contract::with(['items.material.suppliers', 'items.supplier'])->findOrFail($contractId);
         return response()->json($contract->items);
     }
 

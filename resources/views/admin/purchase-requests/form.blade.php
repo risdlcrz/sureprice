@@ -1,15 +1,5 @@
 @extends('layouts.app')
 
-@php
-    $materialSuppliers = $materials->mapWithKeys(function($material) {
-        return [
-            $material->id => $material->suppliers->map(function($s) {
-                return ['id' => $s->id, 'name' => $s->company_name];
-            })->values()
-        ];
-    });
-@endphp
-
 @section('content')
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -228,11 +218,11 @@
                     <div class="col-md-2">
                             <label>Material</label>
                         <select class="form-select material-select" name="items[${itemIndex}][material_id]" required>
-                            <option value="">Select Material</option>
+                                <option value="">Select Material</option>
                             @foreach($materials as $material)
                                 <option value="{{ $material->id }}">{{ $material->name }}</option>
-                            @endforeach
-                        </select>
+                                @endforeach
+                            </select>
                     </div>
                     <div class="col-md-2">
                         <label>Supplier</label>
@@ -526,6 +516,16 @@
             });
         });
     });
+
+    @php
+        $materialSuppliers = $materials->mapWithKeys(function($material) {
+            return [
+                $material->id => $material->suppliers->map(function($s) {
+                    return ['id' => $s->id, 'name' => $s->company_name];
+                })->values()
+            ];
+        });
+    @endphp
 
     var materialSuppliers = @json($materialSuppliers);
 
