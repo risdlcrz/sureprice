@@ -143,7 +143,15 @@
             <div class="row g-3">
                 <div class="col-md-4">
                     <label for="bank_name" class="form-label">Bank Name</label>
-                    <input type="text" class="form-control" id="bank_name" name="bank_name" value="{{ old('bank_name', $bankDetails->bank_name ?? $supplier->bank_name ?? '') }}">
+                    @php
+                        $banks = ['BDO', 'BPI', 'MetroBank', 'PNB', 'Security Bank', 'Union Bank', 'RCBC', 'China Bank'];
+                    @endphp
+                    <select class="form-select" id="bank_name" name="bank_name">
+                        <option value="">Select a bank</option>
+                        @foreach($banks as $bank)
+                            <option value="{{ $bank }}" {{ (old('bank_name', $bankDetails->bank_name ?? $supplier->bank_name ?? '') == $bank) ? 'selected' : '' }}>{{ $bank }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="col-md-4">
                     <label for="bank_account_name" class="form-label">Account Name</label>

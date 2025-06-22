@@ -661,9 +661,17 @@
           <div class="form-row">
             <div class="form-group @error('bank_name') has-error @enderror">
               <label for="bank_name">Bank Name</label>
-              <div class="input-with-icon">
+              @php
+                  $banks = ['BDO', 'BPI', 'MetroBank', 'PNB', 'Security Bank', 'Union Bank', 'RCBC', 'China Bank'];
+              @endphp
+              <div class="select-with-icon">
                 <i class="fas fa-landmark"></i>
-                <input type="text" id="bank_name" name="bank_name" value="{{ old('bank_name') }}" placeholder="e.g. BDO, Metrobank" />
+                <select id="bank_name" name="bank_name">
+                    <option value="">Select a bank</option>
+                    @foreach($banks as $bank)
+                        <option value="{{ $bank }}" {{ old('bank_name') == $bank ? 'selected' : '' }}>{{ $bank }}</option>
+                    @endforeach
+                </select>
               </div>
               @error('bank_name')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
             </div>
