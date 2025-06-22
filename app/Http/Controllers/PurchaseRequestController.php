@@ -170,6 +170,13 @@ class PurchaseRequestController extends Controller
                     'preferred_brand' => $item['preferred_brand'] ?? null
                 ]);
                 $totalAmount += $item['quantity'] * $item['estimated_unit_price'];
+                // Ensure supplier is linked to material in material_supplier table
+                if (!empty($item['preferred_supplier_id'])) {
+                    $material = \App\Models\Material::find($item['material_id']);
+                    if ($material && !$material->suppliers()->where('suppliers.id', $item['preferred_supplier_id'])->exists()) {
+                        $material->suppliers()->attach($item['preferred_supplier_id']);
+                    }
+                }
             }
             $purchaseRequest->total_amount = $totalAmount;
             $purchaseRequest->save();
@@ -266,6 +273,13 @@ class PurchaseRequestController extends Controller
                 ]);
 
                 $totalAmount += $item['quantity'] * $item['estimated_unit_price'];
+                // Ensure supplier is linked to material in material_supplier table
+                if (!empty($item['preferred_supplier_id'])) {
+                    $material = \App\Models\Material::find($item['material_id']);
+                    if ($material && !$material->suppliers()->where('suppliers.id', $item['preferred_supplier_id'])->exists()) {
+                        $material->suppliers()->attach($item['preferred_supplier_id']);
+                    }
+                }
             }
 
             $purchaseRequest->update(['total_amount' => $totalAmount]);

@@ -47,22 +47,13 @@ return new class extends Migration
             }
 
             // Remove old columns that are no longer needed
-            if (Schema::hasColumn('purchase_requests', 'department')) {
-                Schema::table('purchase_requests', function (Blueprint $table) {
-                    $table->dropColumn('department');
-                });
-            }
-
-            if (Schema::hasColumn('purchase_requests', 'required_date')) {
-                Schema::table('purchase_requests', function (Blueprint $table) {
-                    $table->dropColumn('required_date');
-                });
-            }
-
-            if (Schema::hasColumn('purchase_requests', 'purpose')) {
-                Schema::table('purchase_requests', function (Blueprint $table) {
-                    $table->dropColumn('purpose');
-                });
+            $columnsToDrop = ['department', 'required_date', 'purpose'];
+            foreach ($columnsToDrop as $col) {
+                if (Schema::hasColumn('purchase_requests', $col)) {
+                    Schema::table('purchase_requests', function (Blueprint $table) use ($col) {
+                        $table->dropColumn($col);
+                    });
+                }
             }
         }
 

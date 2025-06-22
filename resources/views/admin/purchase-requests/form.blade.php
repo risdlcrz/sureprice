@@ -1,5 +1,15 @@
 @extends('layouts.app')
 
+@php
+    $materialSuppliers = $materials->mapWithKeys(function($material) {
+        return [
+            $material->id => $material->suppliers->map(function($s) {
+                return ['id' => $s->id, 'name' => $s->company_name];
+            })->values()
+        ];
+    });
+@endphp
+
 @section('content')
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -33,7 +43,7 @@
                                     @endforeach
                                 </select>
                                 @error('contract_id')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback" style="text-decoration: underline wavy red;">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -45,7 +55,7 @@
                                        id="department" name="department" 
                                        value="{{ old('department', $purchaseRequest->department ?? '') }}" required>
                                 @error('department')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback" style="text-decoration: underline wavy red;">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -60,7 +70,7 @@
                                        value="{{ old('required_date', isset($purchaseRequest) ? $purchaseRequest->required_date->format('Y-m-d') : '') }}" 
                                        required>
                                 @error('required_date')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback" style="text-decoration: underline wavy red;">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -71,7 +81,7 @@
                                 <textarea class="form-control @error('purpose') is-invalid @enderror" 
                                           id="purpose" name="purpose" rows="3" required>{{ old('purpose', $purchaseRequest->purpose ?? '') }}</textarea>
                                 @error('purpose')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback" style="text-decoration: underline wavy red;">{{ $message }}</div>
                                 @enderror
                             </div>
                         </div>
@@ -91,16 +101,8 @@
                                                         <label>Material</label>
                                                         <select class="form-select material-select" name="items[{{ $index }}][material_id]" required>
                                                             <option value="">Select Material</option>
-                                                            @foreach($materials ?? [] as $material)
-                                                                <option value="{{ $material->id }}"
-                                                                    data-description="{{ $material->description }}"
-                                                                    data-unit="{{ $material->unit }}"
-                                                                    data-price="{{ $material->base_price }}"
-                                                                    data-specifications="{{ $material->specifications }}"
-                                                                    data-suppliers='@json($material->suppliers->map(fn($s) => ["id"=>$s->id,"name"=>$s->company_name,"is_preferred"=>$s->pivot->is_preferred??false]))'
-                                                                    {{ (isset($item) && $item->material_id == $material->id) ? 'selected' : '' }}>
-                                                                    {{ $material->name }}
-                                                                </option>
+                                                            @foreach($materials as $material)
+                                                                <option value="{{ $material->id }}">{{ $material->name }}</option>
                                                             @endforeach
                                                         </select>
                                                         <input type="hidden" name="items[{{ $index }}][supplier_id]" class="supplier-id" />
@@ -109,25 +111,22 @@
                                                 <div class="col-md-2">
                                                     <label>Supplier</label>
                                                     <div class="input-group">
-                                                        <select class="form-select supplier-select select2" name="items[{{ $index }}][supplier_id]">
+                                                        <select class="form-select supplier-select select2" name="items[{{ $index }}][preferred_supplier_id]">
                                                             <option value="">Select Supplier</option>
                                                             @php
                                                                 $matId = $item->material_id ?? null;
-                                                                $best = $matId && isset($bestSuppliers[$matId]) ? $bestSuppliers[$matId] : null;
+                                                                $materialObj = $materials->firstWhere('id', $matId);
                                                             @endphp
-                                                            @if(isset($item) && $item->supplier)
-                                                                <option value="{{ $item->supplier->id }}" selected>{{ $item->supplier->company_name }}</option>
-                                                            @elseif($best)
-                                                                <option value="{{ $best['id'] }}" selected>{{ $suppliers->firstWhere('id', $best['id'])->company_name ?? 'Best Supplier' }}</option>
+                                                            @if($materialObj)
+                                                                @foreach($materialObj->suppliers as $supplier)
+                                                                    <option value="{{ $supplier->id }}" {{ (isset($item) && $item->supplier_id == $supplier->id) ? 'selected' : '' }}>{{ $supplier->company_name }}</option>
+                                                                @endforeach
                                                             @endif
                                                         </select>
                                                         <button type="button" class="btn btn-info supplier-view-btn" disabled>
                                                             <i class="fas fa-eye"></i>
                                                         </button>
                                                     </div>
-                                                    @if($best)
-                                                        <div class="text-success small mt-1">{{ $best['reason'] }}</div>
-                                                    @endif
                                                 </div>
                                                 <div class="col-md-2">
                                                     <label>Description</label>
@@ -172,7 +171,7 @@
                         <textarea class="form-control @error('notes') is-invalid @enderror" 
                                   id="notes" name="notes" rows="3">{{ old('notes', $purchaseRequest->notes ?? '') }}</textarea>
                         @error('notes')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback" style="text-decoration: underline wavy red;">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -181,7 +180,7 @@
                         <input type="file" class="form-control @error('attachments.*') is-invalid @enderror" 
                                name="attachments[]" multiple>
                         @error('attachments.*')
-                            <div class="invalid-feedback">{{ $message }}</div>
+                            <div class="invalid-feedback" style="text-decoration: underline wavy red;">{{ $message }}</div>
                         @enderror
                     </div>
 
@@ -220,7 +219,7 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    let itemIndex = {{ isset($purchaseRequest) ? $purchaseRequest->items->count() : 0 }};
+    var itemIndex = <?php echo isset($purchaseRequest) ? intval($purchaseRequest->items->count()) : 0; ?>;
 
     function createItemRow() {
         const template = `
@@ -229,24 +228,16 @@
                     <div class="col-md-2">
                             <label>Material</label>
                         <select class="form-select material-select" name="items[${itemIndex}][material_id]" required>
-                                <option value="">Select Material</option>
-                                @foreach($materials ?? [] as $material)
-                                <option value="{{ $material->id }}"
-                                    data-description="{{ $material->description }}"
-                                    data-unit="{{ $material->unit }}"
-                                    data-price="{{ $material->base_price }}"
-                                    data-specifications="{{ $material->specifications }}"
-                                    data-suppliers='@json($material->suppliers->map(fn($s) => ["id"=>$s->id,"name"=>$s->company_name,"is_preferred"=>$s->pivot->is_preferred??false]))'
-                                >
-                                    {{ $material->name }}
-                                </option>
-                                @endforeach
-                            </select>
+                            <option value="">Select Material</option>
+                            @foreach($materials as $material)
+                                <option value="{{ $material->id }}">{{ $material->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="col-md-2">
                         <label>Supplier</label>
                         <div class="input-group">
-                            <select class="form-select supplier-select select2" name="items[${itemIndex}][supplier_id]">
+                            <select class="form-select supplier-select select2" name="items[${itemIndex}][preferred_supplier_id]">
                                 <option value="">Select Supplier</option>
                             </select>
                             <button type="button" class="btn btn-info supplier-view-btn" disabled>
@@ -302,7 +293,7 @@
         
         if (e.target.classList.contains('supplier-view-btn') || e.target.closest('.supplier-view-btn')) {
             const row = e.target.closest('.item-row');
-            const supplierId = row.querySelector('select[name$="[supplier_id]"]').value;
+            const supplierId = row.querySelector('select[name$="[preferred_supplier_id]"]').value;
             if (supplierId) {
                 window.open(`/admin/suppliers/${supplierId}`, '_blank');
             }
@@ -363,7 +354,7 @@
                 }
                 
                 // Auto-select preferred supplier if available
-                const supplierSelect = row.querySelector('select[name$="[supplier_id]"]');
+                const supplierSelect = row.querySelector('select[name$="[preferred_supplier_id]"]');
                 const preferredSupplier = Array.from(supplierSelect.options).find(opt => 
                     opt.dataset.isPreferred === 'true'
                 );
@@ -375,7 +366,7 @@
             }
         }
         
-        if (e.target.matches('select[name^="items"][name$="[supplier_id]"]')) {
+        if (e.target.matches('select[name^="items"][name$="[preferred_supplier_id]"]')) {
             const row = e.target.closest('.item-row');
             const viewBtn = row.querySelector('.supplier-view-btn');
             viewBtn.disabled = !e.target.value;
@@ -443,15 +434,8 @@
                         <label>Material</label>
                         <select class="form-select material-select" name="items[__INDEX__][material_id]" required>
                             <option value="">Select Material</option>
-                            @foreach($materials ?? [] as $material)
-                                <option value="{{ $material->id }}"
-                                    data-description="{{ $material->description }}"
-                                    data-unit="{{ $material->unit }}"
-                                    data-price="{{ $material->base_price }}"
-                                    data-specifications="{{ $material->specifications }}"
-                                    data-suppliers='@json($material->suppliers->map(fn($s) => ["id"=>$s->id,"name"=>$s->company_name,"is_preferred"=>$s->pivot->is_preferred??false]))'>
-                                    {{ $material->name }}
-                                </option>
+                            @foreach($materials as $material)
+                                <option value="{{ $material->id }}">{{ $material->name }}</option>
                             @endforeach
                         </select>
                         <input type="hidden" name="items[__INDEX__][supplier_id]" class="supplier-id" />
@@ -460,7 +444,7 @@
                     <div class="col-md-2">
                         <label>Supplier</label>
                         <div class="input-group">
-                            <select class="form-select supplier-select select2" name="items[__INDEX__][supplier_id]">
+                            <select class="form-select supplier-select select2" name="items[__INDEX__][preferred_supplier_id]">
                                 <option value="">Select Supplier</option>
                             </select>
                             <button type="button" class="btn btn-info supplier-view-btn" disabled>
@@ -507,7 +491,7 @@
             $('#items-container').append(newItem);
             
             // Initialize Select2 for the new supplier select
-            $(`select[name="items[${itemIndex}][supplier_id]"]`).select2({
+            $(`select[name="items[${itemIndex}][preferred_supplier_id]"]`).select2({
                 placeholder: 'Search for suppliers...',
                 allowClear: true,
                 ajax: {
@@ -543,25 +527,32 @@
         });
     });
 
-    // In the JS, when a material is selected, set the best supplier and show the reason
+    var materialSuppliers = @json($materialSuppliers);
+
+    // Function to update supplier dropdown for a row
+    function updateSupplierDropdown($row, materialId) {
+        var $supplierSelect = $row.find('.supplier-select');
+        $supplierSelect.empty().append('<option value="">Select Supplier</option>');
+        if (materialSuppliers[materialId]) {
+            materialSuppliers[materialId].forEach(function(supplier) {
+                $supplierSelect.append('<option value="' + supplier.id + '">' + supplier.name + '</option>');
+            });
+        }
+    }
+
+    // On material change, update supplier dropdown for that row
     $(document).on('change', '.material-select', function() {
         var $row = $(this).closest('.item-row');
-        var matId = $(this).val();
-        var best = window.materialBestSuppliers && window.materialBestSuppliers[matId];
-        var $supplierSelect = $row.find('.supplier-select');
-        var $reasonDiv = $row.find('.best-supplier-reason');
-        if (best) {
-            // Set the supplier select
-            var exists = $supplierSelect.find('option[value="'+best.id+'"]').length > 0;
-            if (!exists) {
-                $supplierSelect.append('<option value="'+best.id+'">Best Supplier</option>');
-            }
-            $supplierSelect.val(best.id).trigger('change');
-            $reasonDiv.text(best.reason);
-        } else {
-            $supplierSelect.val('').trigger('change');
-            $reasonDiv.text('');
-        }
+        var materialId = $(this).val();
+        updateSupplierDropdown($row, materialId);
+    });
+
+    // When adding a new item row, also bind the supplier dropdown
+    $('#add-item').on('click', function() {
+        setTimeout(function() {
+            var $lastRow = $('.item-row').last();
+            $lastRow.find('.material-select').trigger('change');
+        }, 100);
     });
 </script>
 @endpush 

@@ -9,15 +9,20 @@ return new class extends Migration {
         $warehouseA = DB::table('warehouses')->where('name', 'Warehouse A')->first();
         if ($warehouseA) {
             $materials = DB::table('materials')->get();
-            foreach ($materials as $material) {
-                DB::table('stocks')->insert([
-                    'warehouse_id' => $warehouseA->id,
-                    'material_id' => $material->id,
-                    'current_stock' => $material->current_stock,
-                    'minimum_stock' => $material->minimum_stock,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            // Determine the correct column name for the threshold in stocks table
+            $stocksColumns = Schema::getColumnListing('stocks');
+            $thresholdCol = in_array('minimum_stock', $stocksColumns) ? 'minimum_stock' : (in_array('threshold', $stocksColumns) ? 'threshold' : null);
+            if ($thresholdCol) {
+                foreach ($materials as $material) {
+                    DB::table('stocks')->insert([
+                        'warehouse_id' => $warehouseA->id,
+                        'material_id' => $material->id,
+                        'current_stock' => $material->current_stock,
+                        $thresholdCol => $material->minimum_stock,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
             }
         }
     }

@@ -5,13 +5,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up() {
-        Schema::table('stocks', function (Blueprint $table) {
-            $table->renameColumn('minimum_stock', 'threshold');
-        });
+        if (Schema::hasTable('stocks') && Schema::hasColumn('stocks', 'minimum_stock') && !Schema::hasColumn('stocks', 'threshold')) {
+            Schema::table('stocks', function (Blueprint $table) {
+                $table->renameColumn('minimum_stock', 'threshold');
+            });
+        }
     }
     public function down() {
-        Schema::table('stocks', function (Blueprint $table) {
-            $table->renameColumn('threshold', 'minimum_stock');
-        });
+        if (Schema::hasTable('stocks') && Schema::hasColumn('stocks', 'threshold') && !Schema::hasColumn('stocks', 'minimum_stock')) {
+            Schema::table('stocks', function (Blueprint $table) {
+                $table->renameColumn('threshold', 'minimum_stock');
+            });
+        }
     }
 }; 

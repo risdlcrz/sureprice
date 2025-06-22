@@ -70,7 +70,7 @@ class Material extends Model
 
     public function suppliers()
     {
-        return $this->belongsToMany(Company::class, 'company_material', 'material_id', 'company_id')
+        return $this->belongsToMany(\App\Models\Supplier::class, 'material_supplier', 'material_id', 'supplier_id')
             ->withPivot(['price', 'is_preferred'])
             ->withTimestamps();
     }

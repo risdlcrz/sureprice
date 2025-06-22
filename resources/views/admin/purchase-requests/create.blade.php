@@ -244,9 +244,9 @@
 <script>
 const baseUrl = '{{ url("/") }}';
 
+// Ensure these are globally available or passed to functions as needed
 window.suppliers = @json($suppliers ?? []);
 window.materials = @json($materials ?? []);
-window.materialSuppliers = @json($materialSuppliers ?? []);
 
 let materialModalMode = 'add'; // 'add' or 'replace'
 let materialModalTargetRow = null;

@@ -14,17 +14,24 @@ return new class extends Migration
         // Update the supplier_invitations table
         Schema::table('supplier_invitations', function (Blueprint $table) {
             // Drop existing columns that we don't need
-            $table->dropColumn([
+            $columnsToDrop = [
                 'business_type',
                 'position',
                 'address',
                 'tax_number',
                 'registration_number',
                 'notes'
-            ]);
+            ];
+            foreach ($columnsToDrop as $col) {
+                if (Schema::hasColumn('supplier_invitations', $col)) {
+                    $table->dropColumn($col);
+                }
+            }
 
-            // Rename contact_person to contact_name
-            $table->renameColumn('contact_person', 'contact_name');
+            // Rename contact_person to contact_name if it exists and contact_name does not
+            if (Schema::hasColumn('supplier_invitations', 'contact_person') && !Schema::hasColumn('supplier_invitations', 'contact_name')) {
+                $table->renameColumn('contact_person', 'contact_name');
+            }
 
             // Add new columns
             if (!Schema::hasColumn('supplier_invitations', 'project_id')) {
