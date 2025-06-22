@@ -123,4 +123,47 @@ class SupplierMaterialController extends Controller
         return redirect()->route('supplier.materials.index')
             ->with('success', 'Material removed from your listings successfully.');
     }
+
+    public function search(Request $request)
+    {
+        $supplier = Auth::user()->company;
+        $term = $request->input('term');
+
+        $existingMaterialIds = $supplier->materials()->pluck('materials.id');
+
+        $materials = Material::where('name', 'LIKE', "%{$term}%")
+            ->whereNotIn('id', $existingMaterialIds)
+            ->select('id', 'name', 'code', 'unit')
+            ->limit(10)
+            ->get();
+
+        return response()->json($materials);
+    }
+
+    public function link(Request $request)
+    {
+        $supplier = Auth::user()->company;
+        if (!$supplier || $supplier->designation !== 'supplier') {
+            abort(403, 'You are not associated with a supplier account.');
+        }
+
+        $validated = $request->validate([
+            'material_id' => 'required|exists:materials,id',
+            'price' => 'required|numeric|min:0',
+        ]);
+
+        // Check if the material is already linked
+        if ($supplier->materials()->where('material_id', $validated['material_id'])->exists()) {
+            return redirect()->back()
+                ->with('error', 'This material is already in your listings.');
+        }
+
+        $supplier->materials()->attach($validated['material_id'], [
+            'price' => $validated['price'],
+            'is_preferred' => false
+        ]);
+
+        return redirect()->route('supplier.materials.index')
+            ->with('success', 'Material linked successfully.');
+    }
 } 

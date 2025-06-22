@@ -355,20 +355,21 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::cla
 // Supplier creation is now handled via sign up. Remove or redirect any suppliers.create routes.
 // Supplier Material Routes
 Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'verified', \App\Http\Middleware\SupplierMiddleware::class])->group(function () {
-    Route::resource('materials', SupplierMaterialController::class);
-    Route::get('/dashboard', [SupplierDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/materials', [SupplierMaterialController::class, 'index'])->name('materials.index');
-    Route::get('/quotations', [SupplierQuotationController::class, 'index'])->name('quotations.index');
-    Route::get('/performance', [SupplierPerformanceController::class, 'index'])->name('ranking');
-    // Supplier Quotation Routes
-    Route::prefix('quotations')->name('quotations.')->group(function () {
-        Route::get('/', [SupplierQuotationController::class, 'index'])->name('index');
-        Route::get('/{quotation}', [SupplierQuotationController::class, 'show'])->name('show');
-        Route::post('/{quotation}/respond', [SupplierQuotationController::class, 'respond'])->name('respond');
-    });
-    // Add missing supplier profile edit/update routes
+    Route::get('dashboard', [SupplierDashboardController::class, 'index'])->name('dashboard');
+
     Route::get('profile/edit', [SupplierDashboardController::class, 'editProfile'])->name('profile.edit');
     Route::put('profile/update', [SupplierDashboardController::class, 'updateProfile'])->name('profile.update');
+
+    Route::get('materials/search', [SupplierMaterialController::class, 'search'])->name('materials.search');
+    Route::post('materials/link', [SupplierMaterialController::class, 'link'])->name('materials.link');
+    Route::resource('materials', SupplierMaterialController::class);
+
+    Route::get('quotations', [SupplierQuotationController::class, 'index'])->name('quotations.index');
+    Route::get('quotations/{quotation}', [SupplierQuotationController::class, 'show'])->name('quotations.show');
+    Route::post('quotations/{quotation}/respond', [SupplierQuotationController::class, 'respond'])->name('quotations.respond');
+
+    Route::get('ranking', [SupplierDashboardController::class, 'ranking'])->name('ranking');
+    Route::get('performance', [SupplierPerformanceController::class, 'index'])->name('performance');
 });
 // Admin Supplier Profile Update Review Routes
 Route::middleware(['auth', AdminMiddleware::class])->prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {
