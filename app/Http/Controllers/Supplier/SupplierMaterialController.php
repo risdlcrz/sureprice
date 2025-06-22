@@ -127,6 +127,9 @@ class SupplierMaterialController extends Controller
     public function search(Request $request)
     {
         $supplier = Auth::user()->company;
+        if (!$supplier) {
+            return response()->json([], 403);
+        }
         $term = $request->input('term');
 
         $existingMaterialIds = $supplier->materials()->pluck('materials.id');
