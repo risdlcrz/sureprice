@@ -127,12 +127,12 @@ class SupplierMaterialController extends Controller
     public function search(Request $request)
     {
         $supplier = Auth::user()->company;
-        if (!$supplier) {
+        if (!$supplier || $supplier->designation !== 'supplier') {
             return response()->json([], 403);
         }
         $term = $request->input('term');
 
-        $existingMaterialIds = $supplier->materials()->pluck('materials.id');
+        $existingMaterialIds = $supplier->materials->pluck('id')->toArray();
 
         $materials = Material::where('name', 'LIKE', "%{$term}%")
             ->whereNotIn('id', $existingMaterialIds)
