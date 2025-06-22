@@ -93,24 +93,7 @@
                                         </thead>
                                         <tbody id="items-container">
                                             @php
-                                                $prefillItems = [];
-                                                if(request('material_id')) {
-                                                    $material = \App\Models\Material::find(request('material_id'));
-                                                    if ($material) {
-                                                        $prefillItems[] = [
-                                                            'material_id' => $material->id,
-                                                            'material_name' => $material->name,
-                                                            'description' => $material->description,
-                                                            'quantity' => 1,
-                                                            'unit' => $material->unit,
-                                                            'estimated_unit_price' => $material->srp_price ?? $material->base_price,
-                                                            'total_amount' => $material->srp_price ?? $material->base_price,
-                                                            'preferred_brand' => '',
-                                                            'preferred_supplier_id' => '',
-                                                            'notes' => '',
-                                                        ];
-                                                    }
-                                                }
+                                                // Use $prefillItems from the controller only
                                             @endphp
                                             @if(isset($prefillItems) && count($prefillItems) > 0)
                                                 @foreach($prefillItems as $index => $item)
@@ -144,9 +127,14 @@
                                                         <td>
                                                             <select name="items[{{ $index }}][preferred_supplier_id]" class="form-control supplier-select" required>
                                                                 <option value="">Select Supplier</option>
-                                                                @foreach($material->suppliers ?? [] as $supplier)
-                                                                    <option value="{{ $supplier->id }}">{{ $supplier->company_name ?? $supplier->name }}</option>
-                                                                @endforeach
+                                                                @php
+                                                                    $materialObj = $materials->firstWhere('id', $item['material_id']);
+                                                                @endphp
+                                                                @if($materialObj && $materialObj->suppliers)
+                                                                    @foreach($materialObj->suppliers as $supplier)
+                                                                        <option value="{{ $supplier->id }}" {{ (isset($item['preferred_supplier_id']) && $item['preferred_supplier_id'] == $supplier->id) ? 'selected' : '' }}>{{ $supplier->company_name ?? $supplier->name }}</option>
+                                                                    @endforeach
+                                                                @endif
                                                             </select>
                                                         </td>
                                                         <td>
