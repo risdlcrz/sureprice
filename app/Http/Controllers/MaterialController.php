@@ -346,14 +346,20 @@ class MaterialController extends Controller
 
     public function suppliers(Material $material)
     {
-        $material->load(['suppliers' => function($query) {
-            $query->select('suppliers.id', 'suppliers.company_name')
-                  ->withPivot(['price', 'lead_time', 'updated_at']);
-        }]);
+        $suppliers = $material->suppliers()->get(); // Now fetches Companies
+
+        $formattedSuppliers = $suppliers->map(function ($supplier) {
+            return [
+                'company_name' => $supplier->company_name,
+                'price' => $supplier->pivot->price,
+                'lead_time' => $supplier->pivot->lead_time ?? null, // Assuming lead_time might not exist
+                'last_updated' => $supplier->pivot->updated_at,
+            ];
+        });
 
         return response()->json([
             'base_price' => $material->base_price,
-            'suppliers' => $material->suppliers
+            'suppliers' => $formattedSuppliers
         ]);
     }
 
@@ -365,15 +371,17 @@ class MaterialController extends Controller
     public function getSuppliersForMaterial($id)
     {
         $material = Material::with(['suppliers'])->findOrFail($id);
-        $suppliers = $material->suppliers->map(function($supplier) {
+        
+        $suppliers = $material->suppliers->map(function($supplier) { // supplier is a Company model
             return [
                 'id' => $supplier->id,
                 'company_name' => $supplier->company_name,
                 'price' => $supplier->pivot->price ?? null,
                 'lead_time' => $supplier->pivot->lead_time ?? null,
-                'last_updated' => $supplier->pivot->updated_at ?? null,
+                'last_updated' => $supplier->pivot->updated_at ? $supplier->pivot->updated_at->toDateTimeString() : null,
             ];
         });
+
         return response()->json($suppliers);
     }
 
