@@ -232,7 +232,7 @@
 
   <!-- Top Navigation -->
   <div class="top-bar">
-    <img src="{{ asset('Images/gdc_logo.png') }}" alt="GDC Logo">
+    <img src="{{ asset('images/gdc_logo.png') }}" alt="GDC Logo">
     <span class="top-title">GDC Admin Center</span>
   </div>
 

@@ -10,7 +10,7 @@
 <body>
 
   <div class="top-bar">
-    <img src="{{ asset('Images/gdc_logo.png') }}" alt="Logo">
+    <img src="{{ asset('images/gdc_logo.png') }}" alt="Logo">
     <span class="top-title">Admin Center</span>
   </div>
 

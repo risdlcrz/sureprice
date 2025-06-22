@@ -183,7 +183,7 @@
 <body>
     <div class="reset-container">
         <div class="logo-section">
-            <img src="{{ asset('Images/gdc_logo.png') }}" alt="GDC Logo">
+            <img src="{{ asset('images/gdc_logo.png') }}" alt="GDC Logo">
             <h1 class="reset-title">Reset Password</h1>
         </div>
         <div class="reset-icon">

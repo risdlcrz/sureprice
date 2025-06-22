@@ -90,6 +90,8 @@
             <a href="{{ route('login') }}" class="login-link">
                 <i class="fas fa-arrow-left"></i> Back to Login
             </a>
+
+            <img src="{{ asset('images/gdc_logo.png') }}" alt="GDC Logo">
         </div>
     </div>
 </body>
