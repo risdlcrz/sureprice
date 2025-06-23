@@ -1,3 +1,5 @@
+@vite(['resources/css/dbadmin.css'])
+
 @extends('layouts.app')
 
 @section('content')
@@ -60,7 +62,3 @@
     </div>
 </div>
 @endsection
-
-@push('styles')
-<link rel="stylesheet" href="{{ asset('css/dbadmin.css') }}">
-@endpush

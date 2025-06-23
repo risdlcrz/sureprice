@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    @vite(['resources/css/projectreq.css', 'resources/js/projectreq.js'])
     <meta charset="UTF-8">
     <title>Purchase Requisition Form</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/projectreq.css') }}">
 
 </head>
 <body>
@@ -91,8 +91,6 @@
             </div>
         </form>
     </div>
-
-    <script src="{{ asset('js/projectreq.js') }}"></script>
 
 </body>
 </html>
