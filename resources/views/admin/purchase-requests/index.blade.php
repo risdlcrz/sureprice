@@ -177,13 +177,6 @@
                                                         <i class="fas fa-times"></i>
                                                     </button>
                                                 </form>
-                                                <form action="{{ route('purchase-requests.update-status', $request) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    <input type="hidden" name="status" value="pending">
-                                                    <button type="submit" class="btn btn-sm btn-warning" {{ $request->status === 'pending' ? 'disabled' : '' }} onclick="return confirm('Set this request to pending?')">
-                                                        <i class="fas fa-undo"></i>
-                                                    </button>
-                                                </form>
                                             @endif
                                         </div>
                                     </td>

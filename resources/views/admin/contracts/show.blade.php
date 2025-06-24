@@ -36,8 +36,8 @@
                     <i class="bi bi-pencil"></i> Edit Contract
                 </a>
                 @if($contract->status === 'approved')
-                    <a href="{{ route('purchase-requests.create', ['contract_id' => $contract->id]) }}" class="btn btn-success" id="generatePurchaseRequest">
-                        <i class="fas fa-file-invoice"></i> Edit Purchase Request
+                    <a href="{{ route('material-requests.create', ['contract_id' => $contract->id]) }}" class="btn btn-info" id="createMaterialRequest">
+                        <i class="fas fa-boxes"></i> Create Material Request
                     </a>
                 @endif
                 <button type="button" class="btn btn-danger" onclick="showDeleteModal()">

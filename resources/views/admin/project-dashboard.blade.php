@@ -139,6 +139,20 @@
                     </div>
                 </div>
             </div>
+            <!-- Material Requests Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 hover-shadow">
+                    <img src="{{ asset('resources/Images/ppimage6.jpg') }}" class="card-img-top rounded-top-4" alt="Material Requests" style="object-fit:cover; height:180px;">
+                    <div class="card-body">
+                        <h5 class="card-title fw-semibold">Material Requests</h5>
+                        <p class="card-text text-muted">Request materials, check inventory, and trigger procurement if needed.</p>
+                    </div>
+                    <div class="card-footer bg-white border-0 d-flex gap-2">
+                        <a href="{{ route('material-requests.create') }}" class="btn btn-danger flex-grow-1">+ New Material Request</a>
+                        <a href="{{ route('material-requests.index') }}" class="btn btn-outline-danger flex-grow-1">View All ({{ \App\Models\MaterialRequest::where('status', 'pending')->count() }})</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 

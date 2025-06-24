@@ -47,6 +47,7 @@ class PurchaseRequestController extends Controller
                         'preferred_brand' => null,
                         'preferred_supplier_id' => null,
                         'material_obj' => $material,
+                        'material_name' => $material->name
                     ];
                 }
             }
@@ -62,7 +63,9 @@ class PurchaseRequestController extends Controller
                     'total_amount' => $material->base_price,
                     'notes' => '',
                     'preferred_brand' => null,
-                    'preferred_supplier_id' => null
+                    'preferred_supplier_id' => null,
+                    'material_obj' => $material,
+                    'material_name' => $material->name
                 ];
             }
         }

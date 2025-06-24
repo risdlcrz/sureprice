@@ -43,6 +43,7 @@ use App\Http\Controllers\Warehouse\WarehouseReportController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PurchaseOrderPaymentController;
 use App\Http\Controllers\Admin\MaterialController as AdminMaterialController;
+use App\Http\Controllers\MaterialRequestController;
 // Home route redirect to login
 Route::get('/', function () {
     return redirect()->route('login.form');
@@ -387,3 +388,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('materials', AdminMaterialController::class);
     Route::post('materials/{material}/suppliers', [AdminMaterialController::class, 'updateSuppliers'])->name('materials.suppliers.update');
 });
+
+Route::resource('material-requests', \App\Http\Controllers\MaterialRequestController::class);
+Route::resource('purchase-orders', \App\Http\Controllers\PurchaseOrderController::class);

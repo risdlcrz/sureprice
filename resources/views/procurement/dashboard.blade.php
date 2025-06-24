@@ -70,6 +70,22 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h3 class="card-title h5">Material Requests</h3>
+                            <p class="display-6 text-white mb-0">{{ \App\Models\MaterialRequest::where('status', 'pending')->count() }}</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-boxes fa-2x"></i>
+                        </div>
+                    </div>
+                    <a href="{{ route('material-requests.index') }}" class="stretched-link"></a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Quick Actions -->

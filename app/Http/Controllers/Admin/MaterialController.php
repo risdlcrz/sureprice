@@ -19,8 +19,8 @@ class MaterialController extends Controller
 
     public function show(Material $material)
     {
-        $suppliers = Company::where('designation', 'supplier')->orderBy('company_name')->get();
-        $linkedSupplierIds = $material->suppliers()->pluck('company_id')->toArray();
+        $suppliers = \App\Models\Supplier::orderBy('company_name')->get();
+        $linkedSupplierIds = $material->suppliers()->pluck('suppliers.id')->toArray();
 
         return view('admin.materials.show', compact('material', 'suppliers', 'linkedSupplierIds'));
     }
@@ -33,7 +33,8 @@ class MaterialController extends Controller
 
     public function updateSuppliers(Request $request, Material $material)
     {
-        $material->suppliers()->sync($request->input('suppliers', []));
+        $supplierIds = $request->input('suppliers', []);
+        $material->suppliers()->sync($supplierIds);
 
         return redirect()->route('admin.materials.show', $material)
             ->with('success', 'Suppliers updated successfully.');
