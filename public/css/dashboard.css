@@ -1,0 +1,17 @@
+.materials-request-card .progress {
+    height: 5px;
+    margin-top: 0.5rem;
+}
+
+.materials-request-card .list-group-item {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.materials-request-card .badge {
+    font-size: 0.875rem;
+}
+
+.materials-request-card .progress-bar {
+    transition: width 0.3s ease-in-out;
+} 

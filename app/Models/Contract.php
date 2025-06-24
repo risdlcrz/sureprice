@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class Contract extends Model
 {
@@ -166,7 +168,7 @@ class Contract extends Model
     {
         $materialRequest = new \App\Models\MaterialRequest([
             'contract_id' => $this->id,
-            'requested_by' => auth()->id(),
+            'requested_by' => Auth::id(),
             'status' => 'pending',
             'notes' => 'Auto-generated from contract ' . $this->contract_number
         ]);
@@ -209,7 +211,7 @@ class Contract extends Model
                 $purchaseRequest = new \App\Models\PurchaseRequest([
                     'request_number' => 'PR-' . str_pad($this->id, 6, '0', STR_PAD_LEFT),
                     'contract_id' => $this->id,
-                    'requested_by' => auth()->id(),
+                    'requested_by' => Auth::id(),
                     'status' => 'pending',
                     'is_project_related' => true,
                     'notes' => 'Auto-generated from material request for contract ' . $this->contract_number
@@ -240,12 +242,12 @@ class Contract extends Model
 
     public function generatePayments()
     {
-        \Log::info('Generating payments for contract: ' . $this->id);
-        \Log::info('Payment schedule: ' . $this->payment_schedule);
+        Log::info('Generating payments for contract: ' . $this->id);
+        Log::info('Payment schedule: ' . $this->payment_schedule);
         
         $paymentSchedule = json_decode($this->payment_schedule, true);
         if (!$paymentSchedule) {
-            \Log::error('Invalid payment schedule format for contract: ' . $this->id);
+            Log::error('Invalid payment schedule format for contract: ' . $this->id);
             return;
         }
 
@@ -261,14 +263,14 @@ class Contract extends Model
                     'payment_type' => $this->getPaymentType($schedule['stage']),
                     'status' => 'pending',
                     'due_date' => $schedule['due_date'],
-                    'created_by' => auth()->id() ?? 1
+                    'created_by' => Auth::id() ?? 1
                 ]);
-                \Log::info('Created payment for contract: ' . $this->id, [
+                Log::info('Created payment for contract: ' . $this->id, [
                     'amount' => $schedule['amount'],
                     'due_date' => $schedule['due_date']
                 ]);
             } catch (\Exception $e) {
-                \Log::error('Error creating payment for contract: ' . $this->id, [
+                Log::error('Error creating payment for contract: ' . $this->id, [
                     'error' => $e->getMessage(),
                     'schedule' => $schedule
                 ]);
@@ -347,7 +349,7 @@ class Contract extends Model
                     'status' => 'pending',
                     'progress' => 0,
                     'priority' => 'medium',
-                    'created_by' => auth()->id()
+                    'created_by' => Auth::id()
                 ]);
             }
         }

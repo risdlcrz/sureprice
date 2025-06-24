@@ -7,6 +7,9 @@ use App\Models\Material;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class PurchaseRequestController extends Controller
 {
@@ -101,7 +104,7 @@ class PurchaseRequestController extends Controller
 
     public function store(Request $request)
     {
-        \Log::info('PurchaseRequestController@store called', ['request' => $request->all()]);
+        Log::info('PurchaseRequestController@store called', ['request' => $request->all()]);
         // Normalize empty preferred_supplier_id to null before validation
         if ($request->has('items')) {
             $items = collect($request->input('items'))->map(function ($item) {
@@ -145,19 +148,19 @@ class PurchaseRequestController extends Controller
         }
 
         try {
-            \Log::info('Validation passed', ['validated' => $validated]);
+            Log::info('Validation passed', ['validated' => $validated]);
 
             DB::beginTransaction();
             $purchaseRequest = new PurchaseRequest([
                 'request_number' => 'PR-' . str_pad(PurchaseRequest::count() + 1, 6, '0', STR_PAD_LEFT),
                 'contract_id' => $validated['is_project_related'] ? $validated['contract_id'] : null,
-                'requested_by' => auth()->id(),
+                'requested_by' => Auth::id(),
                 'status' => 'pending',
                 'is_project_related' => $validated['is_project_related'],
                 'notes' => $validated['notes']
             ]);
             $purchaseRequest->save();
-            \Log::info('PurchaseRequest instance created', ['purchaseRequest' => $purchaseRequest]);
+            Log::info('PurchaseRequest instance created', ['purchaseRequest' => $purchaseRequest]);
             $totalAmount = 0;
             foreach ($validated['items'] as $item) {
                 $purchaseRequest->items()->create([
@@ -184,12 +187,12 @@ class PurchaseRequestController extends Controller
             $purchaseRequest->total_amount = $totalAmount;
             $purchaseRequest->save();
             DB::commit();
-            \Log::info('PurchaseRequest saved and committed', ['purchaseRequest' => $purchaseRequest]);
+            Log::info('PurchaseRequest saved and committed', ['purchaseRequest' => $purchaseRequest]);
             return redirect()->route('purchase-requests.show', $purchaseRequest)
                 ->with('success', 'Purchase request created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error creating purchase request', ['exception' => $e, 'request' => $request->all()]);
+            Log::error('Error creating purchase request', ['exception' => $e, 'request' => $request->all()]);
             return back()->with('error', 'Error creating purchase request: ' . $e->getMessage());
         }
     }
@@ -214,7 +217,7 @@ class PurchaseRequestController extends Controller
         $suppliers = Supplier::orderBy('company_name')->get();
         $contracts = \App\Models\Contract::with('client')->orderBy('created_at', 'desc')->get();
         $projects = \App\Models\Project::orderBy('created_at', 'desc')->get();
-        \Log::info('Projects variable in PurchaseRequestController@edit:', ['projects' => $projects]);
+        Log::info('Projects variable in PurchaseRequestController@edit:', ['projects' => $projects]);
 
         return view('admin.purchase-requests.edit', compact('purchaseRequest', 'materials', 'suppliers', 'contracts', 'projects'));
     }
@@ -315,8 +318,7 @@ class PurchaseRequestController extends Controller
 
     public function approve(PurchaseRequest $purchaseRequest)
     {
-        // Ensure only admin can approve/reject
-        if (!auth()->user()->hasRole('admin')) {
+        if (!Gate::check('approve-as-admin')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -332,8 +334,7 @@ class PurchaseRequestController extends Controller
 
     public function reject(PurchaseRequest $purchaseRequest)
     {
-        // Ensure only admin can approve/reject
-        if (!auth()->user()->hasRole('admin')) {
+        if (!Gate::check('approve-as-admin')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -361,7 +362,7 @@ class PurchaseRequestController extends Controller
                 'items.*.totalCost' => 'required|numeric|min:0'
             ]);
 
-            \Log::info('Items received in generateFromContract:', ['items' => $validated['items']]);
+            Log::info('Items received in generateFromContract:', ['items' => $validated['items']]);
 
             // Find the contract
             $contract = \App\Models\Contract::findOrFail($validated['contract_id']);
@@ -388,7 +389,7 @@ class PurchaseRequestController extends Controller
                 $purchaseRequest = PurchaseRequest::create([
                     'request_number' => $prNumber,
                     'contract_id' => $contract->id,
-                    'requested_by' => auth()->id(),
+                    'requested_by' => Auth::id(),
                     'status' => 'pending',
                     'is_project_related' => true,
                     'notes' => 'Automatically generated from contract ' . $contract->contract_number,
@@ -446,11 +447,10 @@ class PurchaseRequestController extends Controller
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            // Log the error for debugging
-            \Log::error('Error generating purchase request: ' . $e->getMessage(), [
+            Log::error('Error generating purchase request: ' . $e->getMessage(), [
                 'contract_id' => $request->input('contract_id'),
                 'items_count' => count($request->input('items', [])),
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'trace' => $e->getTraceAsString()
             ]);
 

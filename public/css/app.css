@@ -1,0 +1,4 @@
+.progress-bar[data-progress] {
+    width: attr(data-progress);
+    transition: width 0.3s ease-in-out;
+} 

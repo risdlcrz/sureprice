@@ -48,4 +48,11 @@ class Kernel extends HttpKernel
         'check.company.status' => \App\Http\Middleware\CheckCompanyStatus::class,
         'warehouse' => \App\Http\Middleware\WarehouseMiddleware::class,
     ];
+
+    protected $routeMiddleware = [
+        // ... existing middleware ...
+        'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+        'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+        'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+    ];
 }
