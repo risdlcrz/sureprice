@@ -97,6 +97,21 @@
                                                 title="View">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            <form action="{{ route('admin.companies.approve', $supplier->id) }}" method="POST" style="display:inline-block;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-success btn-sm mb-1" {{ $supplier->status === 'approved' ? 'disabled' : '' }}>Approve</button>
+                                            </form>
+                                            <form action="{{ route('admin.companies.reject', $supplier->id) }}" method="POST" style="display:inline-block;">
+                                                @csrf
+                                                <input type="hidden" name="rejection_reason" value="Manual admin rejection">
+                                                <button type="submit" class="btn btn-danger btn-sm mb-1" {{ $supplier->status === 'rejected' ? 'disabled' : '' }}>Reject</button>
+                                            </form>
+                                            <form action="{{ route('admin.companies.update', $supplier->id) }}" method="POST" style="display:inline-block;">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="status" value="pending">
+                                                <button type="submit" class="btn btn-warning btn-sm mb-1" {{ $supplier->status === 'pending' ? 'disabled' : '' }}>Set to Pending</button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>

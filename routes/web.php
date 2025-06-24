@@ -105,6 +105,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{contract}/download', [ContractController::class, 'download'])->name('download');
         Route::patch('/{contract}/status', [ContractController::class, 'updateStatus'])->name('updateStatus');
         Route::post('/{contract}/status', [ContractController::class, 'updateStatus']);
+        Route::post('/{contract}/signatures', [ContractController::class, 'updateSignatures'])->name('updateSignatures');
         Route::post('/save-signature', [ContractController::class, 'saveSignature'])->name('contracts.save.signature');
         Route::post('/contracts/store/step3', [ContractController::class, 'storeStep3'])->name('contracts.store.step3');
         Route::post('/contracts/save/step3', [ContractController::class, 'saveStep3'])->name('contracts.save.step3');
@@ -297,6 +298,7 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::post('/admin/companies/{company}/approve', [AdminController::class, 'approve'])->name('admin.companies.approve');
     Route::post('/admin/companies/{company}/reject', [AdminController::class, 'reject'])->name('admin.companies.reject');
     Route::get('/admin/companies/{company}', [AdminController::class, 'show'])->name('admin.companies.show');
+    Route::patch('/admin/companies/{company}/status', [App\Http\Controllers\AdminController::class, 'updateStatus'])->name('admin.companies.update');
     // Information Management Routes
     Route::resource('information-management', InformationManagementController::class);
     Route::post('information-management/import', [InformationManagementController::class, 'import'])->name('information-management.import');

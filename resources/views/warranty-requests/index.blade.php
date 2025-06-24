@@ -80,22 +80,44 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($warrantyRequests as $request)
+                                @forelse($warrantyRequests as $warrantyRequest)
                                     <tr>
-                                        <td>#{{ $request->id }}</td>
-                                        <td>{{ $request->contract->contract_number }}</td>
-                                        <td>{{ $request->product_name }}</td>
-                                        <td>{{ $request->serial_number }}</td>
+                                        <td>{{ $warrantyRequest->id }}</td>
+                                        <td>{{ $warrantyRequest->contract->contract_number ?? '-' }}</td>
+                                        <td>{{ $warrantyRequest->product_name }}</td>
+                                        <td>{{ $warrantyRequest->serial_number }}</td>
                                         <td>
-                                            <span class="badge bg-{{ $request->status === 'approved' ? 'success' : ($request->status === 'rejected' ? 'danger' : ($request->status === 'in_review' ? 'warning' : 'secondary')) }}">
-                                                {{ ucfirst($request->status) }}
+                                            <span class="badge bg-{{ $warrantyRequest->status === 'approved' ? 'success' : ($warrantyRequest->status === 'pending' ? 'warning' : ($warrantyRequest->status === 'in_review' ? 'info' : 'danger')) }}">
+                                                {{ ucfirst($warrantyRequest->status) }}
                                             </span>
                                         </td>
-                                        <td>{{ $request->created_at->format('M d, Y H:i') }}</td>
+                                        <td>{{ $warrantyRequest->created_at->format('M d, Y') }}</td>
                                         <td>
-                                            <a href="{{ route('warranty-requests.show', $request) }}" class="btn btn-sm btn-primary">
-                                                <i class="bi bi-eye"></i> View
-                                            </a>
+                                            <div class="btn-group">
+                                                <a href="{{ route('warranty-requests.show', $warrantyRequest) }}" class="btn btn-sm btn-info me-1">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <form action="{{ route('warranty-requests.update-status', $warrantyRequest) }}" method="POST" class="d-inline me-1">
+                                                    @csrf
+                                                    <input type="hidden" name="status" value="approved">
+                                                    <button type="submit" class="btn btn-success btn-sm mb-1" {{ $warrantyRequest->status === 'approved' ? 'disabled' : '' }}>Approve</button>
+                                                </form>
+                                                <form action="{{ route('warranty-requests.update-status', $warrantyRequest) }}" method="POST" class="d-inline me-1">
+                                                    @csrf
+                                                    <input type="hidden" name="status" value="rejected">
+                                                    <button type="submit" class="btn btn-danger btn-sm mb-1" {{ $warrantyRequest->status === 'rejected' ? 'disabled' : '' }}>Reject</button>
+                                                </form>
+                                                <form action="{{ route('warranty-requests.update-status', $warrantyRequest) }}" method="POST" class="d-inline me-1">
+                                                    @csrf
+                                                    <input type="hidden" name="status" value="pending">
+                                                    <button type="submit" class="btn btn-warning btn-sm mb-1" {{ $warrantyRequest->status === 'pending' ? 'disabled' : '' }}>Set to Pending</button>
+                                                </form>
+                                                <form action="{{ route('warranty-requests.update-status', $warrantyRequest) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <input type="hidden" name="status" value="in_review">
+                                                    <button type="submit" class="btn btn-info btn-sm mb-1" {{ $warrantyRequest->status === 'in_review' ? 'disabled' : '' }}>Set to In Review</button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty

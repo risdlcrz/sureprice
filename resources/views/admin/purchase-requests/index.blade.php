@@ -167,14 +167,21 @@
                                             @if($request->status === 'pending' && (auth()->user()->role === 'procurement' || auth()->user()->role === 'admin'))
                                                 <form action="{{ route('purchase-requests.approve', $request) }}" method="POST" class="d-inline me-1">
                                                     @csrf
-                                                    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Are you sure you want to approve this request?')">
+                                                    <button type="submit" class="btn btn-sm btn-success" {{ $request->status === 'approved' ? 'disabled' : '' }} onclick="return confirm('Are you sure you want to approve this request?')">
                                                         <i class="fas fa-check"></i>
                                                     </button>
                                                 </form>
-                                                <form action="{{ route('purchase-requests.reject', $request) }}" method="POST" class="d-inline">
+                                                <form action="{{ route('purchase-requests.reject', $request) }}" method="POST" class="d-inline me-1">
                                                     @csrf
-                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to reject this request?')">
+                                                    <button type="submit" class="btn btn-sm btn-danger" {{ $request->status === 'rejected' ? 'disabled' : '' }} onclick="return confirm('Are you sure you want to reject this request?')">
                                                         <i class="fas fa-times"></i>
+                                                    </button>
+                                                </form>
+                                                <form action="{{ route('purchase-requests.update-status', $request) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <input type="hidden" name="status" value="pending">
+                                                    <button type="submit" class="btn btn-sm btn-warning" {{ $request->status === 'pending' ? 'disabled' : '' }} onclick="return confirm('Set this request to pending?')">
+                                                        <i class="fas fa-undo"></i>
                                                     </button>
                                                 </form>
                                             @endif

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\DB;
 
 class Contract extends Model
 {
@@ -54,25 +55,34 @@ class Contract extends Model
         parent::boot();
 
         static::creating(function ($contract) {
-            // Get the current year
-            $year = date('Y');
-            
-            // Get the last contract number for this year
-            $lastContract = static::where('contract_number', 'like', "CT{$year}%")
-                ->orderBy('contract_number', 'desc')
-                ->first();
+            DB::beginTransaction();
+            try {
+                // Get the current year
+                $year = date('Y');
+                
+                // Get the last contract number for this year
+                $lastContract = static::where('contract_number', 'like', "CT{$year}%")
+                    ->orderBy('contract_number', 'desc')
+                    ->lockForUpdate()  // Add lock to prevent race conditions
+                    ->first();
 
-            if ($lastContract) {
-                // Extract the number from the last contract number and increment it
-                $lastNumber = intval(substr($lastContract->contract_number, -4));
-                $newNumber = $lastNumber + 1;
-            } else {
-                // If no contracts exist for this year, start with 0001
-                $newNumber = 1;
+                if ($lastContract) {
+                    // Extract the number from the last contract number and increment it
+                    $lastNumber = intval(substr($lastContract->contract_number, -4));
+                    $newNumber = $lastNumber + 1;
+                } else {
+                    // If no contracts exist for this year, start with 0001
+                    $newNumber = 1;
+                }
+
+                // Generate the new contract number
+                $contract->contract_number = sprintf("CT%s%04d", $year, $newNumber);
+                
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
             }
-
-            // Generate the new contract number
-            $contract->contract_number = sprintf("CT%s%04d", $year, $newNumber);
         });
 
         static::booted(function () {
@@ -152,39 +162,75 @@ class Contract extends Model
         ][$this->status] ?? 'secondary';
     }
 
-    public function generatePurchaseRequest()
+    public function generateMaterialRequest()
     {
-        $purchaseRequest = new PurchaseRequest([
-            'request_number' => 'PR-' . str_pad($this->id, 6, '0', STR_PAD_LEFT),
+        $materialRequest = new \App\Models\MaterialRequest([
             'contract_id' => $this->id,
             'requested_by' => auth()->id(),
             'status' => 'pending',
-            'is_project_related' => true,
             'notes' => 'Auto-generated from contract ' . $this->contract_number
         ]);
-
-        $totalAmount = 0;
+        $materialRequest->save();
 
         foreach ($this->items as $item) {
-            $purchaseRequest->items()->create([
-                'material_id' => $item->material_id,
-                'description' => $item->material_name,
-                'quantity' => $item->quantity,
-                'unit' => $item->unit,
-                'estimated_unit_price' => $item->amount,
-                'total_amount' => $item->total,
-                'notes' => 'From contract item',
-                'supplier_id' => null,
-                'preferred_supplier_id' => null
-            ]);
-
-            $totalAmount += $item->total;
+            $requiredQty = $item->quantity;
+            $warehouses = \App\Models\Warehouse::all();
+            $fulfilled = 0;
+            foreach ($warehouses as $warehouse) {
+                $materialStock = $warehouse->materials()->where('materials.id', $item->material_id)->first();
+                $available = $materialStock ? $materialStock->pivot->current_stock : 0;
+                if ($available > 0 && $fulfilled < $requiredQty) {
+                    $toDeduct = min($available, $requiredQty - $fulfilled);
+                    // Deduct stock
+                    $warehouse->materials()->updateExistingPivot($item->material_id, [
+                        'current_stock' => $available - $toDeduct
+                    ]);
+                    // Add fulfilled item
+                    $materialRequest->items()->create([
+                        'material_id' => $item->material_id,
+                        'warehouse_id' => $warehouse->id,
+                        'quantity' => $toDeduct,
+                        'unit' => $item->unit,
+                        'fulfilled_quantity' => $toDeduct
+                    ]);
+                    $fulfilled += $toDeduct;
+                }
+            }
+            // If not fully fulfilled, create a purchase request for the lacking quantity
+            if ($fulfilled < $requiredQty) {
+                $materialRequest->items()->create([
+                    'material_id' => $item->material_id,
+                    'warehouse_id' => null,
+                    'quantity' => $requiredQty - $fulfilled,
+                    'unit' => $item->unit,
+                    'fulfilled_quantity' => 0
+                ]);
+                // Create a purchase request for the lacking quantity
+                $purchaseRequest = new \App\Models\PurchaseRequest([
+                    'request_number' => 'PR-' . str_pad($this->id, 6, '0', STR_PAD_LEFT),
+                    'contract_id' => $this->id,
+                    'requested_by' => auth()->id(),
+                    'status' => 'pending',
+                    'is_project_related' => true,
+                    'notes' => 'Auto-generated from material request for contract ' . $this->contract_number
+                ]);
+                $purchaseRequest->save();
+                $purchaseRequest->items()->create([
+                    'material_id' => $item->material_id,
+                    'description' => $item->material_name,
+                    'quantity' => $requiredQty - $fulfilled,
+                    'unit' => $item->unit,
+                    'estimated_unit_price' => $item->amount,
+                    'total_amount' => ($requiredQty - $fulfilled) * $item->amount,
+                    'notes' => 'From material request',
+                    'supplier_id' => null,
+                    'preferred_supplier_id' => null
+                ]);
+                $purchaseRequest->total_amount = ($requiredQty - $fulfilled) * $item->amount;
+                $purchaseRequest->save();
+            }
         }
-
-        $purchaseRequest->total_amount = $totalAmount;
-        $purchaseRequest->save();
-
-        return $purchaseRequest;
+        return $materialRequest;
     }
 
     public function payments()

@@ -495,84 +495,31 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
+                                <!-- Status Change Buttons -->
                                 <div class="mb-3">
-                                    <h6 class="text-primary">Address Details</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered">
-                                            <tr>
-                                                <th width="40%">Street</th>
-                                                <td>{{ $company->street }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Barangay</th>
-                                                <td>{{ $company->barangay }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>City</th>
-                                                <td>{{ $company->city }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>State/Province</th>
-                                                <td>{{ $company->state }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Postal Code</th>
-                                                <td>{{ $company->postal }}</td>
-                                            </tr>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <h6 class="text-primary">Activity Information</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered">
-                                            <tr>
-                                                <th width="40%">Created At</th>
-                                                <td>{{ $company->created_at->format('M d, Y H:i A') }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Updated At</th>
-                                                <td>{{ $company->updated_at->format('M d, Y H:i A') }}</td>
-                                            </tr>
-                                        </table>
-                                    </div>
+                                    <h6 class="text-primary">Change Status</h6>
+                                    <form action="{{ route('admin.companies.approve', $company->id) }}" method="POST" style="display:inline-block;">
+                                        @csrf
+                                        <button type="submit" class="btn btn-success btn-sm mb-1" {{ $company->status === 'approved' ? 'disabled' : '' }}>Approve</button>
+                                    </form>
+                                    <form action="{{ route('admin.companies.reject', $company->id) }}" method="POST" style="display:inline-block;">
+                                        @csrf
+                                        <input type="hidden" name="rejection_reason" value="Manual admin rejection">
+                                        <button type="submit" class="btn btn-danger btn-sm mb-1" {{ $company->status === 'rejected' ? 'disabled' : '' }}>Reject</button>
+                                    </form>
+                                    <form action="{{ route('admin.companies.update', $company->id) }}" method="POST" style="display:inline-block;">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="status" value="pending">
+                                        <button type="submit" class="btn btn-warning btn-sm mb-1" {{ $company->status === 'pending' ? 'disabled' : '' }}>Set to Pending</button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
         </div>
-
-        @if($company->status === 'pending')
-            <!-- Reject Modal -->
-            <div class="modal fade" id="rejectModal{{ $company->id }}" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Reject Company Registration</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <form action="{{ route('admin.companies.reject', $company->id) }}" method="POST">
-                            @csrf
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label for="rejection_reason" class="form-label">Reason for Rejection</label>
-                                    <textarea class="form-control" name="rejection_reason" required></textarea>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-danger">Reject</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        @endif
     @endforeach
 @endif
 

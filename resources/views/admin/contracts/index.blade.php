@@ -85,6 +85,7 @@
                             <th>Labor Cost</th>
                             <th>Total Amount</th>
                             <th>Status</th>
+                            <th>Signatures</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -119,6 +120,28 @@
                                     </button>
                                 </td>
                                 <td>
+                                    <div class="d-flex flex-column">
+                                        @if($contract->contractor_signature)
+                                            <span class="badge bg-success mb-1">
+                                                <i class="fas fa-check"></i> Contractor
+                                            </span>
+                                        @else
+                                            <span class="badge bg-warning mb-1">
+                                                <i class="fas fa-clock"></i> Contractor
+                                            </span>
+                                        @endif
+                                        @if($contract->client_signature)
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check"></i> Client
+                                            </span>
+                                        @else
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-clock"></i> Client
+                                            </span>
+                                        @endif
+                                    </div>
+                                </td>
+                                <td>
                                     <div class="btn-group">
                                         <a href="{{ route('contracts.show', $contract->id) }}" 
                                            class="btn btn-sm btn-outline-primary"
@@ -148,7 +171,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center">No contracts found.</td>
+                                <td colspan="10" class="text-center">No contracts found.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -175,6 +198,13 @@
     }
     .status-badge:hover {
         opacity: 0.8;
+    }
+    .signature-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    .signature-badge .fas {
+        margin-right: 0.25rem;
     }
 </style>
 @endpush

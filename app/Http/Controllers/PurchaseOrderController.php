@@ -7,6 +7,7 @@ use App\Models\PurchaseRequest;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class PurchaseOrderController extends Controller
 {
@@ -315,5 +316,84 @@ class PurchaseOrderController extends Controller
             ]);
             return response()->json(['error' => 'Failed to complete purchase order: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function validateClientPayment(Request $request, PurchaseOrder $purchaseOrder)
+    {
+        try {
+            $purchaseOrder->validateClientPayment();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment validated by client successfully.',
+                'is_fully_validated' => $purchaseOrder->isPaymentValidated()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 403);
+        }
+    }
+
+    public function validateSupplierPayment(Request $request, PurchaseOrder $purchaseOrder)
+    {
+        try {
+            $purchaseOrder->validateSupplierPayment();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment validated by supplier successfully.',
+                'is_fully_validated' => $purchaseOrder->isPaymentValidated()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 403);
+        }
+    }
+
+    public function confirmDelivery(Request $request, PurchaseOrder $purchaseOrder)
+    {
+        $request->validate([
+            'warehouse_id' => 'required|exists:warehouses,id'
+        ]);
+
+        try {
+            $purchaseOrder->warehouse_id = $request->warehouse_id;
+            $purchaseOrder->confirmDelivery();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Delivery confirmed and warehouse stock updated successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 403);
+        }
+    }
+
+    public function getStatus(PurchaseOrder $purchaseOrder)
+    {
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'client_payment_validated' => $purchaseOrder->client_payment_validated,
+                'client_payment_validated_at' => $purchaseOrder->client_payment_validated_at,
+                'supplier_payment_validated' => $purchaseOrder->supplier_payment_validated,
+                'supplier_payment_validated_at' => $purchaseOrder->supplier_payment_validated_at,
+                'is_payment_validated' => $purchaseOrder->isPaymentValidated(),
+                'delivery_confirmed' => $purchaseOrder->delivery_confirmed,
+                'delivery_confirmed_at' => $purchaseOrder->delivery_confirmed_at,
+                'status' => $purchaseOrder->status,
+                'warehouse' => $purchaseOrder->warehouse ? [
+                    'id' => $purchaseOrder->warehouse->id,
+                    'name' => $purchaseOrder->warehouse->name
+                ] : null
+            ]
+        ]);
     }
 } 

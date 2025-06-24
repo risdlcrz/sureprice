@@ -8,6 +8,8 @@ use App\Http\Controllers\MaterialController;
 use Illuminate\Http\Request;
 use App\Models\Material;
 use App\Models\Supplier;
+use App\Http\Controllers\PurchaseRequestApprovalController;
+use App\Http\Controllers\PurchaseOrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -103,5 +105,25 @@ Route::middleware('api')->group(function () {
 Route::get('users/{id}', [App\Http\Controllers\UserController::class, 'showMinimal']);
 
 Route::get('materials/{material}/suppliers', [App\Http\Controllers\MaterialController::class, 'getSuppliersForMaterial']);
+
+// Purchase Request Approval Routes
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/purchase-requests/{purchaseRequest}/admin-approve', [PurchaseRequestApprovalController::class, 'adminApprove'])
+        ->middleware('role:admin');
+    Route::post('/purchase-requests/{purchaseRequest}/supplier-approve', [PurchaseRequestApprovalController::class, 'supplierApprove'])
+        ->middleware('role:supplier');
+    Route::get('/purchase-requests/{purchaseRequest}/approval-status', [PurchaseRequestApprovalController::class, 'getApprovalStatus']);
+});
+
+// Purchase Order Routes
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::post('/purchase-orders/{purchaseOrder}/validate-client-payment', [PurchaseOrderController::class, 'validateClientPayment'])
+        ->middleware('role:admin');
+    Route::post('/purchase-orders/{purchaseOrder}/validate-supplier-payment', [PurchaseOrderController::class, 'validateSupplierPayment'])
+        ->middleware('role:supplier');
+    Route::post('/purchase-orders/{purchaseOrder}/confirm-delivery', [PurchaseOrderController::class, 'confirmDelivery'])
+        ->middleware('role:admin');
+    Route::get('/purchase-orders/{purchaseOrder}/status', [PurchaseOrderController::class, 'getStatus']);
+});
 
 require __DIR__.'/auth.php'; 

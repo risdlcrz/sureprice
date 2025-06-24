@@ -73,6 +73,26 @@ public function notificationCenter()
     $activities = \App\Models\Activity::latest()->take(50)->get();
     return view('admin.notification', compact('activities'));
 }
+
+public function updateStatus(Request $request, Company $company)
+{
+    $request->validate([
+        'status' => 'required|in:approved,pending,rejected',
+    ]);
+    $oldStatus = $company->status;
+    $company->status = $request->status;
+    if ($request->status === 'rejected') {
+        $company->rejection_reason = $request->input('rejection_reason', 'Manually set to rejected by admin.');
+        $company->user->notify(new CompanyRejectedNotification($company->rejection_reason));
+    } elseif ($request->status === 'approved' && $oldStatus !== 'approved') {
+        $company->rejection_reason = null;
+        $company->user->notify(new CompanyApprovedNotification());
+    } else {
+        $company->rejection_reason = null;
+    }
+    $company->save();
+    return back()->with('success', 'Company status updated to ' . $request->status . '.');
+}
 }
 
 

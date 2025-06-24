@@ -254,12 +254,16 @@
 
                             <!-- Signature Section -->
                             <div class="section-container" id="signaturesSection">
-                                <h5 class="section-title">Signatures</h5>
+                                <h5 class="section-title">Signatures (Optional)</h5>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>Note:</strong> Signatures can be added now or later. Contracts can be created without signatures and signed by parties at a later time.
+                                </div>
                                 
                                 <!-- Contractor Signature -->
                                 <div class="row mb-4">
                                     <div class="col-md-6">
-                                        <label>Contractor Signature</label>
+                                        <label>Contractor Signature (Optional)</label>
                                         <div class="signature-pad">
                                             <canvas id="contractorSignaturePad"></canvas>
                                         </div>
@@ -281,7 +285,7 @@
                                 
                                     <!-- Client Signature -->
                                     <div class="col-md-6">
-                                        <label>Client Signature</label>
+                                        <label>Client Signature (Optional)</label>
                                         <div class="signature-pad">
                                             <canvas id="clientSignaturePad"></canvas>
                                         </div>
@@ -644,45 +648,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Check if signatures are provided or kept
+            // Check if signatures are provided or kept (optional now)
             const keepContractorSignature = document.getElementById('keepContractorSignature')?.checked;
             const keepClientSignature = document.getElementById('keepClientSignature')?.checked;
             console.log('keepContractorSignature:', keepContractorSignature, 'keepClientSignature:', keepClientSignature);
 
-            // Always set hidden fields before submit
+            // Always set hidden fields before submit (signatures are optional)
             if (keepContractorSignature) {
                 document.getElementById('contractor_signature').value = @json(session('contract_step3.contractor_signature')) || '';
             } else if (window.contractorPad && !window.contractorPad.isEmpty()) {
                 document.getElementById('contractor_signature').value = window.contractorPad.toDataURL();
+            } else {
+                document.getElementById('contractor_signature').value = '';
             }
 
             if (keepClientSignature) {
                 document.getElementById('client_signature').value = @json(session('contract_step3.client_signature')) || '';
             } else if (window.clientPad && !window.clientPad.isEmpty()) {
                 document.getElementById('client_signature').value = window.clientPad.toDataURL();
+            } else {
+                document.getElementById('client_signature').value = '';
             }
 
-            if (!document.getElementById('contractor_signature').value) {
-                errorMessage = 'Please provide contractor signature.';
-                if (errorDiv) {
-                    errorDiv.textContent = errorMessage;
-                    errorDiv.classList.remove('d-none');
-                }
-                console.log('Contractor signature missing');
-                return;
-            }
-
-            if (!document.getElementById('client_signature').value) {
-                errorMessage = 'Please provide client signature.';
-                if (errorDiv) {
-                    errorDiv.textContent = errorMessage;
-                    errorDiv.classList.remove('d-none');
-                }
-                console.log('Client signature missing');
-                return;
-            }
-
-            // Submit the form
+            // Submit the form (signatures are now optional)
             console.log('All validations passed, submitting form');
             isSubmitting = true;
             formSubmit.submit();

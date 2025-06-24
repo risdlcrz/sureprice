@@ -78,6 +78,33 @@
         </div>
     </div>
 
+    <!-- Signature Modal -->
+    <div class="modal fade" id="signatureModal" tabindex="-1" aria-labelledby="signatureModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="signatureModalLabel">Add Signature</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <h6 id="signatureModalSubtitle">Add your signature below</h6>
+                    </div>
+                    <div class="signature-pad-container">
+                        <canvas id="signatureCanvas" class="signature-pad" style="border: 1px solid #dee2e6; border-radius: 4px;"></canvas>
+                    </div>
+                    <div class="text-center mt-3">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="clearSignature()">Clear</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveSignature()">Save Signature</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <form id="delete-form" action="{{ route('contracts.destroy', $contract->id) }}" method="POST" style="display: none;">
         @csrf
         @method('DELETE')
@@ -329,8 +356,16 @@
                              style="max-height: 100px;">
                         <p class="mb-0">{{ $contract->contractor->name }}</p>
                         <small class="text-muted">Contractor</small>
+                        @if($contract->contractor_date_signed)
+                            <br><small class="text-muted">Signed: {{ $contract->contractor_date_signed->format('M d, Y') }}</small>
+                        @endif
                     @else
                         <p class="text-muted">No signature provided</p>
+                        @if(!$isClient)
+                            <button type="button" class="btn btn-sm btn-primary" onclick="showSignatureModal('contractor')">
+                                <i class="fas fa-signature"></i> Add Contractor Signature
+                            </button>
+                        @endif
                     @endif
                 </div>
                 <div class="col-md-6 text-center">
@@ -342,8 +377,16 @@
                              style="max-height: 100px;">
                         <p class="mb-0">{{ $contract->client->name }}</p>
                         <small class="text-muted">Client</small>
+                        @if($contract->client_date_signed)
+                            <br><small class="text-muted">Signed: {{ $contract->client_date_signed->format('M d, Y') }}</small>
+                        @endif
                     @else
                         <p class="text-muted">No signature provided</p>
+                        @if(!$isClient)
+                            <button type="button" class="btn btn-sm btn-primary" onclick="showSignatureModal('client')">
+                                <i class="fas fa-signature"></i> Add Client Signature
+                            </button>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -376,7 +419,10 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
+let currentSignatureType = null;
+
 function updateStatus(status) {
     // Get the CSRF token from the meta tag
     const token = document.querySelector('meta[name="csrf-token"]');
@@ -423,14 +469,15 @@ function updateStatus(status) {
         }),
         credentials: 'same-origin'
     })
-    .then(response => {
+    .then(async response => {
+        const data = await response.json();
         if (!response.ok) {
             if (response.status === 419) {
                 throw new Error('CSRF token mismatch. Please refresh the page and try again.');
             }
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(data.message || `HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        return data;
     })
     .then(data => {
         if (data.success) {
@@ -452,7 +499,7 @@ function updateStatus(status) {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Error updating status: ' + error.message
+            text: error.message
         });
     });
 }
@@ -464,6 +511,96 @@ function showDeleteModal() {
 
 function submitDelete() {
     document.getElementById('delete-form').submit();
+}
+
+function showSignatureModal(type) {
+    currentSignatureType = type;
+    const signatureModal = new bootstrap.Modal(document.getElementById('signatureModal'));
+    const subtitle = document.getElementById('signatureModalSubtitle');
+    subtitle.textContent = `Add ${type === 'contractor' ? 'Contractor' : 'Client'} signature below`;
+    signatureModal.show();
+    
+    // Initialize signature pad
+    const canvas = document.getElementById('signatureCanvas');
+    if (window.signaturePad) {
+        window.signaturePad.clear();
+    } else {
+        window.signaturePad = new SignaturePad(canvas, {
+            backgroundColor: 'rgb(255, 255, 255)',
+            penColor: 'rgb(0, 0, 0)'
+        });
+    }
+}
+
+function clearSignature() {
+    if (window.signaturePad) {
+        window.signaturePad.clear();
+    }
+}
+
+function saveSignature() {
+    if (!window.signaturePad || window.signaturePad.isEmpty()) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'No Signature',
+            text: 'Please provide a signature before saving.'
+        });
+        return;
+    }
+
+    const signatureData = window.signaturePad.toDataURL();
+    
+    // Show loading state
+    Swal.fire({
+        title: 'Saving Signature',
+        text: 'Please wait...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    fetch("{{ route('contracts.updateSignatures', $contract->id) }}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            signature_type: currentSignatureType,
+            [currentSignatureType + '_signature']: signatureData
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: data.message,
+                showConfirmButton: false,
+                timer: 1500
+            }).then(() => {
+                window.location.reload();
+            });
+        } else {
+            throw new Error(data.message || 'Unknown error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error saving signature: ' + error.message
+        });
+    });
 }
 </script>
 @endpush 

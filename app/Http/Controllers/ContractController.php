@@ -382,14 +382,14 @@ class ContractController extends Controller
                 'warranty_terms' => 'required|string',
                 'cancellation_terms' => 'required|string',
                 'additional_terms' => 'nullable|string',
-                'contractor_signature' => 'required|string',
-                'client_signature' => 'required|string',
+                'contractor_signature' => 'nullable|string',
+                'client_signature' => 'nullable|string',
             ]);
 
-            // Process signatures
+            // Process signatures if provided
             foreach (['contractor', 'client'] as $type) {
                 $signatureData = $request->input($type . '_signature');
-                if (strpos($signatureData, 'data:image') === 0) {
+                if ($signatureData && strpos($signatureData, 'data:image') === 0) {
                     list(, $data) = explode(',', $signatureData);
                     $image_data = base64_decode($data);
                     $filename = 'signatures/' . uniqid($type . '_') . '.png';
@@ -1259,6 +1259,18 @@ class ContractController extends Controller
             DB::beginTransaction();
 
             $oldStatus = $contract->status;
+
+            // Require both signatures before approval
+            if ($request->status === 'approved') {
+                if (empty($contract->contractor_signature) || empty($contract->client_signature)) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Both contractor and client signatures are required before approval.'
+                    ], 422);
+                }
+            }
+
             $contract->status = $request->status;
 
             // Generate payment schedule when contract is approved
@@ -1662,6 +1674,47 @@ class ContractController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error saving signature: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Error saving signature']);
+        }
+    }
+
+    /**
+     * Update signatures for an existing contract
+     */
+    public function updateSignatures(Request $request, Contract $contract)
+    {
+        try {
+            $request->validate([
+                'contractor_signature' => 'nullable|string',
+                'client_signature' => 'nullable|string',
+                'signature_type' => 'required|in:contractor,client'
+            ]);
+
+            $signatureType = $request->input('signature_type');
+            $signatureData = $request->input($signatureType . '_signature');
+
+            if ($signatureData && strpos($signatureData, 'data:image') === 0) {
+                list(, $data) = explode(',', $signatureData);
+                $image_data = base64_decode($data);
+                $filename = 'signatures/' . uniqid($signatureType . '_') . '.png';
+                
+                if (Storage::disk('public')->put($filename, $image_data)) {
+                    $contract->update([
+                        $signatureType . '_signature' => $filename,
+                        $signatureType . '_date_signed' => now()
+                    ]);
+                    
+                    return response()->json([
+                        'success' => true, 
+                        'message' => ucfirst($signatureType) . ' signature updated successfully',
+                        'signature_path' => $filename
+                    ]);
+                }
+            }
+
+            return response()->json(['success' => false, 'message' => 'Invalid signature format']);
+        } catch (\Exception $e) {
+            \Log::error('Error updating signature: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error updating signature']);
         }
     }
 
