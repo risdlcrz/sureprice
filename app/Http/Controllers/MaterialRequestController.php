@@ -60,6 +60,7 @@ class MaterialRequestController extends Controller
             'items' => 'required|array|min:1',
             'items.*.material_id' => 'required|exists:materials,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
+            'create_purchase_request' => 'nullable|boolean',
         ]);
 
         DB::beginTransaction();
@@ -74,54 +75,85 @@ class MaterialRequestController extends Controller
             $purchaseRequestItems = [];
 
             foreach ($validated['items'] as $itemData) {
-                $material = Material::with('inventory')->find($itemData['material_id']);
+                $material = Material::find($itemData['material_id']);
                 $requestedQty = $itemData['quantity'];
-                $availableQty = $material->inventory->sum('quantity') ?? 0;
+                $remainingQty = $requestedQty;
 
-                $fulfilledQty = min($requestedQty, $availableQty);
-                $lackingQty = $requestedQty - $fulfilledQty;
+                $mainWarehouse = Warehouse::where('name', 'Main Warehouse')->first();
+                $secondWarehouse = Warehouse::where('name', '2nd Warehouse')->first();
 
-                // Create Material Request Item for what can be fulfilled
-                if ($fulfilledQty > 0) {
+                // Try to fulfill from Main Warehouse first
+                $mainStock = $mainWarehouse ? $mainWarehouse->stocks()->where('material_id', $material->id)->first() : null;
+                $fulfilledFromMain = 0;
+                if ($mainStock && $mainStock->current_stock > 0) {
+                    $fromMain = min($remainingQty, $mainStock->current_stock);
+                    if ($fromMain > 0) {
                     $materialRequest->items()->create([
                         'material_id' => $material->id,
-                        'quantity' => $fulfilledQty,
+                            'warehouse_id' => $mainWarehouse->id,
+                            'quantity' => $fromMain,
                         'unit' => $material->unit,
-                        'fulfilled_quantity' => $fulfilledQty,
-                        // You might need to specify which warehouse it's from if you have multiple
-                    ]);
-
-                    // Deduct from inventory
-                    $inventory = $material->inventory->first(); // Assuming one inventory record per material for simplicity
-                    if ($inventory) {
-                        $inventory->quantity -= $fulfilledQty;
-                        $inventory->save();
+                            'fulfilled_quantity' => 0, // No deduction yet
+                        ]);
+                        $remainingQty -= $fromMain;
+                        $fulfilledFromMain = $fromMain;
                     }
                 }
 
-                // If not enough stock, add to a list to create a Purchase Request
-                if ($lackingQty > 0) {
+                // If not enough, try to fulfill from 2nd Warehouse
+                $fulfilledFromSecond = 0;
+                if ($remainingQty > 0 && $secondWarehouse) {
+                    $secondStock = $secondWarehouse->stocks()->where('material_id', $material->id)->first();
+                    if ($secondStock && $secondStock->current_stock > 0) {
+                        $fromSecond = min($remainingQty, $secondStock->current_stock);
+                        if ($fromSecond > 0) {
+                            $materialRequest->items()->create([
+                                'material_id' => $material->id,
+                                'warehouse_id' => $secondWarehouse->id,
+                                'quantity' => $fromSecond,
+                                'unit' => $material->unit,
+                                'fulfilled_quantity' => 0, // No deduction yet
+                            ]);
+                            $remainingQty -= $fromSecond;
+                            $fulfilledFromSecond = $fromSecond;
+                        }
+                    }
+                }
+
+                // If still not enough and user wants to create purchase request, add to purchase request
+                if ($remainingQty > 0 && $request->boolean('create_purchase_request')) {
                      $materialRequest->items()->create([
                         'material_id' => $material->id,
-                        'quantity' => $lackingQty,
+                        'warehouse_id' => null,
+                        'quantity' => $remainingQty,
                         'unit' => $material->unit,
                         'fulfilled_quantity' => 0,
                     ]);
                     $purchaseRequestItems[] = [
                         'material_id' => $material->id,
                         'description' => $material->name,
-                        'quantity' => $lackingQty,
+                        'quantity' => $remainingQty,
                         'unit' => $material->unit,
                         'estimated_unit_price' => $material->base_price,
-                        'total_amount' => $lackingQty * $material->base_price,
+                        'total_amount' => $remainingQty * $material->base_price,
                     ];
+                } elseif ($remainingQty > 0) {
+                    // If user doesn't want purchase request, still create material request item but mark as unfulfilled
+                    $materialRequest->items()->create([
+                        'material_id' => $material->id,
+                        'warehouse_id' => null,
+                        'quantity' => $remainingQty,
+                        'unit' => $material->unit,
+                        'fulfilled_quantity' => 0,
+                    ]);
                 }
             }
             
-            // If there are items that need purchasing, create a Purchase Request
-            if (!empty($purchaseRequestItems)) {
+            // If there are items that need purchasing and user opted to create purchase request, create a Purchase Request
+            if (!empty($purchaseRequestItems) && $request->boolean('create_purchase_request')) {
                 $contract = Contract::find($validated['contract_id']);
                 $purchaseRequest = PurchaseRequest::create([
+                    'request_number' => 'PR-' . str_pad(PurchaseRequest::count() + 1, 6, '0', STR_PAD_LEFT),
                     'material_request_id' => $materialRequest->id,
                     'contract_id' => $validated['contract_id'],
                     'requested_by' => auth()->id(),

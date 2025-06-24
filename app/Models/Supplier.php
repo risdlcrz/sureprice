@@ -70,4 +70,9 @@ class Supplier extends Model
     {
         return $this->hasOne(SupplierMetrics::class);
     }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 } 

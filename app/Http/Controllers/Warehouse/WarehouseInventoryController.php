@@ -116,6 +116,15 @@ class WarehouseInventoryController extends Controller
                 'reference_number' => 'STK-' . strtoupper(uniqid()),
                 'warehouse_id' => $stock->warehouse_id,
             ]);
+            // Sync to admin Inventory if Main Warehouse
+            $mainWarehouse = \App\Models\Warehouse::where('name', 'Main Warehouse')->first();
+            if ($mainWarehouse && $mainWarehouse->id == $request->warehouse_id) {
+                $inventory = \App\Models\Inventory::firstOrCreate([
+                    'material_id' => $request->material_id
+                ]);
+                $inventory->quantity = $stock->current_stock;
+                $inventory->save();
+            }
         });
         return redirect()->route('warehouse.inventory.index', ['warehouse_id' => $request->warehouse_id])
             ->with('success', 'Stock added successfully');
@@ -167,6 +176,15 @@ class WarehouseInventoryController extends Controller
                 'reference_number' => 'STK-' . strtoupper(uniqid()),
                 'warehouse_id' => $stock->warehouse_id,
             ]);
+            // Sync to admin Inventory if Main Warehouse
+            $mainWarehouse = \App\Models\Warehouse::where('name', 'Main Warehouse')->first();
+            if ($mainWarehouse && $mainWarehouse->id == $request->warehouse_id) {
+                $inventory = \App\Models\Inventory::firstOrCreate([
+                    'material_id' => $request->material_id
+                ]);
+                $inventory->quantity = $stock->current_stock;
+                $inventory->save();
+            }
         });
         return redirect()->route('warehouse.inventory.index', ['warehouse_id' => $request->warehouse_id])
             ->with('success', 'Stock updated successfully');

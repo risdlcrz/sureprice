@@ -34,7 +34,12 @@ class MaterialController extends Controller
     public function updateSuppliers(Request $request, Material $material)
     {
         $supplierIds = $request->input('suppliers', []);
-        $material->suppliers()->sync($supplierIds);
+        // Only allow approved suppliers
+        $approvedSupplierIds = \App\Models\Supplier::whereIn('id', $supplierIds)->pluck('id')->toArray();
+        if (count($approvedSupplierIds) !== count($supplierIds)) {
+            return back()->with('error', 'One or more selected suppliers are not approved. Please select only approved suppliers.');
+        }
+        $material->suppliers()->sync($approvedSupplierIds);
 
         return redirect()->route('admin.materials.show', $material)
             ->with('success', 'Suppliers updated successfully.');

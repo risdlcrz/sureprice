@@ -78,7 +78,7 @@ class MaterialController extends Controller
             'srp_price' => 'required|numeric|min:0',
             'specifications' => 'nullable|string',
             'suppliers' => 'nullable|array',
-            'suppliers.*' => 'exists:companies,id',
+            'suppliers.*' => 'exists:suppliers,id',
             'scope_types' => 'nullable|array',
             'scope_types.*' => 'exists:scope_types,id',
             'images.*' => 'nullable|image|max:2048',
@@ -145,6 +145,11 @@ class MaterialController extends Controller
 
     public function update(Request $request, Material $material)
     {
+        // Debug: log all request data
+        \Log::debug('Material update request data:', $request->all());
+        \Log::debug('Submitted supplier IDs:', $request->input('suppliers', []));
+        \Log::debug('Supplier IDs in DB:', \App\Models\Supplier::pluck('id')->toArray());
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'sometimes|string|max:50|unique:materials,code,' . $material->id,
@@ -155,7 +160,7 @@ class MaterialController extends Controller
             'srp_price' => 'required|numeric|min:0',
             'specifications' => 'nullable|string',
             'suppliers' => 'nullable|array',
-            'suppliers.*' => 'exists:companies,id',
+            'suppliers.*' => 'exists:suppliers,id',
             'scope_types' => 'nullable|array',
             'scope_types.*' => 'exists:scope_types,id',
             'images.*' => 'nullable|image|max:2048',
@@ -165,6 +170,9 @@ class MaterialController extends Controller
             'minimum_quantity' => 'nullable|integer|min:0|required_if:is_per_area,0',
             'warranty_period' => 'nullable|integer|min:0',
         ]);
+
+        // Debug: log validated data
+        \Log::debug('Validated supplier IDs:', $validated['suppliers'] ?? []);
 
         try {
             DB::beginTransaction();

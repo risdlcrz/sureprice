@@ -66,7 +66,7 @@
             <h2 class="h4 mb-0">Your Recent Materials</h2>
         </div>
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
+            <table class="table table-hover mb-0 align-middle">
                 <thead>
                     <tr>
                         <th>Name</th>
@@ -79,12 +79,23 @@
                 <tbody>
                     @forelse($materials->take(5) as $material)
                     <tr>
-                        <td>{{ $material->name }}</td>
+                        <td>
+                            <span class="me-2">
+                                <i class="bi bi-box-seam text-primary"></i>
+                            </span>
+                            <span class="fw-semibold">{{ $material->name }}</span>
+                        </td>
                         <td>{{ $material->category->name ?? '-' }}</td>
-                        <td>{{ $material->stock }}</td>
+                        <td>
+                            @if($material->stock <= 10)
+                                <span class="badge bg-danger">{{ $material->stock }}</span>
+                            @else
+                                <span class="badge bg-success">{{ $material->stock }}</span>
+                            @endif
+                        </td>
                         <td>₱{{ number_format($material->price, 2) }}</td>
                         <td>
-                            <a href="{{ route('supplier.materials.edit', $material) }}" class="btn btn-sm btn-secondary">Edit</a>
+                            <a href="{{ route('supplier.materials.edit', $material) }}" class="btn btn-sm btn-outline-primary">Edit</a>
                         </td>
                     </tr>
                     @empty
@@ -96,8 +107,8 @@
             </table>
         </div>
         @if($materials->count() > 5)
-        <div class="card-footer">
-            <a href="{{ route('supplier.materials.index') }}" class="btn btn-link">View all materials →</a>
+        <div class="card-footer bg-white border-0">
+            <a href="{{ route('supplier.materials.index') }}" class="btn btn-link p-0">View all materials &rarr;</a>
         </div>
         @endif
     </div>
@@ -160,4 +171,23 @@
         </div>
     </div>
 </div>
+
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+<style>
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .btn-outline-primary.btn-sm {
+        padding: 0.25rem 0.75rem;
+        font-size: 0.9rem;
+        border-radius: 0.25rem;
+    }
+    .badge {
+        font-size: 0.95em;
+        padding: 0.4em 0.7em;
+        border-radius: 0.5em;
+    }
+</style>
+@endpush
 @endsection 

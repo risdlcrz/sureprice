@@ -24,6 +24,9 @@
     <a href="{{ route('warehouse.inventory.index') }}" class="btn {{ request()->routeIs('warehouse.inventory.*') ? 'active' : '' }}">
         <i class="fas fa-boxes"></i>Inventory
     </a>
+    <a href="{{ route('warehouse.material-requests.index') }}" class="btn {{ request()->routeIs('warehouse.material-requests.*') ? 'active' : '' }}">
+        <i class="fas fa-clipboard-check"></i>Material Requests
+    </a>
     <a href="{{ route('warehouse.deliveries.index') }}" class="btn {{ request()->routeIs('warehouse.deliveries.*') ? 'active' : '' }}">
         <i class="fas fa-truck"></i>Deliveries
     </a>

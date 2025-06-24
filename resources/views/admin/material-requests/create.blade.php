@@ -99,6 +99,23 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Purchase Request Options -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="create_purchase_request" name="create_purchase_request" value="1">
+                                        <label class="custom-control-label" for="create_purchase_request">
+                                            Create purchase request for items not available in stock
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        If checked, a purchase request will be automatically created for any items that cannot be fulfilled from current stock.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-footer">
                         <button type="submit" class="btn btn-primary">

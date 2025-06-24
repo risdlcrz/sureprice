@@ -44,6 +44,7 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PurchaseOrderPaymentController;
 use App\Http\Controllers\Admin\MaterialController as AdminMaterialController;
 use App\Http\Controllers\MaterialRequestController;
+use App\Http\Controllers\Warehouse\MaterialRequestApprovalController;
 // Home route redirect to login
 Route::get('/', function () {
     return redirect()->route('login.form');
@@ -235,6 +236,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('reports/deliveries/pdf', [WarehouseReportController::class, 'deliveriesPdf'])->name('reports.deliveries.pdf');
         Route::get('reports/usage/pdf', [WarehouseReportController::class, 'usagePdf'])->name('reports.usage.pdf');
         Route::resource('reports', WarehouseReportController::class);
+        Route::get('material-requests', [MaterialRequestApprovalController::class, 'index'])->name('material-requests.index');
+        Route::post('material-requests/{materialRequest}/approve', [MaterialRequestApprovalController::class, 'approve'])->name('material-requests.approve');
+        Route::get('material-requests/{materialRequest}', [MaterialRequestApprovalController::class, 'show'])->name('material-requests.show');
     });
     // Message routes
     Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');

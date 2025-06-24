@@ -13,7 +13,7 @@ class SupplierController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\Company::where('designation', 'supplier');
+        $query = \App\Models\Supplier::query();
 
         // Search
         if ($request->filled('search')) {
@@ -101,8 +101,7 @@ class SupplierController extends Controller
         $page = $request->get('page', 1);
         $perPage = 10;
         
-        $suppliers = \App\Models\Company::where('designation', 'supplier')
-            ->where(function($q) use ($query) {
+        $suppliers = \App\Models\Supplier::where(function($q) use ($query) {
                 $q->where('company_name', 'like', "%{$query}%")
                   ->orWhere('contact_person', 'like', "%{$query}%")
                   ->orWhere('email', 'like', "%{$query}%");

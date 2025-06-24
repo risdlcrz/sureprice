@@ -27,11 +27,19 @@
                         <div class="mb-3">
                             <label for="suppliers" class="form-label">Select Suppliers</label>
                             <select name="suppliers[]" id="suppliers" class="form-control" multiple>
-                                @foreach($suppliers as $supplier)
+                                @php
+                                    // Only show suppliers that exist in the suppliers table (approved)
+                                    $approvedSuppliers = $suppliers->filter(function($supplier) {
+                                        return \App\Models\Supplier::find($supplier->id) !== null;
+                                    });
+                                @endphp
+                                @forelse($approvedSuppliers as $supplier)
                                     <option value="{{ $supplier->id }}" {{ in_array($supplier->id, $linkedSupplierIds) ? 'selected' : '' }}>
                                         {{ $supplier->company_name }}
                                     </option>
-                                @endforeach
+                                @empty
+                                    <option disabled>No approved suppliers available</option>
+                                @endforelse
                             </select>
                         </div>
                         <button type="submit" class="btn btn-primary">Update Suppliers</button>

@@ -88,8 +88,13 @@ class SupplierDashboardController extends Controller
     public function index()
     {
         $supplier = Auth::user()->supplier;
-        // Fetch supplier's materials
-        $materials = $supplier ? $supplier->materials->load('category') : collect();
+        // Fetch supplier's materials with inventory and category
+        $materials = $supplier ? $supplier->materials()->with(['inventory', 'category'])->get() : collect();
+        // Set stock and price for each material
+        $materials->each(function ($material) {
+            $material->stock = (float) $material->inventory->sum('quantity');
+            $material->price = $material->pivot->price ?? 0;
+        });
         // Fetch active quotations for this supplier
         $activeQuotations = $supplier ? $supplier->quotations->where('status', 'pending') : collect();
         // Fetch pending invitations (dummy/empty for now, unless you have a model for this)

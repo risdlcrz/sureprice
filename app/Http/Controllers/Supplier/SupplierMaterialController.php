@@ -7,27 +7,27 @@ use App\Models\Material;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class SupplierMaterialController extends Controller
 {
     public function index(Request $request)
     {
-        $supplier = Auth::user()->company;
-        if (!$supplier || $supplier->designation !== 'supplier') {
+        $supplier = Auth::user()->supplier;
+        if (!$supplier) {
             abort(403, 'You are not associated with a supplier account.');
         }
-        $query = $supplier->materials();
 
-        // Add filters and search if needed, similar to other index methods
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                  ->orWhere('code', 'like', '%' . $search . '%');
-            });
-        }
+        // Get all materials linked to this supplier, with inventory
+        $materials = $supplier->materials()
+            ->with(['inventory']) // eager load inventory relation
+            ->paginate(10); // Use pagination for the materials list
 
-        $materials = $query->paginate(10);
+        // Add price and total stock attributes for the view
+        $materials->each(function ($material) {
+            $material->price = $material->pivot->price ?? 0;
+            $material->stock = (float) $material->inventory->sum('quantity');
+        });
 
         return view('supplier.materials.index', compact('materials'));
     }
@@ -145,27 +145,24 @@ class SupplierMaterialController extends Controller
 
     public function link(Request $request)
     {
-        $supplier = Auth::user()->company;
-        if (!$supplier || $supplier->designation !== 'supplier') {
+        $user = Auth::user();
+        $supplier = $user->supplier;
+        if (!$supplier) {
             abort(403, 'You are not associated with a supplier account.');
         }
-
         $validated = $request->validate([
             'material_id' => 'required|exists:materials,id',
             'price' => 'required|numeric|min:0',
         ]);
-
         // Check if the material is already linked
         if ($supplier->materials()->where('material_id', $validated['material_id'])->exists()) {
             return redirect()->back()
                 ->with('error', 'This material is already in your listings.');
         }
-
         $supplier->materials()->attach($validated['material_id'], [
             'price' => $validated['price'],
             'is_preferred' => false
         ]);
-
         return redirect()->route('supplier.materials.index')
             ->with('success', 'Material linked successfully.');
     }

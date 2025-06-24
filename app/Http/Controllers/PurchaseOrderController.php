@@ -312,6 +312,30 @@ class PurchaseOrderController extends Controller
                     'status' => 'active',
                 ]);
                 $inventory->updateStock($item->quantity, 'add');
+
+                // --- Add to warehouse stock as well ---
+                $warehouseId = $purchaseOrder->warehouse_id ?? 1; // Default to Main Warehouse if not set
+                $stock = \App\Models\Stock::firstOrCreate([
+                    'warehouse_id' => $warehouseId,
+                    'material_id' => $item->material_id,
+                ], [
+                    'current_stock' => 0,
+                    'threshold' => 0,
+                ]);
+                $oldStock = $stock->current_stock;
+                $stock->current_stock += $item->quantity;
+                $stock->save();
+                // Log the movement
+                \App\Models\StockMovement::create([
+                    'material_id' => $item->material_id,
+                    'warehouse_id' => $warehouseId,
+                    'type' => 'in',
+                    'quantity' => $item->quantity,
+                    'previous_stock' => $oldStock,
+                    'new_stock' => $stock->current_stock,
+                    'notes' => 'PO completed',
+                    'reference_number' => 'PO-' . $purchaseOrder->id,
+                ]);
             }
 
             DB::commit();

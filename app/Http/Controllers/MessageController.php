@@ -148,7 +148,14 @@ class MessageController extends Controller
                 if (!$supplier) {
                     return redirect()->back()->with('error', 'Selected supplier is not valid.');
                 }
-                $existingConversation = Conversation::where('supplier_id', $request->supplier_id)
+                
+                // Use the company_id from the supplier for the conversation
+                $companyId = $supplier->company_id;
+                if (!$companyId) {
+                    return redirect()->back()->with('error', 'Selected supplier does not have an associated company.');
+                }
+                
+                $existingConversation = Conversation::where('supplier_id', $companyId)
                     ->where('admin_id', $user->id)
                     ->whereNull('client_id')
                     ->first();
@@ -162,7 +169,7 @@ class MessageController extends Controller
                     return redirect()->route('messages.show', $existingConversation);
                 }
                 $conversation = Conversation::create([
-                    'supplier_id' => $request->supplier_id,
+                    'supplier_id' => $companyId,
                     'admin_id' => $user->id,
                     'status' => 'active'
                 ]);

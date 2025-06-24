@@ -483,12 +483,19 @@ body, html {
                 <form action="{{ route('messages.start') }}" method="POST">
                     @csrf
                     <div class="modal-body">
-                        <div class="mb-3 position-relative">
-                            <label for="company_search_input" class="form-label">Search Client or Supplier</label>
-                            <input type="text" id="company_search_input" name="company_search_input" class="form-control" placeholder="Type to search..." autocomplete="off" required>
-                            <input type="hidden" name="client_id" id="company_id" required>
-                            <div id="companySearchResults" class="list-group position-absolute w-100" style="z-index: 1000; display: none;"></div>
-                            <div class="form-text">Start typing to search for a client or supplier to message. Their type will be shown below.</div>
+                        <div class="mb-3">
+                            <label for="participant_select_admin" class="form-label">Start conversation with</label>
+                            <select class="form-control" id="participant_select_admin" required>
+                                <option value="">Select Client or Supplier</option>
+                                @foreach(\App\Models\User::where('user_type', 'company')->whereHas('company', function($q){ $q->where('designation', 'client'); })->get() as $client)
+                                    <option value="client_{{ $client->id }}">Client: {{ $client->company->company_name }}</option>
+                                @endforeach
+                                @foreach(\App\Models\Supplier::all() as $supplier)
+                                    <option value="supplier_{{ $supplier->id }}">Supplier: {{ $supplier->company_name }}</option>
+                                @endforeach
+                            </select>
+                            <input type="hidden" name="client_id" id="client_id_hidden_admin">
+                            <input type="hidden" name="supplier_id" id="supplier_id_hidden_admin">
                         </div>
                         <div class="mb-3">
                             <label for="message" class="form-label">Message</label>
@@ -503,6 +510,31 @@ body, html {
             </div>
         </div>
     </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const participantSelect = document.getElementById('participant_select_admin');
+        const clientIdHidden = document.getElementById('client_id_hidden_admin');
+        const supplierIdHidden = document.getElementById('supplier_id_hidden_admin');
+        
+        if (participantSelect) {
+            participantSelect.addEventListener('change', function() {
+                // Clear both hidden fields initially
+                clientIdHidden.value = '';
+                supplierIdHidden.value = '';
+                clientIdHidden.name = '';
+                supplierIdHidden.name = '';
+                
+                if (this.value.startsWith('client_')) {
+                    clientIdHidden.name = 'client_id';
+                    clientIdHidden.value = this.value.replace('client_', '');
+                } else if (this.value.startsWith('supplier_')) {
+                    supplierIdHidden.name = 'supplier_id';
+                    supplierIdHidden.value = this.value.replace('supplier_', '');
+                }
+            });
+        }
+    });
+    </script>
 @endif
 <!-- Delete Conversation Modal -->
 <div class="modal fade" id="deleteConversationModal" tabindex="-1" aria-labelledby="deleteConversationModalLabel" aria-hidden="true">
@@ -536,21 +568,44 @@ body, html {
                     @csrf
                     @if(Auth::user()->user_type === 'admin')
                         <div class="mb-3">
-                            <label for="company_id" class="form-label">Start conversation with</label>
-                            <select class="form-control" id="company_id" name="company_id" required>
-                                <option value="">Select Company</option>
-                                <optgroup label="Clients">
-                                    @foreach(\App\Models\Company::where('designation', 'client')->get() as $client)
-                                        <option value="{{ $client->id }}">{{ $client->company_name }}</option>
-                                    @endforeach
-                                </optgroup>
-                                <optgroup label="Suppliers">
-                                    @foreach(\App\Models\Supplier::all() as $supplier)
-                                        <option value="{{ $supplier->id }}">{{ $supplier->company_name }}</option>
-                                    @endforeach
-                                </optgroup>
+                            <label for="participant_select_start" class="form-label">Start conversation with</label>
+                            <select class="form-control" id="participant_select_start" required>
+                                <option value="">Select Client or Supplier</option>
+                                @foreach(\App\Models\User::where('user_type', 'company')->whereHas('company', function($q){ $q->where('designation', 'client'); })->get() as $client)
+                                    <option value="client_{{ $client->id }}">Client: {{ $client->company->company_name }}</option>
+                                @endforeach
+                                @foreach(\App\Models\Supplier::all() as $supplier)
+                                    <option value="supplier_{{ $supplier->id }}">Supplier: {{ $supplier->company_name }}</option>
+                                @endforeach
                             </select>
+                            <input type="hidden" name="client_id" id="client_id_hidden_start">
+                            <input type="hidden" name="supplier_id" id="supplier_id_hidden_start">
                         </div>
+                        <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const participantSelect = document.getElementById('participant_select_start');
+                            const clientIdHidden = document.getElementById('client_id_hidden_start');
+                            const supplierIdHidden = document.getElementById('supplier_id_hidden_start');
+                            
+                            if (participantSelect) {
+                                participantSelect.addEventListener('change', function() {
+                                    // Clear both hidden fields initially
+                                    clientIdHidden.value = '';
+                                    supplierIdHidden.value = '';
+                                    clientIdHidden.name = '';
+                                    supplierIdHidden.name = '';
+                                    
+                                    if (this.value.startsWith('client_')) {
+                                        clientIdHidden.name = 'client_id';
+                                        clientIdHidden.value = this.value.replace('client_', '');
+                                    } else if (this.value.startsWith('supplier_')) {
+                                        supplierIdHidden.name = 'supplier_id';
+                                        supplierIdHidden.value = this.value.replace('supplier_', '');
+                                    }
+                                });
+                            }
+                        });
+                        </script>
                     @elseif(Auth::user()->user_type === 'company' && Auth::user()->company && Auth::user()->company->designation === 'client')
                         <div class="mb-3">
                             <label for="admin_id" class="form-label">Start conversation with</label>
@@ -662,7 +717,7 @@ $(document).ready(function() {
         }
     });
     // Sidebar AJAX search for clients and suppliers (like new message modal)
-    var $sidebarInput = $('#sidebarSearchInput');
+    var $sidebarInput = $('#messenger-search-input');
     var $sidebarResults = $('#sidebarSearchResults');
     var sidebarTimeout;
     $sidebarInput.on('input', function() {
@@ -693,6 +748,8 @@ $(document).ready(function() {
         e.preventDefault();
         var id = $(this).data('id');
         var name = $(this).data('name');
+        var designation = $(this).find('small.text-muted').text().toLowerCase();
+        
         // Check if conversation already exists in the sidebar
         var found = false;
         $('.messenger-chat-item').each(function() {
@@ -705,14 +762,22 @@ $(document).ready(function() {
             window.location.href = found;
         } else {
             // Create new conversation via POST, then redirect
+            var postData = {
+                message: '',
+                _token: '{{ csrf_token() }}'
+            };
+            
+            // Set the correct field based on designation
+            if (designation === 'client') {
+                postData.client_id = id;
+            } else if (designation === 'supplier') {
+                postData.supplier_id = id;
+            }
+            
             $.ajax({
                 url: '{{ route('messages.start') }}',
                 method: 'POST',
-                data: {
-                    client_id: id,
-                    message: '',
-                    _token: '{{ csrf_token() }}'
-                },
+                data: postData,
                 success: function(resp) {
                     if (resp && resp.redirect) {
                         window.location.href = resp.redirect;
@@ -729,7 +794,7 @@ $(document).ready(function() {
     });
     // Hide results when clicking outside
     $(document).on('click', function(e) {
-        if (!$(e.target).closest('#sidebarSearchInput, #sidebarSearchResults').length) {
+        if (!$(e.target).closest('#messenger-search-input, #sidebarSearchResults').length) {
             $sidebarResults.hide();
         }
     });
@@ -817,6 +882,30 @@ $(function() {
                 preview.style.display = 'none';
             }
         });
+    }
+});
+document.addEventListener('DOMContentLoaded', function() {
+    const clientSelect = document.getElementById('client_id');
+    const supplierSelect = document.getElementById('supplier_id');
+
+    function handleSelectChange() {
+        if (clientSelect.value) {
+            supplierSelect.value = '';
+            supplierSelect.disabled = true;
+        } else {
+            supplierSelect.disabled = false;
+        }
+        if (supplierSelect.value) {
+            clientSelect.value = '';
+            clientSelect.disabled = true;
+        } else {
+            clientSelect.disabled = false;
+        }
+    }
+
+    if (clientSelect && supplierSelect) {
+        clientSelect.addEventListener('change', handleSelectChange);
+        supplierSelect.addEventListener('change', handleSelectChange);
     }
 });
 </script>

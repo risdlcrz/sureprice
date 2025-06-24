@@ -186,13 +186,11 @@
                                         <label for="suppliers">Suppliers</label>
                                         <select class="form-control select2 @error('suppliers') is-invalid @enderror" 
                                             id="suppliers" name="suppliers[]" multiple>
-                                            @if(isset($material) && $material->suppliers)
-                                                @foreach($material->suppliers as $supplier)
-                                                    <option value="{{ $supplier->id }}" selected>
-                                                        {{ $supplier->company_name ?? $supplier->name }}
-                                                    </option>
-                                                @endforeach
-                                            @endif
+                                            @foreach($suppliers as $supplier)
+                                                <option value="{{ $supplier->id }}" {{ isset($material) && $material->suppliers->contains($supplier->id) ? 'selected' : '' }}>
+                                                    {{ $supplier->company_name ?? $supplier->name }}
+                                                </option>
+                                            @endforeach
                                         </select>
                                         @error('suppliers')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -330,35 +328,36 @@ $(document).ready(function() {
     });
 
     $('#suppliers').select2({
-        placeholder: 'Search for suppliers...',
+        placeholder: 'Select suppliers...',
         allowClear: true,
-        ajax: {
-            url: '{{ route("admin.suppliers.search") }}',
-            dataType: 'json',
-            delay: 250,
-            data: function(params) {
-                return {
-                    search: params.term,
-                    page: params.page || 1
-                };
-            },
-            processResults: function(data, params) {
-                params.page = params.page || 1;
-                return {
-                    results: data.data.map(function(item) {
-                        return {
-                            id: item.id,
-                            text: item.company_name || item.name
-                        };
-                    }),
-                    pagination: {
-                        more: data.current_page < data.last_page
-                    }
-                };
-            },
-            cache: true
-        },
-        minimumInputLength: 2,
+        // Temporarily disable AJAX to test validation
+        // ajax: {
+        //     url: '{{ route("admin.suppliers.search") }}',
+        //     dataType: 'json',
+        //     delay: 250,
+        //     data: function(params) {
+        //         return {
+        //             search: params.term,
+        //             page: params.page || 1
+        //         };
+        //     },
+        //     processResults: function(data, params) {
+        //         params.page = params.page || 1;
+        //         return {
+        //             results: data.data.map(function(item) {
+        //                 return {
+        //                     id: item.id,
+        //                     text: item.company_name || item.name
+        //                 };
+        //             }),
+        //             pagination: {
+        //                 more: data.current_page < data.last_page
+        //             }
+        //         };
+        //     },
+        //     cache: true
+        // },
+        // minimumInputLength: 2,
         templateResult: formatSupplier,
         templateSelection: formatSupplierSelection
     });

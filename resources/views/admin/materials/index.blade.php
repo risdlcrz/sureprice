@@ -152,8 +152,7 @@
                                             data-bs-target="#supplierPricesModal">
                                             <span class="badge bg-secondary">
                                                 {{ $material->suppliers->count() }}
-                                        </span>
-                                            View Suppliers
+                                            </span>
                                         </button>
                                     </td>
                                     <td>{{ $material->warranty_period ? $material->warranty_period . ' months' : 'No warranty' }}</td>

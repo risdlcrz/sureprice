@@ -55,6 +55,16 @@ class InventoryController extends Controller
             $material = Material::find($request->material_id);
             $material->current_stock = $request->quantity;
             $material->save();
+            // Update Main Warehouse stock
+            $mainWarehouse = \App\Models\Warehouse::where('name', 'Main Warehouse')->first();
+            if ($mainWarehouse) {
+                $stock = \App\Models\Stock::firstOrCreate([
+                    'warehouse_id' => $mainWarehouse->id,
+                    'material_id' => $material->id,
+                ]);
+                $stock->current_stock = $request->quantity;
+                $stock->save();
+            }
         });
 
         return redirect()->route('inventory.index')
@@ -93,6 +103,16 @@ class InventoryController extends Controller
             $material = $inventory->material;
             $material->current_stock = $request->quantity;
             $material->save();
+            // Update Main Warehouse stock
+            $mainWarehouse = \App\Models\Warehouse::where('name', 'Main Warehouse')->first();
+            if ($mainWarehouse) {
+                $stock = \App\Models\Stock::firstOrCreate([
+                    'warehouse_id' => $mainWarehouse->id,
+                    'material_id' => $material->id,
+                ]);
+                $stock->current_stock = $request->quantity;
+                $stock->save();
+            }
         });
 
         return redirect()->route('inventory.index')
