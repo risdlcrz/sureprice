@@ -22,14 +22,12 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css" rel="stylesheet">
     
-    <!-- Consolidated Vite assets - load app.js only once -->
-    @vite([
-        'resources/css/app.css',
-        'resources/css/header.css',
-        'resources/css/login.css',
-        'resources/css/messages.css',
-        'resources/js/app.js',
-    ])
+    <!-- Consolidated assets - load app.js only once -->
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/header.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/login.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/messages.css') }}">
+    <script src="{{ asset('js/app.js') }}"></script>
     <!-- Additional Styles -->
     @stack('styles')
 

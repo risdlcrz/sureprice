@@ -1,0 +1,136 @@
+ /* Reuse your existing styles from login.php */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    .main-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 100px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .top-bar {
+      width: 100%;
+      background-color: #02912d;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 999;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .top-bar img {
+      height: 60px;
+      object-fit: contain;
+    }
+
+    .top-title {
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      margin-left: 15px;
+    }
+
+    .forgot-box {
+      background-color: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      width: 500px;
+      padding: 40px;
+      max-width: 95%;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
+    .forgot-title {
+      font-size: 30px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .back-to-login {
+      font-size: 15px;
+      margin-bottom: 30px;
+    }
+
+    .back-to-login a {
+      color: #02912d;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .back-to-login a:hover {
+      text-decoration: underline;
+    }
+
+    .forgot-box input[type="email"] {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 25px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      font-size: 16px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .forgot-box input[type="email"]:focus {
+      border-color: #02912d;
+      box-shadow: 0 0 5px rgba(2, 145, 45, 0.3);
+      outline: none;
+    }
+
+    .forgot-box input[type="submit"] {
+      width: 100%;
+      padding: 14px;
+      background-color: #02912d;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .forgot-box input[type="submit"]:hover {
+      background-color: #026f22;
+      transform: translateY(-2px);
+    }
+
+    .message {
+      margin-bottom: 20px;
+      padding: 10px;
+      border-radius: 5px;
+    }
+
+    .error-message {
+      color: #d9534f;
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+    }
+
+    .success-message {
+      color: #3c763d;
+      background-color: #dff0d8;
+      border: 1px solid #d6e9c6;
+    }

@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  @vite(['resources/css/login.css', 'resources/js/login.js'])
+  <link rel="stylesheet" href="{{ asset('css/login.css') }}">
+  <script src="{{ asset('js/login.js') }}"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Admin Center</title>
@@ -10,7 +11,7 @@
 <body>
 
   <div class="top-bar">
-    <img src="{{ asset('Images/gdc_logo.png') }}" alt="Logo">
+    <img src="{{ asset('images/gdc_logo.png') }}" alt="Logo">
     <span class="top-title">Admin Center</span>
   </div>
 

@@ -212,7 +212,7 @@
 <body>
     <div class="verification-container">
         <div class="logo-section">
-            <img src="{{ asset('Images/gdc_logo.png') }}" alt="GDC Logo">
+            <img src="{{ asset('images/gdc_logo.png') }}" alt="GDC Logo">
             <h1 class="verification-title">Email Verification</h1>
         </div>
 

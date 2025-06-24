@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up - GDC Admin Center</title>
-  @vite(['resources/css/signup.css', 'resources/js/signup-alert.js'])
+  <link rel="stylesheet" href="{{ asset('css/signup.css') }}">
+  <script src="{{ asset('js/signup-alert.js') }}"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     /* Enhanced error styling */
@@ -232,7 +233,7 @@
 
   <!-- Top Navigation -->
   <div class="top-bar">
-    <img src="{{ asset('Images/gdc_logo.png') }}" alt="GDC Logo">
+    <img src="{{ asset('images/gdc_logo.png') }}" alt="GDC Logo">
     <span class="top-title">GDC Admin Center</span>
   </div>
 

@@ -249,7 +249,7 @@
 <body>
     <div class="forgot-container">
         <div class="logo-section">
-            <img src="{{ asset('Images/gdc_logo.png') }}" alt="GDC Logo">
+            <img src="{{ asset('images/gdc_logo.png') }}" alt="GDC Logo">
             <h1 class="forgot-title">Forgot Password</h1>
         </div>
 

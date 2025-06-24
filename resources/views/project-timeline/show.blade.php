@@ -220,7 +220,7 @@
 
 @push('styles')
 <!-- FullCalendar CSS (npm build will handle this, but for dev you can use CDN) -->
-<link href="/node_modules/fullcalendar/main.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" crossorigin="anonymous" />
 <style>
   #calendar {
     max-width: 900px;
@@ -235,7 +235,7 @@
 
 @push('scripts')
 <!-- FullCalendar JS (npm build will handle this, but for dev you can use CDN) -->
-<script src="/node_modules/fullcalendar/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js" crossorigin="anonymous"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var calendarEl = document.getElementById('calendar');

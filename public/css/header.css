@@ -1,0 +1,307 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f4f4;
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.left-header {
+    width: 260px;
+    background-color: #02912d;
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    padding: 20px 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    z-index: 1000;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+}
+
+.content {
+    flex: 1;
+    margin-left: 260px;
+    padding: 20px;
+    min-height: 100vh;
+    background-color: #f4f4f4;
+    transition: margin-left 0.3s ease;
+}
+
+.logo-title-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 15px;
+    background-color: rgba(255, 255, 255, 0.1);
+    width: 100%;
+}
+
+.header-logo {
+    width: 55px;
+    height: 55px;
+    border-radius: 10px;
+}
+
+.header-title {
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.separator {
+    width: 90%;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.2);
+    margin: 15px 0;
+}
+
+.profile-section {
+    text-align: center;
+    margin: 15px 0;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    width: 100%;
+}
+
+.profile-section .label {
+    font-size: 14px;
+    color: #e0e0e0;
+    margin-bottom: 5px;
+}
+
+.profile-section .username {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 5px 0;
+}
+
+.profile-icon {
+    font-size: 40px;
+    color: white;
+    margin-top: 10px;
+    opacity: 0.9;
+    margin-left: 25px;
+}
+
+.nav-buttons {
+    width: 100%;
+    padding: 10px 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+}
+
+.nav-buttons .btn {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 15px;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #02912d;
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.nav-buttons .btn:hover {
+    background-color: #017a25;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.nav-buttons .btn i {
+    width: 20px;
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.btn-back {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    margin-bottom: 1rem;
+}
+
+.btn-back:hover {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+    transform: translateY(-2px);
+}
+
+.nav-buttons .btn.active {
+    background-color: white !important;
+    color: #02912d !important;
+    font-weight: bold;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.logout-container {
+    margin-top: auto;
+    width: 100%;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.logout-container .btn {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 15px;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #02912d;
+    font-weight: 600;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.logout-container .btn:hover {
+    background-color: #017a25;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+
+.mobile-topbar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: #02912d;
+    color: white;
+    z-index: 1500;
+    height: 60px;
+    padding: 10px 20px;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-menu {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #02912d;
+    color: white;
+    z-index: 2000;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 30px 20px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.mobile-menu.active {
+    transform: translateX(0);
+}
+
+.mobile-nav-buttons {
+    width: 100%;
+    padding: 20px;
+}
+
+.mobile-nav-buttons .btn {
+    width: 100%;
+    padding: 15px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 15px;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #02912d;
+    font-weight: 600;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-nav-buttons .btn:hover {
+    background-color: #017a25;
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.close-btn-mobile {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 24px;
+    padding: 10px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    align-self: flex-end;
+    margin-left: 400px;
+}
+
+.close-btn-mobile:hover {
+    transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+    .left-header {
+        display: none !important;
+    }
+
+    .content {
+        margin-left: 0;
+        padding-top: 80px;
+    }
+
+    .mobile-topbar {
+        display: flex;
+    }
+
+    .mobile-menu {
+        display: flex;
+    }
+}
