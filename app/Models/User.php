@@ -48,6 +48,11 @@ class User extends Authenticatable // implements MustVerifyEmail
         return $this->hasOne(Party::class);
     }
 
+    public function supplier()
+    {
+        return $this->hasOne(\App\Models\Supplier::class, 'user_id');
+    }
+
     // Display name logic
     public function getDisplayNameAttribute()
     {
@@ -99,10 +104,5 @@ class User extends Authenticatable // implements MustVerifyEmail
     protected static function booted()
     {
         parent::booted();
-        static::created(function ($user) {
-            if ($user->user_type === 'supplier') {
-                \App\Models\Supplier::firstOrCreate(['user_id' => $user->id], ['company_name' => $user->name]);
-            }
-        });
     }
 }

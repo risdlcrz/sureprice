@@ -41,6 +41,12 @@
         <a href="{{ route('supplier.quotations.index') }}" class="btn">
             <i class="fas fa-file-invoice"></i>Quotations
         </a>
+        <a href="{{ route('supplier.purchase-requests.index') }}" class="btn">
+            <i class="fas fa-file-alt"></i>Purchase Requests
+        </a>
+        <a href="{{ route('supplier.purchase-orders.index') }}" class="btn">
+            <i class="fas fa-file-invoice-dollar"></i>Purchase Orders
+        </a>
         <a href="{{ route('supplier.ranking') }}" class="btn">
             <i class="fas fa-chart-line"></i>Performance
         </a>

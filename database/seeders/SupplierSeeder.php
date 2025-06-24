@@ -27,6 +27,8 @@ class SupplierSeeder extends Seeder
                     'tax_number' => 'TIN-' . rand(100000000, 999999999),
                     'registration_number' => $company->business_reg_no,
                     'status' => 'active',
+                    'user_id' => $company->user_id,
+                    'company_id' => $company->id,
                 ]
             );
         }

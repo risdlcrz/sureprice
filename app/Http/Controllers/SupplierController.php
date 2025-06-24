@@ -136,22 +136,48 @@ class SupplierController extends Controller
     // Approve the pending update
     public function approveUpdate($id)
     {
-        $supplier = \App\Models\Supplier::findOrFail($id);
-        if ($supplier->pending_changes) {
-            $changes = json_decode($supplier->pending_changes, true);
-            $supplier->fill($changes);
-            $supplier->status = 'approved';
-            $supplier->pending_changes = null;
-            $supplier->save();
+        $company = \App\Models\Company::findOrFail($id);
+        if ($company->pending_changes) {
+            $changes = json_decode($company->pending_changes, true);
+            $company->fill($changes);
         }
+        $company->status = 'active';
+        $company->pending_changes = null;
+        $company->save();
+
+        // Create or update supplier record
+        $address = trim(implode(', ', array_filter([
+            $company->street,
+            $company->barangay,
+            $company->city,
+            $company->state,
+            $company->postal
+        ])));
+        \App\Models\Supplier::updateOrCreate(
+            [
+                'company_name' => $company->company_name,
+                'email' => $company->email,
+            ],
+            [
+                'company_name' => $company->company_name,
+                'contact_person' => $company->contact_person,
+                'email' => $company->email,
+                'phone' => $company->mobile_number,
+                'address' => $address,
+                'status' => 'active',
+                'user_id' => $company->user_id,
+                'company_id' => $company->id,
+            ]
+        );
+
         return redirect()->route('admin.suppliers.pending-updates')->with('success', 'Supplier update approved.');
     }
 
     // Reject the pending update
     public function rejectUpdate($id)
     {
-        $supplier = \App\Models\Supplier::findOrFail($id);
-        $supplier->status = 'approved';
+        $supplier = \App\Models\Company::findOrFail($id);
+        $supplier->status = 'active';
         $supplier->pending_changes = null;
         $supplier->save();
         return redirect()->route('admin.suppliers.pending-updates')->with('success', 'Supplier update rejected.');

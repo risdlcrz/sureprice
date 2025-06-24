@@ -45,7 +45,7 @@
                                     @foreach($purchaseRequests as $pr)
                                         <option value="{{ $pr->id }}" 
                                             data-supplier-id="{{ $pr->supplier_id }}"
-                                            {{ old('purchase_request_id') == $pr->id ? 'selected' : '' }}
+                                            {{ (old('purchase_request_id', $selectedPurchaseRequestId ?? null) == $pr->id) ? 'selected' : '' }}
                                             data-contract-id="{{ $pr->contract_id }}">
                                             {{ $pr->request_number }}
                                             @if(isset($pr->department)) - {{ $pr->department }}@endif
@@ -184,6 +184,7 @@
     const suppliers = @json($suppliers ?? []);
     const purchaseRequests = @json($purchaseRequests);
     let currentPurchaseRequestItems = []; // To store items from the selected PR
+    const selectedPurchaseRequestId = @json($selectedPurchaseRequestId ?? null);
 
     function getSupplierNameById(id) {
         const supplier = suppliers.find(s => s.id == id);
@@ -261,6 +262,14 @@
         });
         document.getElementById('total-amount').textContent = totalAmount.toFixed(2);
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (selectedPurchaseRequestId) {
+            const prSelect = document.getElementById('purchase_request_id');
+            prSelect.value = selectedPurchaseRequestId;
+            prSelect.dispatchEvent(new Event('change'));
+        }
+    });
 
     document.getElementById('purchase_request_id').addEventListener('change', function() {
         const purchaseRequestId = this.value;

@@ -23,8 +23,9 @@ class PurchaseOrderController extends Controller
         return view('admin.purchase-orders.index', compact('purchaseOrders'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
+        $selectedPurchaseRequestId = $request->query('purchase_request_id');
         $purchaseRequests = PurchaseRequest::where('status', 'approved')
             ->whereDoesntHave('purchaseOrder')
             ->with(['contract', 'items.supplier', 'materials'])
@@ -40,7 +41,7 @@ class PurchaseOrderController extends Controller
         // Merge and deduplicate
         $suppliers = $allSuppliers->merge($referencedSuppliers)->unique('id')->values();
 
-        return view('admin.purchase-orders.create', compact('purchaseRequests', 'suppliers'));
+        return view('admin.purchase-orders.create', compact('purchaseRequests', 'suppliers', 'selectedPurchaseRequestId'));
     }
 
     public function store(Request $request)
@@ -300,6 +301,18 @@ class PurchaseOrderController extends Controller
             }
 
             $metrics->save();
+
+            // Update inventory for each material in the PO items
+            foreach ($purchaseOrder->items as $item) {
+                $inventory = \App\Models\Inventory::firstOrCreate([
+                    'material_id' => $item->material_id
+                ], [
+                    'quantity' => 0,
+                    'unit' => $item->material->unit ?? null,
+                    'status' => 'active',
+                ]);
+                $inventory->updateStock($item->quantity, 'add');
+            }
 
             DB::commit();
 

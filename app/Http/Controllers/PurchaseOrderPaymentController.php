@@ -30,10 +30,14 @@ class PurchaseOrderPaymentController extends Controller
     {
         $payment = PurchaseOrderPayment::findOrFail($paymentId);
         $data = $request->validate([
+            'supplier_reference_number' => 'required|string',
             'supplier_notes' => 'nullable|string',
             'action' => 'required|in:verify,reject',
         ]);
         if ($data['action'] === 'verify') {
+            if ($data['supplier_reference_number'] !== $payment->admin_reference_number) {
+                return back()->withErrors(['supplier_reference_number' => 'Reference number does not match admin reference number.']);
+            }
             $payment->update([
                 'supplier_verified' => true,
                 'supplier_verified_at' => now(),

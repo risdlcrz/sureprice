@@ -22,7 +22,6 @@ class PurchaseOrder extends Model
         'approved_by',
         'status',
         'order_date',
-        'expected_delivery_date',
         'total_amount',
         'payment_terms',
         'delivery_terms',
@@ -43,7 +42,6 @@ class PurchaseOrder extends Model
 
     protected $casts = [
         'order_date' => 'date',
-        'expected_delivery_date' => 'date',
         'delivery_date' => 'date',
         'total_amount' => 'decimal:2',
         'client_payment_validated' => 'boolean',

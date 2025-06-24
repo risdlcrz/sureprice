@@ -13,11 +13,14 @@ class PurchaseRequest extends Model
     use HasFactory;
 
     protected $fillable = [
+        'request_number',
         'material_request_id',
         'contract_id',
         'supplier_id',
         'status',
         'notes',
+        'requested_by',
+        'is_project_related',
         'admin_approved',
         'admin_approved_at',
         'admin_approved_by',
@@ -111,9 +114,12 @@ class PurchaseRequest extends Model
         $this->admin_approved = true;
         $this->admin_approved_at = now();
         $this->admin_approved_by = Auth::id();
+        if ($this->admin_approved && $this->supplier_approved) {
+            $this->status = 'approved';
+        }
         $this->save();
 
-        $this->checkAndCreatePurchaseOrder();
+        // $this->checkAndCreatePurchaseOrder();
     }
 
     public function approveBySupplier()
@@ -125,30 +131,65 @@ class PurchaseRequest extends Model
         $this->supplier_approved = true;
         $this->supplier_approved_at = now();
         $this->supplier_approved_by = Auth::id();
+        if ($this->admin_approved && $this->supplier_approved) {
+            $this->status = 'approved';
+        }
         $this->save();
 
-        $this->checkAndCreatePurchaseOrder();
+        // $this->checkAndCreatePurchaseOrder();
     }
 
     protected function checkAndCreatePurchaseOrder()
     {
         if ($this->admin_approved && $this->supplier_approved) {
-            // Create purchase order
-            $purchaseOrder = new PurchaseOrder([
+            // Generate a unique PO number (format: POYYYYNNNN)
+            $year = date('Y');
+            $lastPO = \App\Models\PurchaseOrder::where('po_number', 'like', "PO{$year}%")
+                ->orderBy('po_number', 'desc')
+                ->first();
+            $sequence = '0001';
+            if ($lastPO) {
+                $lastSequence = intval(substr($lastPO->po_number, 6));
+                $sequence = str_pad($lastSequence + 1, 4, '0', STR_PAD_LEFT);
+            }
+            $poNumber = "PO{$year}{$sequence}";
+
+            // Calculate total amount
+            $totalAmount = $this->items->sum(function($item) {
+                return $item->quantity * $item->unit_price;
+            });
+
+            // Set delivery_date to 7 days from now as a default
+            $deliveryDate = now()->addDays(7)->toDateString();
+
+            // Determine supplier_id: use the purchase request's supplier_id, or fallback to the first item's preferred_supplier_id
+            $supplierId = $this->supplier_id;
+            if (!$supplierId) {
+                $supplierId = $this->items()->first()?->preferred_supplier_id;
+            }
+
+            $purchaseOrder = new \App\Models\PurchaseOrder([
+                'po_number' => $poNumber,
                 'purchase_request_id' => $this->id,
-                'supplier_id' => $this->supplier_id,
+                'supplier_id' => $supplierId,
                 'status' => 'pending_payment',
-                'notes' => 'Auto-generated from approved purchase request #' . $this->id
+                'notes' => 'Auto-generated from approved purchase request #' . $this->id,
+                'total_amount' => $totalAmount,
+                'delivery_date' => $deliveryDate,
+                'payment_terms' => 'Net 30',
+                'shipping_terms' => 'FOB Destination'
             ]);
             $purchaseOrder->save();
 
             // Copy items from purchase request to purchase order
             foreach ($this->items as $item) {
+                $unitPrice = $item->unit_price ?? $item->estimated_unit_price ?? 0;
                 $purchaseOrder->items()->create([
                     'material_id' => $item->material_id,
                     'quantity' => $item->quantity,
                     'unit' => $item->unit,
-                    'unit_price' => $item->unit_price,
+                    'unit_price' => $unitPrice,
+                    'total_price' => $item->quantity * $unitPrice,
                 ]);
             }
 

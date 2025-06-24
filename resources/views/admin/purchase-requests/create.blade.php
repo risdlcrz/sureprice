@@ -111,13 +111,15 @@
                                                             <input type="text" name="items[{{ $index }}][preferred_brand]" class="form-control" value="{{ $item['preferred_brand'] }}">
                                                         </td>
                                                         <td>
-                                                            <select name="items[{{ $index }}][preferred_supplier_id]" class="form-control supplier-select" @if(!$materialObj || !$materialObj->suppliers || $materialObj->suppliers->isEmpty()) disabled @endif>
+                                                            <select name="items[{{ $index }}][preferred_supplier_id]" class="form-control supplier-select">
                                                                 <option value="">Select Supplier</option>
-                                                                @if($materialObj && $materialObj->suppliers)
-                                                                    @foreach($materialObj->suppliers as $supplier)
-                                                                        <option value="{{ $supplier->id }}" {{ (isset($item['preferred_supplier_id']) && $item['preferred_supplier_id'] == $supplier->id) ? 'selected' : '' }}>{{ $supplier->company_name ?? $supplier->name }}</option>
-                                                                    @endforeach
-                                                                @endif
+                                                                @php
+                                                                    // Only show suppliers linked to this material
+                                                                    $suppliersForDropdown = ($materialObj) ? $materialObj->suppliers : collect();
+                                                                @endphp
+                                                                @foreach($suppliersForDropdown as $supplier)
+                                                                    <option value="{{ $supplier->id }}" {{ (isset($item['preferred_supplier_id']) && $item['preferred_supplier_id'] == $supplier->id) ? 'selected' : '' }}>{{ $supplier->company_name ?? $supplier->name }}</option>
+                                                                @endforeach
                                                             </select>
                                                         </td>
                                                         <td>
@@ -249,6 +251,7 @@ const baseUrl = '{{ url("/") }}';
 window.suppliers = @json($suppliers ?? []);
 window.materials = @json($materials ?? []);
 window.contracts = @json($contracts ?? []);
+window.bestSuppliers = @json($bestSuppliers ?? []);
 
 let materialModalMode = 'add'; // 'add' or 'replace'
 let materialModalTargetRow = null;
@@ -805,13 +808,26 @@ document.addEventListener('DOMContentLoaded', function() {
         // Optionally update suppliers dropdown
         const supplierSelect = replaceTargetRow.find('select.supplier-select');
         supplierSelect.empty().append('<option value="">Select Supplier</option>');
-        if (selectedReplaceMaterial.suppliers && selectedReplaceMaterial.suppliers.length > 0) {
-            selectedReplaceMaterial.suppliers.forEach(supplier => {
-                supplierSelect.append(`<option value="${supplier.id}">${supplier.company_name || supplier.name}</option>`);
-            });
-        }
+        let suppliersToDisplay = (selectedReplaceMaterial.suppliers && selectedReplaceMaterial.suppliers.length > 0) ? selectedReplaceMaterial.suppliers : window.suppliers;
+        
+        supplierSelect.prop('disabled', false);
+        suppliersToDisplay.forEach(function(supplier) {
+            supplierSelect.append(`<option value="${supplier.id}">${supplier.company_name ?? supplier.name}</option>`);
+        });
         $('#replaceMaterialModal').modal('hide');
     });
+
+    // Prefill supplier for single item restock requests
+    if (window.prefillItems && window.prefillItems.length === 1) {
+        const materialId = window.prefillItems[0].material_id;
+        const bestSupplier = window.bestSuppliers[materialId];
+        if (bestSupplier) {
+            const supplierSelect = document.querySelector('.supplier-select');
+            if (supplierSelect) {
+                supplierSelect.value = bestSupplier.id;
+            }
+        }
+    }
 });
 </script>
 @endpush

@@ -19,7 +19,9 @@ class Supplier extends Model
         'address',
         'tax_number',
         'registration_number',
-        'status'
+        'status',
+        'user_id',
+        'company_id',
     ];
 
     protected $casts = [

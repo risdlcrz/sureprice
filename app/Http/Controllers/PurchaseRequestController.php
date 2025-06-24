@@ -21,11 +21,16 @@ class PurchaseRequestController extends Controller
 
     public function create(Request $request)
     {
+        // Eager load only linked suppliers for each material
         $materials = Material::with(['suppliers' => function($query) {
             $query->orderBy('price');
         }])->get();
-        
-        $suppliers = Supplier::orderBy('company_name')->get();
+        // No need to pass all suppliers for dropdown fallback
+        $suppliers = collect(); // Empty collection to prevent fallback in Blade
+        $validSupplierIds = $materials->flatMap(function($material) {
+            return $material->suppliers->pluck('id');
+        })->unique();
+
         $contracts = \App\Models\Contract::with('client')->orderBy('created_at', 'desc')->get();
         $projects = \App\Models\Project::orderBy('created_at', 'desc')->get();
         
@@ -70,6 +75,10 @@ class PurchaseRequestController extends Controller
             }
         }
         
+        $allSuppliers = $materials->flatMap(function($material) {
+            return $material->suppliers->pluck('id');
+        })->unique();
+        
         $bestSuppliers = [];
         foreach ($materials as $material) {
             $best = null;
@@ -92,13 +101,14 @@ class PurchaseRequestController extends Controller
                     $reason = $price ? ('Best price: ₱' . number_format($price, 2)) : 'Best available supplier';
                 }
             }
-            if ($best) {
+            if ($best && $allSuppliers->contains($best->id)) {
                 $bestSuppliers[$material->id] = [
                     'id' => $best->id,
                     'reason' => $reason
                 ];
             }
         }
+        // Only pass $materials (with suppliers), $contracts, $projects, $prefillItems, $bestSuppliers
         return view('admin.purchase-requests.create', compact('materials', 'suppliers', 'contracts', 'projects', 'prefillItems', 'bestSuppliers'));
     }
 
@@ -135,6 +145,13 @@ class PurchaseRequestController extends Controller
         foreach ($validated['items'] as $idx => $item) {
             if (!empty($item['preferred_supplier_id'])) {
                 $material = \App\Models\Material::with('suppliers')->find($item['material_id']);
+                
+                // Ensure supplier is linked to material in material_supplier table
+                if ($material && !$material->suppliers->pluck('id')->map(fn($id) => (string)$id)->contains((string)$item['preferred_supplier_id'])) {
+                    $material->suppliers()->attach($item['preferred_supplier_id']);
+                    $material->load('suppliers'); // Refresh the relationship
+                }
+
                 $supplierIds = $material ? $material->suppliers->pluck('id')->map(fn($id) => (string)$id) : collect();
                 if (!$material || !$supplierIds->contains((string)$item['preferred_supplier_id'])) {
                     return back()->withErrors(["items.$idx.preferred_supplier_id" => 'The selected supplier is not valid for the chosen material.'])->withInput();
@@ -165,8 +182,8 @@ class PurchaseRequestController extends Controller
             foreach ($validated['items'] as $item) {
                 $purchaseRequest->items()->create([
                     'material_id' => $item['material_id'],
-                    'supplier_id' => $item['preferred_supplier_id'],
-                    'preferred_supplier_id' => $item['preferred_supplier_id'],
+                    'supplier_id' => $item['preferred_supplier_id'] ?? null,
+                    'preferred_supplier_id' => $item['preferred_supplier_id'] ?? null,
                     'description' => $item['description'],
                     'quantity' => $item['quantity'],
                     'unit' => $item['unit'],
@@ -176,13 +193,6 @@ class PurchaseRequestController extends Controller
                     'preferred_brand' => $item['preferred_brand'] ?? null
                 ]);
                 $totalAmount += $item['quantity'] * $item['estimated_unit_price'];
-                // Ensure supplier is linked to material in material_supplier table
-                if (!empty($item['preferred_supplier_id'])) {
-                    $material = \App\Models\Material::find($item['material_id']);
-                    if ($material && !$material->suppliers()->where('suppliers.id', $item['preferred_supplier_id'])->exists()) {
-                        $material->suppliers()->attach($item['preferred_supplier_id']);
-                    }
-                }
             }
             $purchaseRequest->total_amount = $totalAmount;
             $purchaseRequest->save();
@@ -279,13 +289,6 @@ class PurchaseRequestController extends Controller
                 ]);
 
                 $totalAmount += $item['quantity'] * $item['estimated_unit_price'];
-                // Ensure supplier is linked to material in material_supplier table
-                if (!empty($item['preferred_supplier_id'])) {
-                    $material = \App\Models\Material::find($item['material_id']);
-                    if ($material && !$material->suppliers()->where('suppliers.id', $item['preferred_supplier_id'])->exists()) {
-                        $material->suppliers()->attach($item['preferred_supplier_id']);
-                    }
-                }
             }
 
             $purchaseRequest->update(['total_amount' => $totalAmount]);
@@ -327,10 +330,21 @@ class PurchaseRequestController extends Controller
             return back()->with('error', 'Only pending purchase requests can be approved.');
         }
 
-        $purchaseRequest->update(['status' => 'approved']);
+        try {
+            $purchaseRequest->approveByAdmin();
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $successMessage = 'Purchase request approved by admin.';
+        if ($purchaseRequest->isFullyApproved()) {
+            $successMessage .= ' Purchase request fully approved. You may now create a Purchase Order.';
+        } else {
+            $successMessage .= ' Awaiting supplier approval.';
+        }
 
         return redirect()->route('purchase-requests.show', $purchaseRequest)
-            ->with('success', 'Purchase request approved successfully.');
+            ->with('success', $successMessage);
     }
 
     public function reject(PurchaseRequest $purchaseRequest)
@@ -348,6 +362,28 @@ class PurchaseRequestController extends Controller
 
         return redirect()->route('purchase-requests.show', $purchaseRequest)
             ->with('success', 'Purchase request rejected.');
+    }
+
+    public function supplierApprove(Request $request, PurchaseRequest $purchaseRequest)
+    {
+        $supplierId = auth()->user()->supplier?->id;
+        $isAssigned = $purchaseRequest->items()->where('preferred_supplier_id', $supplierId)->exists();
+        if (!$isAssigned) {
+            abort(403, 'You are not authorized to approve this request.');
+        }
+
+        try {
+            $purchaseRequest->approveBySupplier();
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $successMessage = 'Purchase request approved by supplier.';
+        if ($purchaseRequest->isFullyApproved()) {
+            $successMessage .= ' Purchase request fully approved. You may now create a Purchase Order.';
+        }
+
+        return redirect()->back()->with('success', $successMessage);
     }
 
     public function generateFromContract(Request $request)

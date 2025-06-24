@@ -175,11 +175,6 @@
                                                 title="Delete">
                                                 <i class="fas fa-trash"></i>
                                             </button>
-                                            <a href="{{ route('purchase-requests.create', ['material_id' => $material->id]) }}" 
-                                                class="btn btn-sm btn-success" 
-                                                title="Request Restock">
-                                                <i class="fas fa-plus"></i> Request Restock
-                                            </a>
                                         </div>
                                     </td>
                                 </tr>

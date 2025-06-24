@@ -374,6 +374,15 @@ Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'verified', \A
 
     Route::get('ranking', [SupplierDashboardController::class, 'ranking'])->name('ranking');
     Route::get('performance', [SupplierPerformanceController::class, 'index'])->name('performance');
+
+    // Purchase Requests for Supplier
+    Route::get('purchase-requests', [\App\Http\Controllers\Supplier\PurchaseRequestController::class, 'index'])->name('purchase-requests.index');
+    Route::get('purchase-requests/{purchaseRequest}', [\App\Http\Controllers\Supplier\PurchaseRequestController::class, 'show'])->name('purchase-requests.show');
+    Route::post('purchase-requests/{purchaseRequest}/approve', [\App\Http\Controllers\PurchaseRequestController::class, 'supplierApprove'])->name('purchase-requests.approve');
+
+    // Purchase Orders for Supplier
+    Route::get('purchase-orders', [\App\Http\Controllers\Supplier\PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
+    Route::get('purchase-orders/{purchaseOrder}', [\App\Http\Controllers\Supplier\PurchaseOrderController::class, 'show'])->name('purchase-orders.show');
 });
 // Admin Supplier Profile Update Review Routes
 Route::middleware(['auth', AdminMiddleware::class])->prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {
@@ -391,3 +400,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
 Route::resource('material-requests', \App\Http\Controllers\MaterialRequestController::class);
 Route::resource('purchase-orders', \App\Http\Controllers\PurchaseOrderController::class);
+
+Route::post('purchase-requests/{purchaseRequest}/reject', [PurchaseRequestController::class, 'reject'])->name('purchase-requests.reject');
+Route::post('purchase-requests/{purchaseRequest}/supplier-approve', [PurchaseRequestController::class, 'supplierApprove'])->name('purchase-requests.supplier.approve')->middleware('auth', 'role:supplier');
+
+// Material Search
+Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
+Route::get('/materials/all', [MaterialController::class, 'getAllMaterials'])->name('materials.all');

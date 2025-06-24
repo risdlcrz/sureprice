@@ -65,7 +65,7 @@ class DeliveryController extends Controller
             $deliveryNumber = 'DEL' . date('Y') . str_pad(Delivery::count() + 1, 4, '0', STR_PAD_LEFT);
 
             // Check if delivery is on time
-            $isOnTime = $validated['delivery_date'] <= $purchaseOrder->expected_delivery_date;
+            $isOnTime = $validated['delivery_date'] <= $purchaseOrder->delivery_date;
 
             $delivery = Delivery::create([
                 'delivery_number' => $deliveryNumber,
@@ -147,7 +147,7 @@ class DeliveryController extends Controller
             DB::beginTransaction();
 
             $purchaseOrder = $delivery->purchaseOrder;
-            $isOnTime = $validated['delivery_date'] <= $purchaseOrder->expected_delivery_date;
+            $isOnTime = $validated['delivery_date'] <= $purchaseOrder->delivery_date;
 
             $delivery->update([
                 'delivery_date' => $validated['delivery_date'],

@@ -113,7 +113,9 @@ class InventoryAutomationService
             return 1.0;
         }
         
-        $expectedDate = $delivery->purchaseOrder->expected_delivery_date;
+        Are there any purchase requests in the database?
+        Are they in the correct status (e.g., "approved")?
+        Are they already linked to a purchase order?        $expectedDate = $delivery->purchaseOrder->delivery_date;
         $actualDate = $delivery->delivery_date;
         
         if ($actualDate <= $expectedDate) {

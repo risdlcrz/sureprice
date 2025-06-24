@@ -130,7 +130,7 @@ class ProjectTimelineController extends Controller
         $deliveryEvents = collect();
         foreach ($contracts as $contract) {
             foreach ($contract->purchaseOrders as $po) {
-                $deliveryDate = $po->delivery_date ?? $po->expected_delivery_date;
+                $deliveryDate = $po->delivery_date;
                 if ($deliveryDate) {
                     $deliveryEvents->push([
                         'id' => 'po-' . $po->id . '-contract-' . $contract->id,
@@ -142,7 +142,7 @@ class ProjectTimelineController extends Controller
                             'contract_id' => $contract->id,
                             'po_id' => $po->id,
                             'status' => $po->status,
-                            'expected_delivery_date' => $po->expected_delivery_date ? $po->expected_delivery_date->format('Y-m-d') : null,
+                            'expected_delivery_date' => $po->delivery_date ? $po->delivery_date->format('Y-m-d') : null,
                             'delivery_date' => $po->delivery_date ? $po->delivery_date->format('Y-m-d') : null,
                             'total_amount' => $po->total_amount,
                         ],
