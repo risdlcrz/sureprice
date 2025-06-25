@@ -286,6 +286,35 @@
         @csrf
         <input type="hidden" name="type" value="company">
 
+        <!-- Company Role Section (moved to top) -->
+        <div class="form-section">
+          <div class="form-group @error('designation') has-error @enderror">
+            <label for="designation">Company Role</label>
+            <div class="select-with-icon">
+              <i class="fas fa-user-tag"></i>
+              <select id="designation" name="designation" required>
+                <option value="">Select company role</option>
+                <option value="client" {{ old('designation') == 'client' ? 'selected' : '' }}>Client</option>
+                <option value="supplier" {{ old('designation') == 'supplier' ? 'selected' : '' }}>Supplier</option>
+              </select>
+            </div>
+            @error('designation')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
+          </div>
+
+          <!-- Client Type Dropdown (only if Client is selected) -->
+          <div class="form-group" id="client_type_group" style="display:none;">
+            <label for="client_type">Are you registering as an Individual or a Company?</label>
+            <div class="select-with-icon">
+              <i class="fas fa-user"></i>
+              <select id="client_type" name="client_type">
+                <option value="">Select type</option>
+                <option value="individual" {{ old('client_type') == 'individual' ? 'selected' : '' }}>Individual</option>
+                <option value="company" {{ old('client_type') == 'company' ? 'selected' : '' }}>Company</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <!-- Account Information Section -->
         <div class="form-section">
           <h3><i class="fas fa-user-circle"></i> Account Information</h3>
@@ -324,11 +353,11 @@
         <div class="form-section">
           <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
           
-          <div class="form-group @error('company_name') has-error @enderror">
+          <div class="form-group @error('company_name') has-error @enderror" id="company_name_group">
             <label for="company_name">Company Name</label>
             <div class="input-with-icon">
               <i class="fas fa-building"></i>
-              <input type="text" id="company_name" name="company_name" value="{{ old('company_name') }}" placeholder="Enter company name" required />
+              <input type="text" id="company_name" name="company_name" value="{{ old('company_name') }}" placeholder="Enter company name" />
             </div>
             @error('company_name')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
           </div>
@@ -381,30 +410,8 @@
             </div>
           </div>
           
-          <div class="form-group @error('designation') has-error @enderror">
-            <label for="designation">Company Role</label>
-            <div class="select-with-icon">
-              <i class="fas fa-user-tag"></i>
-              <select id="designation" name="designation" required>
-                <option value="">Select company role</option>
-                <option value="client" {{ old('designation') == 'client' ? 'selected' : '' }}>Client</option>
-                <option value="supplier" {{ old('designation') == 'supplier' ? 'selected' : '' }}>Supplier</option>
-              </select>
-            </div>
-            @error('designation')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-          </div>
-          
-          <div class="form-group @error('business_reg_no') has-error @enderror">
-            <label for="business_reg_no">Business Registration Number</label>
-            <div class="input-with-icon">
-              <i class="fas fa-id-card"></i>
-              <input type="text" id="business_reg_no" name="business_reg_no" value="{{ old('business_reg_no') }}" placeholder="Enter registration number (if applicable)" />
-            </div>
-            @error('business_reg_no')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-          </div>
-          
-          <div class="form-group file-upload-group @error('dti_sec_registration') has-error @enderror">
-            <label for="dti_sec_registration">DTI/SEC Registration <span class="text-danger">*</span></label>
+          <div class="form-group file-upload-group @error('dti_sec_registration') has-error @enderror" id="dti_sec_registration_group">
+            <label for="dti_sec_registration">DTI/SEC Registration <span class="text-danger" id="dti_required_star">*</span></label>
             <div class="file-upload-wrapper">
               <label class="file-upload-label" for="dti_sec_registration">
                 <i class="fas fa-cloud-upload-alt"></i>
@@ -757,3 +764,55 @@
   </div>
 </body>
 </html>
+
+<script>
+// Dynamic show/hide and required logic
+function updateFormFields() {
+  const role = document.getElementById('designation').value;
+  const clientTypeGroup = document.getElementById('client_type_group');
+  const clientType = document.getElementById('client_type').value;
+  const companyNameGroup = document.getElementById('company_name_group');
+  const companyNameInput = document.getElementById('company_name');
+  const dtiGroup = document.getElementById('dti_sec_registration_group');
+  const dtiInput = document.getElementById('dti_sec_registration');
+  const dtiStar = document.getElementById('dti_required_star');
+
+  if (role === 'client') {
+    clientTypeGroup.style.display = '';
+    if (clientType === 'individual') {
+      companyNameGroup.style.display = 'none';
+      companyNameInput.required = false;
+      dtiInput.required = false;
+      dtiStar.style.display = 'none';
+    } else if (clientType === 'company') {
+      companyNameGroup.style.display = '';
+      companyNameInput.required = true;
+      dtiInput.required = false;
+      dtiStar.style.display = 'none';
+    } else {
+      companyNameGroup.style.display = '';
+      companyNameInput.required = false;
+      dtiInput.required = false;
+      dtiStar.style.display = 'none';
+    }
+    dtiGroup.style.display = '';
+  } else if (role === 'supplier') {
+    clientTypeGroup.style.display = 'none';
+    companyNameGroup.style.display = '';
+    companyNameInput.required = true;
+    dtiGroup.style.display = '';
+    dtiInput.required = true;
+    dtiStar.style.display = '';
+  } else {
+    clientTypeGroup.style.display = 'none';
+    companyNameGroup.style.display = '';
+    companyNameInput.required = false;
+    dtiGroup.style.display = '';
+    dtiInput.required = false;
+    dtiStar.style.display = 'none';
+  }
+}
+document.getElementById('designation').addEventListener('change', updateFormFields);
+document.getElementById('client_type').addEventListener('change', updateFormFields);
+document.addEventListener('DOMContentLoaded', updateFormFields);
+</script>

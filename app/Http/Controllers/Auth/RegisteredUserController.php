@@ -104,7 +104,6 @@ class RegisteredUserController extends Controller
     protected function validateCompany(Request $request)
     {
         $rules = [
-            'company_name' => 'required|string|max:100',
             'username' => 'required|string|max:50|unique:users',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|confirmed',
@@ -131,8 +130,7 @@ class RegisteredUserController extends Controller
             'bank_account_name' => 'nullable|string|max:100',
             'bank_account_number' => 'nullable|string|max:50',
 
-            // Multiple file uploads validated here
-            'dti_sec_registration' => 'required|file|mimes:pdf,jpg,png|max:10240',
+            // File uploads
             'business_permit_mayor_permit' => 'required|file|mimes:pdf,jpg,png|max:10240',
             'valid_id_owner_rep' => 'required|file|mimes:pdf,jpg,png|max:10240',
             'accreditations_certifications' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
@@ -142,8 +140,28 @@ class RegisteredUserController extends Controller
             'agree_terms' => 'required|accepted',
             'agree_contact' => 'nullable|accepted',
             'type' => 'required|in:employee,company',
-            
         ];
+
+        // Dynamic rules for company_name and dti_sec_registration
+        if ($request->designation === 'supplier') {
+            $rules['company_name'] = 'required|string|max:100';
+            $rules['dti_sec_registration'] = 'required|file|mimes:pdf,jpg,png|max:10240';
+        } elseif ($request->designation === 'client') {
+            $rules['client_type'] = 'required|in:individual,company';
+            if ($request->client_type === 'company') {
+                $rules['company_name'] = 'required|string|max:100';
+                $rules['dti_sec_registration'] = 'nullable|file|mimes:pdf,jpg,png|max:10240';
+            } elseif ($request->client_type === 'individual') {
+                $rules['company_name'] = 'nullable|string|max:100';
+                $rules['dti_sec_registration'] = 'nullable|file|mimes:pdf,jpg,png|max:10240';
+            } else {
+                $rules['company_name'] = 'nullable|string|max:100';
+                $rules['dti_sec_registration'] = 'nullable|file|mimes:pdf,jpg,png|max:10240';
+            }
+        } else {
+            $rules['company_name'] = 'nullable|string|max:100';
+            $rules['dti_sec_registration'] = 'nullable|file|mimes:pdf,jpg,png|max:10240';
+        }
 
         if ($request->supplier_type === 'Other') {
             $rules['other_supplier_type'] = 'required|string|max:100';
