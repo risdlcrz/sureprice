@@ -240,7 +240,11 @@
         <div class="signup-box" id="company-form">
       <div class="form-header">
         <h2><i class="fas fa-building"></i> Company Registration</h2>
-        <p>Register your company as a client or supplier</p>
+      <div class="approval-warning" id="approvalNotice" style="margin: 0.5rem 0 0 0; background: #e8f5e9; color: #256029; border: 1px solid #b2dfdb; border-radius: 6px; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; position: relative;">
+        <i class="fas fa-info-circle" style="font-size: 1.2rem;"></i>
+        <span style="flex:1"><strong>Notice:</strong> All client and supplier accounts must be reviewed and approved by an administrator before you can access the system. You will receive an email once your account is approved.</span>
+        <button type="button" aria-label="Dismiss notice" onclick="document.getElementById('approvalNotice').style.display='none'" style="background: none; border: none; color: #256029; font-size: 1.2rem; cursor: pointer; position: absolute; top: 8px; right: 12px; line-height: 1;">&times;</button>
+      </div>
       </div>
       
       <!-- Enhanced error display -->
@@ -286,34 +290,34 @@
         @csrf
         <input type="hidden" name="type" value="company">
 
-        <!-- Company Role Section (moved to top) -->
-        <div class="form-section">
-          <div class="form-group @error('designation') has-error @enderror">
-            <label for="designation">Company Role</label>
-            <div class="select-with-icon">
-              <i class="fas fa-user-tag"></i>
-              <select id="designation" name="designation" required>
-                <option value="">Select company role</option>
-                <option value="client" {{ old('designation') == 'client' ? 'selected' : '' }}>Client</option>
-                <option value="supplier" {{ old('designation') == 'supplier' ? 'selected' : '' }}>Supplier</option>
-              </select>
-            </div>
-            @error('designation')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
+      <!-- Company Role Section (moved to top) -->
+      <div class="form-section">
+        <div class="form-group @error('designation') has-error @enderror">
+          <label for="designation">Company Role <span class="text-danger">*</span></label>
+          <div class="select-with-icon">
+            <i class="fas fa-user-tag"></i>
+            <select id="designation" name="designation" required>
+              <option value="">Select company role</option>
+              <option value="client" {{ old('designation') == 'client' ? 'selected' : '' }}>Client</option>
+              <option value="supplier" {{ old('designation') == 'supplier' ? 'selected' : '' }}>Supplier</option>
+            </select>
           </div>
+          @error('designation')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
+        </div>
 
-          <!-- Client Type Dropdown (only if Client is selected) -->
-          <div class="form-group" id="client_type_group" style="display:none;">
-            <label for="client_type">Are you registering as an Individual or a Company?</label>
-            <div class="select-with-icon">
-              <i class="fas fa-user"></i>
-              <select id="client_type" name="client_type">
-                <option value="">Select type</option>
-                <option value="individual" {{ old('client_type') == 'individual' ? 'selected' : '' }}>Individual</option>
-                <option value="company" {{ old('client_type') == 'company' ? 'selected' : '' }}>Company</option>
-              </select>
-            </div>
+        <!-- Client Type Dropdown (only if Client is selected) -->
+        <div class="form-group" id="client_type_group" style="display:none;">
+          <label for="client_type">Are you registering as an Individual or a Company? <span class="text-danger">*</span></label>
+          <div class="select-with-icon">
+            <i class="fas fa-user"></i>
+            <select id="client_type" name="client_type">
+              <option value="">Select type</option>
+              <option value="individual" {{ old('client_type') == 'individual' ? 'selected' : '' }}>Individual</option>
+              <option value="company" {{ old('client_type') == 'company' ? 'selected' : '' }}>Company</option>
+            </select>
           </div>
         </div>
+      </div>
 
         <!-- Account Information Section -->
         <div class="form-section">
@@ -321,7 +325,7 @@
           
           <div class="form-row">
             <div class="form-group @error('username') has-error @enderror">
-              <label for="company_username">Username</label>
+              <label for="company_username">Username <span class="text-danger">*</span></label>
               <div class="input-with-icon">
                 <i class="fas fa-at"></i>
                 <input type="text" id="company_username" name="username" value="{{ old('username') }}" placeholder="Choose a username" required />
@@ -330,7 +334,7 @@
             </div>
             
             <div class="form-group @error('password') has-error @enderror">
-              <label for="company_password">Password</label>
+              <label for="company_password">Password <span class="text-danger">*</span></label>
               <div class="input-with-icon">
                 <i class="fas fa-lock"></i>
                 <input type="password" id="company_password" name="password" placeholder="Create a password" required />
@@ -339,7 +343,7 @@
             </div>
             
             <div class="form-group @error('password_confirmation') has-error @enderror">
-              <label for="company_password_confirmation">Confirm Password</label>
+              <label for="company_password_confirmation">Confirm Password <span class="text-danger">*</span></label>
               <div class="input-with-icon">
                 <i class="fas fa-lock"></i>
                 <input type="password" id="company_password_confirmation" name="password_confirmation" placeholder="Confirm your password" required />
@@ -353,18 +357,18 @@
         <div class="form-section">
           <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
           
-          <div class="form-group @error('company_name') has-error @enderror" id="company_name_group">
-            <label for="company_name">Company Name</label>
+        <div class="form-group @error('company_name') has-error @enderror" id="company_name_group">
+            <label for="company_name">Company Name <span class="text-danger" id="company_name_required">*</span></label>
             <div class="input-with-icon">
               <i class="fas fa-building"></i>
-              <input type="text" id="company_name" name="company_name" value="{{ old('company_name') }}" placeholder="Enter company name" />
+            <input type="text" id="company_name" name="company_name" value="{{ old('company_name') }}" placeholder="Enter company name" />
             </div>
             @error('company_name')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
           </div>
           
           <div class="form-row">
             <div class="form-group @error('supplier_type') has-error @enderror">
-              <label for="supplier_type">Type of Company</label>
+              <label for="supplier_type">Type of Company <span class="text-danger">*</span></label>
                 @php
                     $company_types = [
                         'Construction & Engineering',
@@ -410,8 +414,8 @@
             </div>
           </div>
           
-          <div class="form-group file-upload-group @error('dti_sec_registration') has-error @enderror" id="dti_sec_registration_group">
-            <label for="dti_sec_registration">DTI/SEC Registration <span class="text-danger" id="dti_required_star">*</span></label>
+        <div class="form-group file-upload-group @error('dti_sec_registration') has-error @enderror" id="dti_sec_registration_group">
+          <label for="dti_sec_registration">DTI/SEC Registration <span class="text-danger" id="dti_required_star">*</span></label>
             <div class="file-upload-wrapper">
               <label class="file-upload-label" for="dti_sec_registration">
                 <i class="fas fa-cloud-upload-alt"></i>
@@ -429,7 +433,7 @@
   <h3><i class="fas fa-address-book"></i> Contact Details</h3>
   
   <div class="form-group @error('contact_person') has-error @enderror">
-    <label for="contact_person">Contact Person</label>
+    <label for="contact_person">Contact Person <span class="text-danger">*</span></label>
     <div class="input-with-icon">
       <i class="fas fa-user"></i>
       <input type="text" id="contact_person" name="contact_person" value="{{ old('contact_person') }}" placeholder="Full name of contact person" required />
@@ -438,7 +442,7 @@
   </div>
   
   <div class="form-group @error('email') has-error @enderror">
-    <label for="company_email">Email Address</label>
+    <label for="company_email">Email Address <span class="text-danger">*</span></label>
     <div class="input-with-icon">
       <i class="fas fa-envelope"></i>
       <input type="email" id="company_email" name="email" value="{{ old('email') }}" placeholder="company.email@example.com" required />
@@ -448,7 +452,7 @@
   
   <div class="form-row">
     <div class="form-group @error('mobile_number') has-error @enderror">
-      <label for="mobile_number">Mobile Number</label>
+      <label for="mobile_number">Mobile Number <span class="text-danger">*</span></label>
       <div class="input-with-icon">
         <i class="fas fa-mobile-alt"></i>
         <input type="text" id="mobile_number" name="mobile_number" value="{{ old('mobile_number') }}" placeholder="e.g. 09123456789" required />
@@ -467,7 +471,7 @@
   </div>
   
   <div class="form-group @error('street') has-error @enderror">
-    <label for="street">Street Address</label>
+    <label for="street">Street Address <span class="text-danger">*</span></label>
     <div class="input-with-icon">
       <i class="fas fa-map-marker-alt"></i>
       <input type="text" id="street" name="street" value="{{ old('street') }}" placeholder="Building/Street name" required />
@@ -476,7 +480,7 @@
   </div>
   
   <div class="form-group @error('barangay') has-error @enderror">
-    <label for="barangay">Barangay</label>
+    <label for="barangay">Barangay <span class="text-danger">*</span></label>
     <div class="input-with-icon">
       <i class="fas fa-map-marker-alt"></i>
       <input type="text" id="barangay" name="barangay" value="{{ old('barangay') }}" placeholder="Barangay name" required />
@@ -486,7 +490,7 @@
 
   <div class="form-row">
     <div class="form-group @error('city') has-error @enderror">
-      <label for="city">City/Municipality</label>
+      <label for="city">City/Municipality <span class="text-danger">*</span></label>
       <div class="input-with-icon">
         <i class="fas fa-city"></i>
         <input type="text" id="city" name="city" value="{{ old('city') }}" placeholder="City name" required />
@@ -495,7 +499,7 @@
     </div>
     
     <div class="form-group @error('state') has-error @enderror">
-      <label for="province">Province</label>
+      <label for="province">Province <span class="text-danger">*</span></label>
       <div class="input-with-icon">
         <i class="fas fa-map"></i>
         <input type="text" id="province" name="state" value="{{ old('state') }}" placeholder="Province name" required />
@@ -504,7 +508,7 @@
     </div>
     
     <div class="form-group @error('postal') has-error @enderror">
-      <label for="zip_code">ZIP Code</label>
+      <label for="zip_code">ZIP Code <span class="text-danger">*</span></label>
       <div class="input-with-icon">
         <i class="fas fa-mail-bulk"></i>
         <input type="text" id="zip_code" name="postal" value="{{ old('postal') }}" placeholder="e.g. 1000" required />
@@ -593,7 +597,7 @@
   </div>
   
   <div class="form-group @error('vat_registered') has-error @enderror">
-    <label for="vat_registered">VAT Registered?</label>
+    <label for="vat_registered">VAT Registered? <span class="text-danger">*</span></label>
     <div class="select-with-icon">
       <i class="fas fa-receipt"></i>
       <select id="vat_registered" name="vat_registered" required>
@@ -606,7 +610,7 @@
   </div>
   
   <div class="form-group @error('use_sureprice') has-error @enderror">
-    <label for="use_sureprice">Use SurePrice?</label>
+    <label for="use_sureprice">Use SurePrice? <span class="text-danger">*</span></label>
     <div class="select-with-icon">
       <i class="fas fa-check-circle"></i>
       <select id="use_sureprice" name="use_sureprice" required>
@@ -770,49 +774,78 @@
 function updateFormFields() {
   const role = document.getElementById('designation').value;
   const clientTypeGroup = document.getElementById('client_type_group');
-  const clientType = document.getElementById('client_type').value;
+  const clientType = document.getElementById('client_type');
+  const clientTypeValue = clientType.value;
   const companyNameGroup = document.getElementById('company_name_group');
   const companyNameInput = document.getElementById('company_name');
+  const companyNameRequired = document.getElementById('company_name_required');
   const dtiGroup = document.getElementById('dti_sec_registration_group');
   const dtiInput = document.getElementById('dti_sec_registration');
   const dtiStar = document.getElementById('dti_required_star');
 
+  // Reset all fields first
+  companyNameInput.required = false;
+  companyNameRequired.style.display = 'none';
+  dtiInput.required = false;
+  dtiStar.style.display = 'none';
+  clientType.required = false;
+
   if (role === 'client') {
+    // Show client type selection and make it required
     clientTypeGroup.style.display = '';
-    if (clientType === 'individual') {
+    clientType.required = true;
+    
+    if (clientTypeValue === 'individual') {
+      // Individual client - hide company name, no DTI required
       companyNameGroup.style.display = 'none';
-      companyNameInput.required = false;
-      dtiInput.required = false;
-      dtiStar.style.display = 'none';
-    } else if (clientType === 'company') {
+      dtiGroup.style.display = 'none';
+    } else if (clientTypeValue === 'company') {
+      // Company client - show company name, no DTI required
       companyNameGroup.style.display = '';
       companyNameInput.required = true;
-      dtiInput.required = false;
-      dtiStar.style.display = 'none';
+      companyNameRequired.style.display = '';
+      dtiGroup.style.display = 'none';
     } else {
+      // No client type selected yet - show company name but not required
       companyNameGroup.style.display = '';
-      companyNameInput.required = false;
-      dtiInput.required = false;
-      dtiStar.style.display = 'none';
+      dtiGroup.style.display = 'none';
     }
-    dtiGroup.style.display = '';
   } else if (role === 'supplier') {
+    // Supplier - always show company name and DTI required
     clientTypeGroup.style.display = 'none';
     companyNameGroup.style.display = '';
     companyNameInput.required = true;
+    companyNameRequired.style.display = '';
     dtiGroup.style.display = '';
     dtiInput.required = true;
     dtiStar.style.display = '';
   } else {
+    // No role selected - hide everything
     clientTypeGroup.style.display = 'none';
     companyNameGroup.style.display = '';
-    companyNameInput.required = false;
     dtiGroup.style.display = '';
-    dtiInput.required = false;
-    dtiStar.style.display = 'none';
   }
 }
+
+// Add event listeners
 document.getElementById('designation').addEventListener('change', updateFormFields);
 document.getElementById('client_type').addEventListener('change', updateFormFields);
+
+// Handle "Other" company type field visibility
+document.getElementById('supplier_type').addEventListener('change', function() {
+  const otherTypeGroup = document.getElementById('other_supplier_type_group');
+  const otherTypeInput = document.getElementById('other_supplier_type');
+  
+  if (this.value === 'Other') {
+    otherTypeGroup.style.display = 'block';
+    otherTypeInput.required = true;
+  } else {
+    otherTypeGroup.style.display = 'none';
+    otherTypeInput.required = false;
+    otherTypeInput.value = '';
+  }
+});
+
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', updateFormFields);
 </script>

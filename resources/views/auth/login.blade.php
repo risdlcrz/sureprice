@@ -20,6 +20,18 @@
 
       <div class="login-right">
         <h2 class="login-title">Login</h2>
+        @if (session('success'))
+        <div class="success-banner" id="successBanner" style="margin-bottom: 1rem; background: #e8f5e9; color: #256029; border: 1px solid #4caf50; border-radius: 6px; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; position: relative;">
+          <i class="fas fa-check-circle" style="font-size: 1.2rem; color: #388e3c;"></i>
+          <span style="flex:1">{{ session('success') }}</span>
+          <button type="button" aria-label="Dismiss success" onclick="document.getElementById('successBanner').style.display='none'" style="background: none; border: none; color: #256029; font-size: 1.2rem; cursor: pointer; position: absolute; top: 8px; right: 12px; line-height: 1;">&times;</button>
+        </div>
+        @endif
+        <div class="approval-warning" id="approvalNotice" style="margin: 0 0 1.5rem 0; background: #e8f5e9; color: #256029; border: 1px solid #b2dfdb; border-radius: 6px; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; position: relative;">
+          <i class="fas fa-info-circle" style="font-size: 1.2rem;"></i>
+          <span style="flex:1"><strong>Notice:</strong> All client and supplier accounts must be reviewed and approved by an administrator before you can access the system. You will receive an email once your account is approved.</span>
+          <button type="button" aria-label="Dismiss notice" onclick="document.getElementById('approvalNotice').style.display='none'" style="background: none; border: none; color: #256029; font-size: 1.2rem; cursor: pointer; position: absolute; top: 8px; right: 12px; line-height: 1;">&times;</button>
+        </div>
         
         @if (Route::has('register'))
           <div class="signup-link-inside">
