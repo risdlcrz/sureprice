@@ -415,7 +415,7 @@
           </div>
           
         <div class="form-group file-upload-group @error('dti_sec_registration') has-error @enderror" id="dti_sec_registration_group">
-          <label for="dti_sec_registration">DTI/SEC Registration <span class="text-danger" id="dti_required_star">*</span></label>
+          <label for="dti_sec_registration">DTI/SEC Registration <span class="text-danger" id="dti_required_star">*</span> <span id="dti_optional_text" style="display:none; color: #6c757d; font-size: 0.875rem;">(Optional for clients)</span></label>
             <div class="file-upload-wrapper">
               <label class="file-upload-label" for="dti_sec_registration">
                 <i class="fas fa-cloud-upload-alt"></i>
@@ -782,12 +782,14 @@ function updateFormFields() {
   const dtiGroup = document.getElementById('dti_sec_registration_group');
   const dtiInput = document.getElementById('dti_sec_registration');
   const dtiStar = document.getElementById('dti_required_star');
+  const dtiOptionalText = document.getElementById('dti_optional_text');
 
   // Reset all fields first
   companyNameInput.required = false;
   companyNameRequired.style.display = 'none';
   dtiInput.required = false;
   dtiStar.style.display = 'none';
+  dtiOptionalText.style.display = 'none';
   clientType.required = false;
 
   if (role === 'client') {
@@ -796,19 +798,28 @@ function updateFormFields() {
     clientType.required = true;
     
     if (clientTypeValue === 'individual') {
-      // Individual client - hide company name, no DTI required
+      // Individual client - hide company name, show DTI as optional
       companyNameGroup.style.display = 'none';
-      dtiGroup.style.display = 'none';
+      dtiGroup.style.display = '';
+      dtiInput.required = false;
+      dtiStar.style.display = 'none';
+      dtiOptionalText.style.display = 'inline';
     } else if (clientTypeValue === 'company') {
-      // Company client - show company name, no DTI required
+      // Company client - show company name, show DTI as optional
       companyNameGroup.style.display = '';
       companyNameInput.required = true;
       companyNameRequired.style.display = '';
-      dtiGroup.style.display = 'none';
+      dtiGroup.style.display = '';
+      dtiInput.required = false;
+      dtiStar.style.display = 'none';
+      dtiOptionalText.style.display = 'inline';
     } else {
-      // No client type selected yet - show company name but not required
+      // No client type selected yet - show company name but not required, show DTI as optional
       companyNameGroup.style.display = '';
-      dtiGroup.style.display = 'none';
+      dtiGroup.style.display = '';
+      dtiInput.required = false;
+      dtiStar.style.display = 'none';
+      dtiOptionalText.style.display = 'inline';
     }
   } else if (role === 'supplier') {
     // Supplier - always show company name and DTI required
@@ -819,6 +830,7 @@ function updateFormFields() {
     dtiGroup.style.display = '';
     dtiInput.required = true;
     dtiStar.style.display = '';
+    dtiOptionalText.style.display = 'none';
   } else {
     // No role selected - hide everything
     clientTypeGroup.style.display = 'none';

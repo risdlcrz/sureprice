@@ -204,11 +204,20 @@ document.addEventListener('DOMContentLoaded', function () {
             const errorMessages = [];
 
             // Custom required file fields (now handled in JS)
-            const requiredFileFields = [
-                'dti_sec_registration',
+            const designation = document.getElementById('designation')?.value;
+            const clientType = document.getElementById('client_type')?.value;
+            
+            // Base required file fields
+            let requiredFileFields = [
                 'business_permit_mayor_permit',
                 'valid_id_owner_rep'
             ];
+            
+            // Add DTI/SEC registration only for suppliers
+            if (designation === 'supplier') {
+                requiredFileFields.push('dti_sec_registration');
+            }
+            
             requiredFileFields.forEach(fieldId => {
                 const fileInput = document.getElementById(fieldId);
                 const formGroup = fileInput?.closest('.form-group');

@@ -145,7 +145,7 @@ class RegisteredUserController extends Controller
             $rules['client_type'] = 'required|in:individual,company';
             if ($request->client_type === 'company') {
                 $rules['company_name'] = 'required|string|max:100';
-                $rules['dti_sec_registration'] = 'required|file|mimes:pdf,jpg,png|max:10240';
+                $rules['dti_sec_registration'] = 'nullable|file|mimes:pdf,jpg,png|max:10240';
             } else {
                 $rules['company_name'] = 'nullable|string|max:100';
                 $rules['dti_sec_registration'] = 'nullable|file|mimes:pdf,jpg,png|max:10240';
