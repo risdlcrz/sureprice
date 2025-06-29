@@ -63,6 +63,7 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name
 Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
 // Removed employee registration route
 Route::post('/register/company', [RegisteredUserController::class, 'store'])->name('register.company');
+Route::get('/pending-approval', [RegisteredUserController::class, 'pendingApproval'])->name('pending.approval');
 
 // ================== Legal Pages ==================
 Route::get('/terms-conditions', function () {
@@ -75,10 +76,6 @@ Route::get('/privacy-policy', function () {
 
 // Auth required routes
 Route::middleware(['auth'])->group(function () {
-    // Pending approval route
-    Route::get('/pending-approval', function () {
-        return view('auth.pending-approval');
-    })->name('pending.approval');
     // Rejected account route
     Route::get('/account-rejected', function () {
         return view('auth.account-rejected');

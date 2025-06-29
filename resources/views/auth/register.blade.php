@@ -105,6 +105,31 @@
       color: #c0392b;
     }
     
+    /* Optional text styling */
+    .optional-text {
+      color: #6c757d;
+      font-size: 0.875rem;
+      font-style: italic;
+    }
+    
+    /* File requirements notice styling */
+    .file-requirements-notice {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      margin: 0.5rem 0 0 0;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .file-requirements-notice i {
+      font-size: 1.2rem;
+      color: #856404;
+    }
+    
     /* Terms and conditions styling */
     .terms-links {
       color: #02912d;
@@ -244,6 +269,12 @@
         <i class="fas fa-info-circle" style="font-size: 1.2rem;"></i>
         <span style="flex:1"><strong>Notice:</strong> All client and supplier accounts must be reviewed and approved by an administrator before you can access the system. You will receive an email once your account is approved.</span>
         <button type="button" aria-label="Dismiss notice" onclick="document.getElementById('approvalNotice').style.display='none'" style="background: none; border: none; color: #256029; font-size: 1.2rem; cursor: pointer; position: absolute; top: 8px; right: 12px; line-height: 1;">&times;</button>
+      </div>
+      
+      <!-- Dynamic file upload requirements notice -->
+      <div class="file-requirements-notice" id="fileRequirementsNotice" style="display: none;">
+        <i class="fas fa-info-circle"></i>
+        <span id="fileRequirementsText"></span>
       </div>
       </div>
       
@@ -415,7 +446,7 @@
           </div>
           
         <div class="form-group file-upload-group @error('dti_sec_registration') has-error @enderror" id="dti_sec_registration_group">
-          <label for="dti_sec_registration">DTI/SEC Registration <span class="text-danger" id="dti_required_star">*</span> <span id="dti_optional_text" style="display:none; color: #6c757d; font-size: 0.875rem;">(Optional for clients)</span></label>
+          <label for="dti_sec_registration">DTI/SEC Registration <span class="text-danger" id="dti_required_star">*</span> <span id="dti_optional_text" class="optional-text" style="display:none;">(Optional for clients)</span></label>
             <div class="file-upload-wrapper">
               <label class="file-upload-label" for="dti_sec_registration">
                 <i class="fas fa-cloud-upload-alt"></i>
@@ -630,7 +661,7 @@
     
     <div class="form-row">
       <div class="form-group file-upload-group @error('business_permit_mayor_permit') has-error @enderror">
-        <label for="business_permit_mayor_permit">Business Permit/Mayor's Permit <span class="text-danger">*</span></label>
+        <label for="business_permit_mayor_permit">Business Permit/Mayor's Permit <span class="text-danger" id="business_permit_required">*</span> <span id="business_permit_optional_text" class="optional-text" style="display:none;">(Optional for clients)</span></label>
         <div class="file-upload-wrapper">
           <label class="file-upload-label" for="business_permit_mayor_permit">
             <i class="fas fa-cloud-upload-alt"></i>
@@ -643,7 +674,7 @@
       </div>
       
       <div class="form-group file-upload-group @error('valid_id_owner_rep') has-error @enderror">
-        <label for="valid_id_owner_rep">Valid ID (Owner/Rep) <span class="text-danger">*</span></label>
+        <label for="valid_id_owner_rep">Valid ID (Owner/Rep) <span class="text-danger" id="valid_id_required">*</span> <span id="valid_id_optional_text" class="optional-text" style="display:none;">(Optional for clients)</span></label>
         <div class="file-upload-wrapper">
           <label class="file-upload-label" for="valid_id_owner_rep">
             <i class="fas fa-cloud-upload-alt"></i>
@@ -783,6 +814,18 @@ function updateFormFields() {
   const dtiInput = document.getElementById('dti_sec_registration');
   const dtiStar = document.getElementById('dti_required_star');
   const dtiOptionalText = document.getElementById('dti_optional_text');
+  
+  // File upload elements
+  const businessPermitInput = document.getElementById('business_permit_mayor_permit');
+  const businessPermitRequired = document.getElementById('business_permit_required');
+  const businessPermitOptionalText = document.getElementById('business_permit_optional_text');
+  const validIdInput = document.getElementById('valid_id_owner_rep');
+  const validIdRequired = document.getElementById('valid_id_required');
+  const validIdOptionalText = document.getElementById('valid_id_optional_text');
+  
+  // File requirements notice
+  const fileRequirementsNotice = document.getElementById('fileRequirementsNotice');
+  const fileRequirementsText = document.getElementById('fileRequirementsText');
 
   // Reset all fields first
   companyNameInput.required = false;
@@ -791,11 +834,31 @@ function updateFormFields() {
   dtiStar.style.display = 'none';
   dtiOptionalText.style.display = 'none';
   clientType.required = false;
+  
+  // Reset file upload requirements
+  businessPermitInput.required = false;
+  businessPermitRequired.style.display = 'none';
+  businessPermitOptionalText.style.display = 'none';
+  validIdInput.required = false;
+  validIdRequired.style.display = 'none';
+  validIdOptionalText.style.display = 'none';
 
   if (role === 'client') {
     // Show client type selection and make it required
     clientTypeGroup.style.display = '';
     clientType.required = true;
+    
+    // For clients, all file uploads are optional
+    businessPermitInput.required = false;
+    businessPermitRequired.style.display = 'none';
+    businessPermitOptionalText.style.display = 'inline';
+    validIdInput.required = false;
+    validIdRequired.style.display = 'none';
+    validIdOptionalText.style.display = 'inline';
+    
+    // Show file requirements notice for clients
+    fileRequirementsNotice.style.display = 'flex';
+    fileRequirementsText.textContent = 'For clients, all document uploads are optional. You can provide them later if needed.';
     
     if (clientTypeValue === 'individual') {
       // Individual client - hide company name, show DTI as optional
@@ -822,7 +885,7 @@ function updateFormFields() {
       dtiOptionalText.style.display = 'inline';
     }
   } else if (role === 'supplier') {
-    // Supplier - always show company name and DTI required
+    // Supplier - always show company name and DTI required, and all file uploads required
     clientTypeGroup.style.display = 'none';
     companyNameGroup.style.display = '';
     companyNameInput.required = true;
@@ -831,11 +894,24 @@ function updateFormFields() {
     dtiInput.required = true;
     dtiStar.style.display = '';
     dtiOptionalText.style.display = 'none';
+    
+    // For suppliers, all file uploads are required
+    businessPermitInput.required = true;
+    businessPermitRequired.style.display = '';
+    businessPermitOptionalText.style.display = 'none';
+    validIdInput.required = true;
+    validIdRequired.style.display = '';
+    validIdOptionalText.style.display = 'none';
+    
+    // Show file requirements notice for suppliers
+    fileRequirementsNotice.style.display = 'flex';
+    fileRequirementsText.textContent = 'For suppliers, all required documents must be uploaded for approval.';
   } else {
     // No role selected - hide everything
     clientTypeGroup.style.display = 'none';
     companyNameGroup.style.display = '';
     dtiGroup.style.display = '';
+    fileRequirementsNotice.style.display = 'none';
   }
 }
 
