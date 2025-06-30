@@ -17,6 +17,16 @@ class MaterialRequestItem extends Model
         'quantity',
         'unit',
         'fulfilled_quantity',
+        'unit_price',
+        'total_amount',
+        'notes'
+    ];
+
+    protected $casts = [
+        'quantity' => 'decimal:2',
+        'fulfilled_quantity' => 'decimal:2',
+        'unit_price' => 'decimal:2',
+        'total_amount' => 'decimal:2'
     ];
 
     public function materialRequest(): BelongsTo
@@ -32,5 +42,13 @@ class MaterialRequestItem extends Model
     public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class);
+    }
+
+    public function getFulfilledPercentageAttribute()
+    {
+        if ($this->quantity <= 0) {
+            return 0;
+        }
+        return min(100, round(($this->fulfilled_quantity / $this->quantity) * 100));
     }
 } 

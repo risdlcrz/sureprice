@@ -43,23 +43,16 @@ use App\Http\Controllers\Warehouse\WarehouseReportController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PurchaseOrderPaymentController;
 use App\Http\Controllers\Admin\MaterialController as AdminMaterialController;
-use App\Http\Controllers\MaterialRequestController;
-use App\Http\Controllers\Warehouse\MaterialRequestApprovalController;
-use App\Http\Controllers\ProjectTaskController;
 // Home route redirect to login
 Route::get('/', function () {
-    return redirect()->route('login.form');
-});
+    return redirect()->route('login');
+})->name('home');
+
 // ================== Authentication Routes ==================
 Route::middleware('web')->group(function () {
     require __DIR__.'/auth.php';
 });
-// Show Login Form
-Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login.form');
-// Handle Login Submission
-Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login');
-// Handle Logout
-Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
 // ================== Registration Routes ==================
 Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
 // Removed employee registration route
@@ -251,6 +244,8 @@ Route::middleware(['auth'])->group(function () {
     // Purchase Order Payment Routes
     Route::post('/purchase-orders/{po}/payments', [PurchaseOrderPaymentController::class, 'store'])->name('purchase-orders.payments.store');
     Route::post('/purchase-order-payments/{payment}/verify', [PurchaseOrderPaymentController::class, 'verify'])->name('purchase-order-payments.verify');
+    Route::get('/dashboard/procurement', [DashboardController::class, 'procurement'])
+        ->name('dashboard.procurement');
 });
 // Payments routes
 Route::middleware(['auth'])->group(function () {

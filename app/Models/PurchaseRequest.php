@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class PurchaseRequest extends Model
 {
@@ -107,7 +108,7 @@ class PurchaseRequest extends Model
 
     public function approveByAdmin()
     {
-        if (!Auth::user()->hasRole('admin')) {
+        if (!Gate::check('approve-as-admin')) {
             throw new \Exception('Only administrators can approve purchase requests.');
         }
 
@@ -124,7 +125,7 @@ class PurchaseRequest extends Model
 
     public function approveBySupplier()
     {
-        if (!Auth::user()->hasRole('supplier')) {
+        if (!Gate::check('approve-as-supplier')) {
             throw new \Exception('Only suppliers can approve purchase requests.');
         }
 
