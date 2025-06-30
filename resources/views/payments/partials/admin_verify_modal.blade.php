@@ -30,12 +30,8 @@
           </div>
           <div class="mb-3">
             <label for="admin_payment_method_{{ $payment->id }}" class="form-label">Payment Method</label>
-            <select class="form-select" name="admin_payment_method" id="admin_payment_method_{{ $payment->id }}" required>
-              <option value="">Select Method</option>
-              <option value="bank_transfer" @if($payment->payment_method=='bank_transfer') selected @endif>Bank Transfer</option>
-              <option value="check" @if($payment->payment_method=='check') selected @endif>Check</option>
-              <option value="cash" @if($payment->payment_method=='cash') selected @endif>Cash</option>
-            </select>
+            <input type="text" class="form-control" value="{{ ucfirst(str_replace('_', ' ', $payment->client_payment_method)) }}" readonly>
+            <input type="hidden" name="admin_payment_method" value="{{ $payment->client_payment_method }}">
           </div>
           <div class="mb-3">
             <label for="admin_reference_number_{{ $payment->id }}" class="form-label">Reference Number</label>
@@ -59,7 +55,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-success" onclick="return validateReferenceNumber({{ $payment->id }})">Submit Verification</button>
+          <button type="submit" class="btn btn-success" onclick="return validateReferenceNumber('{{ $payment->id }}')">Submit Verification</button>
         </div>
       </form>
     </div>
@@ -68,7 +64,7 @@
 
 <script>
 function validateReferenceNumber(paymentId) {
-  const clientReference = '{{ $payment->client_reference_number }}';
+  const clientReference = '{!! $payment->client_reference_number !!}';
   const adminReference = document.getElementById('admin_reference_number_' + paymentId).value;
   const errorDiv = document.getElementById('reference_number_error_' + paymentId);
   

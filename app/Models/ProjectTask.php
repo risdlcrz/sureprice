@@ -11,41 +11,27 @@ class ProjectTask extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'contract_id',
-        'room_id',
-        'scope_type_id',
-        'title',
+        'project_id',
+        'name',
         'description',
         'start_date',
-        'end_date',
+        'due_date',
         'status',
-        'progress',
         'priority',
         'assigned_to',
-        'created_by',
+        'progress',
         'notes'
     ];
 
     protected $casts = [
         'start_date' => 'date',
-        'end_date' => 'date',
+        'due_date' => 'date',
         'progress' => 'integer'
     ];
 
-    // Relationships
-    public function contract()
+    public function project()
     {
-        return $this->belongsTo(Contract::class);
-    }
-
-    public function room()
-    {
-        return $this->belongsTo(Room::class);
-    }
-
-    public function scopeType()
-    {
-        return $this->belongsTo(ScopeType::class);
+        return $this->belongsTo(Project::class);
     }
 
     public function assignee()
@@ -53,9 +39,14 @@ class ProjectTask extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    public function creator()
+    public function attachments()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'commentable');
     }
 
     // Scopes
@@ -86,13 +77,13 @@ class ProjectTask extends Model
 
     public function scopeDueToday($query)
     {
-        return $query->where('end_date', now()->toDateString())
+        return $query->where('due_date', now()->toDateString())
                     ->where('status', '!=', 'completed');
     }
 
     public function scopeOverdue($query)
     {
-        return $query->where('end_date', '<', now()->toDateString())
+        return $query->where('due_date', '<', now()->toDateString())
                     ->where('status', '!=', 'completed');
     }
 
@@ -112,7 +103,7 @@ class ProjectTask extends Model
 
     public function isOverdue()
     {
-        return $this->end_date < now() && $this->status !== 'completed';
+        return $this->due_date < now() && $this->status !== 'completed';
     }
 
     public function getDaysOverdueAttribute()
@@ -120,12 +111,12 @@ class ProjectTask extends Model
         if (!$this->isOverdue()) {
             return 0;
         }
-        return now()->diffInDays($this->end_date);
+        return now()->diffInDays($this->due_date);
     }
 
     public function getDurationAttribute()
     {
-        return $this->start_date->diffInDays($this->end_date);
+        return $this->start_date->diffInDays($this->due_date);
     }
 
     public function getRemainingDaysAttribute()
@@ -133,6 +124,6 @@ class ProjectTask extends Model
         if ($this->status === 'completed') {
             return 0;
         }
-        return max(0, now()->diffInDays($this->end_date, false));
+        return max(0, now()->diffInDays($this->due_date, false));
     }
 } 

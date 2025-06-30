@@ -15,7 +15,6 @@ return new class extends Migration
             $table->unsignedBigInteger('client_id');
             $table->foreign('client_id')->references('id')->on('parties');
             $table->string('contract_number')->unique();
-            $table->foreignId('project_id')->nullable()->constrained();
             $table->foreignId('supplier_id')->nullable()->constrained();
             $table->unsignedBigInteger('property_id')->nullable();
             $table->foreign('property_id')->references('id')->on('properties');

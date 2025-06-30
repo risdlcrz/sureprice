@@ -45,6 +45,7 @@ use App\Http\Controllers\PurchaseOrderPaymentController;
 use App\Http\Controllers\Admin\MaterialController as AdminMaterialController;
 use App\Http\Controllers\MaterialRequestController;
 use App\Http\Controllers\Warehouse\MaterialRequestApprovalController;
+use App\Http\Controllers\ProjectTaskController;
 // Home route redirect to login
 Route::get('/', function () {
     return redirect()->route('login.form');
@@ -270,14 +271,16 @@ Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefi
 // Procurement Routes
 Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->prefix('procurement')->name('procurement.')->group(function () {
     Route::get('/dashboard', [ProcurementController::class, 'index'])->name('dashboard');
-    Route::get('/projects', [ProcurementController::class, 'projectDashboard'])->name('projects');
+    
+    // Project Management Routes
+    Route::get('/projects', [ProcurementController::class, 'projectDashboard'])->name('projects.index');
+    Route::get('/projects/{project}', [ProcurementController::class, 'projectShow'])->name('projects.show');
+    Route::get('/projects/{project}/tasks', [ProcurementController::class, 'projectTasks'])->name('projects.tasks');
+    Route::get('/projects/{project}/procurement', [ProcurementController::class, 'projectProcurement'])->name('projects.procurement');
+    Route::get('/projects/{project}/analytics', [ProcurementController::class, 'projectAnalytics'])->name('projects.analytics');
+    
+    // Inventory Routes
     Route::get('/inventory', [ProcurementController::class, 'inventoryDashboard'])->name('inventory.index');
-    Route::get('/history', [ProcurementController::class, 'projectHistory'])->name('history');
-    Route::get('/analytics', [ProcurementController::class, 'analyticsDashboard'])->name('analytics');
-    Route::get('/analytics/transactions', [AnalyticsController::class, 'transactions'])->name('analytics.transactions');
-    Route::get('/analytics/budget-allocation', [AnalyticsController::class, 'budgetAllocation'])->name('analytics.budget-allocation');
-    Route::get('/analytics/price-analysis', [AnalyticsController::class, 'priceAnalysis'])->name('analytics.price-analysis');
-    Route::get('/notifications', [ProcurementController::class, 'notificationHub'])->name('notification');
     Route::get('/inventory/create', [ProcurementController::class, 'inventoryCreate'])->name('inventory.create');
     Route::post('/inventory', [ProcurementController::class, 'inventoryStore'])->name('inventory.store');
     Route::get('/inventory/{inventory}/edit', [ProcurementController::class, 'inventoryEdit'])->name('inventory.edit');
@@ -285,8 +288,16 @@ Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->
     Route::delete('/inventory/{inventory}', [ProcurementController::class, 'inventoryDestroy'])->name('inventory.destroy');
     Route::post('/inventory/{inventory}/adjust-stock', [ProcurementController::class, 'inventoryAdjustStock'])->name('inventory.adjust-stock');
     Route::get('/inventory/low-stock', [ProcurementController::class, 'inventoryLowStock'])->name('inventory.low-stock');
-    Route::get('/inventory/expiring', [ProcurementController::class, 'inventoryExpiring'])->name('inventory.expiring');
-    Route::get('/suppliers/rankings', [AnalyticsController::class, 'supplierRankings'])->name('suppliers.rankings');
+    
+    // Analytics Routes
+    Route::get('/analytics', [ProcurementController::class, 'analyticsDashboard'])->name('analytics');
+    Route::get('/analytics/transactions', [AnalyticsController::class, 'transactions'])->name('analytics.transactions');
+    Route::get('/analytics/budget-allocation', [AnalyticsController::class, 'budgetAllocation'])->name('analytics.budget-allocation');
+    Route::get('/analytics/price-analysis', [AnalyticsController::class, 'priceAnalysis'])->name('analytics.price-analysis');
+    
+    // History and Notifications
+    Route::get('/history', [ProcurementController::class, 'projectHistory'])->name('history');
+    Route::get('/notifications', [ProcurementController::class, 'notificationHub'])->name('notification');
 });
 // ================== Email Verification Routes ==================
 // **Removed duplicate route /email/verify here**
@@ -408,3 +419,10 @@ Route::post('purchase-requests/{purchaseRequest}/supplier-approve', [PurchaseReq
 // Material Search
 Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
 Route::get('/materials/all', [MaterialController::class, 'getAllMaterials'])->name('materials.all');
+
+// Project Management Routes
+Route::middleware(['auth'])->group(function () {
+    Route::resource('projects', ProjectController::class);
+    Route::post('projects/{project}/progress', [ProjectController::class, 'updateProgress'])->name('projects.progress.update');
+    Route::resource('projects.tasks', ProjectTaskController::class);
+});

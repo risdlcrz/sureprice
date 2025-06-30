@@ -288,4 +288,89 @@ class ProcurementController extends Controller
         // Return a view or data for expiring items
         return view('procurement.inventory-expiring');
     }
+
+    public function projectShow(Project $project)
+    {
+        $project->load([
+            'contract',
+            'projectManager',
+            'clientRepresentative',
+            'tasks',
+            'contract.purchaseRequests',
+            'contract.purchaseOrders'
+        ]);
+
+        return view('procurement.projects.show', compact('project'));
+    }
+
+    public function projectTasks(Project $project)
+    {
+        $tasks = $project->tasks()
+            ->with(['assignee'])
+            ->latest()
+            ->paginate(10);
+
+        return view('procurement.projects.tasks', compact('project', 'tasks'));
+    }
+
+    public function projectProcurement(Project $project)
+    {
+        $project->load([
+            'contract.purchaseRequests' => function($query) {
+                $query->latest();
+            },
+            'contract.purchaseOrders' => function($query) {
+                $query->latest();
+            },
+            'contract.purchaseRequests.items',
+            'contract.purchaseOrders.items'
+        ]);
+
+        return view('procurement.projects.procurement', compact('project'));
+    }
+
+    public function projectAnalytics(Project $project)
+    {
+        $project->load([
+            'contract.purchaseOrders',
+            'contract.purchaseRequests',
+            'tasks'
+        ]);
+
+        // Calculate procurement metrics
+        $totalBudget = $project->budget;
+        $totalSpent = $project->contract->purchaseOrders->sum('total_amount');
+        $remainingBudget = $totalBudget - $totalSpent;
+        $budgetUtilization = $totalBudget > 0 ? ($totalSpent / $totalBudget) * 100 : 0;
+
+        // Task metrics
+        $totalTasks = $project->tasks->count();
+        $completedTasks = $project->tasks->where('status', 'completed')->count();
+        $inProgressTasks = $project->tasks->where('status', 'in_progress')->count();
+        $pendingTasks = $project->tasks->where('status', 'pending')->count();
+        $taskCompletion = $totalTasks > 0 ? ($completedTasks / $totalTasks) * 100 : 0;
+
+        // Purchase request and order metrics
+        $totalPurchaseRequests = $project->contract->purchaseRequests->count();
+        $totalPurchaseOrders = $project->contract->purchaseOrders->count();
+        $pendingPurchaseRequests = $project->contract->purchaseRequests->where('status', 'pending')->count();
+        $pendingPurchaseOrders = $project->contract->purchaseOrders->where('status', 'pending')->count();
+
+        return view('procurement.projects.analytics', compact(
+            'project',
+            'totalBudget',
+            'totalSpent',
+            'remainingBudget',
+            'budgetUtilization',
+            'totalTasks',
+            'completedTasks',
+            'inProgressTasks',
+            'pendingTasks',
+            'taskCompletion',
+            'totalPurchaseRequests',
+            'totalPurchaseOrders',
+            'pendingPurchaseRequests',
+            'pendingPurchaseOrders'
+        ));
+    }
 } 

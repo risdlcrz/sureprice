@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class PaymentController extends Controller
@@ -348,7 +350,7 @@ class PaymentController extends Controller
     {
         $request->validate([
             'admin_payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'admin_payment_method' => 'required|string',
+            'admin_payment_method' => 'required|string|in:' . $payment->client_payment_method,
             'admin_reference_number' => 'required|string',
             'admin_received_amount' => 'required|numeric',
             'admin_received_date' => 'required|date',
@@ -365,6 +367,9 @@ class PaymentController extends Controller
                 'admin_received_date',
                 'admin_notes',
             ]);
+
+            // Ensure admin payment method matches client's method
+            $data['admin_payment_method'] = $payment->client_payment_method;
 
             if ($request->hasFile('admin_payment_proof')) {
                 $file = $request->file('admin_payment_proof');

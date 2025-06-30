@@ -4,56 +4,100 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Project extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'project_number',
+        'contract_id',
         'name',
         'description',
-        'client_name',
         'start_date',
         'end_date',
         'status',
-        'budget'
+        'progress',
+        'project_manager_id',
+        'client_representative_id',
+        'budget',
+        'notes'
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'progress' => 'integer',
+        'budget' => 'decimal:2'
     ];
 
     // Relationships
-    public function contracts()
+    public function contract()
     {
-        return $this->hasMany(Contract::class);
+        return $this->belongsTo(Contract::class);
     }
 
-    public function contract(): HasOne
+    public function projectManager()
     {
-        return $this->hasOne(Contract::class);
+        return $this->belongsTo(User::class, 'project_manager_id');
     }
 
-    public function client(): HasOneThrough
+    public function clientRepresentative()
     {
-        return $this->hasOneThrough(Party::class, Contract::class, 'project_id', 'id', 'id', 'client_id');
+        return $this->belongsTo(User::class, 'client_representative_id');
     }
 
-    public function inquiries()
+    public function tasks()
     {
-        return $this->hasMany(Inquiry::class);
+        return $this->hasMany(ProjectTask::class);
     }
 
-    public function quotations()
+    public function milestones()
     {
-        return $this->hasMany(Quotation::class);
+        return $this->hasMany(ProjectMilestone::class);
     }
 
-    public function purchaseRequests()
+    public function documents()
     {
-        return $this->hasMany(PurchaseRequest::class);
+        return $this->morphMany(Attachment::class, 'attachable');
+    }
+
+    public function updates()
+    {
+        return $this->hasMany(ProjectUpdate::class);
+    }
+
+    // Status helper methods
+    public function isActive()
+    {
+        return $this->status === 'active';
+    }
+
+    public function isCompleted()
+    {
+        return $this->status === 'completed';
+    }
+
+    public function isOnHold()
+    {
+        return $this->status === 'on_hold';
+    }
+
+    // Generate unique project number
+    public static function generateProjectNumber()
+    {
+        $prefix = 'PRJ';
+        $year = date('Y');
+        $month = date('m');
+        
+        $lastProject = self::whereYear('created_at', $year)
+            ->whereMonth('created_at', $month)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $sequence = $lastProject ? intval(substr($lastProject->project_number, -4)) + 1 : 1;
+        
+        return sprintf('%s%s%s%04d', $prefix, $year, $month, $sequence);
     }
 } 
