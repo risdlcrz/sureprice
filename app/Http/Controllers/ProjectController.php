@@ -130,13 +130,24 @@ class ProjectController extends Controller
             'cancelled' => Project::where('status', 'cancelled')->count(),
         ];
 
+        // --- Added for dashboard quick stats ---
+        $totalBudget = \App\Models\Contract::sum('total_amount');
+        $totalSpent = \App\Models\Contract::sum('materials_cost') + \App\Models\Contract::sum('labor_cost');
+        $recentContracts = \App\Models\Contract::latest()->take(5)->get();
+        $recentPurchaseOrders = \App\Models\PurchaseOrder::latest()->take(5)->get();
+        // ---------------------------------------
+
         return view('admin.project-dashboard', compact(
             'totalProjects',
             'activeProjects',
             'completedProjects',
             'onHoldProjects',
             'recentProjects',
-            'projectsByStatus'
+            'projectsByStatus',
+            'totalBudget',
+            'totalSpent',
+            'recentContracts',
+            'recentPurchaseOrders'
         ));
     }
 
