@@ -18,7 +18,6 @@ return new class extends Migration
             $table->foreignId('supplier_id')->nullable()->constrained();
             $table->unsignedBigInteger('property_id')->nullable();
             $table->foreign('property_id')->references('id')->on('properties');
-            $table->unsignedBigInteger('purchase_order_id')->nullable();
             $table->string('title');
             $table->text('description')->nullable();
             $table->decimal('total_amount', 12, 2);

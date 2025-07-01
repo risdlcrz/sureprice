@@ -11,69 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Create users table if it doesn't exist
-        if (!Schema::hasTable('users')) {
-            Schema::create('users', function (Blueprint $table) {
-                $table->id();
-                $table->string('name');
-                $table->string('email')->unique();
-                $table->timestamp('email_verified_at')->nullable();
-                $table->string('password');
-                $table->rememberToken();
-                $table->timestamps();
-            });
-        }
-
         // Create contracts table if it doesn't exist
-        if (!Schema::hasTable('contracts')) {
-            Schema::create('contracts', function (Blueprint $table) {
-                $table->id();
-                $table->string('contract_number')->unique();
-                $table->string('title');
-                $table->text('description')->nullable();
-                $table->decimal('total_amount', 12, 2)->default(0);
-                $table->date('start_date')->nullable();
-                $table->date('end_date')->nullable();
-                $table->string('status')->default('draft');
-                $table->foreignId('created_by')->constrained('users');
-                $table->timestamps();
-            });
-        }
-
-        // Create materials table if it doesn't exist
-        if (!Schema::hasTable('materials')) {
-            Schema::create('materials', function (Blueprint $table) {
-                $table->id();
-                $table->string('name');
-                $table->string('code')->unique();
-                $table->text('description')->nullable();
-                $table->string('unit');
-                $table->decimal('unit_price', 12, 2)->default(0);
-                $table->boolean('is_active')->default(true);
-                $table->timestamps();
-            });
-        }
-
-        // Create warehouses table if it doesn't exist
-        if (!Schema::hasTable('warehouses')) {
-            Schema::create('warehouses', function (Blueprint $table) {
-                $table->id();
-                $table->string('name');
-                $table->string('code')->unique();
-                $table->text('address')->nullable();
-                $table->string('contact_person')->nullable();
-                $table->string('contact_number')->nullable();
-                $table->boolean('is_active')->default(true);
-                $table->timestamps();
-            });
-        }
+        // Removed creation of 'contracts' table to avoid duplicate table creation.
 
         // Create purchase requests table
         if (!Schema::hasTable('purchase_requests')) {
             Schema::create('purchase_requests', function (Blueprint $table) {
                 $table->id();
                 $table->string('request_number')->unique();
-                $table->foreignId('contract_id')->nullable()->constrained()->nullOnDelete();
+                $table->foreignId('contract_id')->nullable()->constrained('contracts')->nullOnDelete();
                 $table->foreignId('requested_by')->constrained('users');
                 $table->boolean('is_project_related')->default(false);
                 $table->string('status')->default('pending');
@@ -135,9 +81,6 @@ return new class extends Migration
         Schema::dropIfExists('material_request_items');
         Schema::dropIfExists('material_requests');
         Schema::dropIfExists('purchase_requests');
-        Schema::dropIfExists('materials');
-        Schema::dropIfExists('warehouses');
-        Schema::dropIfExists('contracts');
-        Schema::dropIfExists('users');
+        // Schema::dropIfExists('contracts'); // Removed
     }
 };
