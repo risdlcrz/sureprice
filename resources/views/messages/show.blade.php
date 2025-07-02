@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@push('meta')
+<meta name="current-user-id" content="{{ auth()->id() }}">
+@endpush
+
 @section('content')
 <div class="container-fluid py-4">
     <div class="row justify-content-center">
@@ -57,9 +61,30 @@
                                             <div class="d-flex align-items-center">
                                                 <div class="message-text flex-grow-1">{{ $message->content }}</div>
                                             </div>
-                                            @if(isset($message->image) && $message->image)
+                                            @if($message->hasAttachment())
                                                 <div class="mt-2 position-relative attachment-container">
-                                                    <img src="{{ asset('storage/' . $message->image) }}" alt="attachment" style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                                    @if($message->isImage())
+                                                        <img src="{{ $message->download_url }}" alt="attachment" style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                                    @else
+                                                        <div class="file-attachment bg-light rounded-3 p-3 border" style="max-width: 300px;">
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="me-3">
+                                                                    <i class="bi {{ $message->file_icon }} fs-2"></i>
+                                                                </div>
+                                                                <div class="flex-grow-1">
+                                                                    <div class="fw-semibold text-truncate" style="max-width: 200px;">{{ $message->getAttachmentName() }}</div>
+                                                                    <div class="text-muted small">{{ $message->formatted_size }}</div>
+                                                                </div>
+                                                                <div class="ms-2">
+                                                                    <a href="{{ route('messages.attachment.download', $message) }}" 
+                                                                       class="btn btn-sm btn-outline-primary" 
+                                                                       title="Download file">
+                                                                        <i class="bi bi-download"></i>
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endif
                                                     @if($message->sender_id === auth()->id() || auth()->user()->user_type === 'admin')
                                                         <form method="POST" action="{{ route('messages.attachment.remove', $message) }}" class="remove-attachment-form position-absolute top-0 end-0 m-1" data-message-id="{{ $message->id }}">
                                                             @csrf
@@ -90,9 +115,9 @@
                         @csrf
                         <div id="attachmentPreview" style="display:none; position:relative;" class="mb-2"></div>
                         <div class="input-group rounded-pill shadow-sm bg-white" style="overflow: hidden;">
-                            <textarea name="content" class="form-control border-0 px-3 py-2" rows="1" placeholder="Type your message..." style="resize: none; background: transparent;" required></textarea>
-                            <input type="file" name="image" accept="image/*" class="d-none" id="fileInput">
-                            <button type="button" class="btn btn-link px-2" id="attachBtn" title="Attach image">
+                            <textarea name="content" class="form-control border-0 px-3 py-2" rows="1" placeholder="Type your message..." style="resize: none; background: transparent;" id="messageContent"></textarea>
+                            <input type="file" name="file" class="d-none" id="fileInput">
+                            <button type="button" class="btn btn-link px-2" id="attachBtn" title="Attach file">
                                 <i class="bi bi-paperclip fs-4"></i>
                             </button>
                             <button type="submit" class="btn btn-primary rounded-pill px-4">Send</button>
@@ -122,7 +147,8 @@
         Echo.private('conversation.{{ $conversation->id }}')
             .listen('NewMessage', (e) => {
                 const message = e.message;
-                const isCurrentUser = message.sender_id === {{ auth()->id() }};
+                const currentUserId = parseInt(document.querySelector('meta[name="current-user-id"]').getAttribute('content'));
+                const isCurrentUser = message.sender_id === currentUserId;
                 let imageHtml = '';
                 if (message.image) {
                     imageHtml = `<div class=\"mt-2\"><img src=\"/storage/${message.image}\" alt=\"attachment\" style=\"max-width: 200px; max-height: 200px; border-radius: 8px;\"></div>`;
@@ -167,11 +193,44 @@
         const file = e.target.files[0];
         const preview = document.getElementById('attachmentPreview');
         if (file) {
-            let icon = '<i class="bi bi-file-earmark-image text-warning fs-3 me-2"></i>';
-            if (!file.type.startsWith('image/')) {
-                icon = '<i class="bi bi-file-earmark text-secondary fs-3 me-2"></i>';
+            // Check file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File size must be less than 5MB.');
+                fileInput.value = '';
+                preview.innerHTML = '';
+                preview.style.display = 'none';
+                return;
             }
-            preview.innerHTML = `<div class='d-flex align-items-center bg-light rounded-3 p-2 border position-relative'><span>${icon}</span><div><div class='fw-semibold'>${file.name}</div><div class='text-muted' style='font-size:0.9em;'>${(file.size/1024).toFixed(1)}KB</div></div><button type='button' id='removeAttachmentBtn' class='btn btn-sm btn-light position-absolute top-0 end-0 m-1 p-0' style='border-radius:50%;'><i class='bi bi-x-lg'></i></button></div>`;
+
+            // Determine file icon based on type
+            let icon = 'bi-file-earmark text-secondary';
+            if (file.type.startsWith('image/')) {
+                icon = 'bi-file-earmark-image text-warning';
+            } else if (file.type.startsWith('video/')) {
+                icon = 'bi-file-earmark-play text-danger';
+            } else if (file.type.startsWith('audio/')) {
+                icon = 'bi-file-earmark-music text-info';
+            } else if (file.type.includes('pdf')) {
+                icon = 'bi-file-earmark-pdf text-danger';
+            } else if (file.type.includes('word') || file.type.includes('document')) {
+                icon = 'bi-file-earmark-word text-primary';
+            } else if (file.type.includes('excel') || file.type.includes('spreadsheet')) {
+                icon = 'bi-file-earmark-excel text-success';
+            } else if (file.type.includes('powerpoint') || file.type.includes('presentation')) {
+                icon = 'bi-file-earmark-ppt text-warning';
+            }
+
+            // Format file size
+            let sizeText = '';
+            if (file.size < 1024) {
+                sizeText = file.size + ' B';
+            } else if (file.size < 1024 * 1024) {
+                sizeText = (file.size / 1024).toFixed(1) + ' KB';
+            } else {
+                sizeText = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+            }
+
+            preview.innerHTML = `<div class='d-flex align-items-center bg-light rounded-3 p-2 border position-relative'><span><i class='bi ${icon} fs-3 me-2'></i></span><div><div class='fw-semibold'>${file.name}</div><div class='text-muted' style='font-size:0.9em;'>${sizeText}</div></div><button type='button' id='removeAttachmentBtn' class='btn btn-sm btn-light position-absolute top-0 end-0 m-1 p-0' style='border-radius:50%;'><i class='bi bi-x-lg'></i></button></div>`;
             preview.style.display = '';
             document.getElementById('removeAttachmentBtn').onclick = function() {
                 document.getElementById('fileInput').value = '';
@@ -219,6 +278,18 @@
                 });
             }
             contextMenu.style.display = 'none';
+        }
+    });
+
+    // Form validation
+    document.getElementById('messageForm').addEventListener('submit', function(e) {
+        const content = document.getElementById('messageContent').value.trim();
+        const file = document.getElementById('fileInput').files[0];
+        
+        if (!content && !file) {
+            e.preventDefault();
+            alert('Please enter a message or attach a file.');
+            return false;
         }
     });
 </script>

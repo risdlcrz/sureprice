@@ -66,22 +66,47 @@ class MessageController extends Controller
 
         $request->validate([
             'content' => 'nullable|string|max:1000',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:4096'
+            'image' => 'nullable|file|max:5120', // 5MB limit
+            'file' => 'nullable|file|max:5120' // 5MB limit for general files
         ]);
 
-        if (!$request->filled('content') && !$request->hasFile('image')) {
-            return back()->withErrors(['content' => 'Please enter a message or attach an image.'])->withInput();
+        if (!$request->filled('content') && !$request->hasFile('image') && !$request->hasFile('file')) {
+            return back()->withErrors(['content' => 'Please enter a message or attach a file.'])->withInput();
         }
 
+        $filePath = null;
+        $fileName = null;
+        $fileType = null;
+        $fileSize = null;
         $imagePath = null;
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('messages', 'public');
+
+        // Handle file upload (new system)
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $filePath = $file->store('messages/files', 'public');
+            $fileName = $file->getClientOriginalName();
+            $fileType = $file->getMimeType();
+            $fileSize = $file->getSize();
+        }
+        // Handle image upload (backward compatibility)
+        elseif ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $imagePath = $file->store('messages', 'public');
+            // Also store in new fields for consistency
+            $filePath = $imagePath;
+            $fileName = $file->getClientOriginalName();
+            $fileType = $file->getMimeType();
+            $fileSize = $file->getSize();
         }
 
         $message = $conversation->messages()->create([
             'sender_id' => Auth::id(),
             'content' => $request->content,
-            'image' => $imagePath
+            'image' => $imagePath, // Keep for backward compatibility
+            'file_path' => $filePath,
+            'file_name' => $fileName,
+            'file_type' => $fileType,
+            'file_size' => $fileSize
         ]);
 
         $conversation->update(['last_message_at' => now()]);
@@ -304,10 +329,30 @@ class MessageController extends Controller
             $message->image = null;
             $message->save();
         }
+        if ($message->file_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($message->file_path);
+            $message->file_path = null;
+            $message->file_name = null;
+            $message->file_type = null;
+            $message->file_size = null;
+            $message->save();
+        }
         if (request()->wantsJson()) {
             return response()->json(['success' => true]);
         }
         return back()->with('success', 'Attachment removed.');
+    }
+
+    public function downloadAttachment(Message $message)
+    {
+        $path = $message->getAttachmentPath();
+        $fileName = $message->getAttachmentName();
+        
+        if (!$path || !\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+            abort(404, 'File not found');
+        }
+
+        return response()->download(storage_path('app/public/' . $path), $fileName);
     }
 
     public function show(Conversation $conversation)

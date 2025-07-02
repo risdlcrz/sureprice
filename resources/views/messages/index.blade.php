@@ -1,5 +1,10 @@
 @extends('layouts.app')
 
+@push('meta')
+<meta name="search-chat-route" content="{{ route('admin.companies.search-for-chat') }}">
+<meta name="start-message-route" content="{{ route('messages.start') }}">
+@endpush
+
 @section('content')
 <style>
 body, html {
@@ -407,8 +412,31 @@ body, html {
                         <div>
                             <div class="messenger-message-bubble">
                                 {{ $message->content }}
-                                @if(isset($message->image) && $message->image)
-                                    <div class="mt-2"><img src="{{ asset('storage/' . $message->image) }}" alt="attachment" style="max-width: 180px; max-height: 180px; border-radius: 8px;"></div>
+                                @if($message->hasAttachment())
+                                    @if($message->isImage())
+                                        <div class="mt-2"><img src="{{ $message->download_url }}" alt="attachment" style="max-width: 180px; max-height: 180px; border-radius: 8px;"></div>
+                                    @else
+                                        <div class="mt-2">
+                                            <div class="file-attachment bg-light rounded-3 p-2 border" style="max-width: 250px;">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-2">
+                                                        <i class="bi {{ $message->file_icon }} fs-4"></i>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <div class="fw-semibold text-truncate" style="max-width: 150px;">{{ $message->getAttachmentName() }}</div>
+                                                        <div class="text-muted small">{{ $message->formatted_size }}</div>
+                                                    </div>
+                                                    <div class="ms-1">
+                                                        <a href="{{ route('messages.attachment.download', $message) }}" 
+                                                           class="btn btn-sm btn-outline-primary" 
+                                                           title="Download file">
+                                                            <i class="bi bi-download"></i>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
                                 @endif
                             </div>
                             <div class="messenger-message-time">{{ $message->created_at->timezone('Asia/Manila')->format('g:i A') }}</div>
@@ -422,9 +450,9 @@ body, html {
         <form action="{{ route('messages.store', $conversation) }}" method="POST" class="messenger-input-area" enctype="multipart/form-data" id="messageForm">
             @csrf
             <div id="attachmentPreview" style="display:none; position:relative; margin-right:10px;"></div>
-            <button type="button" class="messenger-input-icon" id="attachBtn" title="Attach image"><i class="bi bi-paperclip"></i></button>
-            <textarea name="content" class="messenger-input-box" rows="1" placeholder="Type your message..."></textarea>
-            <input type="file" name="image" accept="image/*" class="d-none" id="fileInput">
+            <button type="button" class="messenger-input-icon" id="attachBtn" title="Attach file"><i class="bi bi-paperclip"></i></button>
+            <textarea name="content" class="messenger-input-box" rows="1" placeholder="Type your message..." id="messageContent"></textarea>
+            <input type="file" name="file" class="d-none" id="fileInput">
             <button type="submit" class="messenger-send-btn">Send</button>
         </form>
         @else
@@ -646,6 +674,12 @@ body, html {
 
 @push('scripts')
 <script>
+// Get routes from data attributes to avoid linter issues
+const routes = {
+    searchChat: document.querySelector('meta[name="search-chat-route"]').getAttribute('content'),
+    startMessage: document.querySelector('meta[name="start-message-route"]').getAttribute('content')
+};
+
 // ... (insert the merged scripts from previous index/show views here, including delete modal, right-click, file preview, etc.) ...
 // Responsive sidebar toggle for Messenger mobile style
 const sidebar = document.getElementById('messengerSidebar');
@@ -681,7 +715,7 @@ $(document).ready(function() {
         }
         searchTimeout = setTimeout(function() {
             $.ajax({
-                url: '{{ route('admin.companies.search-for-chat') }}',
+                url: routes.searchChat,
                 data: { search: term },
                 success: function(data) {
                     if (data.data && data.data.length > 0) {
@@ -729,7 +763,7 @@ $(document).ready(function() {
         }
         sidebarTimeout = setTimeout(function() {
             $.ajax({
-                url: '{{ route('admin.companies.search-for-chat') }}',
+                url: routes.searchChat,
                 data: { search: term },
                 success: function(data) {
                     if (data.data && data.data.length > 0) {
@@ -775,7 +809,7 @@ $(document).ready(function() {
             }
             
             $.ajax({
-                url: '{{ route('messages.start') }}',
+                url: routes.startMessage,
                 method: 'POST',
                 data: postData,
                 success: function(resp) {
@@ -852,20 +886,44 @@ $(function() {
         fileInput.addEventListener('change', function(e) {
             const file = fileInput.files[0];
             if (file) {
-                if (!file.type.startsWith('image/')) {
-                    alert('Only image files are allowed.');
+                // Check file size (5MB limit)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size must be less than 5MB.');
                     fileInput.value = '';
                     preview.innerHTML = '';
                     preview.style.display = 'none';
                     return;
                 }
-                if (file.size > 4 * 1024 * 1024) {
-                    alert('Image must be less than 4MB.');
-                    fileInput.value = '';
-                    preview.innerHTML = '';
-                    preview.style.display = 'none';
-                    return;
+
+                // Determine file icon based on type
+                let icon = 'bi-file-earmark text-secondary';
+                if (file.type.startsWith('image/')) {
+                    icon = 'bi-file-earmark-image text-warning';
+                } else if (file.type.startsWith('video/')) {
+                    icon = 'bi-file-earmark-play text-danger';
+                } else if (file.type.startsWith('audio/')) {
+                    icon = 'bi-file-earmark-music text-info';
+                } else if (file.type.includes('pdf')) {
+                    icon = 'bi-file-earmark-pdf text-danger';
+                } else if (file.type.includes('word') || file.type.includes('document')) {
+                    icon = 'bi-file-earmark-word text-primary';
+                } else if (file.type.includes('excel') || file.type.includes('spreadsheet')) {
+                    icon = 'bi-file-earmark-excel text-success';
+                } else if (file.type.includes('powerpoint') || file.type.includes('presentation')) {
+                    icon = 'bi-file-earmark-ppt text-warning';
                 }
+
+                // Format file size
+                let sizeText = '';
+                if (file.size < 1024) {
+                    sizeText = file.size + ' B';
+                } else if (file.size < 1024 * 1024) {
+                    sizeText = (file.size / 1024).toFixed(1) + ' KB';
+                } else {
+                    sizeText = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+                }
+
+                if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = function(ev) {
                     preview.innerHTML = `<div style='display:flex;align-items:center;gap:8px;'><img src='${ev.target.result}' style='max-width:60px;max-height:60px;border-radius:8px;'><button type='button' id='removeAttachmentBtn' class='btn btn-sm btn-light' style='border-radius:50%;'><i class='bi bi-x-lg'></i></button></div>`;
@@ -878,8 +936,29 @@ $(function() {
                 };
                 reader.readAsDataURL(file);
             } else {
+                    preview.innerHTML = `<div style='display:flex;align-items:center;gap:8px;'><i class='bi ${icon} fs-3'></i><div><div class='fw-semibold'>${file.name}</div><div class='text-muted small'>${sizeText}</div></div><button type='button' id='removeAttachmentBtn' class='btn btn-sm btn-light' style='border-radius:50%;'><i class='bi bi-x-lg'></i></button></div>`;
+                    preview.style.display = '';
+                    document.getElementById('removeAttachmentBtn').onclick = function() {
+                        fileInput.value = '';
+                        preview.innerHTML = '';
+                        preview.style.display = 'none';
+                    };
+                }
+            } else {
                 preview.innerHTML = '';
                 preview.style.display = 'none';
+            }
+        });
+
+        // Form validation
+        document.getElementById('messageForm').addEventListener('submit', function(e) {
+            const content = document.getElementById('messageContent').value.trim();
+            const file = fileInput.files[0];
+            
+            if (!content && !file) {
+                e.preventDefault();
+                alert('Please enter a message or attach a file.');
+                return false;
             }
         });
     }
