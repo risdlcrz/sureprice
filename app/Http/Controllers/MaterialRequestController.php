@@ -7,9 +7,11 @@ use App\Models\Contract;
 use App\Models\Material;
 use App\Models\Warehouse;
 use App\Models\PurchaseRequest;
+use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\SupplierSelectionService;
 
 class MaterialRequestController extends Controller
 {
@@ -189,5 +191,42 @@ class MaterialRequestController extends Controller
         $materialRequest->load(['contract.client', 'user', 'items.material.inventory', 'items.warehouse']);
         $purchaseRequest = PurchaseRequest::where('material_request_id', $materialRequest->id)->first();
         return view('admin.material-requests.show', compact('materialRequest', 'purchaseRequest'));
+    }
+
+    public function recommendSuppliersForMaterial(Request $request)
+    {
+        $materialId = $request->input('material_id');
+        $budget = $request->input('budget', 100000);
+        $mode = $request->input('mode', 'best_score');
+        $projectFeatures = [
+            'on_time_delivery_rate' => $request->input('on_time_delivery_rate', 90),
+            'average_defect_rate' => $request->input('average_defect_rate', 2),
+            'average_cost_variance' => $request->input('average_cost_variance', 0),
+        ];
+
+        $suppliers = Supplier::with(['metrics', 'materials'])->get()->map(function($supplier) {
+            return [
+                'id' => $supplier->id,
+                'name' => $supplier->company_name,
+                'material_ids' => $supplier->materials->pluck('id')->toArray(),
+                'on_time_delivery_rate' => $supplier->metrics ? $supplier->metrics->on_time_delivery_rate : 0,
+                'average_defect_rate' => $supplier->metrics->average_defect_rate ?? 0,
+                'average_cost_variance' => $supplier->metrics->average_cost_variance ?? 0,
+                'cost' => $supplier->metrics->average_cost_variance ?? 0,
+            ];
+        })->toArray();
+
+        $service = new SupplierSelectionService();
+        $filteredSuppliers = $service->filterByMaterial($suppliers, $materialId);
+        // Support different modes if needed (for now, use recommend/optimize as before)
+        $recommended = $service->recommend($filteredSuppliers, $projectFeatures, 5);
+        $optimal = $service->optimize($recommended, $budget);
+
+        return response()->json([
+            'html' => view('admin.suppliers.partials.recommendation-tables', [
+                'recommended' => $recommended,
+                'optimal' => $optimal,
+            ])->render()
+        ]);
     }
 }

@@ -74,6 +74,9 @@
                                                             <input type="text" name="items[{{ $index }}][notes]" class="form-control">
                                                         </td>
                                                         <td>
+                                                            <button type="button" class="btn btn-info btn-sm recommend-supplier-btn" data-material-id="{{ $item['material_id'] }}" data-material-name="{{ $item['name'] }}">
+                                                                <i class="fas fa-lightbulb"></i> Recommend Supplier
+                                                            </button>
                                                             <button type="button" class="btn btn-danger btn-sm remove-row" title="Remove">
                                                                 <i class="fas fa-trash"></i>
                                                             </button>
@@ -128,6 +131,51 @@
     </div>
 </div>
 
+<!-- Supplier Recommendation Modal -->
+<div class="modal fade" id="supplierRecommendationModal" tabindex="-1" aria-labelledby="supplierRecommendationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="supplierRecommendationModalLabel">Supplier Recommendation for <span id="modalMaterialName"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="supplier-recommendation-form" class="row g-3 mb-3">
+          <input type="hidden" id="modalMaterialId" name="material_id">
+          <div class="col-md-3">
+            <label for="rec_budget" class="form-label">Budget</label>
+            <input type="number" class="form-control" id="rec_budget" name="budget" value="100000" min="0" step="0.01">
+          </div>
+          <div class="col-md-3">
+            <label for="rec_on_time_delivery_rate" class="form-label">On-Time Delivery Rate (%)</label>
+            <input type="number" class="form-control" id="rec_on_time_delivery_rate" name="on_time_delivery_rate" value="90" min="0" max="100">
+          </div>
+          <div class="col-md-3">
+            <label for="rec_average_defect_rate" class="form-label">Avg. Defect Rate (%)</label>
+            <input type="number" class="form-control" id="rec_average_defect_rate" name="average_defect_rate" value="2" min="0" max="100" step="0.01">
+          </div>
+          <div class="col-md-3">
+            <label for="rec_average_cost_variance" class="form-label">Avg. Cost Variance</label>
+            <input type="number" class="form-control" id="rec_average_cost_variance" name="average_cost_variance" value="0" step="0.01">
+          </div>
+          <div class="col-md-12">
+            <label for="rec_mode" class="form-label">Recommendation Mode</label>
+            <select class="form-select" id="rec_mode" name="mode">
+              <option value="best_score">Best Overall Score</option>
+              <option value="lowest_cost">Lowest Cost</option>
+              <option value="best_delivery">Best On-Time Delivery</option>
+            </select>
+          </div>
+          <div class="col-md-12 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Show Recommendations</button>
+          </div>
+        </form>
+        <div id="supplier-recommendation-results"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -161,6 +209,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="text" name="items[${itemIndex}][notes]" class="form-control">
                 </td>
                 <td>
+                    <button type="button" class="btn btn-info btn-sm recommend-supplier-btn" data-material-id="${itemIndex}" data-material-name="${materials[itemIndex].name}">
+                        <i class="fas fa-lightbulb"></i> Recommend Supplier
+                    </button>
                     <button type="button" class="btn btn-danger btn-sm remove-row" title="Remove"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
@@ -194,6 +245,34 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.closest('.remove-row')) {
             e.target.closest('.item-row').remove();
         }
+    });
+
+    // Recommend Supplier button click
+    document.querySelectorAll('.recommend-supplier-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            const materialId = this.getAttribute('data-material-id');
+            const materialName = this.getAttribute('data-material-name');
+            document.getElementById('modalMaterialId').value = materialId;
+            document.getElementById('modalMaterialName').textContent = materialName;
+            document.getElementById('supplier-recommendation-results').innerHTML = '';
+            var modal = new bootstrap.Modal(document.getElementById('supplierRecommendationModal'));
+            modal.show();
+        });
+    });
+
+    // Handle recommendation form submit
+    document.getElementById('supplier-recommendation-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const form = e.target;
+        const params = new URLSearchParams(new FormData(form)).toString();
+        fetch('/material-requests/recommend-suppliers-for-material?' + params, {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('supplier-recommendation-results').innerHTML = data.html;
+        });
     });
 });
 </script>

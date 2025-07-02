@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Contract;
 use App\Models\User;
+use App\Models\Supplier;
+use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\SupplierSelectionService;
 
 class ProjectController extends Controller
 {
@@ -201,5 +204,109 @@ class ProjectController extends Controller
                 'message' => 'Failed to update project progress: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    // --- Supplier Recommendation and Selection ---
+    public function recommendSuppliers(Request $request, $projectId)
+    {
+        $project = Project::findOrFail($projectId);
+        $budget = $project->budget;
+
+        // Get all materials for dropdown
+        $materials = Material::orderBy('name')->get();
+        $selectedMaterialId = $request->input('material_id', $materials->first()->id ?? null);
+
+        // Define ideal metrics (can be adjusted or made user-input)
+        $projectFeatures = [
+            'on_time_delivery_rate' => $request->input('on_time_delivery_rate', 90),
+            'average_defect_rate' => $request->input('average_defect_rate', 2),
+            'average_cost_variance' => $request->input('average_cost_variance', 0),
+        ];
+
+        // Fetch all suppliers with their metrics and materials
+        $suppliers = Supplier::with(['metrics', 'materials'])->get()->map(function($supplier) {
+            return [
+                'id' => $supplier->id,
+                'name' => $supplier->company_name,
+                'material_ids' => $supplier->materials->pluck('id')->toArray(),
+                'on_time_delivery_rate' => $supplier->metrics ? $supplier->metrics->on_time_delivery_rate : 0,
+                'average_defect_rate' => $supplier->metrics->average_defect_rate ?? 0,
+                'average_cost_variance' => $supplier->metrics->average_cost_variance ?? 0,
+                'cost' => $supplier->metrics->average_cost_variance ?? 0, // or use a price field if available
+            ];
+        })->toArray();
+
+        $service = new SupplierSelectionService();
+        $filteredSuppliers = $service->filterByMaterial($suppliers, $selectedMaterialId);
+        $recommended = $service->recommend($filteredSuppliers, $projectFeatures, 5);
+        $optimal = $service->optimize($recommended, $budget);
+
+        // If AJAX, return partial view
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('admin.suppliers.partials.recommendation-tables', [
+                    'recommended' => $recommended,
+                    'optimal' => $optimal,
+                ])->render()
+            ]);
+        }
+
+        return view('admin.suppliers.recommendations', [
+            'project' => $project,
+            'materials' => $materials,
+            'selectedMaterialId' => $selectedMaterialId,
+            'recommended' => $recommended,
+            'optimal' => $optimal,
+            'projectFeatures' => $projectFeatures,
+        ]);
+    }
+
+    // General Supplier Recommendation for Analytics Dashboard
+    public function generalSupplierRecommendation(Request $request)
+    {
+        $materials = \App\Models\Material::orderBy('name')->get();
+        $selectedMaterialId = $request->input('material_id', $materials->first()->id ?? null);
+
+        $projectFeatures = [
+            'on_time_delivery_rate' => $request->input('on_time_delivery_rate', 90),
+            'average_defect_rate' => $request->input('average_defect_rate', 2),
+            'average_cost_variance' => $request->input('average_cost_variance', 0),
+        ];
+        $budget = $request->input('budget', 100000); // Default or user input
+
+        $suppliers = Supplier::with(['metrics', 'materials'])->get()->map(function($supplier) {
+            return [
+                'id' => $supplier->id,
+                'name' => $supplier->company_name,
+                'material_ids' => $supplier->materials->pluck('id')->toArray(),
+                'on_time_delivery_rate' => $supplier->metrics ? $supplier->metrics->on_time_delivery_rate : 0,
+                'average_defect_rate' => $supplier->metrics->average_defect_rate ?? 0,
+                'average_cost_variance' => $supplier->metrics->average_cost_variance ?? 0,
+                'cost' => $supplier->metrics->average_cost_variance ?? 0,
+            ];
+        })->toArray();
+
+        $service = new \App\Services\SupplierSelectionService();
+        $filteredSuppliers = $service->filterByMaterial($suppliers, $selectedMaterialId);
+        $recommended = $service->recommend($filteredSuppliers, $projectFeatures, 5);
+        $optimal = $service->optimize($recommended, $budget);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('admin.suppliers.partials.recommendation-tables', [
+                    'recommended' => $recommended,
+                    'optimal' => $optimal,
+                ])->render()
+            ]);
+        }
+
+        return view('admin.suppliers.general-recommendation', [
+            'materials' => $materials,
+            'selectedMaterialId' => $selectedMaterialId,
+            'recommended' => $recommended,
+            'optimal' => $optimal,
+            'projectFeatures' => $projectFeatures,
+            'budget' => $budget,
+        ]);
     }
 } 

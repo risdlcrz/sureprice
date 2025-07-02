@@ -433,3 +433,15 @@ Route::get('/api/clients/{id}/ban-status', [\App\Http\Controllers\PartyControlle
 
 Route::post('purchase-orders/{id}/ship', [\App\Http\Controllers\PurchaseOrderController::class, 'markAsShipped'])->name('purchase-orders.ship');
 Route::post('purchase-orders/{id}/deliver', [\App\Http\Controllers\PurchaseOrderController::class, 'markAsDelivered'])->name('purchase-orders.deliver');
+
+// Supplier Recommendation Route
+Route::get('/projects/{projectId}/recommend-suppliers', [ProjectController::class, 'recommendSuppliers'])->name('projects.recommend-suppliers');
+
+// General Supplier Recommendation Route for Analytics
+Route::get('/analytics/supplier-recommendation', [ProjectController::class, 'generalSupplierRecommendation'])->name('analytics.supplier-recommendation');
+
+// AJAX route for supplier recommendation in material requests
+Route::get('/material-requests/recommend-suppliers-for-material', [\App\Http\Controllers\MaterialRequestController::class, 'recommendSuppliersForMaterial']);
+
+// AJAX route for supplier recommendation in purchase requests
+Route::get('/purchase-requests/recommend-suppliers-for-material', [\App\Http\Controllers\PurchaseRequestController::class, 'recommendSuppliersForMaterial']);
