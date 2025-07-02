@@ -10,7 +10,9 @@ use App\Models\Property;
 use App\Models\Project;
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
 
@@ -729,6 +731,12 @@ class ContractController extends Controller
 
     public function edit(Contract $contract)
     {
+        // Prevent editing completed contracts
+        if ($contract->status === 'completed') {
+            return redirect()->route('contracts.show', $contract)
+                ->with('error', 'Completed contracts cannot be edited.');
+        }
+
         // Load related data
         $contract->load(['contractor', 'client', 'property', 'rooms.scopeTypes']);
 
@@ -1229,6 +1237,12 @@ class ContractController extends Controller
 
     public function destroy(Contract $contract)
     {
+        // Prevent deleting completed contracts
+        if ($contract->status === 'completed') {
+            return redirect()->route('contracts.show', $contract)
+                ->with('error', 'Completed contracts cannot be deleted.');
+        }
+
         try {
             DB::beginTransaction();
             
@@ -1257,6 +1271,14 @@ class ContractController extends Controller
 
     public function updateStatus(Request $request, Contract $contract)
     {
+        // Prevent status changes for completed contracts
+        if ($contract->status === 'completed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Completed contracts cannot have their status changed.'
+            ], 422);
+        }
+
         $validated = $request->validate([
             'status' => 'required|in:draft,active,partially_paid,fully_paid,overdue,suspended,terminated,expired,renewed'
         ]);

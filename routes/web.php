@@ -386,6 +386,7 @@ Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'verified', \A
     Route::get('quotations', [SupplierQuotationController::class, 'index'])->name('quotations.index');
     Route::get('quotations/{quotation}', [SupplierQuotationController::class, 'show'])->name('quotations.show');
     Route::post('quotations/{quotation}/respond', [SupplierQuotationController::class, 'respond'])->name('quotations.respond');
+    Route::post('quotations/discount-info', [SupplierQuotationController::class, 'getDiscountInfo'])->name('quotations.discount-info');
 
     Route::get('ranking', [SupplierDashboardController::class, 'ranking'])->name('ranking');
     Route::get('performance', [SupplierPerformanceController::class, 'index'])->name('performance');

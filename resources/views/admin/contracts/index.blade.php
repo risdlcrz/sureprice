@@ -1,6 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
+{{-- @formatter:off --}}
+{{-- stylelint-disable --}}
 <div class="container mt-4">
     @if(auth()->user() && auth()->user()->party && auth()->user()->party->banned)
         <div class="alert alert-danger mb-4">
@@ -140,9 +142,11 @@
                                             $total = $contract->total_amount;
                                             $paid = $contract->total_paid;
                                             $percent = $total > 0 ? round(($paid / $total) * 100) : 0;
+                                            $progressClass = $percent >= 100 ? 'bg-success' : 'bg-info';
+                                            $progressStyle = "width: {$percent}%";
                                         @endphp
                                         <div class="progress mt-1" style="height: 14px;">
-                                            <div class="progress-bar {{ $percent >= 100 ? 'bg-success' : 'bg-info' }}" role="progressbar" style="width: {{ $percent }}%" aria-valuenow="{{ $percent }}" aria-valuemin="0" aria-valuemax="100">
+                                            <div class="progress-bar {{ $progressClass }}" role="progressbar" style="{{ $progressStyle }}" aria-valuenow="{{ $percent }}" aria-valuemin="0" aria-valuemax="100">
                                                 {{ $percent }}%
                                             </div>
                                         </div>
@@ -177,25 +181,34 @@
                                            title="View">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <a href="{{ route('contracts.edit', $contract->id) }}" 
-                                           class="btn btn-sm btn-outline-secondary"
-                                           title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <button type="button" 
-                                                class="btn btn-sm btn-outline-danger" 
-                                                title="Delete"
-                                                onclick="confirmDelete({{ $contract->id }})">
+                                        @if($contract->canBeEdited())
+                                            <a href="{{ route('contracts.edit', $contract->id) }}" 
+                                               class="btn btn-sm btn-outline-secondary"
+                                               title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    title="Delete"
+                                                    data-contract-id="{{ $contract->id }}"
+                                                    onclick="confirmDelete(this.dataset.contractId)">
                                                 <i class="bi bi-trash"></i>
                                             </button>
+                                        @else
+                                            <span class="badge bg-success" title="Completed contracts cannot be edited or deleted">
+                                                <i class="bi bi-lock"></i> Locked
+                                            </span>
+                                        @endif
                                     </div>
-                                    <form id="delete-form-{{ $contract->id }}" 
-                                          action="{{ route('contracts.destroy', $contract->id) }}" 
-                                          method="POST" 
-                                          style="display: none;">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
+                                    @if($contract->canBeDeleted())
+                                        <form id="delete-form-{{ $contract->id }}" 
+                                              action="{{ route('contracts.destroy', $contract->id) }}" 
+                                              method="POST" 
+                                              style="display: none;">
+                                            @csrf
+                                            @method('DELETE')
+                                        </form>
+                                    @endif
                                 </td>
                             </tr>
                         @empty
@@ -216,6 +229,7 @@
 
 @push('styles')
 <style>
+/* stylelint-disable */
     .btn-group .btn {
         padding: 0.25rem 0.5rem;
     }

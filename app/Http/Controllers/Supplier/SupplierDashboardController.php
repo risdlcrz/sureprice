@@ -9,6 +9,7 @@ use App\Models\OrderEvaluation;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class SupplierDashboardController extends Controller
 {
@@ -88,22 +89,34 @@ class SupplierDashboardController extends Controller
     public function index()
     {
         $supplier = Auth::user()->supplier;
+        
         // Fetch supplier's materials with inventory and category
         $materials = $supplier ? $supplier->materials()->with(['inventory', 'category'])->get() : collect();
+        
         // Set stock and price for each material
         $materials->each(function ($material) {
             $material->stock = (float) $material->inventory->sum('quantity');
             $material->price = $material->pivot->price ?? 0;
         });
+        
         // Fetch active quotations for this supplier
         $activeQuotations = $supplier ? $supplier->quotations->where('status', 'pending') : collect();
+        
         // Fetch pending invitations (dummy/empty for now, unless you have a model for this)
         $pendingInvitations = collect();
+        
         // Performance metrics (reuse from ranking method if needed)
         $ranking = null;
         $completedOrders = 0;
         $onTimeRate = null;
         $averageRating = null;
+        
+        // Sales data calculations
+        $totalSales = 0;
+        $monthlySales = [];
+        $salesTrend = [];
+        $topSellingMaterials = [];
+        
         if ($supplier) {
             $ranking = SupplierRanking::where('supplier_id', $supplier->id)->first();
             $completedOrders = PurchaseOrder::where('supplier_id', $supplier->id)->where('status', 'completed')->count();
@@ -113,7 +126,60 @@ class SupplierDashboardController extends Controller
             $averageRating = OrderEvaluation::whereHas('order', function($query) use ($supplier) {
                 $query->where('supplier_id', $supplier->id);
             })->avg('quality_rating');
+            
+            // Calculate total sales (sum of all completed purchase orders)
+            $totalSales = PurchaseOrder::where('supplier_id', $supplier->id)
+                ->where('status', 'completed')
+                ->sum('total_amount');
+            
+            // Calculate monthly sales for the last 12 months
+            $monthlySales = PurchaseOrder::where('supplier_id', $supplier->id)
+                ->where('status', 'completed')
+                ->where('created_at', '>=', Carbon::now()->subMonths(12))
+                ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month, SUM(total_amount) as total')
+                ->groupBy('year', 'month')
+                ->orderBy('year')
+                ->orderBy('month')
+                ->get()
+                ->mapWithKeys(function ($item) {
+                    $date = Carbon::createFromDate($item->year, $item->month, 1);
+                    return [$date->format('M Y') => (float) $item->total];
+                });
+            
+            // Calculate sales trend (last 6 months vs previous 6 months)
+            $currentPeriodSales = PurchaseOrder::where('supplier_id', $supplier->id)
+                ->where('status', 'completed')
+                ->where('created_at', '>=', Carbon::now()->subMonths(6))
+                ->sum('total_amount');
+            
+            $previousPeriodSales = PurchaseOrder::where('supplier_id', $supplier->id)
+                ->where('status', 'completed')
+                ->whereBetween('created_at', [
+                    Carbon::now()->subMonths(12),
+                    Carbon::now()->subMonths(6)
+                ])
+                ->sum('total_amount');
+            
+            $salesTrend = [
+                'current_period' => $currentPeriodSales,
+                'previous_period' => $previousPeriodSales,
+                'percentage_change' => $previousPeriodSales > 0 ? 
+                    round((($currentPeriodSales - $previousPeriodSales) / $previousPeriodSales) * 100, 2) : 0
+            ];
+            
+            // Get top selling materials
+            $topSellingMaterials = DB::table('purchase_order_items')
+                ->join('purchase_orders', 'purchase_order_items.purchase_order_id', '=', 'purchase_orders.id')
+                ->join('materials', 'purchase_order_items.material_id', '=', 'materials.id')
+                ->where('purchase_orders.supplier_id', $supplier->id)
+                ->where('purchase_orders.status', 'completed')
+                ->selectRaw('materials.name, SUM(purchase_order_items.total_price) as total_sales, COUNT(*) as order_count')
+                ->groupBy('materials.id', 'materials.name')
+                ->orderByDesc('total_sales')
+                ->limit(5)
+                ->get();
         }
+        
         return view('supplier.dashboard', compact(
             'materials',
             'activeQuotations',
@@ -121,7 +187,11 @@ class SupplierDashboardController extends Controller
             'ranking',
             'completedOrders',
             'onTimeRate',
-            'averageRating'
+            'averageRating',
+            'totalSales',
+            'monthlySales',
+            'salesTrend',
+            'topSellingMaterials'
         ));
     }
 

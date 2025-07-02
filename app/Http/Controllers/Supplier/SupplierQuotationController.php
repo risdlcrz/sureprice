@@ -68,7 +68,11 @@ class SupplierQuotationController extends Controller
                                             ->with('items') // Load response items
                                             ->first();
 
-        return view('supplier.quotation-respond', compact('quotation', 'materialsInQuotation', 'existingResponse'));
+        // Get available discount types and rules
+        $discountTypes = QuotationResponse::getAvailableDiscountTypes();
+        $discountRules = QuotationResponse::getDiscountRules();
+
+        return view('supplier.quotation-respond', compact('quotation', 'materialsInQuotation', 'existingResponse', 'discountTypes', 'discountRules'));
     }
 
     public function respond(Request $request, Quotation $quotation)
@@ -89,6 +93,13 @@ class SupplierQuotationController extends Controller
             'materials' => 'required|array',
             'materials.*.unit_price' => 'required|numeric|min:0',
             'materials.*.quantity' => 'required|numeric|min:0.01', // Quantity is passed from the view as hidden input
+            'discount_type' => 'nullable|string|in:' . implode(',', array_keys(QuotationResponse::getAvailableDiscountTypes())),
+            'discount_percentage' => 'nullable|numeric|min:0|max:100',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'discount_reason' => 'nullable|string|max:500',
+            'payment_terms' => 'nullable|string|max:200',
+            'delivery_terms' => 'nullable|string|max:200',
+            'validity_period' => 'nullable|string|max:100',
         ]);
 
         // Find or create a quotation response for this supplier
@@ -129,15 +140,51 @@ class SupplierQuotationController extends Controller
             }
         }
 
+        // Calculate discount and final amount
+        $discountPercentage = 0;
+        $discountAmount = 0;
+        $finalAmount = $totalQuotedAmount;
+        $discountType = $validated['discount_type'] ?? QuotationResponse::DISCOUNT_TYPE_NONE;
+
+        // Apply discount based on type
+        if ($discountType !== QuotationResponse::DISCOUNT_TYPE_NONE) {
+            if (isset($validated['discount_percentage']) && $validated['discount_percentage'] > 0) {
+                $discountPercentage = $validated['discount_percentage'];
+                $discountAmount = ($totalQuotedAmount * $discountPercentage) / 100;
+            } elseif (isset($validated['discount_amount']) && $validated['discount_amount'] > 0) {
+                $discountAmount = $validated['discount_amount'];
+                if ($discountAmount > $totalQuotedAmount) {
+                    $discountAmount = $totalQuotedAmount; // Don't allow negative final amount
+                }
+                $discountPercentage = $totalQuotedAmount > 0 ? ($discountAmount / $totalQuotedAmount) * 100 : 0;
+            }
+
+            $finalAmount = $totalQuotedAmount - $discountAmount;
+        }
+
         // Sync response items
         $response->items()->sync($responseItemsData);
 
         // Update the main response details
         $response->update([
             'total_amount' => $totalQuotedAmount,
+            'discount_type' => $discountType,
+            'discount_percentage' => $discountPercentage,
+            'discount_amount' => $discountAmount,
+            'final_amount' => $finalAmount,
+            'discount_reason' => $validated['discount_reason'] ?? null,
+            'payment_terms' => $validated['payment_terms'] ?? null,
+            'delivery_terms' => $validated['delivery_terms'] ?? null,
+            'validity_period' => $validated['validity_period'] ?? null,
             'notes' => $validated['notes'],
             'status' => QuotationResponse::STATUS_SUBMITTED,
         ]);
+
+        // Validate discount rules
+        $discountErrors = $response->validateDiscount();
+        if (!empty($discountErrors)) {
+            return back()->withInput()->withErrors(['discount' => $discountErrors]);
+        }
 
         // Update the overall quotation status if all invited suppliers have responded
         $totalSuppliers = $quotation->suppliers->count();
@@ -147,7 +194,36 @@ class SupplierQuotationController extends Controller
             $quotation->update(['status' => Quotation::STATUS_IN_PROGRESS]); // Or 'responded'
         }
 
+        $successMessage = 'Quotation response submitted successfully and material prices updated!';
+        if ($discountAmount > 0) {
+            $successMessage .= ' ' . $response->discount_type_display . ' of ' . ($discountPercentage > 0 ? $discountPercentage . '%' : '₱' . number_format($discountAmount, 2)) . ' applied.';
+        }
+
         return redirect()->route('supplier.quotations.show', $quotation)
-            ->with('success', 'Quotation response submitted successfully and material prices updated!');
+            ->with('success', $successMessage);
+    }
+
+    public function getDiscountInfo(Request $request)
+    {
+        $discountType = $request->input('discount_type');
+        $orderAmount = $request->input('order_amount', 0);
+        
+        $rules = QuotationResponse::DISCOUNT_RULES[$discountType] ?? null;
+        
+        if (!$rules) {
+            return response()->json(['error' => 'Invalid discount type']);
+        }
+
+        $isEligible = $orderAmount >= $rules['min_order_amount'];
+        
+        return response()->json([
+            'description' => $rules['description'],
+            'max_percentage' => $rules['max_percentage'],
+            'min_order_amount' => $rules['min_order_amount'],
+            'is_eligible' => $isEligible,
+            'message' => $isEligible ? 
+                "You are eligible for up to {$rules['max_percentage']}% discount." : 
+                "Minimum order amount of ₱" . number_format($rules['min_order_amount'], 2) . " required for this discount type."
+        ]);
     }
 }

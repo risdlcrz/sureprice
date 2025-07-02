@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Contract extends Model
 {
@@ -161,7 +163,23 @@ class Contract extends Model
             'terminated' => 'dark',
             'expired' => 'secondary',
             'renewed' => 'success',
+            'completed' => 'success',
         ][$this->status] ?? 'secondary';
+    }
+
+    public function isCompleted()
+    {
+        return $this->status === 'completed';
+    }
+
+    public function canBeEdited()
+    {
+        return $this->status !== 'completed';
+    }
+
+    public function canBeDeleted()
+    {
+        return $this->status !== 'completed';
     }
 
     public function generateMaterialRequest()

@@ -15,34 +15,42 @@
         <h1>Contract Details</h1>
         <div>
             @if(!$isClient)
-                <div class="btn-group me-2">
-                    <button type="button" 
-                            class="btn {{ $contract->status === 'draft' ? 'btn-warning' : 'btn-outline-warning' }}"
-                            onclick="updateStatus('draft')">
-                        Draft
+                @if($contract->canBeEdited())
+                    <div class="btn-group me-2">
+                        <button type="button" 
+                                class="btn {{ $contract->status === 'draft' ? 'btn-warning' : 'btn-outline-warning' }}"
+                                onclick="updateStatus('draft')">
+                            Draft
+                        </button>
+                        <button type="button" 
+                                class="btn {{ $contract->status === 'approved' ? 'btn-success' : 'btn-outline-success' }}"
+                                onclick="updateStatus('approved')">
+                            Approve
+                        </button>
+                        <button type="button" 
+                                class="btn {{ $contract->status === 'rejected' ? 'btn-danger' : 'btn-outline-danger' }}"
+                                onclick="updateStatus('rejected')">
+                            Reject
+                        </button>
+                    </div>
+                @endif
+                @if($contract->canBeEdited())
+                    <a href="{{ route('contracts.edit', $contract->id) }}" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Edit Contract
+                    </a>
+                    <button type="button" class="btn btn-danger" onclick="showDeleteModal()">
+                        <i class="bi bi-trash"></i> Delete Contract
                     </button>
-                    <button type="button" 
-                            class="btn {{ $contract->status === 'approved' ? 'btn-success' : 'btn-outline-success' }}"
-                            onclick="updateStatus('approved')">
-                        Approve
-                    </button>
-                    <button type="button" 
-                            class="btn {{ $contract->status === 'rejected' ? 'btn-danger' : 'btn-outline-danger' }}"
-                            onclick="updateStatus('rejected')">
-                        Reject
-                    </button>
-                </div>
-                <a href="{{ route('contracts.edit', $contract->id) }}" class="btn btn-primary">
-                    <i class="bi bi-pencil"></i> Edit Contract
-                </a>
+                @else
+                    <span class="badge bg-success fs-6" title="Completed contracts cannot be edited or deleted">
+                        <i class="bi bi-lock"></i> Contract Locked
+                    </span>
+                @endif
                 @if($contract->status === 'approved')
                     <a href="{{ route('material-requests.create', ['contract_id' => $contract->id]) }}" class="btn btn-info" id="createMaterialRequest">
                         <i class="fas fa-boxes"></i> Create Material Request
                     </a>
                 @endif
-                <button type="button" class="btn btn-danger" onclick="showDeleteModal()">
-                    <i class="bi bi-trash"></i> Delete Contract
-                </button>
             @endif
             <a href="{{ route('contracts.download', $contract->id) }}" class="btn btn-success">
                 <i class="bi bi-download"></i> Download PDF
@@ -105,10 +113,12 @@
         </div>
     </div>
 
-    <form id="delete-form" action="{{ route('contracts.destroy', $contract->id) }}" method="POST" style="display: none;">
-        @csrf
-        @method('DELETE')
-    </form>
+    @if($contract->canBeDeleted())
+        <form id="delete-form" action="{{ route('contracts.destroy', $contract->id) }}" method="POST" style="display: none;">
+            @csrf
+            @method('DELETE')
+        </form>
+    @endif
 
     <div class="card mb-4">
         <div class="card-header">

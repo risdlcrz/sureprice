@@ -9,7 +9,7 @@
 
     <!-- Stats Overview -->
     <div class="row mb-4">
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
             <div class="card h-100">
                 <div class="card-body">
                     <h3 class="card-title h5">Total Materials</h3>
@@ -17,7 +17,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
             <div class="card h-100">
                 <div class="card-body">
                     <h3 class="card-title h5">Active Quotations</h3>
@@ -25,11 +25,111 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
             <div class="card h-100">
                 <div class="card-body">
                     <h3 class="card-title h5">Pending Invitations</h3>
                     <p class="display-6 text-warning mb-0">{{ $pendingInvitations->count() }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h3 class="card-title h5">Total Sales</h3>
+                    <p class="display-6 text-info mb-0">₱{{ number_format($totalSales, 2) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Overview Section -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Monthly Sales Trend</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlySalesChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">Sales Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Current Period (6 months)</span>
+                            <span class="fw-bold">₱{{ number_format($salesTrend['current_period'] ?? 0, 2) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Previous Period (6 months)</span>
+                            <span class="fw-bold">₱{{ number_format($salesTrend['previous_period'] ?? 0, 2) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Growth Rate</span>
+                            <span class="fw-bold {{ ($salesTrend['percentage_change'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                                {{ ($salesTrend['percentage_change'] ?? 0) >= 0 ? '+' : '' }}{{ $salesTrend['percentage_change'] ?? 0 }}%
+                            </span>
+                        </div>
+                    </div>
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar {{ ($salesTrend['percentage_change'] ?? 0) >= 0 ? 'bg-success' : 'bg-danger' }}" 
+                             style="width: {{ min(abs($salesTrend['percentage_change'] ?? 0), 100) }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Selling Materials -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Top Selling Materials</h5>
+                </div>
+                <div class="card-body">
+                    @if(count($topSellingMaterials) > 0)
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Material</th>
+                                        <th>Total Sales</th>
+                                        <th>Order Count</th>
+                                        <th>Average Order Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($topSellingMaterials as $material)
+                                    <tr>
+                                        <td>
+                                            <span class="me-2">
+                                                <i class="bi bi-box-seam text-primary"></i>
+                                            </span>
+                                            <span class="fw-semibold">{{ $material->name }}</span>
+                                        </td>
+                                        <td class="fw-bold text-success">₱{{ number_format($material->total_sales, 2) }}</td>
+                                        <td>
+                                            <span class="badge bg-info">{{ $material->order_count }}</span>
+                                        </td>
+                                        <td>₱{{ number_format($material->total_sales / $material->order_count, 2) }}</td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-graph-down display-4"></i>
+                            <p class="mt-2">No sales data available yet</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -189,5 +289,55 @@
         border-radius: 0.5em;
     }
 </style>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Monthly Sales Chart
+    const monthlySalesCtx = document.getElementById('monthlySalesChart');
+    if (monthlySalesCtx) {
+        const monthlySalesData = @json($monthlySales);
+        const labels = Object.keys(monthlySalesData);
+        const data = Object.values(monthlySalesData);
+        
+        new Chart(monthlySalesCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Monthly Sales (₱)',
+                    data: data,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '₱' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
 @endpush
 @endsection 

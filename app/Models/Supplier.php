@@ -47,6 +47,11 @@ class Supplier extends Model
             ->withTimestamps();
     }
 
+    public function purchaseOrders(): HasMany
+    {
+        return $this->hasMany(PurchaseOrder::class);
+    }
+
     public function attachments()
     {
         return $this->morphMany(Attachment::class, 'attachable');
