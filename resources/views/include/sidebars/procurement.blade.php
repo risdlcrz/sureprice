@@ -21,7 +21,7 @@
     <a href="{{ route('procurement.dashboard') }}" class="btn">
         <i class="fas fa-home"></i>Dashboard
     </a>
-    <a href="{{ route('procurement.projects') }}" class="btn">
+    <a href="{{ route('procurement.projects.index') }}" class="btn">
         <i class="fas fa-tasks"></i>Project & Procurement
     </a>
     <a href="{{ route('procurement.inventory.index') }}" class="btn">

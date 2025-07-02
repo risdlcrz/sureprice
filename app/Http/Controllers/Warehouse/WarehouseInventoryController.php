@@ -18,7 +18,7 @@ class WarehouseInventoryController extends Controller
         // Get all available warehouses
         $warehouses = \App\Models\Warehouse::all();
         if ($warehouses->isEmpty()) {
-            abort(404, 'No warehouses found.');
+            return response()->view('warehouse.no-warehouses');
         }
         // Redirect to first warehouse if none selected
         if (!$request->has('warehouse_id')) {
@@ -204,10 +204,12 @@ class WarehouseInventoryController extends Controller
             })
             ->latest()
             ->paginate(15);
+        $material = Material::find($materialId);
         return view('warehouse.inventory.history', [
             'stock' => $stock,
             'movements' => $movements,
             'warehouseId' => $warehouseId,
+            'material' => $material,
         ]);
     }
 } 

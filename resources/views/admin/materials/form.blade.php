@@ -60,8 +60,11 @@
                                             id="category" name="category_id" required>
                                             <option value="">Select Category</option>
                                             @foreach($categories as $category)
-                                                <option value="{{ $category->id }}" {{ old('category_id', $material->category_id ?? '') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                                                @if(strtolower(trim($category->name)) !== 'other')
+                                                    <option value="{{ $category->id }}" {{ old('category_id', $material->category_id ?? '') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                                                @endif
                                             @endforeach
+                                            <option value="other" {{ old('category_id') == 'other' ? 'selected' : '' }}>Other</option>
                                         </select>
                                         @error('category_id')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -477,6 +480,24 @@ $(document).ready(function() {
             }
         }
         categorySelect.addEventListener('change', updateCode);
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const categorySelect = document.getElementById('category');
+        const customCategoryInput = document.getElementById('custom_category');
+        function toggleCustomCategory() {
+            if (categorySelect.value === 'other') {
+                customCategoryInput.style.display = '';
+                customCategoryInput.required = true;
+            } else {
+                customCategoryInput.style.display = 'none';
+                customCategoryInput.required = false;
+                customCategoryInput.value = '';
+            }
+        }
+        categorySelect.addEventListener('change', toggleCustomCategory);
+        // On page load
+        toggleCustomCategory();
     });
 });
 </script>

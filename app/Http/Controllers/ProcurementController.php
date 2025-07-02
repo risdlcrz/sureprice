@@ -279,14 +279,20 @@ class ProcurementController extends Controller
 
     public function inventoryLowStock()
     {
-        // Return a view or data for low stock items
-        return view('procurement.inventory-low-stock');
+        $inventories = \App\Models\Inventory::with(['material.category'])
+            ->lowStock()
+            ->orderBy('quantity', 'asc')
+            ->paginate(10);
+        return view('procurement.inventory-low-stock', compact('inventories'));
     }
 
     public function inventoryExpiring()
     {
-        // Return a view or data for expiring items
-        return view('procurement.inventory-expiring');
+        $inventories = \App\Models\Inventory::with(['material.category'])
+            ->expiring()
+            ->orderBy('expiry_date', 'asc')
+            ->paginate(10);
+        return view('procurement.inventory-expiring', compact('inventories'));
     }
 
     public function projectShow(Project $project)
@@ -372,5 +378,13 @@ class ProcurementController extends Controller
             'pendingPurchaseRequests',
             'pendingPurchaseOrders'
         ));
+    }
+
+    public function suppliersRankings()
+    {
+        $suppliers = \App\Models\Supplier::with(['evaluations', 'metrics'])->get();
+        $rankingService = app(\App\Services\SupplierRankingService::class);
+        $rankings = $rankingService->calculateRankings($suppliers);
+        return view('procurement.suppliers-rankings', compact('rankings'));
     }
 } 

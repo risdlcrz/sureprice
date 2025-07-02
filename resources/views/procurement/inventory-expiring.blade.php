@@ -40,6 +40,6 @@
             {{ $inventories->links() }}
         </div>
     @endif
-    <a href="{{ route('inventory.index') }}" class="btn btn-secondary mt-3">Back to Inventory</a>
+    <a href="{{ route('procurement.inventory.index') }}" class="btn btn-secondary mt-3">Back to Inventory</a>
 </div>
 @endsection 

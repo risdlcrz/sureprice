@@ -291,6 +291,7 @@ Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->
     Route::delete('/inventory/{inventory}', [ProcurementController::class, 'inventoryDestroy'])->name('inventory.destroy');
     Route::post('/inventory/{inventory}/adjust-stock', [ProcurementController::class, 'inventoryAdjustStock'])->name('inventory.adjust-stock');
     Route::get('/inventory/low-stock', [ProcurementController::class, 'inventoryLowStock'])->name('inventory.low-stock');
+    Route::get('/inventory/expiring', [ProcurementController::class, 'inventoryExpiring'])->name('inventory.expiring');
     
     // Analytics Routes
     Route::get('/analytics', [ProcurementController::class, 'analyticsDashboard'])->name('analytics');
@@ -445,3 +446,8 @@ Route::get('/material-requests/recommend-suppliers-for-material', [\App\Http\Con
 
 // AJAX route for supplier recommendation in purchase requests
 Route::get('/purchase-requests/recommend-suppliers-for-material', [\App\Http\Controllers\PurchaseRequestController::class, 'recommendSuppliersForMaterial']);
+
+// Procurement Supplier Rankings
+Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->prefix('procurement')->name('procurement.')->group(function () {
+    Route::get('suppliers/rankings', [App\Http\Controllers\ProcurementController::class, 'suppliersRankings'])->name('suppliers.rankings');
+});

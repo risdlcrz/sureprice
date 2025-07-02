@@ -72,7 +72,7 @@ class MaterialController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => 'required',
             'unit' => 'required|string',
             'base_price' => 'required|numeric|min:0',
             'srp_price' => 'required|numeric|min:0',
@@ -88,6 +88,24 @@ class MaterialController extends Controller
             'minimum_quantity' => 'nullable|integer|min:0|required_if:is_per_area,0',
             'warranty_period' => 'nullable|integer|min:0',
         ]);
+
+        // Handle custom category before creating the material
+        if ($validated['category_id'] === 'other') {
+            $customCategoryName = trim($request->input('custom_category'));
+            if (!$customCategoryName) {
+                return back()->with('error', 'Please enter a custom category name.')->withInput();
+            }
+            $slug = \Str::slug($customCategoryName);
+            $category = \App\Models\Category::where('slug', $slug)->first();
+            if (!$category) {
+                $category = \App\Models\Category::create([
+                    'name' => $customCategoryName,
+                    'slug' => $slug,
+                    'description' => 'Custom category created via material form',
+                ]);
+            }
+            $validated['category_id'] = $category->id;
+        }
 
         try {
             DB::beginTransaction();
