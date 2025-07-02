@@ -24,11 +24,51 @@
                     <i class="fas fa-{{ $company->status === 'approved' ? 'check-circle' : ($company->status === 'pending' ? 'clock' : 'times-circle') }} me-1"></i>
                     {{ ucfirst($company->status) }}
                 </span>
+                @if($company->designation === 'client')
+                    @if($company->banned)
+                        <span class="badge bg-danger ms-2">BANNED</span>
+                        @if($company->ban_reason)
+                            <span class="text-danger ms-2"><i class="fas fa-exclamation-triangle"></i> {{ $company->ban_reason }}</span>
+                        @endif
+                        <form method="POST" action="{{ route('clients.unban', $company->id) }}" class="d-inline ms-2">
+                            @csrf
+                            <button type="submit" class="btn btn-sm btn-outline-success">Unban Client</button>
+                        </form>
+                    @elseif($company->party && $company->party->shouldBeBanned())
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <strong>Warning:</strong> This client has overdue contracts for more than 30 days. Consider banning this client.
+                            <button type="button" class="btn btn-sm btn-danger ms-3" data-bs-toggle="modal" data-bs-target="#banClientModal">Ban Client</button>
+                        </div>
+                    @endif
+                @endif
             </div>
         </div>
         <a href="{{ route('information-management.index', ['type' => 'company']) }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left me-2"></i> Back to Companies
         </a>
+    </div>
+
+    <!-- Ban Client Modal -->
+    <div class="modal fade" id="banClientModal" tabindex="-1" aria-labelledby="banClientModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="{{ route('clients.ban', $company->id) }}">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="banClientModalLabel">Ban Client</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to ban this client? You may provide a reason below:</p>
+                        <textarea name="ban_reason" class="form-control" placeholder="Reason for banning (optional)"></textarea>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Ban Client</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <div class="row">

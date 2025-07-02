@@ -34,6 +34,19 @@
                     </div>
                 </div>
             </div>
+            <!-- View Projects Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 hover-shadow">
+                    <img src="{{ asset('images/ppimage_projects.jpg') }}" class="card-img-top rounded-top-4" alt="View Projects" style="object-fit:cover; height:180px;">
+                    <div class="card-body">
+                        <h5 class="card-title fw-semibold">View Projects</h5>
+                        <p class="card-text text-muted">Browse and manage all projects created from contracts (Step 2).</p>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <a href="{{ route('projects.index') }}" class="btn btn-success w-100">View All Projects</a>
+                    </div>
+                </div>
+            </div>
             <!-- Project Timeline Card -->
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 hover-shadow">

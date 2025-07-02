@@ -79,8 +79,22 @@
                             <th width="30%">Status:</th>
                             <td>
                                 <span class="badge bg-{{ $contract->status_color }}">
-                                    {{ ucfirst($contract->status) }}
+                                    {{ ucwords(str_replace('_', ' ', $contract->status)) }}
                                 </span>
+                                @if($contract->payments && $contract->payments->count())
+                                    <div class="mt-2">
+                                        @php
+                                            $total = $contract->total_amount;
+                                            $paid = $contract->total_paid;
+                                            $percent = $total > 0 ? round(($paid / $total) * 100) : 0;
+                                        @endphp
+                                        <div class="progress" style="height: 18px;">
+                                            <div class="progress-bar {{ $percent >= 100 ? 'bg-success' : 'bg-info' }}" role="progressbar" style="width: {{ $percent }}%" aria-valuenow="{{ $percent }}" aria-valuemin="0" aria-valuemax="100">
+                                                {{ $percent }}% Paid
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
                             </td>
                         </tr>
                         <tr>

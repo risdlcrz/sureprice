@@ -2,6 +2,15 @@
 
 @section('content')
 <div class="container mt-4">
+    @if(auth()->user() && auth()->user()->party && auth()->user()->party->banned)
+        <div class="alert alert-danger mb-4">
+            <strong>You have been banned from the system.</strong>
+            @if(auth()->user()->party->ban_reason)
+                <br>Reason: {{ auth()->user()->party->ban_reason }}
+            @endif
+            <br>Please contact support for more information.
+        </div>
+    @endif
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Contracts</h1>
         <div>
@@ -19,9 +28,13 @@
                     Rejected
                 </a>
             </div>
-        <a href="{{ route('contracts.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> New Contract
-        </a>
+            @if(auth()->user() && auth()->user()->party && auth()->user()->party->banned)
+                <button class="btn btn-primary" disabled title="You are banned and cannot create new contracts."><i class="bi bi-plus-lg"></i> New Contract</button>
+            @else
+                <a href="{{ route('contracts.create') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg"></i> New Contract
+                </a>
+            @endif
         </div>
     </div>
 
@@ -60,10 +73,16 @@
                 </div>
                 <div class="modal-body">
                     <p>Are you sure you want to change the status of this contract?</p>
-                    <div class="btn-group w-100">
+                    <div class="btn-group w-100 flex-wrap">
                         <button type="button" class="btn btn-outline-secondary status-btn" data-status="draft">Draft</button>
-                        <button type="button" class="btn btn-outline-success status-btn" data-status="approved">Approve</button>
-                        <button type="button" class="btn btn-outline-danger status-btn" data-status="rejected">Reject</button>
+                        <button type="button" class="btn btn-outline-primary status-btn" data-status="active">Active</button>
+                        <button type="button" class="btn btn-outline-info status-btn" data-status="partially_paid">Partially Paid</button>
+                        <button type="button" class="btn btn-outline-success status-btn" data-status="fully_paid">Fully Paid</button>
+                        <button type="button" class="btn btn-outline-danger status-btn" data-status="overdue">Overdue</button>
+                        <button type="button" class="btn btn-outline-warning status-btn" data-status="suspended">Suspended</button>
+                        <button type="button" class="btn btn-outline-dark status-btn" data-status="terminated">Terminated</button>
+                        <button type="button" class="btn btn-outline-secondary status-btn" data-status="expired">Expired</button>
+                        <button type="button" class="btn btn-outline-success status-btn" data-status="renewed">Renewed</button>
                     </div>
                 </div>
             </div>
@@ -113,11 +132,21 @@
                                 <td>₱{{ number_format($contract->labor_cost, 2) }}</td>
                                 <td>₱{{ number_format($contract->total_amount, 2) }}</td>
                                 <td>
-                                    <button type="button" 
-                                            class="btn btn-sm status-badge {{ $contract->status === 'draft' ? 'btn-warning' : ($contract->status === 'approved' ? 'btn-success' : 'btn-secondary') }}"
-                                            onclick="showStatusModal({{ $contract->id }})">
-                                        {{ ucfirst($contract->status) }}
-                                    </button>
+                                    <span class="badge bg-{{ $contract->status_color }}">
+                                        {{ ucwords(str_replace('_', ' ', $contract->status)) }}
+                                    </span>
+                                    @if($contract->payments && $contract->payments->count())
+                                        @php
+                                            $total = $contract->total_amount;
+                                            $paid = $contract->total_paid;
+                                            $percent = $total > 0 ? round(($paid / $total) * 100) : 0;
+                                        @endphp
+                                        <div class="progress mt-1" style="height: 14px;">
+                                            <div class="progress-bar {{ $percent >= 100 ? 'bg-success' : 'bg-info' }}" role="progressbar" style="width: {{ $percent }}%" aria-valuenow="{{ $percent }}" aria-valuemin="0" aria-valuemax="100">
+                                                {{ $percent }}%
+                                            </div>
+                                        </div>
+                                    @endif
                                 </td>
                                 <td>
                                     <div class="d-flex flex-column">

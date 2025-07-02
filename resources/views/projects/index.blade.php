@@ -2,13 +2,80 @@
 
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Projects</h2>
-        <a href="{{ route('projects.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> New Project
-        </a>
+    @if(isset($userParty) && $userParty->banned)
+        <div class="alert alert-danger mb-4">
+            <strong>You have been banned from the system.</strong>
+            @if($userParty->ban_reason)
+                <br>Reason: {{ $userParty->ban_reason }}
+            @endif
+            <br>Please contact support for more information.
+        </div>
+    @endif
+    <form method="GET" action="{{ route('projects.index') }}" class="mb-4">
+        <div class="input-group" style="max-width: 600px;">
+            <input type="text" name="q" class="form-control" placeholder="Search projects..." value="{{ request('q') }}">
+            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search"></i> Search</button>
+        </div>
+    </form>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="fw-bold" style="letter-spacing:1px;">Projects Dashboard</h1>
+        @if(isset($userParty) && $userParty->banned)
+            <button class="btn btn-primary" disabled title="You are banned and cannot create new projects."><i class="bi bi-plus-lg"></i> New Project</button>
+        @else
+            <a href="{{ route('projects.create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> New Project
+            </a>
+        @endif
     </div>
-
+    <div class="row mb-3 g-3">
+        <div class="col-md-4 col-6">
+            <div class="card text-center shadow-sm border-0 p-3">
+                <div class="fw-bold fs-4 text-primary">{{ $projects->total() }}</div>
+                <div class="text-muted">Total Projects</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-6">
+            <div class="card text-center shadow-sm border-0 p-3">
+                <div class="fw-bold fs-4 text-info">{{ $projects->where('status', 'in_progress')->count() }}</div>
+                <div class="text-muted">In Progress</div>
+            </div>
+        </div>
+        <div class="col-md-4 col-6">
+            <div class="card text-center shadow-sm border-0 p-3">
+                <div class="fw-bold fs-4 text-success">{{ $projects->where('status', 'completed')->count() }}</div>
+                <div class="text-muted">Completed</div>
+            </div>
+        </div>
+    </div>
+    <div class="mb-3">
+        <div class="d-flex align-items-center flex-wrap gap-2">
+            <span class="fw-semibold me-2">Projects by Status:</span>
+            <span class="badge bg-secondary">Proposed: {{ $projects->where('status', 'proposed')->count() }}</span>
+            <span class="badge bg-info">Planning: {{ $projects->where('status', 'planning')->count() }}</span>
+            <span class="badge bg-success">Approved: {{ $projects->where('status', 'approved')->count() }}</span>
+            <span class="badge bg-primary">In Progress: {{ $projects->where('status', 'in_progress')->count() }}</span>
+            <span class="badge bg-warning">On Hold: {{ $projects->where('status', 'on_hold')->count() }}</span>
+            <span class="badge bg-success">Completed: {{ $projects->where('status', 'completed')->count() }}</span>
+            <span class="badge bg-dark">Closed: {{ $projects->where('status', 'closed')->count() }}</span>
+            <span class="badge bg-danger">Cancelled: {{ $projects->where('status', 'cancelled')->count() }}</span>
+        </div>
+    </div>
+    @php $recentProjects = $projects->sortByDesc('created_at')->take(5); @endphp
+    @if($recentProjects->count())
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold">Recent Projects</div>
+            <div class="card-body p-2">
+                <ul class="list-group list-group-flush">
+                    @foreach($recentProjects as $project)
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>{{ $project->name }}</span>
+                            <span class="text-muted small">{{ $project->created_at->diffForHumans() }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    @endif
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
@@ -46,11 +113,17 @@
                             <td>{{ $project->start_date->format('M d, Y') }}</td>
                             <td>{{ $project->end_date->format('M d, Y') }}</td>
                             <td>
-                                <span class="badge bg-{{ $project->status === 'completed' ? 'success' : 
-                                    ($project->status === 'active' ? 'primary' : 
-                                    ($project->status === 'on_hold' ? 'warning' : 
-                                    ($project->status === 'cancelled' ? 'danger' : 'secondary'))) }}">
-                                    {{ ucfirst($project->status) }}
+                                <span class="badge
+                                    @if($project->status === 'proposed') bg-secondary
+                                    @elseif($project->status === 'planning') bg-info
+                                    @elseif($project->status === 'approved') bg-success
+                                    @elseif($project->status === 'in_progress') bg-primary
+                                    @elseif($project->status === 'on_hold') bg-warning
+                                    @elseif($project->status === 'completed') bg-success
+                                    @elseif($project->status === 'closed') bg-dark
+                                    @elseif($project->status === 'cancelled') bg-danger
+                                    @else bg-secondary @endif">
+                                    {{ ucwords(str_replace('_', ' ', $project->status)) }}
                                 </span>
                             </td>
                             <td>

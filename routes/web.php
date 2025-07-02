@@ -251,6 +251,8 @@ Route::middleware(['auth'])->group(function () {
     // Purchase Order Payment Routes
     Route::post('/purchase-orders/{po}/payments', [PurchaseOrderPaymentController::class, 'store'])->name('purchase-orders.payments.store');
     Route::post('/purchase-order-payments/{payment}/verify', [PurchaseOrderPaymentController::class, 'verify'])->name('purchase-order-payments.verify');
+    Route::post('/clients/{id}/ban', [\App\Http\Controllers\PartyController::class, 'ban'])->name('clients.ban');
+    Route::post('/clients/{id}/unban', [\App\Http\Controllers\PartyController::class, 'unban'])->name('clients.unban');
 });
 // Payments routes
 Route::middleware(['auth'])->group(function () {
@@ -426,3 +428,5 @@ Route::middleware(['auth'])->group(function () {
     Route::post('projects/{project}/progress', [ProjectController::class, 'updateProgress'])->name('projects.progress.update');
     Route::resource('projects.tasks', ProjectTaskController::class);
 });
+
+Route::get('/api/clients/{id}/ban-status', [\App\Http\Controllers\PartyController::class, 'banStatus'])->name('api.clients.ban-status');

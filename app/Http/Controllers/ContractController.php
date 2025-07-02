@@ -567,6 +567,12 @@ class ContractController extends Controller
                 ]
             );
 
+            // Check if client is banned
+            if ($client->banned) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'This client is banned and cannot be assigned to a new contract.');
+            }
+
             // Create property
             $property = Property::create([
                 'property_type' => session('contract_step1.property_type'),
@@ -1251,14 +1257,14 @@ class ContractController extends Controller
 
     public function updateStatus(Request $request, Contract $contract)
     {
+        $validated = $request->validate([
+            'status' => 'required|in:draft,active,partially_paid,fully_paid,overdue,suspended,terminated,expired,renewed'
+        ]);
+        $oldStatus = $contract->status;
+        $contract->status = $request->status;
+        $contract->save();
         try {
-            $request->validate([
-                'status' => 'required|in:draft,approved,rejected'
-            ]);
-
             DB::beginTransaction();
-
-            $oldStatus = $contract->status;
 
             // Require both signatures before approval
             if ($request->status === 'approved') {
@@ -1270,8 +1276,6 @@ class ContractController extends Controller
                     ], 422);
                 }
             }
-
-            $contract->status = $request->status;
 
             // Generate payment schedule when contract is approved
             if ($request->status === 'approved') {

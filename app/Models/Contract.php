@@ -153,12 +153,14 @@ class Contract extends Model
     {
         return [
             'draft' => 'secondary',
-            'pending' => 'warning',
-            'approved' => 'success',
-            'rejected' => 'danger',
-            'cancelled' => 'secondary',
-            'in_progress' => 'info',
-            'completed' => 'success'
+            'active' => 'primary',
+            'partially_paid' => 'info',
+            'fully_paid' => 'success',
+            'overdue' => 'danger',
+            'suspended' => 'warning',
+            'terminated' => 'dark',
+            'expired' => 'secondary',
+            'renewed' => 'success',
         ][$this->status] ?? 'secondary';
     }
 

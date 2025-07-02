@@ -11,13 +11,31 @@ use Illuminate\Support\Facades\DB;
 
 class ProjectController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $projects = Project::with(['contract', 'projectManager', 'clientRepresentative'])
-            ->latest()
-            ->paginate(10);
+        $query = Project::with(['contract', 'projectManager', 'clientRepresentative']);
 
-        return view('projects.index', compact('projects'));
+        if ($request->filled('q')) {
+            $search = $request->input('q');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('project_number', 'like', "%$search%")
+                  ->orWhereHas('contract', function($c) use ($search) {
+                      $c->where('contract_number', 'like', "%$search%")
+                        ->orWhere('name', 'like', "%$search%")
+                        ->orWhere('title', 'like', "%$search%") ;
+                  });
+            });
+        }
+
+        $projects = $query->latest()->paginate(10);
+
+        $userParty = null;
+        if (auth()->check()) {
+            $userParty = \App\Models\Party::where('email', auth()->user()->email)->first();
+        }
+
+        return view('projects.index', compact('projects', 'userParty'));
     }
 
     public function create()
@@ -48,7 +66,7 @@ class ProjectController extends Controller
             $project = Project::create([
                 'project_number' => Project::generateProjectNumber(),
                 ...$validated,
-                'status' => 'pending'
+                'status' => 'proposed'
             ]);
 
             DB::commit();
@@ -83,7 +101,7 @@ class ProjectController extends Controller
             'description' => 'nullable|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
-            'status' => 'required|in:pending,active,on_hold,completed,cancelled',
+            'status' => 'required|in:proposed,planning,approved,in_progress,on_hold,completed,closed,cancelled',
             'project_manager_id' => 'required|exists:users,id',
             'client_representative_id' => 'required|exists:users,id',
             'budget' => 'required|numeric|min:0',
@@ -113,9 +131,14 @@ class ProjectController extends Controller
     public function dashboard()
     {
         $totalProjects = Project::count();
-        $activeProjects = Project::where('status', 'active')->count();
-        $completedProjects = Project::where('status', 'completed')->count();
+        $proposedProjects = Project::where('status', 'proposed')->count();
+        $planningProjects = Project::where('status', 'planning')->count();
+        $approvedProjects = Project::where('status', 'approved')->count();
+        $inProgressProjects = Project::where('status', 'in_progress')->count();
         $onHoldProjects = Project::where('status', 'on_hold')->count();
+        $completedProjects = Project::where('status', 'completed')->count();
+        $closedProjects = Project::where('status', 'closed')->count();
+        $cancelledProjects = Project::where('status', 'cancelled')->count();
 
         $recentProjects = Project::with(['contract', 'projectManager', 'clientRepresentative'])
             ->latest()
@@ -123,11 +146,14 @@ class ProjectController extends Controller
             ->get();
 
         $projectsByStatus = [
-            'pending' => Project::where('status', 'pending')->count(),
-            'active' => $activeProjects,
+            'proposed' => $proposedProjects,
+            'planning' => $planningProjects,
+            'approved' => $approvedProjects,
+            'in_progress' => $inProgressProjects,
             'on_hold' => $onHoldProjects,
             'completed' => $completedProjects,
-            'cancelled' => Project::where('status', 'cancelled')->count(),
+            'closed' => $closedProjects,
+            'cancelled' => $cancelledProjects,
         ];
 
         // --- Added for dashboard quick stats ---
@@ -139,9 +165,14 @@ class ProjectController extends Controller
 
         return view('admin.project-dashboard', compact(
             'totalProjects',
-            'activeProjects',
-            'completedProjects',
+            'proposedProjects',
+            'planningProjects',
+            'approvedProjects',
+            'inProgressProjects',
             'onHoldProjects',
+            'completedProjects',
+            'closedProjects',
+            'cancelledProjects',
             'recentProjects',
             'projectsByStatus',
             'totalBudget',

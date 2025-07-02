@@ -2,6 +2,15 @@
 
 @section('content')
 <div class="container py-4">
+    @if($company->party && $company->party->banned)
+        <div class="alert alert-danger mb-4">
+            <strong>You have been banned from the system.</strong>
+            @if($company->party->ban_reason)
+                <br>Reason: {{ $company->party->ban_reason }}
+            @endif
+            <br>Please contact support for more information.
+        </div>
+    @endif
     <div class="mb-4">
         <h1 class="display-5 fw-bold mb-2">Welcome, {{ $company->contact_person }}</h1>
         <p class="text-muted fs-5">Project & Procurement Dashboard</p>
@@ -40,10 +49,18 @@
     <!-- Quick Actions -->
     <div class="row g-3">
         <div class="col-md-6">
-            <a href="{{ route('contracts.index') }}" class="btn btn-primary btn-lg w-100 rounded-pill">View Contracts</a>
+            @if($company->party && $company->party->banned)
+                <button class="btn btn-primary btn-lg w-100 rounded-pill" disabled title="You are banned and cannot access contracts.">View Contracts</button>
+            @else
+                <a href="{{ route('contracts.index') }}" class="btn btn-primary btn-lg w-100 rounded-pill">View Contracts</a>
+            @endif
         </div>
         <div class="col-md-6">
-            <a href="{{ route('project-timeline.index') }}" class="btn btn-outline-success btn-lg w-100 rounded-pill">Project Timeline</a>
+            @if($company->party && $company->party->banned)
+                <button class="btn btn-outline-success btn-lg w-100 rounded-pill" disabled title="You are banned and cannot access projects.">Project Timeline</button>
+            @else
+                <a href="{{ route('project-timeline.index') }}" class="btn btn-outline-success btn-lg w-100 rounded-pill">Project Timeline</a>
+            @endif
         </div>
     </div>
 </div>

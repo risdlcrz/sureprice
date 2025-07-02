@@ -19,7 +19,9 @@ class Party extends Model
         'state',
         'postal',
         'email',
-        'phone'
+        'phone',
+        'banned',
+        'ban_reason',
     ];
 
     /**
@@ -52,5 +54,17 @@ class Party extends Model
     public function scopeClients($query)
     {
         return $query->where('entity_type', 'client');
+    }
+
+    /**
+     * Check if the client should be banned based on overdue contracts.
+     * Returns true if the client has any overdue contracts older than 30 days.
+     */
+    public function shouldBeBanned()
+    {
+        return $this->clientContracts()
+            ->where('status', 'overdue')
+            ->where('updated_at', '<', now()->subDays(30))
+            ->exists();
     }
 } 

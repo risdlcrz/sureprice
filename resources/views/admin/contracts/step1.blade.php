@@ -222,6 +222,7 @@
                                         id="client_search"
                                         :minimumInputLength="0"
                                     />
+                                    <div id="client-ban-warning" class="alert alert-danger mt-2 d-none"></div>
                                 </div>
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -473,6 +474,39 @@ $(document).ready(function() {
     // Add a change listener to property_type for debugging
     $('#property_type').on('change', function() {
         console.log('Property Type changed to:', $(this).val());
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const clientSearch = document.getElementById('client_search');
+        const warningDiv = document.getElementById('client-ban-warning');
+        const submitBtn = document.querySelector('#step1Form button[type="submit"]');
+
+        // Listen for change event on the client search select
+        clientSearch && clientSearch.addEventListener('change', function() {
+            const clientId = this.value;
+            if (!clientId) {
+                warningDiv.classList.add('d-none');
+                submitBtn.disabled = false;
+                return;
+            }
+            fetch(`/api/clients/${clientId}/ban-status`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.banned) {
+                        warningDiv.textContent = 'This client is banned and cannot be assigned to a new contract.' + (data.reason ? ' Reason: ' + data.reason : '');
+                        warningDiv.classList.remove('d-none');
+                        submitBtn.disabled = true;
+                    } else {
+                        warningDiv.classList.add('d-none');
+                        submitBtn.disabled = false;
+                    }
+                })
+                .catch(() => {
+                    warningDiv.textContent = 'Could not check client ban status.';
+                    warningDiv.classList.remove('d-none');
+                    submitBtn.disabled = true;
+                });
+        });
     });
 });
 </script>
