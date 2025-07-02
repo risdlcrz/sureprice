@@ -338,9 +338,7 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
         return view('admin.purchase-order');
     })->name('admin.purchase-order');
     Route::get('/budget-allocation', [BudgetAllocationController::class, 'index'])->name('admin.budget-allocation');
-    Route::get('/price-analysis', function () {
-        return view('admin.price-analysis');
-    })->name('admin.price-analysis');
+    Route::get('/price-analysis', [App\Http\Controllers\Admin\MaterialController::class, 'priceAnalysis'])->name('admin.price-analysis');
     Route::get('/admin/transactions', [App\Http\Controllers\TransactionController::class, 'index'])->name('admin.transactions');
 });
 // Supplier Evaluation Routes
@@ -432,3 +430,6 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('/api/clients/{id}/ban-status', [\App\Http\Controllers\PartyController::class, 'banStatus'])->name('api.clients.ban-status');
+
+Route::post('purchase-orders/{id}/ship', [\App\Http\Controllers\PurchaseOrderController::class, 'markAsShipped'])->name('purchase-orders.ship');
+Route::post('purchase-orders/{id}/deliver', [\App\Http\Controllers\PurchaseOrderController::class, 'markAsDelivered'])->name('purchase-orders.deliver');

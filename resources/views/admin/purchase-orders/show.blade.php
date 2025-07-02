@@ -160,6 +160,41 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Delivery Workflow</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="timeline mb-3">
+                            <li class="{{ $purchaseOrder->status === 'confirmed' || $purchaseOrder->status === 'shipping' || $purchaseOrder->status === 'delivered' || $purchaseOrder->status === 'completed' ? 'active' : '' }}">Confirmed</li>
+                            <li class="{{ $purchaseOrder->status === 'shipping' || $purchaseOrder->status === 'delivered' || $purchaseOrder->status === 'completed' ? 'active' : '' }}">Shipping</li>
+                            <li class="{{ $purchaseOrder->status === 'delivered' || $purchaseOrder->status === 'completed' ? 'active' : '' }}">Delivered</li>
+                            <li class="{{ $purchaseOrder->status === 'completed' ? 'active' : '' }}">Completed</li>
+                        </ul>
+                        @if(auth()->user()->isSupplier() && $purchaseOrder->status === \App\Models\PurchaseOrder::STATUS_CONFIRMED)
+                            <form method="POST" action="{{ route('purchase-orders.ship', $purchaseOrder->id) }}">
+                                @csrf
+                                <div class="mb-2">
+                                    <textarea name="shipping_note" class="form-control" placeholder="Shipping note (optional)"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-info">Mark as Shipped</button>
+                            </form>
+                        @endif
+                        @if((auth()->user()->isWarehouse() || auth()->user()->isAdmin()) && $purchaseOrder->status === \App\Models\PurchaseOrder::STATUS_SHIPPING)
+                            <form method="POST" action="{{ route('purchase-orders.deliver', $purchaseOrder->id) }}">
+                                @csrf
+                                <button type="submit" class="btn btn-success">Mark as Delivered</button>
+                            </form>
+                        @endif
+                        @if($purchaseOrder->shipping_note)
+                            <div class="mt-3">
+                                <strong>Shipping Note:</strong>
+                                <p>{{ $purchaseOrder->shipping_note }}</p>
+                            </div>
+                        @endif
+                    </div>
+                </div>
             </div>
         </div>
     </div>

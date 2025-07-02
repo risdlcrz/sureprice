@@ -45,7 +45,7 @@ class User extends Authenticatable // implements MustVerifyEmail
 
     public function party()
     {
-        return $this->hasOne(Party::class);
+        return $this->hasOne(Party::class, 'user_id');
     }
 
     public function supplier()
@@ -99,6 +99,11 @@ class User extends Authenticatable // implements MustVerifyEmail
     public function isSupplier()
     {
         return ($this->role ?? $this->user_type ?? null) === 'supplier';
+    }
+
+    public function isWarehouse()
+    {
+        return ($this->role ?? $this->user_type ?? null) === 'warehouse';
     }
 
     protected static function booted()

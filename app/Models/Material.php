@@ -100,6 +100,19 @@ class Material extends Model
         return $this->belongsToMany(ScopeType::class, 'scope_type_material');
     }
 
+    public function priceHistories()
+    {
+        return $this->hasMany(MaterialPriceHistory::class);
+    }
+
+    /**
+     * Get price history as [date => price] array, sorted by date asc
+     */
+    public function getPriceHistoryArray()
+    {
+        return $this->priceHistories()->orderBy('date')->pluck('price', 'date')->toArray();
+    }
+
     protected static function boot()
     {
         parent::boot();

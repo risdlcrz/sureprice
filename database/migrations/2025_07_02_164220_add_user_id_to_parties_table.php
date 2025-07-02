@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // The 'discount_type' column was already added in a previous migration.
-        // No action needed here to avoid duplicate column error.
+        Schema::table('parties', function (Blueprint $table) {
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete()->after('id');
+        });
     }
 
     /**
@@ -20,7 +21,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // The 'discount_type' column was already dropped in the previous migration's down method.
-        // No action needed here.
+        Schema::table('parties', function (Blueprint $table) {
+            $table->dropForeign(['user_id']);
+            $table->dropColumn('user_id');
+        });
     }
 };

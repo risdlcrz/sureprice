@@ -67,4 +67,9 @@ class Party extends Model
             ->where('updated_at', '<', now()->subDays(30))
             ->exists();
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 } 

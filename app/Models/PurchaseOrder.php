@@ -13,6 +13,13 @@ class PurchaseOrder extends Model
 {
     use HasFactory;
 
+    const STATUS_DRAFT = 'draft';
+    const STATUS_PENDING = 'pending';
+    const STATUS_CONFIRMED = 'confirmed';
+    const STATUS_SHIPPING = 'shipping';
+    const STATUS_DELIVERED = 'delivered';
+    const STATUS_COMPLETED = 'completed';
+
     protected $fillable = [
         'po_number',
         'purchase_request_id',
@@ -43,6 +50,9 @@ class PurchaseOrder extends Model
         'penalty_type',
         'penalty_accrued',
         'last_penalty_calculation',
+        'shipped_at',
+        'delivered_at',
+        'shipping_note',
     ];
 
     protected $casts = [
