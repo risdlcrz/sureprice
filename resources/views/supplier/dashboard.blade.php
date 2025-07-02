@@ -79,7 +79,7 @@
                     </div>
                     <div class="progress mb-3" style="height: 8px;">
                         <div class="progress-bar {{ ($salesTrend['percentage_change'] ?? 0) >= 0 ? 'bg-success' : 'bg-danger' }}" 
-                             style="width: {{ min(abs($salesTrend['percentage_change'] ?? 0), 100) }}%"></div>
+                             style="width: {{ min(abs($salesTrend['percentage_change'] ?? 0), 100) }}%;"></div>
                     </div>
                 </div>
             </div>
@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Monthly Sales Chart
     const monthlySalesCtx = document.getElementById('monthlySalesChart');
     if (monthlySalesCtx) {
-        const monthlySalesData = @json($monthlySales);
+        const monthlySalesData = JSON.parse('{!! addslashes(json_encode($monthlySales)) !!}');
         const labels = Object.keys(monthlySalesData);
         const data = Object.values(monthlySalesData);
         

@@ -37,7 +37,12 @@ class PurchaseOrder extends Model
         'delivery_confirmed',
         'delivery_confirmed_at',
         'delivery_confirmed_by',
-        'warehouse_id'
+        'warehouse_id',
+        'due_date',
+        'penalty_rate',
+        'penalty_type',
+        'penalty_accrued',
+        'last_penalty_calculation',
     ];
 
     protected $casts = [
@@ -50,6 +55,10 @@ class PurchaseOrder extends Model
         'client_payment_validated_at' => 'datetime',
         'supplier_payment_validated_at' => 'datetime',
         'delivery_confirmed_at' => 'datetime',
+        'due_date' => 'date',
+        'penalty_rate' => 'decimal:2',
+        'penalty_accrued' => 'decimal:2',
+        'last_penalty_calculation' => 'date',
     ];
 
     public function purchaseRequest(): BelongsTo
@@ -215,5 +224,55 @@ class PurchaseOrder extends Model
     public function isPaymentValidated(): bool
     {
         return $this->client_payment_validated && $this->supplier_payment_validated;
+    }
+
+    /**
+     * Calculate and update penalty if overdue.
+     *
+     * @return float The updated penalty accrued.
+     */
+    public function calculateAndUpdatePenalty()
+    {
+        if (!$this->due_date || $this->status === 'completed') {
+            return $this->penalty_accrued;
+        }
+        $now = now();
+        $lastCalc = $this->last_penalty_calculation ?? $this->due_date;
+        $overdueDays = $now->diffInDays($this->due_date, false);
+        if ($overdueDays >= 0) {
+            // Not overdue
+            return $this->penalty_accrued;
+        }
+        $daysLate = $now->diffInDays($lastCalc);
+        if ($daysLate <= 0) {
+            return $this->penalty_accrued;
+        }
+        $baseAmount = $this->total_amount;
+        $penalty = 0;
+        switch ($this->penalty_type) {
+            case 'fixed':
+                // Fixed penalty per day late
+                $penalty = $this->penalty_rate * $daysLate;
+                break;
+            case 'compound':
+                // Compound penalty (like interest)
+                $penalty = $this->penalty_accrued;
+                for ($i = 0; $i < $daysLate; $i++) {
+                    $penalty += ($baseAmount + $penalty) * ($this->penalty_rate / 100 / 30); // monthly rate, daily compounding
+                }
+                $penalty -= $this->penalty_accrued;
+                break;
+            case 'percentage':
+            default:
+                // Percentage penalty per month, applied daily (simple interest)
+                $monthlyRate = $this->penalty_rate / 100;
+                $dailyRate = $monthlyRate / 30;
+                $penalty = $baseAmount * $dailyRate * $daysLate;
+                break;
+        }
+        $this->penalty_accrued += $penalty;
+        $this->last_penalty_calculation = $now;
+        $this->save();
+        return $this->penalty_accrued;
     }
 } 

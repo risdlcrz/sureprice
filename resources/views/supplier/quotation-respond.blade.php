@@ -175,7 +175,15 @@
 </div>
 
 @push('scripts')
+// Set initial values from existing response if available
+@if($existingResponse && $existingResponse->hasDiscount())
 <script>
+    let discountTypeInit = '{{ $existingResponse->discount_type }}';
+    let discountPercentageInit = '{{ $existingResponse->discount_percentage }}';
+    let discountAmountInit = '{{ $existingResponse->discount_amount }}';
+</script>
+@endif
+
 document.addEventListener('DOMContentLoaded', function() {
     const discountType = document.getElementById('discount-type');
     const percentageDiscount = document.getElementById('percentage-discount');
@@ -189,16 +197,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const eligibilityMessage = document.getElementById('eligibility-message');
     const maxPercentage = document.getElementById('max-percentage');
     
-    // Set initial values from existing response if available
-    @if($existingResponse && $existingResponse->hasDiscount())
-        @if($existingResponse->discount_percentage > 0)
-            discountPercentage.value = '{{ $existingResponse->discount_percentage }}';
+    // Apply initial values if present
+    if (typeof discountTypeInit !== 'undefined') {
+        if (discountPercentageInit > 0) {
+            discountPercentage.value = discountPercentageInit;
             percentageDiscount.style.display = 'block';
-        @elseif($existingResponse->discount_amount > 0)
-            discountAmount.value = '{{ $existingResponse->discount_amount }}';
+        } else if (discountAmountInit > 0) {
+            discountAmount.value = discountAmountInit;
             amountDiscount.style.display = 'block';
-        @endif
-    @endif
+        }
+    }
 
     // Show/hide discount options based on type
     discountType.addEventListener('change', function() {
