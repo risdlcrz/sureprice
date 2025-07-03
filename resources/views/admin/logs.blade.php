@@ -3,6 +3,22 @@
 @section('content')
 <div class="container py-5">
     <h1 class="mb-4">Administrator Logs</h1>
+    @if(auth()->user() && auth()->user()->user_type === 'admin')
+    <form method="GET" class="mb-3" id="userTypeFilterForm">
+        <div class="row g-2 align-items-center">
+            <div class="col-auto">
+                <label for="filter" class="col-form-label">Show logs for:</label>
+            </div>
+            <div class="col-auto">
+                <select name="filter" id="filter" class="form-select" onchange="document.getElementById('userTypeFilterForm').submit()">
+                    @foreach($userTypes as $key => $label)
+                        <option value="{{ $key }}" @if($filter === $key) selected @endif>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+    </form>
+    @endif
     <div class="card">
         <div class="card-body p-0">
             <div class="table-responsive">

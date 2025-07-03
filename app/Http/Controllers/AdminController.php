@@ -148,10 +148,49 @@ public function historyDashboard()
     // ... existing code ...
 }
 
-public function administratorLogs()
+public function administratorLogs(Request $request)
 {
     $this->logPageView('Viewed Administrator Logs');
-    $activities = Activity::latest()->take(50)->get();
-    return view('admin.logs', compact('activities'));
+    $user = auth()->user();
+    $filter = $request->get('filter', 'all');
+
+    $activities = \App\Models\Activity::with('user')
+        ->when($user->user_type === 'employee' && $user->role === 'procurement', function ($query) {
+            $query->whereHas('user', function ($q) {
+                $q->where('user_type', 'employee')->where('role', 'procurement');
+            });
+        })
+        ->when($user->user_type === 'employee' && $user->role === 'warehousing', function ($query) {
+            $query->whereHas('user', function ($q) {
+                $q->where('user_type', 'employee')->where('role', 'warehousing');
+            });
+        })
+        ->when($user->user_type === 'admin' && in_array($filter, ['admin', 'procurement', 'warehousing']), function ($query) use ($filter) {
+            if ($filter === 'admin') {
+                $query->whereHas('user', function ($q) {
+                    $q->where('user_type', 'admin');
+                });
+            } elseif ($filter === 'procurement') {
+                $query->whereHas('user', function ($q) {
+                    $q->where('user_type', 'employee')->where('role', 'procurement');
+                });
+            } elseif ($filter === 'warehousing') {
+                $query->whereHas('user', function ($q) {
+                    $q->where('user_type', 'employee')->where('role', 'warehousing');
+                });
+            }
+        })
+        ->latest()
+        ->take(50)
+        ->get();
+
+    $userTypes = [
+        'all' => 'All',
+        'admin' => 'Admin',
+        'procurement' => 'Procurement',
+        'warehousing' => 'Warehousing',
+    ];
+
+    return view('admin.logs', compact('activities', 'userTypes', 'filter'));
 }
 }
