@@ -83,6 +83,7 @@
                         <th>Material</th>
                         <th>Category</th>
                         <th>Code</th>
+                        <th>Supplier</th>
                         <th>Current Stock</th>
                         <th>Threshold</th>
                         <th>Status</th>
@@ -91,11 +92,25 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($paginatedStocks as $stock)
+                    @forelse($stocks as $materialId => $materialStocks)
+                        @php
+                            $material = $materialStocks->first()->material;
+                            $totalStock = $materialStocks->sum('current_stock');
+                        @endphp
+                        <tr class="table-primary">
+                            <td class="fw-semibold">{{ $material->name ?? 'N/A' }}</td>
+                            <td>{{ $material->category->name ?? '-' }}</td>
+                            <td>{{ $material->code ?? '-' }}</td>
+                            <td colspan="4"><strong>Total Stock: {{ $totalStock }}</strong></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        @foreach($materialStocks as $stock)
                         <tr>
-                            <td class="fw-semibold">{{ $stock->material->name ?? 'N/A' }}</td>
-                            <td>{{ $stock->material->category->name ?? '-' }}</td>
-                            <td>{{ $stock->material->code ?? '-' }}</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td>{{ $stock->supplier->company_name ?? '-' }}</td>
                             <td>{{ $stock->current_stock }}</td>
                             <td>
                                 @if($stock->threshold > 0)
@@ -124,9 +139,10 @@
                                 </a>
                             </td>
                         </tr>
+                        @endforeach
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center py-4 text-muted">No materials found in this warehouse.</td>
+                            <td colspan="9" class="text-center py-4 text-muted">No materials found in this warehouse.</td>
                         </tr>
                     @endforelse
                 </tbody>

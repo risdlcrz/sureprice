@@ -43,6 +43,7 @@
                     <tr>
                         <th>Material</th>
                         <th>Category</th>
+                        <th>Supplier</th>
                         <th>Current Stock</th>
                         <th>Minimum Stock</th>
                         <th>Status</th>
@@ -50,10 +51,22 @@
                 </thead>
                 <tbody>
                     @if(isset($stocks))
-                        @forelse($stocks as $stock)
+                        @forelse($stocks->groupBy('material_id') as $materialId => $materialStocks)
+                        @php
+                            $material = $materialStocks->first()->material;
+                            $totalStock = $materialStocks->sum('current_stock');
+                        @endphp
+                        <tr class="table-primary">
+                            <td>{{ $material->name ?? 'N/A' }}</td>
+                            <td>{{ $material->category->name ?? '-' }}</td>
+                            <td colspan="3"><strong>Total Stock: {{ $totalStock }}</strong></td>
+                            <td></td>
+                        </tr>
+                        @foreach($materialStocks as $stock)
                         <tr>
-                            <td>{{ $stock->material->name ?? 'N/A' }}</td>
-                            <td>{{ $stock->material->category->name ?? '-' }}</td>
+                            <td></td>
+                            <td></td>
+                            <td>{{ $stock->supplier->company_name ?? '-' }}</td>
                             <td>{{ $stock->current_stock }}</td>
                             <td>
                                 @php $minStock = $stock->threshold > 0 ? $stock->threshold : floor($stock->current_stock * 0.2); @endphp
@@ -77,14 +90,15 @@
                                 <span class="badge bg-{{ $color }}">{{ $status }}</span>
                             </td>
                         </tr>
+                        @endforeach
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center text-muted">No inventory data found for the selected warehouse.</td>
+                            <td colspan="6" class="text-center text-muted">No inventory data found for the selected warehouse.</td>
                         </tr>
                         @endforelse
                     @else
                     <tr>
-                        <td colspan="5" class="text-center text-muted">No inventory data available.</td>
+                        <td colspan="6" class="text-center text-muted">No inventory data available.</td>
                     </tr>
                     @endif
                 </tbody>

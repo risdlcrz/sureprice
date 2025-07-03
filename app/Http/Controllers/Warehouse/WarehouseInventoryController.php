@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Warehouse;
 use App\Models\Stock;
+use App\Models\Supplier;
 
 class WarehouseInventoryController extends Controller
 {
@@ -39,52 +40,13 @@ class WarehouseInventoryController extends Controller
             });
         }
         $materials = $materialsQuery->get();
-        // Build stocks collection for the selected warehouse
-        $stocks = $materials->map(function($material) use ($warehouseId, $request) {
-            $stock = Stock::where('warehouse_id', $warehouseId)
-                ->where('material_id', $material->id)
-                ->first();
-            // If no stock record, create a virtual one with zeroes
-            if (!$stock) {
-                $stock = new Stock([
-                    'warehouse_id' => $warehouseId,
-                    'material_id' => $material->id,
-                    'current_stock' => 0,
-                    'threshold' => 0,
-                ]);
-                $stock->material = $material;
-                $stock->warehouse = Warehouse::find($warehouseId);
-            } else {
-                $stock->material = $material;
-            }
-            // Stock status filter
-            if ($request->filled('stock_status')) {
-                switch ($request->stock_status) {
-                    case 'low':
-                        if (!($stock->current_stock < $stock->threshold)) return null;
-                        break;
-                    case 'out':
-                        if (!($stock->current_stock == 0)) return null;
-                        break;
-                    case 'normal':
-                        if (!($stock->current_stock >= $stock->threshold)) return null;
-                        break;
-                }
-            }
-            return $stock;
-        })->filter()->values();
-        // Paginate manually
-        $perPage = 10;
-        $page = $request->input('page', 1);
-        $paginatedStocks = new \Illuminate\Pagination\LengthAwarePaginator(
-            $stocks->forPage($page, $perPage),
-            $stocks->count(),
-            $perPage,
-            $page,
-            ['path' => $request->url(), 'query' => $request->query()]
-        );
+        $suppliers = \App\Models\Supplier::all();
+        $stocks = Stock::with(['material', 'supplier', 'warehouse'])
+            ->where('warehouse_id', $warehouseId)
+            ->get()
+            ->groupBy('material_id');
         $categories = \App\Models\Category::all();
-        return view('warehouse.inventory.index', compact('paginatedStocks', 'categories', 'warehouses', 'warehouseId', 'materials'));
+        return view('warehouse.inventory.index', compact('stocks', 'categories', 'warehouses', 'warehouseId', 'materials', 'suppliers'));
     }
 
     public function addStock(Request $request)

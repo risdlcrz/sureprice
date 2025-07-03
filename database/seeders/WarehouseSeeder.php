@@ -13,9 +13,10 @@ class WarehouseSeeder extends Seeder
     public function run(): void
     {
         Warehouse::firstOrCreate([
-            'name' => 'Main Warehouse',
-        ], [
-            // Add more fields here if your warehouses table requires them
+            'name' => 'Warehouse A',
+        ]);
+        Warehouse::firstOrCreate([
+            'name' => 'Warehouse B',
         ]);
     }
 } 

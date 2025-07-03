@@ -15,7 +15,11 @@ class DatabaseSeeder extends Seeder
     // Add your admin seeder
     $this->call([
         AdminSeeder::class,
+        SupplierSeeder::class,
         MaterialSeeder::class,
+        WarehouseSeeder::class,
+        MaterialSupplierSeeder::class,
+        WarehouseStockSeeder::class,
         ScopeTypeSeeder::class,
         ScopeTypeMaterialSeeder::class,
         SyncEmployeesToUsersSeeder::class,

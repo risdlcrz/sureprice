@@ -113,6 +113,11 @@ class Material extends Model
         return $this->priceHistories()->orderBy('date')->pluck('price', 'date')->toArray();
     }
 
+    public function stocks()
+    {
+        return $this->hasMany(\App\Models\Stock::class);
+    }
+
     protected static function boot()
     {
         parent::boot();

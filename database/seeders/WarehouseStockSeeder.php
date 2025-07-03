@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Material;
 use App\Models\Stock;
 use App\Models\Warehouse;
+use App\Models\Supplier;
 
 class WarehouseStockSeeder extends Seeder
 {
@@ -15,7 +16,8 @@ class WarehouseStockSeeder extends Seeder
     public function run(): void
     {
         $materials = Material::all();
-        $warehouses = Warehouse::all();
+        $warehouses = Warehouse::whereIn('name', ['Warehouse A', 'Warehouse B'])->get();
+        $suppliers = Supplier::all();
 
         if ($materials->isEmpty()) {
             $this->command->info('No materials found, skipping WarehouseStockSeeder.');
@@ -28,22 +30,24 @@ class WarehouseStockSeeder extends Seeder
         }
 
         foreach ($materials as $material) {
-            // Create stock records for each warehouse
-            foreach ($warehouses as $warehouse) {
-                // Generate realistic initial stock based on material type
-                $initialStock = $this->generateInitialStock($material);
-                $minimumStock = $this->generateMinimumStock($material);
+            foreach ($suppliers as $supplier) {
+                foreach ($warehouses as $warehouse) {
+                    // Generate realistic initial stock based on material type
+                    $initialStock = $this->generateInitialStock($material);
+                    $minimumStock = $this->generateMinimumStock($material);
 
-                Stock::updateOrCreate(
-                    [
-                        'warehouse_id' => $warehouse->id,
-                        'material_id' => $material->id,
-                    ],
-                    [
-                        'current_stock' => $initialStock,
-                        'threshold' => $minimumStock,
-                    ]
-                );
+                    Stock::updateOrCreate(
+                        [
+                            'warehouse_id' => $warehouse->id,
+                            'material_id' => $material->id,
+                            'supplier_id' => $supplier->id,
+                        ],
+                        [
+                            'current_stock' => $initialStock,
+                            'threshold' => $minimumStock,
+                        ]
+                    );
+                }
             }
         }
 

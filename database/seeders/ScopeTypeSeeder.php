@@ -233,8 +233,8 @@ class ScopeTypeSeeder extends Seeder
                         'waste_factor' => 1.2,
                         'base_price' => 2
                     ]
-                    ]
-                ],
+                ]
+            ],
             [
                 'code' => 'cabinetry_installation',
                 'name' => 'Cabinetry Installation',
@@ -323,8 +323,8 @@ class ScopeTypeSeeder extends Seeder
                         'base_price' => 200
                     ]
                 ]
-                    ],
-                    [
+            ],
+            [
                 'code' => 'electrical_wiring',
                 'name' => 'Electrical Wiring',
                 'category' => 'MEPFS',
@@ -404,8 +404,8 @@ class ScopeTypeSeeder extends Seeder
                         'base_price' => 150
                     ]
                 ]
-                    ],
-                    [
+            ],
+            [
                 'code' => 'flooring_installation',
                 'name' => 'Vinyl Flooring',
                 'category' => 'Infrastructure',
@@ -486,44 +486,18 @@ class ScopeTypeSeeder extends Seeder
             ]
         ];
 
-        foreach ($scopes as $scopeData) {
-            $materialsData = $scopeData['materials_data'];
-            $tasks = $scopeData['tasks'];
-            unset($scopeData['materials_data']);
-            unset($scopeData['tasks']);
-            
-            $scope = ScopeType::create([
-                'code' => $scopeData['code'],
-                'name' => $scopeData['name'],
-                'category' => $scopeData['category'],
-                'is_wall_work' => $scopeData['is_wall_work'],
-                'estimated_days' => $scopeData['estimated_days'],
-                'labor_rate' => $scopeData['labor_rate'],
-                'complexity_factor' => $scopeData['complexity_factor'],
-                'tasks' => json_encode($tasks)
-            ]);
-
-            // Create and attach materials
-            foreach ($materialsData as $materialData) {
-                $material = Material::firstOrCreate(
-                    ['name' => $materialData['name']],
-                    [
-                        'unit' => $materialData['unit'],
-                        'base_price' => $materialData['base_price'],
-                        'is_per_area' => $materialData['is_per_area'],
-                        'is_wall_material' => $materialData['is_wall_material'],
-                        'coverage_rate' => $materialData['coverage_rate'] ?? null,
-                        'waste_factor' => $materialData['waste_factor'] ?? 1.1,
-                        'code' => 'MAT' . str_pad(rand(1, 99999), 6, '0', STR_PAD_LEFT),
-                        'category_id' => 1 // Default category
-                    ]
-                );
-
-                $scope->materials()->attach($material->id, [
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
+        foreach ($scopes as $scope) {
+            $tasks = $scope['tasks'];
+            unset($scope['tasks']);
+            $materialsData = $scope['materials_data'] ?? [];
+            unset($scope['materials_data']);
+            $scopeType = \App\Models\ScopeType::updateOrCreate(
+                ['code' => $scope['code']],
+                array_merge($scope, [
+                    'tasks' => json_encode($tasks),
+                ])
+            );
+            // Optionally, handle materialsData here if needed
         }
     }
 }

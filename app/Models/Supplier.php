@@ -80,4 +80,9 @@ class Supplier extends Model
     {
         return $this->belongsTo(Company::class);
     }
+
+    public function stocks()
+    {
+        return $this->hasMany(\App\Models\Stock::class);
+    }
 } 

@@ -11,23 +11,17 @@ class MaterialSupplierSeeder extends Seeder
 {
     public function run()
     {
-        $suppliers = Supplier::all();
-        $materials = Material::all();
-        foreach ($suppliers as $supplier) {
-            foreach ($materials as $material) {
-                DB::table('material_supplier')->updateOrInsert(
-                    [
-                        'material_id' => $material->id,
-                        'supplier_id' => $supplier->id,
-                    ],
-                    [
-                        'price' => $material->base_price ?? 0,
-                        'lead_time' => '7 days',
-                        'is_preferred' => 0,
-                        'created_at' => now(),
-                        'updated_at' => now(),
+        $materials = \App\Models\Material::all();
+        $suppliers = \App\Models\Supplier::all();
+        foreach ($materials as $material) {
+            foreach ($suppliers as $supplier) {
+                $material->suppliers()->syncWithoutDetaching([
+                    $supplier->id => [
+                        'price' => rand(100, 1000),
+                        'lead_time' => rand(1, 14) . ' days',
+                        'is_preferred' => (bool)rand(0, 1),
                     ]
-                );
+                ]);
             }
         }
     }
