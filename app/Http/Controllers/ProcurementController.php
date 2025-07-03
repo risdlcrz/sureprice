@@ -387,4 +387,53 @@ class ProcurementController extends Controller
         $rankings = $rankingService->calculateRankings($suppliers);
         return view('procurement.suppliers-rankings', compact('rankings'));
     }
+
+    // --- Supplier Recommendation for Procurement Analytics Dashboard ---
+    public function generalSupplierRecommendation(Request $request)
+    {
+        $materials = \App\Models\Material::orderBy('name')->get();
+        $selectedMaterialId = $request->input('material_id', $materials->first()->id ?? null);
+
+        $projectFeatures = [
+            'on_time_delivery_rate' => $request->input('on_time_delivery_rate', 90),
+            'average_defect_rate' => $request->input('average_defect_rate', 2),
+            'average_cost_variance' => $request->input('average_cost_variance', 0),
+        ];
+        $budget = $request->input('budget', 100000); // Default or user input
+
+        $suppliers = \App\Models\Supplier::with(['metrics', 'materials'])->get()->map(function($supplier) {
+            return [
+                'id' => $supplier->id,
+                'name' => $supplier->company_name,
+                'material_ids' => $supplier->materials->pluck('id')->toArray(),
+                'on_time_delivery_rate' => $supplier->metrics ? $supplier->metrics->on_time_delivery_rate : 0,
+                'average_defect_rate' => $supplier->metrics->average_defect_rate ?? 0,
+                'average_cost_variance' => $supplier->metrics->average_cost_variance ?? 0,
+                'cost' => $supplier->metrics->average_cost_variance ?? 0,
+            ];
+        })->toArray();
+
+        $service = new \App\Services\SupplierSelectionService();
+        $filteredSuppliers = $service->filterByMaterial($suppliers, $selectedMaterialId);
+        $recommended = $service->recommend($filteredSuppliers, $projectFeatures, 5);
+        $optimal = $service->optimize($recommended, $budget);
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('procurement.suppliers.partials.recommendation-tables', [
+                    'recommended' => $recommended,
+                    'optimal' => $optimal,
+                ])->render()
+            ]);
+        }
+
+        return view('procurement.suppliers.general-recommendation', [
+            'materials' => $materials,
+            'selectedMaterialId' => $selectedMaterialId,
+            'recommended' => $recommended,
+            'optimal' => $optimal,
+            'projectFeatures' => $projectFeatures,
+            'budget' => $budget,
+        ]);
+    }
 } 

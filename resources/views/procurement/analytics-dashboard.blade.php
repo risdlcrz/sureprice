@@ -60,6 +60,19 @@
                 </div>
             </a>
         </div>
+
+        <!-- Supplier Recommendation Card -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <a href="{{ route('procurement.analytics.supplier-recommendation') }}" class="text-decoration-none">
+                <div class="card h-100">
+                    <img src="{{ asset('images/aimage5.svg') }}" class="card-img-top" alt="Supplier Recommendation">
+                    <div class="card-body">
+                        <h5 class="card-title">Supplier Recommendation</h5>
+                        <p class="card-text">Get recommended suppliers for your materials and projects.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
     </div>
 
     <!-- Additional Analytics Content -->

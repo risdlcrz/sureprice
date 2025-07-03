@@ -451,3 +451,6 @@ Route::get('/purchase-requests/recommend-suppliers-for-material', [\App\Http\Con
 Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->prefix('procurement')->name('procurement.')->group(function () {
     Route::get('suppliers/rankings', [App\Http\Controllers\ProcurementController::class, 'suppliersRankings'])->name('suppliers.rankings');
 });
+
+// General Supplier Recommendation Route for Procurement Analytics
+Route::get('/procurement/analytics/supplier-recommendation', [\App\Http\Controllers\ProcurementController::class, 'generalSupplierRecommendation'])->name('procurement.analytics.supplier-recommendation');
