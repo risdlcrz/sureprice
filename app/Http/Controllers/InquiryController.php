@@ -41,7 +41,7 @@ class InquiryController extends Controller
         $inquiries = $query->latest()->paginate($perPage);
             
         $contracts = Contract::where('status', 'approved')
-            ->orderBy('contract_id')
+            ->orderBy('id')
             ->get();
 
         return view('admin.inquiries.index', compact('inquiries', 'contracts'));
@@ -51,7 +51,7 @@ class InquiryController extends Controller
     {
         $contracts = Contract::with(['client', 'contractor'])
             ->where('status', 'approved')
-            ->orderBy('contract_id')
+            ->orderBy('id')
             ->get();
         $materials = Material::orderBy('name')->get();
         return view('admin.inquiries.form', compact('contracts', 'materials'));
@@ -113,7 +113,7 @@ class InquiryController extends Controller
     public function edit(Inquiry $inquiry)
     {
         $contracts = Contract::where('status', 'approved')
-            ->orderBy('contract_id')
+            ->orderBy('id')
             ->get();
         $inquiry->load(['contract', 'materials', 'attachments']);
         return view('admin.inquiries.form', compact('inquiry', 'contracts'));

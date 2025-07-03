@@ -166,4 +166,11 @@ class SupplierMaterialController extends Controller
         return redirect()->route('supplier.materials.index')
             ->with('success', 'Material linked successfully.');
     }
+
+    public function show(Material $material)
+    {
+        $suppliers = \App\Models\Supplier::orderBy('company_name')->get();
+        $linkedSupplierIds = $material->suppliers()->pluck('suppliers.id')->toArray();
+        return view('admin.materials.show', compact('material', 'suppliers', 'linkedSupplierIds'));
+    }
 } 

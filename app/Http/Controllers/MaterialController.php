@@ -308,7 +308,9 @@ class MaterialController extends Controller
     public function show(Material $material)
     {
         $material->load(['category', 'suppliers', 'images']);
-        return view('admin.materials.show', compact('material'));
+        $suppliers = \App\Models\Supplier::orderBy('company_name')->get();
+        $linkedSupplierIds = $material->suppliers()->pluck('suppliers.id')->toArray();
+        return view('admin.materials.show', compact('material', 'suppliers', 'linkedSupplierIds'));
     }
 
     public function apiSearch(Request $request)
