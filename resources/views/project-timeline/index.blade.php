@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid mt-4">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
+<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Project Timeline</h1>
+<div class="container-fluid main-bg py-4">
+    <div class="row mb-4 justify-content-center">
+        <div class="col-12 col-lg-11">
+            <div class="card shadow-lg animated-fadein">
                 <div class="card-body">
-                    <h1 class="h3 mb-4">Project Timeline</h1>
                     <!-- Overall Project Progress Bar -->
                     <div id="projectProgressBar" class="progress mb-4" style="height: 40px;">
                         <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
@@ -335,22 +335,155 @@
 @push('styles')
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" crossorigin="anonymous" />
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-.progress-bar {
-    font-size: 1.2rem;
+body, .main-bg {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
 }
+
 .card {
-    border-radius: 1rem;
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    border: none;
+    transition: box-shadow 0.2s;
 }
+.card:hover {
+    box-shadow: 0 8px 32px rgba(44,62,80,0.12), 0 2px 8px rgba(44,62,80,0.08);
+}
+
 .card-body {
     background: #fff;
+    border-radius: 1.1rem;
 }
+
+.animated-fadein {
+    animation: fadeIn 0.7s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: none; }
+}
+
+.progress-bar {
+    font-size: 1.2rem;
+    background: linear-gradient(90deg, #38b6ff 0%, #198754 100%) !important;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    border-radius: 1rem;
+    transition: width 0.5s;
+}
+
+#projectProgressBar {
+    background: #e3f2fd;
+    border-radius: 1rem;
+    box-shadow: 0 1px 4px rgba(44,62,80,0.04);
+}
+
+input.form-control, select.form-select, textarea.form-control {
+    border-radius: 0.7rem;
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    transition: border-color 0.2s;
+}
+input.form-control:focus, select.form-select:focus, textarea.form-control:focus {
+    border-color: #38b6ff;
+    box-shadow: 0 0 0 2px #38b6ff33;
+}
+
+.btn, .btn-primary, .btn-outline-info, .btn-warning {
+    border-radius: 2rem !important;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #38b6ff 0%, #198754 100%);
+    border: none;
+}
+.btn-primary:hover, .btn-outline-info:hover, .btn-warning:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 2px 8px #38b6ff33;
+}
+
+hr {
+    border-top: 2px solid #e3e3e3;
+    margin: 2rem 0 1.5rem 0;
+}
+
+/* Calendar container styling */
+#calendar {
+    background: #f8fafc;
+    border-radius: 1.25rem;
+    box-shadow: 0 2px 12px rgba(44,62,80,0.06);
+    padding: 1.5rem 1rem 1rem 1rem;
+    margin-top: 1.5rem;
+}
+
+.fc-toolbar-title {
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+    color: #198754 !important;
+    letter-spacing: 0.01em;
+}
+.fc-button {
+    border-radius: 1.5rem !important;
+    font-weight: 600 !important;
+    background: #e3f2fd !important;
+    color: #198754 !important;
+    border: none !important;
+    margin: 0 2px !important;
+}
+.fc-button-active, .fc-button:hover {
+    background: #38b6ff !important;
+    color: #fff !important;
+}
+
+.fc-daygrid-day {
+    border-radius: 0.5rem !important;
+    transition: background 0.2s;
+}
+.fc-day-today {
+    background: #e3f2fd !important;
+    border-radius: 0.5rem !important;
+}
+
+.fc-event {
+    padding: 4px 8px !important;
+    margin: 2px 0 !important;
+    border-radius: 6px !important;
+    font-size: 1rem !important;
+    box-shadow: 0 1px 4px #38b6ff22;
+}
+.fc-event-title {
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.fc-event-contractor {
+    font-size: 0.85em !important;
+    opacity: 0.9 !important;
+    display: block !important;
+    margin-top: 2px !important;
+}
+
+/* Modal fade-in */
+.modal-content {
+    animation: fadeIn 0.5s;
+    border-radius: 1.25rem;
+}
+
+/* Section headings */
+h1, h5.card-title {
+    font-weight: 700;
+    color: #198754;
+    letter-spacing: 0.01em;
+}
+
+/* Accordion and contract card tweaks */
 .accordion-button:focus {
     box-shadow: none;
-}
-.contract-card:hover {
-    box-shadow: 0 0 0 4px #0d6efd33, 0 2px 8px rgba(0,0,0,0.08);
-    border-color: #0d6efd;
 }
 .accordion-button:not(.collapsed) {
     background-color: #e9ecef;
@@ -367,6 +500,7 @@
 .contract-card .card-body .row .col-md-6:last-child {
     padding-left: 1.5rem;
 }
+
 /* Color coding for FullCalendar events by status */
 .status-approved {
     background-color: #198754 !important;
@@ -410,26 +544,6 @@
 .contractor-3 { border-left: 4px solid #6f42c1 !important; }
 .contractor-4 { border-left: 4px solid #fd7e14 !important; }
 .contractor-5 { border-left: 4px solid #20c997 !important; }
-
-.fc-event {
-    padding: 2px 4px !important;
-    margin: 1px 0 !important;
-    border-radius: 4px !important;
-}
-
-.fc-event-title {
-    font-weight: 500 !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-}
-
-.fc-event-contractor {
-    font-size: 0.8em !important;
-    opacity: 0.9 !important;
-    display: block !important;
-    margin-top: 2px !important;
-}
 </style>
 @endpush
 

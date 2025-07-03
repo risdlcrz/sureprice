@@ -1,13 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
+<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">{{ isset($inquiry) ? 'Edit Request for Inquiry' : 'Create Request for Inquiry' }}</h1>
 <div class="container-fluid py-4">
     <div class="row justify-content-center">
         <div class="col-12">
             <div class="card shadow">
-                <div class="card-header bg-white py-3">
-                    <h4 class="card-title mb-0">{{ isset($inquiry) ? 'Edit Request for Inquiry' : 'Create Request for Inquiry' }}</h4>
-                </div>
+                <div class="card-header bg-white py-3"></div>
                 <div class="card-body">
                     <form id="inquiryForm" method="POST" action="{{ isset($inquiry) ? route('inquiries.update', $inquiry->id) : route('inquiries.store') }}" enctype="multipart/form-data">
                         @csrf
@@ -219,40 +218,116 @@
 
 @push('styles')
 <style>
-    .section-container {
-        margin-bottom: 2rem;
-        padding: 1.5rem;
-        border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-        background-color: #fff;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    }
-    .section-title {
-        margin-bottom: 1.5rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #007bff;
-        color: #2c3e50;
-        font-weight: 600;
-    }
-    #materialSearchResults {
-        position: absolute;
-        width: 100%;
-        max-height: 200px;
-        overflow-y: auto;
-        background: white;
-        border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-        z-index: 1000;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .material-result {
-        padding: 0.5rem;
-        cursor: pointer;
-        border-bottom: 1px solid #dee2e6;
-    }
-    .material-result:hover {
-        background-color: #f8f9fa;
-    }
+body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+}
+.card {
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    border: none;
+    margin-bottom: 2rem;
+}
+.card-header, .card-body {
+    background: #fff;
+    border-radius: 1.25rem 1.25rem 0 0;
+    border-bottom: none;
+}
+.section-container {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border: 1px solid #e3e8ee;
+    border-radius: 1rem;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(56,182,255,0.07);
+}
+.section-title {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #38b6ff;
+    color: #198754;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+.form-label, label {
+    font-weight: 600;
+    color: #198754;
+    font-size: 1.08rem;
+    margin-bottom: 0.4rem;
+}
+.form-control, .form-select {
+    border-radius: 0.8rem;
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    font-size: 1.08rem;
+    padding: 0.85rem 1.1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #38b6ff;
+    box-shadow: 0 0 0 2px #38b6ff33;
+    background: #fff;
+}
+.btn-primary {
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
+    border: none;
+    box-shadow: 0 2px 8px #38b6ff33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 16px #38b6ff33;
+}
+.btn-secondary {
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: #6c757d;
+    color: #fff;
+    border: none;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-secondary:hover {
+    background: #495057;
+    color: #fff;
+}
+.input-group-append .btn {
+    border-radius: 0 0.8rem 0.8rem 0;
+    background: #38b6ff;
+    color: #fff;
+    font-size: 1.2rem;
+    border: none;
+    transition: background 0.2s;
+}
+.input-group-append .btn:hover {
+    background: #2563eb;
+}
+.material-item.card {
+    border-radius: 0.8rem;
+    box-shadow: 0 1px 4px #38b6ff22;
+    border: 1px solid #e3e8ee;
+}
+#materialSearchResults {
+    position: absolute;
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.material-result {
+    padding: 0.5rem;
+    cursor: pointer;
+    border-bottom: 1px solid #dee2e6;
+}
+.material-result:hover {
+    background-color: #f8f9fa;
+}
 </style>
 @endpush
 

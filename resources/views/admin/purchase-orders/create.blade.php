@@ -2,8 +2,8 @@
 
 @section('content')
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Create Purchase Order</h1>
+        <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Create Purchase Order</h1>
+        <div class="d-flex justify-content-end align-items-center mb-4">
             <a href="{{ route('purchase-orders.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back to List
             </a>
@@ -369,4 +369,99 @@
         });
     });
 </script>
+@endpush
+
+@push('styles')
+<style>
+body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+}
+.card {
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    border: none;
+    margin-bottom: 2rem;
+}
+.card-header, .card-body {
+    background: #fff;
+    border-radius: 1.25rem 1.25rem 0 0;
+    border-bottom: none;
+}
+.form-label, label {
+    font-weight: 600;
+    color: #198754;
+    font-size: 1.08rem;
+    margin-bottom: 0.4rem;
+}
+.form-control, .form-select {
+    border-radius: 0.8rem;
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    font-size: 1.08rem;
+    padding: 0.85rem 1.1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #38b6ff;
+    box-shadow: 0 0 0 2px #38b6ff33;
+    background: #fff;
+}
+.btn-primary {
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
+    border: none;
+    box-shadow: 0 2px 8px #38b6ff33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 16px #38b6ff33;
+}
+.btn-secondary {
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: #6c757d;
+    color: #fff;
+    border: none;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-secondary:hover {
+    background: #495057;
+    color: #fff;
+}
+.table-responsive {
+    border-radius: 1.1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    background: #fff;
+}
+.table {
+    margin-bottom: 0;
+}
+.table th, .table td {
+    vertical-align: middle;
+    padding: 0.85rem 0.6rem;
+    border: none;
+    background: #f8fafc;
+    text-align: center;
+}
+.table thead th {
+    background: #f1f5f9;
+    font-weight: 700;
+    color: #198754;
+    border-bottom: 2px solid #e3e3e3;
+    text-align: center;
+}
+.table-hover tbody tr:hover {
+    background: #e3f2fd44;
+}
+.card.mt-4 {
+    border-radius: 1.1rem;
+    box-shadow: 0 2px 8px #38b6ff22;
+    background: #fff;
+}
+</style>
 @endpush 

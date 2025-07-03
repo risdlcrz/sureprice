@@ -1,12 +1,15 @@
 @extends('layouts.app')
 
 @section('content')
+<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">
+    {{ isset($quotation) ? 'Edit Request for Quotation' : 'Create Request for Quotation' }}
+</h1>
 <div class="container-fluid py-4">
     <div class="row justify-content-center">
         <div class="col-12">
             <div class="card shadow">
                 <div class="card-header bg-white py-3">
-                    <h4 class="card-title mb-0">{{ isset($quotation) ? 'Edit Request for Quotation' : 'Create Request for Quotation' }}</h4>
+                    <!-- Heading moved above -->
                 </div>
                 <div class="card-body">
                     <form id="quotationForm" method="POST" action="{{ isset($quotation) ? route('quotations.update', $quotation->id) : route('quotations.store') }}" enctype="multipart/form-data">
@@ -345,43 +348,126 @@
 
 @push('styles')
 <style>
-    .section-container {
-        margin-bottom: 2rem;
-        padding: 1.5rem;
-        border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-        background-color: #fff;
-        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    }
-    .section-title {
-        margin-bottom: 1.5rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 2px solid #007bff;
-        color: #2c3e50;
-        font-weight: 600;
-    }
-    #supplierSearchResults,
-    #materialSearchResults {
-        position: absolute;
-        width: 100%;
-        max-height: 200px;
-        overflow-y: auto;
-        background: white;
-        border: 1px solid #dee2e6;
-        border-radius: 0.25rem;
-        z-index: 1000;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .supplier-result,
-    .material-result {
-        padding: 0.5rem;
-        cursor: pointer;
-        border-bottom: 1px solid #dee2e6;
-    }
-    .supplier-result:hover,
-    .material-result:hover {
-        background-color: #f8f9fa;
-    }
+body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+}
+.card {
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    border: none;
+    margin-bottom: 2rem;
+}
+.section-container {
+    margin-bottom: 2rem;
+    padding: 2rem 2.5rem;
+    border: none;
+    border-radius: 1.1rem;
+    background-color: #fff;
+    box-shadow: 0 2px 12px rgba(44,62,80,0.06);
+}
+.section-title {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #38b6ff33;
+    color: #198754;
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: 0.01em;
+}
+.form-control, .form-select, .select2-selection {
+    border-radius: 1.2rem !important;
+    border: 1px solid #d1d5db !important;
+    background: #f8fafc !important;
+    font-size: 1.08rem;
+    padding: 0.85rem 1.1rem !important;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-control:focus, .form-select:focus, .select2-selection:focus {
+    border-color: #38b6ff !important;
+    box-shadow: 0 0 0 2px #38b6ff33 !important;
+    background: #fff !important;
+}
+.select2-container--bootstrap4 .select2-selection {
+    min-height: 44px;
+    padding: 0.5rem 1rem;
+    background: #f8fafc;
+    border-radius: 1.2rem;
+    border: 1px solid #d1d5db;
+}
+.select2-container--bootstrap4 .select2-selection--multiple .select2-search__field {
+    margin-top: 0.5rem;
+}
+.btn-primary {
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
+    border: none;
+    box-shadow: 0 2px 8px #38b6ff33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 16px #38b6ff33;
+}
+.btn-secondary {
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: #e9ecef;
+    color: #495057;
+    border: none;
+    margin-left: 0.5rem;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-secondary:hover {
+    background: #d1d5db;
+    color: #222;
+}
+.table {
+    margin-bottom: 0;
+    background: #fff;
+    border-radius: 1.1rem;
+    overflow: hidden;
+}
+.table th, .table td {
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+    border: none;
+    background: #f8fafc;
+    text-align: center;
+}
+.table thead th {
+    background: #f1f5f9;
+    font-weight: 700;
+    color: #198754;
+    border-bottom: 2px solid #e3e3e3;
+    text-align: center;
+}
+.table-hover tbody tr:hover {
+    background: #e3f2fd44;
+}
+.supplier-notes-item.card {
+    border-radius: 1rem;
+    box-shadow: 0 2px 8px #38b6ff11;
+    border: 1px solid #e3e3e3;
+}
+.form-actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+input[type="file"].form-control-file {
+    border-radius: 1.2rem;
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    padding: 0.7rem 1.1rem;
+}
+::-webkit-input-placeholder { color: #b0b3b8; }
+::-moz-placeholder { color: #b0b3b8; }
+:-ms-input-placeholder { color: #b0b3b8; }
+::placeholder { color: #b0b3b8; }
 </style>
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 @endpush

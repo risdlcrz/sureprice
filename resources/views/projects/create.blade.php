@@ -1,12 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
+<h4 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Create New Project</h4>
 <div class="container-fluid">
     <div class="row">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Create New Project</h4>
+                    <!-- Heading moved outside the container -->
                 </div>
                 <div class="card-body">
                     <form action="{{ route('projects.store') }}" method="POST">
@@ -177,5 +178,77 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+@endpush
+
+@push('styles')
+<style>
+body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+}
+.card {
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    border: none;
+    margin-bottom: 2rem;
+    border-top: none !important;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+}
+.card-body {
+    background: #fff;
+    border-radius: 1.1rem;
+    padding: 2.5rem 2rem 2rem 2rem;
+}
+.form-label {
+    font-weight: 600;
+    color: #198754;
+    font-size: 1.08rem;
+    margin-bottom: 0.4rem;
+}
+.form-control, .form-select {
+    border-radius: 0.8rem;
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    font-size: 1.08rem;
+    padding: 0.85rem 1.1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #38b6ff;
+    box-shadow: 0 0 0 2px #38b6ff33;
+    background: #fff;
+}
+.input-group-text {
+    border-radius: 0.8rem 0 0 0.8rem;
+    background: #f1f5f9;
+    border: 1px solid #d1d5db;
+    font-size: 1.08rem;
+}
+.btn-primary {
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: linear-gradient(90deg, #38b6ff 0%, #198754 100%);
+    border: none;
+    box-shadow: 0 2px 8px #38b6ff33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 16px #38b6ff33;
+}
+.btn-secondary {
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: #6c757d;
+    color: #fff;
+    border: none;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-secondary:hover {
+    background: #495057;
+    color: #fff;
+}
+</style>
 @endpush
 @endsection

@@ -22,10 +22,16 @@
     left: 0;
     height: 100vh;
     background-color: transparent;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    overflow: visible; /* No scroll bar at all */
 }
 
-
-
+.sidebar > * {
+    flex-shrink: 1;
+    min-width: 0;
+}
 
         .content {
             margin-left: var(--sidebar-width);
@@ -47,6 +53,7 @@
             color: var(--primary-color);
             font-weight: 600;
             margin-bottom: 0;
+            text-align: center !important;
         }
 
         .data-card {
@@ -199,9 +206,13 @@
         /* Responsive adjustments */
         @media (max-width: 992px) {
             .sidebar {
-                width: var(--sidebar-collapsed-width);
-                padding: 0;
-                overflow: hidden;
+                width: 100vw;
+                height: auto;
+                position: relative;
+                min-height: 0;
+                max-height: none;
+                overflow: visible;
+                flex-wrap: wrap;
             }
             
             .sidebar .nav-link span {
@@ -304,5 +315,15 @@
             
             .search-form {
                 width: 100%;
+            }
+            
+            .sidebar {
+                width: 100vw;
+                height: auto;
+                position: relative;
+                min-height: 0;
+                max-height: none;
+                overflow: visible;
+                flex-wrap: wrap;
             }
         }

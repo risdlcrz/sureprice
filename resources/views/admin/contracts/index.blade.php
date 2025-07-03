@@ -13,8 +13,9 @@
             <br>Please contact support for more information.
         </div>
     @endif
+    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Contracts</h1>
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Contracts</h1>
+        <div></div>
         <div>
             <div class="btn-group me-2">
                 <a href="{{ route('contracts.index') }}" class="btn btn-outline-secondary {{ !request('status') ? 'active' : '' }}">
@@ -91,10 +92,10 @@
         </div>
     </div>
 
-    <div class="card">
+    <div class="card contracts-table-container">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table contracts-table table-hover">
                     <thead>
                         <tr>
                             <th>Contract ID</th>
@@ -145,7 +146,7 @@
                                             $progressClass = $percent >= 100 ? 'bg-success' : 'bg-info';
                                             $progressStyle = "width: {$percent}%";
                                         @endphp
-                                        <div class="progress mt-1" style="height: 14px;">
+                                        <div class="progress mt-1">
                                             <div class="progress-bar {{ $progressClass }}" role="progressbar" style="{{ $progressStyle }}" aria-valuenow="{{ $percent }}" aria-valuemin="0" aria-valuemax="100">
                                                 {{ $percent }}%
                                             </div>
@@ -177,18 +178,16 @@
                                 <td>
                                     <div class="btn-group">
                                         <a href="{{ route('contracts.show', $contract->id) }}" 
-                                           class="btn btn-sm btn-outline-primary"
-                                           title="View">
+                                           class="btn btn-outline-primary" title="View">
                                             <i class="bi bi-eye"></i>
                                         </a>
                                         @if($contract->canBeEdited())
                                             <a href="{{ route('contracts.edit', $contract->id) }}" 
-                                               class="btn btn-sm btn-outline-secondary"
-                                               title="Edit">
+                                               class="btn btn-outline-secondary" title="Edit">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
                                             <button type="button" 
-                                                    class="btn btn-sm btn-outline-danger" 
+                                                    class="btn btn-outline-danger" 
                                                     title="Delete"
                                                     data-contract-id="{{ $contract->id }}"
                                                     onclick="confirmDelete(this.dataset.contractId)">
@@ -213,13 +212,12 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="10" class="text-center">No contracts found.</td>
+                                <td colspan="11" class="text-center">No contracts found.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-
             <div class="d-flex justify-content-end mt-3">
                 {{ $contracts->links() }}
             </div>
@@ -229,25 +227,98 @@
 
 @push('styles')
 <style>
-/* stylelint-disable */
-    .btn-group .btn {
-        padding: 0.25rem 0.5rem;
+    .contracts-table-container {
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid #e3e8ee;
+        background: #fff;
+        box-shadow: 0 4px 24px rgba(56,189,248,0.07), 0 1.5px 6px rgba(0,0,0,0.03);
+        transition: box-shadow 0.25s;
+        padding: 8px 0;
+        margin-bottom: 32px;
     }
-    .badge {
-        font-size: 0.875rem;
+    .contracts-table {
+        border-radius: 20px;
+        overflow: hidden;
+        background: #fff;
     }
-    .status-badge {
-        cursor: pointer;
+    .contracts-table th, .contracts-table td {
+        vertical-align: middle;
+        padding: 18px 24px;
+        font-size: 1.08rem;
+        border: none;
+        transition: background 0.22s, color 0.18s;
     }
-    .status-badge:hover {
-        opacity: 0.8;
+    .contracts-table th {
+        background: #f7fafc;
+        font-weight: 700;
+        color: #1a7f4e;
+        border-bottom: 2px solid #e3e8ee;
+        letter-spacing: 0.01em;
     }
-    .signature-badge {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
+    .contracts-table tbody tr:nth-child(even) {
+        background: #f4f7fa;
     }
-    .signature-badge .fas {
-        margin-right: 0.25rem;
+    .contracts-table tbody tr:hover {
+        background: #e0f2fe;
+        box-shadow: 0 2px 8px rgba(56,189,248,0.10);
+        z-index: 1;
+        position: relative;
+    }
+    .contracts-table .btn-group .btn {
+        padding: 0.25rem 0.6rem;
+        font-size: 1rem;
+        border-radius: 8px;
+        margin-right: 4px;
+        transition: background 0.18s, color 0.18s;
+    }
+    .contracts-table .btn-group .btn:last-child {
+        margin-right: 0;
+    }
+    .contracts-table .btn-outline-primary {
+        border: 1px solid #38bdf8;
+        color: #38bdf8;
+        background: #e0f2fe;
+    }
+    .contracts-table .btn-outline-primary:hover {
+        background: #38bdf8;
+        color: #fff;
+    }
+    .contracts-table .btn-outline-secondary {
+        border: 1px solid #a0aec0;
+        color: #4a5568;
+        background: #f7fafc;
+    }
+    .contracts-table .btn-outline-secondary:hover {
+        background: #a0aec0;
+        color: #fff;
+    }
+    .contracts-table .btn-outline-danger {
+        border: 1px solid #ef4444;
+        color: #ef4444;
+        background: #fee2e2;
+    }
+    .contracts-table .btn-outline-danger:hover {
+        background: #ef4444;
+        color: #fff;
+    }
+    .contracts-table .badge {
+        font-size: 0.95rem;
+        border-radius: 8px;
+        padding: 0.4em 0.8em;
+    }
+    .contracts-table .progress {
+        border-radius: 8px;
+        height: 14px;
+    }
+    .contracts-table .progress-bar {
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .contracts-table .text-center {
+        color: #a0aec0;
+        font-size: 1.1rem;
+        padding: 32px 0;
     }
 </style>
 @endpush

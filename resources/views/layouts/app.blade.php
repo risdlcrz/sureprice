@@ -30,6 +30,8 @@
         'resources/css/messages.css',
         'resources/js/app.js',
     ])
+    <!-- Direct link to dbadmin.css for admin dashboard -->
+    <link rel="stylesheet" href="{{ asset('resources/css/dbadmin.css') }}">
     <!-- Additional Styles -->
     @stack('styles')
 

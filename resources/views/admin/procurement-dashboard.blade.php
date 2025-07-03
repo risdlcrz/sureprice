@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="container-fluid py-4">
-        <h1 class="text-center mb-5 fw-bold" style="letter-spacing:1px;">Procurement Dashboard</h1>
+        <h1 class="h3 mb-4 text-gray-800">Procurement Dashboard</h1>
         <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
             <!-- Purchase Requests Card -->
             <div class="col">

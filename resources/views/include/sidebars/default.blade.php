@@ -1,4 +1,3 @@
-<!-- Logo and Title -->
 <div class="logo-title-container">
     <img src="{{ asset('images/gdc_logo.png') }}" alt="Company Logo" class="header-logo">
     <div class="header-title">GEOCON</div>
@@ -95,12 +94,17 @@
     @endif
 </div>
 
-<!-- Logout Button -->
-<div class="logout-container">
+<div class="sidebar-bottom">
+    <hr class="separator">
     <form method="POST" action="{{ route('logout') }}">
         @csrf
         <button type="submit" class="btn">
             <i class="fas fa-sign-out-alt"></i>Logout
         </button>
     </form>
+</div>
+
+<!-- Logout Button -->
+<div class="logout-container">
+    <!-- REMOVE THIS BLOCK COMPLETELY -->
 </div> 

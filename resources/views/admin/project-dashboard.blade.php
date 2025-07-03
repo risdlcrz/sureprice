@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container-fluid py-4">
-    <h1 class="text-center mb-5 fw-bold" style="letter-spacing:1px;">Project & Procurement Dashboard</h1>
+    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Project & Procurement Dashboard</h1>
 
     <!-- Project Management Section -->
     <section class="mb-5">
@@ -37,7 +37,7 @@
             <!-- View Projects Card -->
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 hover-shadow">
-                    <img src="{{ asset('images/ppimage_projects.jpg') }}" class="card-img-top rounded-top-4" alt="View Projects" style="object-fit:cover; height:180px;">
+                    <img src="{{ asset('images/ppimage10.jpg') }}" class="card-img-top rounded-top-4" alt="View Projects" style="object-fit:cover; height:180px;">
                     <div class="card-body">
                         <h5 class="card-title fw-semibold">View Projects</h5>
                         <p class="card-text text-muted">Browse and manage all projects created from contracts (Step 2).</p>
@@ -111,7 +111,7 @@
             </div>
             <!-- Quotation Management Card -->
             <div class="col">
-                <div class="card h-100 shadow-sm border-0 hover-shadow mt-4">
+                <div class="card h-100 shadow-sm border-0 hover-shadow">
                     <img src="{{ asset('images/ppimage8.jpg') }}" class="card-img-top rounded-top-4" alt="Quotation Management" style="object-fit:cover; height:180px;">
                     <div class="card-body">
                         <h5 class="card-title fw-semibold">Quotation Management</h5>
@@ -125,7 +125,7 @@
             </div>
             <!-- Materials Management Card -->
             <div class="col">
-                <div class="card h-100 shadow-sm border-0 hover-shadow mt-4">
+                <div class="card h-100 shadow-sm border-0 hover-shadow">
                     <img src="{{ asset('images/ppimage9.jpg') }}" class="card-img-top rounded-top-4" alt="Materials Management" style="object-fit:cover; height:180px;">
                     <div class="card-body">
                         <h5 class="card-title fw-semibold">Materials Management</h5>
@@ -140,7 +140,7 @@
             <!-- Supplier Management Card -->
             <div class="col">
                 <div class="card h-100 shadow-sm border-0 hover-shadow">
-                    <img src="{{ asset('images/ppimage10.jpg') }}" class="card-img-top rounded-top-4" alt="Supplier Management" style="object-fit:cover; height:180px;">
+                    <img src="{{ asset('images/ppimage10.png') }}" class="card-img-top rounded-top-4" alt="Supplier Management" style="object-fit:cover; height:180px;">
                     <div class="card-body">
                         <h5 class="card-title fw-semibold">Supplier Management</h5>
                         <p class="card-text text-muted">Manage supplier information, relationships, performance tracking, and send invitations to new suppliers.</p>

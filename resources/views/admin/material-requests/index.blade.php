@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
+<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Material Requests</h1>
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Material Requests</h3>
                     <div class="card-tools">
                         <a href="{{ route('material-requests.create') }}" class="btn btn-primary">
                             <i class="fas fa-plus"></i> New Material Request
@@ -161,6 +161,209 @@
         </div>
     </div>
 </div>
+
+@push('styles')
+<style>
+body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+}
+.card {
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    border: none;
+    margin-bottom: 2rem;
+}
+.card-header {
+    background: #fff;
+    border-radius: 1.25rem 1.25rem 0 0;
+    border-bottom: none;
+    padding: 1.5rem 2rem 1rem 2rem;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 1rem;
+}
+.btn-primary {
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
+    border: none;
+    box-shadow: 0 2px 8px #38b6ff33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 16px #38b6ff33;
+}
+.small-box {
+    border-radius: 1.1rem;
+    box-shadow: 0 2px 12px rgba(44,62,80,0.06);
+    color: #fff;
+    padding: 1.2rem 1.5rem 1.2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 110px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+.small-box.bg-info {
+    background: linear-gradient(90deg, #38b6ff 0%, #00c6fb 100%);
+}
+.small-box.bg-success {
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+}
+.small-box.bg-warning {
+    background: linear-gradient(90deg, #ffc107 0%, #ffecb3 100%);
+    color: #222;
+}
+.small-box.bg-primary {
+    background: linear-gradient(90deg, #2563eb 0%, #38b6ff 100%);
+}
+.small-box .inner h3 {
+    font-size: 2.1rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+.small-box .inner p {
+    font-size: 1.08rem;
+    margin-bottom: 0;
+    font-weight: 500;
+}
+.small-box .icon {
+    position: absolute;
+    right: 1.2rem;
+    bottom: 1.2rem;
+    font-size: 2.2rem;
+    opacity: 0.18;
+}
+.input-group .form-control {
+    border-radius: 1.2rem 0 0 1.2rem;
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    font-size: 1.08rem;
+    padding: 0.85rem 1.1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input-group .form-control:focus {
+    border-color: #38b6ff;
+    box-shadow: 0 0 0 2px #38b6ff33;
+    background: #fff;
+}
+.input-group-append .btn {
+    border-radius: 0 1.2rem 1.2rem 0;
+    background: #38b6ff;
+    color: #fff;
+    font-size: 1.2rem;
+    border: none;
+    box-shadow: 0 2px 8px #38b6ff33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.input-group-append .btn:hover {
+    background: #2563eb;
+    color: #fff;
+}
+.btn-group .btn {
+    border-radius: 2rem !important;
+    font-weight: 600;
+    font-size: 1.08rem;
+    border: none;
+    box-shadow: 0 2px 8px #38b6ff33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-default {
+    background: #e9ecef;
+    color: #495057;
+}
+.btn-default:hover {
+    background: #d1d5db;
+    color: #222;
+}
+.table-responsive {
+    border-radius: 1.1rem;
+    overflow-x: auto;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    background: #fff;
+    max-width: 100%;
+}
+.table {
+    margin-bottom: 0;
+    background: #fff;
+    border-radius: 1.1rem;
+    overflow: hidden;
+    font-size: 0.97rem;
+}
+.table th, .table td {
+    vertical-align: middle;
+    padding: 0.7rem 0.5rem;
+    border: none;
+    background: #f8fafc;
+    text-align: center;
+}
+.table thead th {
+    background: #f1f5f9;
+    font-weight: 700;
+    color: #198754;
+    border-bottom: 2px solid #e3e3e3;
+    text-align: center;
+}
+.table-hover tbody tr:hover {
+    background: #e3f2fd44;
+}
+.badge {
+    font-size: 0.95em;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    box-shadow: 0 1px 4px #ffc10722;
+    border-radius: 0.7em;
+    padding: 0.5em 1em;
+}
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+.badge-success {
+    background-color: #28a745;
+    color: #fff;
+}
+.badge-secondary {
+    background-color: #6c757d;
+    color: #fff;
+}
+.btn-info {
+    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
+    color: #fff;
+    border: none;
+}
+.btn-info:hover {
+    filter: brightness(1.08);
+    color: #fff;
+}
+@media (max-width: 991.98px) {
+    .card-header {
+        padding: 1rem 0.5rem 0.5rem 0.5rem;
+    }
+    .card {
+        padding: 0.5rem;
+    }
+    .table th, .table td {
+        padding: 0.4rem 0.2rem;
+        font-size: 0.93rem;
+    }
+    .small-box {
+        padding: 0.7rem 0.7rem 0.7rem 0.7rem;
+        min-height: 80px;
+    }
+    .small-box .icon {
+        font-size: 1.5rem;
+        right: 0.7rem;
+        bottom: 0.7rem;
+    }
+}
+</style>
+@endpush
 
 @push('scripts')
 <script>

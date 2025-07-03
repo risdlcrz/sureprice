@@ -2,19 +2,247 @@
 
 @push('styles')
 <style>
-    .table .badge {
-        position: static !important;
+body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+}
+/* Prevent content overlap with sidebar and fit content to screen */
+.container-fluid {
+    margin-left: 250px;
+    max-width: calc(100vw - 250px);
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    transition: margin-left 0.3s, max-width 0.3s;
+}
+@media (max-width: 1199.98px) {
+    .container-fluid {
+        margin-left: 200px;
+        max-width: calc(100vw - 200px);
     }
+}
+@media (max-width: 991.98px) {
+    .container-fluid {
+        margin-left: 0;
+        max-width: 100vw;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+.card {
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    border: none;
+    margin-bottom: 2rem;
+    max-width: 100%;
+    overflow-x: auto;
+}
+.card-header {
+    background: #fff;
+    border-radius: 1.25rem 1.25rem 0 0;
+    border-bottom: none;
+    padding: 1.5rem 2rem 1rem 2rem;
+}
+.btn-primary, .btn-info {
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1.08rem;
+    border: none;
+    box-shadow: 0 2px 8px #38b6ff33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
+}
+.btn-info {
+    background: linear-gradient(90deg, #00c6fb 0%, #005bea 100%);
+    color: #fff;
+}
+.btn-primary:hover, .btn-info:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 16px #38b6ff33;
+}
+.btn-secondary {
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1.08rem;
+    background: #e9ecef;
+    color: #495057;
+    border: none;
+    margin-left: 0.5rem;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-secondary:hover {
+    background: #d1d5db;
+    color: #222;
+}
+.btn-group .btn {
+    margin-right: 6px;
+    border-radius: 1.5rem !important;
+    font-size: 0.85rem;
+    min-width: 28px;
+    padding: 0.25rem 0.45rem;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+.table-responsive {
+    border-radius: 1.1rem;
+    overflow-x: auto;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    background: #fff;
+    max-width: 100%;
+}
+.table {
+    margin-bottom: 0;
+    background: #fff;
+    border-radius: 1.1rem;
+    overflow: hidden;
+    font-size: 0.89rem;
+    table-layout: fixed;
+}
+.table th, .table td {
+    vertical-align: middle;
+    padding: 0.32rem 0.15rem;
+    border: none;
+    background: #f8fafc;
+    text-align: center;
+    word-break: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.table thead th {
+    background: #f1f5f9;
+    font-weight: 700;
+    color: #198754;
+    border-bottom: 2px solid #e3e3e3;
+    text-align: center;
+    font-size: 0.93rem;
+    padding: 0.32rem 0.15rem;
+}
+.table-hover tbody tr:hover {
+    background: #e3f2fd44;
+}
+.table th, .table td {
+    min-width: 60px;
+    max-width: 110px;
+}
+.table th:nth-child(2), .table td:nth-child(2) {
+    min-width: 90px;
+    max-width: 120px;
+}
+.table th:nth-child(3), .table td:nth-child(3) {
+    min-width: 80px;
+    max-width: 100px;
+}
+.table th:nth-child(5), .table td:nth-child(5),
+.table th:nth-child(6), .table td:nth-child(6) {
+    min-width: 80px;
+    max-width: 100px;
+}
+.table th:nth-child(1), .table td:nth-child(1) {
+    min-width: 80px;
+    max-width: 90px;
+}
+/* Responsive column hiding */
+.hide-col {
+    display: table-cell;
+}
+@media (max-width: 1400px) {
+    .table {
+        font-size: 0.85rem;
+    }
+    .table th, .table td {
+        padding: 0.25rem 0.08rem;
+        font-size: 0.85rem;
+        min-width: 50px;
+        max-width: 90px;
+    }
+    .table th:nth-child(2), .table td:nth-child(2) {
+        min-width: 70px;
+        max-width: 90px;
+    }
+    .table th:nth-child(3), .table td:nth-child(3) {
+        min-width: 60px;
+        max-width: 80px;
+    }
+    /* Hide Warranty and Suppliers columns */
+    .hide-col-1 { display: none !important; }
+    .hide-col-2 { display: none !important; }
+}
+@media (max-width: 1200px) {
+    .table {
+        font-size: 0.81rem;
+    }
+    .table th, .table td {
+        padding: 0.18rem 0.05rem;
+        font-size: 0.81rem;
+        min-width: 40px;
+        max-width: 70px;
+    }
+    .table th:nth-child(2), .table td:nth-child(2) {
+        min-width: 50px;
+        max-width: 70px;
+    }
+    .table th:nth-child(3), .table td:nth-child(3) {
+        min-width: 40px;
+        max-width: 60px;
+    }
+    /* Hide Base Price and SRP columns */
+    .hide-col-3 { display: none !important; }
+    .hide-col-4 { display: none !important; }
+}
+.badge {
+    font-size: 0.95em;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    box-shadow: 0 1px 4px #ffc10722;
+    border-radius: 0.7em;
+    padding: 0.5em 1em;
+}
+.badge.bg-success {
+    background-color: #28a745 !important;
+    color: #fff;
+}
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+    color: #fff;
+}
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+    color: #fff;
+}
+input.form-control, select.form-control {
+    border-radius: 1.2rem;
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    font-size: 1.08rem;
+    padding: 0.85rem 1.1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+input.form-control:focus, select.form-control:focus {
+    border-color: #38b6ff;
+    box-shadow: 0 0 0 2px #38b6ff33;
+    background: #fff;
+}
+::-webkit-input-placeholder { color: #b0b3b8; }
+::-moz-placeholder { color: #b0b3b8; }
+:-ms-input-placeholder { color: #b0b3b8; }
+::placeholder { color: #b0b3b8; }
 </style>
 @endpush
 
 @section('content')
+<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Materials</h1>
 <div class="container-fluid py-4">
     <div class="row">
         <div class="col-12">
             <div class="card shadow">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h4 class="card-title mb-0">Materials</h4>
                     <div>
                         <button type="button" class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#bulkSrpModal">
                             <i class="fas fa-tags"></i> Set SRP Prices
@@ -558,33 +786,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endpush
-
-@push('styles')
-<style>
-    .table td {
-        vertical-align: middle;
-    }
-    .badge {
-        font-size: 0.9em;
-    }
-    .btn-group .btn {
-        margin-right: 2px;
-    }
-    .suppliers-badge {
-        min-width: 70px;
-        display: inline-block;
-        text-align: center;
-    }
-    .badge.bg-success {
-        background-color: #28a745 !important;
-    }
-    .badge.bg-danger {
-        background-color: #dc3545 !important;
-    }
-    .badge.bg-secondary {
-        background-color: #6c757d !important;
-    }
-</style>
-@endpush
-@endsection 
+@endpush 

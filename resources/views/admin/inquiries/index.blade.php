@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
+<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Requests for Inquiry</h1>
 <div class="container-fluid py-4">
     <div class="row">
         <div class="col-12">
             <div class="card shadow">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h4 class="card-title mb-0">Requests for Inquiry</h4>
+                <div class="card-header bg-white py-3 d-flex justify-content-end align-items-center">
                     <a href="{{ route('inquiries.create') }}" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Create New Inquiry
                     </a>
@@ -188,24 +188,98 @@
 
 @push('styles')
 <style>
-    .table td {
-        vertical-align: middle;
-    }
-    .table tbody tr {
-        background-color: #f6f6f6;
-    }
-    .badge {
-        font-size: 0.9em;
-        padding: 0.5em 0.75em;
-        border-radius: 0.5em;
-    }
-    .badge-priority, .badge-status {
-        background-color: #6c757d !important;
-        color: #fff !important;
-    }
-    .btn-group .btn {
-        margin-right: 2px;
-    }
+body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+}
+.card {
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    border: none;
+    margin-bottom: 2rem;
+}
+.card-header {
+    background: #fff;
+    border-radius: 1.25rem 1.25rem 0 0;
+    border-bottom: none;
+    padding: 1.5rem 2rem 1rem 2rem;
+}
+.btn-primary {
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
+    border: none;
+    box-shadow: 0 2px 8px #38b6ff33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 16px #38b6ff33;
+}
+.btn-secondary {
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    background: #6c757d;
+    color: #fff;
+    border: none;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-secondary:hover {
+    background: #495057;
+    color: #fff;
+}
+.filter-input, .form-control, .form-select {
+    border-radius: 1.2rem;
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    font-size: 1.08rem;
+    padding: 0.85rem 1.1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.filter-input:focus, .form-control:focus, .form-select:focus {
+    border-color: #38b6ff;
+    box-shadow: 0 0 0 2px #38b6ff33;
+    background: #fff;
+}
+.table-responsive {
+    border-radius: 1.1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    background: #fff;
+}
+.table {
+    margin-bottom: 0;
+}
+.table th, .table td {
+    vertical-align: middle;
+    padding: 1rem 0.75rem;
+    border: none;
+    background: #f8fafc;
+    text-align: center;
+}
+.table thead th {
+    background: #f1f5f9;
+    font-weight: 700;
+    color: #198754;
+    border-bottom: 2px solid #e3e3e3;
+    text-align: center;
+}
+.table-hover tbody tr:hover {
+    background: #e3f2fd44;
+}
+.badge {
+    font-size: 0.95em;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    box-shadow: 0 1px 4px #ffc10722;
+    border-radius: 0.7em;
+    padding: 0.5em 1em;
+}
+.badge-priority, .badge-status {
+    background: #6c757d !important;
+    color: #fff !important;
+}
 </style>
 @endpush
 

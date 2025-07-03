@@ -3,7 +3,7 @@
 @section('content')
 <div class="content">
     <div class="page-header">
-        <h1 class="page-title">Information Management</h1>
+        <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Information Management</h1>
     </div>
 
     <div class="top-controls d-flex justify-content-between align-items-center flex-wrap mb-4 gap-3">
@@ -525,66 +525,172 @@
 
 @push('styles')
 <style>
-.card {
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    border: none;
-    margin-bottom: 1rem;
+body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
 }
 .content {
-    margin-left: 150px;
-    padding: 20px;
+    margin-left: 120px;
+    padding: 32px 16px 32px 16px;
     flex-grow: 1;
     transition: margin-left 0.3s ease;
 }
-
+.page-header h1 {
+    font-weight: 700;
+    color: #198754;
+    letter-spacing: 0.01em;
+    margin-bottom: 2rem;
+}
+.card, .data-card {
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    border: none;
+    margin-bottom: 2rem;
+    background: #fff;
+    padding: 2rem 2.5rem;
+}
+.table-responsive {
+    border-radius: 1.1rem;
+    overflow-x: auto;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(44,62,80,0.06);
+}
+.table {
+    margin-bottom: 0;
+    background: #fff;
+    border-radius: 1.1rem;
+    overflow: hidden;
+    font-size: 0.97rem;
+}
+.table th, .table td {
+    vertical-align: middle;
+    padding: 0.7rem 0.5rem;
+    border: none;
+    background: #f8fafc;
+    text-align: center;
+}
+.table thead th {
+    background: #f1f5f9;
+    font-weight: 700;
+    color: #198754;
+    border-bottom: 2px solid #e3e3e3;
+    text-align: center;
+}
+.table-hover tbody tr:hover {
+    background: #e3f2fd44;
+}
+.btn, .btn-group .btn {
+    border-radius: 2rem !important;
+    font-weight: 600;
+    font-size: 1.08rem;
+    border: none;
+    box-shadow: 0 2px 8px #38b6ff33;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
+    color: #fff;
+}
+.btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 16px #38b6ff33;
+}
+.btn-success {
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+    color: #fff;
+}
+.btn-success:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 4px 16px #43e97b33;
+}
+.btn-outline-secondary, .btn-outline-success {
+    border: 1.5px solid #b0b3b8 !important;
+    background: #fff !important;
+    color: #495057 !important;
+    box-shadow: none;
+}
+.btn-outline-secondary:hover, .btn-outline-success:hover {
+    background: #e9ecef !important;
+    color: #198754 !important;
+}
+.form-control, .form-select {
+    border-radius: 1.2rem;
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    font-size: 1.08rem;
+    padding: 0.85rem 1.1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #38b6ff;
+    box-shadow: 0 0 0 2px #38b6ff33;
+    background: #fff;
+}
 .role-badge {
     padding: 0.25em 0.5em;
-    border-radius: 0.25rem;
-    font-size: 0.875em;
+    border-radius: 0.7rem;
+    font-size: 0.93em;
     font-weight: 600;
+    background: #e9ecef;
+    color: #198754;
 }
-
 .role-procurement {
     background-color: #0d6efd;
     color: white;
 }
-
 .role-warehousing {
     background-color: #198754;
     color: white;
 }
-
 .role-contractor {
     background-color: #ffc107;
     color: #212529;
 }
-
-.modal-body .table th {
-    background-color: #f8f9fa;
-}
-
 .status-badge {
     padding: 0.25em 0.5em;
-    border-radius: 0.25rem;
-    font-size: 0.875em;
+    border-radius: 0.7rem;
+    font-size: 0.93em;
     font-weight: 600;
 }
-
 .status-approved {
     background-color: #198754;
     color: white;
 }
-
 .status-pending {
     background-color: #ffc107;
     color: #212529;
 }
-
 .status-rejected {
     background-color: #dc3545;
     color: white;
 }
-
+.search-form .form-control {
+    min-width: 220px;
+    margin-right: 0.5rem;
+}
+.search-form .btn {
+    min-width: 44px;
+    height: 44px;
+    padding: 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.top-controls, .filter-buttons, .right-controls {
+    gap: 1rem;
+}
+@media (max-width: 991.98px) {
+    .content {
+        margin-left: 0;
+        padding: 16px 4px 16px 4px;
+    }
+    .card, .data-card {
+        padding: 1rem 0.5rem;
+    }
+    .search-form .form-control {
+        min-width: 120px;
+    }
+}
 </style>
 @endpush
 @endsection

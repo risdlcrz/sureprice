@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<h1 class="text-center my-4">Admin Dashboard</h1>
+<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;" >Admin Dashboard</h1>
 
 <div class="row row-cols-1 row-cols-md-3 g-4">
     <!-- Card 1 -->
@@ -43,7 +43,7 @@
     <!-- Card 5 -->
     <div class="col">
         <div class="card" onclick="window.location.href='{{ route('admin.analytics') }}';" style="cursor:pointer;">
-            <img src="{{ asset('images/imagecard5.jpg') }}" alt="Image 5" class="card-img-top">
+            <img src="{{ asset('images/resize.jpg') }}" alt="Image 5" class="card-img-top">
             <div class="card-body">
                 <h5 class="card-title">Analytics and Recommendations</h5>
             </div>
@@ -59,6 +59,7 @@
         </div>
     </div>
 </div>
+
 @endsection
 
 @push('styles')

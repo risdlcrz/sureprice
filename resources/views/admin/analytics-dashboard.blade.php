@@ -13,7 +13,7 @@
         <div class="col-md-6 col-lg-3 mb-4">
             <a href="{{ route('admin.transactions') }}" class="text-decoration-none">
                 <div class="card h-100">
-                    <img src="{{ asset('images/aimage1.svg') }}" class="card-img-top" alt="Purchase Orders">
+                    <img src="{{ asset('images/aimage1.jpg') }}" class="card-img-top" alt="Purchase Orders">
                     <div class="card-body">
                         <h5 class="card-title">Transactions</h5>
                         <p class="card-text">History and reports of past transactions.</p>
@@ -26,7 +26,7 @@
         <div class="col-md-6 col-lg-3 mb-4">
             <a href="{{ route('admin.budget-allocation') }}" class="text-decoration-none">
                 <div class="card h-100">
-                    <img src="{{ asset('images/aimage2.svg') }}" class="card-img-top" alt="Budget">
+                    <img src="{{ asset('images/aimage2.jpg') }}" class="card-img-top" alt="Budget">
                     <div class="card-body">
                         <h5 class="card-title">Budget Allocation and Expenditures</h5>
                         <p class="card-text">Monitor budget allocations and track expenditures.</p>
@@ -39,7 +39,7 @@
         <div class="col-md-6 col-lg-3 mb-4">
             <a href="{{ route('admin.supplier-rankings') }}" class="text-decoration-none">
                 <div class="card h-100">
-                    <img src="{{ asset('images/aimage3.svg') }}" class="card-img-top" alt="Suppliers">
+                    <img src="{{ asset('images/aimage3.jpg') }}" class="card-img-top" alt="Suppliers">
                     <div class="card-body">
                         <h5 class="card-title">Supplier Ranking and Performance</h5>
                         <p class="card-text">Evaluate and compare supplier performance metrics.</p>
@@ -52,7 +52,7 @@
         <div class="col-md-6 col-lg-3 mb-4">
             <a href="{{ route('admin.price-analysis') }}" class="text-decoration-none">
                 <div class="card h-100">
-                    <img src="{{ asset('images/aimage4.svg') }}" class="card-img-top" alt="Price Trend">
+                    <img src="{{ asset('images/aimage4.jpg') }}" class="card-img-top" alt="Price Trend">
                     <div class="card-body">
                         <h5 class="card-title">Price Trend Analysis</h5>
                         <p class="card-text">Analyze price trends and market fluctuations.</p>
@@ -65,7 +65,7 @@
         <div class="col-md-6 col-lg-3 mb-4">
             <a href="{{ route('analytics.supplier-recommendation') }}" class="text-decoration-none">
                 <div class="card h-100">
-                    <img src="{{ asset('images/aimage5.svg') }}" class="card-img-top" alt="Supplier Recommendation">
+                    <img src="{{ asset('images/aimage5.jpg') }}" class="card-img-top" alt="Supplier Recommendation">
                     <div class="card-body">
                         <h5 class="card-title">Supplier Recommendation</h5>
                         <p class="card-text">Get data-driven supplier recommendations by category and metrics.</p>
