@@ -454,3 +454,9 @@ Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->
 
 // General Supplier Recommendation Route for Procurement Analytics
 Route::get('/procurement/analytics/supplier-recommendation', [\App\Http\Controllers\ProcurementController::class, 'generalSupplierRecommendation'])->name('procurement.analytics.supplier-recommendation');
+
+Route::get('/procurement/logs', [App\Http\Controllers\ProcurementController::class, 'procurementLogs'])->name('procurement.logs');
+
+Route::get('/admin/logs', [App\Http\Controllers\AdminController::class, 'administratorLogs'])->name('admin.logs');
+
+Route::get('/warehouse/logs', [App\Http\Controllers\Warehouse\WarehouseDashboardController::class, 'warehouseLogs'])->name('warehouse.logs');

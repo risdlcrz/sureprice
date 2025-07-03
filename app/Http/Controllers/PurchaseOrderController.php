@@ -8,11 +8,24 @@ use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Activity;
 
 class PurchaseOrderController extends Controller
 {
+    private function logPageView($description, $modelType = null, $modelId = null)
+    {
+        Activity::create([
+            'user_id' => Auth::id(),
+            'action' => 'viewed',
+            'description' => $description,
+            'model_type' => $modelType,
+            'model_id' => $modelId
+        ]);
+    }
+
     public function index()
     {
+        $this->logPageView('Viewed Purchase Order List', PurchaseOrder::class);
         $purchaseOrders = PurchaseOrder::with(['purchaseRequest', 'contract', 'supplier'])
             ->when(request('status'), function($query, $status) {
                 return $query->where('status', $status);
@@ -25,6 +38,7 @@ class PurchaseOrderController extends Controller
 
     public function create(Request $request)
     {
+        $this->logPageView('Viewed Create Purchase Order Page', PurchaseOrder::class);
         $selectedPurchaseRequestId = $request->query('purchase_request_id');
         $purchaseRequests = PurchaseRequest::where('status', 'approved')
             ->whereDoesntHave('purchaseOrder')
@@ -98,7 +112,14 @@ class PurchaseOrderController extends Controller
             }
 
             DB::commit();
-
+            // Log activity
+            Activity::create([
+                'user_id' => Auth::id(),
+                'action' => 'created',
+                'description' => 'Created Purchase Order #' . $purchaseOrder->po_number,
+                'model_type' => PurchaseOrder::class,
+                'model_id' => $purchaseOrder->id
+            ]);
             return redirect()->route('purchase-orders.show', $purchaseOrder)
                 ->with('success', 'Purchase Order created successfully');
         } catch (\Exception $e) {
@@ -110,12 +131,14 @@ class PurchaseOrderController extends Controller
 
     public function show(PurchaseOrder $purchaseOrder)
     {
+        $this->logPageView('Viewed Purchase Order #' . $purchaseOrder->po_number, PurchaseOrder::class, $purchaseOrder->id);
         $purchaseOrder->load(['purchaseRequest', 'contract', 'supplier', 'items.material']);
         return view('admin.purchase-orders.show', compact('purchaseOrder'));
     }
 
     public function edit(PurchaseOrder $purchaseOrder)
     {
+        $this->logPageView('Viewed Edit Purchase Order #' . $purchaseOrder->po_number, PurchaseOrder::class, $purchaseOrder->id);
         if (!in_array($purchaseOrder->status, ['draft', 'pending'])) {
             return back()->with('error', 'This Purchase Order cannot be edited');
         }
@@ -175,7 +198,14 @@ class PurchaseOrderController extends Controller
             }
 
             DB::commit();
-
+            // Log activity
+            Activity::create([
+                'user_id' => Auth::id(),
+                'action' => 'updated',
+                'description' => 'Updated Purchase Order #' . $purchaseOrder->po_number,
+                'model_type' => PurchaseOrder::class,
+                'model_id' => $purchaseOrder->id
+            ]);
             return redirect()->route('purchase-orders.show', $purchaseOrder)
                 ->with('success', 'Purchase Order updated successfully');
         } catch (\Exception $e) {
@@ -193,10 +223,18 @@ class PurchaseOrderController extends Controller
 
         try {
             DB::beginTransaction();
+            $poNumber = $purchaseOrder->po_number;
             $purchaseOrder->items()->delete();
             $purchaseOrder->delete();
             DB::commit();
-
+            // Log activity
+            Activity::create([
+                'user_id' => Auth::id(),
+                'action' => 'deleted',
+                'description' => 'Deleted Purchase Order #' . $poNumber,
+                'model_type' => PurchaseOrder::class,
+                'model_id' => $purchaseOrder->id
+            ]);
             return redirect()->route('purchase-orders.index')
                 ->with('success', 'Purchase Order deleted successfully');
         } catch (\Exception $e) {

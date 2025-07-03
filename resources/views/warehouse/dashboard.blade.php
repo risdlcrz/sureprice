@@ -4,6 +4,23 @@
 <div class="container py-4">
     <h1 class="display-5 mb-4">Warehouse Dashboard</h1>
 
+    <!-- Warehouse Logs Card -->
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-md-6 col-lg-3">
+            <div class="card shadow-sm h-100" onclick="window.location.href='{{ route('warehouse.logs') }}'" style="cursor:pointer;">
+                <div class="card-body d-flex align-items-center">
+                    <div class="bg-info bg-opacity-10 text-info rounded-circle d-flex align-items-center justify-content-center me-3" style="width:48px;height:48px;">
+                        <i class="bi bi-journal-text fs-3"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">Logs</div>
+                        <div class="h5 mb-0">Warehouse Logs</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Statistics Cards -->
     <div class="row g-4 mb-4">
         <!-- Total Materials Card -->

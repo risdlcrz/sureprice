@@ -10,11 +10,24 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Stock;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Activity;
 
 class WarehouseDeliveryController extends Controller
 {
+    private function logPageView($description, $modelType = null, $modelId = null)
+    {
+        Activity::create([
+            'user_id' => auth()->id(),
+            'action' => 'viewed',
+            'description' => $description,
+            'model_type' => $modelType,
+            'model_id' => $modelId
+        ]);
+    }
+
     public function index(Request $request)
     {
+        $this->logPageView('Viewed Warehouse Deliveries Index');
         $query = Delivery::with(['warehouse'])
             ->withCount('items')
             ->latest();
@@ -43,6 +56,7 @@ class WarehouseDeliveryController extends Controller
 
     public function show(Delivery $delivery)
     {
+        $this->logPageView('Viewed Warehouse Delivery #' . $delivery->id, \App\Models\WarehouseDelivery::class, $delivery->id);
         $delivery->load(['items.material', 'items.material.category', 'warehouse']);
         return view('warehouse.deliveries.show', compact('delivery'));
     }
@@ -124,6 +138,18 @@ class WarehouseDeliveryController extends Controller
             'warehouse_id' => $request->warehouse_id,
         ]);
         // ... rest of logic ...
+    }
+
+    public function create()
+    {
+        $this->logPageView('Viewed Create Warehouse Delivery Page');
+        // ... existing code ...
+    }
+
+    public function edit($id)
+    {
+        $this->logPageView('Viewed Edit Warehouse Delivery #' . $id, \App\Models\WarehouseDelivery::class, $id);
+        // ... existing code ...
     }
 }
  

@@ -25,12 +25,12 @@
             </div>
         </div>
 
-        <!-- Card 3: Procurement Logs -->
+        <!-- Card 3: Administrator Logs -->
         <div class="col">
-            <div class="card h-100 shadow-sm" onclick="window.location.href = '{{ route('admin.procurement') }}';" style="cursor:pointer;">
-                <img src="{{ asset('images/historydash3.svg') }}" class="card-img-top" alt="Procurement Logs" style="height: 150px; object-fit: contain;">
+            <div class="card h-100 shadow-sm" onclick="window.location.href = '{{ route('admin.logs') }}';" style="cursor:pointer;">
+                <img src="{{ asset('images/historydash3.svg') }}" class="card-img-top" alt="Administrator Logs" style="height: 150px; object-fit: contain;">
                 <div class="card-body">
-                    <h5 class="card-title">Procurement Logs</h5>
+                    <h5 class="card-title">Administrator Logs</h5>
                 </div>
             </div>
         </div>

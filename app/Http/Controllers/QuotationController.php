@@ -11,11 +11,24 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Models\QuotationAttachment;
 use App\Models\QuotationResponseAttachment;
+use App\Models\Activity;
 
 class QuotationController extends Controller
 {
+    private function logPageView($description, $modelType = null, $modelId = null)
+    {
+        Activity::create([
+            'user_id' => auth()->id(),
+            'action' => 'viewed',
+            'description' => $description,
+            'model_type' => $modelType,
+            'model_id' => $modelId
+        ]);
+    }
+
     public function index(Request $request)
     {
+        $this->logPageView('Viewed Quotation List', Quotation::class);
         $query = Quotation::with(['purchaseRequest', 'suppliers', 'materials']);
 
         // Search
@@ -68,6 +81,7 @@ class QuotationController extends Controller
 
     public function create()
     {
+        $this->logPageView('Viewed Create Quotation Page', Quotation::class);
         $purchaseRequests = PurchaseRequest::with(['items.material'])
             ->where('status', 'approved')
             ->orderBy('id')
@@ -164,18 +178,29 @@ class QuotationController extends Controller
         }
         $quotation->save();
 
+        // Log activity
+        Activity::create([
+            'user_id' => auth()->id(),
+            'action' => 'created',
+            'description' => 'Created Quotation #' . $quotation->rfq_number,
+            'model_type' => Quotation::class,
+            'model_id' => $quotation->id
+        ]);
+
         return redirect()->route('quotations.index')
             ->with('success', 'RFQ created successfully.');
     }
 
     public function show(Quotation $quotation)
     {
+        $this->logPageView('Viewed Quotation #' . $quotation->rfq_number, Quotation::class, $quotation->id);
         $quotation->load(['purchaseRequest', 'suppliers', 'responses.items', 'responses.attachments']);
         return view('admin.quotations.show', compact('quotation'));
     }
 
     public function edit(Quotation $quotation)
     {
+        $this->logPageView('Viewed Edit Quotation #' . $quotation->rfq_number, Quotation::class, $quotation->id);
         if (!in_array($quotation->status, ['draft', 'sent'])) {
             return redirect()->route('quotations.show', $quotation)
                 ->with('error', 'This RFQ cannot be edited.');
@@ -281,7 +306,16 @@ class QuotationController extends Controller
         }
         $quotation->save();
 
-        return redirect()->route('quotations.index')
+        // Log activity
+        Activity::create([
+            'user_id' => auth()->id(),
+            'action' => 'updated',
+            'description' => 'Updated Quotation #' . $quotation->rfq_number,
+            'model_type' => Quotation::class,
+            'model_id' => $quotation->id
+        ]);
+
+        return redirect()->route('quotations.show', $quotation)
             ->with('success', 'RFQ updated successfully.');
     }
 
@@ -292,7 +326,17 @@ class QuotationController extends Controller
             Storage::delete($attachment->path);
         }
 
+        $rfqNumber = $quotation->rfq_number;
         $quotation->delete();
+
+        // Log activity
+        Activity::create([
+            'user_id' => auth()->id(),
+            'action' => 'deleted',
+            'description' => 'Deleted Quotation #' . $rfqNumber,
+            'model_type' => Quotation::class,
+            'model_id' => $quotation->id
+        ]);
 
         return redirect()->route('quotations.index')
             ->with('success', 'RFQ deleted successfully.');

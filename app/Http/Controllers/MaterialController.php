@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\QuotationAttachment;
 use App\Models\QuotationResponseAttachment;
 use App\Models\Supplier;
+use App\Models\Activity;
 
 class MaterialController extends Controller
 {
@@ -144,6 +145,15 @@ class MaterialController extends Controller
 
             DB::commit();
 
+            // Log activity
+            Activity::create([
+                'user_id' => auth()->id(),
+                'action' => 'created',
+                'description' => 'Created Material: ' . $material->name,
+                'model_type' => Material::class,
+                'model_id' => $material->id
+            ]);
+
             return redirect()->route('materials.index')
                 ->with('success', 'Material created successfully.');
         } catch (\Exception $e) {
@@ -227,6 +237,15 @@ class MaterialController extends Controller
 
             DB::commit();
 
+            // Log activity
+            Activity::create([
+                'user_id' => auth()->id(),
+                'action' => 'updated',
+                'description' => 'Updated Material: ' . $material->name,
+                'model_type' => Material::class,
+                'model_id' => $material->id
+            ]);
+
             return redirect()->route('materials.index')
                 ->with('success', 'Material updated successfully.');
         } catch (\Exception $e) {
@@ -242,6 +261,7 @@ class MaterialController extends Controller
             DB::beginTransaction();
             
             // Delete associated images
+            $materialName = $material->name;
             foreach ($material->images as $image) {
                 // Delete the file from storage
                 if (Storage::disk('public')->exists($image->path)) {
@@ -254,6 +274,15 @@ class MaterialController extends Controller
             $material->delete();
             
             DB::commit();
+            
+            // Log activity
+            Activity::create([
+                'user_id' => auth()->id(),
+                'action' => 'deleted',
+                'description' => 'Deleted Material: ' . $materialName,
+                'model_type' => Material::class,
+                'model_id' => $material->id
+            ]);
             
             if (request()->ajax()) {
                 return response()->json([

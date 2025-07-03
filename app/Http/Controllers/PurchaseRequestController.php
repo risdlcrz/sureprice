@@ -8,6 +8,7 @@ use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\SupplierSelectionService;
+use App\Models\Activity;
 
 class PurchaseRequestController extends Controller
 {
@@ -199,6 +200,14 @@ class PurchaseRequestController extends Controller
             $purchaseRequest->save();
             DB::commit();
             \Log::info('PurchaseRequest saved and committed', ['purchaseRequest' => $purchaseRequest]);
+            // Log activity
+            Activity::create([
+                'user_id' => auth()->id(),
+                'action' => 'created',
+                'description' => 'Created Purchase Request #' . $purchaseRequest->request_number,
+                'model_type' => PurchaseRequest::class,
+                'model_id' => $purchaseRequest->id
+            ]);
             return redirect()->route('purchase-requests.show', $purchaseRequest)
                 ->with('success', 'Purchase request created successfully.');
         } catch (\Exception $e) {
@@ -295,7 +304,14 @@ class PurchaseRequestController extends Controller
             $purchaseRequest->update(['total_amount' => $totalAmount]);
 
             DB::commit();
-
+            // Log activity
+            Activity::create([
+                'user_id' => auth()->id(),
+                'action' => 'updated',
+                'description' => 'Updated Purchase Request #' . $purchaseRequest->request_number,
+                'model_type' => PurchaseRequest::class,
+                'model_id' => $purchaseRequest->id
+            ]);
             return redirect()->route('purchase-requests.show', $purchaseRequest)
                 ->with('success', 'Purchase request updated successfully.');
 
@@ -312,8 +328,19 @@ class PurchaseRequestController extends Controller
         }
 
         try {
-        $purchaseRequest->delete();
-        return redirect()->route('purchase-requests.index')
+            $requestNumber = $purchaseRequest->request_number;
+            $purchaseRequest->items()->delete();
+            $purchaseRequest->delete();
+            DB::commit();
+            // Log activity
+            Activity::create([
+                'user_id' => auth()->id(),
+                'action' => 'deleted',
+                'description' => 'Deleted Purchase Request #' . $requestNumber,
+                'model_type' => PurchaseRequest::class,
+                'model_id' => $purchaseRequest->id
+            ]);
+            return redirect()->route('purchase-requests.index')
                 ->with('success', 'Purchase request deleted successfully.');
         } catch (\Exception $e) {
             return back()->with('error', 'Error deleting purchase request: ' . $e->getMessage());

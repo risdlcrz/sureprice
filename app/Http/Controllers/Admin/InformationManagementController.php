@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use App\Models\Activity;
 
 class InformationManagementController extends Controller
 {
@@ -94,6 +95,8 @@ class InformationManagementController extends Controller
 
                 DB::commit();
 
+                $this->logAction('created', 'Created User #' . $user->id, User::class, $user->id);
+
                 return redirect()->route('information-management.index')
                     ->with('success', 'User account created successfully. An email has been sent to the user with login instructions.');
 
@@ -124,6 +127,7 @@ class InformationManagementController extends Controller
 
     public function index(Request $request)
     {
+        $this->logPageView('Viewed Information Management List', User::class);
         $type = $request->get('type', 'employee');
         $role = $request->get('role', 'all');
         $search = $request->get('search');
@@ -150,6 +154,28 @@ class InformationManagementController extends Controller
         $items = $query->paginate(10);
 
         return view('admin.information-management', compact('items', 'type', 'role', 'search'));
+    }
+
+    private function logPageView($description, $modelType = null, $modelId = null)
+    {
+        Activity::create([
+            'user_id' => auth()->id(),
+            'action' => 'viewed',
+            'description' => $description,
+            'model_type' => $modelType,
+            'model_id' => $modelId
+        ]);
+    }
+
+    private function logAction($action, $description, $modelType = null, $modelId = null)
+    {
+        Activity::create([
+            'user_id' => auth()->id(),
+            'action' => $action,
+            'description' => $description,
+            'model_type' => $modelType,
+            'model_id' => $modelId
+        ]);
     }
 
     // Add other controller methods as needed...

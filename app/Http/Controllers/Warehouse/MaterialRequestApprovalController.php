@@ -5,11 +5,24 @@ namespace App\Http\Controllers\Warehouse;
 use App\Http\Controllers\Controller;
 use App\Models\MaterialRequest;
 use Illuminate\Http\Request;
+use App\Models\Activity;
 
 class MaterialRequestApprovalController extends Controller
 {
+    private function logPageView($description, $modelType = null, $modelId = null)
+    {
+        Activity::create([
+            'user_id' => auth()->id(),
+            'action' => 'viewed',
+            'description' => $description,
+            'model_type' => $modelType,
+            'model_id' => $modelId
+        ]);
+    }
+
     public function index()
     {
+        $this->logPageView('Viewed Material Request Approvals Index');
         $materialRequests = MaterialRequest::with(['contract', 'user'])
             ->orderByDesc('created_at')
             ->paginate(15);
@@ -18,6 +31,7 @@ class MaterialRequestApprovalController extends Controller
 
     public function approve(MaterialRequest $materialRequest)
     {
+        $this->logPageView('Approved Material Request #' . $materialRequest->id, \App\Models\MaterialRequest::class, $materialRequest->id);
         if ($materialRequest->status !== 'pending') {
             return back()->with('error', 'This request is already approved or not pending.');
         }
@@ -62,7 +76,14 @@ class MaterialRequestApprovalController extends Controller
 
     public function show(MaterialRequest $materialRequest)
     {
+        $this->logPageView('Viewed Material Request Approval #' . $materialRequest->id, \App\Models\MaterialRequest::class, $materialRequest->id);
         $materialRequest->load(['contract', 'user', 'items.material']);
         return view('warehouse.material-requests-show', compact('materialRequest'));
+    }
+
+    public function reject($id)
+    {
+        $this->logPageView('Rejected Material Request #' . $id, \App\Models\MaterialRequest::class, $id);
+        // ... existing code ...
     }
 } 

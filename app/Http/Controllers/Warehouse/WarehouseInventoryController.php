@@ -11,11 +11,24 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Warehouse;
 use App\Models\Stock;
 use App\Models\Supplier;
+use App\Models\Activity;
 
 class WarehouseInventoryController extends Controller
 {
+    private function logPageView($description, $modelType = null, $modelId = null)
+    {
+        Activity::create([
+            'user_id' => auth()->id(),
+            'action' => 'viewed',
+            'description' => $description,
+            'model_type' => $modelType,
+            'model_id' => $modelId
+        ]);
+    }
+
     public function index(Request $request)
     {
+        $this->logPageView('Viewed Warehouse Inventory Index');
         // Get all available warehouses
         $warehouses = \App\Models\Warehouse::all();
         if ($warehouses->isEmpty()) {
@@ -41,16 +54,17 @@ class WarehouseInventoryController extends Controller
         }
         $materials = $materialsQuery->get();
         $suppliers = \App\Models\Supplier::all();
-        $stocks = Stock::with(['material', 'supplier', 'warehouse'])
+        $paginatedStocks = Stock::with(['material', 'supplier', 'warehouse'])
             ->where('warehouse_id', $warehouseId)
-            ->get()
-            ->groupBy('material_id');
+            ->orderByDesc('id')
+            ->paginate(15);
         $categories = \App\Models\Category::all();
-        return view('warehouse.inventory.index', compact('stocks', 'categories', 'warehouses', 'warehouseId', 'materials', 'suppliers'));
+        return view('warehouse.inventory.index', compact('paginatedStocks', 'categories', 'warehouses', 'warehouseId', 'materials', 'suppliers'));
     }
 
     public function addStock(Request $request)
     {
+        $this->logPageView('Viewed Add Stock Page');
         $request->validate([
             'warehouse_id' => 'required|exists:warehouses,id',
             'material_id' => 'required|exists:materials,id',
@@ -94,6 +108,7 @@ class WarehouseInventoryController extends Controller
 
     public function updateStock(Request $request)
     {
+        $this->logPageView('Viewed Update Stock Page');
         $request->validate([
             'warehouse_id' => 'required|exists:warehouses,id',
             'material_id' => 'required|exists:materials,id',
@@ -154,6 +169,7 @@ class WarehouseInventoryController extends Controller
 
     public function history(Request $request, $materialId)
     {
+        $this->logPageView('Viewed Stock History Page', \App\Models\Material::class, $materialId);
         $warehouseId = $request->input('warehouse_id');
         $stock = Stock::where('material_id', $materialId)
             ->when($warehouseId, function($q) use ($warehouseId) {

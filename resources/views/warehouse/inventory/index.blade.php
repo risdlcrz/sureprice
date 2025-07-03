@@ -92,7 +92,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($stocks as $materialId => $materialStocks)
+                    @php
+                        $groupedStocks = $paginatedStocks->groupBy('material_id');
+                    @endphp
+                    @forelse($groupedStocks as $materialId => $materialStocks)
                         @php
                             $material = $materialStocks->first()->material;
                             $totalStock = $materialStocks->sum('current_stock');

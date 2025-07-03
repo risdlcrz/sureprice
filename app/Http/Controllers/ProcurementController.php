@@ -17,11 +17,24 @@ use App\Models\Material;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Activity;
 
 class ProcurementController extends Controller
 {
+    private function logPageView($description)
+    {
+        Activity::create([
+            'user_id' => auth()->id(),
+            'action' => 'viewed',
+            'description' => $description,
+            'model_type' => null,
+            'model_id' => null
+        ]);
+    }
+
     public function index()
     {
+        $this->logPageView('Viewed Procurement Dashboard');
         $recentInvitations = SupplierInvitation::with(['contract', 'materials'])
             ->latest()
             ->take(5)
@@ -58,6 +71,7 @@ class ProcurementController extends Controller
 
     public function projectDashboard()
     {
+        $this->logPageView('Viewed Project Dashboard');
         $projects = Project::with(['contract', 'client'])
             ->latest()
             ->get();
@@ -67,6 +81,7 @@ class ProcurementController extends Controller
 
     public function inventoryDashboard()
     {
+        $this->logPageView('Viewed Inventory Dashboard');
         $inventories = Inventory::with(['material.category'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
@@ -80,6 +95,7 @@ class ProcurementController extends Controller
 
     public function projectHistory()
     {
+        $this->logPageView('Viewed Project History');
         $projects = Project::with(['contract', 'client'])
             ->where('status', 'completed')
             ->latest()
@@ -90,6 +106,7 @@ class ProcurementController extends Controller
 
     public function analyticsDashboard()
     {
+        $this->logPageView('Viewed Analytics Dashboard');
         // Get analytics data
         $totalProjects = Project::count();
         $activeProjects = Project::where('status', 'active')->count();
@@ -111,6 +128,7 @@ class ProcurementController extends Controller
 
     public function notificationHub()
     {
+        $this->logPageView('Viewed Notification Hub');
         // You can fetch procurement-specific notifications here
         $notifications = \App\Models\Notification::where('for_role', 'procurement')
                                      ->orWhere('for_user_id', Auth::id())
@@ -121,6 +139,7 @@ class ProcurementController extends Controller
 
     public function inventoryCreate()
     {
+        $this->logPageView('Viewed Inventory Create Page');
         // Return a view for creating a new inventory item
         return view('procurement.inventory-create');
     }
@@ -169,11 +188,13 @@ class ProcurementController extends Controller
 
     public function inventoryEdit(Inventory $inventory)
     {
+        $this->logPageView('Viewed Inventory Edit Page');
         return view('procurement.inventory-edit', compact('inventory'));
     }
 
     public function inventoryUpdate(Request $request, Inventory $inventory)
     {
+        $this->logPageView('Viewed Inventory Update Page');
         $validator = Validator::make($request->all(), [
             'material_name' => 'required|string|max:255',
             'category_name' => 'required|string|max:255',
@@ -221,6 +242,7 @@ class ProcurementController extends Controller
 
     public function inventoryDestroy(Inventory $inventory)
     {
+        $this->logPageView('Viewed Inventory Destroy Page');
         DB::transaction(function () use ($inventory) {
             $material = $inventory->material;
 
@@ -237,6 +259,7 @@ class ProcurementController extends Controller
 
     public function inventoryAdjustStock(Request $request, Inventory $inventory)
     {
+        $this->logPageView('Viewed Inventory Adjust Stock Page');
         $validator = Validator::make($request->all(), [
             'quantity' => 'required|numeric|min:0',
             'operation' => 'required|in:add,subtract',
@@ -279,6 +302,7 @@ class ProcurementController extends Controller
 
     public function inventoryLowStock()
     {
+        $this->logPageView('Viewed Inventory Low Stock Page');
         $inventories = \App\Models\Inventory::with(['material.category'])
             ->lowStock()
             ->orderBy('quantity', 'asc')
@@ -288,6 +312,7 @@ class ProcurementController extends Controller
 
     public function inventoryExpiring()
     {
+        $this->logPageView('Viewed Inventory Expiring Page');
         $inventories = \App\Models\Inventory::with(['material.category'])
             ->expiring()
             ->orderBy('expiry_date', 'asc')
@@ -297,6 +322,7 @@ class ProcurementController extends Controller
 
     public function projectShow(Project $project)
     {
+        $this->logPageView('Viewed Project Show Page');
         $project->load([
             'contract',
             'projectManager',
@@ -311,6 +337,7 @@ class ProcurementController extends Controller
 
     public function projectTasks(Project $project)
     {
+        $this->logPageView('Viewed Project Tasks Page');
         $tasks = $project->tasks()
             ->with(['assignee'])
             ->latest()
@@ -321,6 +348,7 @@ class ProcurementController extends Controller
 
     public function projectProcurement(Project $project)
     {
+        $this->logPageView('Viewed Project Procurement Page');
         $project->load([
             'contract.purchaseRequests' => function($query) {
                 $query->latest();
@@ -337,6 +365,7 @@ class ProcurementController extends Controller
 
     public function projectAnalytics(Project $project)
     {
+        $this->logPageView('Viewed Project Analytics Page');
         $project->load([
             'contract.purchaseOrders',
             'contract.purchaseRequests',
@@ -382,6 +411,7 @@ class ProcurementController extends Controller
 
     public function suppliersRankings()
     {
+        $this->logPageView('Viewed Suppliers Rankings Page');
         $suppliers = \App\Models\Supplier::with(['evaluations', 'metrics'])->get();
         $rankingService = app(\App\Services\SupplierRankingService::class);
         $rankings = $rankingService->calculateRankings($suppliers);
@@ -391,6 +421,7 @@ class ProcurementController extends Controller
     // --- Supplier Recommendation for Procurement Analytics Dashboard ---
     public function generalSupplierRecommendation(Request $request)
     {
+        $this->logPageView('Viewed General Supplier Recommendation Page');
         $materials = \App\Models\Material::orderBy('name')->get();
         $selectedMaterialId = $request->input('material_id', $materials->first()->id ?? null);
 
@@ -435,5 +466,20 @@ class ProcurementController extends Controller
             'projectFeatures' => $projectFeatures,
             'budget' => $budget,
         ]);
+    }
+
+    public function procurementLogs()
+    {
+        $this->logPageView('Viewed Procurement Logs Page');
+        $procurementModels = [
+            \App\Models\PurchaseOrder::class,
+            \App\Models\PurchaseRequest::class,
+            \App\Models\Quotation::class,
+        ];
+        $activities = \App\Models\Activity::whereIn('model_type', $procurementModels)
+            ->latest()
+            ->take(50)
+            ->get();
+        return view('procurement.logs', compact('activities'));
     }
 } 

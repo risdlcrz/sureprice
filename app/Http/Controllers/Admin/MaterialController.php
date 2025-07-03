@@ -8,11 +8,13 @@ use App\Models\Category;
 use App\Models\Company;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use App\Models\Activity;
 
 class MaterialController extends Controller
 {
     public function index()
     {
+        $this->logPageView('Viewed Admin Materials List', Material::class);
         $materials = Material::with('priceHistories')->get();
         // Calculate forecast for each material
         foreach ($materials as $material) {
@@ -23,6 +25,7 @@ class MaterialController extends Controller
 
     public function show(Material $material)
     {
+        $this->logPageView('Viewed Admin Material #' . $material->id, Material::class, $material->id);
         $suppliers = \App\Models\Supplier::orderBy('company_name')->get();
         $linkedSupplierIds = $material->suppliers()->pluck('suppliers.id')->toArray();
 
@@ -31,12 +34,14 @@ class MaterialController extends Controller
 
     public function edit(Material $material)
     {
+        $this->logPageView('Viewed Edit Admin Material #' . $material->id, Material::class, $material->id);
         $categories = Category::whereRaw('LOWER(name) != ?', ['other'])->get();
         return view('admin.materials.edit', compact('material', 'categories'));
     }
 
     public function create()
     {
+        $this->logPageView('Viewed Create Admin Material Page', Material::class);
         $suppliers = \App\Models\Supplier::all();
         $scopeTypes = \App\Models\ScopeType::orderBy('name')->get();
         $categories = Category::whereRaw('LOWER(name) != ?', ['other'])->get();
@@ -45,6 +50,7 @@ class MaterialController extends Controller
 
     public function updateSuppliers(Request $request, Material $material)
     {
+        $this->logAction('updated', 'Updated suppliers for Material #' . $material->id, Material::class, $material->id);
         $supplierIds = $request->input('suppliers', []);
         // Only allow approved suppliers
         $approvedSupplierIds = \App\Models\Supplier::whereIn('id', $supplierIds)->pluck('id')->toArray();
@@ -193,10 +199,34 @@ class MaterialController extends Controller
                 'minimum_quantity' => $validated['minimum_quantity'] ?? null,
             ]);
 
+            $this->logAction('created', 'Created Material #' . $material->id, Material::class, $material->id);
+
             // ... existing code ...
         } catch (\Exception $e) {
             \DB::rollBack();
             return back()->with('error', 'An error occurred while creating the material.')->withInput();
         }
+    }
+
+    private function logPageView($description, $modelType = null, $modelId = null)
+    {
+        Activity::create([
+            'user_id' => auth()->id(),
+            'action' => 'viewed',
+            'description' => $description,
+            'model_type' => $modelType,
+            'model_id' => $modelId
+        ]);
+    }
+
+    private function logAction($action, $description, $modelType = null, $modelId = null)
+    {
+        Activity::create([
+            'user_id' => auth()->id(),
+            'action' => $action,
+            'description' => $description,
+            'model_type' => $modelType,
+            'model_id' => $modelId
+        ]);
     }
 } 

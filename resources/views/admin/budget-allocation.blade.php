@@ -242,8 +242,9 @@
                         </div>
                         <div class="card-body">
                             @php
-                                $totalContractValue = $selectedContract->total_amount;
-                                $remaining = max(0, $totalContractValue - $totalSpent);
+                                $totalContractValue = isset($selectedContract) && $selectedContract ? $selectedContract->total_amount : 0;
+                                $totalSpent = @json($totalSpent);
+                                $remaining = @json(isset($selectedContract) && $selectedContract ? max(0, $selectedContract->total_amount - $totalSpent) : 0);
                                 $percentUsed = $totalContractValue > 0 ? ($totalSpent / $totalContractValue) * 100 : 0;
                             @endphp
 
@@ -364,7 +365,7 @@
                                                     <div>
                                                         <div class="fw-bold">₱{{ number_format($transaction->amount, 2) }}</div>
                                                         @php
-                                                            $budgetImpact = ($transaction->amount / $selectedContract->total_amount) * 100;
+                                                            $budgetImpact = ($selectedContract && $selectedContract->total_amount > 0) ? ($transaction->amount / $selectedContract->total_amount) * 100 : 0;
                                                         @endphp
                                                         <small class="text-muted">{{ number_format($budgetImpact, 1) }}% of budget</small>
                                                     </div>
@@ -456,21 +457,20 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@if($selectedContract)
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    @if($selectedContract)
-        // Initialize charts
-        initSpendingChart();
-        initBreakdownChart();
-        initBudgetDonut();
-    @endif
+    // Initialize charts
+    initSpendingChart();
+    initBreakdownChart();
+    initBudgetDonut();
 });
 
 // Chart initialization functions
 function initSpendingChart() {
     const ctx = document.getElementById('spendingChart').getContext('2d');
-    const monthlyData = @json($monthlyData);
-    const weeklyData = @json($weeklyData);
+    const monthlyData = JSON.parse('@json($monthlyData)');
+    const weeklyData = JSON.parse('@json($weeklyData)');
 
     window.spendingChart = new Chart(ctx, {
         type: 'line',
@@ -509,8 +509,8 @@ function initSpendingChart() {
 
 function initBreakdownChart() {
     const ctx = document.getElementById('costBreakdownChart').getContext('2d');
-    const categoryData = @json($categoryData);
-    const supplierData = @json($supplierData);
+    const categoryData = JSON.parse('@json($categoryData)');
+    const supplierData = JSON.parse('@json($supplierData)');
 
     window.breakdownChart = new Chart(ctx, {
         type: 'doughnut',
@@ -541,8 +541,8 @@ function initBreakdownChart() {
 
 function initBudgetDonut() {
     const ctx = document.getElementById('budgetDonut').getContext('2d');
-    const totalSpent = {{ $totalSpent }};
-    const remaining = {{ max(0, $selectedContract->total_amount - $totalSpent) }};
+    const totalSpent = JSON.parse('@json($totalSpent)');
+    const remaining = JSON.parse('@json(isset($selectedContract) && $selectedContract ? max(0, $selectedContract->total_amount - $totalSpent) : 0)');
 
     window.budgetDonut = new Chart(ctx, {
         type: 'doughnut',
@@ -572,8 +572,8 @@ function initBudgetDonut() {
 
 // Toggle functions
 function toggleChartView(type) {
-    const monthlyData = @json($monthlyData);
-    const weeklyData = @json($weeklyData);
+    const monthlyData = JSON.parse('@json($monthlyData)');
+    const weeklyData = JSON.parse('@json($weeklyData)');
     const data = type === 'monthly' ? monthlyData : weeklyData;
     
     window.spendingChart.data.labels = data.labels;
@@ -591,8 +591,8 @@ function toggleChartView(type) {
 }
 
 function toggleBreakdownView(type) {
-    const categoryData = @json($categoryData);
-    const supplierData = @json($supplierData);
+    const categoryData = JSON.parse('@json($categoryData)');
+    const supplierData = JSON.parse('@json($supplierData)');
     const data = type === 'category' ? categoryData : supplierData;
     
     window.breakdownChart.data.labels = data.labels;
@@ -609,6 +609,7 @@ function toggleBreakdownView(type) {
     });
 }
 </script>
+@endif
 @endpush
 
 @push('styles')

@@ -9,11 +9,24 @@ use App\Models\StockMovement;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\Activity;
 
 class WarehouseDashboardController extends Controller
 {
+    private function logPageView($description, $modelType = null, $modelId = null)
+    {
+        Activity::create([
+            'user_id' => auth()->id(),
+            'action' => 'viewed',
+            'description' => $description,
+            'model_type' => $modelType,
+            'model_id' => $modelId
+        ]);
+    }
+
     public function index()
     {
+        $this->logPageView('Viewed Warehouse Dashboard');
         // Get total materials count
         $totalMaterials = Material::count();
         
@@ -60,6 +73,7 @@ class WarehouseDashboardController extends Controller
     
     public function getStockAlerts()
     {
+        $this->logPageView('Viewed Warehouse Stock Alerts');
         $alerts = Material::whereRaw('current_stock < minimum_stock')
             ->with('category')
             ->get()
@@ -79,6 +93,7 @@ class WarehouseDashboardController extends Controller
     
     public function getStockMovements(Request $request)
     {
+        $this->logPageView('Viewed Warehouse Stock Movements');
         $query = StockMovement::with(['material'])
             ->when($request->filled('type'), function ($q) use ($request) {
                 return $q->where('type', $request->type);
@@ -94,5 +109,12 @@ class WarehouseDashboardController extends Controller
         $movements = $query->latest()->paginate(15);
         
         return response()->json($movements);
+    }
+
+    public function warehouseLogs()
+    {
+        $this->logPageView('Viewed Warehouse Logs');
+        $activities = Activity::latest()->take(50)->get();
+        return view('warehouse.logs', compact('activities'));
     }
 } 
