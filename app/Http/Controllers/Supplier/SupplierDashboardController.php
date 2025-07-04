@@ -173,7 +173,7 @@ class SupplierDashboardController extends Controller
                 ->join('materials', 'purchase_order_items.material_id', '=', 'materials.id')
                 ->where('purchase_orders.supplier_id', $supplier->id)
                 ->where('purchase_orders.status', 'completed')
-                ->selectRaw('materials.name, SUM(purchase_order_items.total_price) as total_sales, COUNT(*) as order_count')
+                ->selectRaw('materials.name, SUM(purchase_order_items.quantity * purchase_order_items.unit_price) as total_sales, COUNT(*) as order_count')
                 ->groupBy('materials.id', 'materials.name')
                 ->orderByDesc('total_sales')
                 ->limit(5)
