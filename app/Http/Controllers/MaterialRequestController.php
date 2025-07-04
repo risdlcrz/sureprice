@@ -37,13 +37,25 @@ class MaterialRequestController extends Controller
 
         if ($contract_id) {
             $selectedContract = Contract::with('items.material.inventory')->findOrFail($contract_id);
+            $warehouses = Warehouse::orderByRaw("name = 'Warehouse A' DESC, name ASC")->get();
             foreach ($selectedContract->items as $item) {
+                $warehouseName = 'N/A';
+                $available = 0;
+                foreach ($warehouses as $warehouse) {
+                    $stock = $warehouse->stocks()->where('material_id', $item->material_id)->first();
+                    if ($stock && $stock->current_stock > 0) {
+                        $warehouseName = $warehouse->name;
+                        $available = $stock->current_stock;
+                        break;
+                    }
+                }
                 $items[] = [
                     'material_id' => $item->material_id,
                     'name' => $item->material->name,
                     'unit' => $item->material->unit,
                     'quantity' => $item->quantity,
-                    'available' => $item->material->inventory->sum('quantity') ?? 0
+                    'warehouse_name' => $warehouseName,
+                    'available' => $available
                 ];
             }
         }
@@ -223,7 +235,13 @@ class MaterialRequestController extends Controller
                 'on_time_delivery_rate' => $supplier->metrics ? $supplier->metrics->on_time_delivery_rate : 0,
                 'average_defect_rate' => $supplier->metrics->average_defect_rate ?? 0,
                 'average_cost_variance' => $supplier->metrics->average_cost_variance ?? 0,
-                'cost' => $supplier->metrics->average_cost_variance ?? 0,
+                'score' => $supplier->metrics->score ?? 0,
+                'delivery' => $supplier->metrics->delivery ?? 0,
+                'quality' => $supplier->metrics->quality ?? 0,
+                'cost' => $supplier->metrics->cost ?? 0,
+                'performance' => $supplier->metrics->performance ?? 0,
+                'engagement' => $supplier->metrics->engagement ?? 0,
+                'sustainability' => $supplier->metrics->sustainability ?? 0,
             ];
         })->toArray();
 

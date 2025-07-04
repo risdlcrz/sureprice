@@ -163,6 +163,7 @@
             .sidebar-toggle-btn { display: none; }
         }
     </style>
+    <link rel="icon" type="image/png" href="{{ asset('images/sureprice.png') }}" />
 </head>
 <body>
     <div class="app-container" id="appContainer">

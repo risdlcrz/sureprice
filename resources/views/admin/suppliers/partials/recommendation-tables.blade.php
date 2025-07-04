@@ -1,4 +1,5 @@
 <h4>Top Recommended Suppliers (KNN)</h4>
+@if(count($recommended) > 0)
 <table class="table table-bordered">
     <thead>
         <tr>
@@ -7,22 +8,35 @@
             <th>Avg. Defect Rate <span title="% of items with defects">&#9432;</span></th>
             <th>Avg. Cost Variance <span title="Average deviation from expected cost">&#9432;</span></th>
             <th>Distance (Similarity)</th>
+            <th>Action</th>
         </tr>
     </thead>
     <tbody>
-    @foreach($recommended as $item)
+    @foreach($recommended as $i => $item)
         <tr>
-            <td>{{ $item['supplier']['name'] }}</td>
+            <td>
+                {{ $item['supplier']['name'] }}
+                @if($i === 0)
+                    <span class="badge bg-success ms-2">Recommended</span>
+                @endif
+            </td>
             <td>{{ $item['supplier']['on_time_delivery_rate'] }}%</td>
             <td>{{ $item['supplier']['average_defect_rate'] }}%</td>
             <td>{{ $item['supplier']['average_cost_variance'] }}</td>
             <td>{{ number_format($item['distance'], 2) }}</td>
+            <td>
+                <button type="button" class="btn btn-sm btn-primary select-supplier-btn" data-supplier-name="{{ $item['supplier']['name'] }}">Select</button>
+            </td>
         </tr>
     @endforeach
     </tbody>
 </table>
+@else
+<div class="alert alert-warning">No recommended suppliers found for this material.</div>
+@endif
 
 <h4>Optimal Supplier Selection (Within Budget)</h4>
+@if(count($optimal) > 0)
 <table class="table table-bordered">
     <thead>
         <tr>
@@ -31,17 +45,29 @@
             <th>Avg. Defect Rate</th>
             <th>Avg. Cost Variance</th>
             <th>Score</th>
+            <th>Action</th>
         </tr>
     </thead>
     <tbody>
-    @foreach($optimal as $supplier)
+    @foreach($optimal as $i => $supplier)
         <tr>
-            <td>{{ $supplier['name'] }}</td>
+            <td>
+                {{ $supplier['name'] }}
+                @if($i === 0)
+                    <span class="badge bg-success ms-2">Recommended</span>
+                @endif
+            </td>
             <td>{{ $supplier['on_time_delivery_rate'] }}%</td>
             <td>{{ $supplier['average_defect_rate'] }}%</td>
             <td>{{ $supplier['average_cost_variance'] }}</td>
             <td>{{ ($supplier['on_time_delivery_rate'] ?? 0) - ($supplier['average_defect_rate'] ?? 0) - abs($supplier['average_cost_variance'] ?? 0) }}</td>
+            <td>
+                <button type="button" class="btn btn-sm btn-primary select-supplier-btn" data-supplier-name="{{ $supplier['name'] }}">Select</button>
+            </td>
         </tr>
     @endforeach
     </tbody>
-</table> 
+</table>
+@else
+<div class="alert alert-warning">No optimal suppliers found within budget.</div>
+@endif 

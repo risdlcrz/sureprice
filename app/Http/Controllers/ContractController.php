@@ -348,7 +348,8 @@ class ContractController extends Controller
                 'grand_total' => $data['grand_total'] ?? 0,
                 'total_amount' => $data['grand_total'] ?? 0,
                 'labor_cost' => $data['total_labor'] ?? 0,
-                'materials_cost' => $data['total_materials'] ?? 0
+                'materials_cost' => $data['total_materials'] ?? 0,
+                'breakdown' => $data['breakdown'] ?? []
             ];
             
             session(['contract_step2' => $sessionData]);
@@ -1280,7 +1281,7 @@ class ContractController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => 'required|in:draft,active,partially_paid,fully_paid,overdue,suspended,terminated,expired,renewed'
+            'status' => 'required|in:draft,active,approved,rejected,partially_paid,fully_paid,overdue,suspended,terminated,expired,renewed'
         ]);
         $oldStatus = $contract->status;
         $contract->status = $request->status;

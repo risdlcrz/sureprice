@@ -657,11 +657,11 @@ function calculateAllCosts() {
                 
                 console.log(`  calculateAllCosts:     Material ${material.name} - is_per_area: ${material.is_per_area}, is_wall_material: ${material.is_wall_material}, coverage_rate: ${material.coverage_rate}, minimum_quantity: ${material.minimum_quantity}, calculated_area: ${area.toFixed(2)}`);
 
-                if (material.is_per_area) {
+                // Force all materials to use area-based calculation for debugging
+                // if (material.is_per_area) {
+                {
                     const coverage = parseFloat(material.coverage_rate ?? 1) || 1;
                     quantity = area > 0 && coverage > 0 ? Math.ceil(area / coverage) : 0;
-                } else {
-                    quantity = parseFloat(material.minimum_quantity ?? 1) || 0;
                 }
                 if (quantity > 0) {
                     const wasteFactor = parseFloat(material.waste_factor ?? 1.1) || 1.1;
@@ -983,6 +983,21 @@ function saveFormData() {
         console.log('No valid rooms to save, skipping save');
         return Promise.resolve();
     }
+
+    // Add material breakdown to data
+    const breakdown = [];
+    const { materialsMap } = calculateAllCosts();
+    materialsMap.forEach(material => {
+        breakdown.push({
+            category: material.category,
+            name: material.name,
+            unit: material.unit,
+            unitCost: material.unitCost,
+            quantity: material.quantity,
+            totalCost: material.totalCost
+        });
+    });
+    data.breakdown = breakdown;
 
     console.log('saveFormData: Data being sent to server:', data);
 

@@ -314,6 +314,46 @@
                                 </div>
                             </div>
 
+                            <!-- Contract Items/Materials Table -->
+                            <div class="review-section mt-4">
+                                <h6>Contract Items</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Item</th>
+                                                <th>Unit</th>
+                                                <th>Unit Cost</th>
+                                                <th>Quantity</th>
+                                                <th>Total Cost</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @php $breakdown = $contractStep2Data['breakdown'] ?? []; @endphp
+                                            @forelse($breakdown as $item)
+                                                <tr>
+                                                    <td>{{ $item['name'] ?? 'N/A' }}</td>
+                                                    <td>{{ $item['unit'] ?? 'N/A' }}</td>
+                                                    <td>₱{{ number_format($item['unitCost'] ?? 0, 2) }}</td>
+                                                    <td>{{ number_format($item['quantity'] ?? 0, 2) }}</td>
+                                                    <td>₱{{ number_format($item['totalCost'] ?? 0, 2) }}</td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="5" class="text-center">No contract items found.</td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                        <tfoot class="table-light">
+                                            <tr>
+                                                <td colspan="4" class="text-end"><strong>Total Materials Cost:</strong></td>
+                                                <td><strong>₱{{ number_format($contractStep2Data['total_materials'] ?? 0, 2) }}</strong></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+
                             <!-- Terms & Conditions Review -->
                             <div class="review-section mt-4">
                                 <h6>Terms & Conditions</h6>

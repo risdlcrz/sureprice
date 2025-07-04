@@ -51,9 +51,9 @@
                                             <tr>
                                                 <th>Material</th>
                                                 <th>Unit</th>
-                                                <th>Available Stock</th>
-                                                <th>Requested Quantity</th>
-                                                <th>Notes</th>
+                                                <th>Quantity</th>
+                                                <th>Warehouse</th>
+                                                <th>Stock</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -65,18 +65,13 @@
                                                             {{ $item['name'] }}
                                                             <input type="hidden" name="items[{{ $index }}][material_id]" value="{{ $item['material_id'] }}">
                                                         </td>
-                                                        <td>{{ $item['unit'] }}</td>
-                                                        <td class="available-stock">{{ $item['available'] }}</td>
+                                                        <td class="unit">{{ $item['unit'] }}</td>
                                                         <td>
                                                             <input type="number" name="items[{{ $index }}][quantity]" class="form-control quantity" step="0.01" value="{{ $item['quantity'] }}" required>
                                                         </td>
+                                                        <td>{{ $item['warehouse_name'] ?? 'N/A' }}</td>
+                                                        <td>{{ $item['available'] ?? 0 }}</td>
                                                         <td>
-                                                            <input type="text" name="items[{{ $index }}][notes]" class="form-control">
-                                                        </td>
-                                                        <td>
-                                                            <button type="button" class="btn btn-info btn-sm recommend-supplier-btn" data-material-id="{{ $item['material_id'] }}" data-material-name="{{ $item['name'] }}">
-                                                                <i class="fas fa-lightbulb"></i> Recommend Supplier
-                                                            </button>
                                                             <button type="button" class="btn btn-danger btn-sm remove-row" title="Remove">
                                                                 <i class="fas fa-trash"></i>
                                                             </button>
@@ -133,47 +128,32 @@
 
 <!-- Supplier Recommendation Modal -->
 <div class="modal fade" id="supplierRecommendationModal" tabindex="-1" aria-labelledby="supplierRecommendationModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="supplierRecommendationModalLabel">Supplier Recommendation for <span id="modalMaterialName"></span></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form id="supplier-recommendation-form" class="row g-3 mb-3">
-          <input type="hidden" id="modalMaterialId" name="material_id">
-          <div class="col-md-3">
-            <label for="rec_budget" class="form-label">Budget</label>
-            <input type="number" class="form-control" id="rec_budget" name="budget" value="100000" min="0" step="0.01">
-          </div>
-          <div class="col-md-3">
-            <label for="rec_on_time_delivery_rate" class="form-label">On-Time Delivery Rate (%)</label>
-            <input type="number" class="form-control" id="rec_on_time_delivery_rate" name="on_time_delivery_rate" value="90" min="0" max="100">
-          </div>
-          <div class="col-md-3">
-            <label for="rec_average_defect_rate" class="form-label">Avg. Defect Rate (%)</label>
-            <input type="number" class="form-control" id="rec_average_defect_rate" name="average_defect_rate" value="2" min="0" max="100" step="0.01">
-          </div>
-          <div class="col-md-3">
-            <label for="rec_average_cost_variance" class="form-label">Avg. Cost Variance</label>
-            <input type="number" class="form-control" id="rec_average_cost_variance" name="average_cost_variance" value="0" step="0.01">
-          </div>
-          <div class="col-md-12">
-            <label for="rec_mode" class="form-label">Recommendation Mode</label>
-            <select class="form-select" id="rec_mode" name="mode">
-              <option value="best_score">Best Overall Score</option>
-              <option value="lowest_cost">Lowest Cost</option>
-              <option value="best_delivery">Best On-Time Delivery</option>
-            </select>
-          </div>
-          <div class="col-md-12 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">Show Recommendations</button>
-          </div>
-        </form>
-        <div id="supplier-recommendation-results"></div>
-      </div>
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="supplierRecommendationModalLabel">Supplier Recommendation for <span id="modalMaterialName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="supplier-recommendation-form" class="row g-3 mb-3">
+                    <input type="hidden" name="material_id" id="modalMaterialId">
+                    <div class="col-12">
+                        <label for="rec_mode" class="form-label">Recommendation Mode</label>
+                        <select class="form-select" id="rec_mode" name="mode">
+                            <option value="best_score">Best Overall Score</option>
+                            <option value="on_time_delivery">Best On-Time Delivery</option>
+                            <option value="lowest_defect">Lowest Defect Rate</option>
+                            <option value="lowest_cost">Lowest Cost Variance</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary w-100">Show Recommendations</button>
+                    </div>
+                </form>
+                <div id="supplier-recommendation-results"></div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 @push('scripts')
@@ -181,6 +161,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     let itemIndex = {{ !empty($items) ? count($items) : 0 }};
     const materials = @json($materials);
+    let currentSupplierRow = null;
 
     // Handle contract change
     document.getElementById('contract_id').addEventListener('change', function() {
@@ -201,15 +182,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     </select>
                 </td>
                 <td class="unit"></td>
-                <td class="available-stock"></td>
                 <td>
                     <input type="number" name="items[${itemIndex}][quantity]" class="form-control quantity" step="0.01" required>
                 </td>
                 <td>
-                    <input type="text" name="items[${itemIndex}][notes]" class="form-control">
+                    <input type="text" name="items[${itemIndex}][supplier]" class="form-control supplier-input" placeholder="Select or enter supplier">
                 </td>
                 <td>
-                    <button type="button" class="btn btn-info btn-sm recommend-supplier-btn" data-material-id="${itemIndex}" data-material-name="${materials[itemIndex].name}">
+                    <button type="button" class="btn btn-info btn-sm recommend-supplier-btn" data-material-id="" data-material-name="">\
                         <i class="fas fa-lightbulb"></i> Recommend Supplier
                     </button>
                     <button type="button" class="btn btn-danger btn-sm remove-row" title="Remove"><i class="fas fa-trash"></i></button>
@@ -220,44 +200,29 @@ document.addEventListener('DOMContentLoaded', function() {
         itemIndex++;
     });
 
-    // Handle material selection in a row
-    document.getElementById('items-container').addEventListener('change', function(e) {
-        if (e.target.classList.contains('material-select')) {
-            const selectedMaterialId = e.target.value;
-            const row = e.target.closest('.item-row');
-            if (selectedMaterialId) {
-                // Fetch material details (including inventory)
-                fetch(`/api/materials/${selectedMaterialId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        row.querySelector('.unit').textContent = data.unit;
-                        row.querySelector('.available-stock').textContent = data.inventory ? data.inventory.quantity : 0;
-                    });
-            } else {
-                row.querySelector('.unit').textContent = '';
-                row.querySelector('.available-stock').textContent = '';
-            }
-        }
-    });
-
-    // Remove row
+    // Delegate recommend supplier button click
     document.getElementById('items-container').addEventListener('click', function(e) {
-        if (e.target.closest('.remove-row')) {
-            e.target.closest('.item-row').remove();
-        }
-    });
-
-    // Recommend Supplier button click
-    document.querySelectorAll('.recommend-supplier-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            const materialId = this.getAttribute('data-material-id');
-            const materialName = this.getAttribute('data-material-name');
+        const btn = e.target.closest('.recommend-supplier-btn');
+        if (btn) {
+            const row = btn.closest('.item-row');
+            currentSupplierRow = row;
+            let materialName = '';
+            let materialId = '';
+            // Try to get from select or from static data
+            const select = row.querySelector('.material-select');
+            if (select) {
+                materialId = select.value;
+                materialName = select.options[select.selectedIndex]?.text || '';
+            } else {
+                materialId = btn.getAttribute('data-material-id');
+                materialName = btn.getAttribute('data-material-name');
+            }
             document.getElementById('modalMaterialId').value = materialId;
             document.getElementById('modalMaterialName').textContent = materialName;
             document.getElementById('supplier-recommendation-results').innerHTML = '';
             var modal = new bootstrap.Modal(document.getElementById('supplierRecommendationModal'));
             modal.show();
-        });
+        }
     });
 
     // Handle recommendation form submit
@@ -265,7 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const form = e.target;
         const params = new URLSearchParams(new FormData(form)).toString();
-        fetch('material-requests/recommend-suppliers-for-material?' + params, {
+        fetch('{{ url("material-requests/recommend-suppliers-for-material") }}?' + params, {
             method: 'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
@@ -273,6 +238,22 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             document.getElementById('supplier-recommendation-results').innerHTML = data.html;
         });
+    });
+
+    // Delegate select supplier button click in modal
+    document.getElementById('supplier-recommendation-results').addEventListener('click', function(e) {
+        const btn = e.target.closest('.select-supplier-btn');
+        if (btn && currentSupplierRow) {
+            const supplierName = btn.getAttribute('data-supplier-name');
+            const supplierInput = currentSupplierRow.querySelector('.supplier-input');
+            if (supplierInput) {
+                supplierInput.value = supplierName;
+            }
+            // Close modal
+            const modalEl = document.getElementById('supplierRecommendationModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+        }
     });
 });
 </script>

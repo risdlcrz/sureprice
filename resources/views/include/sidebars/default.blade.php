@@ -1,6 +1,5 @@
 <div class="logo-title-container">
-    <img src="{{ asset('images/gdc_logo.png') }}" alt="Company Logo" class="header-logo">
-    <div class="header-title">SurePrice</div>
+    <img src="{{ asset('images/sureprice_logo.png') }}" alt="SurePrice Logo" class="header-logo">
 </div>
 
 <!-- Profile Section -->
