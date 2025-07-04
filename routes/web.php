@@ -460,3 +460,7 @@ Route::get('/procurement/logs', [App\Http\Controllers\ProcurementController::cla
 Route::get('/admin/logs', [App\Http\Controllers\AdminController::class, 'administratorLogs'])->name('admin.logs');
 
 Route::get('/warehouse/logs', [App\Http\Controllers\Warehouse\WarehouseDashboardController::class, 'warehouseLogs'])->name('warehouse.logs');
+
+// Procurement request approval routes
+Route::post('/purchase-requests/request-approval', [\App\Http\Controllers\PurchaseRequestController::class, 'requestApproval'])->name('purchase-requests.request-approval');
+Route::post('/purchase-orders/request-approval', [\App\Http\Controllers\PurchaseOrderController::class, 'requestApproval'])->name('purchase-orders.request-approval');

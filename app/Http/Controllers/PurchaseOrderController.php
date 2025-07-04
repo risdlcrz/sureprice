@@ -512,4 +512,29 @@ class PurchaseOrderController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Request approval for a purchase order (Procurement user action)
+     */
+    public function requestApproval(Request $request)
+    {
+        $request->validate([
+            'purchase_order_id' => 'required|exists:purchase_orders,id',
+        ]);
+        $purchaseOrder = \App\Models\PurchaseOrder::findOrFail($request->purchase_order_id);
+        // Create notification for admin
+        \App\Models\Notification::create([
+            'user_id' => auth()->id(),
+            'type' => 'approval_request',
+            'notifiable_type' => PurchaseOrder::class,
+            'notifiable_id' => $purchaseOrder->id,
+            'data' => [
+                'title' => 'Approval Requested for Purchase Order',
+                'message' => 'A procurement user has requested approval for Purchase Order #' . $purchaseOrder->po_number,
+                'link' => route('purchase-orders.show', $purchaseOrder->id),
+            ],
+            'for_role' => 'admin',
+        ]);
+        return back()->with('success', 'Approval request sent to admin.');
+    }
 } 

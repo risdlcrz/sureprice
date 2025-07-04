@@ -11,13 +11,21 @@ class PurchaseOrderController extends Controller
     public function index()
     {
         $supplierId = Auth::user()->supplier?->id;
-        $purchaseOrders = PurchaseOrder::with(['payments' => function($q) {
+        $query = PurchaseOrder::with(['payments' => function($q) {
             $q->latest();
-        }, 'items.material'])
+        }, 'items.material', 'contract'])
             ->where('supplier_id', $supplierId)
-            ->where('total_amount', '>', 0)
-            ->orderByDesc('created_at')
-            ->get();
+            ->where('total_amount', '>', 0);
+
+        // Add filters for status, sort, and per page
+        if (request('status')) {
+            $query->where('status', request('status'));
+        }
+        $sort = request('sort', 'created_at');
+        $direction = request('direction', 'desc');
+        $query->orderBy($sort, $direction);
+        $perPage = request('perPage', 10);
+        $purchaseOrders = $query->paginate($perPage);
         return view('supplier.purchase-orders.index', compact('purchaseOrders'));
     }
 

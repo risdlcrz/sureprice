@@ -2,6 +2,27 @@
 
 @section('content')
 <div class="container py-4">
+    <!-- Status Summary Card -->
+    <div class="mb-4">
+        <div class="card border-{{ $supplier->status === 'approved' ? 'success' : ($supplier->status === 'pending' ? 'warning' : 'danger') }}">
+            <div class="card-body">
+                <h5 class="card-title mb-2">Account Status:
+                    <span class="badge bg-{{ $supplier->status === 'approved' ? 'success' : ($supplier->status === 'pending' ? 'warning' : 'danger') }}">
+                        {{ ucfirst($supplier->status) }}
+                    </span>
+                </h5>
+                @if($supplier->status === 'approved' && $supplier->approved_at)
+                    <p class="mb-1"><strong>Approved on:</strong> {{ $supplier->approved_at->format('M d, Y') }}</p>
+                @endif
+                @if($supplier->admin_notes)
+                    <p class="mb-0"><strong>Admin Notes:</strong> {{ $supplier->admin_notes }}</p>
+                @endif
+                @if($supplier->status === 'rejected' && $supplier->rejection_reason)
+                    <p class="mb-0 text-danger"><strong>Rejection Reason:</strong> {{ $supplier->rejection_reason }}</p>
+                @endif
+            </div>
+        </div>
+    </div>
     <h1 class="mb-4">Edit My Information</h1>
     @if(!$supplier)
         <div class="alert alert-danger">Supplier information not found. Please contact support.</div>

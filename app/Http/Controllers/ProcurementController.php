@@ -72,11 +72,13 @@ class ProcurementController extends Controller
     public function projectDashboard()
     {
         $this->logPageView('Viewed Project Dashboard');
-        $projects = Project::with(['contract', 'client'])
-            ->latest()
-            ->get();
-
-        return view('procurement.project-dashboard', compact('projects'));
+        // Dummy or simple values for demonstration
+        $totalBudget = \App\Models\Contract::sum('total_amount');
+        $totalSpent = \App\Models\PurchaseOrder::sum('total_amount');
+        $recentContracts = \App\Models\Contract::latest()->take(5)->get();
+        $recentPurchaseOrders = \App\Models\PurchaseOrder::latest()->take(5)->get();
+        $recentPurchaseRequests = \App\Models\PurchaseRequest::latest()->take(5)->get();
+        return view('procurement.project-dashboard', compact('totalBudget', 'totalSpent', 'recentContracts', 'recentPurchaseOrders', 'recentPurchaseRequests'));
     }
 
     public function inventoryDashboard()

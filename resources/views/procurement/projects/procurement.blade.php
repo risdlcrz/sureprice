@@ -30,6 +30,7 @@
                                     <th>Date</th>
                                     <th>Status</th>
                                     <th>Total Amount</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -44,6 +45,15 @@
                                         </span>
                                     </td>
                                     <td>₱{{ number_format($pr->total_amount, 2) }}</td>
+                                    <td>
+                                        @if($pr->status === 'pending')
+                                        <form action="{{ route('purchase-requests.request-approval') }}" method="POST" style="display:inline-block;">
+                                            @csrf
+                                            <input type="hidden" name="purchase_request_id" value="{{ $pr->id }}">
+                                            <button type="submit" class="btn btn-outline-info btn-sm"><i class="fas fa-paper-plane"></i> Request Approval</button>
+                                        </form>
+                                        @endif
+                                    </td>
                                 </tr>
                                 @empty
                                 <tr>
@@ -72,6 +82,7 @@
                                     <th>Date</th>
                                     <th>Status</th>
                                     <th>Total Amount</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -86,6 +97,15 @@
                                         </span>
                                     </td>
                                     <td>₱{{ number_format($po->total_amount, 2) }}</td>
+                                    <td>
+                                        @if($po->status === 'pending' || $po->status === 'draft')
+                                        <form action="{{ route('purchase-orders.request-approval') }}" method="POST" style="display:inline-block;">
+                                            @csrf
+                                            <input type="hidden" name="purchase_order_id" value="{{ $po->id }}">
+                                            <button type="submit" class="btn btn-outline-info btn-sm"><i class="fas fa-paper-plane"></i> Request Approval</button>
+                                        </form>
+                                        @endif
+                                    </td>
                                 </tr>
                                 @empty
                                 <tr>

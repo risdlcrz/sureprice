@@ -24,12 +24,18 @@ class SupplierQuotationController extends Controller
             })
             ->with(['materials', 'responses' => function($q) use ($supplierId) {
                 $q->where('supplier_id', $supplierId);
-            }])
+            }, 'purchaseRequest', 'suppliers'])
             ->orderBy('created_at', 'desc');
 
-        // You can add filters/search if needed
-
-        $quotations = $query->paginate(10);
+        // Add filters for status, sort, and per page
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+        $sort = $request->input('sort', 'created_at');
+        $direction = $request->input('direction', 'desc');
+        $query->orderBy($sort, $direction);
+        $perPage = $request->input('perPage', 10);
+        $quotations = $query->paginate($perPage);
 
         return view('supplier.quotations.index', compact('quotations'));
     }

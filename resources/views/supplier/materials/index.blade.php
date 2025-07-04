@@ -15,6 +15,25 @@
                     <label for="search" class="form-label">Search</label>
                     <input type="text" class="form-control" id="search" name="search" placeholder="Material Name or Code" value="{{ request('search') }}">
                 </div>
+                <div class="col-md-3">
+                    <label for="sort" class="form-label">Sort By</label>
+                    <select class="form-select" id="sort" name="sort">
+                        <option value="name">Name</option>
+                        <option value="code">Code</option>
+                        <option value="category">Category</option>
+                        <option value="stock">Stock</option>
+                        <option value="price">Your Price</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="perPage" class="form-label">Per Page</label>
+                    <select class="form-select" id="perPage" name="perPage">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
                 <div class="col-12">
                     <button type="submit" class="btn btn-primary">Apply Filters</button>
                     <a href="{{ route('supplier.materials.index') }}" class="btn btn-secondary">Reset</a>
@@ -33,6 +52,10 @@
                         <th>Code</th>
                         <th>Category</th>
                         <th>Unit</th>
+                        <th>Stock</th>
+                        <th>SRP</th>
+                        <th>Base Price</th>
+                        <th>Status</th>
                         <th>Your Price (₱)</th>
                         <th>Actions</th>
                     </tr>
@@ -44,6 +67,14 @@
                         <td>{{ $material->code }}</td>
                         <td>{{ $material->category->name ?? '-' }}</td>
                         <td>{{ $material->unit }}</td>
+                        <td>{{ $material->stock }}</td>
+                        <td>₱{{ is_numeric($material->srp_price) ? number_format($material->srp_price, 2) : '-' }}</td>
+                        <td>₱{{ is_numeric($material->base_price) ? number_format($material->base_price, 2) : '-' }}</td>
+                        <td>
+                            <span class="badge bg-{{ $material->approval_status === 'approved' ? 'success' : ($material->approval_status === 'pending' ? 'warning' : 'danger') }}">
+                                {{ ucfirst($material->approval_status) }}
+                            </span>
+                        </td>
                         <td>₱{{ number_format($material->pivot->price, 2) }}</td>
                         <td>
                             <div class="btn-group">

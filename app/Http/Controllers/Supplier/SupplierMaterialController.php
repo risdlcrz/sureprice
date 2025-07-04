@@ -18,15 +18,18 @@ class SupplierMaterialController extends Controller
             abort(403, 'You are not associated with a supplier account.');
         }
 
-        // Get all materials linked to this supplier, with inventory
+        // Get all materials linked to this supplier, with inventory and category
         $materials = $supplier->materials()
-            ->with(['inventory']) // eager load inventory relation
+            ->with(['inventory', 'category']) // eager load inventory and category
             ->paginate(10); // Use pagination for the materials list
 
-        // Add price and total stock attributes for the view
+        // Add price, total stock, SRP, base price, and approval status attributes for the view
         $materials->each(function ($material) {
             $material->price = $material->pivot->price ?? 0;
             $material->stock = (float) $material->inventory->sum('quantity');
+            $material->srp_price = $material->srp_price ?? '-';
+            $material->base_price = $material->base_price ?? '-';
+            $material->approval_status = $material->approval_status ?? ($material->pivot->approval_status ?? 'pending');
         });
 
         return view('supplier.materials.index', compact('materials'));

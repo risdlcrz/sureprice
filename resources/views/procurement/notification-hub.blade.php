@@ -18,6 +18,7 @@
             @else
                 <div class="list-group">
                     @foreach($notifications as $notification)
+                        @if($notification->type === 'approval_request' || $notification->type === 'info' || empty($notification->type))
                         <div class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
                                 <h5 class="mb-1">{{ $notification->title }}</h5>
@@ -28,6 +29,7 @@
                                 <a href="{{ $notification->link }}" class="badge bg-primary text-white">View Details</a>
                             @endif
                         </div>
+                        @endif
                     @endforeach
                 </div>
             @endif
