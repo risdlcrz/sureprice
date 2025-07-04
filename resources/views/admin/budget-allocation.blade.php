@@ -243,8 +243,6 @@
                         <div class="card-body">
                             @php
                                 $totalContractValue = isset($selectedContract) && $selectedContract ? $selectedContract->total_amount : 0;
-                                $totalSpent = @json($totalSpent);
-                                $remaining = @json(isset($selectedContract) && $selectedContract ? max(0, $selectedContract->total_amount - $totalSpent) : 0);
                                 $percentUsed = $totalContractValue > 0 ? ($totalSpent / $totalContractValue) * 100 : 0;
                             @endphp
 
@@ -274,7 +272,7 @@
                                 <div class="col-12">
                                     <div class="border-start border-4 border-info ps-3">
                                         <small class="text-muted">Remaining</small>
-                                        <h5 class="mb-0">₱{{ number_format($remaining, 2) }}</h5>
+                                        <h5 class="mb-0">₱{{ number_format($totalContractValue - $totalSpent, 2) }}</h5>
                                     </div>
                                 </div>
                             </div>
@@ -469,8 +467,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // Chart initialization functions
 function initSpendingChart() {
     const ctx = document.getElementById('spendingChart').getContext('2d');
-    const monthlyData = JSON.parse('@json($monthlyData)');
-    const weeklyData = JSON.parse('@json($weeklyData)');
+    const monthlyData = JSON.parse('{!! json_encode($monthlyData) !!}');
+    const weeklyData = JSON.parse('{!! json_encode($weeklyData) !!}');
 
     window.spendingChart = new Chart(ctx, {
         type: 'line',
@@ -509,8 +507,8 @@ function initSpendingChart() {
 
 function initBreakdownChart() {
     const ctx = document.getElementById('costBreakdownChart').getContext('2d');
-    const categoryData = JSON.parse('@json($categoryData)');
-    const supplierData = JSON.parse('@json($supplierData)');
+    const categoryData = JSON.parse('{!! json_encode($categoryData) !!}');
+    const supplierData = JSON.parse('{!! json_encode($supplierData) !!}');
 
     window.breakdownChart = new Chart(ctx, {
         type: 'doughnut',
@@ -541,8 +539,8 @@ function initBreakdownChart() {
 
 function initBudgetDonut() {
     const ctx = document.getElementById('budgetDonut').getContext('2d');
-    const totalSpent = JSON.parse('@json($totalSpent)');
-    const remaining = JSON.parse('@json(isset($selectedContract) && $selectedContract ? max(0, $selectedContract->total_amount - $totalSpent) : 0)');
+    const totalSpent = JSON.parse('{!! json_encode($totalSpent) !!}');
+    const remaining = JSON.parse('{!! json_encode(isset($selectedContract) && $selectedContract ? max(0, $selectedContract->total_amount - $totalSpent) : 0) !!}');
 
     window.budgetDonut = new Chart(ctx, {
         type: 'doughnut',
@@ -572,8 +570,8 @@ function initBudgetDonut() {
 
 // Toggle functions
 function toggleChartView(type) {
-    const monthlyData = JSON.parse('@json($monthlyData)');
-    const weeklyData = JSON.parse('@json($weeklyData)');
+    const monthlyData = JSON.parse('{!! json_encode($monthlyData) !!}');
+    const weeklyData = JSON.parse('{!! json_encode($weeklyData) !!}');
     const data = type === 'monthly' ? monthlyData : weeklyData;
     
     window.spendingChart.data.labels = data.labels;
@@ -591,8 +589,8 @@ function toggleChartView(type) {
 }
 
 function toggleBreakdownView(type) {
-    const categoryData = JSON.parse('@json($categoryData)');
-    const supplierData = JSON.parse('@json($supplierData)');
+    const categoryData = JSON.parse('{!! json_encode($categoryData) !!}');
+    const supplierData = JSON.parse('{!! json_encode($supplierData) !!}');
     const data = type === 'category' ? categoryData : supplierData;
     
     window.breakdownChart.data.labels = data.labels;
