@@ -111,9 +111,13 @@ public function show(Company $company)
 
 public function notificationCenter()
 {
-    // Fetch the latest 50 activities for the notification hub
-    $activities = \App\Models\Activity::latest()->take(50)->get();
-    return view('admin.notification', compact('activities'));
+    // Fetch the latest 50 notifications for the current user (polymorphic)
+    $notifications = \App\Models\Notification::where('notifiable_id', auth()->id())
+        ->where('notifiable_type', \App\Models\User::class)
+        ->latest()
+        ->take(50)
+        ->get();
+    return view('admin.notification', compact('notifications'));
 }
 
 public function updateStatus(Request $request, Company $company)

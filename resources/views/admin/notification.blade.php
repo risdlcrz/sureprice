@@ -10,21 +10,20 @@
                     <h6 class="m-0 font-weight-bold text-primary" style="font-size:1.2rem;">All Notifications</h6>
                 </div>
                 <div class="card-body">
-                    @if(isset($activities) && $activities->isNotEmpty())
+                    @if(isset($notifications) && $notifications->isNotEmpty())
                         <div class="list-group">
-                            @foreach($activities as $activity)
+                            @foreach($notifications as $notification)
                                 <div class="list-group-item list-group-item-action animated-fadein">
                                     <div class="d-flex w-100 justify-content-between">
                                         <h5 class="mb-1" style="font-weight:600; color:#198754;">
-                                            {{ $activity->user ? $activity->user->getDisplayNameAttribute() : 'System' }}
-                                            <span class="badge bg-{{ $activity->action_color }} ms-2" style="font-size:0.9em; border-radius:0.7em; box-shadow:0 1px 4px #38b6ff22;">{{ ucfirst($activity->action) }}</span>
+                                            {{ $notification->type ?? 'Notification' }}
+                                            <span class="badge bg-success ms-2" style="font-size:0.9em; border-radius:0.7em; box-shadow:0 1px 4px #38b6ff22;">New</span>
                                         </h5>
-                                        <small style="color:#6c757d; font-size:0.98em;">{{ $activity->created_at->diffForHumans() }}</small>
+                                        <small style="color:#6c757d; font-size:0.98em;">{{ $notification->created_at->diffForHumans() }}</small>
                                     </div>
-                                    <p class="mb-1" style="font-size:1.08em; color:#495057;">{{ $activity->description }}</p>
-                                    @if($activity->model_type && $activity->model_id)
-                                        <small style="color:#adb5bd;">Related: {{ class_basename($activity->model_type) }} #{{ $activity->model_id }}</small>
-                                    @endif
+                                    <p class="mb-1" style="font-size:1.08em; color:#495057;">
+                                        {{ is_array($notification->data) ? ($notification->data['message'] ?? json_encode($notification->data)) : $notification->data }}
+                                    </p>
                                 </div>
                             @endforeach
                         </div>

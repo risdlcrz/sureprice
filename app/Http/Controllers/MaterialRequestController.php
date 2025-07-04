@@ -175,6 +175,15 @@ class MaterialRequestController extends Controller
                 $purchaseRequest->save();
             }
 
+            $materialRequest->save();
+
+            \App\Models\Notification::create([
+                'notifiable_id' => auth()->id(),
+                'notifiable_type' => \App\Models\User::class,
+                'type' => 'Material Request',
+                'data' => ['message' => 'Your material request #' . $materialRequest->id . ' has been created.'],
+            ]);
+
             DB::commit();
             return redirect()->route('material-requests.show', $materialRequest)->with('success', 'Material request created successfully.');
 

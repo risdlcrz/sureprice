@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ config('app.name', 'GEOCON') }}</title>
+    <title>@yield('title', 'SurePrice')</title>
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -123,15 +123,58 @@
             .left-header { max-width: 100vw; min-width: 0; border-radius: 0; }
             .content { border-radius: 0; padding: 1rem; }
         }
+        .sidebar-collapsed .left-header {
+            min-width: 60px !important;
+            max-width: 60px !important;
+            padding: 2rem 0.5rem 2rem 0.5rem;
+            transition: all 0.2s;
+        }
+        .sidebar-collapsed .left-header .header-title,
+        .sidebar-collapsed .left-header .profile-container,
+        .sidebar-collapsed .left-header .nav-buttons,
+        .sidebar-collapsed .left-header .sidebar-bottom {
+            display: none !important;
+        }
+        .sidebar-collapsed .left-header .header-logo {
+            margin: 0 auto;
+            display: block;
+        }
+        .sidebar-collapsed .content {
+            padding-left: 1rem !important;
+        }
+        .sidebar-toggle-btn {
+            position: absolute;
+            top: 1rem;
+            right: -1.5rem;
+            z-index: 10;
+            background: #fff;
+            border-radius: 50%;
+            border: 1px solid #e0e0e0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: right 0.2s;
+        }
+        @media (max-width: 900px) {
+            .sidebar-toggle-btn { display: none; }
+        }
     </style>
 </head>
 <body>
-    <div class="app-container">
+    <div class="app-container" id="appContainer">
+        <!-- Sidebar Toggle Button -->
+        <button class="sidebar-toggle-btn d-none d-md-flex" id="sidebarToggleBtn" type="button" title="Toggle Sidebar">
+            <i class="fas fa-angle-double-left" id="sidebarToggleIcon"></i>
+        </button>
+
         <!-- Mobile Top Header -->
         <div class="mobile-topbar d-md-none d-flex">
             <div class="d-flex align-items-center gap-2">
-                <img src="{{ asset('images/gdc_logo.png') }}" alt="Logo" style="height: 40px;">
-                <strong>GEOCON</strong>
+                <img src="{{ asset('images/sureprice_logo.png') }}" alt="SurePrice Logo" style="height: 40px;">
             </div>
             <button class="btn btn-success" onclick="toggleMobileMenu()">
                 <i class="fas fa-bars"></i>
@@ -236,6 +279,26 @@
 
         window.PUSHER_APP_KEY = "{{ env('PUSHER_APP_KEY') }}";
         window.PUSHER_APP_CLUSTER = "{{ env('PUSHER_APP_CLUSTER') }}";
+
+        // Sidebar minimization logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const appContainer = document.getElementById('appContainer');
+            const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+            const sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
+            let collapsed = false;
+            sidebarToggleBtn.addEventListener('click', function() {
+                collapsed = !collapsed;
+                if (collapsed) {
+                    appContainer.classList.add('sidebar-collapsed');
+                    sidebarToggleIcon.classList.remove('fa-angle-double-left');
+                    sidebarToggleIcon.classList.add('fa-angle-double-right');
+                } else {
+                    appContainer.classList.remove('sidebar-collapsed');
+                    sidebarToggleIcon.classList.remove('fa-angle-double-right');
+                    sidebarToggleIcon.classList.add('fa-angle-double-left');
+                }
+            });
+        });
     </script>
 
     @auth

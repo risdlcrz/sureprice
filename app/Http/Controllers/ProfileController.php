@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use App\Models\Notification;
 
 class ProfileController extends Controller
 {
@@ -33,6 +34,14 @@ class ProfileController extends Controller
         }
 
         $request->user()->save();
+
+        // Add notification for profile update
+        Notification::create([
+            'notifiable_id' => $request->user()->id,
+            'notifiable_type' => \App\Models\User::class,
+            'type' => 'Profile Update',
+            'data' => ['message' => 'Your profile information was updated.'],
+        ]);
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }

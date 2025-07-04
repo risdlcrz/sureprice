@@ -1,6 +1,6 @@
 <div class="logo-title-container">
     <img src="{{ asset('images/gdc_logo.png') }}" alt="Company Logo" class="header-logo">
-    <div class="header-title">GEOCON</div>
+    <div class="header-title">SurePrice</div>
 </div>
 
 <!-- Profile Section -->

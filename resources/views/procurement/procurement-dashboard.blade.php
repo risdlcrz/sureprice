@@ -9,7 +9,7 @@
                 <!-- Purchase Requests Card -->
                 <div class="col">
                     <div class="card h-100 shadow-sm border-0 hover-shadow">
-                        <img src="{{ asset('images/ppimage4.jpg') }}" class="card-img-top rounded-top-4" alt="Purchase Requests" style="object-fit:cover; height:180px;">
+                        <img src="{{ asset('images/ppimage4.jpg') }}" class="card-img-top rounded-top-4" alt="Purchase Requests" style="object-fit:cover; height:180px;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                         <div class="card-body">
                             <h5 class="card-title fw-semibold">Purchase Requests</h5>
                             <p class="card-text text-muted">Create and manage purchase requests for materials and supplies.</p>
@@ -23,7 +23,7 @@
                 <!-- Purchase Orders Card -->
                 <div class="col">
                     <div class="card h-100 shadow-sm border-0 hover-shadow">
-                        <img src="{{ asset('images/ppimage5.jpg') }}" class="card-img-top rounded-top-4" alt="Purchase Orders" style="object-fit:cover; height:180px;">
+                        <img src="{{ asset('images/ppimage5.jpg') }}" class="card-img-top rounded-top-4" alt="Purchase Orders" style="object-fit:cover; height:180px;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                         <div class="card-body">
                             <h5 class="card-title fw-semibold">Purchase Orders</h5>
                             <p class="card-text text-muted">Create and manage purchase orders from approved purchase requests.</p>
@@ -37,7 +37,7 @@
                 <!-- Inquiries Card -->
                 <div class="col">
                     <div class="card h-100 shadow-sm border-0 hover-shadow">
-                        <img src="{{ asset('images/ppimage7.jpg') }}" class="card-img-top rounded-top-4" alt="Inquiries" style="object-fit:cover; height:180px;">
+                        <img src="{{ asset('images/ppimage7.jpg') }}" class="card-img-top rounded-top-4" alt="Inquiries" style="object-fit:cover; height:180px;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                         <div class="card-body">
                             <h5 class="card-title fw-semibold">Inquiries</h5>
                             <p class="card-text text-muted">Submit and track material inquiries and procurement requests.</p>
@@ -51,7 +51,7 @@
                 <!-- Quotation Management Card -->
                 <div class="col">
                     <div class="card h-100 shadow-sm border-0 hover-shadow">
-                        <img src="{{ asset('images/ppimage8.jpg') }}" class="card-img-top rounded-top-4" alt="Quotation Management" style="object-fit:cover; height:180px;">
+                        <img src="{{ asset('images/ppimage8.jpg') }}" class="card-img-top rounded-top-4" alt="Quotation Management" style="object-fit:cover; height:180px;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                         <div class="card-body">
                             <h5 class="card-title fw-semibold">Quotation Management</h5>
                             <p class="card-text text-muted">Create and manage RFQs, compare supplier quotations, and track responses.</p>
@@ -65,7 +65,7 @@
                 <!-- Materials Management Card -->
                 <div class="col">
                     <div class="card h-100 shadow-sm border-0 hover-shadow">
-                        <img src="{{ asset('images/ppimage9.jpg') }}" class="card-img-top rounded-top-4" alt="Materials Management" style="object-fit:cover; height:180px;">
+                        <img src="{{ asset('images/ppimage9.jpg') }}" class="card-img-top rounded-top-4" alt="Materials Management" style="object-fit:cover; height:180px;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                         <div class="card-body">
                             <h5 class="card-title fw-semibold">Materials Management</h5>
                             <p class="card-text text-muted">Manage materials inventory, specifications, and pricing information.</p>
@@ -79,7 +79,7 @@
                 <!-- Supplier Management Card -->
                 <div class="col">
                     <div class="card h-100 shadow-sm border-0 hover-shadow">
-                        <img src="{{ asset('images/ppimage10.png') }}" class="card-img-top rounded-top-4" alt="Supplier Management" style="object-fit:cover; height:180px;">
+                        <img src="{{ asset('images/ppimage10.png') }}" class="card-img-top rounded-top-4" alt="Supplier Management" style="object-fit:cover; height:180px;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                         <div class="card-body">
                             <h5 class="card-title fw-semibold">Supplier Management</h5>
                             <p class="card-text text-muted">Manage supplier information, relationships, performance tracking, and send invitations to new suppliers.</p>
@@ -94,7 +94,7 @@
                 <!-- Material Requests Card -->
                 <div class="col">
                     <div class="card h-100 shadow-sm border-0 hover-shadow">
-                        <img src="{{ asset('images/ppimage6.jpg') }}" class="card-img-top rounded-top-4" alt="Material Requests" style="object-fit:cover; height:180px;">
+                        <img src="{{ asset('images/ppimage6.jpg') }}" class="card-img-top rounded-top-4" alt="Material Requests" style="object-fit:cover; height:180px;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                         <div class="card-body">
                             <h5 class="card-title fw-semibold">Material Requests</h5>
                             <p class="card-text text-muted">Request materials, check inventory, and trigger procurement if needed.</p>
@@ -113,7 +113,7 @@
                 <div class="card h-100 shadow-sm border-0 hover-shadow">
                     <div class="row g-0 align-items-center">
                         <div class="col-md-3">
-                            <img src="{{ asset('images/historydash1.svg') }}" class="card-img-top rounded-top-4" alt="Past Transactions" style="object-fit:cover; height:180px;">
+                            <img src="{{ asset('images/historydash1.svg') }}" class="card-img-top rounded-top-4" alt="Past Transactions" style="object-fit:cover; height:180px;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                         </div>
                         <div class="col-md-9">
                             <div class="card-body">

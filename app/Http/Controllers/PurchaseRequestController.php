@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\SupplierSelectionService;
 use App\Models\Activity;
+use App\Models\Notification;
 
 class PurchaseRequestController extends Controller
 {
@@ -208,6 +209,13 @@ class PurchaseRequestController extends Controller
                 'model_type' => PurchaseRequest::class,
                 'model_id' => $purchaseRequest->id
             ]);
+            // Create notification
+            Notification::create([
+                'notifiable_id' => auth()->id(),
+                'notifiable_type' => \App\Models\User::class,
+                'type' => 'Purchase Request',
+                'data' => ['message' => 'Your purchase request #' . $purchaseRequest->request_number . ' has been created.'],
+            ]);
             return redirect()->route('purchase-requests.show', $purchaseRequest)
                 ->with('success', 'Purchase request created successfully.');
         } catch (\Exception $e) {
@@ -360,6 +368,13 @@ class PurchaseRequestController extends Controller
 
         try {
             $purchaseRequest->approveByAdmin();
+            // Create notification
+            Notification::create([
+                'notifiable_id' => $purchaseRequest->requested_by,
+                'notifiable_type' => \App\Models\User::class,
+                'type' => 'Purchase Request Approved',
+                'data' => ['message' => 'Your purchase request #' . $purchaseRequest->request_number . ' has been approved.'],
+            ]);
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }

@@ -332,6 +332,11 @@ input.form-control:focus, select.form-control:focus {
                                                      alt="{{ $material->name }}"
                                                      class="img-thumbnail mr-2 mb-2 mb-md-0"
                                                      style="width: 150px; height: 150px; object-fit: contain; background: #fff; border: 2px solid #e0e0e0;">
+                                            @else
+                                                <img src="{{ asset('images/placeholder.png') }}"
+                                                     alt="No Image"
+                                                     class="img-thumbnail mr-2 mb-2 mb-md-0"
+                                                     style="width: 150px; height: 150px; object-fit: contain; background: #fff; border: 2px solid #e0e0e0;">
                                             @endif
                                             <div class="text-center text-md-start">
                                                 <strong>{{ $material->name }}</strong>
