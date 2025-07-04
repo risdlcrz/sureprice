@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const form = e.target;
         const params = new URLSearchParams(new FormData(form)).toString();
-        fetch('/material-requests/recommend-suppliers-for-material?' + params, {
+        fetch('material-requests/recommend-suppliers-for-material?' + params, {
             method: 'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
