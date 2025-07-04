@@ -114,7 +114,15 @@ class SupplierController extends Controller
     public function show(Supplier $supplier)
     {
         $supplier->load(['materials.category']);
-        return view('admin.suppliers.show', compact('supplier'));
+        $latestOrder = \DB::table('order_evaluations')
+            ->where('supplier_id', $supplier->id)
+            ->orderByDesc('order_date')
+            ->first();
+        $avgOrder = \DB::table('order_evaluations')
+            ->where('supplier_id', $supplier->id)
+            ->selectRaw('AVG(ontime_deliveries) as ontime_deliveries, AVG(total_deliveries) as total_deliveries, AVG(defective_units) as defective_units, AVG(total_units) as total_units, AVG(actual_cost) as actual_cost, AVG(estimated_cost) as estimated_cost')
+            ->first();
+        return view('admin.suppliers.show', compact('supplier', 'latestOrder', 'avgOrder'));
     }
 
     // List suppliers with pending updates

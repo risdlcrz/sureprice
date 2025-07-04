@@ -97,18 +97,16 @@ class MaterialController extends Controller
     {
         // Get all materials
         $materials = Material::orderBy('name')->get();
-        // For each material, build price history from quotations
+        // For each material, build price history from material_supplier_price_histories
         foreach ($materials as $material) {
-            // Get all quotation response items for this material, grouped by date (use created_at)
-            $history = \App\Models\QuotationResponseItem::where('material_id', $material->id)
-                ->orderBy('created_at')
+            $history = \DB::table('material_supplier_price_histories')
+                ->where('material_id', $material->id)
+                ->orderBy('date')
                 ->get()
-                ->groupBy(function($item) {
-                    return $item->created_at->format('Y-m-d');
-                })
+                ->groupBy('date')
                 ->map(function($items) {
-                    // Use average unit price per day if multiple
-                    return round($items->avg('unit_price'), 2);
+                    // Use average price per day if multiple
+                    return round(collect($items)->avg('price'), 2);
                 });
             $material->price_history_for_analysis = $history;
             $material->forecasted_price = $this->forecastPriceFromArray($history->all());

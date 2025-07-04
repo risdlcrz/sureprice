@@ -15,6 +15,10 @@ return new class extends Migration
             $table->integer('ontime_deliveries')->default(0);
             $table->decimal('average_defect_rate', 5, 2)->default(0);
             $table->decimal('average_cost_variance', 5, 2)->default(0);
+            $table->integer('total_units')->default(0);
+            $table->integer('defective_units')->default(0);
+            $table->decimal('actual_cost', 12, 2)->default(0);
+            $table->decimal('estimated_cost', 12, 2)->default(0);
             $table->timestamps();
         });
     }

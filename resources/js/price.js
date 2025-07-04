@@ -55,3 +55,50 @@ const ctx = document.getElementById('priceTrendChart').getContext('2d');
       el.textContent = priceChange;
       el.style.color = priceChange < 0 ? 'green' : 'red';
     });
+
+function fetchAndRenderPriceHistory(materialId, supplierId = null) {
+  let url = '/price-analysis/history/' + materialId;
+  if (supplierId) url += '/' + supplierId;
+  fetch(url)
+    .then(response => response.json())
+    .then(history => {
+      if (!history.length) return;
+      const labels = history.map(item => item.date);
+      const prices = history.map(item => item.price);
+      // Update chart
+      if (window.priceTrendChart) {
+        window.priceTrendChart.data.labels = labels;
+        window.priceTrendChart.data.datasets[0].data = prices;
+        window.priceTrendChart.update();
+      } else {
+        const ctx = document.getElementById('priceTrendChart').getContext('2d');
+        window.priceTrendChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Price History',
+              data: prices,
+              borderColor: '#007bff',
+              backgroundColor: 'rgba(0, 123, 255, 0.1)',
+              tension: 0.4,
+              fill: true,
+              pointRadius: 6,
+            }]
+          },
+          options: {
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: false,
+                ticks: { stepSize: 50 }
+              }
+            }
+          }
+        });
+      }
+      // Optionally update table or forecast here
+    });
+}
+// Example usage: fetchAndRenderPriceHistory(1, 2); // materialId=1, supplierId=2
+// Call this function when the page loads or when a material/supplier is selected

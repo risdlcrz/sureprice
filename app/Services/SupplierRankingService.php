@@ -48,24 +48,33 @@ class SupplierRankingService
 
     protected function calculateFinalScore($evaluation, $metrics)
     {
-        // Calculate objective metrics
-        $deliveryObj = ($metrics->ontime_deliveries / max(1, $metrics->total_deliveries)) * 100;
-        $qualityObj = (1 - ($metrics->defective_units / max(1, $metrics->total_units))) * 100;
-        $costObj = (($metrics->actual_cost - $metrics->estimated_cost) / max(1, $metrics->estimated_cost)) * 100;
-        
-        // Combine subjective and objective scores
+        // Normalize objective metrics to 0-5 scale
+        $deliveryObj = ($metrics->total_deliveries > 0)
+            ? min(max(($metrics->ontime_deliveries / $metrics->total_deliveries) * 5, 0), 5)
+            : 0;
+        $qualityObj = ($metrics->total_units > 0)
+            ? min(max((1 - ($metrics->defective_units / $metrics->total_units)) * 5, 0), 5)
+            : 0;
+        $costObj = ($metrics->estimated_cost > 0)
+            ? min(max((1 - abs(($metrics->actual_cost - $metrics->estimated_cost) / $metrics->estimated_cost)) * 5, 0), 5)
+            : 0;
+
+        // Combine subjective and objective scores (all 0-5)
         $deliveryScore = ($evaluation->delivery_speed_score * 0.5 + $deliveryObj * 0.5);
         $qualityScore = ($evaluation->quality_score * 0.5 + $qualityObj * 0.5);
-        $costScore = ($evaluation->cost_variance_score * 0.5 + (100 - abs($costObj)) * 0.5);
-        
-        return (
+        $costScore = ($evaluation->cost_variance_score * 0.5 + $costObj * 0.5);
+
+        // Weighted sum, all components 0-5, so result is 0-5
+        $score = (
             $this->weights['engagement'] * $evaluation->engagement_score +
             $this->weights['delivery'] * $deliveryScore +
             $this->weights['performance'] * $evaluation->performance_score +
             $this->weights['quality'] * $qualityScore +
             $this->weights['cost'] * $costScore +
             $this->weights['sustainability'] * $evaluation->sustainability_score
-        ) / 5;
+        );
+        // Ensure score is in 0-5 range
+        return min(max($score, 0), 5);
     }
 
     public function generateTemplate()

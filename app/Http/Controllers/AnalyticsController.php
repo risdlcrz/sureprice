@@ -84,34 +84,27 @@ class AnalyticsController extends Controller
         $materials = Material::orderBy('name')->get();
         $selectedMaterialIds = $request->input('material_ids', []);
 
-        $priceDataQuery = PurchaseOrderItem::with('material', 'purchaseOrder')
-            ->whereHas('purchaseOrder');
-
+        $query = \DB::table('material_supplier_price_histories');
         if (!empty($selectedMaterialIds)) {
-            $priceDataQuery->whereIn('material_id', $selectedMaterialIds);
+            $query->whereIn('material_id', $selectedMaterialIds);
         } else {
             // By default, show no data. User must select materials.
-            $priceDataQuery->whereRaw('1 = 0');
+            $query->whereRaw('1 = 0');
         }
+        $histories = $query->orderBy('date')->get();
 
-        $priceData = $priceDataQuery
-            ->get()
-            ->groupBy('material.name')
-            ->map(function ($items, $materialName) {
-                return [
-                    'label' => $materialName,
-                    'data' => $items->map(function ($item) {
-                        if ($item->purchaseOrder && $item->purchaseOrder->created_at) {
-                            return [
-                                'x' => $item->purchaseOrder->created_at->format('Y-m-d'),
-                                'y' => $item->unit_price
-                            ];
-                        }
-                        return null;
-                    })->filter()->sortBy('x')->values()
-                ];
-            })
-            ->values();
+        $priceData = collect($histories)->groupBy('material_id')->map(function ($items, $materialId) use ($materials) {
+            $material = $materials->firstWhere('id', $materialId);
+            return [
+                'label' => $material ? $material->name : 'Unknown',
+                'data' => collect($items)->map(function ($item) {
+                    return [
+                        'x' => $item->date,
+                        'y' => $item->price
+                    ];
+                })->sortBy('x')->values()
+            ];
+        })->values();
 
         return view('procurement.analytics.price-analysis', [
             'priceData' => $priceData,
