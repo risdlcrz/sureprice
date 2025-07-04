@@ -23,13 +23,8 @@
     <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css" rel="stylesheet">
     
     <!-- Consolidated Vite assets - load app.js only once -->
-    @vite([
-        'resources/css/app.css',
-        'resources/css/header.css',
-        'resources/css/login.css',
-        'resources/css/messages.css',
-        'resources/js/app.js',
-    ])
+    <link rel="stylesheet" href="{{ asset('resources/css/app.css') }}">
+    <script src="{{ asset('resources/js/app.js') }}"></script>
     <!-- Direct link to dbadmin.css for admin dashboard -->
     <link rel="stylesheet" href="{{ asset('resources/css/dbadmin.css') }}">
     <!-- Additional Styles -->
