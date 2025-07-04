@@ -10,12 +10,23 @@ class CompanySeeder extends Seeder
 {
     public function run(): void
     {
-        
-        // Get company users
-        $clientUsers = User::where('user_type', 'client')->get();
-        $supplierUsers = User::where('user_type', 'supplier')->get();
+        // DEMO/TEST DATA: 50 companies (25 clients, 25 suppliers)
+        $companyCount = 50;
+        $cities = ['Quezon City', 'Manila', 'Makati', 'Pasig', 'Taguig', 'Cebu City', 'Davao City', 'Baguio', 'Iloilo City', 'Cagayan de Oro', 'San Juan', 'Mandaluyong', 'Paranaque', 'Las Pinas', 'Valenzuela', 'Caloocan', 'Marikina', 'Muntinlupa', 'Navotas', 'Malabon'];
+        $provinces = ['Metro Manila', 'Cebu', 'Davao del Sur', 'Benguet', 'Iloilo', 'Misamis Oriental', 'Pampanga', 'Batangas', 'Laguna', 'Bulacan'];
+        $businessSizes = ['Small', 'Medium', 'Large'];
+        $paymentTerms = ['30 days', '45 days', '60 days', 'COD', 'EOM'];
+        $supplierTypes = ['Distributor', 'Manufacturer', 'Retailer', 'Wholesaler', 'Other'];
+        $clientCompanyNames = [];
+        $supplierCompanyNames = [];
+        for ($i = 1; $i <= 25; $i++) {
+            $clientCompanyNames[] = 'Client Company ' . $i;
+            $supplierCompanyNames[] = 'Supplier Company ' . $i;
+        }
 
-        $companyCount = 20;
+        // Get company users
+        $clientUsers = User::where('user_type', 'company')->where('role', 'client')->get();
+        $supplierUsers = User::where('user_type', 'company')->where('role', 'supplier')->get();
 
         // Create client companies
         for ($i = 0; $i < $companyCount / 2; $i++) {

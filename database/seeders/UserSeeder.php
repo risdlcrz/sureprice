@@ -74,10 +74,9 @@ class UserSeeder extends Seeder
         }
         */
 
-        // More realistic Filipino names and emails
-        $firstNames = ['Juan', 'Maria', 'Jose', 'Ana', 'Pedro', 'Luz', 'Carlos', 'Rosa', 'Antonio', 'Carmen', 'Miguel', 'Isabel', 'Manuel', 'Teresa', 'Francisco', 'Gloria', 'Ramon', 'Elena', 'Roberto', 'Patricia'];
-        $lastNames = ['Dela Cruz', 'Santos', 'Reyes', 'Garcia', 'Mendoza', 'Torres', 'Gonzales', 'Ramos', 'Lopez', 'Aquino', 'Cruz', 'Bautista', 'Castro', 'Flores', 'Morales', 'Gutierrez', 'Navarro', 'Domingo', 'Silva', 'Padilla'];
-
+        // More realistic Filipino names and emails (DEMO/TEST DATA)
+        $firstNames = ['Juan', 'Maria', 'Jose', 'Ana', 'Pedro', 'Luz', 'Carlos', 'Rosa', 'Antonio', 'Carmen', 'Miguel', 'Isabel', 'Manuel', 'Teresa', 'Francisco', 'Gloria', 'Ramon', 'Elena', 'Roberto', 'Patricia', 'Andres', 'Emilio', 'Estrella', 'Julio', 'Ligaya', 'Mariano', 'Nicanor', 'Pilar', 'Salvador', 'Victoria'];
+        $lastNames = ['Dela Cruz', 'Santos', 'Reyes', 'Garcia', 'Mendoza', 'Torres', 'Gonzales', 'Ramos', 'Lopez', 'Aquino', 'Cruz', 'Bautista', 'Castro', 'Flores', 'Morales', 'Gutierrez', 'Navarro', 'Domingo', 'Silva', 'Padilla', 'Soriano', 'Villanueva', 'Aguilar', 'Salazar', 'Rosales', 'Valdez', 'Santiago', 'Pascual', 'Rivera', 'Ocampo'];
         // Create company users (clients and suppliers)
         $companyCount = 50;
         for ($i = 1; $i <= $companyCount; $i++) {
@@ -85,7 +84,6 @@ class UserSeeder extends Seeder
             $lastName = $lastNames[array_rand($lastNames)];
             $userType = $i <= 25 ? 'client' : 'supplier';
             $role = $userType;
-            $status = 'active';
             $email = strtolower($firstName) . '.' . strtolower(str_replace(' ', '', $lastName)) . '.company' . $i . '@example.com';
             $username = strtolower($firstName) . '_' . strtolower(str_replace(' ', '', $lastName)) . '_company_' . $i;
             User::updateOrCreate([
@@ -94,10 +92,9 @@ class UserSeeder extends Seeder
                 'name' => $firstName . ' ' . $lastName,
                 'username' => $username,
                 'email' => $email,
-                'user_type' => $userType,
+                'user_type' => 'company',
                 'role' => $role,
-                'status' => $status,
-                'password' => Hash::make('password123'),
+                'password' => Hash::make('PASS_123'), // DEMO/TEST PASSWORD
                 'email_verified_at' => now(),
             ]);
         }

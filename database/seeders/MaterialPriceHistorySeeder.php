@@ -26,5 +26,6 @@ class MaterialPriceHistorySeeder extends Seeder
             }
         }
         $this->command->info('Material price history seeded successfully!');
+        // DEMO/TEST DATA: All seeded price histories are for testing/demo purposes
     }
 } 

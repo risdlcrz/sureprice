@@ -13,6 +13,7 @@ class MaterialSupplierSeeder extends Seeder
     {
         $materials = \App\Models\Material::all();
         $suppliers = \App\Models\Supplier::all();
+        // DEMO/TEST DATA: All seeded supplier-material links are for testing/demo purposes
         foreach ($materials as $material) {
             foreach ($suppliers as $supplier) {
                 $material->suppliers()->syncWithoutDetaching([

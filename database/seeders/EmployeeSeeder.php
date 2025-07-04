@@ -12,11 +12,11 @@ class EmployeeSeeder extends Seeder
 {
     public function run(): void
     {
-        // More realistic Filipino data
-        $employeeCount = 50;
-        $firstNames = ['Juan', 'Maria', 'Jose', 'Ana', 'Pedro', 'Luz', 'Carlos', 'Rosa', 'Antonio', 'Carmen', 'Miguel', 'Isabel', 'Manuel', 'Teresa', 'Francisco', 'Gloria', 'Ramon', 'Elena', 'Roberto', 'Patricia'];
-        $lastNames = ['Dela Cruz', 'Santos', 'Reyes', 'Garcia', 'Mendoza', 'Torres', 'Gonzales', 'Ramos', 'Lopez', 'Aquino', 'Cruz', 'Bautista', 'Castro', 'Flores', 'Morales', 'Gutierrez', 'Navarro', 'Domingo', 'Silva', 'Padilla'];
-        $roles = ['procurement', 'warehousing', 'project_manager', 'engineer', 'accounting'];
+        // More realistic Filipino data (DEMO/TEST DATA)
+        $employeeCount = 60;
+        $firstNames = ['Juan', 'Maria', 'Jose', 'Ana', 'Pedro', 'Luz', 'Carlos', 'Rosa', 'Antonio', 'Carmen', 'Miguel', 'Isabel', 'Manuel', 'Teresa', 'Francisco', 'Gloria', 'Ramon', 'Elena', 'Roberto', 'Patricia', 'Andres', 'Emilio', 'Estrella', 'Julio', 'Ligaya', 'Mariano', 'Nicanor', 'Pilar', 'Salvador', 'Victoria'];
+        $lastNames = ['Dela Cruz', 'Santos', 'Reyes', 'Garcia', 'Mendoza', 'Torres', 'Gonzales', 'Ramos', 'Lopez', 'Aquino', 'Cruz', 'Bautista', 'Castro', 'Flores', 'Morales', 'Gutierrez', 'Navarro', 'Domingo', 'Silva', 'Padilla', 'Soriano', 'Villanueva', 'Aguilar', 'Salazar', 'Rosales', 'Valdez', 'Santiago', 'Pascual', 'Rivera', 'Ocampo'];
+        $roles = ['procurement', 'warehousing', 'contractor'];
         $cities = ['Quezon City', 'Manila', 'Makati', 'Pasig', 'Taguig', 'Cebu City', 'Davao City', 'Baguio', 'Iloilo City', 'Cagayan de Oro'];
         $provinces = ['Metro Manila', 'Cebu', 'Davao del Sur', 'Benguet', 'Iloilo', 'Misamis Oriental'];
         for ($i = 0; $i < $employeeCount; $i++) {
@@ -33,7 +33,7 @@ class EmployeeSeeder extends Seeder
                     'email' => $email,
                     'user_type' => 'employee',
                     'role' => $role,
-                    'password' => Hash::make('password123'),
+                    'password' => Hash::make('PASS_123'), // DEMO/TEST PASSWORD
                     'email_verified_at' => now(),
                 ]
             );
@@ -57,6 +57,6 @@ class EmployeeSeeder extends Seeder
             );
         }
 
-        $this->command->info('50 Employees seeded successfully!');
+        $this->command->info('60 Employees seeded successfully!');
     }
 } 

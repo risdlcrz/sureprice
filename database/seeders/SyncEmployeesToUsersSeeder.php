@@ -21,7 +21,7 @@ class SyncEmployeesToUsersSeeder extends Seeder
                     'name' => $employee->first_name . ' ' . $employee->last_name,
                     'email' => $employee->email,
                     'username' => $employee->username,
-                    'password' => Hash::make(Str::random(12)),
+                    'password' => Hash::make('PASS_123'), // DEMO/TEST PASSWORD
                     'role' => $employee->role,
                     'user_type' => 'employee',
                     'force_password_change' => true,
