@@ -82,4 +82,31 @@ class WarehouseStockSeeder extends Seeder
             return rand(20, 100); // Default
         }
     }
+
+    /**
+     * Generate realistic minimum stock based on material type
+     */
+    private function generateMinimumStock(Material $material): int
+    {
+        $materialName = strtolower($material->name);
+        if (str_contains($materialName, 'paint') || str_contains($materialName, 'primer')) {
+            return rand(10, 30); // Liters
+        } elseif (str_contains($materialName, 'cement') || str_contains($materialName, 'concrete')) {
+            return rand(20, 50); // Bags
+        } elseif (str_contains($materialName, 'steel') || str_contains($materialName, 'metal')) {
+            return rand(5, 20); // Pieces/meters
+        } elseif (str_contains($materialName, 'lumber') || str_contains($materialName, 'wood')) {
+            return rand(10, 30); // Pieces
+        } elseif (str_contains($materialName, 'tile') || str_contains($materialName, 'vinyl')) {
+            return rand(20, 50); // Square meters
+        } elseif (str_contains($materialName, 'pipe') || str_contains($materialName, 'fitting')) {
+            return rand(10, 30); // Pieces/meters
+        } elseif (str_contains($materialName, 'wire') || str_contains($materialName, 'electrical')) {
+            return rand(20, 50); // Meters
+        } elseif (str_contains($materialName, 'sandpaper') || str_contains($materialName, 'tape')) {
+            return rand(10, 30); // Pieces/rolls
+        } else {
+            return rand(5, 20); // Default
+        }
+    }
 } 

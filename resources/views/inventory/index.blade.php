@@ -190,56 +190,46 @@
                                 <tr>
                                     <th>Material</th>
                                     <th>Category</th>
-                                    <th>Quantity</th>
+                                    @foreach($warehouses as $warehouse)
+                                        <th>{{ $warehouse->name }} Stock</th>
+                                    @endforeach
+                                    <th>Total Quantity</th>
                                     <th>Unit</th>
-                                    <th>Location</th>
                                     <th>Status</th>
-                                    <th>Last Restock</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($inventories as $inventory)
+                                @foreach($materials as $material)
                                 <tr>
-                                    <td>{{ $inventory->material->name }}</td>
-                                    <td>{{ $inventory->material->category->name }}</td>
-                                    <td>{{ $inventory->quantity }}</td>
-                                    <td>{{ $inventory->unit }}</td>
-                                    <td>{{ $inventory->location ?? 'N/A' }}</td>
+                                    <td>{{ $material->name }}</td>
+                                    <td>{{ $material->category->name ?? '-' }}</td>
+                                    @foreach($warehouses as $warehouse)
+                                        <td>{{ $material->warehouse_stocks[$warehouse->id] ?? 0 }}</td>
+                                    @endforeach
+                                    <td>{{ $material->total_stock }}</td>
+                                    <td>{{ $material->unit }}</td>
                                     <td>
-                                        @if($inventory->status)
-                                            @php
-                                                $statusClass = '';
-                                                switch ($inventory->status) {
-                                                    case 'active':
-                                                        $statusClass = 'bg-success';
-                                                        break;
-                                                    case 'inactive':
-                                                        $statusClass = 'bg-warning';
-                                                        break;
-                                                    case 'obsolete':
-                                                    case 'danger':
-                                                        $statusClass = 'bg-danger';
-                                                        break;
-                                                }
-                                            @endphp
-                                            <span class="badge inventory-status-badge {{ $statusClass }}">
-                                                {{ ucfirst($inventory->status) }}
-                                            </span>
+                                        @php
+                                            $threshold = $material->minimum_stock ?? 0;
+                                        @endphp
+                                        @if($material->total_stock <= 0)
+                                            <span class="badge bg-danger">Out of Stock</span>
+                                        @elseif($material->total_stock < $threshold)
+                                            <span class="badge bg-warning text-dark">Low Stock</span>
                                         @else
-                                            N/A
+                                            <span class="badge bg-success">Active</span>
                                         @endif
                                     </td>
-                                    <td>{{ $inventory->last_restock_date ? $inventory->last_restock_date->format('M d, Y') : 'N/A' }}</td>
                                     <td>
                                         <div class="btn-group">
-                                            <a href="{{ route('purchase-requests.create', ['material_id' => $inventory->material->id]) }}" class="btn btn-sm btn-success" title="Request Restock">
+                                            <a href="{{ route('purchase-requests.create', ['material_id' => $material->id]) }}" class="btn btn-sm btn-success" title="Request Restock">
                                                 <i class="fas fa-plus"></i>
                                             </a>
-                                            <a href="{{ route('inventory.edit', $inventory) }}" class="btn btn-sm btn-primary">
+                                            <a href="{{ route('inventory.edit', $material) }}" class="btn btn-sm btn-primary">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <form action="{{ route('inventory.destroy', $inventory) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('inventory.destroy', $material) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this item?')">
@@ -255,7 +245,7 @@
                     </div>
 
                     <div class="mt-4">
-                        {{ $inventories->links() }}
+                        {{ $materials->links() }}
                     </div>
                 </div>
             </div>

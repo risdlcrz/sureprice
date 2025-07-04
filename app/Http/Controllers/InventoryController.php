@@ -4,23 +4,57 @@ namespace App\Http\Controllers;
 
 use App\Models\Inventory;
 use App\Models\Material;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class InventoryController extends Controller
 {
     public function index()
     {
-        $inventories = Inventory::with(['material.category'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $perPage = 10;
+        $page = request()->get('page', 1);
 
-        $lowStockItems = Inventory::lowStock()->count();
-        $expiringItems = Inventory::expiring()->count();
-        $totalItems = Inventory::count();
+        $warehouses = Warehouse::all();
 
-        return view('inventory.index', compact('inventories', 'lowStockItems', 'expiringItems', 'totalItems'));
+        $materials = \App\Models\Material::with('category', 'stocks')
+            ->get()
+            ->map(function ($material) use ($warehouses) {
+                $totalStock = $material->stocks->sum('current_stock');
+                $material->total_stock = $totalStock;
+                // Add per-warehouse stock
+                $material->warehouse_stocks = $warehouses->mapWithKeys(function ($warehouse) use ($material) {
+                    $stock = $material->stocks->where('warehouse_id', $warehouse->id)->sum('current_stock');
+                    return [$warehouse->id => $stock];
+                });
+                return $material;
+            });
+
+        $lowStockItems = $materials->filter(function ($material) {
+            $threshold = $material->minimum_stock ?? 0;
+            return $material->total_stock < $threshold;
+        })->count();
+        $totalItems = $materials->count();
+        $expiringItems = 0; // Not tracked in Stock table, keep as 0 or implement if needed
+
+        // Paginate the collection manually
+        $paginatedMaterials = new LengthAwarePaginator(
+            $materials->forPage($page, $perPage),
+            $materials->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
+        return view('inventory.index', [
+            'materials' => $paginatedMaterials,
+            'warehouses' => $warehouses,
+            'lowStockItems' => $lowStockItems,
+            'expiringItems' => $expiringItems,
+            'totalItems' => $totalItems,
+        ]);
     }
 
     public function create()

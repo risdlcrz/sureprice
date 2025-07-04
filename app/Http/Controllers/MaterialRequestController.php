@@ -81,50 +81,52 @@ class MaterialRequestController extends Controller
                 $requestedQty = $itemData['quantity'];
                 $remainingQty = $requestedQty;
 
-                $mainWarehouse = Warehouse::where('name', 'Main Warehouse')->first();
-                $secondWarehouse = Warehouse::where('name', '2nd Warehouse')->first();
-
-                // Try to fulfill from Main Warehouse first
-                $mainStock = $mainWarehouse ? $mainWarehouse->stocks()->where('material_id', $material->id)->first() : null;
-                $fulfilledFromMain = 0;
-                if ($mainStock && $mainStock->current_stock > 0) {
-                    $fromMain = min($remainingQty, $mainStock->current_stock);
-                    if ($fromMain > 0) {
-                    $materialRequest->items()->create([
-                        'material_id' => $material->id,
-                            'warehouse_id' => $mainWarehouse->id,
-                            'quantity' => $fromMain,
-                        'unit' => $material->unit,
-                            'fulfilled_quantity' => 0, // No deduction yet
-                        ]);
-                        $remainingQty -= $fromMain;
-                        $fulfilledFromMain = $fromMain;
+                // Try to fulfill from the requested warehouse first
+                $requestedWarehouseId = $request->input('warehouse_id'); // You may need to adjust this if multiple warehouses can be requested
+                $requestedWarehouse = $requestedWarehouseId ? Warehouse::find($requestedWarehouseId) : null;
+                $fulfilledFromRequested = 0;
+                if ($requestedWarehouse) {
+                    $requestedStock = $requestedWarehouse->stocks()->where('material_id', $material->id)->first();
+                    if ($requestedStock && $requestedStock->current_stock > 0) {
+                        $fromRequested = min($remainingQty, $requestedStock->current_stock);
+                        if ($fromRequested > 0) {
+                            $materialRequest->items()->create([
+                                'material_id' => $material->id,
+                                'warehouse_id' => $requestedWarehouse->id,
+                                'quantity' => $fromRequested,
+                                'unit' => $material->unit,
+                                'fulfilled_quantity' => 0,
+                            ]);
+                            $remainingQty -= $fromRequested;
+                            $fulfilledFromRequested = $fromRequested;
+                        }
                     }
                 }
 
-                // If not enough, try to fulfill from 2nd Warehouse
-                $fulfilledFromSecond = 0;
-                if ($remainingQty > 0 && $secondWarehouse) {
-                    $secondStock = $secondWarehouse->stocks()->where('material_id', $material->id)->first();
-                    if ($secondStock && $secondStock->current_stock > 0) {
-                        $fromSecond = min($remainingQty, $secondStock->current_stock);
-                        if ($fromSecond > 0) {
+                // If not enough, try to fulfill from other warehouses
+                $fulfilledFromOther = 0;
+                if ($remainingQty > 0) {
+                    $otherWarehouses = Warehouse::where('id', '!=', $requestedWarehouseId)->get();
+                    foreach ($otherWarehouses as $otherWarehouse) {
+                        $otherStock = $otherWarehouse->stocks()->where('material_id', $material->id)->first();
+                        if ($otherStock && $otherStock->current_stock >= $remainingQty) {
                             $materialRequest->items()->create([
                                 'material_id' => $material->id,
-                                'warehouse_id' => $secondWarehouse->id,
-                                'quantity' => $fromSecond,
+                                'warehouse_id' => $otherWarehouse->id,
+                                'quantity' => $remainingQty,
                                 'unit' => $material->unit,
-                                'fulfilled_quantity' => 0, // No deduction yet
+                                'fulfilled_quantity' => 0,
                             ]);
-                            $remainingQty -= $fromSecond;
-                            $fulfilledFromSecond = $fromSecond;
+                            $fulfilledFromOther = $remainingQty;
+                            $remainingQty = 0;
+                            break;
                         }
                     }
                 }
 
                 // If still not enough and user wants to create purchase request, add to purchase request
                 if ($remainingQty > 0 && $request->boolean('create_purchase_request')) {
-                     $materialRequest->items()->create([
+                    $materialRequest->items()->create([
                         'material_id' => $material->id,
                         'warehouse_id' => null,
                         'quantity' => $remainingQty,
