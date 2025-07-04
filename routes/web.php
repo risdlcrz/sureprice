@@ -408,7 +408,7 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin/suppliers')->
 });
 
 // Admin Material Routes
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('materials', AdminMaterialController::class);
     Route::post('materials/{material}/suppliers', [AdminMaterialController::class, 'updateSuppliers'])->name('materials.suppliers.update');
 });

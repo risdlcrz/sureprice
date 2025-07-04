@@ -63,9 +63,9 @@
         <a href="{{ route('information-management.index') }}" class="btn">
             <i class="fas fa-folder-open"></i>Information Management
         </a>
-        <a href="{{ route('admin.suppliers.pending-updates') }}" class="btn">
+        {{-- <a href="{{ route('admin.suppliers.pending-updates') }}" class="btn">
             <i class="fas fa-user-clock"></i>Supplier Profile Updates
-        </a>
+        </a> --}}
         @endif
         <a href="{{ route('admin.notification') }}" class="btn">
             <i class="fas fa-bell"></i>Notification Hub

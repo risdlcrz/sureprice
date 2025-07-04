@@ -12,14 +12,19 @@ class EmployeeSeeder extends Seeder
 {
     public function run(): void
     {
-
+        // More realistic Filipino data
+        $employeeCount = 50;
+        $firstNames = ['Juan', 'Maria', 'Jose', 'Ana', 'Pedro', 'Luz', 'Carlos', 'Rosa', 'Antonio', 'Carmen', 'Miguel', 'Isabel', 'Manuel', 'Teresa', 'Francisco', 'Gloria', 'Ramon', 'Elena', 'Roberto', 'Patricia'];
+        $lastNames = ['Dela Cruz', 'Santos', 'Reyes', 'Garcia', 'Mendoza', 'Torres', 'Gonzales', 'Ramos', 'Lopez', 'Aquino', 'Cruz', 'Bautista', 'Castro', 'Flores', 'Morales', 'Gutierrez', 'Navarro', 'Domingo', 'Silva', 'Padilla'];
+        $roles = ['procurement', 'warehousing', 'project_manager', 'engineer', 'accounting'];
+        $cities = ['Quezon City', 'Manila', 'Makati', 'Pasig', 'Taguig', 'Cebu City', 'Davao City', 'Baguio', 'Iloilo City', 'Cagayan de Oro'];
+        $provinces = ['Metro Manila', 'Cebu', 'Davao del Sur', 'Benguet', 'Iloilo', 'Misamis Oriental'];
         for ($i = 0; $i < $employeeCount; $i++) {
             $firstName = $firstNames[array_rand($firstNames)];
             $lastName = $lastNames[array_rand($lastNames)];
             $role = $roles[array_rand($roles)];
             $username = strtolower(Str::slug($firstName . ' ' . $lastName, '')) . $i;
             $email = $username . '@sureprice.com';
-
             // Create the User record
             $user = User::updateOrCreate(
                 ['username' => $username],
@@ -32,7 +37,6 @@ class EmployeeSeeder extends Seeder
                     'email_verified_at' => now(),
                 ]
             );
-
             // Create the corresponding Employee record
             Employee::updateOrCreate(
                 ['user_id' => $user->id],

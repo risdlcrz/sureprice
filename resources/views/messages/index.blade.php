@@ -412,31 +412,15 @@ body, html {
                         <div>
                             <div class="messenger-message-bubble">
                                 {{ $message->content }}
-                                @if($message->hasAttachment())
-                                    @if($message->isImage())
-                                        <div class="mt-2"><img src="{{ $message->download_url }}" alt="attachment" style="max-width: 180px; max-height: 180px; border-radius: 8px;"></div>
-                                    @else
-                                        <div class="mt-2">
-                                            <div class="file-attachment bg-light rounded-3 p-2 border" style="max-width: 250px;">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="me-2">
-                                                        <i class="bi {{ $message->file_icon }} fs-4"></i>
-                                                    </div>
-                                                    <div class="flex-grow-1">
-                                                        <div class="fw-semibold text-truncate" style="max-width: 150px;">{{ $message->getAttachmentName() }}</div>
-                                                        <div class="text-muted small">{{ $message->formatted_size }}</div>
-                                                    </div>
-                                                    <div class="ms-1">
-                                                        <a href="{{ route('messages.attachment.download', $message) }}" 
-                                                           class="btn btn-sm btn-outline-primary" 
-                                                           title="Download file">
-                                                            <i class="bi bi-download"></i>
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endif
+                                @if($message->isImage())
+                                    <a href="{{ $message->download_url }}" target="_blank">
+                                        <img src="{{ $message->download_url }}" alt="attachment" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                                    </a>
+                                @endif
+                                @if($message->hasAttachment() && !$message->isImage())
+                                    <a href="{{ $message->download_url }}" download>
+                                        <i class="bi bi-download"></i> Download {{ $message->getAttachmentName() }}
+                                    </a>
                                 @endif
                             </div>
                             <div class="messenger-message-time">{{ $message->created_at->timezone('Asia/Manila')->format('g:i A') }}</div>
@@ -989,3 +973,18 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush 
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.messenger-input-icon').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const form = btn.closest('form');
+            if (form) {
+                const fileInput = form.querySelector('input[type="file"]');
+                if (fileInput) fileInput.click();
+            }
+        });
+    });
+});
+</script> 

@@ -701,7 +701,7 @@
         @error('company_profile_portfolio')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
       </div>
       
-      <div class="form-group file-upload-group @error('sample_price_list') has-error @enderror">
+      <div class="form-group file-upload-group @error('sample_price_list') has-error @enderror" id="sample_price_list_group" style="display:none;">
         <label for="sample_price_list">Sample Price List</label>
         <div class="file-upload-wrapper">
           <label class="file-upload-label" for="sample_price_list">
@@ -913,6 +913,14 @@ function updateFormFields() {
     dtiGroup.style.display = '';
     fileRequirementsNotice.style.display = 'none';
   }
+
+  // Show/hide Sample Price List field
+  const samplePriceListGroup = document.getElementById('sample_price_list_group');
+  if (role === 'supplier') {
+    samplePriceListGroup.style.display = '';
+  } else {
+    samplePriceListGroup.style.display = 'none';
+  }
 }
 
 // Add event listeners
@@ -936,4 +944,67 @@ document.getElementById('supplier_type').addEventListener('change', function() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', updateFormFields);
+
+function updateCompanyTypeOptions() {
+  const role = document.getElementById('designation').value;
+  const supplierTypeSelect = document.getElementById('supplier_type');
+  const primaryProducts = document.getElementById('primary_products_services').value;
+  const defaultOptions = [
+    'Construction & Engineering',
+    'Architecture & Design',
+    'Real Estate & Property Development',
+    'Manufacturing',
+    'Wholesale & Distribution',
+    'Retail & E-Commerce',
+    'Information Technology & Software',
+    'Telecommunications',
+    'Healthcare & Medical',
+    'Logistics & Transportation',
+    'Energy & Utilities',
+    'Financial Services',
+    'Legal & Compliance',
+    'Education & Training',
+    'Marketing & Advertising',
+    'Hospitality & Tourism',
+    'Government & Public Sector',
+    'Nonprofit / NGO',
+    'Other'
+  ];
+  if (role === 'supplier') {
+    // Remove all current options
+    supplierTypeSelect.innerHTML = '<option value="">Select company type</option>';
+    if (primaryProducts.trim() !== '') {
+      // Split primary products/services by comma and trim whitespace
+      const materials = primaryProducts.split(',').map(item => item.trim()).filter(Boolean);
+      // Add each material as an option
+      materials.forEach(material => {
+        const opt = document.createElement('option');
+        opt.value = material;
+        opt.textContent = material;
+        supplierTypeSelect.appendChild(opt);
+      });
+    }
+    // Always add 'Other' option
+    const otherOpt = document.createElement('option');
+    otherOpt.value = 'Other';
+    otherOpt.textContent = 'Other';
+    supplierTypeSelect.appendChild(otherOpt);
+  } else {
+    // Restore default options for clients
+    supplierTypeSelect.innerHTML = '<option value="">Select company type</option>';
+    defaultOptions.forEach(type => {
+      const opt = document.createElement('option');
+      opt.value = type;
+      opt.textContent = type;
+      supplierTypeSelect.appendChild(opt);
+    });
+  }
+}
+// Add event listeners
+if (document.getElementById('designation')) {
+  document.getElementById('designation').addEventListener('change', updateCompanyTypeOptions);
+}
+if (document.getElementById('primary_products_services')) {
+  document.getElementById('primary_products_services').addEventListener('input', updateCompanyTypeOptions);
+}
 </script>

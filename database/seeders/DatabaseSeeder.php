@@ -24,6 +24,10 @@ class DatabaseSeeder extends Seeder
         ScopeTypeMaterialSeeder::class,
         SyncEmployeesToUsersSeeder::class,
         CategorySeeder::class,
+        OrderEvaluationSeeder::class,
+        SupplierEvaluationSeeder::class,
+        MaterialPriceHistorySeeder::class,
+        TransactionSeeder::class,
     ]);
 }
 }

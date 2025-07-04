@@ -74,19 +74,29 @@ class UserSeeder extends Seeder
         }
         */
 
+        // More realistic Filipino names and emails
+        $firstNames = ['Juan', 'Maria', 'Jose', 'Ana', 'Pedro', 'Luz', 'Carlos', 'Rosa', 'Antonio', 'Carmen', 'Miguel', 'Isabel', 'Manuel', 'Teresa', 'Francisco', 'Gloria', 'Ramon', 'Elena', 'Roberto', 'Patricia'];
+        $lastNames = ['Dela Cruz', 'Santos', 'Reyes', 'Garcia', 'Mendoza', 'Torres', 'Gonzales', 'Ramos', 'Lopez', 'Aquino', 'Cruz', 'Bautista', 'Castro', 'Flores', 'Morales', 'Gutierrez', 'Navarro', 'Domingo', 'Silva', 'Padilla'];
+
         // Create company users (clients and suppliers)
         $companyCount = 50;
         for ($i = 1; $i <= $companyCount; $i++) {
             $firstName = $firstNames[array_rand($firstNames)];
             $lastName = $lastNames[array_rand($lastNames)];
             $userType = $i <= 25 ? 'client' : 'supplier';
-            
-            User::create([
+            $role = $userType;
+            $status = 'active';
+            $email = strtolower($firstName) . '.' . strtolower(str_replace(' ', '', $lastName)) . '.company' . $i . '@example.com';
+            $username = strtolower($firstName) . '_' . strtolower(str_replace(' ', '', $lastName)) . '_company_' . $i;
+            User::updateOrCreate([
+                'username' => $username,
+            ], [
                 'name' => $firstName . ' ' . $lastName,
-                'username' => strtolower($firstName) . '_' . strtolower($lastName) . '_company_' . $i,
-                'email' => strtolower($firstName) . '.' . strtolower($lastName) . '.company' . $i . '@example.com',
+                'username' => $username,
+                'email' => $email,
                 'user_type' => $userType,
-                'role' => $userType,
+                'role' => $role,
+                'status' => $status,
                 'password' => Hash::make('password123'),
                 'email_verified_at' => now(),
             ]);

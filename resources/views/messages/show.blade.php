@@ -61,46 +61,24 @@
                                             <div class="d-flex align-items-center">
                                                 <div class="message-text flex-grow-1">{{ $message->content }}</div>
                                             </div>
-                                            @if($message->hasAttachment())
-                                                <div class="mt-2 position-relative attachment-container">
-                                                    @if($message->isImage())
-                                                        <img src="{{ $message->download_url }}" alt="attachment" style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                                                    @else
-                                                        <div class="file-attachment bg-light rounded-3 p-3 border" style="max-width: 300px;">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="me-3">
-                                                                    <i class="bi {{ $message->file_icon }} fs-2"></i>
-                                                                </div>
-                                                                <div class="flex-grow-1">
-                                                                    <div class="fw-semibold text-truncate" style="max-width: 200px;">{{ $message->getAttachmentName() }}</div>
-                                                                    <div class="text-muted small">{{ $message->formatted_size }}</div>
-                                                                </div>
-                                                                <div class="ms-2">
-                                                                    <a href="{{ route('messages.attachment.download', $message) }}" 
-                                                                       class="btn btn-sm btn-outline-primary" 
-                                                                       title="Download file">
-                                                                        <i class="bi bi-download"></i>
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    @endif
-                                                    @if($message->sender_id === auth()->id() || auth()->user()->user_type === 'admin')
-                                                        <form method="POST" action="{{ route('messages.attachment.remove', $message) }}" class="remove-attachment-form position-absolute top-0 end-0 m-1" data-message-id="{{ $message->id }}">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="button" class="btn btn-sm btn-light p-0" style="border-radius:50%;"><i class="bi bi-x-lg"></i></button>
-                                                        </form>
-                                                    @endif
-                                                </div>
+                                            @if($message->isImage())
+                                                <a href="{{ $message->download_url }}" target="_blank">
+                                                    <img src="{{ $message->download_url }}" alt="attachment" style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                                                </a>
+                                            @endif
+                                            @if($message->hasAttachment() && !$message->isImage())
+                                                <a href="{{ $message->download_url }}" download>
+                                                    <i class="bi bi-download"></i> Download {{ $message->getAttachmentName() }}
+                                                </a>
+                                            @endif
+                                            @if($message->sender_id === auth()->id() || auth()->user()->user_type === 'admin')
+                                                <form method="POST" action="{{ route('messages.attachment.remove', $message) }}" class="remove-attachment-form position-absolute top-0 end-0 m-1" data-message-id="{{ $message->id }}">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="button" class="btn btn-sm btn-light p-0" style="border-radius:50%;"><i class="bi bi-x-lg"></i></button>
+                                                </form>
                                             @endif
                                         </div>
-                                        <small class="message-time mt-1 {{ $message->sender_id === auth()->id() ? 'text-white-50' : 'text-muted' }}" style="font-size: 0.85rem; opacity: 0.7;">
-                                            {{ $message->created_at->timezone('Asia/Manila')->format('g:i A') }}
-                                            @if($message->is_read && $message->sender_id === auth()->id())
-                                                <span class="ms-1">✓✓</span>
-                                            @endif
-                                        </small>
                                     </div>
                                     @if($message->sender_id === auth()->id())
                                         <div class="ms-2 align-self-end"></div>

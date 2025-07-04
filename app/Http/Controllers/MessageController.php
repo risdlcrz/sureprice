@@ -66,8 +66,8 @@ class MessageController extends Controller
 
         $request->validate([
             'content' => 'nullable|string|max:1000',
-            'image' => 'nullable|file|max:5120', // 5MB limit
-            'file' => 'nullable|file|max:5120' // 5MB limit for general files
+            'image' => 'nullable|file|max:10240', // 10MB limit for images
+            'file' => 'nullable|file|max:10240' // 10MB limit for general files
         ]);
 
         if (!$request->filled('content') && !$request->hasFile('image') && !$request->hasFile('file')) {

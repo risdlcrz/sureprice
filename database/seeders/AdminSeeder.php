@@ -13,6 +13,22 @@ class AdminSeeder extends Seeder
     {
         $admins = [
             [
+                'name' => 'Juan Admin Dela Cruz',
+                'username' => 'juandelacruz_admin',
+                'email' => 'juan.admin@sureprice.com',
+                'password' => Hash::make('AdminPass123!'),
+                'user_type' => 'admin',
+                'role' => 'admin',
+            ],
+            [
+                'name' => 'Maria Admin Santos',
+                'username' => 'mariaadmin_santos',
+                'email' => 'maria.admin@sureprice.com',
+                'password' => Hash::make('AdminPass456!'),
+                'user_type' => 'admin',
+                'role' => 'admin',
+            ],
+            [
                 'name' => 'Main Admin',
                 'username' => 'mainadmin',
                 'email' => 'admin1@example.com',
@@ -21,7 +37,7 @@ class AdminSeeder extends Seeder
                 'role' => 'admin',
             ],
             [
-                'name' => 'Backup Admin', 
+                'name' => 'Backup Admin',
                 'username' => 'backupadmin',
                 'email' => 'admin2@example.com',
                 'password' => Hash::make('AdminPass456!'),

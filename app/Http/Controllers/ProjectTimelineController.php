@@ -14,7 +14,26 @@ class ProjectTimelineController extends Controller
 {
     public function index(Request $request)
     {
-        $query = ProjectTask::with(['contract', 'room', 'scopeType', 'assignee']);
+        $user = auth()->user();
+        $party = $user->party;
+
+        // Build contracts query
+        $contractsQuery = Contract::with([
+            'tasks', 'client', 'contractor', 'rooms', 'rooms.scopeTypes', 'rooms.scopeTypes.materials',
+            'purchaseOrders', 'purchaseOrders.deliveries', 'purchaseOrders.items'
+        ])->orderBy('contract_number');
+
+        // If the user is a client, restrict to their contracts only
+        if ($party && $party->entity_type === 'client') {
+            $contractsQuery->where('client_id', $party->id);
+        }
+
+        $contracts = $contractsQuery->get();
+
+        // Restrict project tasks to only those under the client's contracts
+        $contractIds = $contracts->pluck('id')->toArray();
+        $query = ProjectTask::with(['contract', 'room', 'scopeType', 'assignee'])
+            ->whereIn('contract_id', $contractIds);
 
         // Filter by contract if specified
         if ($request->has('contract_id')) {
@@ -71,7 +90,7 @@ class ProjectTimelineController extends Controller
 
         // Add contracts as calendar events
         $contractEvents = $contracts->map(function($contract) {
-            return [
+            return (object)[
                 'id' => 'contract-' . $contract->id,
                 'title' => $contract->title ?? $contract->contract_number,
                 'start' => $contract->start_date ? $contract->start_date->format('Y-m-d') : null,
@@ -402,7 +421,7 @@ class ProjectTimelineController extends Controller
 
             $contracts = $contractsQuery->get()->map(function($contract) {
                 $safeStatus = $contract->status ?: 'default';
-                return [
+                return (object)[
                     'id' => 'contract-' . $contract->id,
                     'title' => $contract->client->name ?? 'Unknown Client',
                     'start' => $contract->start_date->format('Y-m-d'),
@@ -428,7 +447,7 @@ class ProjectTimelineController extends Controller
             // For now, only contracts for Gantt to fix initial issue.
             $ganttTasks = $contracts->map(function($contract) {
                 $safeStatus = $contract->status ?: 'default';
-                return [
+                return (object)[
                     'id' => 'contract-' . $contract->id,
                     'name' => $contract->client->name ?? 'Unknown Client',
                     'start' => $contract->start_date->format('YYYY-MM-DD'),
