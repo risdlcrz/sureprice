@@ -866,14 +866,40 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Add form submission handler
-    const form = document.getElementById('step2Form');
-    form.addEventListener('submit', function(e) {
-        console.log('Form submission event detected.');
-        // Ensure we save the final state before submitting
-        if (!window.isInitializing) {
-            saveFormData();
-        }
-    });
+    const step2Form = document.getElementById('step2Form');
+    if (step2Form) {
+        step2Form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Debug: log and alert the breakdown before saving
+            const { materialsMap } = calculateAllCosts();
+            const breakdown = [];
+            materialsMap.forEach(material => {
+                breakdown.push({
+                    material_id: material.id ?? null,
+                    supplier_id: material.supplier_id ?? null,
+                    supplier_name: material.supplier_name ?? null,
+                    category: material.category,
+                    name: material.name,
+                    unit: material.unit,
+                    unitCost: material.unitCost,
+                    quantity: material.quantity,
+                    totalCost: material.totalCost
+                });
+            });
+            console.log('DEBUG: Breakdown to be saved:', breakdown);
+            alert('DEBUG: About to save ' + breakdown.length + ' contract items. Check console for details.');
+            saveFormData().then((result) => {
+                // Only submit if saveFormData returns success
+                if (result && result.success) {
+                    step2Form.submit();
+                } else {
+                    alert('Failed to save contract items. Please try again.');
+                }
+            }).catch(() => {
+                alert('Failed to save contract items. Please try again.');
+            });
+        });
+    }
 
     // Add window unload handler to save data when navigating away
     window.addEventListener('beforeunload', function() {
@@ -913,8 +939,7 @@ Object.values(scopeTypes).forEach(scope => {
 });
 
 // Get session data
-const sessionData = @json($sessionData ?? []);
-console.log('Client-side sessionData received:', sessionData);
+console.log('Client-side sessionData received:', window.sessionData);
 
 // Helper to generate a stable room id
 function getRoomId(room, idx) {
@@ -925,70 +950,21 @@ function getRoomId(room, idx) {
 
 function saveFormData() {
     console.log('saveFormData called');
-    
-    // Don't save if we're just initializing
     if (window.isInitializing) {
         console.log('Skipping save during initialization');
-        return Promise.resolve();
+        return Promise.resolve({ success: true });
     }
-    
     const form = document.getElementById('step2Form');
     const formData = new FormData(form);
-    const data = {
-        rooms: [],
-        start_date: formData.get('start_date'),
-        end_date: formData.get('end_date'),
-        total_materials: formData.get('total_materials'),
-        total_labor: formData.get('total_labor'),
-        grand_total: formData.get('grand_total'),
-        total_amount: formData.get('grand_total'),
-        labor_cost: formData.get('total_labor'),
-        materials_cost: formData.get('total_materials')
-    };
 
-    const roomElements = document.querySelectorAll('.room-row');
-    console.log(`saveFormData: Found ${roomElements.length} room(s) in the DOM.`);
-
-    // Validate that we have at least one room
-    if (roomElements.length === 0) {
-        console.log('No rooms found, skipping save');
-        return Promise.resolve();
-    }
-
-    roomElements.forEach((room, idx) => {
-        const roomId = room.dataset.roomId;
-        const roomData = {
-            id: roomId,
-            name: formData.get(`rooms[${roomId}][name]`),
-            length: formData.get(`rooms[${roomId}][length]`),
-            width: formData.get(`rooms[${roomId}][width]`),
-            height: formData.get(`rooms[${roomId}][height]`),
-            floor_area: formData.get(`rooms[${roomId}][floor_area]`),
-            wall_area: formData.get(`rooms[${roomId}][wall_area]`),
-            area: formData.get(`rooms[${roomId}][area]`),
-            materials_cost: formData.get(`rooms[${roomId}][materials_cost]`),
-            labor_cost: formData.get(`rooms[${roomId}][labor_cost]`),
-            scope: Array.from(room.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value)
-        };
-        
-        // Only add room if it has valid data
-        if (roomData.name && roomData.length && roomData.width && roomData.height) {
-            data.rooms.push(roomData);
-            console.log(`saveFormData: Added room ${roomData.name} (${roomData.id}) to save data.`);
-        }
-    });
-
-    // Only save if we have valid rooms
-    if (data.rooms.length === 0) {
-        console.log('No valid rooms to save, skipping save');
-        return Promise.resolve();
-    }
-
-    // Add material breakdown to data
-    const breakdown = [];
+    // Build breakdown array
     const { materialsMap } = calculateAllCosts();
+    const breakdown = [];
     materialsMap.forEach(material => {
         breakdown.push({
+            material_id: material.id ?? null,
+            supplier_id: material.supplier_id ?? null,
+            supplier_name: material.supplier_name ?? null,
             category: material.category,
             name: material.name,
             unit: material.unit,
@@ -997,26 +973,27 @@ function saveFormData() {
             totalCost: material.totalCost
         });
     });
-    data.breakdown = breakdown;
 
-    console.log('saveFormData: Data being sent to server:', data);
+    // Append breakdown to FormData
+    formData.append('breakdown', JSON.stringify(breakdown));
 
     return fetch('{{ route("contracts.save.step2") }}', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
         },
-        body: JSON.stringify(data)
-    }).then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    }).then(data => {
+        body: formData,
+        credentials: 'same-origin'
+    })
+    .then(response => response.json())
+    .then(data => {
         console.log('Data saved successfully:', data);
-    }).catch(error => {
+        return data;
+    })
+    .catch(error => {
         console.error('Error saving data:', error);
+        return { success: false };
     });
 }
 
@@ -1025,11 +1002,11 @@ function initializeForm() {
     const roomDetails = document.getElementById('roomDetails');
     // Convert rooms object to array if it's an object and not already an array
     let roomsToInitialize = [];
-    if (sessionData && sessionData.rooms) {
-        if (Array.isArray(sessionData.rooms)) {
-            roomsToInitialize = sessionData.rooms;
-        } else if (typeof sessionData.rooms === 'object' && sessionData.rooms !== null) {
-            roomsToInitialize = Object.values(sessionData.rooms);
+    if (window.sessionData && window.sessionData.rooms) {
+        if (Array.isArray(window.sessionData.rooms)) {
+            roomsToInitialize = window.sessionData.rooms;
+        } else if (typeof window.sessionData.rooms === 'object' && window.sessionData.rooms !== null) {
+            roomsToInitialize = Object.values(window.sessionData.rooms);
         }
     }
     if (roomsToInitialize.length > 0) {

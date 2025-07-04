@@ -58,7 +58,7 @@
         <a href="{{ route('admin.dbadmin') }}" class="btn">
             <i class="fas fa-home"></i>Dashboard
         </a>
-        @if(auth()->user()->role === 'admin')
+        @if(auth()->check() && auth()->user()->role === 'admin')
         <a href="{{ route('information-management.index') }}" class="btn">
             <i class="fas fa-folder-open"></i>Information Management
         </a>

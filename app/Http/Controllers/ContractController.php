@@ -328,6 +328,10 @@ class ContractController extends Controller
             // Get the input data
             $data = $request->all();
             
+            // Log incoming breakdown for debugging
+            \Log::info('DEBUG: Incoming breakdown in saveStep2:', [
+                'breakdown' => $data['breakdown'] ?? null
+            ]);
             // Ensure rooms is an array
             if (isset($data['rooms']) && !is_array($data['rooms'])) {
                 $rooms = [];
@@ -351,8 +355,10 @@ class ContractController extends Controller
                 'materials_cost' => $data['total_materials'] ?? 0,
                 'breakdown' => $data['breakdown'] ?? []
             ];
-            
             session(['contract_step2' => $sessionData]);
+            \Log::info('DEBUG: Session after saving contract_step2:', [
+                'contract_step2' => session('contract_step2')
+            ]);
             \Log::info('Auto-saved Step 2 data to session:', $sessionData);
 
             return response()->json(['success' => true]);
@@ -473,6 +479,10 @@ class ContractController extends Controller
         }
 
         $contractStep2Data = session('contract_step2', []);
+        // Decode breakdown if it's a JSON string
+        if (isset($contractStep2Data['breakdown']) && is_string($contractStep2Data['breakdown'])) {
+            $contractStep2Data['breakdown'] = json_decode($contractStep2Data['breakdown'], true) ?? [];
+        }
 
         // Get scope types with materials through relationship, similar to step2
         $scopeTypes = \App\Models\ScopeType::with('materials')->get()->map(function ($scope) {
@@ -652,65 +662,23 @@ class ContractController extends Controller
             $contract->end_date = \Carbon\Carbon::parse($contract->start_date)->addDays((int)$totalEstimatedDays);
             $contract->save();
 
-            // Create contract items
-            foreach ($contract->rooms as $room) {
-                $room->load(['scopeTypes' => function($query) {
-                    $query->with(['materials' => function($q) {
-                        $q->with(['suppliers' => function($sq) {
-                            $sq->wherePivot('is_preferred', true);
-                        }]);
-                    }]);
-                }]);
-
-                foreach ($room->scopeTypes as $scope) {
-                    foreach ($scope->materials as $material) {
-                        \Log::info('Processing material for contract item:', [
-                            'material_name' => $material->name,
-                            'srp_price' => $material->srp_price,
-                            'base_price' => $material->base_price
-                        ]);
-                        // Get the price from either srp_price or base_price
-                        $price = ($material->srp_price > 0) ? floatval($material->srp_price) : floatval($material->base_price ?? 0);
-                        $quantity = 1;
-                        
-                        // Calculate quantity based on area if needed
-                        if ($material->is_per_area) {
-                            $coverage = floatval($material->coverage_rate ?? 1);
-                            $quantity = ceil($room->area / $coverage);
-                        }
-
-                        // Apply waste factor
-                        $wasteFactor = floatval($material->waste_factor ?? 1.1);
-                        $quantity = ceil($quantity * $wasteFactor);
-
-                        // Check for bulk pricing
-                        if ($material->bulk_pricing) {
-                            $bulkPricing = is_array($material->bulk_pricing) ? $material->bulk_pricing : json_decode($material->bulk_pricing, true);
-                            if (is_array($bulkPricing)) {
-                                foreach ($bulkPricing as $tier) {
-                                    if ($quantity >= ($tier['min_quantity'] ?? 0)) {
-                                        $price = floatval($tier['price'] ?? $price);
-                                    }
-                                }
-                            }
-                        }
-
-                        // Get preferred supplier if exists
-                        $supplier = $material->suppliers->first();
-
-                        // Create contract item
-                        $contract->items()->create([
-                            'material_id' => $material->id,
-                            'material_name' => $material->name,
-                            'unit' => $material->unit ?? 'pcs',
-                            'supplier_id' => $supplier ? $supplier->id : null,
-                            'supplier_name' => $supplier ? $supplier->company_name : null,
-                            'quantity' => $quantity,
-                            'amount' => $price,
-                            'total' => $quantity * $price
-                        ]);
-                    }
-                }
+            // Create contract items from breakdown (frontend-calculated)
+            $breakdown = session('contract_step2.breakdown', []);
+            if (is_string($breakdown)) {
+                $breakdown = json_decode($breakdown, true) ?? [];
+            }
+            foreach ($breakdown as $item) {
+                $contract->items()->create([
+                    'contract_id'   => $contract->id,
+                    'material_id'   => $item['material_id'] ?? null,
+                    'material_name' => $item['name'],
+                    'unit'          => $item['unit'],
+                    'supplier_id'   => $item['supplier_id'] ?? null,
+                    'supplier_name' => $item['supplier_name'] ?? null,
+                    'quantity'      => $item['quantity'],
+                    'amount'        => $item['unitCost'],
+                    'total'         => $item['totalCost'],
+                ]);
             }
 
             DB::commit();
@@ -795,6 +763,19 @@ class ContractController extends Controller
             'total_amount' => $contract->total_amount ?? 0,
             'labor_cost' => $contract->labor_cost ?? 0,
             'materials_cost' => $contract->materials_cost ?? 0,
+            'breakdown' => $contract->items->map(function($item) {
+                return [
+                    'material_id' => $item->material_id,
+                    'supplier_id' => $item->supplier_id,
+                    'supplier_name' => $item->supplier_name,
+                    'category' => $item->material->category ?? 'Uncategorized',
+                    'name' => $item->material_name,
+                    'unit' => $item->unit,
+                    'unitCost' => $item->amount,
+                    'quantity' => $item->quantity,
+                    'totalCost' => $item->total
+                ];
+            })->toArray()
         ];
         session(['contract_step2' => $step2]);
 
