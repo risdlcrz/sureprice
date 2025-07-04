@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         CompanySeeder::class,
         AdminSeeder::class,
         SupplierSeeder::class,
+        SupplierMetricsSeeder::class,
         MaterialSeeder::class,
         WarehouseSeeder::class,
         MaterialSupplierSeeder::class,

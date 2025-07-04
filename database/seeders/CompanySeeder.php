@@ -18,7 +18,33 @@ class CompanySeeder extends Seeder
         $paymentTerms = ['30 days', '45 days', '60 days', 'COD', 'EOM'];
         $supplierTypes = ['Distributor', 'Manufacturer', 'Retailer', 'Wholesaler', 'Other'];
         $clientCompanyNames = [];
-        $supplierCompanyNames = [];
+        $supplierCompanyNames = [
+            'Aguila Construction Supply',
+            'Bayanihan Builders',
+            'Luzviminda Hardware',
+            'Mabuhay Materials Co.',
+            'Pinoy Prime Supplies',
+            'Tagumpay Trading',
+            'Lakbay Construction Depot',
+            'Matatag Merchandising',
+            'Gintong Ani Enterprises',
+            'Silangan Steel & Cement',
+            'Bagong Bayan Hardware',
+            'Isla Construction Depot',
+            'Kapitbahay Supplies',
+            'Malasakit Materials',
+            'Sulong Construction',
+            'Tibay Trading',
+            'Bughaw Builders',
+            'Dalisay Depot',
+            'Luntian Hardware',
+            'Pilipinas Prime Supply',
+            'Kaagapay Construction',
+            'Sikap Merchandising',
+            'Bayanihan Steel',
+            'Lakambini Materials',
+            'Tagumpay Hardware'
+        ];
         for ($i = 1; $i <= 25; $i++) {
             $clientCompanyNames[] = 'Client Company ' . $i;
             $supplierCompanyNames[] = 'Supplier Company ' . $i;
