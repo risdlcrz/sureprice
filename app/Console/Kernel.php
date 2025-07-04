@@ -27,4 +27,8 @@ class Kernel extends ConsoleKernel
         // You can add other scheduled commands here as needed
         // $schedule->command('inspire')->hourly();
     }
+
+    protected $commands = [
+        \App\Console\Commands\FixContractItemsMaterialId::class,
+    ];
 }
