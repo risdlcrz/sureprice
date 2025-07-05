@@ -318,12 +318,6 @@
                             <div class="review-section mt-4">
                                 <h6>Contract Items</h6>
                                 <div class="table-responsive">
-                                    @php
-                                        $breakdown = $contractStep2Data['breakdown'] ?? [];
-                                        if (is_string($breakdown)) {
-                                            $breakdown = json_decode($breakdown, true) ?? [];
-                                        }
-                                    @endphp
                                     <table class="table table-bordered table-striped">
                                         <thead class="table-light">
                                             <tr>
@@ -335,6 +329,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            @php $breakdown = $contractStep2Data['breakdown'] ?? []; @endphp
                                             @forelse($breakdown as $item)
                                                 <tr>
                                                     <td>{{ $item['name'] ?? 'N/A' }}</td>
