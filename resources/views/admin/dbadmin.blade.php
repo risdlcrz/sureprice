@@ -63,5 +63,5 @@
 @endsection
 
 @push('styles')
-<link rel="stylesheet" href="{{ asset('resources/css/dbadmin.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/dbadmin.css') }}">
 @endpush
