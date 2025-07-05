@@ -164,6 +164,20 @@
         }
     </style>
     <link rel="icon" type="image/png" href="{{ asset('images/sureprice.png') }}" />
+    <link rel="stylesheet" href="{{ asset('resources/css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/header.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/inventory.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/infoman.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/dbadmin.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/supprankings.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/signup.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/projectreq.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/projectapp.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/price.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/messages.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/login.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/forgot.css') }}">
+    <link rel="stylesheet" href="{{ asset('resources/css/budget.css') }}">
 </head>
 <body>
     <div class="app-container" id="appContainer">
