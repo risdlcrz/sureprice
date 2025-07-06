@@ -360,6 +360,13 @@ function createRoomRow(initialRoomData = {}) {
                                                         id="scope_${scope.id}_${roomId}">
                                                     <label class="form-check-label" for="scope_${scope.id}_${roomId}">
                                                         <strong>${scope.name}</strong>
+                                                        ${(scope.materials && scope.materials.length > 0) ? `
+                                                            <ul class="mb-0 ms-3">
+                                                                ${scope.materials.map(material => `
+                                                                    <li>${material.name} <span class='text-muted'>(₱${parseFloat(material.base_price).toFixed(2)})</span></li>
+                                                                `).join('')}
+                                                            </ul>
+                                                        ` : ''}
                                                     </label>
                                                 </div>
                                             </div>
