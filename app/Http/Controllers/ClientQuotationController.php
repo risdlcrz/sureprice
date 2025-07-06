@@ -216,13 +216,16 @@ class ClientQuotationController extends Controller
     {
         $result = [];
         foreach ($materials as $material) {
+            // Only get suppliers that actually offer this material (via pivot)
             $suppliers = $material->suppliers()->with('metrics')->get();
             $supplierData = [];
             foreach ($suppliers as $supplier) {
+                // Defensive: Only include if the pivot price exists (i.e., real offer)
+                if (!isset($supplier->pivot) || $supplier->pivot->price === null) continue;
                 $supplierData[] = [
                     'id' => $supplier->id,
                     'name' => $supplier->company_name,
-                    'price' => $supplier->pivot->price ?? null,
+                    'price' => $supplier->pivot->price,
                     'base_price' => $material->base_price,
                     'on_time_delivery_rate' => $supplier->metrics->on_time_delivery_rate ?? 0,
                     'average_defect_rate' => $supplier->metrics->average_defect_rate ?? 0,
@@ -230,15 +233,10 @@ class ClientQuotationController extends Controller
                 ];
             }
             // Badges
-            $badges = [];
             if (count($supplierData) > 0) {
-                // Cheapest
                 $minPrice = min(array_column($supplierData, 'price'));
-                // Best Delivery
                 $maxDelivery = max(array_column($supplierData, 'on_time_delivery_rate'));
-                // Least Defects
                 $minDefect = min(array_column($supplierData, 'average_defect_rate'));
-                // Overall Best (KNN)
                 $service = new \App\Services\SupplierSelectionService();
                 $knn = $service->recommend($supplierData, $projectFeatures, 1);
                 $bestOverallId = $knn[0]['supplier']['id'] ?? null;

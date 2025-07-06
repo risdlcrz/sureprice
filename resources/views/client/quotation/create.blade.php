@@ -406,22 +406,10 @@ function updateBreakdownTable() {
                 tr.setAttribute('data-material-id', material.id);
                 tr.setAttribute('data-room-id', roomId);
                 tr.setAttribute('data-scope-id', scopeId);
-                // Hidden input for selected supplier
                 const hiddenInputName = `selected_suppliers[${roomId}][${scopeId}][${material.id}]`;
-                tr.innerHTML = `
-                    <td>${roomName}</td>
-                    <td>${scope.name}</td>
-                    <td>${scope.category}</td>
-                    <td>${material.name}</td>
-                    <td>${material.unit}</td>
-                    <td class="unit-cost-cell">
-                        <span class="base-price">₱${parseFloat(material.base_price).toFixed(2)}</span>
-                        <span class="arrow">→</span>
-                        <span class="supplier-price">₱${parseFloat(material.base_price).toFixed(2)}</span>
-                    </td>
-                    <td class="quantity-cell">1 ${material.unit}</td>
-                    <td class="total-cost-cell">₱${parseFloat(material.base_price).toFixed(2)}</td>
-                    <td>
+                let supplierCellHtml = '';
+                if (suppliers.length > 0) {
+                    supplierCellHtml = `
                         <div class="dropdown">
                             <button class="btn btn-outline-secondary dropdown-toggle w-100 supplier-dropdown-btn" type="button" id="dropdownMenu${rowIdx}" data-bs-toggle="dropdown" aria-expanded="false">
                                 Select Supplier
@@ -442,7 +430,28 @@ function updateBreakdownTable() {
                             <div class="badge-list mt-1"></div>
                         </div>
                         <input type="hidden" class="selected-supplier-input" name="${hiddenInputName}" value="">
+                    `;
+                } else {
+                    supplierCellHtml = `
+                        <button class="btn btn-outline-secondary w-100" type="button" disabled>No suppliers available</button>
+                        <span class="badge bg-warning text-dark mt-1">No suppliers</span>
+                        <input type="hidden" class="selected-supplier-input" name="${hiddenInputName}" value="">
+                    `;
+                }
+                tr.innerHTML = `
+                    <td>${roomName}</td>
+                    <td>${scope.name}</td>
+                    <td>${scope.category}</td>
+                    <td>${material.name}</td>
+                    <td>${material.unit}</td>
+                    <td class="unit-cost-cell">
+                        <span class="base-price">₱${parseFloat(material.base_price).toFixed(2)}</span>
+                        <span class="arrow">→</span>
+                        <span class="supplier-price">₱${parseFloat(material.base_price).toFixed(2)}</span>
                     </td>
+                    <td class="quantity-cell">1 ${material.unit}</td>
+                    <td class="total-cost-cell">₱${parseFloat(material.base_price).toFixed(2)}</td>
+                    <td>${supplierCellHtml}</td>
                 `;
                 tbody.appendChild(tr);
                 rowIdx++;
@@ -457,11 +466,17 @@ document.addEventListener('DOMContentLoaded', function() {
         createRoomRow();
     });
     updateBreakdownTable();
+    // Use event delegation on the dropdown-menu for supplier selection
     document.getElementById('breakdownTable').addEventListener('click', function(e) {
+        // Defensive check: only handle if supplier-option is in a dropdown for this material
         if (e.target.classList.contains('supplier-option')) {
             e.preventDefault();
+            e.stopPropagation();
             const supplier = e.target;
             const tr = supplier.closest('tr');
+            const dropdownMenu = supplier.closest('.dropdown-menu');
+            // Defensive: ensure this supplier is in the dropdown for this material
+            if (!dropdownMenu || !dropdownMenu.contains(supplier)) return;
             const btn = tr.querySelector('.supplier-dropdown-btn');
             btn.innerHTML = `<span>${supplier.querySelector('span').textContent}</span>`;
             // Update price, badges, etc.
@@ -479,12 +494,18 @@ document.addEventListener('DOMContentLoaded', function() {
             // Store selected supplier ID in hidden input
             const hiddenInput = tr.querySelector('.selected-supplier-input');
             if (hiddenInput) hiddenInput.value = supplier.getAttribute('data-supplier-id');
+            // Close the dropdown (Bootstrap 5)
+            const btnElem = tr.querySelector('.supplier-dropdown-btn');
+            if (btnElem) {
+                const dropdown = bootstrap.Dropdown.getOrCreateInstance(btnElem);
+                dropdown.hide();
+            }
         }
     });
     document.getElementById('recommendAllBtn').addEventListener('click', function() {
         document.querySelectorAll('#breakdownTable tr[data-material-id]').forEach(row => {
             const dropdown = row.querySelector('.dropdown-menu');
-            const best = dropdown.querySelector('.supplier-option[data-badges*="Overall Best"]');
+            const best = dropdown ? dropdown.querySelector('.supplier-option[data-badges*="Overall Best"]') : null;
             if (best) {
                 const btn = row.querySelector('.supplier-dropdown-btn');
                 btn.innerHTML = `<span>${best.querySelector('span').textContent}</span>`;
