@@ -181,12 +181,11 @@
                                                 <th>Unit</th>
                                                 <th>Unit Cost</th>
                                                 <th>Quantity</th>
-                                                <th>Total Cost</th>
-                                                <th>Supplier</th>
+                                                <th>Base Total Cost</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <!-- Dynamically filled by JS (step2 + supplier logic) -->
+                                            <!-- Dynamically filled by JS (step2 logic) -->
                                         </tbody>
                                     </table>
                                 </div>
@@ -403,48 +402,37 @@ function updateBreakdownTable() {
     document.querySelectorAll('.room-row').forEach(room => {
         const roomName = room.querySelector('input[name$="[name]"]').value || `Room ${room.dataset.roomId}`;
         const roomId = room.dataset.roomId;
+        // Get dimensions (example: length, width, height)
+        const length = parseFloat(room.querySelector('.room-dimension.length')?.value) || 1;
+        const width = parseFloat(room.querySelector('.room-dimension.width')?.value) || 1;
+        const height = parseFloat(room.querySelector('.room-dimension.height')?.value) || 1;
+        // Example calculation: area (for paint, etc.)
+        const area = length * width;
+        // Example calculation: volume (for grout, etc.)
+        const volume = length * width * height;
         const checkedScopes = Array.from(room.querySelectorAll('.scope-checkbox:checked')).map(cb => cb.value);
         checkedScopes.forEach(scopeId => {
             const scope = scopeTypesByCode[scopeId];
             if (!scope) return;
             (scope.materials || []).forEach(material => {
-                const suppliers = materialSuppliers[material.id] || [];
                 const tr = document.createElement('tr');
                 tr.setAttribute('data-material-id', material.id);
                 tr.setAttribute('data-room-id', roomId);
                 tr.setAttribute('data-scope-id', scopeId);
                 const hiddenInputName = `selected_suppliers[${roomId}][${scopeId}][${material.id}]`;
                 let supplierCellHtml = '';
-                if (suppliers.length > 0) {
-                    supplierCellHtml = `
-                        <div class="dropdown">
-                            <button class="btn btn-outline-secondary dropdown-toggle w-100 supplier-dropdown-btn" type="button" id="dropdownMenu${rowIdx}" data-bs-toggle="dropdown" aria-expanded="false">
-                                Select Supplier
-                            </button>
-                            <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenu${rowIdx}">
-                                ${suppliers.map(supplier => `
-                                    <li>
-                                        <a class="dropdown-item d-flex justify-content-between align-items-center supplier-option" href="#" data-supplier-id="${supplier.id}" data-price="${supplier.price}" data-base-price="${supplier.base_price}" data-badges="${(supplier.badges || []).join(',')}">
-                                            <span>${supplier.name}</span>
-                                            <span class="d-flex flex-wrap gap-1">
-                                                ${(supplier.badges || []).map(badge => `<span class="badge bg-${badgeColors[badge] || 'secondary'} ms-1">${badge}</span>`).join('')}
-                                            </span>
-                                            <span class="ms-2 text-muted">(₱${parseFloat(supplier.base_price).toFixed(2)} → ₱${parseFloat(supplier.price).toFixed(2)})</span>
-                                        </a>
-                                    </li>
-                                `).join('')}
-                            </ul>
-                            <div class="badge-list mt-1"></div>
-                        </div>
-                        <input type="hidden" class="selected-supplier-input" name="${hiddenInputName}" value="">
-                    `;
+                // --- Quantity logic ---
+                let quantity = 1;
+                if (material.unit.toLowerCase().includes('liter') || material.unit.toLowerCase().includes('litre')) {
+                    quantity = area; // Paint, etc.
+                } else if (material.unit.toLowerCase().includes('kg')) {
+                    quantity = volume; // Grout, etc.
                 } else {
-                    supplierCellHtml = `
-                        <button class="btn btn-outline-secondary w-100" type="button" disabled>No suppliers available</button>
-                        <span class="badge bg-warning text-dark mt-1">No suppliers</span>
-                        <input type="hidden" class="selected-supplier-input" name="${hiddenInputName}" value="">
-                    `;
+                    quantity = area; // Default to area for now
                 }
+                quantity = Math.max(1, parseFloat(quantity.toFixed(2))); // At least 1, rounded
+                // --- Cost logic ---
+                const baseTotal = material.base_price * quantity;
                 tr.innerHTML = `
                     <td>${roomName}</td>
                     <td>${scope.name}</td>
@@ -452,13 +440,10 @@ function updateBreakdownTable() {
                     <td>${material.name}</td>
                     <td>${material.unit}</td>
                     <td class="unit-cost-cell">
-                        <span class="base-price">₱${parseFloat(material.base_price).toFixed(2)}</span>
-                        <span class="arrow">→</span>
                         <span class="supplier-price">₱${parseFloat(material.base_price).toFixed(2)}</span>
                     </td>
-                    <td class="quantity-cell">1 ${material.unit}</td>
-                    <td class="total-cost-cell">₱${parseFloat(material.base_price).toFixed(2)}</td>
-                    <td>${supplierCellHtml}</td>
+                    <td class="quantity-cell">${quantity} ${material.unit}</td>
+                    <td class="base-total-cost-cell">₱${baseTotal.toFixed(2)}</td>
                 `;
                 tbody.appendChild(tr);
                 rowIdx++;
@@ -473,42 +458,6 @@ document.addEventListener('DOMContentLoaded', function() {
         createRoomRow();
     });
     updateBreakdownTable();
-    // Use event delegation on the dropdown-menu for supplier selection
-    document.getElementById('breakdownTable').addEventListener('click', function(e) {
-        // Defensive check: only handle if supplier-option is in a dropdown for this material
-        if (e.target.classList.contains('supplier-option')) {
-            e.preventDefault();
-            e.stopPropagation();
-            const supplier = e.target;
-            const tr = supplier.closest('tr');
-            const dropdownMenu = supplier.closest('.dropdown-menu');
-            // Defensive: ensure this supplier is in the dropdown for this material
-            if (!dropdownMenu || !dropdownMenu.contains(supplier)) return;
-            const btn = tr.querySelector('.supplier-dropdown-btn');
-            btn.innerHTML = `<span>${supplier.querySelector('span').textContent}</span>`;
-            // Update price, badges, etc.
-            tr.querySelector('.supplier-price').textContent = `₱${parseFloat(supplier.getAttribute('data-price')).toFixed(2)}`;
-            tr.querySelector('.total-cost-cell').textContent = `₱${parseFloat(supplier.getAttribute('data-price')).toFixed(2)}`;
-            // Show badges
-            const badgeList = tr.querySelector('.badge-list');
-            badgeList.innerHTML = '';
-            (supplier.getAttribute('data-badges') || '').split(',').filter(Boolean).forEach(badge => {
-                const span = document.createElement('span');
-                span.className = `badge bg-${badgeColors[badge] || 'secondary'} me-1`;
-                span.textContent = badge;
-                badgeList.appendChild(span);
-            });
-            // Store selected supplier ID in hidden input
-            const hiddenInput = tr.querySelector('.selected-supplier-input');
-            if (hiddenInput) hiddenInput.value = supplier.getAttribute('data-supplier-id');
-            // Close the dropdown (Bootstrap 5)
-            const btnElem = tr.querySelector('.supplier-dropdown-btn');
-            if (btnElem) {
-                const dropdown = bootstrap.Dropdown.getOrCreateInstance(btnElem);
-                dropdown.hide();
-            }
-        }
-    });
     document.getElementById('recommendAllBtn').addEventListener('click', function() {
         document.querySelectorAll('#breakdownTable tr[data-material-id]').forEach(row => {
             const dropdown = row.querySelector('.dropdown-menu');
@@ -517,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const btn = row.querySelector('.supplier-dropdown-btn');
                 btn.innerHTML = `<span>${best.querySelector('span').textContent}</span>`;
                 row.querySelector('.supplier-price').textContent = `₱${parseFloat(best.getAttribute('data-price')).toFixed(2)}`;
-                row.querySelector('.total-cost-cell').textContent = `₱${parseFloat(best.getAttribute('data-price')).toFixed(2)}`;
+                row.querySelector('.supplier-total-cost-cell').textContent = `₱${parseFloat(best.getAttribute('data-price')).toFixed(2)}`;
                 // Show badges
                 const badgeList = row.querySelector('.badge-list');
                 badgeList.innerHTML = '';

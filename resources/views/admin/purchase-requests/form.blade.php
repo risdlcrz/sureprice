@@ -100,23 +100,20 @@
                                                     </div>
                                                 <div class="col-md-2">
                                                     <label>Supplier</label>
-                                                    <div class="input-group">
-                                                        <select class="form-select supplier-select select2" name="items[{{ $index }}][preferred_supplier_id]">
-                                                            <option value="">Select Supplier</option>
-                                                            @php
-                                                                $matId = $item->material_id ?? null;
-                                                                $materialObj = $materials->firstWhere('id', $matId);
-                                                            @endphp
-                                                            @if($materialObj)
-                                                                @foreach($materialObj->suppliers as $supplier)
-                                                                    <option value="{{ $supplier->id }}" {{ (isset($item) && $item->supplier_id == $supplier->id) ? 'selected' : '' }}>{{ $supplier->company_name }}</option>
-                                                                @endforeach
-                                                            @endif
-                                                        </select>
-                                                        <button type="button" class="btn btn-info supplier-view-btn" disabled>
-                                                            <i class="fas fa-eye"></i>
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-outline-secondary dropdown-toggle w-100 supplier-dropdown-btn" type="button" id="dropdownMenu{{ $index }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            Select Supplier
                                                         </button>
+                                                        <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenu{{ $index }}">
+                                                            <!-- Dynamically filled by JS based on material selection -->
+                                                        </ul>
+                                                        <div class="badge-list mt-1"></div>
                                                     </div>
+                                                    <input type="hidden" class="selected-supplier-input" name="items[{{ $index }}][supplier_id]" value="">
+                                                </div>
+                                                <div class="col-md-2">
+                                                    <label>Supplier Total Cost</label>
+                                                    <input type="text" class="form-control supplier-total-cost" name="items[{{ $index }}][supplier_total_cost]" value="" readonly>
                                                 </div>
                                                 <div class="col-md-2">
                                                     <label>Description</label>
@@ -226,15 +223,20 @@
                     </div>
                     <div class="col-md-2">
                         <label>Supplier</label>
-                        <div class="input-group">
-                            <select class="form-select supplier-select select2" name="items[${itemIndex}][preferred_supplier_id]">
-                                <option value="">Select Supplier</option>
-                            </select>
-                            <button type="button" class="btn btn-info supplier-view-btn" disabled>
-                                <i class="fas fa-eye"></i>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle w-100 supplier-dropdown-btn" type="button" id="dropdownMenu${itemIndex}" data-bs-toggle="dropdown" aria-expanded="false">
+                                Select Supplier
                             </button>
+                            <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenu${itemIndex}">
+                                <!-- Dynamically filled by JS based on material selection -->
+                            </ul>
+                            <div class="badge-list mt-1"></div>
                         </div>
-                        <div class="best-supplier-reason text-success small mt-1"></div>
+                        <input type="hidden" class="selected-supplier-input" name="items[${itemIndex}][supplier_id]" value="">
+                    </div>
+                    <div class="col-md-2">
+                        <label>Supplier Total Cost</label>
+                        <input type="text" class="form-control supplier-total-cost" name="items[${itemIndex}][supplier_total_cost]" value="" readonly>
                     </div>
                     <div class="col-md-2">
                         <label>Description</label>
@@ -433,15 +435,20 @@
                     </div>
                     <div class="col-md-2">
                         <label>Supplier</label>
-                        <div class="input-group">
-                            <select class="form-select supplier-select select2" name="items[__INDEX__][preferred_supplier_id]">
-                                <option value="">Select Supplier</option>
-                            </select>
-                            <button type="button" class="btn btn-info supplier-view-btn" disabled>
-                                <i class="fas fa-eye"></i>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle w-100 supplier-dropdown-btn" type="button" id="dropdownMenu__INDEX__" data-bs-toggle="dropdown" aria-expanded="false">
+                                Select Supplier
                             </button>
+                            <ul class="dropdown-menu w-100" aria-labelledby="dropdownMenu__INDEX__">
+                                <!-- Dynamically filled by JS based on material selection -->
+                            </ul>
+                            <div class="badge-list mt-1"></div>
                         </div>
-                        <div class="best-supplier-reason text-success small mt-1"></div>
+                        <input type="hidden" class="selected-supplier-input" name="items[__INDEX__][supplier_id]" value="">
+                    </div>
+                    <div class="col-md-2">
+                        <label>Supplier Total Cost</label>
+                        <input type="text" class="form-control supplier-total-cost" name="items[__INDEX__][supplier_total_cost]" value="" readonly>
                     </div>
                     <div class="col-md-2">
                         <label>Description</label>
@@ -517,42 +524,79 @@
         });
     });
 
-    @php
-        $materialSuppliers = $materials->mapWithKeys(function($material) {
+    // --- Supplier selection logic adapted from quotation view ---
+    const badgeColors = {
+        'Overall Best': 'success',
+        'Cheapest': 'primary',
+        'Best Delivery': 'info',
+        'Least Defects': 'warning',
+    };
+
+    // Example: materialSuppliers = { materialId: [{id, name, price, base_price, badges: []}, ...] }
+    var materialSuppliers = @json($materials->mapWithKeys(function($material) {
             return [
                 $material->id => $material->suppliers->map(function($s) {
-                    return ['id' => $s->id, 'name' => $s->company_name];
+                return [
+                    'id' => $s->id,
+                    'name' => $s->company_name,
+                    'price' => $s->pivot->price ?? $s->pivot->base_price ?? 0,
+                    'base_price' => $s->pivot->base_price ?? 0,
+                    'badges' => $s->badges ?? [],
+                ];
                 })->values()
             ];
-        });
-    @endphp
+    }));
 
-    var materialSuppliers = @json($materialSuppliers);
-
-    // Function to update supplier dropdown for a row
     function updateSupplierDropdown($row, materialId) {
-        var $supplierSelect = $row.find('.supplier-select');
-        $supplierSelect.empty().append('<option value="">Select Supplier</option>');
+        var $dropdownMenu = $row.find('.dropdown-menu');
+        $dropdownMenu.empty();
         if (materialSuppliers[materialId]) {
             materialSuppliers[materialId].forEach(function(supplier) {
-                $supplierSelect.append('<option value="' + supplier.id + '">' + supplier.name + '</option>');
+                var badgeHtml = (supplier.badges || []).map(function(badge) {
+                    return '<span class="badge bg-' + (badgeColors[badge] || 'secondary') + ' ms-1">' + badge + '</span>';
+                }).join('');
+                $dropdownMenu.append('<li><a class="dropdown-item d-flex justify-content-between align-items-center supplier-option" href="#" data-supplier-id="' + supplier.id + '" data-price="' + supplier.price + '" data-base-price="' + supplier.base_price + '" data-badges="' + (supplier.badges || []).join(',') + '"><span>' + supplier.name + '</span><span class="d-flex flex-wrap gap-1">' + badgeHtml + '</span><span class="ms-2 text-muted">(₱' + parseFloat(supplier.base_price).toFixed(2) + ' → ₱' + parseFloat(supplier.price).toFixed(2) + ')</span></a></li>');
             });
+        } else {
+            $dropdownMenu.append('<li><span class="dropdown-item disabled">No suppliers available</span></li>');
         }
     }
 
-    // On material change, update supplier dropdown for that row
     $(document).on('change', '.material-select', function() {
         var $row = $(this).closest('.item-row');
         var materialId = $(this).val();
         updateSupplierDropdown($row, materialId);
     });
 
-    // When adding a new item row, also bind the supplier dropdown
-    $('#add-item').on('click', function() {
-        setTimeout(function() {
-            var $lastRow = $('.item-row').last();
-            $lastRow.find('.material-select').trigger('change');
-        }, 100);
+    $(document).on('click', '.supplier-option', function(e) {
+        e.preventDefault();
+        var $option = $(this);
+        var $row = $option.closest('.item-row');
+        var btn = $row.find('.supplier-dropdown-btn');
+        btn.html('<span>' + $option.find('span').first().text() + '</span>');
+        // Update badges
+        var badgeList = $row.find('.badge-list');
+        badgeList.empty();
+        ($option.data('badges') || '').split(',').filter(Boolean).forEach(function(badge) {
+            badgeList.append('<span class="badge bg-' + (badgeColors[badge] || 'secondary') + ' me-1">' + badge + '</span>');
+        });
+        // Store selected supplier ID
+        $row.find('.selected-supplier-input').val($option.data('supplier-id'));
+        // Update supplier total cost
+        var quantity = parseFloat($row.find('.item-quantity').val()) || 1;
+        var price = parseFloat($option.data('price')) || 0;
+        $row.find('.supplier-total-cost').val('₱' + (quantity * price).toFixed(2));
+    });
+
+    $(document).on('input', '.item-quantity', function() {
+        var $row = $(this).closest('.item-row');
+        var price = 0;
+        var selectedSupplier = $row.find('.dropdown-menu .supplier-option.active');
+        if (selectedSupplier.length) {
+            price = parseFloat(selectedSupplier.data('price')) || 0;
+        }
+        var quantity = parseFloat($(this).val()) || 1;
+        $row.find('.supplier-total-cost').val('₱' + (quantity * price).toFixed(2));
     });
 </script>
 @endpush 
