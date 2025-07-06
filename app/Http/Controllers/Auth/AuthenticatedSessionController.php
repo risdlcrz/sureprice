@@ -66,7 +66,7 @@ class AuthenticatedSessionController extends Controller
                 
                 // If approved, redirect based on designation
                 if ($company->designation === 'client') {
-                    return redirect()->route('client.dashboard');
+                    return redirect()->route('landing.catalogue');
                 } elseif ($company->designation === 'supplier') {
                     return redirect()->route('supplier.dashboard');
                 }

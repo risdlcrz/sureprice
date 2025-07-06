@@ -45,4 +45,9 @@ class ScopeType extends Model
     {
         return $this->belongsToMany(Room::class, 'room_scope_type');
     }
+
+    public function tasks()
+    {
+        return $this->hasMany(ProjectTask::class, 'scope_type_id');
+    }
 }

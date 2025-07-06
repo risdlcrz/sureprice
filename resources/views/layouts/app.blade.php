@@ -162,6 +162,36 @@
         @media (max-width: 900px) {
             .sidebar-toggle-btn { display: none; }
         }
+        .landing-navbar {
+            background: #1b5e20 !important;
+            color: #fff !important;
+            border-radius: 0;
+            box-shadow: 0 4px 24px 0 rgba(27, 94, 32, 0.10);
+            margin-bottom: 0;
+        }
+        .landing-navbar .navbar-brand,
+        .landing-navbar .navbar-brand:visited {
+            color: #fff !important;
+        }
+        .landing-navbar .btn-outline-light {
+            border-color: #fff;
+            color: #fff;
+        }
+        .landing-navbar .btn-outline-light:hover,
+        .landing-navbar .btn-outline-light:focus {
+            background: #fff;
+            color: #1b5e20;
+        }
+        .landing-navbar .btn-light {
+            background: #fff;
+            color: #1b5e20;
+            border: none;
+        }
+        .landing-navbar .btn-light:hover,
+        .landing-navbar .btn-light:focus {
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
     </style>
     <link rel="icon" type="image/png" href="{{ asset('images/sureprice.png') }}" />
     <link rel="stylesheet" href="{{ asset('resources/css/app.css') }}">
@@ -180,31 +210,77 @@
     <link rel="stylesheet" href="{{ asset('resources/css/budget.css') }}">
 </head>
 <body>
-    <div class="app-container" id="appContainer">
-        <!-- Sidebar Toggle Button -->
-        <button class="sidebar-toggle-btn d-none d-md-flex" id="sidebarToggleBtn" type="button" title="Toggle Sidebar">
-            <i class="fas fa-angle-double-left" id="sidebarToggleIcon"></i>
-        </button>
-
-        <!-- Mobile Top Header -->
-        <div class="mobile-topbar d-md-none d-flex">
-            <div class="d-flex align-items-center gap-2">
-                <img src="{{ asset('images/sureprice_logo.png') }}" alt="SurePrice Logo" style="height: 40px;">
+    @if(View::hasSection('is_landing'))
+        <!-- Landing Page Navbar -->
+        <nav class="navbar navbar-expand-lg landing-navbar shadow-sm py-3">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+                    <img src="{{ asset('images/sureprice_logo.png') }}" alt="SurePrice Logo" style="height: 64px;">
+                </a>
+                <div class="ms-auto d-flex align-items-center gap-3">
+                    @if(auth()->check())
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle me-1"></i> {{ auth()->user()->name }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="{{ route('contracts.index') }}">My Contracts</a></li>
+                                <li><a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a></li>
+                            </ul>
+                        </div>
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">@csrf</form>
+                    @else
+                        <a href="{{ route('login.form') }}" class="btn btn-outline-light me-2">Login</a>
+                        <a href="{{ route('register') }}" class="btn btn-light text-success fw-bold">Sign Up</a>
+                    @endif
+                </div>
             </div>
-            <button class="btn btn-success" onclick="toggleMobileMenu()">
-                <i class="fas fa-bars"></i>
+        </nav>
+        <main>
+            @yield('content')
+        </main>
+    @else
+        <div class="app-container" id="appContainer">
+            <!-- Sidebar Toggle Button -->
+            <button class="sidebar-toggle-btn d-none d-md-flex" id="sidebarToggleBtn" type="button" title="Toggle Sidebar">
+                <i class="fas fa-angle-double-left" id="sidebarToggleIcon"></i>
             </button>
-        </div>
 
-        <!-- Mobile Fullscreen Menu -->
-        <div class="mobile-menu" id="mobileMenu">
-            <div class="logo-close-container d-flex justify-content-between align-items-start w-100 mb-4">
-                <button class="close-btn-mobile" onclick="toggleMobileMenu()">
-                    <i class="fas fa-times"></i>
+            <!-- Mobile Top Header -->
+            <div class="mobile-topbar d-md-none d-flex">
+                <div class="d-flex align-items-center gap-2">
+                    <img src="{{ asset('images/sureprice_logo.png') }}" alt="SurePrice Logo" style="height: 40px;">
+                </div>
+                <button class="btn btn-success" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars"></i>
                 </button>
             </div>
 
-            <div class="w-100 d-flex flex-column align-items-center mt-2 mobile-nav-buttons">
+            <!-- Mobile Fullscreen Menu -->
+            <div class="mobile-menu" id="mobileMenu">
+                <div class="logo-close-container d-flex justify-content-between align-items-start w-100 mb-4">
+                    <button class="close-btn-mobile" onclick="toggleMobileMenu()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="w-100 d-flex flex-column align-items-center mt-2 mobile-nav-buttons">
+                    @if(request()->is('admin/project*'))
+                        @include('include.sidebars.project')
+                    @elseif(request()->is('admin/analytics*'))
+                        @include('include.sidebars.analytics')
+                    @elseif(auth()->check() && auth()->user()->role === 'warehousing')
+                        @include('include.sidebars.warehousing')
+                    @elseif(auth()->check() && auth()->user()->user_type === 'employee' && auth()->user()->role === 'procurement')
+                        @include('include.sidebars.procurement')
+                    @else
+                        @include('include.sidebars.default')
+                    @endif
+                </div>
+            </div>
+
+            <!-- Desktop Sidebar -->
+            <div class="left-header d-none d-md-flex">
                 @if(request()->is('admin/project*'))
                     @include('include.sidebars.project')
                 @elseif(request()->is('admin/analytics*'))
@@ -217,54 +293,39 @@
                     @include('include.sidebars.default')
                 @endif
             </div>
+
+            <!-- Main Content -->
+            <div class="content">
+                <!-- Flash Messages -->
+                @if(session('success'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        {{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @if($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <ul class="mb-0">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
+
+                @yield('content')
+            </div>
         </div>
-
-        <!-- Desktop Sidebar -->
-        <div class="left-header d-none d-md-flex">
-            @if(request()->is('admin/project*'))
-                @include('include.sidebars.project')
-            @elseif(request()->is('admin/analytics*'))
-                @include('include.sidebars.analytics')
-            @elseif(auth()->check() && auth()->user()->role === 'warehousing')
-                @include('include.sidebars.warehousing')
-            @elseif(auth()->check() && auth()->user()->user_type === 'employee' && auth()->user()->role === 'procurement')
-                @include('include.sidebars.procurement')
-            @else
-                @include('include.sidebars.default')
-            @endif
-        </div>
-
-        <!-- Main Content -->
-        <div class="content">
-            <!-- Flash Messages -->
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            @if($errors->any())
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <ul class="mb-0">
-                        @foreach($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            @yield('content')
-        </div>
-    </div>
+    @endif
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

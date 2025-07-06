@@ -48,8 +48,8 @@ use App\Http\Controllers\Warehouse\MaterialRequestApprovalController;
 use App\Http\Controllers\ProjectTaskController;
 // Home route redirect to login
 Route::get('/', function () {
-    return redirect()->route('login.form');
-});
+    return view('landing.catalogue');
+})->name('landing.catalogue');
 // ================== Authentication Routes ==================
 Route::middleware('web')->group(function () {
     require __DIR__.'/auth.php';
@@ -269,6 +269,15 @@ Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefi
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments');
     Route::get('/payments/dashboard', [PaymentController::class, 'dashboard'])->name('payments.dashboard');
     Route::get('/project-procurement', [ClientController::class, 'projectProcurement'])->name('project.procurement');
+    
+    // Client Quotation Routes
+    Route::prefix('quotation')->name('quotation.')->group(function () {
+        Route::get('/create', [\App\Http\Controllers\ClientQuotationController::class, 'create'])->name('create');
+        Route::post('/store', [\App\Http\Controllers\ClientQuotationController::class, 'store'])->name('store');
+        Route::get('/suppliers', [\App\Http\Controllers\ClientQuotationController::class, 'suppliers'])->name('suppliers');
+        Route::get('/recommend-suppliers', [\App\Http\Controllers\ClientQuotationController::class, 'recommendSuppliers'])->name('recommend-suppliers');
+        Route::post('/submit', [\App\Http\Controllers\ClientQuotationController::class, 'submit'])->name('submit');
+    });
 });
 
 // Procurement Routes
