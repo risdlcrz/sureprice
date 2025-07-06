@@ -144,7 +144,14 @@
             <div class="col-12">
                 <div class="card mb-4">
                     <div class="card-header bg-white py-3">
-                        <h5 class="mb-0">Request a Quotation - {{ $category ?? '' }}</h5>
+                        <h5 class="mb-0">
+                            Request a Quotation - 
+                            @if(is_array($category))
+                                {{ implode(', ', $category) }}
+                            @else
+                                {{ $category ?? '' }}
+                            @endif
+                        </h5>
                     </div>
                     <div class="card-body">
                         <form method="POST" action="{{ route('client.quotation.store') }}" id="quotationForm" novalidate>
@@ -167,9 +174,6 @@
                             <!-- Cost Breakdown & Supplier Selection (step2 + supplier features) -->
                             <div class="section-container" id="breakdownSection">
                                 <h5 class="section-title">Cost Breakdown & Supplier Selection</h5>
-                                <button type="button" class="btn btn-info mb-3" id="recommendAllBtn">
-                                    <i class="fas fa-magic"></i> Recommend All
-                                </button>
                                 <div class="table-responsive">
                                     <table class="table table-bordered" id="breakdownTable">
                                         <thead class="table-light">
@@ -188,25 +192,6 @@
                                             <!-- Dynamically filled by JS (step2 logic) -->
                                         </tbody>
                                     </table>
-                                </div>
-                            </div>
-
-                            <!-- Timeline Section (step2 logic) -->
-                            <div class="section-container" id="timelineSection">
-                                <h5 class="section-title">Project Timeline</h5>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="start_date">Start Date</label>
-                                            <input type="date" class="form-control" id="start_date" name="start_date" required>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="end_date">End Date</label>
-                                            <input type="date" class="form-control" id="end_date" name="end_date" required>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
@@ -402,14 +387,12 @@ function updateBreakdownTable() {
     document.querySelectorAll('.room-row').forEach(room => {
         const roomName = room.querySelector('input[name$="[name]"]').value || `Room ${room.dataset.roomId}`;
         const roomId = room.dataset.roomId;
-        // Get dimensions (example: length, width, height)
-        const length = parseFloat(room.querySelector('.room-dimension.length')?.value) || 1;
-        const width = parseFloat(room.querySelector('.room-dimension.width')?.value) || 1;
-        const height = parseFloat(room.querySelector('.room-dimension.height')?.value) || 1;
-        // Example calculation: area (for paint, etc.)
-        const area = length * width;
-        // Example calculation: volume (for grout, etc.)
-        const volume = length * width * height;
+        // Get dimensions
+        const length = parseFloat(room.querySelector('.room-dimension[name$="[length]"]')?.value) || 1;
+        const width = parseFloat(room.querySelector('.room-dimension[name$="[width]"]')?.value) || 1;
+        const height = parseFloat(room.querySelector('.room-dimension[name$="[height]"]')?.value) || 1;
+        const floorArea = length * width;
+        const wallArea = 2 * (length + width) * height; // Perimeter * height
         const checkedScopes = Array.from(room.querySelectorAll('.scope-checkbox:checked')).map(cb => cb.value);
         checkedScopes.forEach(scopeId => {
             const scope = scopeTypesByCode[scopeId];
@@ -419,19 +402,27 @@ function updateBreakdownTable() {
                 tr.setAttribute('data-material-id', material.id);
                 tr.setAttribute('data-room-id', roomId);
                 tr.setAttribute('data-scope-id', scopeId);
-                const hiddenInputName = `selected_suppliers[${roomId}][${scopeId}][${material.id}]`;
-                let supplierCellHtml = '';
-                // --- Quantity logic ---
+                // --- Quantity logic (step2 style) ---
                 let quantity = 1;
-                if (material.unit.toLowerCase().includes('liter') || material.unit.toLowerCase().includes('litre')) {
-                    quantity = area; // Paint, etc.
-                } else if (material.unit.toLowerCase().includes('kg')) {
-                    quantity = volume; // Grout, etc.
+                let area = material.is_wall_material ? wallArea : floorArea;
+                if (material.is_per_area || material.isPerArea) {
+                    const coverage = parseFloat(material.coverage_rate ?? 1) || 1;
+                    quantity = area > 0 && coverage > 0 ? Math.ceil(area / coverage) : 0;
                 } else {
-                    quantity = area; // Default to area for now
+                    quantity = area > 0 ? Math.ceil(area) : 1;
                 }
-                quantity = Math.max(1, parseFloat(quantity.toFixed(2))); // At least 1, rounded
+                if (quantity > 0) {
+                    const wasteFactor = parseFloat(material.waste_factor ?? 1.1) || 1.1;
+                    quantity = Math.ceil(quantity * wasteFactor);
+                }
+                quantity = Math.max(1, parseFloat(quantity));
                 // --- Cost logic ---
+                let coverageInfo = '';
+                if (material.coverage_rate && material.unit) {
+                    coverageInfo = ` (1 ${material.unit} covers ${material.coverage_rate} sqm)`;
+                } else if (material.unit) {
+                    coverageInfo = ` (1 ${material.unit} covers 1 sqm)`;
+                }
                 const baseTotal = material.base_price * quantity;
                 tr.innerHTML = `
                     <td>${roomName}</td>
@@ -442,7 +433,7 @@ function updateBreakdownTable() {
                     <td class="unit-cost-cell">
                         <span class="supplier-price">₱${parseFloat(material.base_price).toFixed(2)}</span>
                     </td>
-                    <td class="quantity-cell">${quantity} ${material.unit}</td>
+                    <td class="quantity-cell">${quantity} ${material.unit}${coverageInfo}</td>
                     <td class="base-total-cost-cell">₱${baseTotal.toFixed(2)}</td>
                 `;
                 tbody.appendChild(tr);
@@ -458,29 +449,60 @@ document.addEventListener('DOMContentLoaded', function() {
         createRoomRow();
     });
     updateBreakdownTable();
-    document.getElementById('recommendAllBtn').addEventListener('click', function() {
-        document.querySelectorAll('#breakdownTable tr[data-material-id]').forEach(row => {
-            const dropdown = row.querySelector('.dropdown-menu');
-            const best = dropdown ? dropdown.querySelector('.supplier-option[data-badges*="Overall Best"]') : null;
-            if (best) {
-                const btn = row.querySelector('.supplier-dropdown-btn');
-                btn.innerHTML = `<span>${best.querySelector('span').textContent}</span>`;
-                row.querySelector('.supplier-price').textContent = `₱${parseFloat(best.getAttribute('data-price')).toFixed(2)}`;
-                row.querySelector('.supplier-total-cost-cell').textContent = `₱${parseFloat(best.getAttribute('data-price')).toFixed(2)}`;
-                // Show badges
-                const badgeList = row.querySelector('.badge-list');
-                badgeList.innerHTML = '';
-                (best.getAttribute('data-badges') || '').split(',').filter(Boolean).forEach(badge => {
-                    const span = document.createElement('span');
-                    span.className = `badge bg-${badgeColors[badge] || 'secondary'} me-1`;
-                    span.textContent = badge;
-                    badgeList.appendChild(span);
-                });
-                // Store selected supplier ID in hidden input
-                const hiddenInput = row.querySelector('.selected-supplier-input');
-                if (hiddenInput) hiddenInput.value = best.getAttribute('data-supplier-id');
-            }
+    // Only add recommendAllBtn event listener if the button exists
+    const recommendAllBtn = document.getElementById('recommendAllBtn');
+    if (recommendAllBtn) {
+        recommendAllBtn.addEventListener('click', function() {
+            document.querySelectorAll('#breakdownTable tr[data-material-id]').forEach(row => {
+                const dropdown = row.querySelector('.dropdown-menu');
+                const best = dropdown ? dropdown.querySelector('.supplier-option[data-badges*="Overall Best"]') : null;
+                if (best) {
+                    const btn = row.querySelector('.supplier-dropdown-btn');
+                    btn.innerHTML = `<span>${best.querySelector('span').textContent}</span>`;
+                    row.querySelector('.supplier-price').textContent = `₱${parseFloat(best.getAttribute('data-price')).toFixed(2)}`;
+                    row.querySelector('.supplier-total-cost-cell').textContent = `₱${parseFloat(best.getAttribute('data-price')).toFixed(2)}`;
+                    // Show badges
+                    const badgeList = row.querySelector('.badge-list');
+                    badgeList.innerHTML = '';
+                    (best.getAttribute('data-badges') || '').split(',').filter(Boolean).forEach(badge => {
+                        const span = document.createElement('span');
+                        span.className = `badge bg-${badgeColors[badge] || 'secondary'} me-1`;
+                        span.textContent = badge;
+                        badgeList.appendChild(span);
+                    });
+                    // Store selected supplier ID in hidden input
+                    const hiddenInput = row.querySelector('.selected-supplier-input');
+                    if (hiddenInput) hiddenInput.value = best.getAttribute('data-supplier-id');
+                }
+            });
         });
+    }
+
+    // Restore accordion click handler
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('custom-accordion-header')) {
+            e.preventDefault();
+            e.stopPropagation();
+            const header = e.target;
+            const accordion = header.closest('.custom-accordion');
+            const targetId = header.getAttribute('data-target');
+            const body = accordion.querySelector(targetId);
+            if (!body || !accordion) return;
+            const isActive = header.classList.contains('active');
+            // Close all
+            accordion.querySelectorAll('.custom-accordion-header').forEach(h => {
+                h.classList.remove('active');
+                h.setAttribute('aria-expanded', 'false');
+                const otherBody = accordion.querySelector(h.getAttribute('data-target'));
+                if (otherBody) otherBody.classList.remove('show');
+            });
+            // Toggle clicked
+            if (!isActive) {
+                header.classList.add('active');
+                header.setAttribute('aria-expanded', 'true');
+                body.classList.add('show');
+            }
+        }
     });
 });
 </script>

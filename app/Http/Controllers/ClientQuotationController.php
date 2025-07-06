@@ -20,13 +20,33 @@ class ClientQuotationController extends Controller
         $scopeTypesQuery = ScopeType::with(['materials', 'tasks']);
         
         if ($category) {
-            $scopeTypesQuery->where('category', $category);
+            if (is_array($category)) {
+                $scopeTypesQuery->whereIn('category', $category);
+            } else {
+                $scopeTypesQuery->where('category', $category);
+            }
         }
         
         $scopeTypes = $scopeTypesQuery->get();
         
-        // Group scope types by category
-        $scopeTypesByCode = $scopeTypes->keyBy('id')->toArray();
+        // Group scope types by category, and ensure all material fields are present
+        $scopeTypesByCode = $scopeTypes->mapWithKeys(function ($scope) {
+            $scopeArr = $scope->toArray();
+            $scopeArr['materials'] = collect($scope->materials)->map(function ($material) {
+                return [
+                    'id' => $material->id,
+                    'name' => $material->name,
+                    'unit' => $material->unit,
+                    'base_price' => $material->base_price,
+                    'is_per_area' => $material->is_per_area,
+                    'is_wall_material' => $material->is_wall_material,
+                    'coverage_rate' => $material->coverage_rate,
+                    'waste_factor' => $material->waste_factor,
+                    'minimum_quantity' => $material->minimum_quantity,
+                ];
+            })->toArray();
+            return [$scope->id => $scopeArr];
+        })->toArray();
         
         // Get session data if any
         $sessionData = session('client_quotation_data', []);
@@ -49,15 +69,54 @@ class ClientQuotationController extends Controller
             'rooms.*.width' => 'required|numeric|min:0.01',
             'rooms.*.height' => 'required|numeric|min:0.01',
             'rooms.*.scope' => 'required|array|min:1',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
         ]);
-        
-        // Store in session for now (in a real app, you'd save to database)
+
+        // Debug: Log the validated data
+        \Log::info('Validated Quotation Request:', $validated);
+
+        // Generate request number
+        $lastRequest = \App\Models\QuotationRequest::orderByDesc('id')->first();
+        if ($lastRequest && preg_match('/QR-(\\d+)/i', $lastRequest->request_number, $matches)) {
+            $nextNumber = intval($matches[1]) + 1;
+        } else {
+            $nextNumber = 1;
+        }
+        $requestNumber = 'QR-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+        // Create quotation request
+        $quotationRequest = \App\Models\QuotationRequest::create([
+            'user_id' => auth()->id(),
+            'request_number' => $requestNumber,
+            'status' => 'pending'
+        ]);
+
+        // Save rooms and scopes
+        foreach ($validated['rooms'] as $roomData) {
+            $room = $quotationRequest->rooms()->create([
+                'name' => $roomData['name'],
+                'length' => $roomData['length'],
+                'width' => $roomData['width'],
+                'height' => $roomData['height']
+            ]);
+
+            // Save scopes for this room (scope is an array of IDs)
+            foreach ($roomData['scope'] as $scopeId) {
+                $scopeType = \App\Models\ScopeType::where('id', $scopeId)->first();
+                if ($scopeType) {
+                    $room->scopes()->create([
+                        'scope_type_id' => $scopeType->id,
+                        'scope_name' => $scopeType->name,
+                        'scope_category' => $scopeType->category,
+                        'selected_materials' => [] // No materials
+                    ]);
+                }
+            }
+        }
+
         Session::put('client_quotation_data', $validated);
-        
-        return redirect()->route('client.quotation.suppliers')
-            ->with('success', 'Quotation request created successfully. Please select suppliers.');
+        Session::put('quotation_request_id', $quotationRequest->id);
+        return redirect()->route('client.quotation.view', ['id' => $quotationRequest->id])
+            ->with('success', 'Quotation request submitted successfully. Our team will contact you soon.');
     }
     
     public function suppliers()
@@ -251,5 +310,30 @@ class ClientQuotationController extends Controller
             $result[$material->id] = $supplierData;
         }
         return $result;
+    }
+
+    public function index()
+    {
+        // Get all quotation requests for the logged-in client
+        $quotationRequests = \App\Models\QuotationRequest::where('user_id', auth()->id())
+            ->orderByDesc('created_at')
+            ->with('rooms')
+            ->get();
+        return view('client.quotation.index', compact('quotationRequests'));
+    }
+
+    public function view(Request $request)
+    {
+        $quotationRequestId = $request->query('id') ?? $request->id ?? session('quotation_request_id');
+        if ($quotationRequestId) {
+            $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType'])
+                ->where('id', $quotationRequestId)
+                ->where('user_id', auth()->id())
+                ->first();
+        } else {
+            $quotationRequest = null;
+        }
+        $sessionData = session('client_quotation_data');
+        return view('client.quotation.view', compact('quotationRequest', 'sessionData'));
     }
 } 

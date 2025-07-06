@@ -278,6 +278,10 @@ Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefi
         Route::get('/recommend-suppliers', [\App\Http\Controllers\ClientQuotationController::class, 'recommendSuppliers'])->name('recommend-suppliers');
         Route::post('/submit', [\App\Http\Controllers\ClientQuotationController::class, 'submit'])->name('submit');
     });
+    Route::get('/quotation', [\App\Http\Controllers\ClientQuotationController::class, 'index'])->name('quotation.index');
+    Route::get('/quotation/create', [\App\Http\Controllers\ClientQuotationController::class, 'create'])->name('quotation.create');
+    Route::post('/quotation', [\App\Http\Controllers\ClientQuotationController::class, 'store'])->name('quotation.store');
+    Route::get('/quotation/view', [\App\Http\Controllers\ClientQuotationController::class, 'view'])->name('quotation.view');
 });
 
 // Procurement Routes

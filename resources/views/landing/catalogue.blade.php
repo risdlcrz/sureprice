@@ -108,6 +108,22 @@ $altColors = ['#f9fafb', '#e8f5e9'];
 
 <div class="container-fluid px-0">
     <h2 class="text-center mb-5 fw-bold text-success">Our Service Catalogue</h2>
+    <!-- All Services Card -->
+    <div class="category-card row align-items-center mx-0 py-5" style="background: #e3fcec;">
+        <div class="col-md-4 text-center mb-4 mb-md-0">
+            <img src="https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?auto=format&fit=crop&w=800&q=80" alt="All Services" class="category-img shadow-sm">
+        </div>
+        <div class="col-md-8">
+            <div class="category-content p-4">
+                <h2 class="fw-bold text-success mb-2">All Services</h2>
+                <p class="mb-4 text-secondary fs-5">Select any combination of our main services to request a quotation for multiple scopes at once.</p>
+                <button class="btn btn-success btn-lg px-5 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#allServicesModal">
+                    Show All Services
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Existing catalogue cards -->
     @foreach($catalogue as $i => $cat)
         <div class="category-card row align-items-center mx-0 py-5" style="background: {{ $altColors[$i % 2] }};">
             <div class="col-md-4 text-center mb-4 mb-md-0">
@@ -142,10 +158,60 @@ $altColors = ['#f9fafb', '#e8f5e9'];
     @endforeach
 </div>
 
+<!-- All Services Modal -->
+<div class="modal fade" id="allServicesModal" tabindex="-1" aria-labelledby="allServicesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="allServicesModalLabel">Select Services for Quotation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="allServicesForm">
+                    <div class="row">
+                        @foreach($catalogue as $i => $cat)
+                            <div class="col-md-6 mb-4">
+                                <div class="border rounded p-3 h-100">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input service-checkbox" type="checkbox" value="{{ $cat['name'] }}" id="serviceCheck{{ $i }}">
+                                        <label class="form-check-label fw-bold text-success" for="serviceCheck{{ $i }}">
+                                            {{ $cat['name'] }}
+                                        </label>
+                                    </div>
+                                    <ul class="list-unstyled ms-3">
+                                        @foreach($cat['scopes'] as $scope)
+                                            <li class="mb-2">
+                                                <span class="fw-semibold text-dark">{{ $scope['name'] }}</span>
+                                                <span class="text-muted">- {{ $scope['desc'] }}</span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="requestAllServicesBtn">Request Quotation</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="bg-light py-5">
     <div class="container text-center">
         <h3 class="fw-bold mb-3 text-success">Be a part of the SurePrice team</h3>
-        <a href="{{ auth()->check() ? route('contracts.index') : route('register') }}" class="btn btn-lg btn-success px-5 py-3 join-btn">
+        <a href="
+            @if(!auth()->check())
+                {{ route('register') }}
+            @elseif((auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client') || auth()->user()->role === 'client')
+                {{ route('client.dashboard') }}
+            @else
+                {{ route('contracts.index') }}
+            @endif
+        " class="btn btn-lg btn-success px-5 py-3 join-btn">
             {{ auth()->check() ? 'Go to Dashboard' : 'Sign Up / Log In' }}
         </a>
         <p class="mt-3 text-muted">Join us to access personalized quotations and more features for your projects.</p>
@@ -239,4 +305,19 @@ body {
     }
 }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+document.getElementById('requestAllServicesBtn').addEventListener('click', function() {
+    const checked = Array.from(document.querySelectorAll('.service-checkbox:checked')).map(cb => cb.value);
+    if (checked.length === 0) {
+        alert('Please select at least one service.');
+        return;
+    }
+    // Redirect to quotation form with selected categories as query params
+    const params = checked.map(cat => 'category[]=' + encodeURIComponent(cat)).join('&');
+    window.location.href = '{{ route('client.quotation.create') }}' + '?' + params;
+});
+</script>
 @endpush 

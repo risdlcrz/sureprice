@@ -17,6 +17,9 @@
 <!-- Navigation Links -->
 <div class="nav-buttons">
     @if(auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client')
+        <a href="{{ url('/') }}" class="btn" style="display: flex; align-items: center; gap: 8px;">
+            <img src="{{ asset('images/sureprice_logo.png') }}" alt="Home" style="height: 24px; width: 24px;"> <span>Home</span>
+        </a>
         <a href="{{ route('client.dashboard') }}" class="btn">
             <i class="fas fa-home"></i>Dashboard
         </a>
@@ -25,6 +28,9 @@
         </a>
         <a href="{{ route('client.payments') }}" class="btn">
             <i class="fas fa-money-check-alt"></i>Payments
+        </a>
+        <a href="{{ route('client.quotation.index') }}" class="btn">
+            <i class="fas fa-file-alt"></i>View Quotation
         </a>
         <a href="{{ route('messages.index') }}" class="btn">
             <i class="fas fa-comments"></i>Messages
