@@ -205,14 +205,15 @@
 </div>
 
 @push('scripts')
-// Set initial values from existing response if available
-@if($existingResponse && $existingResponse->hasDiscount())
+@php
+    $discountTypeInit = ($existingResponse && $existingResponse->hasDiscount()) ? $existingResponse->discount_type : null;
+    $discountPercentageInit = ($existingResponse && $existingResponse->hasDiscount()) ? $existingResponse->discount_percentage : null;
+    $discountAmountInit = ($existingResponse && $existingResponse->hasDiscount()) ? $existingResponse->discount_amount : null;
+@endphp
 <script>
-    let discountTypeInit = '{{ $existingResponse->discount_type }}';
-    let discountPercentageInit = '{{ $existingResponse->discount_percentage }}';
-    let discountAmountInit = '{{ $existingResponse->discount_amount }}';
-</script>
-@endif
+let discountTypeInit = {!! json_encode($discountTypeInit) !!};
+let discountPercentageInit = {!! json_encode($discountPercentageInit) !!};
+let discountAmountInit = {!! json_encode($discountAmountInit) !!};
 
 document.addEventListener('DOMContentLoaded', function() {
     const discountType = document.getElementById('discount-type');
@@ -226,9 +227,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const discountEligibility = document.getElementById('discount-eligibility');
     const eligibilityMessage = document.getElementById('eligibility-message');
     const maxPercentage = document.getElementById('max-percentage');
-    
     // Apply initial values if present
-    if (typeof discountTypeInit !== 'undefined') {
+    if (typeof discountTypeInit !== 'undefined' && discountTypeInit !== null) {
         if (discountPercentageInit > 0) {
             discountPercentage.value = discountPercentageInit;
             percentageDiscount.style.display = 'block';
@@ -237,14 +237,12 @@ document.addEventListener('DOMContentLoaded', function() {
             amountDiscount.style.display = 'block';
         }
     }
-
     // Show/hide discount options based on type
     discountType.addEventListener('change', function() {
         percentageDiscount.style.display = 'none';
         amountDiscount.style.display = 'none';
         discountInfo.style.display = 'none';
         discountEligibility.style.display = 'none';
-        
         if (this.value !== 'none') {
             // Show discount input based on type
             if (this.value === 'percentage' || this.value === 'bulk' || this.value === 'seasonal' || 
@@ -254,18 +252,14 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (this.value === 'amount') {
                 amountDiscount.style.display = 'block';
             }
-            
             // Get discount info
             getDiscountInfo(this.value);
         }
-        
         calculateTotals();
     });
-
     // Get discount information from server
     function getDiscountInfo(discountType) {
         const subtotal = calculateSubtotal();
-        
         fetch('{{ route("supplier.quotations.discount-info") }}', {
             method: 'POST',
             headers: {
@@ -283,11 +277,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 discountInfo.style.display = 'none';
                 return;
             }
-            
             discountDescription.textContent = data.description;
             maxPercentage.textContent = data.max_percentage;
             discountInfo.style.display = 'block';
-            
             // Show eligibility
             if (data.is_eligible) {
                 eligibilityMessage.textContent = data.message;
@@ -297,7 +289,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 discountEligibility.className = 'alert alert-warning';
             }
             discountEligibility.style.display = 'block';
-            
             // Update max percentage for input
             if (discountPercentage) {
                 discountPercentage.max = data.max_percentage;
@@ -307,7 +298,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Error fetching discount info:', error);
         });
     }
-
     // Calculate subtotal
     function calculateSubtotal() {
         let subtotal = 0;
@@ -318,14 +308,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         return subtotal;
     }
-
     // Calculate totals when prices or discounts change
     function calculateTotals() {
         const subtotal = calculateSubtotal();
-        
         let discount = 0;
         let discountDisplay = '₱0.00';
-        
         if (discountType.value !== 'none') {
             if (discountType.value === 'percentage' || discountType.value === 'bulk' || 
                 discountType.value === 'seasonal' || discountType.value === 'loyalty' || 
@@ -343,31 +330,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 discountDisplay = '₱' + discount.toFixed(2);
             }
         }
-        
         const finalAmount = subtotal - discount;
-        
         document.getElementById('subtotal').textContent = '₱' + subtotal.toFixed(2);
         document.getElementById('discount-display').textContent = discountDisplay;
         document.getElementById('final-amount').textContent = '₱' + finalAmount.toFixed(2);
-        
         // Update discount info if discount type is selected
         if (discountType.value !== 'none') {
             getDiscountInfo(discountType.value);
         }
     }
-
     // Add event listeners for real-time calculation
     materialPrices.forEach(input => {
         input.addEventListener('input', calculateTotals);
     });
-    
     if (discountPercentage) {
         discountPercentage.addEventListener('input', calculateTotals);
     }
     if (discountAmount) {
         discountAmount.addEventListener('input', calculateTotals);
     }
-    
     // Initial calculation
     calculateTotals();
 });
