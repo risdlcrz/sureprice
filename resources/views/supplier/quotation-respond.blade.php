@@ -157,22 +157,22 @@
                                             </table>
                                         </div>
                                         <div id="global-summary">
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <span>Subtotal:</span>
-                                                <span id="subtotal">₱0.00</span>
-                                            </div>
-                                            <div class="d-flex justify-content-between mb-2">
-                                                <span>Discount:</span>
-                                                <span id="discount-display">₱0.00</span>
-                                            </div>
-                                            <hr>
-                                            <div class="d-flex justify-content-between fw-bold">
-                                                <span>Final Amount:</span>
-                                                <span id="final-amount" class="text-success">₱0.00</span>
-                                            </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Subtotal:</span>
+                                            <span id="subtotal">₱0.00</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Discount:</span>
+                                            <span id="discount-display">₱0.00</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between fw-bold">
+                                            <span>Final Amount:</span>
+                                            <span id="final-amount" class="text-success">₱0.00</span>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
                             </div>
                             <div class="col-md-6" id="discount-options-col">
                                 <div class="card border-info" id="global-discount-options">
@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const perMaterialDiscountInputs = document.querySelectorAll('.per-material-discount-input');
     const perMaterialDiscountHeaders = document.querySelectorAll('.per-material-discount-header');
     const perMaterialDiscountCells = document.querySelectorAll('.per-material-discount-cell');
-
+    
     // Apply initial values if present
     if (typeof discountTypeInit !== 'undefined' && discountTypeInit !== null) {
         if (discountPercentageInit > 0) {
@@ -288,23 +288,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Show/hide discount options based on type
     if (discountType) {
-        discountType.addEventListener('change', function() {
-            percentageDiscount.style.display = 'none';
-            amountDiscount.style.display = 'none';
-            discountInfo.style.display = 'none';
-            discountEligibility.style.display = 'none';
-            if (this.value !== 'none') {
-                // Show discount input based on type
-                if (this.value === 'percentage' || this.value === 'bulk' || this.value === 'seasonal' || 
-                    this.value === 'loyalty' || this.value === 'new_customer' || this.value === 'payment_terms' || 
-                    this.value === 'delivery_terms' || this.value === 'custom') {
-                    percentageDiscount.style.display = 'block';
-                } else if (this.value === 'amount') {
-                    amountDiscount.style.display = 'block';
-                }
-                // Get discount info
-                getDiscountInfo(this.value);
+    discountType.addEventListener('change', function() {
+        percentageDiscount.style.display = 'none';
+        amountDiscount.style.display = 'none';
+        discountInfo.style.display = 'none';
+        discountEligibility.style.display = 'none';
+        if (this.value !== 'none') {
+            // Show discount input based on type
+            if (this.value === 'percentage' || this.value === 'bulk' || this.value === 'seasonal' || 
+                this.value === 'loyalty' || this.value === 'new_customer' || this.value === 'payment_terms' || 
+                this.value === 'delivery_terms' || this.value === 'custom') {
+                percentageDiscount.style.display = 'block';
+            } else if (this.value === 'amount') {
+                amountDiscount.style.display = 'block';
             }
+            // Get discount info
+            getDiscountInfo(this.value);
+        }
             calculateTotals();
         });
     }
@@ -397,6 +397,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var perMaterialDiscountTotal = 0;
         var perMaterialFinalTotal = 0;
         var finalAmount = 0;
+        var discount = 0;
+        var discountDisplay = '';
         var usePerMaterial = togglePerMaterialDiscount.checked;
 
         if (usePerMaterial) {
@@ -434,7 +436,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('discount-display').textContent = 'Per-material: -₱' + perMaterialDiscountTotal.toFixed(2);
             document.getElementById('final-amount').textContent = '₱' + finalAmount.toFixed(2);
         } else {
-            // Global discount only
             subtotal = calculateSubtotal();
             if (discountType && discountType.value !== 'none') {
                 if (discountType.value === 'percentage' || discountType.value === 'bulk' || 
@@ -455,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             finalAmount = subtotal - discount;
             document.getElementById('subtotal').textContent = '₱' + subtotal.toFixed(2);
-            document.getElementById('discount-display').textContent = discountDisplay;
+            document.getElementById('discount-display').textContent = discountDisplay || '₱0.00';
             document.getElementById('final-amount').textContent = '₱' + finalAmount.toFixed(2);
         }
         // Update discount info if discount type is selected
@@ -477,7 +478,11 @@ document.addEventListener('DOMContentLoaded', function() {
     perMaterialDiscountInputs.forEach(function(input) {
         input.addEventListener('input', calculateTotals);
     });
-
+    // Add event listeners for per-material discount type dropdowns
+    var perMaterialDiscountTypeSelects = document.querySelectorAll('.per-material-discount-type');
+    perMaterialDiscountTypeSelects.forEach(function(select) {
+        select.addEventListener('change', calculateTotals);
+    });
     // Initial calculation
     calculateTotals();
 });
