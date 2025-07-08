@@ -223,7 +223,30 @@ public function review($id)
     // Check if any RFQs have already been created for this QuotationRequest
     $rfqsSent = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->exists();
 
-    return view('admin.quotation-requests.review', compact('quotationRequest', 'rfqsSent'));
+    // Build materialSupplierResponses for the view
+    $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')
+        ->with(['responses.items', 'responses.supplier'])
+        ->get();
+
+    $materialSupplierResponses = [];
+    foreach ($materialIds as $materialId) {
+        $offers = [];
+        foreach ($rfqs as $rfq) {
+            foreach ($rfq->responses as $response) {
+                foreach ($response->items as $item) {
+                    if ($item->material_id == $materialId) {
+                        $offers[] = [
+                            'supplier_name' => $response->supplier->company_name ?? 'Unknown',
+                            'unit_price' => $item->unit_price,
+                        ];
+                    }
+                }
+            }
+        }
+        $materialSupplierResponses[$materialId] = $offers;
+    }
+
+    return view('admin.quotation-requests.review', compact('quotationRequest', 'rfqsSent', 'materialSupplierResponses'));
 }
 
 // Helper to get badges for a supplier's response for a material

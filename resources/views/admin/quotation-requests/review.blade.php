@@ -53,6 +53,7 @@
                                     <th>Material</th>
                                     <th>Unit</th>
                                     <th>Base Price</th>
+                                    <th>Supplier Offers</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -69,6 +70,23 @@
                                                         <td>{{ $material->name }}</td>
                                                         <td>{{ $material->unit }}</td>
                                                         <td>₱{{ number_format($material->base_price, 2) }}</td>
+                                                        <td>
+                                                            @php
+                                                                $offers = $materialSupplierResponses[$material->id] ?? [];
+                                                            @endphp
+                                                            @if(count($offers) > 0)
+                                                                <ul class="list-unstyled mb-0">
+                                                                    @foreach($offers as $offer)
+                                                                        <li>
+                                                                            <span class="fw-bold">{{ $offer['supplier_name'] }}</span>:
+                                                                            <span class="badge bg-primary">₱{{ number_format($offer['unit_price'], 2) }}</span>
+                                                                        </li>
+                                                                    @endforeach
+                                                                </ul>
+                                                            @else
+                                                                <span class="text-muted">No supplier offers</span>
+                                                            @endif
+                                                        </td>
                                                     </tr>
                                                     @php $shown->push($key); @endphp
                                                 @endif
