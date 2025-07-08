@@ -438,26 +438,26 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             subtotal = calculateSubtotal();
             if (discountType && discountType.value !== 'none') {
-                if (discountType.value === 'percentage' || discountType.value === 'bulk' || 
-                    discountType.value === 'seasonal' || discountType.value === 'loyalty' || 
-                    discountType.value === 'new_customer' || discountType.value === 'payment_terms' || 
-                    discountType.value === 'delivery_terms' || discountType.value === 'custom') {
+            if (discountType.value === 'percentage' || discountType.value === 'bulk' || 
+                discountType.value === 'seasonal' || discountType.value === 'loyalty' || 
+                discountType.value === 'new_customer' || discountType.value === 'payment_terms' || 
+                discountType.value === 'delivery_terms' || discountType.value === 'custom') {
                     var percentage = parseFloat(discountPercentage.value) || 0;
-                    discount = (subtotal * percentage) / 100;
-                    discountDisplay = percentage + '% (-₱' + discount.toFixed(2) + ')';
-                } else if (discountType.value === 'amount') {
-                    discount = parseFloat(discountAmount.value) || 0;
-                    if (discount > subtotal) {
-                        discount = subtotal;
-                        discountAmount.value = subtotal;
-                    }
-                    discountDisplay = '₱' + discount.toFixed(2);
+                discount = (subtotal * percentage) / 100;
+                discountDisplay = percentage + '% (-₱' + discount.toFixed(2) + ')';
+            } else if (discountType.value === 'amount') {
+                discount = parseFloat(discountAmount.value) || 0;
+                if (discount > subtotal) {
+                    discount = subtotal;
+                    discountAmount.value = subtotal;
                 }
+                discountDisplay = '₱' + discount.toFixed(2);
             }
+        }
             finalAmount = subtotal - discount;
-            document.getElementById('subtotal').textContent = '₱' + subtotal.toFixed(2);
+        document.getElementById('subtotal').textContent = '₱' + subtotal.toFixed(2);
             document.getElementById('discount-display').textContent = discountDisplay || '₱0.00';
-            document.getElementById('final-amount').textContent = '₱' + finalAmount.toFixed(2);
+        document.getElementById('final-amount').textContent = '₱' + finalAmount.toFixed(2);
         }
         // Update discount info if discount type is selected
         if (discountType && discountType.value !== 'none') {

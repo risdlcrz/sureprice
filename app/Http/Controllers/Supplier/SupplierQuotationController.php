@@ -15,8 +15,8 @@ class SupplierQuotationController extends Controller
 {
     public function index(Request $request)
     {
-        $supplier = Auth::user()->company;
-        if (!$supplier || $supplier->designation !== 'supplier') {
+        $supplier = Auth::user()->supplier;
+        if (!$supplier) {
             abort(403, 'You are not associated with a supplier account.');
         }
         $supplierId = $supplier->id;
@@ -44,11 +44,11 @@ class SupplierQuotationController extends Controller
 
     public function show(Quotation $quotation)
     {
-        $supplier = Auth::user()->company;
-        if (!$supplier || $supplier->designation !== 'supplier') {
+        $supplier = Auth::user()->supplier;
+        if (!$supplier) {
             abort(403, 'You are not associated with a supplier account.');
         }
-        if (!$quotation->suppliers->contains($supplier->id)) {
+        if (!$quotation->suppliers->contains('id', $supplier->company_id)) {
             abort(403, 'Unauthorized action.');
         }
         // Try to extract client quotation request number from notes
@@ -81,13 +81,13 @@ class SupplierQuotationController extends Controller
 
     public function respond(Request $request, Quotation $quotation)
     {
-        $supplier = Auth::user()->company;
-        if (!$supplier || $supplier->designation !== 'supplier') {
+        $supplier = Auth::user()->supplier;
+        if (!$supplier) {
             abort(403, 'You are not associated with a supplier account.');
         }
 
         // Ensure the quotation is for the logged-in supplier
-        if (!$quotation->suppliers->contains($supplier->id)) {
+        if (!$quotation->suppliers->contains('id', $supplier->company_id)) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -114,6 +114,7 @@ class SupplierQuotationController extends Controller
             ],
             [
                 'status' => QuotationResponse::STATUS_PENDING, // Default status for new response
+                'total_amount' => 0, // Ensure this is set to avoid SQL error
             ]
         );
 
@@ -167,7 +168,11 @@ class SupplierQuotationController extends Controller
         }
 
         // Sync response items
-        $response->items()->sync($responseItemsData);
+        $response->items()->delete();
+        foreach ($responseItemsData as $materialId => $itemData) {
+            $itemData['material_id'] = $materialId;
+            $response->items()->create($itemData);
+        }
 
         // Update the main response details
         $response->update([
