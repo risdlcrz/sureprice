@@ -69,6 +69,12 @@
                         @csrf
 
                         <h5>Quoted Materials</h5>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="toggle-per-material-discount">
+                            <label class="form-check-label" for="toggle-per-material-discount">
+                                Enable Per-Material Discount (Percentage)
+                            </label>
+                        </div>
                         <div class="table-responsive mb-3">
                             <table class="table table-bordered">
                                 <thead>
@@ -77,6 +83,8 @@
                                         <th>Requested Quantity</th>
                                         <th>Current Material Price</th>
                                         <th>Your Quoted Price</th>
+                                        <th class="per-material-discount-header" style="display:none;">Discount Type</th>
+                                        <th class="per-material-discount-header" style="display:none;">Discount (%)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -94,10 +102,20 @@
                                                    data-quantity="{{ $material->requested_quantity }}">
                                             <input type="hidden" name="materials[{{ $material->id }}][quantity]" value="{{ $material->requested_quantity }}">
                                         </td>
+                                        <td class="per-material-discount-cell" style="display:none;">
+                                            <select class="form-select form-select-sm per-material-discount-type" name="materials[{{ $material->id }}][discount_type]">
+                                                @foreach($discountTypes as $type => $label)
+                                                    <option value="{{ $type }}">{{ $label }}</option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td class="per-material-discount-cell" style="display:none;">
+                                            <input type="number" class="form-control form-control-sm per-material-discount-input" name="materials[{{ $material->id }}][discount_percentage]" min="0" max="100" step="0.01" value="0">
+                                        </td>
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="4" class="text-center text-muted">No materials requested for this quotation.</td>
+                                        <td colspan="6" class="text-center text-muted">No materials requested for this quotation.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -112,18 +130,46 @@
                                         <h6 class="mb-0">Pricing Summary</h6>
                                     </div>
                                     <div class="card-body">
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span>Subtotal:</span>
-                                            <span id="subtotal">₱0.00</span>
+                                        <div id="per-material-summary" style="display:none;">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Material</th>
+                                                        <th>Unit Price</th>
+                                                        <th>Discount Type</th>
+                                                        <th>Discount (%)</th>
+                                                        <th>Discount Amount</th>
+                                                        <th>Final Price</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($materialsInQuotation as $material)
+                                                    <tr>
+                                                        <td>{{ $material->name }} ({{ $material->code }})</td>
+                                                        <td><span class="summary-unit-price" data-material-id="{{ $material->id }}">₱0.00</span></td>
+                                                        <td><span class="summary-discount-type" data-material-id="{{ $material->id }}"></span></td>
+                                                        <td><span class="summary-discount-percentage" data-material-id="{{ $material->id }}">0</span>%</td>
+                                                        <td><span class="summary-discount-amount" data-material-id="{{ $material->id }}">₱0.00</span></td>
+                                                        <td><span class="summary-final-price" data-material-id="{{ $material->id }}">₱0.00</span></td>
+                                                    </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
                                         </div>
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span>Discount:</span>
-                                            <span id="discount-display">₱0.00</span>
-                                        </div>
-                                        <hr>
-                                        <div class="d-flex justify-content-between fw-bold">
-                                            <span>Final Amount:</span>
-                                            <span id="final-amount" class="text-success">₱0.00</span>
+                                        <div id="global-summary">
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Subtotal:</span>
+                                                <span id="subtotal">₱0.00</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between mb-2">
+                                                <span>Discount:</span>
+                                                <span id="discount-display">₱0.00</span>
+                                            </div>
+                                            <hr>
+                                            <div class="d-flex justify-content-between fw-bold">
+                                                <span>Final Amount:</span>
+                                                <span id="final-amount" class="text-success">₱0.00</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -133,7 +179,7 @@
                                     <div class="card-header bg-info text-white">
                                         <h6 class="mb-0">Discount Options</h6>
                                     </div>
-                                    <div class="card-body">
+                                    <div class="card-body" id="global-discount-options">
                                         <div class="mb-3">
                                             <label class="form-label">Discount Type</label>
                                             <select class="form-select" id="discount-type" name="discount_type">
@@ -144,26 +190,21 @@
                                                 @endforeach
                                             </select>
                                         </div>
-                                        
                                         <div id="discount-info" class="alert alert-info" style="display: none;">
                                             <small id="discount-description"></small>
                                         </div>
-                                        
                                         <div id="discount-eligibility" class="alert" style="display: none;">
                                             <small id="eligibility-message"></small>
                                         </div>
-                                        
                                         <div id="percentage-discount" class="discount-option" style="display: none;">
                                             <label class="form-label">Discount Percentage (%)</label>
                                             <input type="number" class="form-control" id="discount-percentage" name="discount_percentage" min="0" max="100" step="0.01" value="{{ old('discount_percentage', $existingResponse->discount_percentage ?? '') }}">
                                             <small class="text-muted">Maximum: <span id="max-percentage">0</span>%</small>
                                         </div>
-                                        
                                         <div id="amount-discount" class="discount-option" style="display: none;">
                                             <label class="form-label">Discount Amount (₱)</label>
                                             <input type="number" class="form-control" id="discount-amount" name="discount_amount" min="0" step="0.01" value="{{ old('discount_amount', $existingResponse->discount_amount ?? '') }}">
                                         </div>
-                                        
                                         <div class="mb-3">
                                             <label class="form-label">Discount Reason (Optional)</label>
                                             <textarea class="form-control" id="discount-reason" name="discount_reason" rows="2" placeholder="e.g., Bulk order discount, seasonal promotion, etc.">{{ old('discount_reason', $existingResponse->discount_reason ?? '') }}</textarea>
@@ -227,6 +268,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const discountEligibility = document.getElementById('discount-eligibility');
     const eligibilityMessage = document.getElementById('eligibility-message');
     const maxPercentage = document.getElementById('max-percentage');
+    const togglePerMaterialDiscount = document.getElementById('toggle-per-material-discount');
+    const perMaterialSummary = document.getElementById('per-material-summary');
+    const globalSummary = document.getElementById('global-summary');
+    const perMaterialDiscountInputs = document.querySelectorAll('.per-material-discount-input');
+    const perMaterialDiscountHeaders = document.querySelectorAll('.per-material-discount-header');
+    const perMaterialDiscountCells = document.querySelectorAll('.per-material-discount-cell');
+
     // Apply initial values if present
     if (typeof discountTypeInit !== 'undefined' && discountTypeInit !== null) {
         if (discountPercentageInit > 0) {
@@ -237,29 +285,45 @@ document.addEventListener('DOMContentLoaded', function() {
             amountDiscount.style.display = 'block';
         }
     }
+
     // Show/hide discount options based on type
-    discountType.addEventListener('change', function() {
-        percentageDiscount.style.display = 'none';
-        amountDiscount.style.display = 'none';
-        discountInfo.style.display = 'none';
-        discountEligibility.style.display = 'none';
-        if (this.value !== 'none') {
-            // Show discount input based on type
-            if (this.value === 'percentage' || this.value === 'bulk' || this.value === 'seasonal' || 
-                this.value === 'loyalty' || this.value === 'new_customer' || this.value === 'payment_terms' || 
-                this.value === 'delivery_terms' || this.value === 'custom') {
-                percentageDiscount.style.display = 'block';
-            } else if (this.value === 'amount') {
-                amountDiscount.style.display = 'block';
+    if (discountType) {
+        discountType.addEventListener('change', function() {
+            percentageDiscount.style.display = 'none';
+            amountDiscount.style.display = 'none';
+            discountInfo.style.display = 'none';
+            discountEligibility.style.display = 'none';
+            if (this.value !== 'none') {
+                // Show discount input based on type
+                if (this.value === 'percentage' || this.value === 'bulk' || this.value === 'seasonal' || 
+                    this.value === 'loyalty' || this.value === 'new_customer' || this.value === 'payment_terms' || 
+                    this.value === 'delivery_terms' || this.value === 'custom') {
+                    percentageDiscount.style.display = 'block';
+                } else if (this.value === 'amount') {
+                    amountDiscount.style.display = 'block';
+                }
+                // Get discount info
+                getDiscountInfo(this.value);
             }
-            // Get discount info
-            getDiscountInfo(this.value);
-        }
+            calculateTotals();
+        });
+    }
+
+    // Toggle per-material discount
+    togglePerMaterialDiscount.addEventListener('change', function() {
+        var show = this.checked;
+        perMaterialSummary.style.display = show ? 'block' : 'none';
+        globalSummary.style.display = show ? 'none' : 'block';
+        perMaterialDiscountHeaders.forEach(function(h) { h.style.display = show ? '' : 'none'; });
+        perMaterialDiscountCells.forEach(function(c) { c.style.display = show ? '' : 'none'; });
+        // Hide global discount options when per-material is enabled
+        document.getElementById('global-discount-options').style.display = show ? 'none' : 'block';
         calculateTotals();
     });
+
     // Get discount information from server
     function getDiscountInfo(discountType) {
-        const subtotal = calculateSubtotal();
+        var subtotal = calculateSubtotal();
         fetch('{{ route("supplier.quotations.discount-info") }}', {
             method: 'POST',
             headers: {
@@ -271,8 +335,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 order_amount: subtotal
             })
         })
-        .then(response => response.json())
-        .then(data => {
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
             if (data.error) {
                 discountInfo.style.display = 'none';
                 return;
@@ -294,53 +358,97 @@ document.addEventListener('DOMContentLoaded', function() {
                 discountPercentage.max = data.max_percentage;
             }
         })
-        .catch(error => {
+        .catch(function(error) {
             console.error('Error fetching discount info:', error);
         });
     }
+
     // Calculate subtotal
     function calculateSubtotal() {
-        let subtotal = 0;
-        materialPrices.forEach(input => {
-            const price = parseFloat(input.value) || 0;
-            const quantity = parseFloat(input.dataset.quantity) || 0;
+        var subtotal = 0;
+        materialPrices.forEach(function(input) {
+            var price = parseFloat(input.value) || 0;
+            var quantity = parseFloat(input.dataset.quantity) || 0;
             subtotal += price * quantity;
         });
         return subtotal;
     }
+
     // Calculate totals when prices or discounts change
     function calculateTotals() {
-        const subtotal = calculateSubtotal();
-        let discount = 0;
-        let discountDisplay = '₱0.00';
-        if (discountType.value !== 'none') {
-            if (discountType.value === 'percentage' || discountType.value === 'bulk' || 
-                discountType.value === 'seasonal' || discountType.value === 'loyalty' || 
-                discountType.value === 'new_customer' || discountType.value === 'payment_terms' || 
-                discountType.value === 'delivery_terms' || discountType.value === 'custom') {
-                const percentage = parseFloat(discountPercentage.value) || 0;
-                discount = (subtotal * percentage) / 100;
-                discountDisplay = percentage + '% (-₱' + discount.toFixed(2) + ')';
-            } else if (discountType.value === 'amount') {
-                discount = parseFloat(discountAmount.value) || 0;
-                if (discount > subtotal) {
-                    discount = subtotal;
-                    discountAmount.value = subtotal;
+        var subtotal = 0;
+        var perMaterialDiscountTotal = 0;
+        var perMaterialFinalTotal = 0;
+        var finalAmount = 0;
+        var usePerMaterial = togglePerMaterialDiscount.checked;
+
+        if (usePerMaterial) {
+            materialPrices.forEach(function(input) {
+                var row = input.closest('tr');
+                var materialIdMatch = input.name.match(/materials\[(\d+)\]/);
+                var materialId = materialIdMatch ? materialIdMatch[1] : null;
+                var unitPrice = parseFloat(input.value) || 0;
+                var quantity = parseFloat(input.dataset.quantity) || 0;
+                var discountTypeSelect = row.querySelector('.per-material-discount-type');
+                var discountType = discountTypeSelect ? discountTypeSelect.options[discountTypeSelect.selectedIndex].text : '';
+                var discountInput = row.querySelector('.per-material-discount-input');
+                var discountPercentage = parseFloat(discountInput.value) || 0;
+                var discountAmount = (unitPrice * discountPercentage) / 100;
+                var finalPrice = unitPrice - discountAmount;
+
+                // Update summary cells
+                var unitPriceCell = document.querySelector('.summary-unit-price[data-material-id="' + materialId + '"]');
+                var discountTypeCell = document.querySelector('.summary-discount-type[data-material-id="' + materialId + '"]');
+                var discountPercentageCell = document.querySelector('.summary-discount-percentage[data-material-id="' + materialId + '"]');
+                var discountAmountCell = document.querySelector('.summary-discount-amount[data-material-id="' + materialId + '"]');
+                var finalPriceCell = document.querySelector('.summary-final-price[data-material-id="' + materialId + '"]');
+                if (unitPriceCell) unitPriceCell.textContent = '₱' + unitPrice.toFixed(2);
+                if (discountTypeCell) discountTypeCell.textContent = discountType;
+                if (discountPercentageCell) discountPercentageCell.textContent = discountPercentage;
+                if (discountAmountCell) discountAmountCell.textContent = '₱' + discountAmount.toFixed(2);
+                if (finalPriceCell) finalPriceCell.textContent = '₱' + finalPrice.toFixed(2);
+
+                subtotal += unitPrice * quantity;
+                perMaterialDiscountTotal += discountAmount * quantity;
+                perMaterialFinalTotal += finalPrice * quantity;
+            });
+            finalAmount = perMaterialFinalTotal;
+            document.getElementById('subtotal').textContent = '₱' + subtotal.toFixed(2);
+            document.getElementById('discount-display').textContent = 'Per-material: -₱' + perMaterialDiscountTotal.toFixed(2);
+            document.getElementById('final-amount').textContent = '₱' + finalAmount.toFixed(2);
+        } else {
+            // Global discount only
+            subtotal = calculateSubtotal();
+            if (discountType && discountType.value !== 'none') {
+                if (discountType.value === 'percentage' || discountType.value === 'bulk' || 
+                    discountType.value === 'seasonal' || discountType.value === 'loyalty' || 
+                    discountType.value === 'new_customer' || discountType.value === 'payment_terms' || 
+                    discountType.value === 'delivery_terms' || discountType.value === 'custom') {
+                    var percentage = parseFloat(discountPercentage.value) || 0;
+                    discount = (subtotal * percentage) / 100;
+                    discountDisplay = percentage + '% (-₱' + discount.toFixed(2) + ')';
+                } else if (discountType.value === 'amount') {
+                    discount = parseFloat(discountAmount.value) || 0;
+                    if (discount > subtotal) {
+                        discount = subtotal;
+                        discountAmount.value = subtotal;
+                    }
+                    discountDisplay = '₱' + discount.toFixed(2);
                 }
-                discountDisplay = '₱' + discount.toFixed(2);
             }
+            finalAmount = subtotal - discount;
+            document.getElementById('subtotal').textContent = '₱' + subtotal.toFixed(2);
+            document.getElementById('discount-display').textContent = discountDisplay;
+            document.getElementById('final-amount').textContent = '₱' + finalAmount.toFixed(2);
         }
-        const finalAmount = subtotal - discount;
-        document.getElementById('subtotal').textContent = '₱' + subtotal.toFixed(2);
-        document.getElementById('discount-display').textContent = discountDisplay;
-        document.getElementById('final-amount').textContent = '₱' + finalAmount.toFixed(2);
         // Update discount info if discount type is selected
-        if (discountType.value !== 'none') {
+        if (discountType && discountType.value !== 'none') {
             getDiscountInfo(discountType.value);
         }
     }
+
     // Add event listeners for real-time calculation
-    materialPrices.forEach(input => {
+    materialPrices.forEach(function(input) {
         input.addEventListener('input', calculateTotals);
     });
     if (discountPercentage) {
@@ -349,6 +457,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (discountAmount) {
         discountAmount.addEventListener('input', calculateTotals);
     }
+    perMaterialDiscountInputs.forEach(function(input) {
+        input.addEventListener('input', calculateTotals);
+    });
+
     // Initial calculation
     calculateTotals();
 });
