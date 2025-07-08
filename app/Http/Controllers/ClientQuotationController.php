@@ -285,6 +285,23 @@ class ClientQuotationController extends Controller
             ->with('success', 'Quotation request submitted successfully. Suppliers will be notified.');
     }
 
+    public function cancel($id)
+    {
+        $quotationRequest = \App\Models\QuotationRequest::findOrFail($id);
+        // Optionally, check if the user is authorized to cancel
+        $quotationRequest->status = 'cancelled';
+        $quotationRequest->save();
+
+        return redirect()->route('client.quotation.index')->with('success', 'Quotation cancelled.');
+    }
+
+    public function showContractForm($id)
+    {
+        $quotationRequest = \App\Models\QuotationRequest::findOrFail($id);
+        // Pass any other data needed for the contract
+        return view('client.quotation.contract', compact('quotationRequest'));
+    }
+
     /**
      * Get suppliers for each material with price, metrics, and badges
      */

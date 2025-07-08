@@ -335,6 +335,15 @@
                             <button type="submit" class="btn btn-success btn-lg">Submit Final Selection</button>
                         </div>
                     </form>
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <form method="POST" action="{{ route('client.quotation.cancel', ['id' => $quotationRequest->id]) }}" onsubmit="return confirm('Are you sure you want to cancel this quotation?');">
+                            @csrf
+                            <button type="submit" class="btn btn-danger btn-lg">Cancel Quotation</button>
+                        </form>
+                        <form method="GET" action="{{ route('client.contract.fill', ['id' => $quotationRequest->id]) }}">
+                            <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
+                        </form>
+                    </div>
                     <!-- Recommend Modal for Client -->
                     <div class="modal fade" id="clientRecommendModal" tabindex="-1" aria-labelledby="clientRecommendModalLabel" aria-hidden="true">
                         <div class="modal-dialog">

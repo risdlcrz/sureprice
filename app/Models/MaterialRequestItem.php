@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MaterialRequestItem extends Model
 {
@@ -13,24 +12,17 @@ class MaterialRequestItem extends Model
     protected $fillable = [
         'material_request_id',
         'material_id',
-        'warehouse_id',
         'quantity',
-        'unit',
-        'fulfilled_quantity',
+        'status',
     ];
 
-    public function materialRequest(): BelongsTo
+    public function materialRequest()
     {
         return $this->belongsTo(MaterialRequest::class);
     }
 
-    public function material(): BelongsTo
+    public function material()
     {
         return $this->belongsTo(Material::class);
-    }
-
-    public function warehouse(): BelongsTo
-    {
-        return $this->belongsTo(Warehouse::class);
     }
 } 

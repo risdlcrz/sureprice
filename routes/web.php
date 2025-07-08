@@ -284,6 +284,8 @@ Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefi
     Route::get('/quotation/view', [\App\Http\Controllers\ClientQuotationController::class, 'view'])->name('quotation.view');
     Route::post('/quotation/{id}/finalize', [\App\Http\Controllers\ClientQuotationController::class, 'finalizeSelection'])->name('quotation.finalize');
 });
+Route::post('/client/quotation/{id}/cancel', [App\Http\Controllers\ClientQuotationController::class, 'cancel'])->name('client.quotation.cancel');
+Route::get('/client/quotation/{id}/contract', [App\Http\Controllers\ClientQuotationController::class, 'showContractForm'])->name('client.contract.fill');
 
 // Procurement Routes
 Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->prefix('procurement')->name('procurement.')->group(function () {
