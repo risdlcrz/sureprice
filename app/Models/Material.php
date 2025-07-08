@@ -71,7 +71,7 @@ class Material extends Model
     public function suppliers()
     {
         return $this->belongsToMany(\App\Models\Supplier::class, 'material_supplier', 'material_id', 'supplier_id')
-            ->withPivot(['price', 'is_preferred'])
+            ->withPivot(['price', 'is_preferred', 'approval_status'])
             ->withTimestamps();
     }
 

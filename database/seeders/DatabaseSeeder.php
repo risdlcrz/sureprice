@@ -14,11 +14,9 @@ class DatabaseSeeder extends Seeder
 
     // Add your admin seeder
     $this->call([
-        UserSeeder::class,
         EmployeeSeeder::class,
         CompanySeeder::class,
         AdminSeeder::class,
-        SupplierSeeder::class,
         SupplierMetricsSeeder::class,
         OrderEvaluationSeeder::class,
         MaterialSeeder::class,

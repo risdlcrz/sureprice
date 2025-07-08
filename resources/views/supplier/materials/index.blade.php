@@ -55,7 +55,6 @@
                         <th>Stock</th>
                         <th>SRP</th>
                         <th>Base Price</th>
-                        <th>Status</th>
                         <th>Your Price (₱)</th>
                         <th>Actions</th>
                     </tr>
@@ -70,11 +69,6 @@
                         <td>{{ $material->stock }}</td>
                         <td>₱{{ is_numeric($material->srp_price) ? number_format($material->srp_price, 2) : '-' }}</td>
                         <td>₱{{ is_numeric($material->base_price) ? number_format($material->base_price, 2) : '-' }}</td>
-                        <td>
-                            <span class="badge bg-{{ $material->approval_status === 'approved' ? 'success' : ($material->approval_status === 'pending' ? 'warning' : 'danger') }}">
-                                {{ ucfirst($material->approval_status) }}
-                            </span>
-                        </td>
                         <td>₱{{ number_format($material->pivot->price, 2) }}</td>
                         <td>
                             <div class="btn-group">

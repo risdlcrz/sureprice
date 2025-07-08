@@ -838,10 +838,10 @@ function updateFormFields() {
   // Reset file upload requirements
   businessPermitInput.required = false;
   businessPermitRequired.style.display = 'none';
-  businessPermitOptionalText.style.display = 'none';
+  businessPermitOptionalText.style.display = 'inline';
   validIdInput.required = false;
   validIdRequired.style.display = 'none';
-  validIdOptionalText.style.display = 'none';
+  validIdOptionalText.style.display = 'inline';
 
   if (role === 'client') {
     // Show client type selection and make it required
@@ -948,7 +948,6 @@ document.addEventListener('DOMContentLoaded', updateFormFields);
 function updateCompanyTypeOptions() {
   const role = document.getElementById('designation').value;
   const supplierTypeSelect = document.getElementById('supplier_type');
-  const primaryProducts = document.getElementById('primary_products_services').value;
   const defaultOptions = [
     'Construction & Engineering',
     'Architecture & Design',
@@ -970,35 +969,14 @@ function updateCompanyTypeOptions() {
     'Nonprofit / NGO',
     'Other'
   ];
-  if (role === 'supplier') {
-    // Remove all current options
-    supplierTypeSelect.innerHTML = '<option value="">Select company type</option>';
-    if (primaryProducts.trim() !== '') {
-      // Split primary products/services by comma and trim whitespace
-      const materials = primaryProducts.split(',').map(item => item.trim()).filter(Boolean);
-      // Add each material as an option
-      materials.forEach(material => {
-        const opt = document.createElement('option');
-        opt.value = material;
-        opt.textContent = material;
-        supplierTypeSelect.appendChild(opt);
-      });
-    }
-    // Always add 'Other' option
-    const otherOpt = document.createElement('option');
-    otherOpt.value = 'Other';
-    otherOpt.textContent = 'Other';
-    supplierTypeSelect.appendChild(otherOpt);
-  } else {
-    // Restore default options for clients
-    supplierTypeSelect.innerHTML = '<option value="">Select company type</option>';
-    defaultOptions.forEach(type => {
-      const opt = document.createElement('option');
-      opt.value = type;
-      opt.textContent = type;
-      supplierTypeSelect.appendChild(opt);
-    });
-  }
+  // Always show default options for both supplier and client
+  supplierTypeSelect.innerHTML = '<option value="">Select company type</option>';
+  defaultOptions.forEach(type => {
+    const opt = document.createElement('option');
+    opt.value = type;
+    opt.textContent = type;
+    supplierTypeSelect.appendChild(opt);
+  });
 }
 // Add event listeners
 if (document.getElementById('designation')) {

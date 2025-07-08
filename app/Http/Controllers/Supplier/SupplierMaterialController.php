@@ -163,7 +163,8 @@ class SupplierMaterialController extends Controller
         }
         $supplier->materials()->attach($validated['material_id'], [
             'price' => $validated['price'],
-            'is_preferred' => false
+            'is_preferred' => false,
+            'approval_status' => 'approved' // Automatically approve on link
         ]);
         return redirect()->route('supplier.materials.index')
             ->with('success', 'Material linked successfully.');
@@ -175,4 +176,5 @@ class SupplierMaterialController extends Controller
         $linkedSupplierIds = $material->suppliers()->pluck('suppliers.id')->toArray();
         return view('admin.materials.show', compact('material', 'suppliers', 'linkedSupplierIds'));
     }
+} 
 } 
