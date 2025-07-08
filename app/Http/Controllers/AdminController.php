@@ -8,6 +8,13 @@ use Illuminate\Http\Request;
 use App\Notifications\CompanyRejectedNotification;
 use App\Notifications\CompanyApprovedNotification;
 use App\Models\Activity;
+use App\Models\QuotationRequest;
+use App\Models\Supplier;
+use App\Models\Material;
+use App\Models\Quotation;
+use App\Models\User;
+use Illuminate\Support\Carbon;
+use App\Services\SupplierSelectionService;
 
 class AdminController extends Controller
 {
@@ -111,9 +118,8 @@ public function show(Company $company)
 
 public function notificationCenter()
 {
-    // Fetch the latest 50 notifications for the current user (polymorphic)
-    $notifications = \App\Models\Notification::where('notifiable_id', auth()->id())
-        ->where('notifiable_type', \App\Models\User::class)
+    // Fetch the latest 50 notifications for the current admin user by user_id
+    $notifications = \App\Models\Notification::where('user_id', auth()->id())
         ->latest()
         ->take(50)
         ->get();
@@ -196,5 +202,223 @@ public function administratorLogs(Request $request)
     ];
 
     return view('admin.logs', compact('activities', 'userTypes', 'filter'));
+}
+
+public function review($id)
+{
+    $quotationRequest = QuotationRequest::with(['rooms.scopes.scopeType.materials'])->findOrFail($id);
+    $this->logPageView('Reviewed Client Quotation Request #' . $quotationRequest->request_number, QuotationRequest::class, $quotationRequest->id);
+
+    // Gather all material IDs from the request
+    $materialIds = collect();
+    foreach ($quotationRequest->rooms as $room) {
+        foreach ($room->scopes as $scope) {
+            if ($scope->scopeType && $scope->scopeType->materials) {
+                $materialIds = $materialIds->merge($scope->scopeType->materials->pluck('id'));
+            }
+        }
+    }
+    $materialIds = $materialIds->unique()->values();
+
+    // Check if any RFQs have already been created for this QuotationRequest
+    $rfqsSent = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->exists();
+
+    return view('admin.quotation-requests.review', compact('quotationRequest', 'rfqsSent'));
+}
+
+// Helper to get badges for a supplier's response for a material
+private function getSupplierBadges($supplier, $unitPrice, $materialId, $rfqs)
+{
+    // Gather all prices for this material from all suppliers
+    $prices = [];
+    $deliveryRates = [];
+    $defectRates = [];
+    foreach ($rfqs as $rfq) {
+        foreach ($rfq->responses as $response) {
+            foreach ($response->items as $item) {
+                if ($item->material_id == $materialId) {
+                    $prices[$response->supplier_id] = $item->unit_price;
+                    $deliveryRates[$response->supplier_id] = $response->supplier->metrics->on_time_delivery_rate ?? 0;
+                    $defectRates[$response->supplier_id] = $response->supplier->metrics->average_defect_rate ?? 0;
+                }
+            }
+        }
+    }
+    $badges = [];
+    if (!empty($prices)) {
+        $minPrice = min($prices);
+        $maxDelivery = max($deliveryRates);
+        $minDefect = min($defectRates);
+        if ($unitPrice == $minPrice) $badges[] = 'Cheapest';
+        if (($supplier->metrics->on_time_delivery_rate ?? 0) == $maxDelivery) $badges[] = 'Best Delivery';
+        if (($supplier->metrics->average_defect_rate ?? 0) == $minDefect) $badges[] = 'Least Defects';
+        // You can add more logic for "Overall Best" using your KNN/LP service
+    }
+    return $badges;
+}
+
+public function sendRfqToSuppliers($id)
+{
+    $quotationRequest = QuotationRequest::with(['rooms.scopes.scopeType.materials'])->findOrFail($id);
+
+    // Gather all material IDs from the request
+    $materialIds = collect();
+    foreach ($quotationRequest->rooms as $room) {
+        foreach ($room->scopes as $scope) {
+            if ($scope->scopeType && $scope->scopeType->materials) {
+                $materialIds = $materialIds->merge($scope->scopeType->materials->pluck('id'));
+            }
+        }
+    }
+    $materialIds = $materialIds->unique()->values();
+
+    // Find all suppliers who can provide any of these materials
+    $suppliers = Supplier::whereHas('materials', function($q) use ($materialIds) {
+        $q->whereIn('materials.id', $materialIds);
+    })->get();
+
+    // For each supplier, create a Quotation (RFQ) with all their materials from the request
+    foreach ($suppliers as $supplier) {
+        $supplierMaterialIds = $supplier->materials()->whereIn('materials.id', $materialIds)->pluck('materials.id');
+        if ($supplierMaterialIds->isEmpty()) continue;
+
+        // Generate RFQ number
+        $lastQuotation = Quotation::orderByDesc('id')->first();
+        if ($lastQuotation && preg_match('/RFQ-(\\d+)/i', $lastQuotation->rfq_number, $matches)) {
+            $nextNumber = intval($matches[1]) + 1;
+        } else {
+            $nextNumber = 1;
+        }
+        $rfqNumber = 'RFQ-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+        $quotation = Quotation::create([
+            'purchase_request_id' => null, // Not linked to a PR
+            'rfq_number' => $rfqNumber,
+            'status' => 'draft',
+            'notes' => 'Auto-generated from client quotation request #' . $quotationRequest->request_number,
+            'due_date' => Carbon::now()->addDays(7),
+        ]);
+        // Attach supplier
+        $quotation->suppliers()->attach($supplier->company_id ?? $supplier->id);
+        // Attach materials
+        $materialSyncData = [];
+        foreach ($supplierMaterialIds as $matId) {
+            $materialSyncData[$matId] = ['quantity' => 1]; // Quantity can be improved if needed
+        }
+        $quotation->materials()->sync($materialSyncData);
+        // Notify supplier's user
+        if ($supplier->user) {
+            \App\Models\Notification::create([
+                'user_id' => $supplier->user->id,
+                'type' => 'rfq_created',
+                'notifiable_type' => Quotation::class,
+                'notifiable_id' => $quotation->id,
+                'data' => [
+                    'title' => 'New RFQ Created',
+                    'message' => 'A new Request for Quotation (RFQ #' . $quotation->rfq_number . ') has been created for you.',
+                    'link' => route('supplier.quotations.show', $quotation->id),
+                ],
+                'for_role' => 'supplier',
+            ]);
+        }
+    }
+
+    // Mark the QuotationRequest as reviewed
+    $quotationRequest->status = 'reviewed';
+    $quotationRequest->save();
+
+    return redirect()->route('admin.quotation.review', ['id' => $quotationRequest->id])
+        ->with('success', 'RFQs have been created for all relevant suppliers.');
+}
+
+public function finalizeQuotationSelection(Request $request, $id)
+{
+    $quotationRequest = QuotationRequest::with(['rooms.scopes.scopeType.materials'])->findOrFail($id);
+    $selectedSuppliers = $request->input('selected_suppliers', []);
+
+    // Find all RFQs (Quotations) generated for this QuotationRequest
+    $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with(['materials'])->get();
+
+    // For each material, update the selected_supplier_id in material_quotation
+    foreach ($selectedSuppliers as $materialId => $supplierId) {
+        foreach ($rfqs as $rfq) {
+            // Update the pivot for this material in this RFQ
+            $rfq->materials()->updateExistingPivot($materialId, ['selected_supplier_id' => $supplierId]);
+        }
+    }
+
+    // Notify the client (user who created the quotation request)
+    if ($quotationRequest->user_id) {
+        \App\Models\Notification::create([
+            'user_id' => $quotationRequest->user_id,
+            'type' => 'quotation_finalized',
+            'notifiable_type' => QuotationRequest::class,
+            'notifiable_id' => $quotationRequest->id,
+            'data' => [
+                'title' => 'Quotation Finalized',
+                'message' => 'Your quotation request has been finalized. You can now view supplier offers and selected suppliers.',
+                'link' => route('client.quotation.view', $quotationRequest->id),
+            ],
+            'for_role' => 'client',
+        ]);
+    }
+
+    return redirect()->route('admin.quotation.review', ['id' => $quotationRequest->id])
+        ->with('success', 'Supplier selections saved and client notified.');
+}
+
+public function recommendSuppliers(Request $request, $id)
+{
+    $category = $request->query('category', 'overall_best');
+    $quotationRequest = QuotationRequest::with(['rooms.scopes.scopeType.materials'])->findOrFail($id);
+
+    // Gather all material IDs from the request
+    $materialIds = collect();
+    foreach ($quotationRequest->rooms as $room) {
+        foreach ($room->scopes as $scope) {
+            if ($scope->scopeType && $scope->scopeType->materials) {
+                $materialIds = $materialIds->merge($scope->scopeType->materials->pluck('id'));
+            }
+        }
+    }
+    $materialIds = $materialIds->unique()->values();
+
+    // Fetch all RFQs (Quotations) generated for this QuotationRequest
+    $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with(['suppliers', 'materials', 'responses.items', 'responses.supplier.metrics'])->get();
+
+    // Build supplier data for the service
+    $suppliers = [];
+    foreach ($rfqs as $rfq) {
+        foreach ($rfq->responses as $response) {
+            $supplier = $response->supplier;
+            $metrics = $supplier->metrics;
+            $materialIdsForSupplier = [];
+            foreach ($response->items as $item) {
+                $materialIdsForSupplier[] = $item->material_id;
+            }
+            $suppliers[] = [
+                'id' => $supplier->id,
+                'name' => $supplier->company_name,
+                'material_ids' => $materialIdsForSupplier,
+                'price_map' => collect($response->items)->mapWithKeys(fn($item) => [$item->material_id => $item->unit_price])->toArray(),
+                'on_time_delivery_rate' => $metrics->on_time_delivery_rate ?? 0,
+                'average_defect_rate' => $metrics->average_defect_rate ?? 0,
+                'average_cost_variance' => $metrics->average_cost_variance ?? 0,
+            ];
+        }
+    }
+
+    $service = new SupplierSelectionService();
+    $materialSegments = $service->segmentSuppliersByMaterial($suppliers);
+
+    $recommendations = [];
+    foreach ($materialIds as $materialId) {
+        $ranked = $service->getSuppliersForMaterial($materialSegments, $materialId, $category);
+        if (!empty($ranked)) {
+            $recommendations[$materialId] = $ranked[0]['id'];
+        }
+    }
+
+    return response()->json(['recommendations' => $recommendations]);
 }
 }

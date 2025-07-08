@@ -9,6 +9,36 @@
                     <h4 class="card-title mb-0">Respond to Quotation</h4>
                 </div>
                 <div class="card-body">
+                    @if(isset($quotationRequest) && $quotationRequest)
+                        <div class="alert alert-secondary mb-4">
+                            <h5 class="mb-1">Client Quotation Request #{{ $quotationRequest->request_number }}</h5>
+                            <span class="badge bg-{{ $quotationRequest->status_color ?? 'secondary' }}">{{ $quotationRequest->status_label ?? ucfirst($quotationRequest->status) }}</span>
+                            <ul class="mb-1 mt-2">
+                                <li><strong>Submitted At:</strong> {{ $quotationRequest->created_at->format('M d, Y H:i') }}</li>
+                                <li><strong>Requested By (User ID):</strong> {{ $quotationRequest->user_id }}</li>
+                                <li><strong>Rooms/Scopes/Materials:</strong>
+                                    <ul>
+                                        @foreach($quotationRequest->rooms as $room)
+                                            <li>
+                                                <strong>{{ $room->name ?? 'Room' }}</strong>
+                                                <ul>
+                                                    @foreach($room->scopes as $scope)
+                                                        <li>
+                                                            {{ $scope->scopeType->name ?? 'Scope' }}:
+                                                            @if($scope->scopeType && $scope->scopeType->materials)
+                                                                {{ $scope->scopeType->materials->pluck('name')->join(', ') }}
+                                                            @endif
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    @endif
+
                     @if($existingResponse)
                     <div class="alert alert-info">
                         <h5>You have already submitted a response for this quotation.</h5>

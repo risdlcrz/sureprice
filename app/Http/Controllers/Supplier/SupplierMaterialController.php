@@ -13,8 +13,8 @@ class SupplierMaterialController extends Controller
 {
     public function index(Request $request)
     {
-        $supplier = Auth::user()->supplier;
-        if (!$supplier) {
+        $supplier = Auth::user()->company;
+        if (!$supplier || $supplier->designation !== 'supplier') {
             abort(403, 'You are not associated with a supplier account.');
         }
 
@@ -148,9 +148,8 @@ class SupplierMaterialController extends Controller
 
     public function link(Request $request)
     {
-        $user = Auth::user();
-        $supplier = $user->supplier;
-        if (!$supplier) {
+        $supplier = Auth::user()->company;
+        if (!$supplier || $supplier->designation !== 'supplier') {
             abort(403, 'You are not associated with a supplier account.');
         }
         $validated = $request->validate([

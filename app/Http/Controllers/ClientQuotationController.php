@@ -9,6 +9,7 @@ use App\Models\ScopeType;
 use App\Services\SupplierSelectionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use App\Models\User;
 
 class ClientQuotationController extends Controller
 {
@@ -113,10 +114,26 @@ class ClientQuotationController extends Controller
             }
         }
 
+        // Notify all admins
+        $admins = User::role('admin')->get();
+        foreach ($admins as $admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'type' => 'client_quotation_submitted',
+                'notifiable_type' => \App\Models\QuotationRequest::class,
+                'notifiable_id' => $quotationRequest->id,
+                'data' => [
+                    'title' => 'New Client Quotation Submitted',
+                    'message' => 'A new client quotation request (Request #' . $quotationRequest->request_number . ') has been submitted and needs review.',
+                    'link' => route('admin.quotation.review', ['id' => $quotationRequest->id]),
+                ],
+                'for_role' => 'admin',
+            ]);
+        }
+
         Session::put('client_quotation_data', $validated);
         Session::put('quotation_request_id', $quotationRequest->id);
-        return redirect()->route('client.quotation.view', ['id' => $quotationRequest->id])
-            ->with('success', 'Quotation request submitted successfully. Our team will contact you soon.');
+        return redirect()->route('client.quotation.view', ['id' => $quotationRequest->id]);
     }
     
     public function suppliers()
@@ -326,14 +343,91 @@ class ClientQuotationController extends Controller
     {
         $quotationRequestId = $request->query('id') ?? $request->id ?? session('quotation_request_id');
         if ($quotationRequestId) {
-            $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType'])
-                ->where('id', $quotationRequestId)
-                ->where('user_id', auth()->id())
-                ->first();
+            $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType.materials'])->where('id', $quotationRequestId)->where('user_id', auth()->id())->first();
         } else {
             $quotationRequest = null;
         }
         $sessionData = session('client_quotation_data');
-        return view('client.quotation.view', compact('quotationRequest', 'sessionData'));
+
+        // Fetch all RFQs (Quotations) generated for this QuotationRequest
+        $rfqs = [];
+        $materialSupplierResponses = [];
+        $selectedSuppliers = [];
+        if ($quotationRequest) {
+            $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with(['suppliers', 'materials', 'responses.items', 'responses.supplier.metrics'])->get();
+            // For each material, gather all supplier responses and the selected supplier
+            $materialIds = collect();
+            foreach ($quotationRequest->rooms as $room) {
+                foreach ($room->scopes as $scope) {
+                    if ($scope->scopeType && $scope->scopeType->materials) {
+                        $materialIds = $materialIds->merge($scope->scopeType->materials->pluck('id'));
+                    }
+                }
+            }
+            $materialIds = $materialIds->unique()->values();
+            foreach ($materialIds as $materialId) {
+                $materialSupplierResponses[$materialId] = [];
+                foreach ($rfqs as $rfq) {
+                    foreach ($rfq->responses as $response) {
+                        foreach ($response->items as $item) {
+                            if ($item->material_id == $materialId) {
+                                $materialSupplierResponses[$materialId][] = [
+                                    'supplier_id' => $response->supplier_id,
+                                    'supplier_name' => $response->supplier->company_name,
+                                    'unit_price' => $item->unit_price,
+                                    'badges' => [], // Add badge logic if needed
+                                    'metrics' => $response->supplier->metrics,
+                                ];
+                            }
+                        }
+                    }
+                }
+                // Get selected supplier from the pivot
+                foreach ($rfqs as $rfq) {
+                    $material = $rfq->materials->firstWhere('id', $materialId);
+                    if ($material && $material->pivot && $material->pivot->selected_supplier_id) {
+                        $selectedSuppliers[$materialId] = $material->pivot->selected_supplier_id;
+                        break;
+                    }
+                }
+            }
+        }
+        return view('client.quotation.view', compact('quotationRequest', 'sessionData', 'materialSupplierResponses', 'selectedSuppliers'));
+    }
+
+    public function finalizeSelection(Request $request, $id)
+    {
+        $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType.materials'])->where('id', $id)->where('user_id', auth()->id())->firstOrFail();
+        $selectedSuppliers = $request->input('selected_suppliers', []);
+
+        // Find all RFQs (Quotations) generated for this QuotationRequest
+        $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with(['materials'])->get();
+
+        // For each material, update the selected_supplier_id in material_quotation
+        foreach ($selectedSuppliers as $materialId => $supplierId) {
+            foreach ($rfqs as $rfq) {
+                $rfq->materials()->updateExistingPivot($materialId, ['selected_supplier_id' => $supplierId]);
+            }
+        }
+
+        // Optionally, notify the admin
+        $admins = \App\Models\User::role('admin')->get();
+        foreach ($admins as $admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'type' => 'client_finalized_selection',
+                'notifiable_type' => \App\Models\QuotationRequest::class,
+                'notifiable_id' => $quotationRequest->id,
+                'data' => [
+                    'title' => 'Client Finalized Supplier Selection',
+                    'message' => 'The client has finalized their supplier selections for Quotation Request #' . $quotationRequest->request_number . '.',
+                    'link' => route('admin.quotation.review', ['id' => $quotationRequest->id]),
+                ],
+                'for_role' => 'admin',
+            ]);
+        }
+
+        return redirect()->route('client.quotation.view', ['id' => $quotationRequest->id])
+            ->with('success', 'Your supplier selections have been saved!');
     }
 } 

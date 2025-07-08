@@ -17,7 +17,7 @@ return new class extends Migration
             $table->dropColumn('project_id');
             
             // Add purchase_request_id
-            $table->foreignId('purchase_request_id')->after('id')->constrained()->onDelete('cascade');
+            $table->foreignId('purchase_request_id')->nullable()->after('id')->constrained()->onDelete('cascade');
             
             // Add new fields
             $table->decimal('total_amount', 15, 2)->nullable()->after('status');

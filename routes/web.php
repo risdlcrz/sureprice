@@ -282,6 +282,7 @@ Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefi
     Route::get('/quotation/create', [\App\Http\Controllers\ClientQuotationController::class, 'create'])->name('quotation.create');
     Route::post('/quotation', [\App\Http\Controllers\ClientQuotationController::class, 'store'])->name('quotation.store');
     Route::get('/quotation/view', [\App\Http\Controllers\ClientQuotationController::class, 'view'])->name('quotation.view');
+    Route::post('/quotation/{id}/finalize', [\App\Http\Controllers\ClientQuotationController::class, 'finalizeSelection'])->name('quotation.finalize');
 });
 
 // Procurement Routes
@@ -354,6 +355,10 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::get('/budget-allocation', [BudgetAllocationController::class, 'index'])->name('admin.budget-allocation');
     Route::get('/price-analysis', [App\Http\Controllers\Admin\MaterialController::class, 'priceAnalysis'])->name('admin.price-analysis');
     Route::get('/admin/transactions', [App\Http\Controllers\TransactionController::class, 'index'])->name('admin.transactions');
+    Route::get('/admin/quotation-requests/{id}/review', [App\Http\Controllers\AdminController::class, 'review'])->name('admin.quotation.review');
+    Route::post('/admin/quotation-requests/{id}/send-rfq', [App\Http\Controllers\AdminController::class, 'sendRfqToSuppliers'])->name('admin.quotation.send-rfq');
+    Route::post('/admin/quotation-requests/{id}/finalize', [App\Http\Controllers\AdminController::class, 'finalizeQuotationSelection'])->name('admin.quotation.finalize');
+    Route::get('/admin/quotation-requests/{id}/recommend-suppliers', [App\Http\Controllers\AdminController::class, 'recommendSuppliers'])->name('admin.quotation.recommend-suppliers');
 });
 // Supplier Evaluation Routes
 Route::get('/admin/suppliers/{supplier}/latest-evaluation', [SupplierRankingController::class, 'getLatestEvaluation'])
@@ -411,6 +416,8 @@ Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'verified', \A
     // Purchase Orders for Supplier
     Route::get('purchase-orders', [\App\Http\Controllers\Supplier\PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
     Route::get('purchase-orders/{purchaseOrder}', [\App\Http\Controllers\Supplier\PurchaseOrderController::class, 'show'])->name('purchase-orders.show');
+
+    Route::get('notification-center', [\App\Http\Controllers\Supplier\SupplierDashboardController::class, 'notificationCenter'])->name('notification');
 });
 // Admin Supplier Profile Update Review Routes
 Route::middleware(['auth', AdminMiddleware::class])->prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {

@@ -46,7 +46,7 @@ class Quotation extends Model
 
     public function suppliers(): BelongsToMany
     {
-        return $this->belongsToMany(Supplier::class, 'quotation_supplier')
+        return $this->belongsToMany(\App\Models\Company::class, 'quotation_supplier', 'quotation_id', 'supplier_id')
             ->withPivot('notes')
             ->withTimestamps();
     }

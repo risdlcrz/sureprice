@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Models\Notification;
 
 class SupplierDashboardController extends Controller
 {
@@ -243,5 +244,15 @@ class SupplierDashboardController extends Controller
         ]);
         // (Optional) Trigger admin notification here
         return redirect()->route('supplier.dashboard')->with('success', 'Profile updated successfully.');
+    }
+
+    public function notificationCenter()
+    {
+        $user = Auth::user();
+        $notifications = Notification::where('user_id', $user->id)
+            ->latest()
+            ->take(50)
+            ->get();
+        return view('supplier.notification-center', compact('notifications'));
     }
 }

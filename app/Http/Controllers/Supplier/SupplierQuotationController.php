@@ -8,6 +8,8 @@ use App\Models\Quotation;
 use App\Models\Material;
 use App\Models\QuotationResponse;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use App\Models\Notification;
 
 class SupplierQuotationController extends Controller
 {
@@ -46,39 +48,35 @@ class SupplierQuotationController extends Controller
         if (!$supplier || $supplier->designation !== 'supplier') {
             abort(403, 'You are not associated with a supplier account.');
         }
-
-        // Ensure the quotation is for the logged-in supplier
         if (!$quotation->suppliers->contains($supplier->id)) {
             abort(403, 'Unauthorized action.');
         }
-
-        // Load materials associated with the quotation
-        // If it's a PR-based quotation, materials come from PR items. If standalone, from quotation_material pivot.
+        // Try to extract client quotation request number from notes
+        $quotationRequest = null;
+        if (preg_match('/client quotation request #(\d+)/i', $quotation->notes, $matches)) {
+            $requestNumber = $matches[1];
+            $quotationRequest = \App\Models\QuotationRequest::where('request_number', $requestNumber)
+                ->with(['rooms.scopes.scopeType.materials'])
+                ->first();
+        }
         if ($quotation->purchase_request_id) {
             $materialsInQuotation = $quotation->purchaseRequest->items->map(function($item) {
-                // Include quantity from PR item as well
                 $item->material->requested_quantity = $item->quantity;
                 return $item->material;
             });
         } else {
             $materialsInQuotation = $quotation->materials->map(function($material) {
-                // Include quantity from quotation_material pivot
                 $material->requested_quantity = $material->pivot->quantity;
                 return $material;
             });
         }
-
-        // Check if there's an existing response from this supplier for this quotation
         $existingResponse = QuotationResponse::where('quotation_id', $quotation->id)
                                             ->where('supplier_id', $supplier->id)
-                                            ->with('items') // Load response items
+                                            ->with('items')
                                             ->first();
-
-        // Get available discount types and rules
         $discountTypes = QuotationResponse::getAvailableDiscountTypes();
         $discountRules = QuotationResponse::getDiscountRules();
-
-        return view('supplier.quotation-respond', compact('quotation', 'materialsInQuotation', 'existingResponse', 'discountTypes', 'discountRules'));
+        return view('supplier.quotation-respond', compact('quotation', 'materialsInQuotation', 'existingResponse', 'discountTypes', 'discountRules', 'quotationRequest'));
     }
 
     public function respond(Request $request, Quotation $quotation)
@@ -185,6 +183,23 @@ class SupplierQuotationController extends Controller
             'notes' => $validated['notes'],
             'status' => QuotationResponse::STATUS_SUBMITTED,
         ]);
+
+        // Notify all admins about the new supplier response
+        $admins = User::role('admin')->get();
+        foreach ($admins as $admin) {
+            Notification::create([
+                'user_id' => $admin->id,
+                'type' => 'supplier_quotation_response',
+                'notifiable_type' => Quotation::class,
+                'notifiable_id' => $quotation->id,
+                'data' => [
+                    'title' => 'Supplier Quotation Response Submitted',
+                    'message' => 'A supplier has submitted a response to RFQ #' . $quotation->rfq_number . '.',
+                    'link' => route('quotations.show', $quotation->id),
+                ],
+                'for_role' => 'admin',
+            ]);
+        }
 
         // Validate discount rules
         $discountErrors = $response->validateDiscount();

@@ -32,6 +32,7 @@ return new class extends Migration
             $table->foreignId('material_id')->constrained()->onDelete('cascade');
             $table->decimal('quantity', 10, 2);
             $table->text('specifications')->nullable();
+            $table->unsignedBigInteger('selected_supplier_id')->nullable();
             $table->timestamps();
         });
     }
