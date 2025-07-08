@@ -53,23 +53,46 @@ class SupplierQuotationController extends Controller
         }
         // Try to extract client quotation request number from notes
         $quotationRequest = null;
-        if (preg_match('/client quotation request #(\d+)/i', $quotation->notes, $matches)) {
+        $materialQuantities = [];
+        if (preg_match('/client quotation request #([A-Za-z0-9\-]+)/i', $quotation->notes, $matches)) {
             $requestNumber = $matches[1];
             $quotationRequest = \App\Models\QuotationRequest::where('request_number', $requestNumber)
-                ->with(['rooms.scopes.scopeType.materials'])
+                ->with(['rooms.scopes'])
                 ->first();
+            \Log::info('QuotationRequest:', ['id' => $quotationRequest?->id, 'rooms_count' => $quotationRequest?->rooms?->count()]);
+            if ($quotationRequest) {
+                foreach ($quotationRequest->rooms as $room) {
+                    \Log::info('Room:', ['id' => $room->id, 'scopes_count' => $room->scopes?->count()]);
+                    foreach ($room->scopes as $scope) {
+                        \Log::info('Scope selected_materials:', ['scope_id' => $scope->id, 'selected_materials' => $scope->selected_materials]);
+                        $selectedMaterials = $scope->selected_materials;
+                        if (is_string($selectedMaterials)) {
+                            $selectedMaterials = json_decode($selectedMaterials, true);
+                        }
+                        if (is_array($selectedMaterials)) {
+                            foreach ($selectedMaterials as $mat) {
+                                // FIX: Use 'material_id' instead of 'id'
+                                if (isset($mat['material_id']) && isset($mat['quantity'])) {
+                                    $materialQuantities[$mat['material_id']] = $mat['quantity'];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
-        if ($quotation->purchase_request_id) {
-            $materialsInQuotation = $quotation->purchaseRequest->items->map(function($item) {
-                $item->material->requested_quantity = $item->quantity;
-                return $item->material;
-            });
-        } else {
-            $materialsInQuotation = $quotation->materials->map(function($material) {
-                $material->requested_quantity = $material->pivot->quantity;
-                return $material;
-            });
-        }
+        \Log::info('Material Quantities Map:', $materialQuantities);
+        \Log::info('Quotation Materials:', $quotation->materials->pluck('id')->toArray());
+        $materialsInQuotation = $quotation->materials->map(function($material) use ($materialQuantities, $supplier) {
+            $material->requested_quantity = $materialQuantities[$material->id] ?? 1;
+            // Fetch the supplier's price from the pivot table
+            $pivot = \DB::table('material_supplier')
+                ->where('material_id', $material->id)
+                ->where('supplier_id', $supplier->id)
+                ->first();
+            $material->price = $pivot ? $pivot->price : 0;
+            return $material;
+        });
         $existingResponse = QuotationResponse::where('quotation_id', $quotation->id)
                                             ->where('supplier_id', $supplier->id)
                                             ->with('items')

@@ -157,7 +157,33 @@
                                                 @if($room->scopes->count() > 0)
                                                     <ul class="list-unstyled mb-0">
                                                         @foreach($room->scopes as $scope)
-                                                            <li><strong>{{ $scope->scope_name }}</strong> ({{ $scope->scope_category }})</li>
+                                                            <li><strong>{{ $scope->scope_name }}</strong> ({{ $scope->scope_category }})
+                                                                @if(is_array($scope->selected_materials) && count($scope->selected_materials) > 0)
+                                                                    <div class="table-responsive mt-2">
+                                                                        <table class="table table-sm table-bordered">
+                                                                            <thead>
+                                                                                <tr>
+                                                                                    <th>Material</th>
+                                                                                    <th>Requested Quantity</th>
+                                                                                    <th>Unit</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                @foreach($scope->selected_materials as $mat)
+                                                                                    @php
+                                                                                        $material = \App\Models\Material::find($mat['material_id']);
+                                                                                    @endphp
+                                                                                    <tr>
+                                                                                        <td>{{ $material ? $material->name : 'Material #'.$mat['material_id'] }}</td>
+                                                                                        <td>{{ $mat['quantity'] }}{{ $mat['coverage_info'] ?? '' }}</td>
+                                                                                        <td>{{ $mat['unit'] ?? ($material ? $material->unit : '') }}</td>
+                                                                                    </tr>
+                                                                                @endforeach
+                                                                            </tbody>
+                                                                        </table>
+                                                                    </div>
+                                                                @endif
+                                                            </li>
                                                         @endforeach
                                                     </ul>
                                                 @else

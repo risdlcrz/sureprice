@@ -102,13 +102,42 @@ class ClientQuotationController extends Controller
 
             // Save scopes for this room (scope is an array of IDs)
             foreach ($roomData['scope'] as $scopeId) {
-                $scopeType = \App\Models\ScopeType::where('id', $scopeId)->first();
+                $scopeType = \App\Models\ScopeType::with('materials')->where('id', $scopeId)->first();
+                $selectedMaterials = [];
                 if ($scopeType) {
+                    foreach ($scopeType->materials as $material) {
+                        $area = $material->is_wall_material ? ($roomData['length'] * 2 + $roomData['width'] * 2) * $roomData['height'] : $roomData['length'] * $roomData['width'];
+                        $quantity = 1;
+                        if ($material->is_per_area || $material->isPerArea) {
+                            $coverage = floatval($material->coverage_rate ?? 1) ?: 1;
+                            $quantity = $area > 0 && $coverage > 0 ? ceil($area / $coverage) : 0;
+                        } else {
+                            $quantity = $area > 0 ? ceil($area) : 1;
+                        }
+                        if ($quantity > 0) {
+                            $wasteFactor = floatval($material->waste_factor ?? 1.1) ?: 1.1;
+                            $quantity = ceil($quantity * $wasteFactor);
+                        }
+                        $quantity = max(1, floatval($quantity));
+                        // Coverage explanation
+                        $coverageInfo = '';
+                        if ($material->coverage_rate && $material->unit) {
+                            $coverageInfo = " (1 {$material->unit} covers {$material->coverage_rate} sqm)";
+                        } elseif ($material->unit) {
+                            $coverageInfo = " (1 {$material->unit} covers 1 sqm)";
+                        }
+                        $selectedMaterials[] = [
+                            'material_id' => $material->id,
+                            'quantity' => $quantity,
+                            'unit' => $material->unit,
+                            'coverage_info' => $coverageInfo,
+                        ];
+                    }
                     $room->scopes()->create([
                         'scope_type_id' => $scopeType->id,
                         'scope_name' => $scopeType->name,
                         'scope_category' => $scopeType->category,
-                        'selected_materials' => [] // No materials
+                        'selected_materials' => $selectedMaterials
                     ]);
                 }
             }
