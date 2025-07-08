@@ -124,7 +124,7 @@
 
                         <!-- Pricing Summary -->
                         <div class="row mb-4">
-                            <div class="col-md-6">
+                            <div class="col-md-6" id="pricing-summary-col">
                                 <div class="card border-primary">
                                     <div class="card-header bg-primary text-white">
                                         <h6 class="mb-0">Pricing Summary</h6>
@@ -174,8 +174,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="card border-info">
+                            <div class="col-md-6" id="discount-options-col">
+                                <div class="card border-info" id="global-discount-options">
                                     <div class="card-header bg-info text-white">
                                         <h6 class="mb-0">Discount Options</h6>
                                     </div>
@@ -316,8 +316,25 @@ document.addEventListener('DOMContentLoaded', function() {
         globalSummary.style.display = show ? 'none' : 'block';
         perMaterialDiscountHeaders.forEach(function(h) { h.style.display = show ? '' : 'none'; });
         perMaterialDiscountCells.forEach(function(c) { c.style.display = show ? '' : 'none'; });
-        // Hide global discount options when per-material is enabled
-        document.getElementById('global-discount-options').style.display = show ? 'none' : 'block';
+
+        var pricingSummaryCol = document.getElementById('pricing-summary-col');
+        var discountOptionsCol = document.getElementById('discount-options-col');
+        var globalDiscountOptions = document.getElementById('global-discount-options');
+        if (show) {
+            if (globalDiscountOptions) { globalDiscountOptions.style.display = 'none'; }
+            if (pricingSummaryCol) {
+                pricingSummaryCol.classList.remove('col-md-6');
+                pricingSummaryCol.classList.add('col-md-12');
+            }
+            if (discountOptionsCol) { discountOptionsCol.style.display = 'none'; }
+        } else {
+            if (globalDiscountOptions) { globalDiscountOptions.style.display = 'block'; }
+            if (pricingSummaryCol) {
+                pricingSummaryCol.classList.remove('col-md-12');
+                pricingSummaryCol.classList.add('col-md-6');
+            }
+            if (discountOptionsCol) { discountOptionsCol.style.display = 'block'; }
+        }
         calculateTotals();
     });
 
