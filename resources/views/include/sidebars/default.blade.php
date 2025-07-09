@@ -82,9 +82,6 @@
         <a href="{{ route('admin.analytics') }}" class="btn">
             <i class="fas fa-chart-bar"></i>Analytics
         </a>
-        <a href="{{ route('messages.index') }}" class="btn">
-            <i class="fas fa-comments"></i>Messages
-        </a>
         @else
         <a href="{{ route('admin.project') }}" class="btn">
             <i class="fas fa-tasks"></i>Project & Procurement

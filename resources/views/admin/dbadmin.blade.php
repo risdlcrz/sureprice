@@ -22,15 +22,6 @@
             </div>
         </div>
     </div>
-    <!-- Messaging -->
-    <div class="col">
-        <div class="card" onclick="window.location.href='{{ route('messages.index') }}';" style="cursor:pointer;">
-            <img src="{{ asset('images/imagecard7.jpg') }}" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';" alt="Messaging" class="card-img-top">
-            <div class="card-body">
-                <h5 class="card-title">Messaging</h5>
-            </div>
-        </div>
-    </div>
     <!-- Analytics -->
     <div class="col">
         <div class="card" onclick="window.location.href='{{ route('admin.analytics') }}';" style="cursor:pointer;">
