@@ -48,7 +48,7 @@ class SupplierQuotationController extends Controller
         if (!$supplier) {
             abort(403, 'You are not associated with a supplier account.');
         }
-        if (!$quotation->suppliers->contains('id', $supplier->company_id)) {
+        if (!$quotation->suppliers->contains('id', $supplier->id)) {
             abort(403, 'Unauthorized action.');
         }
         // Try to extract client quotation request number from notes
@@ -110,7 +110,7 @@ class SupplierQuotationController extends Controller
         }
 
         // Ensure the quotation is for the logged-in supplier
-        if (!$quotation->suppliers->contains('id', $supplier->company_id)) {
+        if (!$quotation->suppliers->contains('id', $supplier->id)) {
             abort(403, 'Unauthorized action.');
         }
 

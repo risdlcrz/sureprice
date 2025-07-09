@@ -81,6 +81,11 @@ class Supplier extends Model
         return $this->belongsTo(Company::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id');
+    }
+
     public function stocks()
     {
         return $this->hasMany(\App\Models\Stock::class);

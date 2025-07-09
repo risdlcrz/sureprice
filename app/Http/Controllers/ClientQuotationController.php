@@ -194,104 +194,72 @@ class ClientQuotationController extends Controller
     
     public function recommendSuppliers(Request $request)
     {
-        $materialId = $request->input('material_id');
-        $budget = $request->input('budget', 100000);
-        $projectFeatures = [
-            'on_time_delivery_rate' => $request->input('on_time_delivery_rate', 90),
-            'average_defect_rate' => $request->input('average_defect_rate', 2),
-            'average_cost_variance' => $request->input('average_cost_variance', 0),
-        ];
-
-        $suppliers = Supplier::with(['metrics', 'materials'])->get()->map(function($supplier) use ($materialId) {
-            return [
-                'id' => $supplier->id,
-                'name' => $supplier->company_name,
-                'material_ids' => $supplier->materials->pluck('id')->toArray(),
-                'on_time_delivery_rate' => $supplier->metrics ? $supplier->metrics->on_time_delivery_rate : 0,
-                'average_defect_rate' => $supplier->metrics->average_defect_rate ?? 0,
-                'average_cost_variance' => $supplier->metrics->average_cost_variance ?? 0,
-                'cost' => $supplier->metrics->average_cost_variance ?? 0,
-                'price' => $supplier->materials->where('id', $materialId)->first()?->pivot?->price ?? null,
-            ];
-        })->toArray();
-
-        $service = new SupplierSelectionService();
-        $filteredSuppliers = $service->filterByMaterial($suppliers, $materialId);
-
-        // KNN Modes
-        $knn = [];
-        // Best Overall (KNN)
-        $knn['best_overall'] = [];
-        $knnResults = $service->recommend($filteredSuppliers, $projectFeatures, 5);
-        foreach ($knnResults as $i => $item) {
-            $knn['best_overall'][] = [
-                'supplier' => $item['supplier'],
-                'reason' => 'Best Overall',
-                'score' => isset($item['distance']) ? (100 - $item['distance']) : null,
-                'is_cheapest' => false,
-                'recommended' => $i === 0,
-            ];
+        $quotationRequestId = $request->query('id') ?? $request->id ?? session('quotation_request_id');
+        $category = $request->query('category', 'overall_best');
+        $budget = $request->query('budget');
+        $recommendations = [];
+        if ($quotationRequestId) {
+            $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType.materials'])->find($quotationRequestId);
+            $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with(['suppliers', 'materials', 'responses.items', 'responses.supplier.metrics'])->get();
+            $materialIds = collect();
+            foreach ($quotationRequest->rooms as $room) {
+                foreach ($room->scopes as $scope) {
+                    if ($scope->scopeType && $scope->scopeType->materials) {
+                        $materialIds = $materialIds->merge($scope->scopeType->materials->pluck('id'));
+                    }
+                }
+            }
+            $materialIds = $materialIds->unique()->values();
+            $totalCost = 0;
+            foreach ($materialIds as $materialId) {
+                $offers = [];
+                foreach ($rfqs as $rfq) {
+                    foreach ($rfq->responses as $response) {
+                        foreach ($response->items as $item) {
+                            if ($item->material_id == $materialId) {
+                                $offers[] = [
+                                    'supplier_id' => $response->supplier_id,
+                                    'unit_price' => $item->unit_price,
+                                    'metrics' => $response->supplier->metrics,
+                                ];
+                            }
+                        }
+                    }
+                }
+                if (count($offers) > 0) {
+                    // LP/Greedy: select best supplier per category
+                    if ($category === 'cheapest') {
+                        usort($offers, fn($a, $b) => $a['unit_price'] <=> $b['unit_price']);
+                    } elseif ($category === 'fastest_delivery') {
+                        usort($offers, fn($a, $b) => ($b['metrics']->on_time_delivery_rate ?? 0) <=> ($a['metrics']->on_time_delivery_rate ?? 0));
+                    } elseif ($category === 'least_defects') {
+                        usort($offers, fn($a, $b) => ($a['metrics']->average_defect_rate ?? 0) <=> ($b['metrics']->average_defect_rate ?? 0));
+                    } else { // overall_best
+                        // Composite score: higher is better
+                        $minPrice = min(array_column($offers, 'unit_price'));
+                        $maxDelivery = max(array_map(function($o) { return $o['metrics']->on_time_delivery_rate ?? 0; }, $offers));
+                        $minDefect = min(array_map(function($o) { return $o['metrics']->average_defect_rate ?? 0; }, $offers));
+                        $scores = [];
+                        foreach ($offers as $ix => $o) {
+                            $priceScore = $minPrice / max($o['unit_price'], 1);
+                            $deliveryScore = ($o['metrics']->on_time_delivery_rate ?? 0) / max($maxDelivery, 1);
+                            $defectScore = $minDefect / max($o['metrics']->average_defect_rate ?? 1, 1);
+                            $scores[$ix] = $priceScore + $deliveryScore + $defectScore;
+                        }
+                        array_multisort($scores, SORT_DESC, $offers);
+                    }
+                    // Pick the top offer
+                    $selected = $offers[0];
+                    $recommendations[$materialId] = $selected['supplier_id'];
+                    $totalCost += $selected['unit_price'];
+                }
+            }
+            // If budget is set, check if totalCost fits
+            if ($budget && $totalCost > $budget) {
+                // Optionally, try to fit within budget by picking next best offers (not implemented here)
+            }
         }
-        // Cheapest
-        $cheapest = array_filter($filteredSuppliers, fn($s) => $s['price'] !== null);
-        usort($cheapest, fn($a, $b) => $a['price'] <=> $b['price']);
-        $knn['cheapest'] = [];
-        foreach ($cheapest as $i => $supplier) {
-            $knn['cheapest'][] = [
-                'supplier' => $supplier,
-                'reason' => 'Cheapest',
-                'is_cheapest' => $i === 0,
-                'recommended' => $i === 0,
-            ];
-        }
-        // Best Delivery
-        $delivery = $filteredSuppliers;
-        usort($delivery, fn($a, $b) => $b['on_time_delivery_rate'] <=> $a['on_time_delivery_rate']);
-        $knn['delivery'] = [];
-        foreach ($delivery as $i => $supplier) {
-            $knn['delivery'][] = [
-                'supplier' => $supplier,
-                'reason' => 'Best On-Time Delivery',
-                'is_cheapest' => false,
-                'recommended' => $i === 0,
-            ];
-        }
-        // Least Defects
-        $defects = $filteredSuppliers;
-        usort($defects, fn($a, $b) => $a['average_defect_rate'] <=> $b['average_defect_rate']);
-        $knn['defects'] = [];
-        foreach ($defects as $i => $supplier) {
-            $knn['defects'][] = [
-                'supplier' => $supplier,
-                'reason' => 'Lowest Defect Rate',
-                'is_cheapest' => false,
-                'recommended' => $i === 0,
-            ];
-        }
-
-        // Simple LP: pick the cheapest supplier for the material if within budget
-        $lp = [];
-        if (count($cheapest) > 0) {
-            $best = $cheapest[0];
-            $lp['suppliers'] = [[
-                'supplier' => $best,
-                'reason' => 'Cheapest (LP)',
-                'recommended' => true,
-            ]];
-            $lp['total'] = $best['price'] ?? 0;
-            $lp['fits_budget'] = $lp['total'] <= $budget;
-        } else {
-            $lp['suppliers'] = [];
-            $lp['total'] = 0;
-            $lp['fits_budget'] = false;
-        }
-
-        return response()->json([
-            'html' => view('client.quotation.partials.supplier-recommendations', [
-                'knn' => $knn,
-                'lp' => $lp,
-            ])->render()
-        ]);
+        return response()->json(['recommendations' => $recommendations]);
     }
     
     public function submit(Request $request)
@@ -413,21 +381,44 @@ class ClientQuotationController extends Controller
             $materialIds = $materialIds->unique()->values();
             foreach ($materialIds as $materialId) {
                 $materialSupplierResponses[$materialId] = [];
+                $offers = [];
                 foreach ($rfqs as $rfq) {
                     foreach ($rfq->responses as $response) {
                         foreach ($response->items as $item) {
                             if ($item->material_id == $materialId) {
-                                $materialSupplierResponses[$materialId][] = [
+                                $offers[] = [
                                     'supplier_id' => $response->supplier_id,
                                     'supplier_name' => $response->supplier->company_name,
                                     'unit_price' => $item->unit_price,
-                                    'badges' => [], // Add badge logic if needed
                                     'metrics' => $response->supplier->metrics,
                                 ];
                             }
                         }
                     }
                 }
+                // KNN-style ranking and badges
+                if (count($offers) > 0) {
+                    $minPrice = min(array_column($offers, 'unit_price'));
+                    $maxDelivery = max(array_map(function($o) { return $o['metrics']->on_time_delivery_rate ?? 0; }, $offers));
+                    $minDefect = min(array_map(function($o) { return $o['metrics']->average_defect_rate ?? 0; }, $offers));
+                    // Composite score for best overall (normalize and sum)
+                    $scores = [];
+                    foreach ($offers as $ix => $o) {
+                        $priceScore = $minPrice / max($o['unit_price'], 1);
+                        $deliveryScore = ($o['metrics']->on_time_delivery_rate ?? 0) / max($maxDelivery, 1);
+                        $defectScore = $minDefect / max($o['metrics']->average_defect_rate ?? 1, 1);
+                        $scores[$ix] = $priceScore + $deliveryScore + $defectScore;
+                    }
+                    $bestOverallIx = array_keys($scores, max($scores));
+                    foreach ($offers as $ix => &$offer) {
+                        $offer['badges'] = [];
+                        if ($offer['unit_price'] == $minPrice) $offer['badges'][] = 'Cheapest';
+                        if (($offer['metrics']->on_time_delivery_rate ?? 0) == $maxDelivery) $offer['badges'][] = 'Best Delivery';
+                        if (($offer['metrics']->average_defect_rate ?? 0) == $minDefect) $offer['badges'][] = 'Least Defects';
+                        if (in_array($ix, $bestOverallIx)) $offer['badges'][] = 'Overall Best';
+                    }
+                }
+                $materialSupplierResponses[$materialId] = $offers;
                 // Get selected supplier from the pivot
                 foreach ($rfqs as $rfq) {
                     $material = $rfq->materials->firstWhere('id', $materialId);

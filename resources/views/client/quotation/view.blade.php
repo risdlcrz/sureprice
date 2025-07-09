@@ -1,68 +1,142 @@
 @extends('layouts.app')
 
 @push('styles')
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
+body {
+    font-family: 'Inter', Arial, sans-serif;
+    background: linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%);
+    min-height: 100vh;
+}
 .quotation-card {
-    max-width: 700px;
-    margin: 40px auto;
-    border-radius: 18px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    max-width: 950px;
+    margin: 48px auto 32px auto;
+    border-radius: 22px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.13);
     background: #fff;
-    padding: 32px 24px 24px 24px;
+    padding: 48px 40px 40px 40px;
     position: relative;
+    border: 1px solid #e5e7eb;
 }
 .quotation-card h2 {
     font-weight: 700;
-    color: #198754;
+    color: #2563eb;
+    letter-spacing: 1px;
+    margin-bottom: 0.5em;
 }
 .quotation-card .lead {
-    font-size: 1.1rem;
-    color: #444;
+    font-size: 1.18rem;
+    color: #374151;
+    margin-bottom: 1.5em;
 }
-.quotation-card .badge.bg-primary {
-    font-size: 1rem;
-    padding: 0.5em 1em;
+.quotation-card .badge {
+    font-size: 0.98rem;
+    padding: 0.45em 1em;
     border-radius: 8px;
+    margin-right: 0.25em;
+    font-weight: 500;
+    letter-spacing: 0.5px;
 }
-.quotation-card .badge.bg-warning {
-    color: #fff;
-    background: #f59e42;
-}
+.badge-cheapest { background: #22c55e; color: #fff; }
+.badge-delivery { background: #0ea5e9; color: #fff; }
+.badge-defects { background: #fbbf24; color: #333; }
+.badge-overall { background: #6366f1; color: #fff; }
 .quotation-card .table {
     margin-top: 24px;
-    border-radius: 10px;
-    overflow: hidden;
+    border-radius: 14px;
+    overflow: visible;
     background: #f8fafc;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    width: 100%;
+    min-width: unset;
+    table-layout: auto;
 }
 .quotation-card .table th, .quotation-card .table td {
     vertical-align: middle;
     text-align: center;
     background: #f8fafc;
+    font-size: 1.08rem;
+    border-bottom: 1px solid #e5e7eb;
+    min-width: 120px;
+    word-break: break-word;
+}
+.quotation-card .table th {
+    background: #f1f5f9;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    font-weight: 600;
+    color: #2563eb;
+    letter-spacing: 0.5px;
 }
 .quotation-card .table-striped > tbody > tr:nth-of-type(odd) {
-    background-color: #f1f5f9;
+    background-color: #f3f6fa;
 }
+.quotation-card .form-select, .select2-container--default .select2-selection--single {
+    border-radius: 12px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 1.05rem;
+    min-height: 44px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    transition: border 0.2s;
+}
+.quotation-card .form-select:focus, .select2-container--default .select2-selection--single:focus {
+    border-color: #2563eb;
+    outline: none;
+}
+.select2-container--default .select2-selection--single {
+    height: 44px;
+    padding: 8px 12px;
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 44px;
+}
+.select2-results__option .badge { margin-left: 0.5em; font-size: 0.9em; }
 .quotation-card .btn-primary {
-    background: #2563eb;
+    background: linear-gradient(90deg, #2563eb 0%, #6366f1 100%);
     border: none;
     border-radius: 24px;
-    padding: 0.75em 2em;
-    font-weight: 600;
-    transition: background 0.2s;
+    padding: 0.85em 2.2em;
+    font-weight: 700;
+    font-size: 1.08rem;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.08);
 }
 .quotation-card .btn-primary:hover {
-    background: #1d4ed8;
+    background: linear-gradient(90deg, #1d4ed8 0%, #6366f1 100%);
+    box-shadow: 0 4px 16px rgba(99,102,241,0.13);
 }
-.quotation-card .btn-secondary {
-    background: #6c757d;
+.quotation-card .btn-success {
+    background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
     border: none;
     border-radius: 24px;
-    padding: 0.75em 2em;
-    font-weight: 600;
-    transition: background 0.2s;
+    padding: 0.85em 2.2em;
+    font-weight: 700;
+    font-size: 1.08rem;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(34,197,94,0.08);
 }
-.quotation-card .btn-secondary:hover {
-    background: #495057;
+.quotation-card .btn-success:hover {
+    background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
+    box-shadow: 0 4px 16px rgba(34,197,94,0.13);
+}
+.quotation-card .btn-danger {
+    background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+    border: none;
+    border-radius: 24px;
+    padding: 0.85em 2.2em;
+    font-weight: 700;
+    font-size: 1.08rem;
+    transition: background 0.2s, box-shadow 0.2s;
+    box-shadow: 0 2px 8px rgba(239,68,68,0.08);
+}
+.quotation-card .btn-danger:hover {
+    background: linear-gradient(90deg, #b91c1c 0%, #ef4444 100%);
+    box-shadow: 0 4px 16px rgba(239,68,68,0.13);
 }
 .quotation-card .alert-success {
     background: #e6f9ed;
@@ -82,33 +156,28 @@
     margin-bottom: 24px;
     text-align: center;
 }
-@media (max-width: 768px) {
+.table-responsive {
+    overflow-x: unset;
+    width: 100%;
+    min-width: unset;
+}
+@media (max-width: 991.98px) {
     .quotation-card {
-        padding: 16px 4px 16px 4px;
+        padding: 10px 2px 10px 2px;
+    }
+    .quotation-card .table {
+        font-size: 0.93rem;
+        min-width: unset;
+        table-layout: auto;
+    }
+    .quotation-card .table th, .quotation-card .table td {
+        min-width: 80px;
+        padding: 6px 4px;
+    }
+    .quotation-card h2 {
+        font-size: 1.3rem;
     }
 }
-    @media (min-width: 992px) {
-        .container-fluid .card {
-            max-width: 100%;
-        }
-        .container-fluid .card-body {
-            padding: 2rem;
-        }
-    }
-    .table-responsive {
-        overflow-x: auto;
-    }
-    table.table {
-        font-size: 1rem;
-    }
-    @media (max-width: 991.98px) {
-        .container-fluid .card-body {
-            padding: 1rem;
-        }
-        table.table {
-            font-size: 0.95rem;
-        }
-    }
 </style>
 @endpush
 
@@ -136,7 +205,7 @@
                     
                     @if($quotationRequest && $quotationRequest->rooms->count() > 0)
                         <div class="table-responsive">
-                            <table class="table table-bordered table-striped w-100" style="min-width: 700px;">
+                            <table class="table table-bordered table-striped w-100" style="width: 100%; min-width: unset; table-layout: auto;">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Room</th>
@@ -255,7 +324,7 @@
                                 {{-- Materials Table (existing) --}}
                                 @if(isset($materialSupplierResponses) && count($materialSupplierResponses) > 0)
                                     <div class="table-responsive">
-                                        <table class="table table-bordered table-striped w-100" style="min-width: 700px;">
+                                        <table class="table table-bordered table-striped w-100" style="width: 100%; min-width: 900px; table-layout: fixed;">
                                             <thead class="table-light">
                                                 <tr>
                                                     <th>Material</th>
@@ -288,11 +357,15 @@
                                                         </td>
                                                         <td>
                                                             @if(count($offers) > 0)
-                                                                <select name="selected_suppliers[{{ $materialId }}]" class="form-select">
+                                                                <select name="selected_suppliers[{{ $materialId }}]" class="form-select supplier-select" data-material-id="{{ $materialId }}">
                                                                     <option value="">Select Supplier</option>
                                                                     @foreach($offers as $offer)
-                                                                        <option value="{{ $offer['supplier_id'] }}" @if(isset($selectedSuppliers[$materialId]) && $selectedSuppliers[$materialId] == $offer['supplier_id']) selected @endif>
-                                                                            {{ $offer['supplier_name'] }} (₱{{ number_format($offer['unit_price'], 2) }})
+                                                                        <option value="{{ $offer['supplier_id'] }}"
+                                                                            data-badges='@json($offer["badges"] ?? [])'
+                                                                            data-supplier="{{ $offer['supplier_name'] ?? 'Unknown' }}"
+                                                                            data-price="{{ isset($offer['unit_price']) ? number_format($offer['unit_price'], 2) : '0.00' }}"
+                                                                            @if(isset($selectedSuppliers[$materialId]) && $selectedSuppliers[$materialId] == $offer['supplier_id']) selected @endif>
+                                                                            {{ $offer['supplier_name'] ?? 'Unknown' }} (₱{{ isset($offer['unit_price']) ? number_format($offer['unit_price'], 2) : '0.00' }})
                                                                         </option>
                                                                     @endforeach
                                                                 </select>
@@ -308,53 +381,6 @@
                                 @else
                                     <div class="alert alert-info text-center">No supplier offers available yet.</div>
                                 @endif
-                            </div>
-                            <div class="col-12 col-lg-6">
-                                {{-- Supplier Offers Table --}}
-                                <h5>Supplier Offers</h5>
-                                <div class="table-responsive">
-                                    <table class="table table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>Material</th>
-                                                <th>Supplier</th>
-                                                <th>Offered Price</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($materialSupplierResponses as $materialId => $offers)
-                                                @php
-                                                    $materialName = null;
-                                                    if($quotationRequest) {
-                                                        foreach($quotationRequest->rooms as $room) {
-                                                            foreach($room->scopes as $scope) {
-                                                                if($scope->scopeType && $scope->scopeType->materials) {
-                                                                    foreach($scope->scopeType->materials as $mat) {
-                                                                        if($mat->id == $materialId) $materialName = $mat->name;
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                @endphp
-                                                @if(count($offers) > 0)
-                                                    @foreach($offers as $offer)
-                                                        <tr>
-                                                            <td>{{ $materialName ?? 'Material #'.$materialId }}</td>
-                                                            <td>{{ $offer['supplier_name'] }}</td>
-                                                            <td>₱{{ number_format($offer['unit_price'], 2) }}</td>
-                                                        </tr>
-                                                    @endforeach
-                                                @else
-                                                    <tr>
-                                                        <td>{{ $materialName ?? 'Material #'.$materialId }}</td>
-                                                        <td colspan="2"><span class="text-muted">No supplier offers</span></td>
-                                                    </tr>
-                                                @endif
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
                             </div>
                         </div>
                         <div class="mt-3 text-end">
@@ -408,8 +434,49 @@
 @endsection 
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Only initialize Select2 once for all supplier-select elements
+    if (window.__supplierSelect2Initialized !== true) {
+        window.__supplierSelect2Initialized = true;
+        $('.supplier-select').select2({
+            width: '100%',
+            templateResult: function (data) {
+                if (!data.id) return data.text;
+                var badges = [];
+                try { badges = JSON.parse($(data.element).attr('data-badges')); } catch {}
+                var html = '<span>' + $(data.element).attr('data-supplier') + ' (₱' + $(data.element).attr('data-price') + ')';
+                if (badges && badges.length) {
+                    badges.forEach(function(badge) {
+                        if (badge === 'Cheapest') html += ' <span class="badge badge-cheapest">Cheapest</span>';
+                        if (badge === 'Best Delivery') html += ' <span class="badge badge-delivery">Best Delivery</span>';
+                        if (badge === 'Least Defects') html += ' <span class="badge badge-defects">Least Defects</span>';
+                        if (badge === 'Overall Best') html += ' <span class="badge badge-overall">Overall Best</span>';
+                    });
+                }
+                html += '</span>';
+                return $(html);
+            },
+            templateSelection: function (data) {
+                if (!data.id) return data.text;
+                var badges = [];
+                try { badges = JSON.parse($(data.element).attr('data-badges')); } catch {}
+                var html = '<span>' + $(data.element).attr('data-supplier') + ' (₱' + $(data.element).attr('data-price') + ')';
+                if (badges && badges.length) {
+                    badges.forEach(function(badge) {
+                        if (badge === 'Cheapest') html += ' <span class="badge badge-cheapest">Cheapest</span>';
+                        if (badge === 'Best Delivery') html += ' <span class="badge badge-delivery">Best Delivery</span>';
+                        if (badge === 'Least Defects') html += ' <span class="badge badge-defects">Least Defects</span>';
+                        if (badge === 'Overall Best') html += ' <span class="badge badge-overall">Overall Best</span>';
+                    });
+                }
+                html += '</span>';
+                return $(html);
+            },
+            escapeMarkup: function (m) { return m; }
+        });
+    }
     const recommendBtn = document.getElementById('clientRecommendAllBtn');
     const recommendModal = new bootstrap.Modal(document.getElementById('clientRecommendModal'));
     const applyRecommendBtn = document.getElementById('clientApplyRecommendBtn');
@@ -425,7 +492,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     for (const materialId in data.recommendations) {
                         const supplierId = data.recommendations[materialId];
                         const select = document.querySelector(`select[name='selected_suppliers[${materialId}]']`);
-                        if (select) select.value = supplierId;
+                        if (select) {
+                            $(select).val(supplierId).trigger('change');
+                        }
                     }
                 }
                 recommendModal.hide();

@@ -13,6 +13,13 @@ class SupplierMaterialController extends Controller
 {
     public function index(Request $request)
     {
+        \Log::info('Supplier debug', [
+            'user_id' => Auth::id(),
+            'role' => Auth::user()->role,
+            'user_type' => Auth::user()->user_type,
+            'supplier' => Auth::user()->supplier,
+            'supplier_status' => Auth::user()->supplier ? Auth::user()->supplier->status : null,
+        ]);
         $supplier = Auth::user()->supplier;
         if (!$supplier) {
             abort(403, 'You are not associated with a supplier account.');

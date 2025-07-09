@@ -330,8 +330,9 @@ public function sendRfqToSuppliers($id)
         }
         $quotation->materials()->sync($materialSyncData);
         // Notify supplier's user
+        \Log::info('Attempting to notify supplier', ['supplier_id' => $supplier->id, 'user_id' => $supplier->user_id, 'user_exists' => $supplier->user ? true : false]);
         if ($supplier->user) {
-            \App\Models\Notification::create([
+            $notification = \App\Models\Notification::create([
                 'user_id' => $supplier->user->id,
                 'type' => 'rfq_created',
                 'notifiable_type' => Quotation::class,
@@ -343,6 +344,9 @@ public function sendRfqToSuppliers($id)
                 ],
                 'for_role' => 'supplier',
             ]);
+            \Log::info('Notification created', ['notification_id' => $notification->id, 'user_id' => $supplier->user->id]);
+        } else {
+            \Log::warning('Supplier has no user, notification not sent', ['supplier_id' => $supplier->id]);
         }
     }
 
