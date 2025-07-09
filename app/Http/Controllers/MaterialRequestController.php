@@ -67,6 +67,8 @@ class MaterialRequestController extends Controller
                 $materialsList = Material::whereIn('id', array_keys($materialQuantities))->get();
                 foreach ($materialsList as $mat) {
                     $id = $mat->id;
+                    // Fetch actual stock for this material (sum across all warehouses)
+                    $actualStock = \App\Models\Stock::where('material_id', $id)->sum('current_stock');
                     $items[] = [
                         'material_id' => $id,
                         'name' => $mat->name,
@@ -75,7 +77,7 @@ class MaterialRequestController extends Controller
                         'description' => $materialDetails[$id]['description'] ?? $mat->description,
                         'notes' => $materialDetails[$id]['notes'] ?? '',
                         'warehouse_name' => 'N/A',
-                        'available' => 0
+                        'available' => $actualStock
                     ];
                 }
             }
@@ -85,13 +87,13 @@ class MaterialRequestController extends Controller
             $selectedContract = Contract::with('items.material.inventory')->findOrFail($contract_id);
             $warehouses = Warehouse::orderByRaw("name = 'Warehouse A' DESC, name ASC")->get();
             foreach ($selectedContract->items as $item) {
+                // Fetch actual stock for this material (sum across all warehouses)
+                $actualStock = \App\Models\Stock::where('material_id', $item->material_id)->sum('current_stock');
                 $warehouseName = 'N/A';
-                $available = 0;
                 foreach ($warehouses as $warehouse) {
                     $stock = $warehouse->stocks()->where('material_id', $item->material_id)->first();
                     if ($stock && $stock->current_stock > 0) {
                         $warehouseName = $warehouse->name;
-                        $available = $stock->current_stock;
                         break;
                     }
                 }
@@ -101,7 +103,7 @@ class MaterialRequestController extends Controller
                     'unit' => $item->material->unit,
                     'quantity' => $item->quantity,
                     'warehouse_name' => $warehouseName,
-                    'available' => $available
+                    'available' => $actualStock
                 ];
             }
         }
