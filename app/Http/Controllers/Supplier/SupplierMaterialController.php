@@ -13,9 +13,12 @@ class SupplierMaterialController extends Controller
 {
     public function index(Request $request)
     {
-        $supplier = Auth::user()->company;
-        if (!$supplier || $supplier->designation !== 'supplier') {
+        $supplier = Auth::user()->supplier;
+        if (!$supplier) {
             abort(403, 'You are not associated with a supplier account.');
+        }
+        if ($supplier->status !== 'active') {
+            abort(403, 'Your supplier account is not active.');
         }
 
         // Get all materials linked to this supplier, with inventory and category
@@ -40,9 +43,12 @@ class SupplierMaterialController extends Controller
         if (!Auth::user()->hasRole('supplier')) {
             abort(403, 'Unauthorized action.');
         }
-        $supplier = Auth::user()->company;
-        if (!$supplier || $supplier->designation !== 'supplier') {
+        $supplier = Auth::user()->supplier;
+        if (!$supplier) {
             abort(403, 'You are not associated with a supplier account.');
+        }
+        if ($supplier->status !== 'active') {
+            abort(403, 'Your supplier account is not active.');
         }
         $categories = \App\Models\Category::orderBy('name')->get();
         return view('supplier.materials.create', compact('categories'));
@@ -50,9 +56,12 @@ class SupplierMaterialController extends Controller
 
     public function store(Request $request)
     {
-        $supplier = Auth::user()->company;
-        if (!$supplier || $supplier->designation !== 'supplier') {
+        $supplier = Auth::user()->supplier;
+        if (!$supplier) {
             abort(403, 'You are not associated with a supplier account.');
+        }
+        if ($supplier->status !== 'active') {
+            abort(403, 'Your supplier account is not active.');
         }
 
         $validated = $request->validate([
@@ -80,8 +89,8 @@ class SupplierMaterialController extends Controller
 
     public function edit(Material $material)
     {
-        $supplier = Auth::user()->company;
-        if (!$supplier || $supplier->designation !== 'supplier' || !$supplier->materials->contains($material->id)) {
+        $supplier = Auth::user()->supplier;
+        if (!$supplier || !$supplier->materials->contains($material->id)) {
             abort(403, 'You are not authorized to edit this material.');
         }
         $pivotData = $supplier->materials()->where('material_id', $material->id)->first()->pivot;
@@ -90,8 +99,8 @@ class SupplierMaterialController extends Controller
 
     public function update(Request $request, Material $material)
     {
-        $supplier = Auth::user()->company;
-        if (!$supplier || $supplier->designation !== 'supplier' || !$supplier->materials->contains($material->id)) {
+        $supplier = Auth::user()->supplier;
+        if (!$supplier || !$supplier->materials->contains($material->id)) {
             abort(403, 'You are not authorized to update this material.');
         }
 
@@ -118,8 +127,8 @@ class SupplierMaterialController extends Controller
 
     public function destroy(Material $material)
     {
-        $supplier = Auth::user()->company;
-        if (!$supplier || $supplier->designation !== 'supplier' || !$supplier->materials->contains($material->id)) {
+        $supplier = Auth::user()->supplier;
+        if (!$supplier || !$supplier->materials->contains($material->id)) {
             abort(403, 'You are not authorized to delete this material.');
         }
         $supplier->materials()->detach($material->id);
@@ -129,8 +138,8 @@ class SupplierMaterialController extends Controller
 
     public function search(Request $request)
     {
-        $supplier = Auth::user()->company;
-        if (!$supplier || $supplier->designation !== 'supplier') {
+        $supplier = Auth::user()->supplier;
+        if (!$supplier) {
             return response()->json([], 403);
         }
         $term = $request->input('term');
@@ -148,8 +157,8 @@ class SupplierMaterialController extends Controller
 
     public function link(Request $request)
     {
-        $supplier = Auth::user()->company;
-        if (!$supplier || $supplier->designation !== 'supplier') {
+        $supplier = Auth::user()->supplier;
+        if (!$supplier) {
             abort(403, 'You are not associated with a supplier account.');
         }
         $validated = $request->validate([
@@ -176,5 +185,4 @@ class SupplierMaterialController extends Controller
         $linkedSupplierIds = $material->suppliers()->pluck('suppliers.id')->toArray();
         return view('admin.materials.show', compact('material', 'suppliers', 'linkedSupplierIds'));
     }
-} 
-} 
+}

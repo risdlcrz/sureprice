@@ -13,6 +13,15 @@
                     <p><strong>Category:</strong> {{ $material->category->name ?? 'N/A' }}</p>
                     <p><strong>Unit:</strong> {{ $material->unit }}</p>
                     <p><strong>Description:</strong> {{ $material->description }}</p>
+                    <hr>
+                    <h5>Linked Suppliers:</h5>
+                    @if($material->suppliers->count())
+                        @foreach($material->suppliers as $supplier)
+                            <span class="badge bg-success mb-1">{{ $supplier->company_name }}</span>
+                        @endforeach
+                    @else
+                        <span class="text-muted">No suppliers linked.</span>
+                    @endif
                 </div>
             </div>
         </div>
