@@ -25,15 +25,15 @@ class AuthServiceProvider extends ServiceProvider
 
         // Material Request Gates
         Gate::define('approve-material-requests', function ($user) {
-            return $user && ($user->hasRole('admin') || $user->hasRole('warehousing'));
+            return $user && ($user->hasRole('admin') || $user->hasRole('manager') || $user->hasRole('warehousing'));
         });
 
         Gate::define('reject-material-requests', function ($user) {
-            return $user && ($user->hasRole('admin') || $user->hasRole('warehousing'));
+            return $user && ($user->hasRole('admin') || $user->hasRole('manager') || $user->hasRole('warehousing'));
         });
 
         Gate::define('complete-material-requests', function ($user) {
-            return $user && ($user->hasRole('admin') || $user->hasRole('warehousing'));
+            return $user && ($user->hasRole('admin') || $user->hasRole('manager') || $user->hasRole('warehousing'));
         });
     }
 } 

@@ -311,30 +311,14 @@ Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->
 // Remove duplicate client search route
 // Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
 // Admin protected routes
-Route::middleware(['auth', AdminMiddleware::class])->group(function () {
+// Manager protected operational routes
+Route::middleware(['auth', 'manager'])->group(function () {
     Route::get('/admin/dbadmin', [AdminController::class, 'dashboard'])->name('admin.dbadmin');
     Route::get('/admin/procurement', [ProcurementController::class, 'index'])->name('admin.procurement');
-    Route::get('/admin/companies/pending', [AdminController::class, 'pending'])->name('admin.companies.pending');
-    Route::post('/admin/companies/{company}/approve', [AdminController::class, 'approve'])->name('admin.companies.approve');
-    Route::post('/admin/companies/{company}/reject', [AdminController::class, 'reject'])->name('admin.companies.reject');
-    Route::get('/admin/companies/{company}', [AdminController::class, 'show'])->name('admin.companies.show');
-    Route::patch('/admin/companies/{company}/status', [App\Http\Controllers\AdminController::class, 'updateStatus'])->name('admin.companies.update');
     // Information Management Routes
     Route::resource('information-management', InformationManagementController::class);
     Route::post('information-management/import', [InformationManagementController::class, 'import'])->name('information-management.import');
     Route::get('information-management/template/download', [InformationManagementController::class, 'template'])->name('information-management.template');
-    // Quotation Approval/Rejection for Admin
-    Route::post('/api/quotations/{quotation}/approve', [QuotationController::class, 'approve'])->name('quotations.approve');
-    Route::post('/api/quotations/{quotation}/reject', [QuotationController::class, 'reject'])->name('quotations.reject');
-    // Purchase Request Approval/Rejection & Status Update for Admin
-    Route::post('purchase-requests/{purchaseRequest}/approve', [PurchaseRequestController::class, 'approve'])->name('purchase-requests.approve');
-    Route::post('purchase-requests/{purchaseRequest}/reject', [PurchaseRequestController::class, 'reject'])->name('purchase-requests.reject');
-    Route::post('purchase-requests/{purchaseRequest}/status', [PurchaseRequestController::class, 'updateStatus'])->name('purchase-requests.update-status');
-    // Purchase Order Status Update/Completion for Admin
-    Route::post('purchase-orders/{purchaseOrder}/status', [PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
-    Route::post('purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete'])->name('purchase-orders.complete');
-    // Other admin routes
-    Route::get('/notification-center', [\App\Http\Controllers\AdminController::class, 'notificationCenter'])->name('admin.notification');
     Route::get('/analytics-dashboard', [AnalyticsController::class, 'index'])->name('admin.analytics');
     Route::get('/supplier-rankings', [AnalyticsController::class, 'supplierRankings'])->name('admin.supplier-rankings');
     Route::get('/supplier-rankings/top', [AnalyticsController::class, 'getTopSuppliers'])->name('admin.supplier-rankings.top');
@@ -349,6 +333,27 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::post('/admin/quotation-requests/{id}/finalize', [App\Http\Controllers\AdminController::class, 'finalizeQuotationSelection'])->name('admin.quotation.finalize');
     Route::get('/admin/quotation-requests/{id}/recommend-suppliers', [App\Http\Controllers\AdminController::class, 'recommendSuppliers'])->name('admin.quotation.recommend-suppliers');
     Route::get('/admin/quotation-requests/{id}/json', [App\Http\Controllers\AdminController::class, 'quotationRequestJson'])->name('admin.quotation-request.json');
+});
+// Admin approval/oversight routes
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin/companies/pending', [AdminController::class, 'pending'])->name('admin.companies.pending');
+    Route::post('/admin/companies/{company}/approve', [AdminController::class, 'approve'])->name('admin.companies.approve');
+    Route::post('/admin/companies/{company}/reject', [AdminController::class, 'reject'])->name('admin.companies.reject');
+    Route::get('/admin/companies/{company}', [AdminController::class, 'show'])->name('admin.companies.show');
+    Route::patch('/admin/companies/{company}/status', [App\Http\Controllers\AdminController::class, 'updateStatus'])->name('admin.companies.update');
+    // Quotation Approval/Rejection for Admin
+    Route::post('/api/quotations/{quotation}/approve', [QuotationController::class, 'approve'])->name('quotations.approve');
+    Route::post('/api/quotations/{quotation}/reject', [QuotationController::class, 'reject'])->name('quotations.reject');
+    // Purchase Request Approval/Rejection & Status Update for Admin
+    Route::post('purchase-requests/{purchaseRequest}/approve', [PurchaseRequestController::class, 'approve'])->name('purchase-requests.approve');
+    Route::post('purchase-requests/{purchaseRequest}/reject', [PurchaseRequestController::class, 'reject'])->name('purchase-requests.reject');
+    Route::post('purchase-requests/{purchaseRequest}/status', [PurchaseRequestController::class, 'updateStatus'])->name('purchase-requests.update-status');
+    // Purchase Order Status Update/Completion for Admin
+    Route::post('purchase-orders/{purchaseOrder}/status', [PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
+    Route::post('purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete'])->name('purchase-orders.complete');
+    // Other admin routes
+    Route::get('/notification-center', [\App\Http\Controllers\AdminController::class, 'notificationCenter'])->name('admin.notification');
+    Route::get('/admin/logs', [App\Http\Controllers\AdminController::class, 'administratorLogs'])->name('admin.logs');
 });
 // Supplier Evaluation Routes
 Route::get('/admin/suppliers/{supplier}/latest-evaluation', [SupplierRankingController::class, 'getLatestEvaluation'])
@@ -372,7 +377,7 @@ Route::prefix('search')->group(function () {
 // API Routes for Warranty Requests
 Route::post('/api/warranty-requests', [WarrantyRequestController::class, 'store'])->middleware('auth');
 // Budget Tracking Routes
-Route::prefix('admin')->name('admin.')->middleware(['auth', AdminMiddleware::class])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
     Route::get('/budgets/{contract}', [BudgetController::class, 'show'])->name('budgets.show');
     Route::get('/budgets/{contract}/export', [BudgetController::class, 'exportReport'])->name('budgets.export');
@@ -410,7 +415,7 @@ Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'verified', \A
     Route::get('notification-center', [\App\Http\Controllers\Supplier\SupplierDashboardController::class, 'notificationCenter'])->name('notification');
 });
 // Admin Supplier Profile Update Review Routes
-Route::middleware(['auth', AdminMiddleware::class])->prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {
     Route::get('pending-updates', [\App\Http\Controllers\SupplierController::class, 'pendingUpdates'])->name('pending-updates');
     Route::get('review-update/{id}', [\App\Http\Controllers\SupplierController::class, 'reviewUpdate'])->name('review-update');
     Route::post('approve-update/{id}', [\App\Http\Controllers\SupplierController::class, 'approveUpdate'])->name('approve-update');
@@ -418,7 +423,7 @@ Route::middleware(['auth', AdminMiddleware::class])->prefix('admin/suppliers')->
 });
 
 // Admin Material Routes
-Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('materials', AdminMaterialController::class);
     Route::post('materials/{material}/suppliers', [AdminMaterialController::class, 'updateSuppliers'])->name('materials.suppliers.update');
 });
@@ -481,3 +486,15 @@ Route::middleware(['auth', 'role:finance'])->group(function () {
 
 // API endpoint for fetching a single quotation request by ID
 Route::get('/api/quotation-requests/{id}', [App\Http\Controllers\QuotationRequestController::class, 'showJson']);
+
+// Manager dashboard and routes
+Route::middleware(['auth', 'manager'])->prefix('manager')->name('manager.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Manager\DashboardController::class, 'index'])->name('dashboard');
+    // Add more manager routes here
+});
+
+// Admin dashboard (for oversight/approval)
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+    // Add more admin routes here
+});

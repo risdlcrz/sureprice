@@ -265,12 +265,20 @@ document.addEventListener('DOMContentLoaded', function() {
     qrSelect.addEventListener('change', function() {
         const qrId = this.value;
         if (!qrId) return;
-        fetch(`/api/quotation-requests/${qrId}`)
+        fetch(`/sureprice/public/api/quotation-requests/${qrId}`)
             .then(res => res.json())
             .then(data => {
                 // Parties
-                document.getElementById('client_name_display').innerText = data.client?.name || '';
-                document.getElementById('client_address_display').innerText = data.client?.address || '';
+                const clientName = data.client?.name || '';
+                const clientAddress = [
+                  data.client?.street,
+                  data.client?.barangay,
+                  data.client?.city,
+                  data.client?.state,
+                  data.client?.postal
+                ].filter(Boolean).join(', ');
+                document.getElementById('client_name_display').innerText = clientName;
+                document.getElementById('client_address_display').innerText = clientAddress;
                 // Property
                 document.getElementById('property_address_display').innerText = data.property?.address || '';
                 // Scope of Work

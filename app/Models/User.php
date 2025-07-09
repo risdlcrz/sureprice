@@ -82,15 +82,20 @@ class User extends Authenticatable // implements MustVerifyEmail
         if ($this->role === $role) {
             return true;
         }
-        
         // If not found in users table, check in employees table
         if ($this->employee && $this->employee->role === $role) {
             return true;
         }
-        
         return false;
     }
 
+    // New: Check if user is a manager (operational role)
+    public function isManager()
+    {
+        return ($this->role ?? $this->user_type ?? null) === 'manager';
+    }
+
+    // Updated: Check if user is an admin (approval/oversight only)
     public function isAdmin()
     {
         return ($this->role ?? $this->user_type ?? null) === 'admin';
@@ -111,3 +116,4 @@ class User extends Authenticatable // implements MustVerifyEmail
         parent::booted();
     }
 }
+

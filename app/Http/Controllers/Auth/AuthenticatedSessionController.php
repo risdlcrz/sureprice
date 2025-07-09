@@ -40,8 +40,10 @@ class AuthenticatedSessionController extends Controller
             $user->save();
 
             // Redirect based on user type
-            if ($user->user_type === 'admin') {
-                return redirect()->route('admin.dbadmin');
+            if ($user->role === 'manager') {
+                return redirect()->route('manager.dashboard'); // Manager dashboard
+            } elseif ($user->role === 'admin') {
+                return redirect()->route('admin.dashboard'); // Admin dashboard (oversight)
             } elseif ($user->user_type === 'employee') {
                 if ($user->role === 'procurement') {
                     return redirect()->route('procurement.dashboard');

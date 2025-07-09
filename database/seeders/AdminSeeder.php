@@ -13,34 +13,19 @@ class AdminSeeder extends Seeder
     {
         $admins = [
             [
-                'name' => 'Juan Admin Dela Cruz',
-                'username' => 'juandelacruz_admin',
-                'email' => 'juan.admin@sureprice.com',
-                'password' => Hash::make('PASS_123'), // DEMO/TEST PASSWORD
-                'user_type' => 'admin',
-                'role' => 'admin',
+                'name' => 'Manager One',
+                'username' => 'manager1',
+                'email' => 'manager1@example.com',
+                'password' => Hash::make('PASS_123'),
+                'user_type' => 'manager',
+                'role' => 'manager',
             ],
+            // Admin for oversight
             [
-                'name' => 'Maria Admin Santos',
-                'username' => 'mariaadmin_santos',
-                'email' => 'maria.admin@sureprice.com',
-                'password' => Hash::make('PASS_123'), // DEMO/TEST PASSWORD
-                'user_type' => 'admin',
-                'role' => 'admin',
-            ],
-            [
-                'name' => 'Main Admin',
-                'username' => 'mainadmin',
+                'name' => 'Admin One',
+                'username' => 'admin1',
                 'email' => 'admin1@example.com',
-                'password' => Hash::make('PASS_123'), // DEMO/TEST PASSWORD
-                'user_type' => 'admin',
-                'role' => 'admin',
-            ],
-            [
-                'name' => 'Backup Admin',
-                'username' => 'backupadmin',
-                'email' => 'admin2@example.com',
-                'password' => Hash::make('PASS_123'), // DEMO/TEST PASSWORD
+                'password' => Hash::make('PASS_123'),
                 'user_type' => 'admin',
                 'role' => 'admin',
             ],

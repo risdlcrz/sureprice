@@ -6,13 +6,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
-class AdminMiddleware
+class ManagerMiddleware
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check() || !Auth::user()->isAdmin()) {
-            abort(403, 'Unauthorized action. Admin access required.');
+        if (!Auth::check() || !Auth::user()->isManager()) {
+            abort(403, 'Unauthorized action. Manager access required.');
         }
         return $next($request);
     }
-}
+} 

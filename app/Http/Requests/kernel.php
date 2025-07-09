@@ -50,4 +50,4 @@ class Kernel extends HttpKernel
         'check.company.status' => \App\Http\Middleware\CheckCompanyStatus::class,
         'warehouse' => \App\Http\Middleware\WarehouseMiddleware::class,
     ];
-} 
+}

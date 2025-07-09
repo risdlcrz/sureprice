@@ -6,7 +6,15 @@
 <div class="profile-container">
     <div class="label">Logged in as</div>
     @if(auth()->check())
-        <div class="username">{{ auth()->user()->getDisplayNameAttribute() }}</div>
+        <div class="username">
+            @if(auth()->user()->role === 'manager')
+                Manager
+            @elseif(auth()->user()->role === 'admin')
+                Admin
+            @else
+                {{ auth()->user()->getDisplayNameAttribute() }}
+            @endif
+        </div>
         <div class="role">{{ ucfirst(auth()->user()->role) }}</div>
     @else
         <div class="username">Guest</div>

@@ -498,4 +498,30 @@ class ClientQuotationController extends Controller
         return redirect()->route('client.quotation.view', ['id' => $quotationRequest->id])
             ->with('success', 'Your supplier selections have been saved!');
     }
+
+    /**
+     * API: Get Quotation Request details for contract editor
+     */
+    public function apiShow($id)
+    {
+        $quotation = \App\Models\QuotationRequest::with(['user.company', 'rooms.scopes.scopeType.materials'])->findOrFail($id);
+        $company = $quotation->user->company;
+        $clientAddress = $company
+            ? trim("{$company->street}, {$company->barangay}, {$company->city}, {$company->state}, {$company->postal}", ', ')
+            : '';
+        return response()->json([
+            'client' => [
+                'name' => $company->company_name ?? $quotation->user->name,
+                'street' => $company->street ?? '',
+                'barangay' => $company->barangay ?? '',
+                'city' => $company->city ?? '',
+                'state' => $company->state ?? '',
+                'postal' => $company->postal ?? '',
+                'address' => $clientAddress,
+                'email' => $quotation->user->email,
+                'phone' => $company->mobile_number ?? '',
+            ],
+            // Add more fields as needed for your contract editor (property, items, etc.)
+        ]);
+    }
 } 

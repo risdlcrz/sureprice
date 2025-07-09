@@ -178,10 +178,10 @@ public function administratorLogs(Request $request)
                 $q->where('user_type', 'employee')->where('role', 'warehousing');
             });
         })
-        ->when($user->user_type === 'admin' && in_array($filter, ['admin', 'procurement', 'warehousing']), function ($query) use ($filter) {
-            if ($filter === 'admin') {
+        ->when($user->role === 'manager' && in_array($filter, ['manager', 'procurement', 'warehousing']), function ($query) use ($filter) {
+            if ($filter === 'manager') {
                 $query->whereHas('user', function ($q) {
-                    $q->where('user_type', 'admin');
+                    $q->where('role', 'manager');
                 });
             } elseif ($filter === 'procurement') {
                 $query->whereHas('user', function ($q) {
@@ -199,7 +199,7 @@ public function administratorLogs(Request $request)
 
     $userTypes = [
         'all' => 'All',
-        'admin' => 'Admin',
+        'manager' => 'Manager',
         'procurement' => 'Procurement',
         'warehousing' => 'Warehousing',
     ];

@@ -3,7 +3,11 @@
     $dashboardRoute = null;
 
     if ($user) {
-        if ($user->role === 'company') {
+        if ($user->role === 'manager') {
+            $dashboardRoute = 'admin.dbadmin'; // Manager dashboard
+        } elseif ($user->role === 'admin') {
+            $dashboardRoute = 'admin.companies.pending'; // Admin oversight dashboard
+        } elseif ($user->role === 'company') {
             // Redirect to pending approval if not approved
             if ($user->status !== 'approved') {
                 $dashboardRoute = 'pending-approval';
@@ -38,7 +42,13 @@
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     @if ($dashboardRoute)
                         <x-nav-link :href="route($dashboardRoute)" :active="request()->routeIs($dashboardRoute)">
-                            {{ __('Dashboard') }}
+                            @if($user && $user->role === 'manager')
+                                {{ __('Manager Dashboard') }}
+                            @elseif($user && $user->role === 'admin')
+                                {{ __('Admin Oversight') }}
+                            @else
+                                {{ __('Dashboard') }}
+                            @endif
                         </x-nav-link>
                     @endif
                 </div>

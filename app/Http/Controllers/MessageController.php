@@ -18,7 +18,7 @@ class MessageController extends Controller
     {
         $user = Auth::user();
         // Fetch all conversations for sidebar
-        if ($user->user_type === 'admin') {
+        if ($user->role === 'manager') {
             $conversations = Conversation::where('admin_id', $user->id);
         } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
             $conversations = Conversation::where('client_id', $user->id);
@@ -125,8 +125,8 @@ class MessageController extends Controller
     {
         $user = Auth::user();
 
-        // Admin starts conversation with client or supplier
-        if ($user->user_type === 'admin') {
+        // Manager starts conversation with client or supplier
+        if ($user->role === 'manager') {
             if ($request->has('client_id')) {
                 $request->validate([
                     'client_id' => 'required|exists:users,id',

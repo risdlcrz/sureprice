@@ -127,3 +127,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 
 require __DIR__.'/auth.php'; 
+
+Route::get('/quotation-requests/{id}', [App\Http\Controllers\ClientQuotationController::class, 'apiShow']); 
