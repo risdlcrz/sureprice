@@ -92,41 +92,20 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php
-                        $groupedStocks = $paginatedStocks->groupBy('material_id');
-                    @endphp
-                    @forelse($groupedStocks as $materialId => $materialStocks)
+                    @forelse($paginatedStocks as $row)
                         @php
-                            $material = $materialStocks->first()->material;
-                            $totalStock = $materialStocks->sum('current_stock');
+                            $material = $row->material;
+                            $currentStock = $row->current_stock ?? 0;
+                            $threshold = $row->threshold ?? 0;
                         @endphp
-                        <tr class="table-primary">
+                        <tr>
                             <td class="fw-semibold">{{ $material->name ?? 'N/A' }}</td>
                             <td>{{ $material->category->name ?? '-' }}</td>
                             <td>{{ $material->code ?? '-' }}</td>
-                            <td colspan="4"><strong>Total Stock: {{ $totalStock }}</strong></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        @foreach($materialStocks as $stock)
-                        <tr>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td>{{ $stock->supplier->company_name ?? '-' }}</td>
-                            <td>{{ $stock->current_stock }}</td>
+                            <td>-</td>
+                            <td>{{ $currentStock }}</td>
+                            <td>{{ $threshold }}</td>
                             <td>
-                                @if($stock->threshold > 0)
-                                    {{ $stock->threshold }}
-                                @else
-                                    {{ floor($stock->current_stock * 0.2) }} <span class="text-muted">(auto)</span>
-                                @endif
-                            </td>
-                            <td>
-                                @php
-                                    $currentStock = $stock->current_stock ?? 0;
-                                    $threshold = $stock->threshold > 0 ? $stock->threshold : floor($currentStock * 0.2);
-                                @endphp
                                 @if($currentStock <= 0)
                                     <span class="badge rounded-pill bg-danger">Out of Stock</span>
                                 @elseif($currentStock < $threshold)
@@ -135,14 +114,13 @@
                                     <span class="badge rounded-pill bg-success">Normal</span>
                                 @endif
                             </td>
-                            <td>{{ $stock->warehouse->name ?? '-' }}</td>
+                            <td>-</td>
                             <td>
-                                <a href="{{ route('warehouse.inventory.history', ['material' => $stock->material->id, 'warehouse_id' => $stock->warehouse_id]) }}" class="btn btn-sm btn-outline-info">
+                                <a href="{{ route('warehouse.inventory.history', ['material' => $material->id, 'warehouse_id' => $row->warehouse_id]) }}" class="btn btn-sm btn-outline-info">
                                     <i class="fas fa-history"></i> View History
                                 </a>
                             </td>
                         </tr>
-                        @endforeach
                     @empty
                         <tr>
                             <td colspan="9" class="text-center py-4 text-muted">No materials found in this warehouse.</td>

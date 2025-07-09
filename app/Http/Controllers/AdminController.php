@@ -118,8 +118,11 @@ public function show(Company $company)
 
 public function notificationCenter()
 {
-    // Fetch the latest 50 notifications for the current admin user by user_id
-    $notifications = \App\Models\Notification::where('user_id', auth()->id())
+    // Fetch notifications for the current admin user using both old (user_id) and new (notifiable_id) methods
+    $notifications = \App\Models\Notification::where(function($query) {
+            $query->where('notifiable_id', auth()->id())
+                  ->orWhere('user_id', auth()->id());
+        })
         ->latest()
         ->take(50)
         ->get();

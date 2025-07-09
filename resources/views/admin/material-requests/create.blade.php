@@ -15,6 +15,9 @@
                 </div>
                 <form action="{{ route('material-requests.store') }}" method="POST" id="materialRequestForm">
                     @csrf
+                    @if(!empty($quotation_id))
+                        <input type="hidden" name="quotation_id" value="{{ $quotation_id }}">
+                    @endif
                     <div class="card-body">
                         @if(session('error'))
                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -25,21 +28,23 @@
                             </div>
                         @endif
 
-                        <div class="row mb-4">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="contract_id">Contract</label>
-                                    <select name="contract_id" id="contract_id" class="form-control" required>
-                                        <option value="">Select a contract</option>
-                                        @foreach($contracts as $contract)
-                                            <option value="{{ $contract->id }}" {{ $selectedContract && $selectedContract->id == $contract->id ? 'selected' : '' }}>
-                                                {{ $contract->contract_number }} - {{ $contract->title }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                        @if($selectedContract || empty($items))
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="contract_id">Contract</label>
+                                        <select name="contract_id" id="contract_id" class="form-control" required>
+                                            <option value="">Select a contract</option>
+                                            @foreach($contracts as $contract)
+                                                <option value="{{ $contract->id }}" {{ $selectedContract && $selectedContract->id == $contract->id ? 'selected' : '' }}>
+                                                    {{ $contract->contract_number }} - {{ $contract->title }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        @endif
 
                         <!-- Items Section -->
                         <div class="row mb-4">
@@ -181,7 +186,16 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${materials.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
                     </select>
                 </td>
-                <td class="unit"></td>
+                <td class="unit">
+                    <select name="items[${itemIndex}][unit]" class="form-control unit-select" required>
+                        <option value="">Select Unit</option>
+                        <option value="pcs">Pcs</option>
+                        <option value="kg">Kg</option>
+                        <option value="m">M</option>
+                        <option value="set">Set</option>
+                        <option value="box">Box</option>
+                    </select>
+                </td>
                 <td>
                     <input type="number" name="items[${itemIndex}][quantity]" class="form-control quantity" step="0.01" required>
                 </td>
@@ -260,123 +274,103 @@ document.addEventListener('DOMContentLoaded', function() {
 @endpush
 
 @push('styles')
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-body {
-    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+body, .container-fluid, .card {
+    font-family: 'Inter', Arial, sans-serif;
+    background: linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%);
 }
 .card {
-    border-radius: 1.25rem;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    border: none;
-    margin-bottom: 2rem;
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    border: 1px solid #e5e7eb;
+    margin-bottom: 0.5rem;
 }
-.card-header {
-    background: #fff;
-    border-radius: 1.25rem 1.25rem 0 0;
-    border-bottom: none;
-    padding: 1.5rem 2rem 1rem 2rem;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 1rem;
+.card-header, .card-footer {
+    background: #f1f5f9;
+    border-radius: 18px 18px 0 0;
+    border-bottom: 1px solid #e5e7eb;
 }
-.btn-primary {
-    border-radius: 2rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
-    border: none;
-    box-shadow: 0 2px 8px #38b6ff33;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-}
-.btn-primary:hover {
-    filter: brightness(1.08);
-    box-shadow: 0 4px 16px #38b6ff33;
-}
-.btn-success {
-    border-radius: 2rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
-    border: none;
-    box-shadow: 0 2px 8px #43e97b33;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-}
-.btn-success:hover {
-    filter: brightness(1.08);
-    box-shadow: 0 4px 16px #43e97b33;
-}
-.btn-default {
-    border-radius: 2rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-    background: #e9ecef;
-    color: #495057;
-    border: none;
-    margin-left: 0.5rem;
-    transition: background 0.2s, color 0.2s;
-}
-.btn-default:hover {
-    background: #d1d5db;
-    color: #222;
-}
-.form-control, .form-select {
-    border-radius: 1.2rem;
-    border: 1px solid #d1d5db;
-    background: #f8fafc;
-    font-size: 1.08rem;
-    padding: 0.85rem 1.1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.form-control:focus, .form-select:focus {
-    border-color: #38b6ff;
-    box-shadow: 0 0 0 2px #38b6ff33;
-    background: #fff;
+.card-footer {
+    border-radius: 0 0 18px 18px;
+    border-top: 1px solid #e5e7eb;
 }
 .table-responsive {
-    border-radius: 1.1rem;
-    overflow-x: auto;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    background: #fff;
-    max-width: 100%;
+    width: 100%;
+    overflow-x: unset !important;
+    margin-bottom: 0;
 }
 .table {
-    margin-bottom: 0;
+    width: 100%;
+    table-layout: fixed;
     background: #fff;
-    border-radius: 1.1rem;
+    border-radius: 12px;
     overflow: hidden;
-    font-size: 0.97rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin-bottom: 0;
 }
 .table th, .table td {
+    padding: 6px 2px;
+    font-size: 0.95rem;
+    word-break: break-word;
+    white-space: normal;
     vertical-align: middle;
-    padding: 0.7rem 0.5rem;
-    border: none;
+    text-align: center;
     background: #f8fafc;
-    text-align: center;
+    border-bottom: 1px solid #e5e7eb;
 }
-.table thead th {
+.table th {
+    background: #e0e7ef;
+    font-weight: 600;
+    color: #2563eb;
+    letter-spacing: 0.5px;
+    font-size: 0.97rem;
+}
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: #f3f6fa;
+}
+.form-control, .form-control-plaintext {
+    border-radius: 8px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 0.95rem;
+    min-height: 32px;
+    background: #f8fafc;
+}
+.form-control-plaintext[readonly] {
     background: #f1f5f9;
-    font-weight: 700;
-    color: #198754;
-    border-bottom: 2px solid #e3e3e3;
-    text-align: center;
+    color: #6b7280;
+    border: none;
+    font-style: italic;
 }
-.table-hover tbody tr:hover {
-    background: #e3f2fd44;
+input[type="number"].form-control {
+    text-align: right;
 }
-textarea.form-control {
-    min-height: 100px;
+.btn-success, .btn-primary {
+    border-radius: 24px;
+    padding: 0.4em 1.1em;
+    font-weight: 600;
+    font-size: 1.01rem;
+}
+#addRow {
+    margin-top: 8px;
+    font-size: 1.01rem;
+    font-weight: 600;
+    border-radius: 18px;
+    background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+    color: #fff;
+    border: none;
+    box-shadow: 0 2px 8px rgba(34,197,94,0.08);
+}
+#addRow:hover {
+    background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
 }
 @media (max-width: 991.98px) {
-    .card-header {
-        padding: 1rem 0.5rem 0.5rem 0.5rem;
-    }
     .card {
-        padding: 0.5rem;
+        padding: 0 2px;
     }
     .table th, .table td {
-        padding: 0.4rem 0.2rem;
         font-size: 0.93rem;
+        padding: 4px 1px;
     }
 }
 </style>

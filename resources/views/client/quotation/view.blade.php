@@ -176,8 +176,8 @@ body {
     }
     .quotation-card h2 {
         font-size: 1.3rem;
+        }
     }
-}
 </style>
 @endpush
 
@@ -392,7 +392,8 @@ body {
                             @csrf
                             <button type="submit" class="btn btn-danger btn-lg">Cancel Quotation</button>
                         </form>
-                        <form method="GET" action="{{ route('client.contract.fill', ['id' => $quotationRequest->id]) }}">
+                        <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}">
+                            @csrf
                             <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
                         </form>
                     </div>

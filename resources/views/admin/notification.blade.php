@@ -15,9 +15,14 @@
                             @foreach($notifications as $notification)
                                 @php
                                     $data = is_array($notification->data) ? $notification->data : json_decode($notification->data, true);
+                                    $quotationId = $data['quotation_id'] ?? null;
                                     $link = $data['link'] ?? null;
                                     $title = $data['title'] ?? $notification->type;
                                     $message = $data['message'] ?? '';
+                                    if ($notification->type === 'ClientProceededQuotation' && $quotationId) {
+                                        $link = route('material-requests.create') . '?quotation_id=' . $quotationId;
+                                        $title = 'Material Request Needed';
+                                    }
                                 @endphp
                                 <a href="{{ $link ?? '#' }}" class="list-group-item list-group-item-action animated-fadein mb-2 notification-item" style="border-radius: 0.9rem; text-decoration: none;">
                                     <div class="d-flex w-100 justify-content-between align-items-center">
@@ -31,7 +36,7 @@
                                         {{ $message }}
                                     </p>
                                     @if($link)
-                                        <span class="btn btn-primary btn-sm">View Quotation</span>
+                                        <span class="btn btn-primary btn-sm">{{ $notification->type === 'ClientProceededQuotation' ? 'Create Material Request' : 'View Quotation' }}</span>
                                     @endif
                                 </a>
                             @endforeach

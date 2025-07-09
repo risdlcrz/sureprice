@@ -948,6 +948,10 @@ document.addEventListener('DOMContentLoaded', updateFormFields);
 function updateCompanyTypeOptions() {
   const role = document.getElementById('designation').value;
   const supplierTypeSelect = document.getElementById('supplier_type');
+  
+  // Store the currently selected value
+  const currentlySelected = supplierTypeSelect.value;
+  
   const defaultOptions = [
     'Construction & Engineering',
     'Architecture & Design',
@@ -969,6 +973,7 @@ function updateCompanyTypeOptions() {
     'Nonprofit / NGO',
     'Other'
   ];
+  
   // Always show default options for both supplier and client
   supplierTypeSelect.innerHTML = '<option value="">Select company type</option>';
   defaultOptions.forEach(type => {
@@ -977,12 +982,17 @@ function updateCompanyTypeOptions() {
     opt.textContent = type;
     supplierTypeSelect.appendChild(opt);
   });
+  
+  // Restore the previously selected value if it exists in default options
+  if (currentlySelected && currentlySelected !== '') {
+    const optionExists = Array.from(supplierTypeSelect.options).some(option => option.value === currentlySelected);
+    if (optionExists) {
+      supplierTypeSelect.value = currentlySelected;
+    }
+  }
 }
 // Add event listeners
 if (document.getElementById('designation')) {
   document.getElementById('designation').addEventListener('change', updateCompanyTypeOptions);
-}
-if (document.getElementById('primary_products_services')) {
-  document.getElementById('primary_products_services').addEventListener('input', updateCompanyTypeOptions);
 }
 </script>

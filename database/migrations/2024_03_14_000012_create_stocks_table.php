@@ -14,7 +14,7 @@ return new class extends Migration {
             Schema::create('stocks', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('warehouse_id')->constrained()->onDelete('cascade');
-                $table->foreignId('supplier_id')->constrained()->onDelete('cascade');
+                $table->foreignId('supplier_id')->nullable()->constrained()->onDelete('cascade');
                 $table->foreignId('material_id')->constrained()->onDelete('cascade');
                 $table->integer('current_stock')->default(0);
                 $table->integer('minimum_stock')->default(0);

@@ -299,6 +299,30 @@ class ClientQuotationController extends Controller
         return view('client.quotation.contract', compact('quotationRequest'));
     }
 
+    public function proceed($id)
+    {
+        $quotationRequest = \App\Models\QuotationRequest::findOrFail($id);
+        // Optionally update status
+        $quotationRequest->status = 'proceeded';
+        $quotationRequest->save();
+
+        // Notify all admins
+        $admins = \App\Models\User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            \Log::info('Creating notification for admin', ['admin_id' => $admin->id]);
+            \App\Models\Notification::create([
+                'notifiable_id' => $admin->id,
+                'notifiable_type' => \App\Models\User::class,
+                'type' => 'ClientProceededQuotation',
+                'data' => [
+                    'message' => 'Client ' . ($quotationRequest->user->name ?? 'Unknown') . ' proceeded with Quotation #' . $quotationRequest->id,
+                    'quotation_id' => $quotationRequest->id,
+                ],
+            ]);
+        }
+        return view('client.quotation.proceeded', compact('quotationRequest'));
+    }
+
     /**
      * Get suppliers for each material with price, metrics, and badges
      */

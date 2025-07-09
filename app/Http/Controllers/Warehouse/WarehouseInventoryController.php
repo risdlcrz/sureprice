@@ -54,12 +54,44 @@ class WarehouseInventoryController extends Controller
         }
         $materials = $materialsQuery->get();
         $suppliers = \App\Models\Supplier::all();
-        $paginatedStocks = Stock::with(['material', 'supplier', 'warehouse'])
-            ->where('warehouse_id', $warehouseId)
-            ->orderByDesc('id')
-            ->paginate(15);
         $categories = \App\Models\Category::all();
-        return view('warehouse.inventory.index', compact('paginatedStocks', 'categories', 'warehouses', 'warehouseId', 'materials', 'suppliers'));
+
+        // Get all stocks for this warehouse, keyed by material_id
+        $stocks = \App\Models\Stock::where('warehouse_id', $warehouseId)->get()->keyBy('material_id');
+
+        // Build rows for the view, matching admin inventory logic
+        $rows = $materials->map(function($material) use ($stocks, $warehouseId) {
+            $stock = $stocks->get($material->id);
+            return (object)[
+                'material' => $material,
+                'current_stock' => $stock ? $stock->current_stock : 0,
+                'threshold' => $stock ? $stock->threshold : ($material->minimum_stock ?? 0),
+                'warehouse_id' => $warehouseId,
+                'stock_id' => $stock ? $stock->id : null,
+                'supplier_id' => $stock ? $stock->supplier_id : null,
+                // add other fields as needed
+            ];
+        });
+
+        // Paginate manually
+        $page = request()->get('page', 1);
+        $perPage = 15;
+        $paginatedRows = new \Illuminate\Pagination\LengthAwarePaginator(
+            $rows->forPage($page, $perPage),
+            $rows->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
+        return view('warehouse.inventory.index', [
+            'paginatedStocks' => $paginatedRows, // keep the same variable name for the view
+            'categories' => $categories,
+            'warehouses' => $warehouses,
+            'warehouseId' => $warehouseId,
+            'materials' => $materials,
+            'suppliers' => $suppliers,
+        ]);
     }
 
     public function addStock(Request $request)

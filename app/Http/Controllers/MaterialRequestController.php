@@ -29,13 +29,59 @@ class MaterialRequestController extends Controller
      */
     public function create(Request $request)
     {
+        $quotation_id = $request->get('quotation_id');
+        \Log::info('MaterialRequestController@create', ['quotation_id' => $quotation_id, 'request' => $request->all()]);
         $contracts = Contract::with('items.material')->latest()->get();
         $materials = Material::orderBy('name')->get();
         $contract_id = $request->get('contract_id');
         $selectedContract = null;
         $items = [];
 
-        if ($contract_id) {
+        if ($quotation_id) {
+            $quotation = \App\Models\QuotationRequest::with(['rooms.scopes'])->find($quotation_id);
+            \Log::info('QuotationRequest loaded', ['quotation' => $quotation]);
+            if ($quotation) {
+                $materialQuantities = [];
+                $materialDetails = [];
+                foreach ($quotation->rooms as $room) {
+                    foreach ($room->scopes as $scope) {
+                        \Log::info('Scope selected_materials', ['selected_materials' => $scope->selected_materials]);
+                        if (is_array($scope->selected_materials)) {
+                            foreach ($scope->selected_materials as $mat) {
+                                $materialId = $mat['material_id'] ?? $mat['id'] ?? null;
+                                if ($materialId) {
+                                    $qty = $mat['quantity'] ?? 1;
+                                    $materialQuantities[$materialId] = ($materialQuantities[$materialId] ?? 0) + $qty;
+                                    // Store extra info for each material
+                                    if (!isset($materialDetails[$materialId])) {
+                                        $materialDetails[$materialId] = [
+                                            'description' => $mat['description'] ?? ($mat['specifications'] ?? ''),
+                                            'notes' => $mat['notes'] ?? '',
+                                        ];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                $materialsList = Material::whereIn('id', array_keys($materialQuantities))->get();
+                foreach ($materialsList as $mat) {
+                    $id = $mat->id;
+                    $items[] = [
+                        'material_id' => $id,
+                        'name' => $mat->name,
+                        'unit' => $mat->unit,
+                        'quantity' => $materialQuantities[$id],
+                        'description' => $materialDetails[$id]['description'] ?? $mat->description,
+                        'notes' => $materialDetails[$id]['notes'] ?? '',
+                        'warehouse_name' => 'N/A',
+                        'available' => 0
+                    ];
+                }
+            }
+            $selectedContract = null;
+        } elseif ($contract_id) {
+            // Admin/contract flow (existing logic)
             $selectedContract = Contract::with('items.material.inventory')->findOrFail($contract_id);
             $warehouses = Warehouse::orderByRaw("name = 'Warehouse A' DESC, name ASC")->get();
             foreach ($selectedContract->items as $item) {
@@ -60,7 +106,7 @@ class MaterialRequestController extends Controller
             }
         }
 
-        return view('admin.material-requests.create', compact('contracts', 'materials', 'selectedContract', 'items'));
+        return view('admin.material-requests.create', compact('contracts', 'materials', 'selectedContract', 'items', 'quotation_id'));
     }
 
     /**
