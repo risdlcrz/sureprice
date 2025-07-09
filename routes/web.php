@@ -312,10 +312,7 @@ Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->
 // Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
 // Admin protected routes
 // Manager protected operational routes
-Route::middleware(['auth', 'manager'])->group(function () {
-    Route::get('/admin/dbadmin', [AdminController::class, 'dashboard'])->name('admin.dbadmin');
-    Route::get('/admin/procurement', [ProcurementController::class, 'index'])->name('admin.procurement');
-    // Information Management Routes
+Route::middleware(['auth', 'role:admin,manager'])->group(function () {
     Route::resource('information-management', InformationManagementController::class);
     Route::post('information-management/import', [InformationManagementController::class, 'import'])->name('information-management.import');
     Route::get('information-management/template/download', [InformationManagementController::class, 'template'])->name('information-management.template');
@@ -497,4 +494,10 @@ Route::middleware(['auth', 'manager'])->prefix('manager')->name('manager.')->gro
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
     // Add more admin routes here
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dbadmin', function () {
+        return view('admin.dbadmin');
+    })->name('dbadmin');
 });

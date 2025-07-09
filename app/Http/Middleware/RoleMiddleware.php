@@ -16,19 +16,11 @@ class RoleMiddleware
      * @param  string  $role
      * @return mixed
      */
-    public function handle(Request $request, Closure $next, $role)
+    public function handle(Request $request, Closure $next, ...$roles)
     {
-        if (!Auth::check()) {
-            return redirect()->route('login.form')->with('error', 'Please login first.');
+        if (!Auth::check() || !in_array(Auth::user()->role, $roles)) {
+            abort(403, 'Unauthorized action.');
         }
-
-        $user = Auth::user();
-        
-        // Check if user has the required role
-        if ($user->role !== $role) {
-            return redirect()->route('login.form')->with('error', "Unauthorized access. {$role} role required.");
-        }
-
         return $next($request);
     }
 } 
