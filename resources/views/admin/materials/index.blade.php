@@ -326,26 +326,11 @@ input.form-control:focus, select.form-control:focus {
                                 <tr>
                                     <td>{{ $material->code }}</td>
                                     <td>
-                                        <div class="d-flex align-items-center flex-md-row flex-column">
-                                            @if($material->images && count($material->images) > 0)
-                                                <img src="{{ asset('storage/' . $material->images[0]->path) }}"
-                                                     alt="{{ $material->name }}"
-                                                     class="img-thumbnail mr-2 mb-2 mb-md-0"
-                                                     style="width: 150px; height: 150px; object-fit: contain; background: #fff; border: 2px solid #e0e0e0;">
-                                            @else
-                                                <img src="{{ asset('images/placeholder.png') }}"
-                                                     alt="No Image"
-                                                     class="img-thumbnail mr-2 mb-2 mb-md-0"
-                                                     style="width: 150px; height: 150px; object-fit: contain; background: #fff; border: 2px solid #e0e0e0;">
-                                            @endif
-                                            <div class="text-center text-md-start">
-                                                <strong>{{ $material->name }}</strong>
-                                                @if($material->description)
-                                                    <br>
-                                                    <small class="text-muted">{{ Str::limit($material->description, 50) }}</small>
-                                                @endif
-                                            </div>
-                                        </div>
+                                        <strong>{{ $material->name }}</strong>
+                                        @if($material->description)
+                                            <br>
+                                            <small class="text-muted">{{ Str::limit($material->description, 50) }}</small>
+                                        @endif
                                     </td>
                                     <td>
                                         {{ $material->category->name ?? 'N/A' }}

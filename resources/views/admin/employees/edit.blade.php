@@ -70,6 +70,7 @@
                                 <option value="procurement" {{ old('role', $employee->role) == 'procurement' ? 'selected' : '' }}>Procurement</option>
                                 <option value="warehousing" {{ old('role', $employee->role) == 'warehousing' ? 'selected' : '' }}>Warehousing</option>
                                 <option value="contractor" {{ old('role', $employee->role) == 'contractor' ? 'selected' : '' }}>Contractor</option>
+                                <option value="finance" {{ old('role', $employee->role) == 'finance' ? 'selected' : '' }}>Finance</option>
                             </select>
                             @error('role')
                                 <div class="invalid-feedback">{{ $message }}</div>

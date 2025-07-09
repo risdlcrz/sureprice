@@ -22,6 +22,10 @@ class PurchaseOrderService
             throw new \Exception('Payment details are incomplete');
         }
 
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasRole('finance')) {
+            throw new \Exception('Only administrators or finance can validate client payments.');
+        }
+
         $purchaseOrder->update([
             'admin_payment_validator_id' => $adminId,
             'admin_payment_validated_at' => Carbon::now(),

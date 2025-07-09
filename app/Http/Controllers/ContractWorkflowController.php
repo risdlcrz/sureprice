@@ -112,7 +112,7 @@ class ContractWorkflowController extends Controller
     public function validatePaymentAdmin(Contract $contract)
     {
         try {
-            if (!Auth::user()->hasRole('admin')) {
+            if (!Auth::user()->hasRole('admin') && !Auth::user()->hasRole('finance')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized action'

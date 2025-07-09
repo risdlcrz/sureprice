@@ -81,8 +81,20 @@
                                     <td>{{ $quotation->rfq_number }}</td>
                                     <td>
                                         <div>
-                                            <strong>PR-{{ $quotation->purchaseRequest->id }}</strong><br>
-                                            <small class="text-muted">{{ $quotation->purchaseRequest->department }}</small>
+                                            <strong>
+                                                @if($quotation->purchaseRequest)
+                                                    PR-{{ $quotation->purchaseRequest->id }}
+                                                @else
+                                                    <span class="text-muted">N/A</span>
+                                                @endif
+                                            </strong><br>
+                                            <small class="text-muted">
+                                                @if($quotation->purchaseRequest && $quotation->purchaseRequest->department)
+                                                    {{ $quotation->purchaseRequest->department }}
+                                                @else
+                                                    <span class="text-muted">N/A</span>
+                                                @endif
+                                            </small>
                                         </div>
                                     </td>
                                     <td>
@@ -102,22 +114,26 @@
                                     </td>
                                     <td>
                                         <div>
-                                            {{ $quotation->purchaseRequest->items->count() }} materials<br>
-                                            <small class="text-muted">
-                                                Top categories: {{
-                                                    $quotation->purchaseRequest->items
-                                                        ->pluck('material')
-                                                        ->filter()
-                                                        ->pluck('category')
-                                                        ->filter()
-                                                        ->unique()
-                                                        ->take(2)
-                                                        ->map(function($cat) {
-                                                            return is_object($cat) && isset($cat->name) ? $cat->name : (is_string($cat) ? $cat : '');
-                                                        })
-                                                        ->implode(', ')
-                                                }}
-                                            </small>
+                                            @if($quotation->purchaseRequest && $quotation->purchaseRequest->items)
+                                                {{ $quotation->purchaseRequest->items->count() }} materials<br>
+                                                <small class="text-muted">
+                                                    Top categories: {{
+                                                        $quotation->purchaseRequest->items
+                                                            ->pluck('material')
+                                                            ->filter()
+                                                            ->pluck('category')
+                                                            ->filter()
+                                                            ->unique()
+                                                            ->take(2)
+                                                            ->map(function($cat) {
+                                                                return is_object($cat) && isset($cat->name) ? $cat->name : (is_string($cat) ? $cat : '');
+                                                            })
+                                                            ->implode(', ')
+                                                    }}
+                                                </small>
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
                                         </div>
                                     </td>
                                     <td>

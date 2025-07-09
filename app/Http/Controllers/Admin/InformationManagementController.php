@@ -20,7 +20,7 @@ class InformationManagementController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'role' => 'required|in:procurement,warehousing,contractor',
+            'role' => 'required|in:procurement,warehousing,contractor,finance',
             'username' => 'required|string|max:255|unique:users',
         ]);
 

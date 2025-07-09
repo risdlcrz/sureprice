@@ -47,6 +47,30 @@ class CustomSupplierSeeder extends Seeder
                     'email_verified_at' => now(),
                 ]
             );
+            // Ensure supplier has a corresponding company record
+            \App\Models\Company::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'company_name' => $companyName,
+                    'contact_person' => 'Juan Dela Cruz',
+                    'email' => $email,
+                    'username' => $username,
+                    'mobile_number' => '+63' . rand(900, 999) . rand(1000000, 9999999),
+                    'telephone_number' => '+63' . rand(2, 8) . rand(1000000, 9999999),
+                    'street' => rand(1, 999) . ' ' . Arr::random($cities) . ' Street',
+                    'city' => Arr::random($cities),
+                    'state' => Arr::random($provinces),
+                    'postal' => str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT),
+                    'years_operation' => rand(1, 30),
+                    'business_size' => Arr::random(['Small', 'Medium', 'Large']),
+                    'service_areas' => Arr::random($provinces) . ', ' . Arr::random($cities),
+                    'vat_registered' => rand(0, 1),
+                    'use_sureprice' => rand(0, 1),
+                    'payment_terms' => Arr::random(['30 days', '45 days', '60 days', 'COD', 'EOM']),
+                    'designation' => 'supplier',
+                    'status' => 'approved',
+                ]
+            );
             $supplier = Supplier::updateOrCreate(
                 ['user_id' => $user->id],
                 [

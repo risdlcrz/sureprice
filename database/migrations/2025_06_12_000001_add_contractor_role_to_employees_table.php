@@ -17,7 +17,7 @@ return new class extends Migration
             });
         } else {
             // For MySQL, use the MODIFY approach
-            DB::statement("ALTER TABLE employees MODIFY role ENUM('procurement','warehousing','contractor') NOT NULL");
+            DB::statement("ALTER TABLE employees MODIFY role ENUM('procurement','warehousing','contractor','finance') NOT NULL");
         }
     }
 
@@ -30,7 +30,7 @@ return new class extends Migration
             });
         } else {
             // For MySQL, revert to original
-            DB::statement("ALTER TABLE employees MODIFY role ENUM('procurement','warehousing') NOT NULL");
+            DB::statement("ALTER TABLE employees MODIFY role ENUM('procurement','warehousing','contractor') NOT NULL");
         }
     }
 }; 

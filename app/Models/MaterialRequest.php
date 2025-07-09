@@ -10,6 +10,9 @@ class MaterialRequest extends Model
     use HasFactory;
 
     protected $fillable = [
+        'contract_id',
+        'requested_by',
+        'notes',
         'quotation_request_id',
         'user_id',
         'status',
@@ -23,5 +26,10 @@ class MaterialRequest extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function items()
+    {
+        return $this->hasMany(\App\Models\MaterialRequestItem::class);
     }
 } 

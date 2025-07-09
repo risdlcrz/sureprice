@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
+use App\Models\Employee;
 
 class ContractController extends Controller
 {
@@ -79,29 +80,8 @@ class ContractController extends Controller
 
     public function create()
     {
-        // Clear all contract wizard session data
-        session()->forget([
-            'contract_step1',
-            'contract_step2',
-            'contract_step3',
-            'contract_step4',
-            'step3_data',
-            'step4_data',
-            'contract_id',
-            'contract_step1.contract_id',
-            'contract_step2.contract_id',
-            'contract_step3.contract_id',
-            'contract_step4.contract_id',
-            'contract_step1.rooms',
-            'contract_step2.rooms',
-            'contract_step3.rooms',
-            'contract_step4.rooms'
-        ]);
-        
-        // Also clear any flash data
-        session()->forget(['success', 'error', 'warning', 'info']);
-        
-        return view('admin.contracts.step1');
+        $contractors = Employee::where('role', 'contractor')->get();
+        return view('admin.contracts.create', compact('contractors'));
     }
 
     public function step1()
@@ -737,94 +717,17 @@ class ContractController extends Controller
             return redirect()->route('contracts.show', $contract)
                 ->with('error', 'Completed contracts cannot be edited.');
         }
-
-        // Load related data
-        $contract->load(['contractor', 'client', 'property', 'rooms.scopeTypes']);
-
-        // Step 1: Contractor, Client, Property
-        $step1 = [
-            'contractor_name' => $contract->contractor->name ?? '',
-            'contractor_company' => $contract->contractor->company_name ?? '',
-            'contractor_email' => $contract->contractor->email ?? '',
-            'contractor_phone' => $contract->contractor->phone ?? '',
-            'contractor_street' => $contract->contractor->street ?? '',
-            'contractor_barangay' => $contract->contractor->barangay ?? '',
-            'contractor_city' => $contract->contractor->city ?? '',
-            'contractor_state' => $contract->contractor->state ?? '',
-            'contractor_postal' => $contract->contractor->postal ?? '',
-            'client_name' => $contract->client->name ?? '',
-            'client_company' => $contract->client->company_name ?? '',
-            'client_email' => $contract->client->email ?? '',
-            'client_phone' => $contract->client->phone ?? '',
-            'client_street' => $contract->client->street ?? '',
-            'client_unit' => $contract->client->unit ?? '',
-            'client_barangay' => $contract->client->barangay ?? '',
-            'client_city' => $contract->client->city ?? '',
-            'client_state' => $contract->client->state ?? '',
-            'client_postal' => $contract->client->postal ?? '',
-            'property_type' => $contract->property->property_type ?? '',
-            'property_street' => $contract->property->street ?? '',
-            'property_unit' => $contract->property->unit ?? '',
-            'property_barangay' => $contract->property->barangay ?? '',
-            'property_city' => $contract->property->city ?? '',
-            'property_state' => $contract->property->state ?? '',
-            'property_postal' => $contract->property->postal ?? '',
-        ];
-        session(['contract_step1' => $step1]);
-
-        // Step 2: Rooms, Dates, Totals
-        $rooms = [];
-        foreach ($contract->rooms as $room) {
-            $rooms[] = [
-                'name' => $room->name,
-                'length' => $room->length,
-                'width' => $room->width,
-                'area' => $room->area,
-                'scope' => $room->scopeTypes->pluck('id')->toArray(),
-                'materials_cost' => $room->materials_cost ?? 0,
-                'labor_cost' => $room->labor_cost ?? 0,
-            ];
-        }
-        $step2 = [
-            'rooms' => $rooms,
-            'start_date' => $contract->start_date ? $contract->start_date->format('Y-m-d') : '',
-            'end_date' => $contract->end_date ? $contract->end_date->format('Y-m-d') : '',
-            'total_materials' => $contract->materials_cost ?? 0,
-            'total_labor' => $contract->labor_cost ?? 0,
-            'grand_total' => $contract->total_amount ?? 0,
-            'total_amount' => $contract->total_amount ?? 0,
-            'labor_cost' => $contract->labor_cost ?? 0,
-            'materials_cost' => $contract->materials_cost ?? 0,
-        ];
-        session(['contract_step2' => $step2]);
-
-        // Step 3: Terms & Signatures
-        $step3 = [
-            'payment_terms' => $contract->payment_terms ?? '',
-            'warranty_terms' => $contract->warranty_terms ?? '',
-            'cancellation_terms' => $contract->cancellation_terms ?? '',
-            'additional_terms' => $contract->additional_terms ?? '',
-            'contractor_signature' => $contract->contractor_signature ?? '',
-            'client_signature' => $contract->client_signature ?? '',
-        ];
-        session(['contract_step3' => $step3]);
-
-        // Step 4: Payment details
-        $step4 = [
-            'payment_method' => $contract->payment_method ?? '',
-            'bank_name' => $contract->bank_name ?? '',
-            'bank_account_name' => $contract->bank_account_name ?? '',
-            'bank_account_number' => $contract->bank_account_number ?? '',
-            'check_number' => $contract->check_number ?? '',
-            'check_date' => $contract->check_date ? $contract->check_date->format('Y-m-d') : '',
-        ];
-        session(['contract_step4' => $step4]);
-
-        // Store contract ID to indicate edit mode
-        session(['editing_contract_id' => $contract->id]);
-
-        // Redirect to step1
-        return redirect()->route('contracts.step1');
+        $contract->load(['contractor', 'client', 'property', 'items']);
+        $contractors = Employee::where('role', 'contractor')->get();
+        // Pass contract and related data to the view
+        return view('admin.contracts.create', [
+            'contract' => $contract,
+            'contractor' => $contract->contractor,
+            'client' => $contract->client,
+            'property' => $contract->property,
+            'items' => $contract->items,
+            'contractors' => $contractors,
+        ]);
     }
 
     public function update(Request $request, Contract $contract)

@@ -15,9 +15,7 @@
                 </div>
                 <form action="{{ route('material-requests.store') }}" method="POST" id="materialRequestForm">
                     @csrf
-                    @if(!empty($quotation_id))
-                        <input type="hidden" name="quotation_id" value="{{ $quotation_id }}">
-                    @endif
+                    <input type="hidden" name="quotation_request_id" value="{{ $quotation_id }}">
                     <div class="card-body">
                         @if(session('error'))
                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -25,24 +23,6 @@
                                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                     <span aria-hidden="true">&times;</span>
                                 </button>
-                            </div>
-                        @endif
-
-                        @if($selectedContract || empty($items))
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="contract_id">Contract</label>
-                                        <select name="contract_id" id="contract_id" class="form-control" required>
-                                            <option value="">Select a contract</option>
-                                            @foreach($contracts as $contract)
-                                                <option value="{{ $contract->id }}" {{ $selectedContract && $selectedContract->id == $contract->id ? 'selected' : '' }}>
-                                                    {{ $contract->contract_number }} - {{ $contract->title }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                </div>
                             </div>
                         @endif
 
@@ -108,7 +88,7 @@
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <div class="custom-control custom-checkbox">
-                                        <input type="checkbox" class="custom-control-input" id="create_purchase_request" name="create_purchase_request" value="1">
+                                        <input type="checkbox" class="custom-control-input" id="create_purchase_request" name="create_purchase_request" value="1" @if($anyShort) checked disabled @endif>
                                         <label class="custom-control-label" for="create_purchase_request">
                                             Create purchase request for items not available in stock
                                         </label>
@@ -169,50 +149,56 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentSupplierRow = null;
 
     // Handle contract change
-    document.getElementById('contract_id').addEventListener('change', function() {
-        const contractId = this.value;
-        if (contractId) {
-            window.location.href = '{{ route("material-requests.create") }}?contract_id=' + contractId;
-        }
-    });
+    var contractSelect = document.getElementById('contract_id');
+    if (contractSelect) {
+        contractSelect.addEventListener('change', function() {
+            const contractId = this.value;
+            if (contractId) {
+                window.location.href = '{{ route("material-requests.create") }}?contract_id=' + contractId;
+            }
+        });
+    }
 
     // Add new item row
-    document.getElementById('addRow').addEventListener('click', function() {
-        const newRow = `
-            <tr class="item-row">
-                <td>
-                    <select name="items[${itemIndex}][material_id]" class="form-control material-select" required>
-                        <option value="">Select Material</option>
-                        ${materials.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
-                    </select>
-                </td>
-                <td class="unit">
-                    <select name="items[${itemIndex}][unit]" class="form-control unit-select" required>
-                        <option value="">Select Unit</option>
-                        <option value="pcs">Pcs</option>
-                        <option value="kg">Kg</option>
-                        <option value="m">M</option>
-                        <option value="set">Set</option>
-                        <option value="box">Box</option>
-                    </select>
-                </td>
-                <td>
-                    <input type="number" name="items[${itemIndex}][quantity]" class="form-control quantity" step="0.01" required>
-                </td>
-                <td>
-                    <input type="text" name="items[${itemIndex}][supplier]" class="form-control supplier-input" placeholder="Select or enter supplier">
-                </td>
-                <td>
-                    <button type="button" class="btn btn-info btn-sm recommend-supplier-btn" data-material-id="" data-material-name="">\
-                        <i class="fas fa-lightbulb"></i> Recommend Supplier
-                    </button>
-                    <button type="button" class="btn btn-danger btn-sm remove-row" title="Remove"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-        `;
-        document.getElementById('items-container').insertAdjacentHTML('beforeend', newRow);
-        itemIndex++;
-    });
+    var addRowBtn = document.getElementById('addRow');
+    if (addRowBtn) {
+        addRowBtn.addEventListener('click', function() {
+            const newRow = `
+                <tr class="item-row">
+                    <td>
+                        <select name="items[${itemIndex}][material_id]" class="form-control material-select" required>
+                            <option value="">Select Material</option>
+                            ${materials.map(m => `<option value="${m.id}">${m.name}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="unit">
+                        <select name="items[${itemIndex}][unit]" class="form-control unit-select" required>
+                            <option value="">Select Unit</option>
+                            <option value="pcs">Pcs</option>
+                            <option value="kg">Kg</option>
+                            <option value="m">M</option>
+                            <option value="set">Set</option>
+                            <option value="box">Box</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" name="items[${itemIndex}][quantity]" class="form-control quantity" step="0.01" required>
+                    </td>
+                    <td>
+                        <input type="text" name="items[${itemIndex}][supplier]" class="form-control supplier-input" placeholder="Select or enter supplier">
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-info btn-sm recommend-supplier-btn" data-material-id="" data-material-name="">\
+                            <i class="fas fa-lightbulb"></i> Recommend Supplier
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm remove-row" title="Remove"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+            document.getElementById('items-container').insertAdjacentHTML('beforeend', newRow);
+            itemIndex++;
+        });
+    }
 
     // Delegate recommend supplier button click
     document.getElementById('items-container').addEventListener('click', function(e) {

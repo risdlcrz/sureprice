@@ -76,7 +76,7 @@ class InformationManagementController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'in:procurement,warehousing,contractor'],
+            'role' => ['required', 'in:procurement,warehousing,contractor,finance'],
         ];
         // Contractor-specific validation
         if ($request->role === 'contractor') {
@@ -144,7 +144,7 @@ class InformationManagementController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $employee->user_id],
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'in:procurement,warehousing,contractor'],
+            'role' => ['required', 'in:procurement,warehousing,contractor,finance'],
         ];
         if ($request->role === 'contractor') {
             $rules = array_merge($rules, [

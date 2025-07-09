@@ -153,8 +153,8 @@ class PurchaseOrder extends Model
 
     public function validateClientPayment()
     {
-        if (!auth()->user()->hasRole('admin')) {
-            throw new \Exception('Only administrators can validate client payments.');
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasRole('finance')) {
+            throw new \Exception('Only administrators or finance can validate client payments.');
         }
 
         $this->client_payment_validated = true;

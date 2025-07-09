@@ -86,7 +86,7 @@
                             @endif
                         </td>
                         <td>
-                            @if($payment->status === 'for_verification' && auth()->user()->user_type === 'admin')
+                            @if($payment->status === 'for_verification' && (auth()->user()->user_type === 'admin' || auth()->user()->role === 'finance'))
                                 <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#adminVerifyModal{{ $payment->id }}">Verify</button>
                                 @include('payments.partials.admin_verify_modal', ['payment' => $payment])
                             @elseif($payment->status !== 'paid' && auth()->user()->user_type !== 'admin')

@@ -112,9 +112,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 </span>
                             </p>
                         </div>
-                        @if(Auth::user()->hasRole('admin') && !$contract->admin_payment_validated_at)
+                        @if((Auth::user()->hasRole('admin') || Auth::user()->hasRole('finance')) && !$contract->admin_payment_validated_at)
                             <button class="btn btn-primary btn-sm" onclick="validatePaymentAdmin()">
-                                Validate Payment (Admin)
+                                Validate Payment (Admin/Finance)
                             </button>
                         @endif
                         @if(Auth::user()->hasRole('supplier') && $contract->admin_payment_validated_at && !$contract->supplier_payment_validated_at)

@@ -23,7 +23,7 @@
           <div class="mb-2"><strong>Date:</strong> {{ $payment->client_paid_date ?? '-' }}</div>
           <div class="mb-2"><strong>Notes:</strong> {{ $payment->client_notes ?? '-' }}</div>
           <hr>
-          <h6>Admin Verification</h6>
+          <h6>Admin/Finance Verification</h6>
           <div class="mb-3">
             <label for="admin_payment_proof_{{ $payment->id }}" class="form-label">Upload Proof of Receipt</label>
             <input type="file" class="form-control" name="admin_payment_proof" id="admin_payment_proof_{{ $payment->id }}" accept=".jpg,.jpeg,.png,.pdf" required>

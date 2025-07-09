@@ -15,6 +15,9 @@ class ClientQuotationController extends Controller
 {
     public function create(Request $request)
     {
+        // Clear any old session data
+        \Session::forget('client_quotation_data');
+        \Session::forget('quotation_request_id');
         $category = $request->query('category');
         
         // Get scope types organized by category
@@ -288,6 +291,10 @@ class ClientQuotationController extends Controller
         // Optionally, check if the user is authorized to cancel
         $quotationRequest->status = 'cancelled';
         $quotationRequest->save();
+
+        // Clear session data
+        \Session::forget('client_quotation_data');
+        \Session::forget('quotation_request_id');
 
         return redirect()->route('client.quotation.index')->with('success', 'Quotation cancelled.');
     }

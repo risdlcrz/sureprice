@@ -132,7 +132,7 @@ class RegisteredUserController extends Controller
             'username' => 'required|string|max:50|unique:users',
             'email' => 'required|email|unique:users',
             'password' => 'required|string|confirmed',
-            'role' => 'required|in:procurement,warehousing',
+            'role' => 'required|in:procurement,warehousing,finance',
             'type' => 'required|in:employee,company'
         ]);
     }
