@@ -1,4 +1,4 @@
 @extends('layouts.app')
 @section('content')
-    @include('admin.contracts.editor')
+    @include('admin.contracts.editor', ['quotationRequests' => $quotationRequests, 'contractors' => $contractors])
 @endsection 

@@ -9,10 +9,13 @@
         @endif
         <div class="mb-4 row">
             <div class="col-md-6">
-                <label for="po-search" class="form-label"><strong>Purchase Order</strong> <span class="text-danger">*</span></label>
-                <input type="text" id="po-search" class="form-control" placeholder="Search PO number or client name..." autocomplete="off" required>
-                <input type="hidden" name="purchase_order_id" id="purchase_order_id" required>
-                <div id="po-search-results" class="list-group position-absolute w-100" style="z-index:10; display:none;"></div>
+                <label for="quotation_request_id" class="form-label"><strong>Client Quotation Request</strong> <span class="text-danger">*</span></label>
+                <select name="quotation_request_id" id="quotation_request_id" class="form-control" required>
+                    <option value="">Select Quotation Request</option>
+                    @foreach($quotationRequests as $qr)
+                        <option value="{{ $qr->id }}" data-client="{{ $qr->user->name }}" data-request-number="{{ $qr->request_number }}">QR-{{ $qr->request_number }} - {{ $qr->user->name }}</option>
+                    @endforeach
+                </select>
             </div>
             <div class="col-md-6">
                 <label for="constructor_id" class="form-label"><strong>Constructor</strong> <span class="text-danger">*</span></label>
@@ -35,6 +38,16 @@
                         </option>
                     @endforeach
                 </select>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="project_start_date" class="form-label">Project Start Date <span class="text-danger">*</span></label>
+                <input type="date" id="project_start_date" name="project_start_date" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label for="project_end_date" class="form-label">Project End Date <span class="text-danger">*</span></label>
+                <input type="date" id="project_end_date" name="project_end_date" class="form-control" required>
             </div>
         </div>
         <div class="contract-border p-4 bg-white">
@@ -67,6 +80,18 @@
                     <div class="col-md-6">
                         <span class="fw-bold">Labor Fee (15%):</span> <span class="contract-blank" id="labor_fee_display"></span>
                     </div>
+                </div>
+            </div>
+            <div class="section mb-3">
+                <strong>PROJECT TIMELINE</strong>
+                <p class="mt-2">
+                    <span class="fw-bold">Start Date:</span> <span class="contract-blank" id="timeline_start_display"></span>
+                    <span class="fw-bold ms-3">End Date:</span> <span class="contract-blank" id="timeline_end_display"></span>
+                </p>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <span class="fw-bold">Grand Total:</span> <span class="contract-blank" id="grand_total_display"></span>
                 </div>
             </div>
             <div class="section mb-3">
@@ -164,6 +189,7 @@
         <input type="hidden" name="contract[additional_terms]" id="additional_terms" />
         <input type="hidden" name="materials_total" id="materials_total" />
         <input type="hidden" name="labor_fee" id="labor_fee" />
+        <input type="hidden" name="grand_total" id="grand_total" />
     </form>
 </div>
 @endsection
@@ -233,53 +259,20 @@
 <script>
 let contractorPad, clientPad;
 document.addEventListener('DOMContentLoaded', function() {
-    // --- PO Autocomplete ---
-    const poSearch = document.getElementById('po-search');
-    const poResults = document.getElementById('po-search-results');
-    const poIdInput = document.getElementById('purchase_order_id');
+    // --- Quotation Request Autofill ---
+    const qrSelect = document.getElementById('quotation_request_id');
     const saveBtn = document.getElementById('save-btn');
-    let poList = [];
-    let poSelected = false;
-    poSearch.addEventListener('input', function() {
-        const q = this.value.trim();
-        if (q.length < 2) {
-            poResults.style.display = 'none';
-            return;
-        }
-        fetch(`/purchase-orders?search=${encodeURIComponent(q)}`)
-            .then(res => res.json())
-            .then(data => {
-                poList = data;
-                if (data.length === 0) {
-                    poResults.innerHTML = '<div class="list-group-item">No results</div>';
-                } else {
-                    poResults.innerHTML = data.map(po => `<button type="button" class="list-group-item list-group-item-action" data-id="${po.id}" data-po="${encodeURIComponent(JSON.stringify(po))}">${po.po_number} - ${po.client_name || ''}</button>`).join('');
-                }
-                poResults.style.display = 'block';
-            });
-    });
-    poResults.addEventListener('click', function(e) {
-        if (e.target.matches('button[data-id]')) {
-            const po = JSON.parse(decodeURIComponent(e.target.getAttribute('data-po')));
-            fillFromPO(po);
-            poResults.style.display = 'none';
-            poSearch.value = `${po.po_number} - ${po.client_name || ''}`;
-            poIdInput.value = po.id;
-            poSelected = true;
-            saveBtn.disabled = false;
-        }
-    });
-    function fillFromPO(po) {
-        fetch(`/purchase-orders/${po.id}/json`)
+    qrSelect.addEventListener('change', function() {
+        const qrId = this.value;
+        if (!qrId) return;
+        fetch(`/api/quotation-requests/${qrId}`)
             .then(res => res.json())
             .then(data => {
                 // Parties
-                document.getElementById('contractor_name_display').innerText = data.supplier?.company_name || '';
-                document.getElementById('contractor_address_display').innerText = data.supplier?.address || '';
-                document.getElementById('client_name_display').innerText = data.contract?.client?.name || '';
-                document.getElementById('client_address_display').innerText = data.contract?.client?.street || '';
+                document.getElementById('client_name_display').innerText = data.client?.name || '';
+                document.getElementById('client_address_display').innerText = data.client?.address || '';
                 // Property
-                document.getElementById('property_address_display').innerText = data.contract?.property?.street + ', ' + data.contract?.property?.city + ', ' + data.contract?.property?.state + ' ' + data.contract?.property?.postal;
+                document.getElementById('property_address_display').innerText = data.property?.address || '';
                 // Scope of Work
                 const scopeList = document.getElementById('scope-list');
                 scopeList.innerHTML = '';
@@ -296,46 +289,64 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 document.getElementById('materials_total_display').innerText = '₱' + total.toFixed(2);
                 document.getElementById('labor_fee_display').innerText = '₱' + labor.toFixed(2);
+                document.getElementById('grand_total_display').innerText = '₱' + (total + labor).toFixed(2);
+                document.getElementById('grand_total').value = (total + labor).toFixed(2);
                 // Terms
-                document.getElementById('payment_terms_display').innerText = data.payment_terms || data.contract?.payment_terms || '';
-                document.getElementById('warranty_terms_display').innerText = data.contract?.warranty_terms || '';
-                document.getElementById('cancellation_terms_display').innerText = data.contract?.cancellation_terms || '';
-                document.getElementById('additional_terms_display').innerText = data.contract?.additional_terms || '';
+                document.getElementById('payment_terms_display').innerText = data.payment_terms || '';
+                document.getElementById('warranty_terms_display').innerText = data.warranty_terms || '';
+                document.getElementById('cancellation_terms_display').innerText = data.cancellation_terms || '';
+                document.getElementById('additional_terms_display').innerText = data.additional_terms || '';
                 // Signatures (clear for new contract)
-                document.getElementById('contractor_name_signed_display').innerText = data.supplier?.company_name || '';
-                document.getElementById('client_name_signed_display').innerText = data.contract?.client?.name || '';
+                document.getElementById('contractor_name_signed_display').innerText = '';
+                document.getElementById('client_name_signed_display').innerText = data.client?.name || '';
                 document.getElementById('contractor_date_signed_display').innerText = '';
                 document.getElementById('client_date_signed_display').innerText = '';
                 // Hidden fields for backend
-                document.getElementById('contractor_name').value = data.supplier?.company_name || '';
-                document.getElementById('contractor_street').value = data.supplier?.address || '';
-                document.getElementById('contractor_city').value = data.supplier?.city || '';
-                document.getElementById('contractor_state').value = data.supplier?.state || '';
-                document.getElementById('contractor_postal').value = data.supplier?.postal || '';
-                document.getElementById('contractor_email').value = data.supplier?.email || '';
-                document.getElementById('contractor_phone').value = data.supplier?.phone || '';
-                document.getElementById('client_name').value = data.contract?.client?.name || '';
-                document.getElementById('client_street').value = data.contract?.client?.street || '';
-                document.getElementById('client_city').value = data.contract?.client?.city || '';
-                document.getElementById('client_state').value = data.contract?.client?.state || '';
-                document.getElementById('client_postal').value = data.contract?.client?.postal || '';
-                document.getElementById('client_email').value = data.contract?.client?.email || '';
-                document.getElementById('client_phone').value = data.contract?.client?.phone || '';
-                document.getElementById('property_street').value = data.contract?.property?.street || '';
-                document.getElementById('property_city').value = data.contract?.property?.city || '';
-                document.getElementById('property_state').value = data.contract?.property?.state || '';
-                document.getElementById('property_postal').value = data.contract?.property?.postal || '';
-                document.getElementById('scope_of_work').value = data.contract?.scope_of_work || '';
-                document.getElementById('scope_description').value = data.contract?.scope_description || '';
-                document.getElementById('payment_terms').value = data.payment_terms || data.contract?.payment_terms || '';
-                document.getElementById('warranty_terms').value = data.contract?.warranty_terms || '';
-                document.getElementById('cancellation_terms').value = data.contract?.cancellation_terms || '';
-                document.getElementById('additional_terms').value = data.contract?.additional_terms || '';
+                document.getElementById('client_name').value = data.client?.name || '';
+                document.getElementById('client_street').value = data.client?.street || '';
+                document.getElementById('client_city').value = data.client?.city || '';
+                document.getElementById('client_state').value = data.client?.state || '';
+                document.getElementById('client_postal').value = data.client?.postal || '';
+                document.getElementById('client_email').value = data.client?.email || '';
+                document.getElementById('client_phone').value = data.client?.phone || '';
+                document.getElementById('property_street').value = data.property?.street || '';
+                document.getElementById('property_city').value = data.property?.city || '';
+                document.getElementById('property_state').value = data.property?.state || '';
+                document.getElementById('property_postal').value = data.property?.postal || '';
+                document.getElementById('scope_of_work').value = data.scope_of_work || '';
+                document.getElementById('scope_description').value = data.scope_description || '';
+                document.getElementById('payment_terms').value = data.payment_terms || '';
+                document.getElementById('warranty_terms').value = data.warranty_terms || '';
+                document.getElementById('cancellation_terms').value = data.cancellation_terms || '';
+                document.getElementById('additional_terms').value = data.additional_terms || '';
                 document.getElementById('materials_total').value = total.toFixed(2);
                 document.getElementById('labor_fee').value = labor.toFixed(2);
+                // Clear timeline fields
+                document.getElementById('project_start_date').value = '';
+                document.getElementById('project_end_date').value = '';
+                document.getElementById('timeline_start_display').innerText = '';
+                document.getElementById('timeline_end_display').innerText = '';
+                saveBtn.disabled = false;
             });
+    });
+    // --- End Quotation Request Autofill ---
+
+    // Project Timeline logic
+    function updateTimeline() {
+      const start = document.getElementById('project_start_date').value;
+      const end = document.getElementById('project_end_date').value;
+      document.getElementById('timeline_start_display').innerText = start;
+      document.getElementById('timeline_end_display').innerText = end;
+      // Only enable save if both dates are filled
+      const saveBtn = document.getElementById('save-btn');
+      if (start && end) {
+        saveBtn.disabled = false;
+      } else {
+        saveBtn.disabled = true;
+      }
     }
-    // --- End PO Autocomplete ---
+    document.getElementById('project_start_date').addEventListener('change', updateTimeline);
+    document.getElementById('project_end_date').addEventListener('change', updateTimeline);
 
     // Constructor autofill logic
     const constructorSelect = document.getElementById('constructor_id');

@@ -142,13 +142,29 @@ class MaterialRequestController extends Controller
                             'unit' => $unit,
                             'fulfilled_quantity' => 0,
                         ]);
+                        // Fetch supplier and price from material_quotation
+                        $preferredSupplierId = null;
+                        $estimatedUnitPrice = $material->base_price;
+                        $quotationRequest = $materialRequest->quotationRequest;
+                        if ($quotationRequest) {
+                            $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with(['materials'])->get();
+                            foreach ($rfqs as $rfq) {
+                                $mat = $rfq->materials->firstWhere('id', $material->id);
+                                if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id) {
+                                    $preferredSupplierId = $mat->pivot->selected_supplier_id;
+                                    $estimatedUnitPrice = $mat->pivot->unit_price ?? $estimatedUnitPrice;
+                                    break;
+                                }
+                            }
+                        }
                         $purchaseRequestItems[] = [
                             'material_id' => $material->id,
                             'description' => $material->name,
                             'quantity' => $remainingQty,
                             'unit' => $unit,
-                            'estimated_unit_price' => $material->base_price,
-                            'total_amount' => $remainingQty * $material->base_price,
+                            'preferred_supplier_id' => $preferredSupplierId,
+                            'estimated_unit_price' => $estimatedUnitPrice,
+                            'total_amount' => $remainingQty * $estimatedUnitPrice,
                         ];
                     }
                 }
@@ -181,5 +197,12 @@ class MaterialRequestController extends Controller
             Log::error('Error creating material request: ' . $e->getMessage());
             return back()->with('error', 'There was an error creating the material request. Please try again.');
         }
+    }
+
+    public function show($id)
+    {
+        $materialRequest = \App\Models\MaterialRequest::with(['items.material', 'user'])->findOrFail($id);
+        $purchaseRequest = \App\Models\PurchaseRequest::where('material_request_id', $materialRequest->id)->first();
+        return view('admin.material-requests.show', compact('materialRequest', 'purchaseRequest'));
     }
 }

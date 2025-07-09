@@ -13,6 +13,9 @@ class MaterialRequestItem extends Model
         'material_request_id',
         'material_id',
         'quantity',
+        'unit',
+        'warehouse_id',
+        'fulfilled_quantity',
         'status',
     ];
 
@@ -24,5 +27,10 @@ class MaterialRequestItem extends Model
     public function material()
     {
         return $this->belongsTo(Material::class);
+    }
+
+    public function warehouse()
+    {
+        return $this->belongsTo(\App\Models\Warehouse::class);
     }
 } 

@@ -81,7 +81,8 @@ class ContractController extends Controller
     public function create()
     {
         $contractors = Employee::where('role', 'contractor')->get();
-        return view('admin.contracts.create', compact('contractors'));
+        $quotationRequests = \App\Models\QuotationRequest::with('user')->orderByDesc('created_at')->get();
+        return view('admin.contracts.create', compact('contractors', 'quotationRequests'));
     }
 
     public function step1()

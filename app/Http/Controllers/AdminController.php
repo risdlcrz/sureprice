@@ -451,4 +451,60 @@ public function recommendSuppliers(Request $request, $id)
 
     return response()->json(['recommendations' => $recommendations]);
 }
+
+    /**
+     * Return a finalized quotation request and its related data as JSON for contract autofill.
+     */
+    public function quotationRequestJson($id)
+    {
+        $quotationRequest = \App\Models\QuotationRequest::with(['user', 'rooms.scopes.scopeType.materials'])->findOrFail($id);
+        // Gather property info (if any)
+        $property = [
+            'address' => $quotationRequest->property->address ?? '',
+            'street' => $quotationRequest->property->street ?? '',
+            'city' => $quotationRequest->property->city ?? '',
+            'state' => $quotationRequest->property->state ?? '',
+            'postal' => $quotationRequest->property->postal ?? '',
+        ];
+        // Gather all items (materials, quantities, prices, units)
+        $items = [];
+        foreach ($quotationRequest->rooms as $room) {
+            foreach ($room->scopes as $scope) {
+                if ($scope->scopeType && $scope->scopeType->materials) {
+                    foreach ($scope->scopeType->materials as $material) {
+                        $items[] = [
+                            'material' => [
+                                'id' => $material->id,
+                                'name' => $material->name,
+                            ],
+                            'quantity' => $material->pivot->quantity ?? 1,
+                            'unit' => $material->unit ?? 'pcs',
+                            'unit_price' => $material->pivot->unit_price ?? 0,
+                            'amount' => ($material->pivot->quantity ?? 1) * ($material->pivot->unit_price ?? 0),
+                        ];
+                    }
+                }
+            }
+        }
+        return response()->json([
+            'client' => [
+                'name' => $quotationRequest->user->name ?? '',
+                'address' => $quotationRequest->user->address ?? '',
+                'street' => $quotationRequest->user->street ?? '',
+                'city' => $quotationRequest->user->city ?? '',
+                'state' => $quotationRequest->user->state ?? '',
+                'postal' => $quotationRequest->user->postal ?? '',
+                'email' => $quotationRequest->user->email ?? '',
+                'phone' => $quotationRequest->user->phone ?? '',
+            ],
+            'property' => $property,
+            'items' => $items,
+            'scope_of_work' => '',
+            'scope_description' => '',
+            'payment_terms' => '',
+            'warranty_terms' => '',
+            'cancellation_terms' => '',
+            'additional_terms' => '',
+        ]);
+    }
 }

@@ -348,6 +348,7 @@ Route::middleware(['auth', AdminMiddleware::class])->group(function () {
     Route::post('/admin/quotation-requests/{id}/send-rfq', [App\Http\Controllers\AdminController::class, 'sendRfqToSuppliers'])->name('admin.quotation.send-rfq');
     Route::post('/admin/quotation-requests/{id}/finalize', [App\Http\Controllers\AdminController::class, 'finalizeQuotationSelection'])->name('admin.quotation.finalize');
     Route::get('/admin/quotation-requests/{id}/recommend-suppliers', [App\Http\Controllers\AdminController::class, 'recommendSuppliers'])->name('admin.quotation.recommend-suppliers');
+    Route::get('/admin/quotation-requests/{id}/json', [App\Http\Controllers\AdminController::class, 'quotationRequestJson'])->name('admin.quotation-request.json');
 });
 // Supplier Evaluation Routes
 Route::get('/admin/suppliers/{supplier}/latest-evaluation', [SupplierRankingController::class, 'getLatestEvaluation'])
@@ -477,3 +478,6 @@ Route::post('/purchase-orders/request-approval', [\App\Http\Controllers\Purchase
 Route::middleware(['auth', 'role:finance'])->group(function () {
     Route::get('/finance/dashboard', [\App\Http\Controllers\FinanceDashboardController::class, 'index'])->name('finance.dashboard');
 });
+
+// API endpoint for fetching a single quotation request by ID
+Route::get('/api/quotation-requests/{id}', [App\Http\Controllers\QuotationRequestController::class, 'showJson']);

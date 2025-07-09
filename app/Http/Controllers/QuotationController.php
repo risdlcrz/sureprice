@@ -448,4 +448,65 @@ class QuotationController extends Controller
         $attachment = QuotationResponseAttachment::findOrFail($id);
         return Storage::download($attachment->path, $attachment->file_name);
     }
+
+    public function showJson($id)
+    {
+        $qr = \App\Models\QuotationRequest::with(['user', 'rooms.scopes'])->findOrFail($id);
+
+        // Build client address (customize as needed)
+        $client = $qr->user;
+        $clientAddress = trim("{$client->street} {$client->barangay} {$client->city} {$client->state} {$client->postal}");
+
+        // Gather items and compute totals
+        $items = [];
+        $totalMaterialCost = 0;
+        foreach ($qr->rooms as $room) {
+            foreach ($room->scopes as $scope) {
+                if (is_array($scope->selected_materials)) {
+                    foreach ($scope->selected_materials as $mat) {
+                        $material = \App\Models\Material::find($mat['material_id']);
+                        $unitPrice = $material ? $material->price : 0;
+                        $qty = $mat['quantity'];
+                        $amount = $unitPrice * $qty;
+                        $items[] = [
+                            'material' => [
+                                'name' => $material ? $material->name : 'Unknown',
+                            ],
+                            'quantity' => $qty,
+                            'unit_price' => $unitPrice,
+                            'amount' => $amount,
+                        ];
+                        $totalMaterialCost += $amount;
+                    }
+                }
+            }
+        }
+        $laborCost = $totalMaterialCost * 0.15;
+        $grandTotal = $totalMaterialCost + $laborCost;
+
+        return response()->json([
+            'client' => [
+                'name' => $client->name,
+                'address' => $clientAddress,
+                'street' => $client->street,
+                'city' => $client->city,
+                'state' => $client->state,
+                'postal' => $client->postal,
+                'email' => $client->email,
+                'phone' => $client->phone,
+            ],
+            'property' => [
+                'address' => $qr->property_address ?? '', // Adjust as needed
+                'street' => $qr->property_street ?? '',
+                'city' => $qr->property_city ?? '',
+                'state' => $qr->property_state ?? '',
+                'postal' => $qr->property_postal ?? '',
+            ],
+            'items' => $items,
+            'total_material_cost' => $totalMaterialCost,
+            'labor_cost' => $laborCost,
+            'grand_total' => $grandTotal,
+            // Add more fields as needed
+        ]);
+    }
 } 

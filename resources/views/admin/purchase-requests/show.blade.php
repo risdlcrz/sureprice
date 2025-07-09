@@ -1,6 +1,40 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+    .card, .table {
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .card-header {
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        border-radius: 12px 12px 0 0;
+    }
+    .table th, .table td {
+        vertical-align: middle;
+        font-size: 1rem;
+    }
+    .table th {
+        background: #f1f5f9;
+        color: #222;
+    }
+    .badge {
+        font-size: 1em;
+        padding: 0.5em 1em;
+        border-radius: 8px;
+    }
+    .btn-primary {
+        background: #1d4ed8;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5em 1.5em;
+        font-weight: 600;
+    }
+    .btn-primary:hover {
+        background: #2563eb;
+    }
+</style>
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -64,6 +98,26 @@
                                     <th>Requested By</th>
                                     <td>{{ $purchaseRequest->requestedBy?->name ?? 'N/A' }}</td>
                                 </tr>
+                                @if($purchaseRequest->materialRequest)
+                                <tr>
+                                    <th>Originating Material Request</th>
+                                    <td>
+                                        <a href="{{ route('material-requests.show', $purchaseRequest->materialRequest) }}">
+                                            {{ $purchaseRequest->materialRequest->request_number ?? $purchaseRequest->material_request_id }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                @if($purchaseRequest->materialRequest->quotationRequest)
+                                <tr>
+                                    <th>Originating Quotation Request</th>
+                                    <td>
+                                        <a href="{{ route('admin.quotation.review', $purchaseRequest->materialRequest->quotationRequest->id) }}">
+                                            {{ $purchaseRequest->materialRequest->quotationRequest->request_number }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                @endif
+                                @endif
                                 <tr>
                                     <th>Created Date</th>
                                     <td>{{ $purchaseRequest->created_at->format('M d, Y H:i') }}</td>
@@ -110,9 +164,8 @@
                                         <th>Unit</th>
                                         <th>Estimated Unit Price</th>
                                         <th>Total Amount</th>
-                                            <th>Preferred Brand</th>
-                                            <th>Preferred Supplier</th>
-                                            <th>Notes</th>
+                                        <th>Preferred Supplier</th>
+                                        <th>Notes</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -125,12 +178,33 @@
                                                 <td>{{ $item->unit }}</td>
                                                     <td class="text-right">{{ $item->estimated_unit_price ? number_format($item->estimated_unit_price, 2) : 'N/A' }}</td>
                                                     <td class="text-right">{{ $item->total_amount ? number_format($item->total_amount, 2) : 'N/A' }}</td>
-                                                    <td>{{ $item->preferred_brand ?? 'N/A' }}</td>
                                                     <td>
-                                                        @if($item->preferredSupplier)
-                                                            {{ $item->preferredSupplier->company_name }}
+                                                        @php
+                                                            $selectedSupplier = null;
+                                                            $selectedSupplierPrice = null;
+                                                            if ($purchaseRequest->materialRequest && $purchaseRequest->materialRequest->quotationRequest) {
+                                                                $quotationRequest = $purchaseRequest->materialRequest->quotationRequest;
+                                                                $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with(['materials'])->get();
+                                                                foreach ($rfqs as $rfq) {
+                                                                    $material = $rfq->materials->firstWhere('id', $item->material_id);
+                                                                    if ($material && $material->pivot && $material->pivot->selected_supplier_id) {
+                                                                        $supplier = \App\Models\Supplier::find($material->pivot->selected_supplier_id);
+                                                                        $unitPrice = $material->pivot->unit_price ?? null;
+                                                                        if (!$selectedSupplier || ($unitPrice !== null && ($selectedSupplierPrice === null || $unitPrice < $selectedSupplierPrice))) {
+                                                                            $selectedSupplier = $supplier;
+                                                                            $selectedSupplierPrice = $unitPrice;
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        @endphp
+                                                        @if($selectedSupplier)
+                                                            {{ $selectedSupplier->company_name }}
+                                                            @if($selectedSupplierPrice)
+                                                                <span class="text-muted">(₱{{ number_format($selectedSupplierPrice, 2) }})</span>
+                                                            @endif
                                                         @else
-                                                            N/A
+                                                            <span class="text-danger">No supplier selected by client</span>
                                                         @endif
                                                     </td>
                                                     <td>{{ $item->notes ?? 'N/A' }}</td>

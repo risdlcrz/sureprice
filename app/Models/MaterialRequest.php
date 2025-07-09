@@ -28,6 +28,11 @@ class MaterialRequest extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function requestedBy()
+    {
+        return $this->belongsTo(User::class, 'requested_by');
+    }
+
     public function items()
     {
         return $this->hasMany(\App\Models\MaterialRequestItem::class);
