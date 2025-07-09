@@ -32,6 +32,8 @@ class DatabaseSeeder extends Seeder
         SupplierEvaluationSeeder::class,
         MaterialPriceHistorySeeder::class,
         TransactionSeeder::class,
+        CustomClientSeeder::class,
+        CustomSupplierSeeder::class,
     ]);
 }
 }
