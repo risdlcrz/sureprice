@@ -76,21 +76,21 @@
         <a href="{{ route('information-management.index') }}" class="btn">
             <i class="fas fa-folder-open"></i>Information Management
         </a>
-        {{-- <a href="{{ route('admin.suppliers.pending-updates') }}" class="btn">
-            <i class="fas fa-user-clock"></i>Supplier Profile Updates
-        </a> --}}
-        @endif
         <a href="{{ route('admin.notification') }}" class="btn">
             <i class="fas fa-bell"></i>Notification Hub
         </a>
+        <a href="{{ route('admin.analytics') }}" class="btn">
+            <i class="fas fa-chart-bar"></i>Analytics
+        </a>
+        <a href="{{ route('messages.index') }}" class="btn">
+            <i class="fas fa-comments"></i>Messages
+        </a>
+        @else
         <a href="{{ route('admin.project') }}" class="btn">
             <i class="fas fa-tasks"></i>Project & Procurement
         </a>
         <a href="{{ route('history.dashboard') }}" class="btn">
             <i class="fas fa-history"></i>Project History
-        </a>
-        <a href="{{ route('admin.analytics') }}" class="btn">
-            <i class="fas fa-chart-bar"></i>Analytics
         </a>
         <a href="{{ route('inventory.index') }}" class="btn">
             <i class="fas fa-boxes"></i>Inventory
@@ -104,6 +104,7 @@
         <a href="{{ route('messages.index') }}" class="btn">
             <i class="fas fa-comments"></i>Messages
         </a>
+        @endif
     @endif
 </div>
 
