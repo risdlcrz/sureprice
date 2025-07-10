@@ -263,6 +263,7 @@ Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefi
         Route::get('/suppliers', [\App\Http\Controllers\ClientQuotationController::class, 'suppliers'])->name('suppliers');
         Route::get('/recommend-suppliers', [\App\Http\Controllers\ClientQuotationController::class, 'recommendSuppliers'])->name('recommend-suppliers');
         Route::post('/submit', [\App\Http\Controllers\ClientQuotationController::class, 'submit'])->name('submit');
+        Route::post('/save-supplier-selection', [\App\Http\Controllers\ClientQuotationController::class, 'saveSupplierSelection'])->name('saveSupplierSelection');
     });
     Route::get('/quotation', [\App\Http\Controllers\ClientQuotationController::class, 'index'])->name('quotation.index');
     Route::get('/quotation/create', [\App\Http\Controllers\ClientQuotationController::class, 'create'])->name('quotation.create');

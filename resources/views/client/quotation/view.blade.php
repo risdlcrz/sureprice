@@ -10,8 +10,8 @@ body {
     min-height: 100vh;
 }
 .quotation-card {
-    max-width: 950px;
-    margin: 48px auto 32px auto;
+    max-width: 1600px;
+    margin: 40px auto 32px auto;
     border-radius: 22px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.13);
     background: #fff;
@@ -161,6 +161,11 @@ body {
     width: 100%;
     min-width: unset;
 }
+.quotation-card .table, .quotation-card .table-responsive {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+}
 @media (max-width: 991.98px) {
     .quotation-card {
         padding: 10px 2px 10px 2px;
@@ -187,25 +192,30 @@ body {
         <div class="col-12">
             <div class="card shadow-sm quotation-card">
                 <div class="card-body">
+                    <!-- Top Title Row -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h1 class="fw-bold mb-2" style="font-size:2rem; color:#2563eb;">Quotation Request Details</h1>
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="fs-6 fw-semibold">Request Number: <span class="badge bg-primary fs-6">{{ $quotationRequest->request_number }}</span></span>
+                                <span class="fs-6 fw-semibold">Status: <span class="badge bg-{{ $quotationRequest->status_color }} fs-6">{{ $quotationRequest->status_label }}</span></span>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 justify-content-end">
+                            <a href="{{ route('client.quotation.create') }}" class="btn btn-primary btn-sm">Request Another Quotation</a>
+                            <a href="{{ route('client.quotation.index') }}" class="btn btn-success btn-sm">View All Requests</a>
+                            <a href="{{ url('/') }}" class="btn btn-secondary btn-sm">Back to Home</a>
+                        </div>
+                    </div>
                     @if(session('success'))
                         <div class="alert alert-success">{{ session('success') }}</div>
                     @endif
-                    <h2 class="mb-4 text-success text-center">Quotation Request Submitted!</h2>
-                    <p class="lead text-center">Thank you for your request. Our team will review your details and contact you soon.</p>
-                    
-                    @if($quotationRequest)
-                        <div class="text-center mb-4">
-                            <h5>Request Number: <span class="badge bg-primary">{{ $quotationRequest->request_number }}</span></h5>
-                            <p class="text-muted">Status: <span class="badge bg-{{ $quotationRequest->status_color }}">{{ $quotationRequest->status_label }}</span></p>
-                        </div>
-                    @endif
-                    
                     <hr>
-                    <h4 class="mb-3 text-center">Quotation Request Details</h4>
+                    <h3 class="mb-3 fw-bold" style="font-size:1.5rem;">Quotation Request Details</h3>
                     
                     @if($quotationRequest && $quotationRequest->rooms->count() > 0)
                         <div class="table-responsive">
-                            <table class="table table-bordered table-striped w-100" style="width: 100%; min-width: unset; table-layout: auto;">
+                            <table class="table table-bordered table-striped w-100">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Room</th>
@@ -265,8 +275,8 @@ body {
                             </table>
                         </div>
                     @elseif($sessionData)
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped w-100" style="min-width: 700px;">
+                        <div class="table-responsive" style="min-width: 1200px; width: 100%;">
+                            <table class="table table-bordered table-striped w-100" style="width: 100%; min-width: 1200px; table-layout: fixed;">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Room</th>
@@ -312,11 +322,11 @@ body {
                     @endif
 
                     <hr>
-                    <h4 class="mb-3 text-center">Supplier Offers & Selection</h4>
-                    <form method="POST" action="{{ route('client.quotation.finalize', ['id' => $quotationRequest->id]) }}" id="client-finalize-form">
+                    <h3 class="mb-3 fw-bold" style="font-size:1.5rem;">Supplier Offers & Selection</h3>
+                    <form method="POST" action="{{ route('client.quotation.finalize', ['id' => $quotationRequest->id]) }}" id="client-finalize-form-table">
                         @csrf
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-bold">Choose your preferred supplier for each material below:</span>
+                            <span class="fw-bold fs-5">Choose your preferred supplier for each material below:</span>
                             <button type="button" class="btn btn-primary" id="clientRecommendAllBtn">Recommend for All</button>
                         </div>
                         <div class="row mt-4">
@@ -359,9 +369,32 @@ body {
                                                             @if(count($offers) > 0)
                                                                 <select name="selected_suppliers[{{ $materialId }}]" class="form-select supplier-select" data-material-id="{{ $materialId }}">
                                                                     <option value="">Select Supplier</option>
+                                                                    @php
+                                                                        // Ensure only one supplier per badge per material
+                                                                        $badgeWinners = [];
+                                                                        foreach ($offers as $offer) {
+                                                                            if (!empty($offer['badges'])) {
+                                                                                foreach ($offer['badges'] as $badge) {
+                                                                                    if (!isset($badgeWinners[$badge])) {
+                                                                                        $badgeWinners[$badge] = $offer['supplier_id'];
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    @endphp
                                                                     @foreach($offers as $offer)
+                                                                        @php
+                                                                            $uniqueBadges = [];
+                                                                            if (!empty($offer['badges'])) {
+                                                                                foreach ($offer['badges'] as $badge) {
+                                                                                    if (isset($badgeWinners[$badge]) && $badgeWinners[$badge] == $offer['supplier_id']) {
+                                                                                        $uniqueBadges[] = $badge;
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        @endphp
                                                                         <option value="{{ $offer['supplier_id'] }}"
-                                                                            data-badges='@json($offer["badges"] ?? [])'
+                                                                            data-badges='@json($uniqueBadges)'
                                                                             data-supplier="{{ $offer['supplier_name'] ?? 'Unknown' }}"
                                                                             data-price="{{ isset($offer['unit_price']) ? number_format($offer['unit_price'], 2) : '0.00' }}"
                                                                             @if(isset($selectedSuppliers[$materialId]) && $selectedSuppliers[$materialId] == $offer['supplier_id']) selected @endif>
@@ -383,20 +416,7 @@ body {
                                 @endif
                             </div>
                         </div>
-                        <div class="mt-3 text-end">
-                            <button type="submit" class="btn btn-success btn-lg">Submit Final Selection</button>
-                        </div>
                     </form>
-                    <div class="d-flex justify-content-center gap-3 mt-4">
-                        <form method="POST" action="{{ route('client.quotation.cancel', ['id' => $quotationRequest->id]) }}" onsubmit="return confirm('Are you sure you want to cancel this quotation?');">
-                            @csrf
-                            <button type="submit" class="btn btn-danger btn-lg">Cancel Quotation</button>
-                        </form>
-                        <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}">
-                            @csrf
-                            <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
-                        </form>
-                    </div>
                     <!-- Recommend Modal for Client -->
                     <div class="modal fade" id="clientRecommendModal" tabindex="-1" aria-labelledby="clientRecommendModalLabel" aria-hidden="true">
                         <div class="modal-dialog">
@@ -422,10 +442,29 @@ body {
                         </div>
                     </div>
 
-                    <div class="text-center mt-4">
-                        <a href="{{ route('client.quotation.create') }}" class="btn btn-primary me-2">Request Another Quotation</a>
-                        <a href="{{ route('client.quotation.index') }}" class="btn btn-success me-2">View All Requests</a>
-                        <a href="{{ url('/') }}" class="btn btn-secondary">Back to Home</a>
+                    <!-- Main action buttons below the table -->
+                    @php
+                        $allSuppliersSelected = true;
+                        if(isset($materialSupplierResponses)) {
+                            foreach($materialSupplierResponses as $materialId => $offers) {
+                                if(empty($selectedSuppliers[$materialId])) {
+                                    $allSuppliersSelected = false;
+                                    break;
+                                }
+                            }
+                        }
+                    @endphp
+                    <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+                        @if($allSuppliersSelected)
+                        <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
+                        </form>
+                        @endif
+                        <form method="POST" action="{{ route('client.quotation.cancel', ['id' => $quotationRequest->id]) }}" onsubmit="return confirm('Are you sure you want to cancel this quotation?');" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-danger btn-lg">Cancel Quotation</button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -500,6 +539,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 recommendModal.hide();
             });
+    });
+});
+// Save supplier selection via AJAX on change
+$(document).on('change', '.supplier-select', function() {
+    var materialId = $(this).data('material-id');
+    var supplierId = $(this).val();
+    $.ajax({
+        url: '{{ route('client.quotation.saveSupplierSelection') }}',
+        method: 'POST',
+        data: {
+            _token: '{{ csrf_token() }}',
+            quotation_request_id: '{{ $quotationRequest->id }}',
+            material_id: materialId,
+            supplier_id: supplierId
+        },
+        success: function(response) {
+            // Optionally show a toast or feedback
+        }
     });
 });
 </script>

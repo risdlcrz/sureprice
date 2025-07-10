@@ -499,6 +499,22 @@ class ClientQuotationController extends Controller
             ->with('success', 'Your supplier selections have been saved!');
     }
 
+    public function saveSupplierSelection(Request $request)
+    {
+        $request->validate([
+            'quotation_request_id' => 'required|integer|exists:quotation_requests,id',
+            'material_id' => 'required|integer',
+            'supplier_id' => 'nullable|integer',
+        ]);
+        $quotationRequest = \App\Models\QuotationRequest::findOrFail($request->quotation_request_id);
+        // Save or update the selected supplier for this material
+        $selected = $quotationRequest->selected_suppliers ?? [];
+        $selected[$request->material_id] = $request->supplier_id;
+        $quotationRequest->selected_suppliers = $selected;
+        $quotationRequest->save();
+        return response()->json(['success' => true]);
+    }
+
     /**
      * API: Get Quotation Request details for contract editor
      */
