@@ -371,6 +371,7 @@ Route::prefix('search')->group(function () {
     Route::get('suppliers', [SearchController::class, 'suppliers'])->name('search.suppliers');
     Route::get('scope-types', [SearchController::class, 'scopeTypes'])->name('search.scope-types');
     Route::get('contracts', [SearchController::class, 'contracts'])->name('search.contracts');
+    Route::get('quotation-requests', [SearchController::class, 'quotationRequests'])->name('search.quotation-requests'); // <-- Added
 });
 // API Routes for Warranty Requests
 Route::post('/api/warranty-requests', [WarrantyRequestController::class, 'store'])->middleware('auth');
@@ -488,6 +489,10 @@ Route::get('/api/quotation-requests/{id}', [App\Http\Controllers\QuotationReques
 // Manager dashboard and routes
 Route::middleware(['auth', 'role:manager'])->prefix('manager')->name('manager.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Manager\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/notification-center', [\App\Http\Controllers\Manager\DashboardController::class, 'notificationCenter'])->name('notification');
+    Route::get('/quotations', [\App\Http\Controllers\Manager\DashboardController::class, 'quotationsPage'])->name('quotations');
+    Route::get('/quotation-requests/{id}/view', [\App\Http\Controllers\Manager\DashboardController::class, 'showClientQuotationRequest'])->name('quotation-requests.view');
+    Route::post('/quotation-requests/{id}/send-to-suppliers', [\App\Http\Controllers\Manager\DashboardController::class, 'sendQuotationRequestToSuppliers'])->name('quotation-requests.send-to-suppliers');
     // Add more manager routes here
 });
 

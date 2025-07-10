@@ -73,6 +73,12 @@
             <a href="{{ route('manager.dashboard') }}" class="btn">
                 <i class="fas fa-home"></i>Dashboard
             </a>
+            <a href="{{ route('manager.notification') }}" class="btn position-relative">
+                <i class="fas fa-bell"></i>Notification Center
+                @if(isset($unreadCount) && $unreadCount > 0)
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $unreadCount }}</span>
+                @endif
+            </a>
         @else
             <a href="{{ route('admin.dbadmin') }}" class="btn">
                 <i class="fas fa-home"></i>Dashboard
@@ -113,11 +119,11 @@
 
 <div class="sidebar-bottom">
     <hr class="separator">
-    <form method="POST" action="{{ route('logout') }}">
+    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="btn">
+        <i class="fas fa-sign-out-alt"></i>Logout
+    </a>
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
         @csrf
-        <button type="submit" class="btn">
-            <i class="fas fa-sign-out-alt"></i>Logout
-        </button>
     </form>
 </div>
 

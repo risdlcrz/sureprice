@@ -70,13 +70,15 @@ class QuotationController extends Controller
             $perPage = 10;
         }
 
-        $quotations = $query->latest()->paginate($perPage)->appends($request->all());
+        $supplierQuotations = $query->latest()->paginate($perPage)->appends($request->all());
 
         $purchaseRequests = PurchaseRequest::where('status', 'approved')
             ->orderBy('id')
             ->get();
 
-        return view('admin.quotations.index', compact('quotations', 'purchaseRequests'));
+        $quotationRequests = \App\Models\QuotationRequest::with('user')->latest()->get();
+
+        return view('admin.quotations.index', compact('quotationRequests', 'supplierQuotations', 'purchaseRequests'));
     }
 
     public function create()

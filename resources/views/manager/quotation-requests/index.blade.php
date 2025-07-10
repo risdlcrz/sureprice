@@ -5,27 +5,26 @@
         <div class="card-header pb-0">
             <ul class="nav nav-tabs card-header-tabs">
                 <li class="nav-item">
-                    <a class="nav-link @if(request('tab', 'client') === 'client') active @endif" href="?tab=client">Client Quotation Requests</a>
+                    <a class="nav-link @if($activeTab === 'client') active @endif" href="?tab=client">Client Quotation Requests</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @if(request('tab') === 'supplier') active @endif" href="?tab=supplier">Supplier Quotations Sent</a>
+                    <a class="nav-link @if($activeTab === 'supplier') active @endif" href="?tab=supplier">Supplier Quotations Sent</a>
                 </li>
             </ul>
-                </div>
-                <div class="card-body">
-            @php $activeTab = request('tab', 'client'); @endphp
+        </div>
+        <div class="card-body">
             @if($activeTab === 'client')
                 <h5>All Client Quotation Requests</h5>
                 <table class="table table-bordered table-hover">
-                            <thead>
-                                <tr>
+                    <thead>
+                        <tr>
                             <th>Request #</th>
                             <th>Client</th>
-                                    <th>Status</th>
+                            <th>Status</th>
                             <th>Created At</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         @forelse($quotationRequests as $qr)
                             <tr>
@@ -40,7 +39,7 @@
                         @endforelse
                     </tbody>
                 </table>
-                                                @else
+            @else
                 <h5>All Supplier Quotations Sent</h5>
                 <table class="table table-bordered table-hover">
                     <thead>
@@ -64,14 +63,14 @@
                                     @foreach($q->suppliers as $supplier)
                                         <span class="badge bg-info text-dark">{{ $supplier->company_name }}</span>
                                     @endforeach
-                                    </td>
+                                </td>
                                 <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                </tr>
+                            </tr>
                         @empty
                             <tr><td colspan="6">No supplier quotations found.</td></tr>
                         @endforelse
-                            </tbody>
-                        </table>
+                    </tbody>
+                </table>
             @endif
         </div>
     </div>

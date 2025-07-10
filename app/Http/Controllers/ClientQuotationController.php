@@ -162,6 +162,22 @@ class ClientQuotationController extends Controller
                 'for_role' => 'admin',
             ]);
         }
+        // Notify all managers
+        $managers = User::role('manager')->get();
+        foreach ($managers as $manager) {
+            \App\Models\Notification::create([
+                'user_id' => $manager->id,
+                'type' => 'client_quotation_submitted',
+                'notifiable_type' => \App\Models\QuotationRequest::class,
+                'notifiable_id' => $quotationRequest->id,
+                'data' => [
+                    'title' => 'New Client Quotation Submitted',
+                    'message' => 'A new client quotation request (Request #' . $quotationRequest->request_number . ') has been submitted and needs review.',
+                    'link' => route('manager.dashboard'), // Update this if you have a manager-specific review page
+                ],
+                'for_role' => 'manager',
+            ]);
+        }
 
         Session::put('client_quotation_data', $validated);
         Session::put('quotation_request_id', $quotationRequest->id);

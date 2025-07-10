@@ -173,4 +173,37 @@ class SearchController extends Controller
 
         return $query->paginate(10);
     }
+
+    public function quotationRequests(Request $request)
+    {
+        $search = $request->input('q', '');
+        $query = \App\Models\QuotationRequest::with(['user.company'])
+            ->whereHas('user', function($q) {
+                $q->where('user_type', 'client');
+            });
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('request_number', 'like', "%{$search}%")
+                  ->orWhereHas('user', function($q2) use ($search) {
+                      $q2->where('name', 'like', "%{$search}%")
+                         ->orWhereHas('company', function($q3) use ($search) {
+                             $q3->where('company_name', 'like', "%{$search}%");
+                         });
+                  });
+            });
+        }
+
+        $results = $query->orderByDesc('created_at')->paginate(10);
+        $data = $results->map(function($qr) {
+            $clientName = $qr->user->company->company_name ?? $qr->user->name ?? '';
+            return [
+                'id' => $qr->id,
+                'request_number' => $qr->request_number,
+                'client_name' => $clientName,
+                'created_at' => $qr->created_at->format('Y-m-d H:i'),
+            ];
+        });
+        return response()->json(['data' => $data]);
+    }
 } 

@@ -277,17 +277,48 @@
 <script>
 let contractorPad, clientPad;
 document.addEventListener('DOMContentLoaded', function() {
-    // Make the quotation request dropdown searchable
+    // --- Improved AJAX Quotation Request Dropdown ---
     $('#quotation_request_id').select2({
         width: '100%',
         placeholder: 'Select Quotation Request',
-        allowClear: true
+        allowClear: true,
+        minimumInputLength: 1,
+        ajax: {
+            url: '/sureprice/public/search/quotation-requests',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return { q: params.term };
+            },
+            processResults: function(data) {
+                return {
+                    results: data.data.map(function(item) {
+                        return {
+                            id: item.id,
+                            text: `QR-${item.request_number} - ${item.client_name} (${item.created_at})`,
+                            request_number: item.request_number,
+                            client_name: item.client_name,
+                            created_at: item.created_at
+                        };
+                    })
+                };
+            },
+            cache: true
+        },
+        templateResult: function(item) {
+            if (!item.id) return item.text;
+            return `<strong>QR-${item.request_number}</strong> - ${item.client_name} <span class='text-muted'>(${item.created_at})</span>`;
+        },
+        templateSelection: function(item) {
+            return item.text || '';
+        },
+        escapeMarkup: function(m) { return m; }
     });
     // --- Quotation Request Autofill ---
     const qrSelect = document.getElementById('quotation_request_id');
     const saveBtn = document.getElementById('save-btn');
-    qrSelect.addEventListener('change', function() {
-        const qrId = this.value;
+    $('#quotation_request_id').on('select2:select', function(e) {
+        const qrId = e.params.data.id;
         if (!qrId) return;
         fetch(`/sureprice/public/api/quotation-requests/${qrId}`)
             .then(res => res.json())
