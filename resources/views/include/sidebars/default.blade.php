@@ -69,9 +69,15 @@
             <i class="fas fa-comments"></i>Messages
         </a>
     @else
-        <a href="{{ route('admin.dbadmin') }}" class="btn">
-            <i class="fas fa-home"></i>Dashboard
-        </a>
+        @if(auth()->user()->role === 'manager')
+            <a href="{{ route('manager.dashboard') }}" class="btn">
+                <i class="fas fa-home"></i>Dashboard
+            </a>
+        @else
+            <a href="{{ route('admin.dbadmin') }}" class="btn">
+                <i class="fas fa-home"></i>Dashboard
+            </a>
+        @endif
         @if(auth()->user()->role === 'admin')
         <a href="{{ route('information-management.index') }}" class="btn">
             <i class="fas fa-folder-open"></i>Information Management
