@@ -485,7 +485,7 @@ Route::middleware(['auth', 'role:finance'])->group(function () {
 Route::get('/api/quotation-requests/{id}', [App\Http\Controllers\QuotationRequestController::class, 'showJson']);
 
 // Manager dashboard and routes
-Route::middleware(['auth', 'manager'])->prefix('manager')->name('manager.')->group(function () {
+Route::middleware(['auth', 'role:manager'])->prefix('manager')->name('manager.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Manager\DashboardController::class, 'index'])->name('dashboard');
     // Add more manager routes here
 });
