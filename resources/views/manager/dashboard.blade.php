@@ -58,6 +58,76 @@
             </div>
         </div>
     @endif
+
+    <!-- Quick Access Cards Based on Sidebar (with Images) -->
+    <section class="mb-5">
+        <h2 class="mb-4 fw-semibold text-success">Quick Access</h2>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <!-- Dashboard Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('manager.dashboard') }}';" style="cursor:pointer;">
+                    <img src="{{ asset('images/dashboard1.jpg') }}" class="card-img-top flex-grow-1" alt="Dashboard" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Dashboard</h5>
+                    </div>
+                </div>
+            </div>
+            <!-- Project & Procurement Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('projects.index') }}';" style="cursor:pointer;">
+                    <img src="{{ asset('images/dashboard2.jpg') }}" class="card-img-top flex-grow-1" alt="Project & Procurement" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Project & Procurement</h5>
+                    </div>
+                </div>
+            </div>
+            <!-- Project History Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '/history-dashboard';" style="cursor:pointer;">
+                    <img src="{{ asset('images/dashboard3.jpg') }}" class="card-img-top flex-grow-1" alt="Project History" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Project History</h5>
+                    </div>
+                </div>
+            </div>
+            <!-- Inventory Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('materials.index') }}';" style="cursor:pointer;">
+                    <img src="{{ asset('images/dashboard4.jpg') }}" class="card-img-top flex-grow-1" alt="Inventory" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Inventory</h5>
+                    </div>
+                </div>
+            </div>
+            <!-- Transactions Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '/transactions';" style="cursor:pointer;">
+                    <img src="{{ asset('images/dashboard5.jpg') }}" class="card-img-top flex-grow-1" alt="Transactions" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Transactions</h5>
+                    </div>
+                </div>
+            </div>
+            <!-- Payments Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '/payments';" style="cursor:pointer;">
+                    <img src="{{ asset('images/dashboard6.jpg') }}" class="card-img-top flex-grow-1" alt="Payments" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Payments</h5>
+                    </div>
+                </div>
+            </div>
+            <!-- Messages Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '/messages';" style="cursor:pointer;">
+                    <img src="{{ asset('images/dashboard7.jpg') }}" class="card-img-top flex-grow-1" alt="Messages" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Messages</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </div>
 <style>
 .hover-shadow:hover {

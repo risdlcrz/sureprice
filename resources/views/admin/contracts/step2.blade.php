@@ -1145,6 +1145,13 @@ function createRoomRow(initialRoomData = {}) {
                                                     </label>
                                                 </div>
                                                 <div class="ms-4 mt-2">
+                                                    <small class="text-muted">Estimated Days:</small>
+                                                    <div><small>₱${scope.labor_rate || 100} per hour</small></div>
+                                                    <div><small>Total Hours: <span class="total-hours-badge" data-scope-id="${scope.id}">${scope.tasks ? scope.tasks.reduce((sum, task) => sum + (task.labor_hours_per_sqm || 0), 0) : 0}</span></small></div>
+                                                    <div><small>Estimated Time: <span class="estimated-time-badge" data-scope-id="${scope.id}">${getScopeEstimatedDays(scope, null)} day${getScopeEstimatedDays(scope, null) > 1 ? 's' : ''}</span></small></div>
+                                                    <div><small>Labor Cost: <span class="labor-cost-badge" data-scope-id="${scope.id}">₱${(scope.labor_rate || 100) * (scope.tasks ? scope.tasks.reduce((sum, task) => sum + (task.labor_hours_per_sqm || 0), 0) : 0).toFixed(2)}</span></small></div>
+                                                </div>
+                                                <div class="ms-4 mt-2">
                                                     <small class="text-muted">Materials:</small>
                                                     <ul class="list-unstyled small">
                                                         ${(scope.materials && scope.materials.length > 0) ? scope.materials.map(material => {
@@ -1470,7 +1477,7 @@ function getScopeEstimatedDays(scope, room) {
     const hoursPerDay = DEFAULT_HOURS_PER_DAY;
     const productivityFactor = DEFAULT_PRODUCTIVITY_FACTOR;
     
-    console.log(`Calculating days for scope: ${scope.name} (Room: ${room.dataset.roomId})`);
+    console.log(`Calculating days for scope: ${scope.name} (Room: ${room ? room.dataset.roomId : 'N/A'})`);
     console.log(`  Floor Area: ${floorArea}, Wall Area: ${wallArea}, Adjustment: ${adjustment}`);
 
     let totalLaborHours = 0;

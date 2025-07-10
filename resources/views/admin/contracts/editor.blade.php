@@ -7,7 +7,7 @@
         @if(isset($contract))
             @method('PUT')
         @endif
-        <div class="mb-4 row">
+        <div class="mb-4 row align-items-end justify-content-between">
             <div class="col-md-6">
                 <label for="quotation_request_id" class="form-label"><strong>Client Quotation Request</strong> <span class="text-danger">*</span></label>
                 <select name="quotation_request_id" id="quotation_request_id" class="form-control" required>
@@ -17,48 +17,43 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-6">
-                <label for="constructor_id" class="form-label"><strong>Constructor</strong> <span class="text-danger">*</span></label>
-                <select name="constructor_id" id="constructor_id" class="form-control" required>
-                    <option value="">Select Constructor</option>
-                    @foreach($contractors as $c)
-                        <option value="{{ $c->id }}"
-                            data-first_name="{{ $c->first_name }}"
-                            data-last_name="{{ $c->last_name }}"
-                            data-company_name="{{ $c->company_name }}"
-                            data-street="{{ $c->street }}"
-                            data-barangay="{{ $c->barangay }}"
-                            data-city="{{ $c->city }}"
-                            data-state="{{ $c->state }}"
-                            data-postal="{{ $c->postal }}"
-                            data-email="{{ $c->email }}"
-                            data-phone="{{ $c->phone }}"
-                        >
-                            {{ $c->first_name }} {{ $c->last_name }}@if($c->company_name) - {{ $c->company_name }}@endif
-                        </option>
-                    @endforeach
-                </select>
+            <div class="col-md-6 d-flex justify-content-end gap-2">
+                <button type="submit" class="btn btn-success" id="save-btn" disabled>Save Contract</button>
+                <button type="button" class="btn btn-info" id="download-pdf">Download/Print</button>
             </div>
         </div>
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <label for="project_start_date" class="form-label">Project Start Date <span class="text-danger">*</span></label>
-                <input type="date" id="project_start_date" name="project_start_date" class="form-control" required>
-            </div>
-            <div class="col-md-6">
-                <label for="project_end_date" class="form-label">Project End Date <span class="text-danger">*</span></label>
-                <input type="date" id="project_end_date" name="project_end_date" class="form-control" required>
-            </div>
-        </div>
-        <div class="contract-border p-4 bg-white">
+        <!-- Remove the old input row for constructor and dates -->
+        <!-- Inline contract document starts here -->
+        <div class="contract-border p-4 bg-white" style="margin-top: 1.5rem;">
             <div class="text-center mb-4">
-                <h2 class="contract-title">CONSTRUCTION CONTRACT AGREEMENT</h2>
+                <h2 class="contract-title mb-3">CONSTRUCTION CONTRACT AGREEMENT</h2>
             </div>
             <div class="section mb-3">
                 <strong>PARTIES</strong>
                 <p class="mt-2">
-                    This Construction Contract Agreement (the <b>"Agreement"</b>) is entered into on <span class="contract-blank" id="effective_date">{{ date('F d, Y') }}</span> (the <b>"Effective Date"</b>), by and between
-                    <span class="contract-blank" id="contractor_name_display"></span>, with an address of <span class="contract-blank" id="contractor_address_display"></span> (the <b>"Constructor"</b>), and
+                    This Construction Contract Agreement (the <b>"Agreement"</b>) is entered into on 
+                    <input type="date" id="effective_date" name="effective_date" class="contract-inline-input" value="{{ date('Y-m-d') }}" required>
+                    (the <b>"Effective Date"</b>), by and between
+                    <select name="constructor_id" id="constructor_id" class="contract-inline-input" required>
+                        <option value="">Select Constructor</option>
+                        @foreach($contractors as $c)
+                            <option value="{{ $c->id }}"
+                                data-first_name="{{ $c->first_name }}"
+                                data-last_name="{{ $c->last_name }}"
+                                data-company_name="{{ $c->company_name }}"
+                                data-street="{{ $c->street }}"
+                                data-barangay="{{ $c->barangay }}"
+                                data-city="{{ $c->city }}"
+                                data-state="{{ $c->state }}"
+                                data-postal="{{ $c->postal }}"
+                                data-email="{{ $c->email }}"
+                                data-phone="{{ $c->phone }}"
+                            >
+                                {{ $c->first_name }} {{ $c->last_name }}@if($c->company_name) - {{ $c->company_name }}@endif
+                            </option>
+                        @endforeach
+                    </select>
+                    , with an address of <span class="contract-blank" id="contractor_address_display"></span> (the <b>"Constructor"</b>), and
                     <span class="contract-blank" id="client_name_display"></span>, with an address of <span class="contract-blank" id="client_address_display"></span> (the <b>"Client"</b>), (collectively referred to as the <b>"Parties"</b>).
                 </p>
             </div>
@@ -78,15 +73,15 @@
                         <span class="fw-bold">Total Materials Cost:</span> <span class="contract-blank" id="materials_total_display"></span>
                     </div>
                     <div class="col-md-6">
-                        <span class="fw-bold">Labor Fee (15%):</span> <span class="contract-blank" id="labor_fee_display"></span>
+                        <span class="fw-bold">Labor Fee:</span> <span class="contract-blank" id="labor_fee_display"></span>
                     </div>
                 </div>
             </div>
             <div class="section mb-3">
                 <strong>PROJECT TIMELINE</strong>
                 <p class="mt-2">
-                    <span class="fw-bold">Start Date:</span> <span class="contract-blank" id="timeline_start_display"></span>
-                    <span class="fw-bold ms-3">End Date:</span> <span class="contract-blank" id="timeline_end_display"></span>
+                    <span class="fw-bold">Start Date:</span> <input type="date" id="project_start_date" name="project_start_date" class="contract-inline-input" required>
+                    <span class="fw-bold ms-3">End Date:</span> <input type="date" id="project_end_date" name="project_end_date" class="contract-inline-input" required>
                 </p>
             </div>
             <div class="row mb-3">
@@ -139,6 +134,7 @@
                         <p><b>Contractor Signature:</b></p>
                         <canvas id="contractor-signature-pad" width="300" height="100" style="border:1px solid #000;"></canvas>
                         <input type="hidden" name="contractor_signature" id="contractor_signature">
+                        <input type="hidden" name="contractor_date_signed" id="contractor_date_signed">
                         <div class="mt-2">
                             <button type="button" class="btn btn-secondary btn-sm" onclick="clearSignature('contractor')">Clear</button>
                         </div>
@@ -149,6 +145,7 @@
                         <p><b>Client Signature:</b></p>
                         <canvas id="client-signature-pad" width="300" height="100" style="border:1px solid #000;"></canvas>
                         <input type="hidden" name="client_signature" id="client_signature">
+                        <input type="hidden" name="client_date_signed" id="client_date_signed">
                         <div class="mt-2">
                             <button type="button" class="btn btn-secondary btn-sm" onclick="clearSignature('client')">Clear</button>
                         </div>
@@ -157,10 +154,11 @@
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="mt-4 d-flex justify-content-between">
-            <button type="submit" class="btn btn-success" id="save-btn" disabled>Save Contract</button>
-            <button type="button" class="btn btn-info" id="download-pdf">Download/Print</button>
+            <div class="row mt-4">
+                <div class="col-12 text-end">
+                    <button type="button" class="btn btn-primary" id="submit-approval-btn" style="display:none;">Submit for Approval</button>
+                </div>
+            </div>
         </div>
         <!-- Hidden fields for backend submission -->
         <input type="hidden" name="contractor[name]" id="contractor_name" />
@@ -242,6 +240,24 @@
     padding-bottom: 0.15em;
     font-size: 1.04em;
 }
+.contract-inline-input {
+    border: none;
+    border-bottom: 1.5px solid #222;
+    background: #f8fafc;
+    font-size: 1.08rem;
+    font-weight: 500;
+    color: #222;
+    min-width: 120px;
+    margin: 0 0.2em;
+    padding: 0 0.2em 2px 0.2em;
+    outline: none;
+    display: inline-block;
+    box-shadow: none;
+}
+.contract-inline-input:focus {
+    border-bottom: 2px solid #198754;
+    background: #e9fbe9;
+}
 @media (max-width: 900px) {
     .contract-template { max-width: 100vw; padding-left: 0.5rem; padding-right: 0.5rem; }
     .contract-border { padding: 1.2rem 0.5rem; }
@@ -255,10 +271,18 @@
 @endpush
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
 let contractorPad, clientPad;
 document.addEventListener('DOMContentLoaded', function() {
+    // Make the quotation request dropdown searchable
+    $('#quotation_request_id').select2({
+        width: '100%',
+        placeholder: 'Select Quotation Request',
+        allowClear: true
+    });
     // --- Quotation Request Autofill ---
     const qrSelect = document.getElementById('quotation_request_id');
     const saveBtn = document.getElementById('save-btn');
@@ -356,30 +380,35 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('project_start_date').addEventListener('change', updateTimeline);
     document.getElementById('project_end_date').addEventListener('change', updateTimeline);
 
-    // Constructor autofill logic
+    // Constructor autofill logic (fix for inline dropdown)
     const constructorSelect = document.getElementById('constructor_id');
-    constructorSelect.addEventListener('change', function() {
-        const selected = this.options[this.selectedIndex];
-        if (!selected || !selected.value) return;
-        // Compose name
-        const name = (selected.dataset.first_name || '') + ' ' + (selected.dataset.last_name || '');
-        const company = selected.dataset.company_name || '';
-        const fullName = company ? (name + ' - ' + company) : name;
-        // Address
-        const address = [selected.dataset.street, selected.dataset.barangay, selected.dataset.city, selected.dataset.state, selected.dataset.postal].filter(Boolean).join(', ');
-        // Fill contract blanks
-        document.getElementById('contractor_name_display').innerText = fullName;
-        document.getElementById('contractor_address_display').innerText = address;
-        document.getElementById('contractor_name_signed_display').innerText = fullName;
-        // Fill hidden fields
-        document.getElementById('contractor_name').value = fullName;
-        document.getElementById('contractor_street').value = selected.dataset.street || '';
-        document.getElementById('contractor_city').value = selected.dataset.city || '';
-        document.getElementById('contractor_state').value = selected.dataset.state || '';
-        document.getElementById('contractor_postal').value = selected.dataset.postal || '';
-        document.getElementById('contractor_email').value = selected.dataset.email || '';
-        document.getElementById('contractor_phone').value = selected.dataset.phone || '';
-    });
+    if (constructorSelect) {
+        constructorSelect.addEventListener('change', function() {
+            const selected = this.options[this.selectedIndex];
+            if (!selected || !selected.value) return;
+            // Compose name
+            const name = (selected.dataset.first_name || '') + ' ' + (selected.dataset.last_name || '');
+            const company = selected.dataset.company_name || '';
+            const fullName = company ? (name + ' - ' + company) : name;
+            // Address
+            const address = [selected.dataset.street, selected.dataset.barangay, selected.dataset.city, selected.dataset.state, selected.dataset.postal].filter(Boolean).join(', ');
+            // Fill contract blanks
+            const nameSpan = document.getElementById('contractor_name_display');
+            if (nameSpan) nameSpan.innerText = fullName;
+            const addressSpan = document.getElementById('contractor_address_display');
+            if (addressSpan) addressSpan.innerText = address;
+            const nameSignedSpan = document.getElementById('contractor_name_signed_display');
+            if (nameSignedSpan) nameSignedSpan.innerText = fullName;
+            // Fill hidden fields
+            document.getElementById('contractor_name').value = fullName;
+            document.getElementById('contractor_street').value = selected.dataset.street || '';
+            document.getElementById('contractor_city').value = selected.dataset.city || '';
+            document.getElementById('contractor_state').value = selected.dataset.state || '';
+            document.getElementById('contractor_postal').value = selected.dataset.postal || '';
+            document.getElementById('contractor_email').value = selected.dataset.email || '';
+            document.getElementById('contractor_phone').value = selected.dataset.phone || '';
+        });
+    }
 
     // Signature pad logic
     contractorPad = new SignaturePad(document.getElementById('contractor-signature-pad'));
@@ -408,6 +437,84 @@ document.addEventListener('DOMContentLoaded', function() {
 function clearSignature(type) {
     if(type === 'contractor') contractorPad.clear();
     else clientPad.clear();
+}
+
+// Role-based signature pad logic and autofill date
+const userType = @json(auth()->user()->user_type ?? 'manager');
+
+function setTodayDateString() {
+    const d = new Date();
+    return d.toLocaleDateString('en-CA'); // yyyy-mm-dd
+}
+
+function updateSignaturePadAccess() {
+    if (userType === 'manager') {
+        // Manager can only sign contractor
+        clientPad.off();
+        document.getElementById('client-signature-pad').style.pointerEvents = 'none';
+        document.getElementById('client-signature-pad').style.opacity = 0.5;
+    } else if (userType === 'client') {
+        // Client can only sign client
+        contractorPad.off();
+        document.getElementById('contractor-signature-pad').style.pointerEvents = 'none';
+        document.getElementById('contractor-signature-pad').style.opacity = 0.5;
+    }
+}
+
+function checkSignaturesAndToggleApprovalBtn() {
+    const contractorSigned = !contractorPad.isEmpty();
+    const clientSigned = !clientPad.isEmpty();
+    const btn = document.getElementById('submit-approval-btn');
+    if (userType === 'manager' && contractorSigned && clientSigned) {
+        btn.style.display = '';
+        btn.disabled = false;
+    } else {
+        btn.style.display = 'none';
+    }
+}
+
+// Autofill date on signature
+contractorPad.onEnd = function() {
+    if (!contractorPad.isEmpty()) {
+        const today = setTodayDateString();
+        document.getElementById('contractor_date_signed_display').innerText = today;
+        document.getElementById('contractor_date_signed').value = today;
+    } else {
+        document.getElementById('contractor_date_signed_display').innerText = '';
+        document.getElementById('contractor_date_signed').value = '';
+    }
+    checkSignaturesAndToggleApprovalBtn();
+};
+clientPad.onEnd = function() {
+    if (!clientPad.isEmpty()) {
+        const today = setTodayDateString();
+        document.getElementById('client_date_signed_display').innerText = today;
+        document.getElementById('client_date_signed').value = today;
+    } else {
+        document.getElementById('client_date_signed_display').innerText = '';
+        document.getElementById('client_date_signed').value = '';
+    }
+    checkSignaturesAndToggleApprovalBtn();
+};
+
+updateSignaturePadAccess();
+checkSignaturesAndToggleApprovalBtn();
+
+// Submit for Approval button logic
+const submitApprovalBtn = document.getElementById('submit-approval-btn');
+if (submitApprovalBtn) {
+    submitApprovalBtn.addEventListener('click', function() {
+        // Lock the form and submit for approval (AJAX or form submit)
+        // You may want to add a hidden field or status change here
+        // For now, just submit the form with a special flag
+        const form = document.getElementById('contractEditorForm');
+        const approvalInput = document.createElement('input');
+        approvalInput.type = 'hidden';
+        approvalInput.name = 'submit_for_approval';
+        approvalInput.value = '1';
+        form.appendChild(approvalInput);
+        form.submit();
+    });
 }
 </script>
 @endpush 
