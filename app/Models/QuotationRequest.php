@@ -16,7 +16,8 @@ class QuotationRequest extends Model
         'request_number',
         'status',
         'notes',
-        'admin_notes'
+        'admin_notes',
+        'total_hours'
     ];
 
     // Status constants

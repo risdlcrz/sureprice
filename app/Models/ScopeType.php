@@ -12,6 +12,7 @@ class ScopeType extends Model
         'name',
         'category',
         'estimated_days',
+        'time_per_sqm_days',
         'labor_rate',
         'items',
         'labor_type',

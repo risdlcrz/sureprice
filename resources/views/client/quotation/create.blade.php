@@ -267,6 +267,24 @@ function updateRoomAreas(roomRow) {
     roomRow.querySelector('input[name$="[wall_area]"]').value = wallArea.toFixed(2);
 }
 
+function updateScopeDays(room) {
+    const length = parseFloat(room.querySelector('.room-dimension[name$="[length]"]')?.value) || 1;
+    const width = parseFloat(room.querySelector('.room-dimension[name$="[width]"]')?.value) || 1;
+    const area = length * width;
+    room.querySelectorAll('.scope-checkbox').forEach(cb => {
+        const scopeId = cb.value;
+        const scope = scopeTypesByCode[scopeId];
+        if (!scope) return;
+        // Use time_per_sqm_days if present, else fallback to estimated_days
+        const daysPerSqm = parseFloat(scope.time_per_sqm_days) || parseFloat(scope.estimated_days) || 0;
+        const days = Math.ceil(area * daysPerSqm);
+        const daysSpan = room.querySelector(`.scope-days[data-scope-id="${scopeId}"]`);
+        if (daysSpan) {
+            daysSpan.textContent = days > 0 ? `(${days} day${days !== 1 ? 's' : ''})` : '';
+        }
+    });
+}
+
 function createRoomRow(initialRoomData = {}) {
     const roomContainer = document.createElement('div');
     roomContainer.className = 'room-row mb-4';
@@ -344,6 +362,7 @@ function createRoomRow(initialRoomData = {}) {
                                                         id="scope_${scope.id}_${roomId}">
                                                     <label class="form-check-label" for="scope_${scope.id}_${roomId}">
                                                         <strong>${scope.name}</strong>
+                                                        <span class="badge bg-info ms-2 scope-days" data-scope-id="${scope.id}" data-room-id="${roomId}"></span>
                                                         ${(scope.materials && scope.materials.length > 0) ? `
                                                             <ul class="mb-0 ms-3">
                                                                 ${scope.materials.map(material => `
@@ -369,14 +388,19 @@ function createRoomRow(initialRoomData = {}) {
     roomContainer.querySelectorAll('.room-dimension').forEach(input => {
         input.addEventListener('input', function() {
             updateRoomAreas(roomContainer);
+            updateScopeDays(roomContainer);
             updateBreakdownTable();
         });
     });
     roomContainer.querySelectorAll('.scope-checkbox').forEach(cb => {
-        cb.addEventListener('change', updateBreakdownTable);
+        cb.addEventListener('change', function() {
+            updateScopeDays(roomContainer);
+            updateBreakdownTable();
+        });
     });
     // Initial area calculation
     updateRoomAreas(roomContainer);
+    updateScopeDays(roomContainer);
     updateBreakdownTable();
 }
 
@@ -385,6 +409,7 @@ function updateBreakdownTable() {
     tbody.innerHTML = '';
     let rowIdx = 0;
     document.querySelectorAll('.room-row').forEach(room => {
+        updateScopeDays(room);
         const roomName = room.querySelector('input[name$="[name]"]').value || `Room ${room.dataset.roomId}`;
         const roomId = room.dataset.roomId;
         // Get dimensions

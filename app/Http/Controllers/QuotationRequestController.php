@@ -38,6 +38,8 @@ class QuotationRequestController extends Controller
             }
         }
         $grandTotal = $totalMaterialsCost + $laborFee;
+        $totalHours = $quotation->total_hours ?? 0;
+        $totalDays = $totalHours > 0 ? ceil($totalHours / 8) : 0;
         return response()->json([
             'client' => [
                 'name' => $company->company_name ?? $quotation->user->name,
@@ -54,6 +56,8 @@ class QuotationRequestController extends Controller
             'total_materials_cost' => $totalMaterialsCost,
             'labor_fee' => $laborFee,
             'grand_total' => $grandTotal,
+            'total_hours' => $totalHours,
+            'total_days' => $totalDays,
         ]);
     }
 } 

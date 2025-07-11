@@ -91,7 +91,8 @@ class ClientQuotationController extends Controller
         $quotationRequest = \App\Models\QuotationRequest::create([
             'user_id' => auth()->id(),
             'request_number' => $requestNumber,
-            'status' => 'pending'
+            'status' => 'pending',
+            'total_hours' => 0 // will update after calculation
         ]);
 
         // Save rooms and scopes
