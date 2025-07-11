@@ -12,8 +12,48 @@ class QuotationRequestController extends Controller
      */
     public function showJson($id)
     {
-        $quotationRequest = QuotationRequest::with(['materials', 'suppliers'])->findOrFail($id);
-        
-        return response()->json($quotationRequest);
+        $quotation = \App\Models\QuotationRequest::with(['user.company', 'rooms.scopes.scopeType.materials'])->findOrFail($id);
+        $company = $quotation->user->company;
+        $clientAddress = $company
+            ? trim("{$company->street}, {$company->barangay}, {$company->city}, {$company->state}, {$company->postal}", ', ')
+            : '';
+        // Aggregate scope of work and materials
+        $scopeOfWork = [];
+        $totalMaterialsCost = 0;
+        $laborFee = 0;
+        foreach ($quotation->rooms as $room) {
+            foreach ($room->scopes as $scope) {
+                $scopeName = $scope->scopeType->name ?? $scope->scope_name ?? '';
+                $scopeOfWork[] = $scopeName;
+                if (is_array($scope->selected_materials)) {
+                    foreach ($scope->selected_materials as $mat) {
+                        $material = \App\Models\Material::find($mat['material_id'] ?? $mat['id'] ?? null);
+                        $qty = $mat['quantity'] ?? 1;
+                        $unitPrice = $material ? $material->base_price : 0;
+                        $amount = $unitPrice * $qty;
+                        $totalMaterialsCost += $amount;
+                        $laborFee += 0.15 * $amount; // 15% labor fee
+                    }
+                }
+            }
+        }
+        $grandTotal = $totalMaterialsCost + $laborFee;
+        return response()->json([
+            'client' => [
+                'name' => $company->company_name ?? $quotation->user->name,
+                'street' => $company->street ?? '',
+                'barangay' => $company->barangay ?? '',
+                'city' => $company->city ?? '',
+                'state' => $company->state ?? '',
+                'postal' => $company->postal ?? '',
+                'address' => $clientAddress,
+                'email' => $quotation->user->email,
+                'phone' => $company->mobile_number ?? '',
+            ],
+            'scope_of_work' => implode(', ', array_unique($scopeOfWork)),
+            'total_materials_cost' => $totalMaterialsCost,
+            'labor_fee' => $laborFee,
+            'grand_total' => $grandTotal,
+        ]);
     }
 } 

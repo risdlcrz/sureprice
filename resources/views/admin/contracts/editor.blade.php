@@ -323,47 +323,13 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(`/sureprice/public/api/quotation-requests/${qrId}`)
             .then(res => res.json())
             .then(data => {
-                // Parties
-                const clientName = data.client?.name || '';
-                const clientAddress = [
-                  data.client?.street,
-                  data.client?.barangay,
-                  data.client?.city,
-                  data.client?.state,
-                  data.client?.postal
-                ].filter(Boolean).join(', ');
-                document.getElementById('client_name_display').innerText = clientName;
-                document.getElementById('client_address_display').innerText = clientAddress;
-                // Property
-                document.getElementById('property_address_display').innerText = data.property?.address || '';
-                // Scope of Work
-                const scopeList = document.getElementById('scope-list');
-                scopeList.innerHTML = '';
-                let total = 0, labor = 0;
-                (data.items || []).forEach((item, idx) => {
-                    const qty = parseFloat(item.quantity) || 0;
-                    const amt = parseFloat(item.unit_price || item.amount) || 0;
-                    const laborCost = 0.15 * amt * qty;
-                    total += qty * amt;
-                    labor += laborCost;
-                    const li = document.createElement('li');
-                    li.innerText = `${item.material?.name || ''} - Qty: ${qty}, Unit Price: ₱${amt.toFixed(2)}, Total: ₱${(qty*amt).toFixed(2)}`;
-                    scopeList.appendChild(li);
-                });
-                document.getElementById('materials_total_display').innerText = '₱' + total.toFixed(2);
-                document.getElementById('labor_fee_display').innerText = '₱' + labor.toFixed(2);
-                document.getElementById('grand_total_display').innerText = '₱' + (total + labor).toFixed(2);
-                document.getElementById('grand_total').value = (total + labor).toFixed(2);
-                // Terms
-                document.getElementById('payment_terms_display').innerText = data.payment_terms || '';
-                document.getElementById('warranty_terms_display').innerText = data.warranty_terms || '';
-                document.getElementById('cancellation_terms_display').innerText = data.cancellation_terms || '';
-                document.getElementById('additional_terms_display').innerText = data.additional_terms || '';
-                // Signatures (clear for new contract)
-                document.getElementById('contractor_name_signed_display').innerText = '';
-                document.getElementById('client_name_signed_display').innerText = data.client?.name || '';
-                document.getElementById('contractor_date_signed_display').innerText = '';
-                document.getElementById('client_date_signed_display').innerText = '';
+                // Autofill contract fields
+                document.getElementById('client_name_display').innerText = data.client?.name || '';
+                document.getElementById('client_address_display').innerText = data.client?.address || '';
+                document.getElementById('scope_of_work_display').innerText = data.scope_of_work || '';
+                document.getElementById('materials_total_display').innerText = '₱' + (data.total_materials_cost?.toFixed(2) || '0.00');
+                document.getElementById('labor_fee_display').innerText = '₱' + (data.labor_fee?.toFixed(2) || '0.00');
+                document.getElementById('grand_total_display').innerText = '₱' + (data.grand_total?.toFixed(2) || '0.00');
                 // Hidden fields for backend
                 document.getElementById('client_name').value = data.client?.name || '';
                 document.getElementById('client_street').value = data.client?.street || '';
@@ -372,24 +338,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('client_postal').value = data.client?.postal || '';
                 document.getElementById('client_email').value = data.client?.email || '';
                 document.getElementById('client_phone').value = data.client?.phone || '';
-                document.getElementById('property_street').value = data.property?.street || '';
-                document.getElementById('property_city').value = data.property?.city || '';
-                document.getElementById('property_state').value = data.property?.state || '';
-                document.getElementById('property_postal').value = data.property?.postal || '';
                 document.getElementById('scope_of_work').value = data.scope_of_work || '';
-                document.getElementById('scope_description').value = data.scope_description || '';
-                document.getElementById('payment_terms').value = data.payment_terms || '';
-                document.getElementById('warranty_terms').value = data.warranty_terms || '';
-                document.getElementById('cancellation_terms').value = data.cancellation_terms || '';
-                document.getElementById('additional_terms').value = data.additional_terms || '';
-                document.getElementById('materials_total').value = total.toFixed(2);
-                document.getElementById('labor_fee').value = labor.toFixed(2);
-                // Clear timeline fields
-                document.getElementById('project_start_date').value = '';
-                document.getElementById('project_end_date').value = '';
-                document.getElementById('timeline_start_display').innerText = '';
-                document.getElementById('timeline_end_display').innerText = '';
-                saveBtn.disabled = false;
+                document.getElementById('materials_total').value = data.total_materials_cost?.toFixed(2) || '0.00';
+                document.getElementById('labor_fee').value = data.labor_fee?.toFixed(2) || '0.00';
+                document.getElementById('grand_total').value = data.grand_total?.toFixed(2) || '0.00';
             });
     });
     // --- End Quotation Request Autofill ---
