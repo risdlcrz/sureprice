@@ -174,7 +174,7 @@ class ClientQuotationController extends Controller
                 'data' => [
                     'title' => 'New Client Quotation Submitted',
                     'message' => 'A new client quotation request (Request #' . $quotationRequest->request_number . ') has been submitted and needs review.',
-                    'link' => route('manager.dashboard'), // Update this if you have a manager-specific review page
+                    'link' => route('manager.quotation-requests.view', ['id' => $quotationRequest->id]),
                 ],
                 'for_role' => 'manager',
             ]);
@@ -323,29 +323,7 @@ class ClientQuotationController extends Controller
         return view('client.quotation.contract', compact('quotationRequest'));
     }
 
-    public function proceed($id)
-    {
-        $quotationRequest = \App\Models\QuotationRequest::findOrFail($id);
-        // Optionally update status
-        $quotationRequest->status = 'proceeded';
-        $quotationRequest->save();
-
-        // Notify all admins
-        $admins = \App\Models\User::where('role', 'admin')->get();
-        foreach ($admins as $admin) {
-            \Log::info('Creating notification for admin', ['admin_id' => $admin->id]);
-            \App\Models\Notification::create([
-                'notifiable_id' => $admin->id,
-                'notifiable_type' => \App\Models\User::class,
-                'type' => 'ClientProceededQuotation',
-                'data' => [
-                    'message' => 'Client ' . ($quotationRequest->user->name ?? 'Unknown') . ' proceeded with Quotation #' . $quotationRequest->id,
-                    'quotation_id' => $quotationRequest->id,
-                ],
-            ]);
-        }
-        return view('client.quotation.proceeded', compact('quotationRequest'));
-    }
+    // Removed proceed method, status is now set in finalizeSelection
 
     /**
      * Get suppliers for each material with price, metrics, and badges
@@ -495,6 +473,10 @@ class ClientQuotationController extends Controller
             }
         }
 
+        // Set status to proceeded only after client finalizes selection
+        $quotationRequest->status = 'proceeded';
+        $quotationRequest->save();
+
         // Optionally, notify the admin
         $admins = \App\Models\User::role('admin')->get();
         foreach ($admins as $admin) {
@@ -509,6 +491,22 @@ class ClientQuotationController extends Controller
                     'link' => route('admin.quotation.review', ['id' => $quotationRequest->id]),
                 ],
                 'for_role' => 'admin',
+            ]);
+        }
+        // Notify all managers
+        $managers = \App\Models\User::role('manager')->get();
+        foreach ($managers as $manager) {
+            \App\Models\Notification::create([
+                'user_id' => $manager->id,
+                'type' => 'client_finalized_selection',
+                'notifiable_type' => \App\Models\QuotationRequest::class,
+                'notifiable_id' => $quotationRequest->id,
+                'data' => [
+                    'title' => 'Client Finalized Supplier Selection',
+                    'message' => 'The client has finalized their supplier selections for Quotation Request #' . $quotationRequest->request_number . '.',
+                    'link' => route('manager.quotation-requests.view', ['id' => $quotationRequest->id]),
+                ],
+                'for_role' => 'manager',
             ]);
         }
 
@@ -529,6 +527,13 @@ class ClientQuotationController extends Controller
         $selected[$request->material_id] = $request->supplier_id;
         $quotationRequest->selected_suppliers = $selected;
         $quotationRequest->save();
+
+        // Update the pivot table for all related RFQs
+        $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #' . $quotationRequest->request_number . '%')->get();
+        foreach ($rfqs as $rfq) {
+            $rfq->materials()->updateExistingPivot($request->material_id, ['selected_supplier_id' => $request->supplier_id]);
+        }
+
         return response()->json(['success' => true]);
     }
 

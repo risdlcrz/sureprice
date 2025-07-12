@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('status')->default('pending'); // pending, reviewed, approved, rejected
             $table->text('notes')->nullable();
             $table->text('admin_notes')->nullable();
-            $table->decimal('total_hours', 10, 2)->nullable()->after('admin_notes');
+            $table->decimal('total_hours', 10, 2)->nullable();
             $table->timestamps();
         });
     }

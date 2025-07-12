@@ -33,12 +33,12 @@
                     </ul>
                 </div>
             @endforeach
-            @if($quotationRequest->status !== 'sent_to_suppliers')
+            @if(!in_array($quotationRequest->status, ['sent_to_suppliers', 'proceeded']))
                 <form method="POST" action="{{ route('manager.quotation-requests.send-to-suppliers', $quotationRequest->id) }}" class="mb-3">
                     @csrf
                     <button type="submit" class="btn btn-success float-end">Send Quotation Request to All Suppliers</button>
                 </form>
-            @else
+            @elseif($quotationRequest->status === 'sent_to_suppliers')
                 <div class="alert alert-info text-center">This request has already been sent to all suppliers.</div>
             @endif
             <h6>Materials in this Quotation</h6>
@@ -70,6 +70,9 @@
                     @endforeach
                 </tbody>
             </table>
+            @if($quotationRequest->status === 'proceeded' && !$quotationRequest->materialRequest)
+                <a href="{{ route('material-requests.create', ['quotation_id' => $quotationRequest->id]) }}" class="btn btn-primary mt-3">Create Material Request</a>
+            @endif
         </div>
     </div>
 </div>

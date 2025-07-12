@@ -54,7 +54,7 @@ class Quotation extends Model
     public function materials(): BelongsToMany
     {
         return $this->belongsToMany(Material::class, 'material_quotation')
-            ->withPivot('quantity', 'specifications')
+            ->withPivot('quantity', 'specifications', 'selected_supplier_id')
             ->withTimestamps();
     }
 

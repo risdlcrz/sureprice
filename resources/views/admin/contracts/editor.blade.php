@@ -284,7 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         allowClear: true,
         minimumInputLength: 1,
         ajax: {
-            url: '/sureprice/public/search/quotation-requests',
+            url: '{{ url('search/quotation-requests') }}',
             dataType: 'json',
             delay: 250,
             data: function(params) {
@@ -320,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
     $('#quotation_request_id').on('select2:select', function(e) {
         const qrId = e.params.data.id;
         if (!qrId) return;
-        fetch(`/sureprice/public/api/quotation-requests/${qrId}`)
+        fetch(`{{ url('api/quotation-requests') }}/${qrId}`)
             .then(res => res.json())
             .then(data => {
                 // Autofill contract fields

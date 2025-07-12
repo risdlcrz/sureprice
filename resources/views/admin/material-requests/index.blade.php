@@ -8,9 +8,11 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-tools">
+                        @if(auth()->user()->hasRole('manager'))
                         <a href="{{ route('material-requests.create') }}" class="btn btn-primary">
                             <i class="fas fa-plus"></i> New Material Request
                         </a>
+                        @endif
                     </div>
                 </div>
                 <div class="card-body">

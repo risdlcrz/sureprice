@@ -228,6 +228,22 @@ class SupplierQuotationController extends Controller
                 'for_role' => 'admin',
             ]);
         }
+        // Notify all managers about the new supplier response
+        $managers = User::role('manager')->get();
+        foreach ($managers as $manager) {
+            Notification::create([
+                'user_id' => $manager->id,
+                'type' => 'supplier_quotation_response',
+                'notifiable_type' => Quotation::class,
+                'notifiable_id' => $quotation->id,
+                'data' => [
+                    'title' => 'Supplier Quotation Response Submitted',
+                    'message' => 'A supplier has submitted a response to RFQ #' . $quotation->rfq_number . '.',
+                    'link' => route('quotations.show', $quotation->id),
+                ],
+                'for_role' => 'manager',
+            ]);
+        }
 
         // Validate discount rules
         $discountErrors = $response->validateDiscount();

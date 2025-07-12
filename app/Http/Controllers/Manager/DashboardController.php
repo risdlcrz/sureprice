@@ -47,26 +47,74 @@ class DashboardController extends Controller
     public function sendQuotationRequestToSuppliers($id)
     {
         $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType.materials'])->findOrFail($id);
-        if ($quotationRequest->status === 'sent_to_suppliers') {
+        if (in_array($quotationRequest->status, ['reviewed', 'proceeded'])) {
             return redirect()->back()->with('error', 'This request has already been sent to suppliers.');
         }
-        $suppliers = \App\Models\Supplier::all();
-        foreach ($suppliers as $supplier) {
-            \App\Models\Notification::create([
-                'user_id' => $supplier->user_id,
-                'type' => 'rfq_sent',
-                'notifiable_type' => \App\Models\QuotationRequest::class,
-                'notifiable_id' => $quotationRequest->id,
-                'data' => [
-                    'title' => 'New RFQ Available',
-                    'message' => 'A new RFQ (Request #' . $quotationRequest->request_number . ') is available for your review.',
-                    'link' => route('supplier.quotations.index'),
-                ],
-                'for_role' => 'supplier',
-            ]);
+
+        // Gather all material IDs from the request
+        $materialIds = collect();
+        foreach ($quotationRequest->rooms as $room) {
+            foreach ($room->scopes as $scope) {
+                if ($scope->scopeType && $scope->scopeType->materials) {
+                    $materialIds = $materialIds->merge($scope->scopeType->materials->pluck('id'));
+                }
+            }
         }
-        $quotationRequest->status = 'sent_to_suppliers';
+        $materialIds = $materialIds->unique()->values();
+
+        // Find all suppliers who can provide any of these materials
+        $suppliers = \App\Models\Supplier::whereHas('materials', function($q) use ($materialIds) {
+            $q->whereIn('materials.id', $materialIds);
+        })->get();
+
+        foreach ($suppliers as $supplier) {
+            $supplierMaterialIds = $supplier->materials()->whereIn('materials.id', $materialIds)->pluck('materials.id');
+            if ($supplierMaterialIds->isEmpty()) continue;
+
+            // Generate RFQ number
+            $lastQuotation = \App\Models\Quotation::orderByDesc('id')->first();
+            if ($lastQuotation && preg_match('/RFQ-(\\d+)/i', $lastQuotation->rfq_number, $matches)) {
+                $nextNumber = intval($matches[1]) + 1;
+            } else {
+                $nextNumber = 1;
+            }
+            $rfqNumber = 'RFQ-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+            $quotation = \App\Models\Quotation::create([
+                'purchase_request_id' => null,
+                'rfq_number' => $rfqNumber,
+                'status' => 'draft',
+                'notes' => 'Auto-generated from client quotation request #' . $quotationRequest->request_number,
+                'due_date' => now()->addDays(7),
+            ]);
+            // Attach supplier
+            $quotation->suppliers()->attach($supplier->id);
+            // Attach materials
+            $materialSyncData = [];
+            foreach ($supplierMaterialIds as $matId) {
+                $materialSyncData[$matId] = ['quantity' => 1];
+            }
+            $quotation->materials()->sync($materialSyncData);
+            // Notify supplier's user
+            if ($supplier->user) {
+                \App\Models\Notification::create([
+                    'user_id' => $supplier->user->id,
+                    'type' => 'rfq_created',
+                    'notifiable_type' => \App\Models\Quotation::class,
+                    'notifiable_id' => $quotation->id,
+                    'data' => [
+                        'title' => 'New RFQ Created',
+                        'message' => 'A new Request for Quotation (RFQ #' . $quotation->rfq_number . ') has been created for you.',
+                        'link' => route('supplier.quotations.show', $quotation->id),
+                    ],
+                    'for_role' => 'supplier',
+                ]);
+            }
+        }
+
+        $quotationRequest->status = 'reviewed';
         $quotationRequest->save();
-        return redirect()->back()->with('success', 'Quotation request sent to all suppliers.');
+
+        return redirect()->back()->with('success', 'RFQs have been created for all relevant suppliers.');
     }
 } 

@@ -20,6 +20,10 @@ class QuotationRequest extends Model
         'total_hours'
     ];
 
+    protected $casts = [
+        'selected_suppliers' => 'array',
+    ];
+
     // Status constants
     const STATUS_PENDING = 'pending';
     const STATUS_REVIEWED = 'reviewed';

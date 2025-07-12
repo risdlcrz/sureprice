@@ -325,7 +325,7 @@ public function sendRfqToSuppliers($id)
             'due_date' => Carbon::now()->addDays(7),
         ]);
         // Attach supplier
-        $quotation->suppliers()->attach($supplier->company_id ?? $supplier->id);
+        $quotation->suppliers()->attach($supplier->id);
         // Attach materials
         $materialSyncData = [];
         foreach ($supplierMaterialIds as $matId) {

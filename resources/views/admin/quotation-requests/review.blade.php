@@ -34,14 +34,14 @@
                     @endforeach
                     <hr>
                     <h5>Materials in this Quotation</h5>
-                    @if(empty($rfqsSent))
+                    @if(empty($rfqsSent) && auth()->user()->hasRole('manager'))
                         <form method="POST" action="{{ route('admin.quotation.send-rfq', ['id' => $quotationRequest->id]) }}">
                             @csrf
                             <div class="text-end mb-3">
                                 <button type="submit" class="btn btn-success btn-lg">Send Quotation Request to All Suppliers</button>
                             </div>
                         </form>
-                    @else
+                    @elseif(!empty($rfqsSent))
                         <div class="alert alert-info mb-3">RFQs have already been sent to all relevant suppliers.</div>
                     @endif
                     <div class="table-responsive">

@@ -323,149 +323,157 @@ body {
 
                     <hr>
                     <h3 class="mb-3 fw-bold" style="font-size:1.5rem;">Supplier Offers & Selection</h3>
-                    <form method="POST" action="{{ route('client.quotation.finalize', ['id' => $quotationRequest->id]) }}" id="client-finalize-form-table">
-                        @csrf
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-bold fs-5">Choose your preferred supplier for each material below:</span>
-                            <button type="button" class="btn btn-primary" id="clientRecommendAllBtn">Recommend for All</button>
-                        </div>
-                        <div class="row mt-4">
-                            <div class="col-12 col-lg-6 mb-4 mb-lg-0">
-                                {{-- Materials Table (existing) --}}
-                                @if(isset($materialSupplierResponses) && count($materialSupplierResponses) > 0)
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered table-striped w-100" style="width: 100%; min-width: 900px; table-layout: fixed;">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th>Material</th>
-                                                    <th>Supplier Responses</th>
-                                                    <th>Your Selection</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @foreach($materialSupplierResponses as $materialId => $offers)
+                    @if($quotationRequest->status === 'pending' || $quotationRequest->status === 'reviewed')
+                        {{-- Supplier selection and proceed UI --}}
+                        <form method="POST" action="{{ route('client.quotation.finalize', ['id' => $quotationRequest->id]) }}" id="client-finalize-form-table">
+                            @csrf
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold fs-5">Choose your preferred supplier for each material below:</span>
+                                <button type="button" class="btn btn-primary" id="clientRecommendAllBtn">Recommend for All</button>
+                            </div>
+                            <div class="row mt-4">
+                                <div class="col-12 col-lg-6 mb-4 mb-lg-0">
+                                    {{-- Materials Table (existing) --}}
+                                    @if(isset($materialSupplierResponses) && count($materialSupplierResponses) > 0)
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-striped w-100" style="width: 100%; min-width: 900px; table-layout: fixed;">
+                                                <thead class="table-light">
                                                     <tr>
-                                                        <td>
-                                                            @php
-                                                                $materialName = null;
-                                                                if($quotationRequest) {
-                                                                    foreach($quotationRequest->rooms as $room) {
-                                                                        foreach($room->scopes as $scope) {
-                                                                            if($scope->scopeType && $scope->scopeType->materials) {
-                                                                                foreach($scope->scopeType->materials as $mat) {
-                                                                                    if($mat->id == $materialId) $materialName = $mat->name;
+                                                        <th>Material</th>
+                                                        <th>Supplier Responses</th>
+                                                        <th>Your Selection</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($materialSupplierResponses as $materialId => $offers)
+                                                        <tr>
+                                                            <td>
+                                                                @php
+                                                                    $materialName = null;
+                                                                    if($quotationRequest) {
+                                                                        foreach($quotationRequest->rooms as $room) {
+                                                                            foreach($room->scopes as $scope) {
+                                                                                if($scope->scopeType && $scope->scopeType->materials) {
+                                                                                    foreach($scope->scopeType->materials as $mat) {
+                                                                                        if($mat->id == $materialId) $materialName = $mat->name;
+                                                                                    }
                                                                                 }
                                                                             }
                                                                         }
                                                                     }
-                                                                }
-                                                            @endphp
-                                                            <strong>{{ $materialName ?? 'Material #'.$materialId }}</strong>
-                                                        </td>
-                                                        <td>
-                                                            <span class="badge bg-secondary">{{ count($offers) }}</span>
-                                                        </td>
-                                                        <td>
-                                                            @if(count($offers) > 0)
-                                                                <select name="selected_suppliers[{{ $materialId }}]" class="form-select supplier-select" data-material-id="{{ $materialId }}">
-                                                                    <option value="">Select Supplier</option>
-                                                                    @php
-                                                                        // Ensure only one supplier per badge per material
-                                                                        $badgeWinners = [];
-                                                                        foreach ($offers as $offer) {
-                                                                            if (!empty($offer['badges'])) {
-                                                                                foreach ($offer['badges'] as $badge) {
-                                                                                    if (!isset($badgeWinners[$badge])) {
-                                                                                        $badgeWinners[$badge] = $offer['supplier_id'];
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    @endphp
-                                                                    @foreach($offers as $offer)
+                                                                @endphp
+                                                                <strong>{{ $materialName ?? 'Material #'.$materialId }}</strong>
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge bg-secondary">{{ count($offers) }}</span>
+                                                            </td>
+                                                            <td>
+                                                                @if(count($offers) > 0)
+                                                                    <select name="selected_suppliers[{{ $materialId }}]" class="form-select supplier-select" data-material-id="{{ $materialId }}">
+                                                                        <option value="">Select Supplier</option>
                                                                         @php
-                                                                            $uniqueBadges = [];
-                                                                            if (!empty($offer['badges'])) {
-                                                                                foreach ($offer['badges'] as $badge) {
-                                                                                    if (isset($badgeWinners[$badge]) && $badgeWinners[$badge] == $offer['supplier_id']) {
-                                                                                        $uniqueBadges[] = $badge;
+                                                                            // Ensure only one supplier per badge per material
+                                                                            $badgeWinners = [];
+                                                                            foreach ($offers as $offer) {
+                                                                                if (!empty($offer['badges'])) {
+                                                                                    foreach ($offer['badges'] as $badge) {
+                                                                                        if (!isset($badgeWinners[$badge])) {
+                                                                                            $badgeWinners[$badge] = $offer['supplier_id'];
+                                                                                        }
                                                                                     }
                                                                                 }
                                                                             }
                                                                         @endphp
-                                                                        <option value="{{ $offer['supplier_id'] }}"
-                                                                            data-badges='@json($uniqueBadges)'
-                                                                            data-supplier="{{ $offer['supplier_name'] ?? 'Unknown' }}"
-                                                                            data-price="{{ isset($offer['unit_price']) ? number_format($offer['unit_price'], 2) : '0.00' }}"
-                                                                            @if(isset($selectedSuppliers[$materialId]) && $selectedSuppliers[$materialId] == $offer['supplier_id']) selected @endif>
-                                                                            {{ $offer['supplier_name'] ?? 'Unknown' }} (₱{{ isset($offer['unit_price']) ? number_format($offer['unit_price'], 2) : '0.00' }})
-                                                                        </option>
-                                                                    @endforeach
-                                                                </select>
-                                                            @else
-                                                                <span class="text-muted">No selection</span>
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
+                                                                        @foreach($offers as $offer)
+                                                                            @php
+                                                                                $uniqueBadges = [];
+                                                                                if (!empty($offer['badges'])) {
+                                                                                    foreach ($offer['badges'] as $badge) {
+                                                                                        if (isset($badgeWinners[$badge]) && $badgeWinners[$badge] == $offer['supplier_id']) {
+                                                                                            $uniqueBadges[] = $badge;
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            @endphp
+                                                                            <option value="{{ $offer['supplier_id'] }}"
+                                                                                data-badges='@json($uniqueBadges)'
+                                                                                data-supplier="{{ $offer['supplier_name'] ?? 'Unknown' }}"
+                                                                                data-price="{{ isset($offer['unit_price']) ? number_format($offer['unit_price'], 2) : '0.00' }}"
+                                                                                @if(isset($selectedSuppliers[$materialId]) && $selectedSuppliers[$materialId] == $offer['supplier_id']) selected @endif>
+                                                                                {{ $offer['supplier_name'] ?? 'Unknown' }} (₱{{ isset($offer['unit_price']) ? number_format($offer['unit_price'], 2) : '0.00' }})
+                                                                            </option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                @else
+                                                                    <span class="text-muted">No selection</span>
+                                                                @endif
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @else
+                                        <div class="alert alert-info text-center">No supplier offers available yet.</div>
+                                    @endif
+                                </div>
+                            </div>
+                        </form>
+                        <!-- Recommend Modal for Client -->
+                        <div class="modal fade" id="clientRecommendModal" tabindex="-1" aria-labelledby="clientRecommendModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="clientRecommendModalLabel">Recommend Suppliers for All Materials</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
-                                @else
-                                    <div class="alert alert-info text-center">No supplier offers available yet.</div>
-                                @endif
-                            </div>
-                        </div>
-                    </form>
-                    <!-- Recommend Modal for Client -->
-                    <div class="modal fade" id="clientRecommendModal" tabindex="-1" aria-labelledby="clientRecommendModalLabel" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="clientRecommendModalLabel">Recommend Suppliers for All Materials</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <label for="clientRecommendCategory" class="form-label">Optimization Category</label>
-                                    <select id="clientRecommendCategory" class="form-select">
-                                        <option value="overall_best">Overall Best</option>
-                                        <option value="cheapest">Cheapest</option>
-                                        <option value="fastest_delivery">Best Delivery</option>
-                                        <option value="least_defects">Least Defects</option>
-                                    </select>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="button" class="btn btn-primary" id="clientApplyRecommendBtn">Apply Recommendation</button>
+                                    <div class="modal-body">
+                                        <label for="clientRecommendCategory" class="form-label">Optimization Category</label>
+                                        <select id="clientRecommendCategory" class="form-select">
+                                            <option value="overall_best">Overall Best</option>
+                                            <option value="cheapest">Cheapest</option>
+                                            <option value="fastest_delivery">Best Delivery</option>
+                                            <option value="least_defects">Least Defects</option>
+                                        </select>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="button" class="btn btn-primary" id="clientApplyRecommendBtn">Apply Recommendation</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Main action buttons below the table -->
-                    @php
-                        $allSuppliersSelected = true;
-                        if(isset($materialSupplierResponses)) {
-                            foreach($materialSupplierResponses as $materialId => $offers) {
-                                if(empty($selectedSuppliers[$materialId])) {
-                                    $allSuppliersSelected = false;
-                                    break;
+                        @php
+                            $allSuppliersSelected = true;
+                            if(isset($materialSupplierResponses)) {
+                                foreach($materialSupplierResponses as $materialId => $offers) {
+                                    if(empty($selectedSuppliers[$materialId])) {
+                                        $allSuppliersSelected = false;
+                                        break;
+                                    }
                                 }
                             }
-                        }
-                    @endphp
-                    <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
-                        @if($allSuppliersSelected)
-                        <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
-                        </form>
-                        @endif
-                        <form method="POST" action="{{ route('client.quotation.cancel', ['id' => $quotationRequest->id]) }}" onsubmit="return confirm('Are you sure you want to cancel this quotation?');" class="d-inline">
-                            @csrf
-                            <button type="submit" class="btn btn-danger btn-lg">Cancel Quotation</button>
-                        </form>
-                    </div>
+                        @endphp
+                        <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+                            @if($allSuppliersSelected)
+                            <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" class="d-inline proceed-quotation-btn">
+                                @csrf
+                                <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
+                            </form>
+                            @endif
+                            <form method="POST" action="{{ route('client.quotation.cancel', ['id' => $quotationRequest->id]) }}" onsubmit="return confirm('Are you sure you want to cancel this quotation?');" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-danger btn-lg">Cancel Quotation</button>
+                            </form>
+                        </div>
+                    @else
+                        <div class="alert alert-success text-center my-5">
+                            <h4>Thank you for proceeding!</h4>
+                            <p>Your quotation request has already been submitted and is being processed by our admin team.</p>
+                            <p>Request Number: <span class="badge bg-primary">{{ $quotationRequest->request_number }}</span></p>
+                            <a href="{{ route('client.quotation.index') }}" class="btn btn-primary mt-3">Back to My Quotations</a>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -538,6 +546,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
                 recommendModal.hide();
+                // --- NEW: Check if all suppliers are selected and show the button ---
+                setTimeout(function() {
+                    let allSelected = true;
+                    $('.supplier-select').each(function() {
+                        if (!$(this).val()) {
+                            allSelected = false;
+                        }
+                    });
+                    if (allSelected) {
+                        if ($('.proceed-quotation-btn').length === 0) {
+                            $('.d-flex.flex-wrap.justify-content-center.gap-3.mt-4').prepend(`
+                                <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" class="d-inline proceed-quotation-btn">
+                                    @csrf
+                                    <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
+                                </form>
+                            `);
+                        }
+                    }
+                }, 500);
+                // --- END NEW ---
             });
     });
 });
@@ -556,6 +584,26 @@ $(document).on('change', '.supplier-select', function() {
         },
         success: function(response) {
             // Optionally show a toast or feedback
+            // --- NEW: Check if all suppliers are selected and show the button ---
+            let allSelected = true;
+            $('.supplier-select').each(function() {
+                if (!$(this).val()) {
+                    allSelected = false;
+                }
+            });
+            if (allSelected) {
+                if ($('.proceed-quotation-btn').length === 0) {
+                    $('.d-flex.flex-wrap.justify-content-center.gap-3.mt-4').prepend(`
+                        <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" class="d-inline proceed-quotation-btn">
+                            @csrf
+                            <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
+                        </form>
+                    `);
+                }
+            } else {
+                $('.proceed-quotation-btn').remove();
+            }
+            // --- END NEW ---
         }
     });
 });
