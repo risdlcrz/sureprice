@@ -240,6 +240,8 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+const DEFAULT_CREW_SIZE = 8; // 8 workers
+const DEFAULT_HOURS_PER_DAY = 8; // 8 hours per day
 const scopeTypesByCode = @json($scopeTypesByCode);
 const materialSuppliers = @json($materialSuppliers);
 const badgeColors = {
@@ -270,14 +272,20 @@ function updateRoomAreas(roomRow) {
 function updateScopeDays(room) {
     const length = parseFloat(room.querySelector('.room-dimension[name$="[length]"]')?.value) || 1;
     const width = parseFloat(room.querySelector('.room-dimension[name$="[width]"]')?.value) || 1;
-    const area = length * width;
+    const floorArea = length * width;
+    const height = parseFloat(room.querySelector('.room-dimension[name$="[height]"]')?.value) || 1;
+    const wallArea = 2 * (length + width) * height;
     room.querySelectorAll('.scope-checkbox').forEach(cb => {
         const scopeId = cb.value;
         const scope = scopeTypesByCode[scopeId];
         if (!scope) return;
-        // Use time_per_sqm_days if present, else fallback to estimated_days
-        const daysPerSqm = parseFloat(scope.time_per_sqm_days) || parseFloat(scope.estimated_days) || 0;
-        const days = Math.ceil(area * daysPerSqm);
+        // Use wall area for wall work, floor area otherwise
+        const area = scope.is_wall_work ? wallArea : floorArea;
+        const laborHoursPerSqm = parseFloat(scope.labor_hours_per_sqm) || 1; // default 1 hour per sqm if not set
+        const totalLaborHours = area * laborHoursPerSqm;
+        let days = totalLaborHours / (DEFAULT_CREW_SIZE * DEFAULT_HOURS_PER_DAY);
+        days = Math.ceil(days * 2) / 2; // round up to nearest half day
+        days = Math.max(0.5, days); // minimum 0.5 days
         const daysSpan = room.querySelector(`.scope-days[data-scope-id="${scopeId}"]`);
         if (daysSpan) {
             daysSpan.textContent = days > 0 ? `(${days} day${days !== 1 ? 's' : ''})` : '';
