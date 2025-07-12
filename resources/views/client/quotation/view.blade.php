@@ -458,6 +458,9 @@ body {
                             @if($allSuppliersSelected)
                             <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" class="d-inline proceed-quotation-btn">
                                 @csrf
+                                @foreach($selectedSuppliers as $materialId => $supplierId)
+                                    <input type="hidden" name="selected_suppliers[{{ $materialId }}]" value="{{ $supplierId }}">
+                                @endforeach
                                 <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
                             </form>
                             @endif
@@ -567,6 +570,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 500);
                 // --- END NEW ---
             });
+    });
+    // Disable the Proceed button after click to prevent double submission
+    $(document).on('submit', '.proceed-quotation-btn', function(e) {
+        // Remove any existing hidden inputs for selected_suppliers
+        $(this).find('input[name^="selected_suppliers"]').remove();
+        // For each supplier-select, add a hidden input with the current value
+        $('.supplier-select').each(function() {
+            var materialId = $(this).data('material-id');
+            var supplierId = $(this).val();
+            if (supplierId) {
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: 'selected_suppliers[' + materialId + ']',
+                    value: supplierId
+                }).appendTo(e.target);
+            }
+        });
+        var btn = $(this).find('button[type="submit"]');
+        btn.prop('disabled', true);
+        btn.text('Processing...');
     });
 });
 // Save supplier selection via AJAX on change

@@ -460,22 +460,56 @@ class ClientQuotationController extends Controller
 
     public function finalizeSelection(Request $request, $id)
     {
+        \Log::info('finalizeSelection called', ['id' => $id, 'request' => $request->all()]);
         $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType.materials'])->where('id', $id)->where('user_id', auth()->id())->firstOrFail();
         $selectedSuppliers = $request->input('selected_suppliers', []);
 
         // Find all RFQs (Quotations) generated for this QuotationRequest
-        $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with(['materials'])->get();
+        $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with(['materials', 'responses.items'])->get();
 
-        // For each material, update the selected_supplier_id in material_quotation
+        // For each material, update the selected_supplier_id and unit_price in material_quotation
         foreach ($selectedSuppliers as $materialId => $supplierId) {
+            $found = false;
             foreach ($rfqs as $rfq) {
-                $rfq->materials()->updateExistingPivot($materialId, ['selected_supplier_id' => $supplierId]);
+                $quotedPrice = null;
+                foreach ($rfq->responses as $response) {
+                    if ($response->supplier_id == $supplierId) {
+                        foreach ($response->items as $item) {
+                            if ($item->material_id == $materialId) {
+                                $quotedPrice = $item->unit_price;
+                                // Only update the pivot for this RFQ and break out of both loops
+                                \Log::info('Pivot update', [
+                                    'material_id' => $materialId,
+                                    'supplier_id' => $supplierId,
+                                    'quoted_price' => $quotedPrice,
+                                    'rfq_id' => $rfq->id,
+                                ]);
+                                $rfq->materials()->updateExistingPivot($materialId, [
+                                    'selected_supplier_id' => $supplierId,
+                                    'unit_price' => $quotedPrice,
+                                ]);
+                                $found = true;
+                                break 3;
+                            }
+                        }
+                    }
+                }
+            }
+            // Optionally, log if no quoted price was found for this material/supplier
+            if (!$found) {
+                \Log::warning('No quoted price found for material/supplier', [
+                    'material_id' => $materialId,
+                    'supplier_id' => $supplierId,
+                ]);
             }
         }
 
         // Set status to proceeded only after client finalizes selection
         $quotationRequest->status = 'proceeded';
         $quotationRequest->save();
+
+        // Store selected_suppliers in session for contract calculation
+        session(['selected_suppliers' => $selectedSuppliers]);
 
         // Optionally, notify the admin
         $admins = \App\Models\User::role('admin')->get();

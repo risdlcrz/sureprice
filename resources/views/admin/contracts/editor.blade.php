@@ -324,24 +324,46 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(res => res.json())
             .then(data => {
                 // Autofill contract fields
-                document.getElementById('client_name_display').innerText = data.client?.name || '';
-                document.getElementById('client_address_display').innerText = data.client?.address || '';
-                document.getElementById('scope_of_work_display').innerText = data.scope_of_work || '';
-                document.getElementById('materials_total_display').innerText = '₱' + (data.total_materials_cost?.toFixed(2) || '0.00');
-                document.getElementById('labor_fee_display').innerText = '₱' + (data.labor_fee?.toFixed(2) || '0.00');
-                document.getElementById('grand_total_display').innerText = '₱' + (data.grand_total?.toFixed(2) || '0.00');
-                // Hidden fields for backend
-                document.getElementById('client_name').value = data.client?.name || '';
-                document.getElementById('client_street').value = data.client?.street || '';
-                document.getElementById('client_city').value = data.client?.city || '';
-                document.getElementById('client_state').value = data.client?.state || '';
-                document.getElementById('client_postal').value = data.client?.postal || '';
-                document.getElementById('client_email').value = data.client?.email || '';
-                document.getElementById('client_phone').value = data.client?.phone || '';
-                document.getElementById('scope_of_work').value = data.scope_of_work || '';
-                document.getElementById('materials_total').value = data.total_materials_cost?.toFixed(2) || '0.00';
-                document.getElementById('labor_fee').value = data.labor_fee?.toFixed(2) || '0.00';
-                document.getElementById('grand_total').value = data.grand_total?.toFixed(2) || '0.00';
+                const startDateInput = document.getElementById('project_start_date');
+                const endDateInput = document.getElementById('project_end_date');
+                if (startDateInput && data.start_date) startDateInput.value = data.start_date;
+                if (endDateInput && data.end_date) endDateInput.value = data.end_date;
+                // Autofill contract fields (with element existence checks)
+                const clientNameDisplay = document.getElementById('client_name_display');
+                if (clientNameDisplay) clientNameDisplay.innerText = data.client?.name || '';
+                const clientAddressDisplay = document.getElementById('client_address_display');
+                if (clientAddressDisplay) clientAddressDisplay.innerText = data.client?.address || '';
+                const scopeOfWorkDisplay = document.getElementById('scope_of_work_display');
+                if (scopeOfWorkDisplay) scopeOfWorkDisplay.innerText = data.scope_of_work || '';
+                const materialsTotalDisplay = document.getElementById('materials_total_display');
+                if (materialsTotalDisplay) materialsTotalDisplay.innerText = '₱' + (data.total_materials_cost?.toFixed(2) || '0.00');
+                const laborFeeDisplay = document.getElementById('labor_fee_display');
+                if (laborFeeDisplay) laborFeeDisplay.innerText = '₱' + (data.labor_fee?.toFixed(2) || '0.00');
+                const grandTotalDisplay = document.getElementById('grand_total_display');
+                if (grandTotalDisplay) grandTotalDisplay.innerText = '₱' + (data.grand_total?.toFixed(2) || '0.00');
+                // Hidden fields for backend (with checks)
+                const clientName = document.getElementById('client_name');
+                if (clientName) clientName.value = data.client?.name || '';
+                const clientStreet = document.getElementById('client_street');
+                if (clientStreet) clientStreet.value = data.client?.street || '';
+                const clientCity = document.getElementById('client_city');
+                if (clientCity) clientCity.value = data.client?.city || '';
+                const clientState = document.getElementById('client_state');
+                if (clientState) clientState.value = data.client?.state || '';
+                const clientPostal = document.getElementById('client_postal');
+                if (clientPostal) clientPostal.value = data.client?.postal || '';
+                const clientEmail = document.getElementById('client_email');
+                if (clientEmail) clientEmail.value = data.client?.email || '';
+                const clientPhone = document.getElementById('client_phone');
+                if (clientPhone) clientPhone.value = data.client?.phone || '';
+                const scopeOfWork = document.getElementById('scope_of_work');
+                if (scopeOfWork) scopeOfWork.value = data.scope_of_work || '';
+                const materialsTotal = document.getElementById('materials_total');
+                if (materialsTotal) materialsTotal.value = data.total_materials_cost?.toFixed(2) || '0.00';
+                const laborFee = document.getElementById('labor_fee');
+                if (laborFee) laborFee.value = data.labor_fee?.toFixed(2) || '0.00';
+                const grandTotal = document.getElementById('grand_total');
+                if (grandTotal) grandTotal.value = data.grand_total?.toFixed(2) || '0.00';
             });
     });
     // --- End Quotation Request Autofill ---

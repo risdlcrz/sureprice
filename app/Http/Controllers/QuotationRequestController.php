@@ -21,16 +21,56 @@ class QuotationRequestController extends Controller
         $scopeOfWork = [];
         $totalMaterialsCost = 0;
         $laborFee = 0;
+        // Use selected_suppliers from session if available (from form POST), otherwise use DB
+        $selectedSuppliers = session('selected_suppliers') ?? $quotation->selected_suppliers ?? [];
+        // Gather all RFQs for this quotation request
+        $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #' . $quotation->request_number . '%')->with(['materials'])->get();
         foreach ($quotation->rooms as $room) {
             foreach ($room->scopes as $scope) {
                 $scopeName = $scope->scopeType->name ?? $scope->scope_name ?? '';
                 $scopeOfWork[] = $scopeName;
                 if (is_array($scope->selected_materials)) {
                     foreach ($scope->selected_materials as $mat) {
-                        $material = \App\Models\Material::find($mat['material_id'] ?? $mat['id'] ?? null);
+                        $materialId = $mat['material_id'] ?? $mat['id'] ?? null;
+                        \Log::info('Contract showJson processing material', [
+                            'material_id' => $materialId,
+                            'selected_suppliers' => $selectedSuppliers,
+                        ]);
                         $qty = $mat['quantity'] ?? 1;
-                        $unitPrice = $material ? $material->base_price : 0;
+                        $unitPrice = 0;
+                        // Try to get the selected supplier's quoted price from the pivot
+                        if ($materialId && isset($selectedSuppliers[$materialId])) {
+                            $selectedSupplierId = $selectedSuppliers[$materialId];
+                            foreach (array_reverse($rfqs->all()) as $rfq) {
+                                $pivot = \DB::table('material_quotation')
+                                    ->where('quotation_id', $rfq->id)
+                                    ->where('material_id', $materialId)
+                                    ->where('selected_supplier_id', $selectedSupplierId)
+                                    ->first();
+                                if ($pivot && $pivot->unit_price) {
+                                    $unitPrice = $pivot->unit_price;
+                                    \Log::info('Contract showJson material (DB direct)', [
+                                        'material_id' => $materialId,
+                                        'selected_supplier_id' => $selectedSupplierId,
+                                        'unit_price' => $unitPrice,
+                                        'rfq_id' => $rfq->id,
+                                    ]);
+                                    break;
+                                }
+                            }
+                        }
+                        // Fallback to base price if no supplier price found
+                        if (!$unitPrice && $materialId) {
+                            $material = \App\Models\Material::find($materialId);
+                            $unitPrice = $material ? $material->base_price : 0;
+                        }
                         $amount = $unitPrice * $qty;
+                        \Log::info('Contract material calculation', [
+                            'material_id' => $materialId,
+                            'qty' => $qty,
+                            'unit_price' => $unitPrice,
+                            'amount' => $amount,
+                        ]);
                         $totalMaterialsCost += $amount;
                         $laborFee += 0.15 * $amount; // 15% labor fee
                     }
@@ -58,6 +98,8 @@ class QuotationRequestController extends Controller
             'grand_total' => $grandTotal,
             'total_hours' => $totalHours,
             'total_days' => $totalDays,
+            'start_date' => $quotation->start_date ?? null,
+            'end_date' => $quotation->end_date ?? null,
         ]);
     }
 } 
