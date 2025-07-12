@@ -29,6 +29,17 @@
             <label for="admin_signature" class="form-label">Admin Signature</label>
             <input type="text" class="form-control" id="admin_signature" name="admin_signature" required>
         </div>
+        <div class="mb-3">
+            <label class="form-label">Project Timeline</label>
+            <div>
+                <strong>Start Date:</strong>
+                <input type="date" name="start_date" value="{{ $timelineStartDate ?? '' }}" readonly>
+                <strong>End Date:</strong>
+                <input type="date" name="end_date" value="{{ $timelineEndDate ?? '' }}" readonly>
+                <br>
+                <strong>Total Estimated Days:</strong> {{ $timelineEstimatedDays ?? 'Not set' }}
+            </div>
+        </div>
         <button type="submit" class="btn btn-success">Submit Contract</button>
         <a href="{{ route('client.contract.download', ['id' => $quotationRequest->id]) }}" class="btn btn-primary">Download as PDF</a>
     </form>

@@ -598,15 +598,26 @@ class ContractController extends Controller
             ]);
 
             // Create rooms and their scopes
+            $crewSize = 8;
+            $hoursPerDay = 8;
             $totalEstimatedDays = 0;
             foreach (session('contract_step2.rooms', []) as $roomId => $roomData) {
-                // Calculate estimated days for this room
                 $roomEstimatedDays = 0;
                 if (!empty($roomData['scope'])) {
-                    $roomEstimatedDays = (int)\App\Models\ScopeType::whereIn('id', $roomData['scope'])
-                        ->sum('estimated_days');
+                    foreach ($roomData['scope'] as $scopeId) {
+                        $scope = \App\Models\ScopeType::find($scopeId);
+                        $isWallWork = $scope && $scope->is_wall_work;
+                        $area = $isWallWork
+                            ? 2 * ($roomData['length'] + $roomData['width']) * $roomData['height']
+                            : $roomData['length'] * $roomData['width'];
+                        $laborHoursPerSqm = $scope && $scope->labor_hours_per_sqm ? $scope->labor_hours_per_sqm : 1;
+                        $totalLaborHours = $area * $laborHoursPerSqm;
+                        $days = $totalLaborHours / ($crewSize * $hoursPerDay);
+                        $days = ceil($days * 2) / 2;
+                        $days = max(0.5, $days);
+                        $roomEstimatedDays += $days;
+                    }
                 }
-
                 $room = $contract->rooms()->create([
                     'name' => $roomData['name'],
                     'length' => $roomData['length'],
@@ -619,18 +630,13 @@ class ContractController extends Controller
                     'labor_cost' => $roomData['labor_cost'] ?? 0,
                     'estimated_days' => $roomEstimatedDays
                 ]);
-
                 if (!empty($roomData['scope'])) {
                     $room->scopeTypes()->attach($roomData['scope']);
                 }
-
-                // Update total estimated days (use max since some work can be done in parallel)
-                $totalEstimatedDays = max($totalEstimatedDays, $roomEstimatedDays);
+                $totalEstimatedDays += $roomEstimatedDays;
             }
-
-            // Update contract end date and estimated days
             $contract->estimated_days = $totalEstimatedDays;
-            $contract->end_date = \Carbon\Carbon::parse($contract->start_date)->addDays((int)$totalEstimatedDays);
+            $contract->end_date = \Carbon\Carbon::parse($contract->start_date)->addDays((int)ceil($totalEstimatedDays));
             $contract->save();
 
             // Create contract items

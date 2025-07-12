@@ -82,6 +82,7 @@
                 <p class="mt-2">
                     <span class="fw-bold">Start Date:</span> <input type="date" id="project_start_date" name="project_start_date" class="contract-inline-input" required>
                     <span class="fw-bold ms-3">End Date:</span> <input type="date" id="project_end_date" name="project_end_date" class="contract-inline-input" required>
+                    <!-- Removed Estimated Days display -->
                 </p>
             </div>
             <div class="row mb-3">
@@ -372,8 +373,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateTimeline() {
       const start = document.getElementById('project_start_date').value;
       const end = document.getElementById('project_end_date').value;
-      document.getElementById('timeline_start_display').innerText = start;
-      document.getElementById('timeline_end_display').innerText = end;
+      var startDisplay = document.getElementById('timeline_start_display');
+      var endDisplay = document.getElementById('timeline_end_display');
+      if (startDisplay) startDisplay.innerText = start;
+      if (endDisplay) endDisplay.innerText = end;
       // Only enable save if both dates are filled
       const saveBtn = document.getElementById('save-btn');
       if (start && end) {
@@ -479,31 +482,35 @@ function checkSignaturesAndToggleApprovalBtn() {
 }
 
 // Autofill date on signature
-contractorPad.onEnd = function() {
-    if (!contractorPad.isEmpty()) {
-        const today = setTodayDateString();
-        document.getElementById('contractor_date_signed_display').innerText = today;
-        document.getElementById('contractor_date_signed').value = today;
-    } else {
-        document.getElementById('contractor_date_signed_display').innerText = '';
-        document.getElementById('contractor_date_signed').value = '';
-    }
-    checkSignaturesAndToggleApprovalBtn();
-};
-clientPad.onEnd = function() {
-    if (!clientPad.isEmpty()) {
-        const today = setTodayDateString();
-        document.getElementById('client_date_signed_display').innerText = today;
-        document.getElementById('client_date_signed').value = today;
-    } else {
-        document.getElementById('client_date_signed_display').innerText = '';
-        document.getElementById('client_date_signed').value = '';
-    }
-    checkSignaturesAndToggleApprovalBtn();
-};
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize signature pads
+    var contractorPad = new SignaturePad(document.getElementById('contractor-signature-pad'));
+    var clientPad = new SignaturePad(document.getElementById('client-signature-pad'));
 
-updateSignaturePadAccess();
-checkSignaturesAndToggleApprovalBtn();
+    // Autofill date on signature
+    contractorPad.onEnd = function() {
+        if (!contractorPad.isEmpty()) {
+            const today = setTodayDateString();
+            document.getElementById('contractor_date_signed_display').innerText = today;
+            document.getElementById('contractor_date_signed').value = today;
+        } else {
+            document.getElementById('contractor_date_signed_display').innerText = '';
+            document.getElementById('contractor_date_signed').value = '';
+        }
+        checkSignaturesAndToggleApprovalBtn();
+    };
+    clientPad.onEnd = function() {
+        if (!clientPad.isEmpty()) {
+            const today = setTodayDateString();
+            document.getElementById('client_date_signed_display').innerText = today;
+            document.getElementById('client_date_signed').value = today;
+        } else {
+            document.getElementById('client_date_signed_display').innerText = '';
+            document.getElementById('client_date_signed').value = '';
+        }
+        checkSignaturesAndToggleApprovalBtn();
+    };
+});
 
 // Submit for Approval button logic
 const submitApprovalBtn = document.getElementById('submit-approval-btn');
@@ -521,5 +528,49 @@ if (submitApprovalBtn) {
         form.submit();
     });
 }
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const qrSelect = document.getElementById('quotation_request_id');
+    const startDateInput = document.getElementById('project_start_date');
+    const endDateInput = document.getElementById('project_end_date');
+    const estimatedDaysDisplay = document.getElementById('estimated_days_display');
+
+    if (!qrSelect) {
+        console.error('quotation_request_id select not found!');
+        return;
+    }
+
+    qrSelect.addEventListener('change', function() {
+        const qrId = this.value;
+        if (!qrId) return;
+        console.log('Fetching timeline for quotation request ID:', qrId);
+        fetch(`/api/quotation-requests/${qrId}`)
+            .then(res => res.json())
+            .then(data => {
+                console.log('API response:', data);
+                let startDate = data.start_date || new Date().toISOString().slice(0, 10);
+                startDateInput.value = startDate;
+                console.log('Setting start date:', startDate);
+                if (data.end_date) {
+                    endDateInput.value = data.end_date;
+                    console.log('Setting end date (from API):', data.end_date);
+                } else if (data.total_days) {
+                    const d = new Date(startDate);
+                    d.setDate(d.getDate() + Math.ceil(data.total_days));
+                    const endDate = d.toISOString().slice(0, 10);
+                    endDateInput.value = endDate;
+                    console.log('Setting end date (calculated):', endDate);
+                }
+                if (estimatedDaysDisplay && data.total_days) {
+                    estimatedDaysDisplay.textContent = data.total_days;
+                    console.log('Setting estimated days:', data.total_days);
+                }
+            })
+            .catch(err => {
+                console.error('Failed to fetch quotation request timeline:', err);
+            });
+    });
+});
 </script>
 @endpush 

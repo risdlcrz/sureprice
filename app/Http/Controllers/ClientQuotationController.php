@@ -318,9 +318,37 @@ class ClientQuotationController extends Controller
 
     public function showContractForm($id)
     {
-        $quotationRequest = \App\Models\QuotationRequest::findOrFail($id);
-        // Pass any other data needed for the contract
-        return view('client.quotation.contract', compact('quotationRequest'));
+        $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType'])->findOrFail($id);
+        // Calculate timeline
+        $crewSize = 8;
+        $hoursPerDay = 8;
+        $totalEstimatedDays = 0;
+        foreach ($quotationRequest->rooms as $room) {
+            $roomEstimatedDays = 0;
+            foreach ($room->scopes as $scope) {
+                $scopeType = $scope->scopeType;
+                $isWallWork = $scopeType && $scopeType->is_wall_work;
+                $area = $isWallWork
+                    ? 2 * ($room->length + $room->width) * $room->height
+                    : $room->length * $room->width;
+                $laborHoursPerSqm = $scopeType && $scopeType->labor_hours_per_sqm ? $scopeType->labor_hours_per_sqm : 1;
+                $totalLaborHours = $area * $laborHoursPerSqm;
+                $days = $totalLaborHours / ($crewSize * $hoursPerDay);
+                $days = ceil($days * 2) / 2;
+                $days = max(0.5, $days);
+                $roomEstimatedDays += $days;
+            }
+            $totalEstimatedDays = max($totalEstimatedDays, $roomEstimatedDays);
+        }
+        $timelineStartDate = now()->format('Y-m-d');
+        $timelineEndDate = now()->copy()->addDays(ceil($totalEstimatedDays))->format('Y-m-d');
+        $timelineEstimatedDays = $totalEstimatedDays;
+        \Log::info('Timeline', [
+            'start' => $timelineStartDate,
+            'end' => $timelineEndDate,
+            'days' => $timelineEstimatedDays
+        ]);
+        return view('client.quotation.contract', compact('quotationRequest', 'timelineStartDate', 'timelineEndDate', 'timelineEstimatedDays'));
     }
 
     // Removed proceed method, status is now set in finalizeSelection

@@ -80,6 +80,50 @@ class QuotationRequestController extends Controller
         $grandTotal = $totalMaterialsCost + $laborFee;
         $totalHours = $quotation->total_hours ?? 0;
         $totalDays = $totalHours > 0 ? ceil($totalHours / 8) : 0;
+        $startDate = $quotation->start_date ?? now()->format('Y-m-d');
+        if (!$totalDays) {
+            $crewSize = 8;
+            $hoursPerDay = 8;
+            foreach ($quotation->rooms as $room) {
+                $roomEstimatedDays = 0;
+                foreach ($room->scopes as $scope) {
+                    $scopeType = $scope->scopeType;
+                    $isWallWork = $scopeType && $scopeType->is_wall_work;
+                    $area = $isWallWork
+                        ? 2 * ($room->length + $room->width) * $room->height
+                        : $room->length * $room->width;
+                    // Fix: sum labor_hours_per_sqm from tasks if not set directly
+                    $laborHoursPerSqm = 1;
+                    if ($scopeType) {
+                        if ($scopeType->labor_hours_per_sqm) {
+                            $laborHoursPerSqm = $scopeType->labor_hours_per_sqm;
+                        } elseif ($scopeType->tasks) {
+                            $tasks = is_array($scopeType->tasks) ? $scopeType->tasks : json_decode($scopeType->tasks, true);
+                            if (is_array($tasks)) {
+                                $laborHoursPerSqm = array_sum(array_column($tasks, 'labor_hours_per_sqm'));
+                            }
+                        }
+                    }
+                    $totalLaborHours = $area * $laborHoursPerSqm;
+                    $days = $totalLaborHours / ($crewSize * $hoursPerDay);
+                    $days = ceil($days * 2) / 2;
+                    $days = max(0.5, $days);
+                    if ($scopeType && $scopeType->estimated_days) {
+                        $roomEstimatedDays += $scopeType->estimated_days;
+                    } else {
+                        $roomEstimatedDays += $days;
+                    }
+                }
+                $totalDays += $roomEstimatedDays;
+            }
+        }
+        // Always recalculate end date after totalDays is finalized
+        $endDate = \Carbon\Carbon::parse($startDate)->addDays(ceil($totalDays))->format('Y-m-d');
+        \Log::info('Quotation timeline calculation', [
+            'quotation_id' => $quotation->id,
+            'total_days' => $totalDays,
+            'rooms' => $quotation->rooms ? $quotation->rooms->toArray() : null,
+        ]);
         return response()->json([
             'client' => [
                 'name' => $company->company_name ?? $quotation->user->name,
@@ -98,8 +142,8 @@ class QuotationRequestController extends Controller
             'grand_total' => $grandTotal,
             'total_hours' => $totalHours,
             'total_days' => $totalDays,
-            'start_date' => $quotation->start_date ?? null,
-            'end_date' => $quotation->end_date ?? null,
+            'start_date' => $startDate,
+            'end_date' => $endDate,
         ]);
     }
 } 
