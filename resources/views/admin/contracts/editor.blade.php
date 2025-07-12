@@ -534,43 +534,64 @@ document.addEventListener('DOMContentLoaded', function() {
     const qrSelect = document.getElementById('quotation_request_id');
     const startDateInput = document.getElementById('project_start_date');
     const endDateInput = document.getElementById('project_end_date');
-    const estimatedDaysDisplay = document.getElementById('estimated_days_display');
+    let estimatedDays = 0;
 
-    if (!qrSelect) {
-        console.error('quotation_request_id select not found!');
-        return;
+    function updateEndDate() {
+        console.log('updateEndDate called');
+        console.log('startDateInput.value:', startDateInput.value);
+        console.log('estimatedDays:', estimatedDays);
+        if (!startDateInput.value || !estimatedDays) return;
+        const startDate = new Date(startDateInput.value);
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + Math.ceil(estimatedDays));
+        endDateInput.value = endDate.toISOString().slice(0, 10);
+        console.log('endDateInput.value set to:', endDateInput.value);
     }
 
-    qrSelect.addEventListener('change', function() {
-        const qrId = this.value;
-        if (!qrId) return;
-        console.log('Fetching timeline for quotation request ID:', qrId);
-        fetch(`/api/quotation-requests/${qrId}`)
-            .then(res => res.json())
-            .then(data => {
-                console.log('API response:', data);
-                let startDate = data.start_date || new Date().toISOString().slice(0, 10);
-                startDateInput.value = startDate;
-                console.log('Setting start date:', startDate);
-                if (data.end_date) {
-                    endDateInput.value = data.end_date;
-                    console.log('Setting end date (from API):', data.end_date);
-                } else if (data.total_days) {
-                    const d = new Date(startDate);
-                    d.setDate(d.getDate() + Math.ceil(data.total_days));
-                    const endDate = d.toISOString().slice(0, 10);
-                    endDateInput.value = endDate;
-                    console.log('Setting end date (calculated):', endDate);
-                }
-                if (estimatedDaysDisplay && data.total_days) {
-                    estimatedDaysDisplay.textContent = data.total_days;
-                    console.log('Setting estimated days:', data.total_days);
-                }
-            })
-            .catch(err => {
-                console.error('Failed to fetch quotation request timeline:', err);
-            });
-    });
+    if (window.jQuery && $('#quotation_request_id').data('select2')) {
+        // Use Laravel's url() helper to generate the correct API endpoint
+        const apiBaseUrl = "{{ url('api/quotation-requests') }}";
+        $('#quotation_request_id').on('select2:select', function(e) {
+            const qrId = e.params.data.id;
+            console.log('select2:select fired, qrId:', qrId);
+            if (!qrId) return;
+            fetch(`${apiBaseUrl}/${qrId}`)
+                .then(res => {
+                    console.log('Fetch response status:', res.status);
+                    return res.json();
+                })
+                .then(data => {
+                    console.log('Fetched data:', data);
+                    estimatedDays = data.total_days || 0;
+                    console.log('Fetched estimatedDays:', estimatedDays);
+                    updateEndDate();
+                })
+                .catch(err => {
+                    console.error('Failed to fetch quotation request timeline:', err);
+                });
+        });
+    } else if (qrSelect) {
+        qrSelect.addEventListener('change', function() {
+            const qrId = this.value;
+            if (!qrId) return;
+            fetch(`/api/quotation-requests/${qrId}`)
+                .then(res => res.json())
+                .then(data => {
+                    estimatedDays = data.total_days || 0;
+                    console.log('Fetched estimatedDays:', estimatedDays);
+                    updateEndDate();
+                })
+                .catch(err => {
+                    console.error('Failed to fetch quotation request timeline:', err);
+                });
+        });
+    }
+
+    if (startDateInput) {
+        startDateInput.addEventListener('change', function() {
+            updateEndDate();
+        });
+    }
 });
 </script>
 @endpush 
