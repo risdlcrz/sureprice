@@ -192,6 +192,22 @@
             background: #e8f5e9;
             color: #1b5e20;
         }
+        
+        /* Notification badge styles */
+        .position-relative .badge {
+            position: absolute !important;
+            top: 0 !important;
+            right: 0 !important;
+            transform: translate(50%, -50%) !important;
+            font-size: 0.75em !important;
+            min-width: 18px !important;
+            height: 18px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border-radius: 9px !important;
+            z-index: 10 !important;
+        }
     </style>
     <link rel="icon" type="image/png" href="{{ asset('images/sureprice.png') }}" />
     <link rel="stylesheet" href="{{ asset('resources/css/app.css') }}">

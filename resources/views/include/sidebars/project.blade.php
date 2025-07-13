@@ -36,6 +36,12 @@
             <i class="fas fa-money-check-alt"></i> Payments
         </a>
     </li>
+    <a href="{{ route('messages.index') }}" class="btn position-relative">
+        <i class="fas fa-comments"></i>Messages
+        @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $globalUnreadCount }}</span>
+        @endif
+    </a>
 </div>
 
 <!-- Logout Button -->

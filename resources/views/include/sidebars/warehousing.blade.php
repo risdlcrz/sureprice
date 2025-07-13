@@ -32,6 +32,12 @@
     <a href="{{ route('warehouse.reports.index') }}" class="btn {{ request()->routeIs('warehouse.reports.*') ? 'active' : '' }}">
         <i class="fas fa-file-alt"></i>Reports
     </a>
+    <a href="{{ route('messages.index') }}" class="btn position-relative">
+        <i class="fas fa-comments"></i>Messages
+        @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $globalUnreadCount }}</span>
+        @endif
+    </a>
 </div>
 
 <!-- Logout Button -->

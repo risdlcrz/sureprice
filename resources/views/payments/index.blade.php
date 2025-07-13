@@ -108,12 +108,12 @@
     </div>
 
     <h2>PO Payments</h2>
-    <div class="card mb-4">
-        <div class="card-header">Purchase Order Payments</div>
+    <div class="card mb-4 shadow-sm rounded">
+        <div class="card-header bg-white fw-semibold">Purchase Order Payments</div>
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
+            <div class="table-responsive rounded bg-white p-2">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-success">
                         <tr>
                             <th>PO #</th>
                             <th>Supplier</th>
@@ -124,7 +124,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach(App\Models\PurchaseOrderPayment::latest()->take(20)->get() as $poPayment)
+                        @php $poPayments = App\Models\PurchaseOrderPayment::latest()->take(20)->get(); @endphp
+                        @forelse($poPayments as $poPayment)
                             <tr>
                                 <td><a href="{{ route('purchase-orders.show', $poPayment->purchaseOrder) }}">{{ $poPayment->purchaseOrder->po_number }}</a></td>
                                 <td>{{ $poPayment->purchaseOrder->supplier->company_name ?? '-' }}</td>
@@ -135,11 +136,74 @@
                                     <a href="{{ route('purchase-orders.show', $poPayment->purchaseOrder) }}" class="btn btn-sm btn-info">View PO</a>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <div class="d-flex flex-column align-items-center justify-content-center">
+                                        <i class="fas fa-money-check-alt fa-3x mb-3 text-muted"></i>
+                                        <span class="fw-semibold text-muted" style="font-size:1.2em;">No purchase order payments found.</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 </div>
+@push('styles')
+<style>
+body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+}
+.card {
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    border: none;
+    margin-bottom: 2rem;
+}
+.card-header {
+    background: #fff;
+    border-radius: 1.25rem 1.25rem 0 0;
+    border-bottom: none;
+    padding: 1.5rem 2rem 1rem 2rem;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 1rem;
+}
+.table-responsive {
+    border-radius: 1.1rem;
+    overflow-x: auto;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    background: #fff;
+    max-width: 100%;
+}
+.table {
+    margin-bottom: 0;
+    background: #fff;
+    border-radius: 1.1rem;
+    overflow: hidden;
+    font-size: 0.97rem;
+}
+.table th, .table td {
+    vertical-align: middle;
+    padding: 0.7rem 0.5rem;
+    border: none;
+    background: #f8fafc;
+    text-align: center;
+}
+.table thead th {
+    background: #e8f5e9;
+    font-weight: 700;
+    color: #198754;
+    border-bottom: 2px solid #e3e3e3;
+    text-align: center;
+}
+.table-hover tbody tr:hover {
+    background: #e3f2fd44;
+}
+</style>
+@endpush
 @endsection 

@@ -347,7 +347,7 @@ body, html {
     <div class="messenger-sidebar">
         <div class="messenger-sidebar-header">
             <h3>Messages</h3>
-            @if(Auth::user()->user_type === 'admin' || (Auth::user()->user_type === 'company' && Auth::user()->company) )
+            @if(Auth::user()->user_type === 'admin' || (Auth::user()->user_type === 'company' && Auth::user()->company) || Auth::user()->role === 'manager')
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#startConversationModal" style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0;">
                     <i class="fas fa-plus"></i>
                 </button>
@@ -578,44 +578,78 @@ body, html {
             <div class="modal-body">
                 <form action="{{ route('messages.start') }}" method="POST">
                     @csrf
-                    @if(Auth::user()->user_type === 'admin')
+                    @if(Auth::user()->user_type === 'admin' || Auth::user()->role === 'manager')
                         <div class="mb-3">
-                            <label for="participant_select_start" class="form-label">Start conversation with</label>
-                            <select class="form-control" id="participant_select_start" required>
-                                <option value="">Select Client or Supplier</option>
-                                @foreach(\App\Models\User::where('user_type', 'company')->whereHas('company', function($q){ $q->where('designation', 'client'); })->get() as $client)
-                                    <option value="client_{{ $client->id }}">Client: {{ $client->company->company_name }}</option>
-                                @endforeach
-                                @foreach(\App\Models\Supplier::all() as $supplier)
-                                    <option value="supplier_{{ $supplier->id }}">Supplier: {{ $supplier->company_name }}</option>
-                                @endforeach
-                            </select>
+                            <label for="participant_search_start" class="form-label">Search for Client or Supplier</label>
+                            <input type="text" class="form-control" id="participant_search_start" placeholder="Type to search..." autocomplete="off" required>
+                            <div id="participant_search_results_start" class="list-group position-absolute w-100" style="z-index: 1000; display: none;"></div>
                             <input type="hidden" name="client_id" id="client_id_hidden_start">
                             <input type="hidden" name="supplier_id" id="supplier_id_hidden_start">
                         </div>
                         <script>
                         document.addEventListener('DOMContentLoaded', function() {
-                            const participantSelect = document.getElementById('participant_select_start');
+                            const searchInput = document.getElementById('participant_search_start');
+                            const resultsDiv = document.getElementById('participant_search_results_start');
                             const clientIdHidden = document.getElementById('client_id_hidden_start');
                             const supplierIdHidden = document.getElementById('supplier_id_hidden_start');
-                            
-                            if (participantSelect) {
-                                participantSelect.addEventListener('change', function() {
-                                    // Clear both hidden fields initially
+                            let searchTimeout;
+                            searchInput.addEventListener('input', function() {
+                                clearTimeout(searchTimeout);
+                                const term = searchInput.value.trim();
+                                clientIdHidden.value = '';
+                                supplierIdHidden.value = '';
+                                clientIdHidden.name = '';
+                                supplierIdHidden.name = '';
+                                if (term.length < 2) {
+                                    resultsDiv.style.display = 'none';
+                                    resultsDiv.innerHTML = '';
+                                    return;
+                                }
+                                searchTimeout = setTimeout(function() {
+                                    fetch(`{{ route('admin.companies.search-for-chat') }}?search=${encodeURIComponent(term)}`)
+                                        .then(res => res.json())
+                                        .then(data => {
+                                            if (data.data && data.data.length > 0) {
+                                                resultsDiv.innerHTML = data.data.map(item =>
+                                                    `<a href="#" class="list-group-item list-group-item-action d-flex align-items-center" data-id="${item.id}" data-designation="${item.designation.toLowerCase()}">
+                                                        <span class="fw-semibold flex-grow-1">${item.text}</span>
+                                                        <span class="badge bg-${item.designation.toLowerCase() === 'client' ? 'primary' : 'success'} ms-2">${item.designation}</span>
+                                                    </a>`
+                                                ).join('');
+                                                resultsDiv.style.display = 'block';
+                                            } else {
+                                                resultsDiv.innerHTML = '<div class="list-group-item">No results found</div>';
+                                                resultsDiv.style.display = 'block';
+                                            }
+                                        });
+                                }, 250);
+                            });
+                            resultsDiv.addEventListener('click', function(e) {
+                                if (e.target.closest('.list-group-item-action')) {
+                                    e.preventDefault();
+                                    const item = e.target.closest('.list-group-item-action');
+                                    const id = item.getAttribute('data-id');
+                                    const designation = item.getAttribute('data-designation');
                                     clientIdHidden.value = '';
                                     supplierIdHidden.value = '';
                                     clientIdHidden.name = '';
                                     supplierIdHidden.name = '';
-                                    
-                                    if (this.value.startsWith('client_')) {
+                                    if (designation === 'client') {
                                         clientIdHidden.name = 'client_id';
-                                        clientIdHidden.value = this.value.replace('client_', '');
-                                    } else if (this.value.startsWith('supplier_')) {
+                                        clientIdHidden.value = id;
+                                    } else if (designation === 'supplier') {
                                         supplierIdHidden.name = 'supplier_id';
-                                        supplierIdHidden.value = this.value.replace('supplier_', '');
+                                        supplierIdHidden.value = id;
                                     }
-                                });
-                            }
+                                    searchInput.value = item.querySelector('.fw-semibold').textContent;
+                                    resultsDiv.style.display = 'none';
+                                }
+                            });
+                            document.addEventListener('click', function(e) {
+                                if (!e.target.closest('#participant_search_start, #participant_search_results_start')) {
+                                    resultsDiv.style.display = 'none';
+                                }
+                            });
                         });
                         </script>
                     @elseif(Auth::user()->user_type === 'company' && Auth::user()->company && Auth::user()->company->designation === 'client')

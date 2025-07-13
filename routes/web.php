@@ -507,3 +507,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         return view('admin.dbadmin');
     })->name('dbadmin');
 });
+
+// Test route for notification count (remove in production)
+Route::get('/test-notifications', function () {
+    $service = new \App\Services\NotificationService();
+    $count = $service::getUnreadCount();
+    return response()->json([
+        'unread_count' => $count,
+        'user_id' => auth()->id(),
+        'user_name' => auth()->user()->name ?? 'Unknown'
+    ]);
+})->middleware('auth');

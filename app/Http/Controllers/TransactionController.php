@@ -15,8 +15,17 @@ class TransactionController extends Controller
 
         // If user is not admin, only show their transactions
         if (auth()->user()->user_type !== 'admin') {
-            $query->whereHas('contract', function($q) {
-                $q->where('client_id', auth()->user()->party->id);
+            $party = auth()->user()->party;
+            if (!$party) {
+                // No party found, show empty list and warning
+                $transactions = collect([]);
+                return view('transactions.index', [
+                    'transactions' => $transactions,
+                    'warning' => 'No party record found for your account. Please contact the administrator.'
+                ]);
+            }
+            $query->whereHas('contract', function($q) use ($party) {
+                $q->where('client_id', $party->id);
             });
         }
 
