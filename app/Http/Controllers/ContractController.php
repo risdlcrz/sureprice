@@ -1303,6 +1303,44 @@ class ContractController extends Controller
             if ($request->status === 'approved') {
                 \Log::info('Attempting to generate payments');
                 $contract->generatePayments();
+
+                // Auto-create project if not exists
+                if (!\App\Models\Project::where('contract_id', $contract->id)->exists()) {
+                    $project = \App\Models\Project::create([
+                        'project_number' => \App\Models\Project::generateProjectNumber(),
+                        'contract_id' => $contract->id,
+                        'name' => $contract->title ?? 'Project for Contract ' . $contract->contract_number,
+                        'description' => $contract->scope_description ?? '',
+                        'start_date' => $contract->start_date,
+                        'end_date' => $contract->end_date,
+                        'status' => 'pending',
+                        'progress' => 0,
+                        'project_manager_id' => $contract->contractor_id, // or assign as needed
+                        'client_representative_id' => $contract->client_id, // or assign as needed
+                        'budget' => $contract->total_amount,
+                        'notes' => $contract->scope_of_work ?? '',
+                    ]);
+
+                    // Generate project tasks from contract scopes/rooms
+                    foreach ($contract->rooms as $room) {
+                        foreach ($room->scopeTypes as $scopeType) {
+                            $duration = $scopeType->estimated_days ?? 7;
+                            $startDate = $contract->start_date;
+                            $endDate = $startDate->copy()->addDays($duration);
+                            \App\Models\ProjectTask::create([
+                                'project_id' => $project->id,
+                                'name' => $scopeType->name . ' in ' . $room->name,
+                                'description' => 'Complete ' . $scopeType->name . ' work in ' . $room->name,
+                                'start_date' => $startDate,
+                                'due_date' => $endDate,
+                                'status' => 'pending',
+                                'priority' => 'medium',
+                                'progress' => 0,
+                                'notes' => null,
+                            ]);
+                        }
+                    }
+                }
             }
 
             DB::commit();

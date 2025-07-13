@@ -12,7 +12,18 @@
         </div>
     @endif
     <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Projects Dashboard</h1>
-    <div class="d-flex justify-content-end align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <form method="GET" action="{{ route('projects.index') }}" class="flex-grow-1 me-3" style="max-width: 600px;">
+            <div class="input-group search-bar-container custom-search-bar">
+                <span class="input-group-text bg-white border-0 ps-3" id="search-icon" style="border-radius: 32px 0 0 32px;">
+                    <i class="bi bi-search text-primary"></i>
+                </span>
+                <input type="text" name="q" class="form-control border-0 px-4 py-3 bg-white" placeholder="Search projects..." value="{{ request('q') }}" aria-label="Search projects" aria-describedby="search-icon" style="border-radius: 0 32px 32px 0; font-size: 1.15rem;">
+                <button class="btn btn-primary px-4 py-2 ms-2 rounded-pill shadow-sm" type="submit" style="font-size: 1.1rem; font-weight: 500;">
+                    Search
+                </button>
+            </div>
+        </form>
         @if(isset($userParty) && $userParty->banned)
             <button class="btn btn-primary" disabled title="You are banned and cannot create new projects."><i class="bi bi-plus-lg"></i> New Project</button>
         @else
@@ -21,17 +32,6 @@
             </a>
         @endif
     </div>
-    <form method="GET" action="{{ route('projects.index') }}" class="mb-4">
-        <div class="input-group search-bar-container custom-search-bar" style="max-width: 600px; margin: 0 auto;">
-            <span class="input-group-text bg-white border-0 ps-3" id="search-icon" style="border-radius: 32px 0 0 32px;">
-                <i class="bi bi-search text-primary"></i>
-            </span>
-            <input type="text" name="q" class="form-control border-0 px-4 py-3 bg-white" placeholder="Search projects..." value="{{ request('q') }}" aria-label="Search projects" aria-describedby="search-icon" style="border-radius: 0 32px 32px 0; font-size: 1.15rem;">
-            <button class="btn btn-primary px-4 py-2 ms-2 rounded-pill shadow-sm" type="submit" style="font-size: 1.1rem; font-weight: 500;">
-                Search
-            </button>
-        </div>
-    </form>
     <div class="row mb-3 g-3">
         <div class="col-md-4 col-6">
             <div class="card text-center shadow-sm border-0 p-3 rounded-4">
@@ -53,73 +53,17 @@
         </div>
     </div>
     <div class="mb-3">
-        <div class="d-flex align-items-center flex-wrap gap-2">
-            <span class="fw-semibold me-2">Projects by Status:</span>
-            <span class="badge bg-secondary">Proposed: {{ $projects->where('status', 'proposed')->count() }}</span>
-            <span class="badge bg-info">Planning: {{ $projects->where('status', 'planning')->count() }}</span>
-            <span class="badge bg-success">Approved: {{ $projects->where('status', 'approved')->count() }}</span>
-            <span class="badge bg-primary">In Progress: {{ $projects->where('status', 'in_progress')->count() }}</span>
-            <span class="badge bg-warning">On Hold: {{ $projects->where('status', 'on_hold')->count() }}</span>
-            <span class="badge bg-success">Completed: {{ $projects->where('status', 'completed')->count() }}</span>
-            <span class="badge bg-dark">Closed: {{ $projects->where('status', 'closed')->count() }}</span>
-            <span class="badge bg-danger">Cancelled: {{ $projects->where('status', 'cancelled')->count() }}</span>
-        </div>
+        <!-- Status summary bar removed -->
     </div>
-    @php $recentProjects = $projects->sortByDesc('created_at')->take(5); @endphp
-    @if($recentProjects->count())
-        <div class="card mb-3">
-            <div class="card-header bg-white fw-semibold">Recent Projects</div>
-            <div class="card-body p-2">
-                <ul class="list-group list-group-flush">
-                    @foreach($recentProjects as $project)
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span>{{ $project->name }}</span>
-                            <span class="text-muted small">{{ $project->created_at->diffForHumans() }}</span>
-                        </li>
-                    @endforeach
-                </ul>
-            </div>
-        </div>
-    @endif
-    <div class="card projects-table-container">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table projects-table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Project #</th>
-                            <th>Name</th>
-                            <th>Contract</th>
-                            <th>Project Manager</th>
-                            <th>Client Rep.</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Status</th>
-                            <th>Progress</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($projects as $project)
-                        <tr>
-                            <td>{{ $project->project_number }}</td>
-                            <td>
-                                <a href="{{ route('projects.show', $project) }}" class="text-decoration-none">
-                                    {{ $project->name }}
-                                </a>
-                            </td>
-                            <td>
-                                <a href="{{ route('contracts.show', $project->contract) }}" class="text-decoration-none">
-                                    {{ $project->contract->contract_number }}
-                                </a>
-                            </td>
-                            <td>{{ $project->projectManager->name }}</td>
-                            <td>{{ $project->clientRepresentative->name }}</td>
-                            <td>{{ $project->start_date->format('M d, Y') }}</td>
-                            <td>{{ $project->end_date->format('M d, Y') }}</td>
-                            <td>
-                                <span class="badge
-                                    @if($project->status === 'proposed') bg-secondary
+    <div class="row g-4">
+        @forelse($projects as $project)
+            <div class="col-md-4 col-lg-3">
+                <div class="card shadow-sm border-0 rounded-4 h-100">
+                    <div class="card-body d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="fw-bold text-primary me-2">#{{ $project->project_number }}</span>
+                                <span class="badge ms-auto @if($project->status === 'proposed') bg-secondary
                                     @elseif($project->status === 'planning') bg-info
                                     @elseif($project->status === 'approved') bg-success
                                     @elseif($project->status === 'in_progress') bg-primary
@@ -127,60 +71,41 @@
                                     @elseif($project->status === 'completed') bg-success
                                     @elseif($project->status === 'closed') bg-dark
                                     @elseif($project->status === 'cancelled') bg-danger
-                                    @else bg-secondary @endif">
-                                    {{ ucwords(str_replace('_', ' ', $project->status)) }}
-                                </span>
-                            </td>
-                            <td>
-                                <div class="progress rounded-pill" style="height: 16px;">
-                                    <div class="progress-bar {{ $project->progress >= 100 ? 'bg-success' : 'bg-primary' }}" 
-                                         role="progressbar" 
-                                         @style("width: " . $project->progress . "%")
-                                         aria-valuenow="{{ $project->progress }}" 
-                                         aria-valuemin="0" 
-                                         aria-valuemax="100">
-                                        {{ $project->progress }}%
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="btn-group">
-                                    <a href="{{ route('projects.show', $project) }}" 
-                                       class="btn btn-outline-primary rounded-3" title="View">
-                                        <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="{{ route('projects.edit', $project) }}" 
-                                       class="btn btn-outline-secondary rounded-3" title="Edit">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <button type="button" 
-                                            class="btn btn-outline-danger rounded-3" 
-                                            onclick="confirmDelete('{{ $project->id }}')"
-                                            title="Delete">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </div>
-                                <form id="delete-form-{{ $project->id }}" 
-                                      action="{{ route('projects.destroy', $project) }}" 
-                                      method="POST" 
-                                      style="display: none;">
-                                    @csrf
-                                    @method('DELETE')
-                                </form>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="10" class="text-center">No projects found.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                                    @else bg-secondary @endif" style="font-size:0.85em;">{{ ucwords(str_replace('_', ' ', $project->status)) }}</span>
+                            </div>
+                            <div class="mb-1">
+                                <span class="fw-semibold">Client:</span> {{ $project->contract->client->company_name ?? $project->contract->client->name ?? 'N/A' }}
+                            </div>
+                            <div class="mb-1">
+                                <span class="fw-semibold">Name:</span> {{ $project->name }}
+                            </div>
+                            <div class="mb-1">
+                                <span class="fw-semibold">Start:</span> {{ $project->start_date->format('M d, Y') }}
+                            </div>
+                            <div class="mb-1">
+                                <span class="fw-semibold">End:</span> {{ $project->end_date->format('M d, Y') }}
+                            </div>
+                        </div>
+                        <div class="mt-3 d-flex justify-content-between align-items-center">
+                            <a href="{{ route('projects.show', $project) }}" class="btn btn-outline-primary rounded-pill px-3 py-1">View</a>
+                            <div class="progress rounded-pill flex-grow-1 ms-2" style="height: 12px; min-width: 80px;">
+                                <div class="progress-bar {{ $project->progress >= 100 ? 'bg-success' : 'bg-primary' }}" role="progressbar" style="width: {{ $project->progress }}%" aria-valuenow="{{ $project->progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="d-flex justify-content-end mt-3">
-                {{ $projects->links() }}
+        @empty
+            <div class="col-12">
+                <div class="d-flex flex-column align-items-center justify-content-center py-5">
+                    <i class="fas fa-folder-open fa-3x mb-3 text-muted"></i>
+                    <span class="fw-semibold text-muted" style="font-size:1.2em;">No projects found.</span>
+                </div>
             </div>
-        </div>
+        @endforelse
+    </div>
+    <div class="d-flex justify-content-end mt-3">
+        {{ $projects->links() }}
     </div>
 </div>
 
@@ -198,133 +123,74 @@ function confirmDelete(projectId) {
 <style>
     .projects-table-container {
         border-radius: 20px;
-        overflow: hidden;
-        border: 1px solid #e3e8ee;
-        background: #fff;
-        box-shadow: 0 4px 24px rgba(56,189,248,0.07), 0 1.5px 6px rgba(0,0,0,0.03);
-        transition: box-shadow 0.25s;
-        padding: 8px 0;
-        margin-bottom: 32px;
-    }
-    .projects-table {
-        border-radius: 20px;
-        overflow: hidden;
-        background: #fff;
+        box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+        border: none;
+        margin-bottom: 2rem;
     }
     .projects-table th, .projects-table td {
         vertical-align: middle;
-        padding: 18px 24px;
-        font-size: 1.08rem;
+        text-align: center;
+        padding: 0.9rem 0.5rem;
         border: none;
-        transition: background 0.22s, color 0.18s;
+        background: #f8fafc;
     }
-    .projects-table th {
-        background: #f7fafc;
+    .projects-table thead th {
+        background: #e8f5e9;
         font-weight: 700;
-        color: #1a7f4e;
-        border-bottom: 2px solid #e3e8ee;
-        letter-spacing: 0.01em;
-    }
-    .projects-table tbody tr:nth-child(even) {
-        background: #f4f7fa;
+        color: #198754;
+        border-bottom: 2px solid #e3e3e3;
     }
     .projects-table tbody tr:hover {
-        background: #e0f2fe;
-        box-shadow: 0 2px 8px rgba(56,189,248,0.10);
-        z-index: 1;
-        position: relative;
-    }
-    .projects-table .btn-group .btn {
-        padding: 0.25rem 0.6rem;
-        font-size: 1rem;
-        border-radius: 8px;
-        margin-right: 4px;
-        transition: background 0.18s, color 0.18s;
-    }
-    .projects-table .btn-group .btn:last-child {
-        margin-right: 0;
-    }
-    .projects-table .btn-outline-primary {
-        border: 1px solid #38bdf8;
-        color: #38bdf8;
-        background: #e0f2fe;
-    }
-    .projects-table .btn-outline-primary:hover {
-        background: #38bdf8;
-        color: #fff;
-    }
-    .projects-table .btn-outline-secondary {
-        border: 1px solid #a0aec0;
-        color: #4a5568;
-        background: #f7fafc;
-    }
-    .projects-table .btn-outline-secondary:hover {
-        background: #a0aec0;
-        color: #fff;
-    }
-    .projects-table .btn-outline-danger {
-        border: 1px solid #ef4444;
-        color: #ef4444;
-        background: #fee2e2;
-    }
-    .projects-table .btn-outline-danger:hover {
-        background: #ef4444;
-        color: #fff;
-    }
-    .projects-table .badge {
-        font-size: 0.95rem;
-        border-radius: 8px;
-        padding: 0.4em 0.8em;
+        background: #e3f2fd44;
     }
     .projects-table .progress {
-        border-radius: 8px;
+        background: #e9ecef;
         height: 16px;
+        border-radius: 8px;
+        box-shadow: none;
     }
     .projects-table .progress-bar {
-        font-size: 0.95rem;
+        font-size: 0.95em;
         font-weight: 600;
     }
-    .projects-table .text-center {
-        color: #a0aec0;
-        font-size: 1.1rem;
-        padding: 32px 0;
+    .card {
+        border-radius: 1.25rem;
+        box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+        border: none;
+        margin-bottom: 2rem;
     }
-    .custom-search-bar {
-        box-shadow: 0 2px 12px rgba(56,189,248,0.10);
+    .card-header {
         background: #fff;
-        border-radius: 32px;
-        margin-bottom: 24px;
+        border-radius: 1.25rem 1.25rem 0 0;
+        border-bottom: none;
+        padding: 1.5rem 2rem 1rem 2rem;
+        display: flex;
+        justify-content: flex-start;
         align-items: center;
-        padding: 0.25rem 0.5rem;
+        gap: 1rem;
     }
-    .custom-search-bar .form-control {
-        border: none;
+    .badge {
+        font-size: 0.85em;
+        padding: 0.4em 0.9em;
+        border-radius: 1em;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+    }
+    .btn-group .btn {
+        margin-right: 0.25rem;
+    }
+    .btn-group .btn:last-child {
+        margin-right: 0;
+    }
+    .progress {
+        background: #e9ecef;
+        height: 12px;
+        border-radius: 8px;
         box-shadow: none;
-        background: #fff;
-        font-size: 1.15rem;
-        border-radius: 0 32px 32px 0;
     }
-    .custom-search-bar .form-control:focus {
-        box-shadow: none;
-        background: #f7fafc;
-    }
-    .custom-search-bar .input-group-text {
-        background: #fff;
-        border: none;
-        font-size: 1.3rem;
-        border-radius: 32px 0 0 32px;
-        padding-right: 0.5rem;
-    }
-    .custom-search-bar .btn-primary {
-        border-radius: 32px;
-        font-size: 1.1rem;
-        font-weight: 500;
-        box-shadow: 0 2px 8px rgba(56,189,248,0.13);
-        transition: background 0.18s, color 0.18s;
-    }
-    .custom-search-bar .btn-primary:hover {
-        background: #2563eb;
-        color: #fff;
+    .progress-bar {
+        font-size: 0.85em;
+        font-weight: 600;
     }
 </style>
 @endpush
