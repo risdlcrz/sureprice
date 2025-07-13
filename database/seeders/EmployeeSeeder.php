@@ -57,6 +57,58 @@ class EmployeeSeeder extends Seeder
             );
         }
 
+        // Add finance employees
+        $financeEmployees = [
+            [
+                'first_name' => 'Finance',
+                'last_name' => 'Manager',
+                'username' => 'financemanager',
+                'email' => 'financemanager@sureprice.com',
+            ],
+            [
+                'first_name' => 'Finance',
+                'last_name' => 'Officer',
+                'username' => 'financeofficer',
+                'email' => 'financeofficer@sureprice.com',
+            ],
+            [
+                'first_name' => 'Finance',
+                'last_name' => 'Analyst',
+                'username' => 'financeanalyst',
+                'email' => 'financeanalyst@sureprice.com',
+            ],
+        ];
+        foreach ($financeEmployees as $fin) {
+            $user = User::updateOrCreate(
+                ['username' => $fin['username']],
+                [
+                    'name' => $fin['first_name'] . ' ' . $fin['last_name'],
+                    'email' => $fin['email'],
+                    'user_type' => 'employee',
+                    'role' => 'finance',
+                    'password' => Hash::make('PASS_123'),
+                    'email_verified_at' => now(),
+                ]
+            );
+            Employee::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'username' => $user->username,
+                    'first_name' => $fin['first_name'],
+                    'last_name' => $fin['last_name'],
+                    'email' => $user->email,
+                    'role' => 'finance',
+                    'company_name' => 'SurePrice Construction Corp.',
+                    'street' => 'Finance St.',
+                    'barangay' => 'Barangay 1',
+                    'city' => 'Makati',
+                    'state' => 'Metro Manila',
+                    'postal' => '1200',
+                    'phone' => '+639171234567',
+                ]
+            );
+        }
+
         $this->command->info('60 Employees seeded successfully!');
     }
 } 
