@@ -25,6 +25,10 @@ class PurchaseOrderController extends Controller
 
     public function index()
     {
+        $user = Auth::user();
+        if (!($user->hasRole('admin') || $user->hasRole('finance') || $user->hasRole('manager'))) {
+            abort(403, 'Unauthorized action.');
+        }
         $this->logPageView('Viewed Purchase Order List', PurchaseOrder::class);
         $purchaseOrders = PurchaseOrder::with(['purchaseRequest', 'contract', 'supplier'])
             ->when(request('status'), function($query, $status) {
@@ -131,6 +135,10 @@ class PurchaseOrderController extends Controller
 
     public function show(PurchaseOrder $purchaseOrder)
     {
+        $user = Auth::user();
+        if (!($user->hasRole('admin') || $user->hasRole('finance') || $user->hasRole('manager'))) {
+            abort(403, 'Unauthorized action.');
+        }
         $this->logPageView('Viewed Purchase Order #' . $purchaseOrder->po_number, PurchaseOrder::class, $purchaseOrder->id);
         $purchaseOrder->load(['purchaseRequest', 'contract', 'supplier', 'items.material']);
         return view('admin.purchase-orders.show', compact('purchaseOrder'));

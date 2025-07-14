@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Stock;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Activity;
+use App\Models\DeliveryFeedback;
+use App\Models\User;
 
 class WarehouseDeliveryController extends Controller
 {
@@ -56,7 +58,7 @@ class WarehouseDeliveryController extends Controller
 
     public function show(Delivery $delivery)
     {
-        $this->logPageView('Viewed Warehouse Delivery #' . $delivery->id, \App\Models\WarehouseDelivery::class, $delivery->id);
+        $this->logPageView('Viewed Warehouse Delivery #' . $delivery->id, Delivery::class, $delivery->id);
         $delivery->load(['items.material', 'items.material.category', 'warehouse']);
         return view('warehouse.deliveries.show', compact('delivery'));
     }
@@ -148,8 +150,46 @@ class WarehouseDeliveryController extends Controller
 
     public function edit($id)
     {
-        $this->logPageView('Viewed Edit Warehouse Delivery #' . $id, \App\Models\WarehouseDelivery::class, $id);
+        $this->logPageView('Viewed Edit Warehouse Delivery #' . $id, Delivery::class, $id);
         // ... existing code ...
+    }
+
+    public function feedbackForm(Delivery $delivery)
+    {
+        $user = Auth::user();
+        $userWarehouseId = property_exists($user, 'warehouse_id') ? $user->warehouse_id : null;
+        $hasWarehouseRole = method_exists($user, 'hasRole') ? $user->hasRole('warehouse') : false;
+        if ($delivery->status !== 'completed' || !$hasWarehouseRole || $delivery->warehouse_id !== $userWarehouseId) {
+            abort(403, 'Feedback only allowed for completed deliveries by the assigned warehouse.');
+        }
+        $existing = DeliveryFeedback::where('delivery_id', $delivery->id)->where('warehouse_id', $userWarehouseId)->first();
+        return view('warehouse.deliveries.feedback', compact('delivery', 'existing'));
+    }
+
+    public function submitFeedback(Request $request, Delivery $delivery)
+    {
+        $user = Auth::user();
+        $userWarehouseId = property_exists($user, 'warehouse_id') ? $user->warehouse_id : null;
+        $hasWarehouseRole = method_exists($user, 'hasRole') ? $user->hasRole('warehouse') : false;
+        if ($delivery->status !== 'completed' || !$hasWarehouseRole || $delivery->warehouse_id !== $userWarehouseId) {
+            abort(403, 'Feedback only allowed for completed deliveries by the assigned warehouse.');
+        }
+        $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comments' => 'nullable|string',
+        ]);
+        DeliveryFeedback::updateOrCreate(
+            [
+                'delivery_id' => $delivery->id,
+                'warehouse_id' => $userWarehouseId,
+            ],
+            [
+                'supplier_id' => $delivery->supplier_id ?? null,
+                'rating' => $request->rating,
+                'comments' => $request->comments,
+            ]
+        );
+        return redirect()->route('warehouse.deliveries.show', $delivery)->with('success', 'Feedback submitted!');
     }
 }
  

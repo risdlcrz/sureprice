@@ -297,6 +297,38 @@
 
     <div class="card mb-4">
         <div class="card-header">
+            <h5 class="mb-0">Scope, Materials, and Suppliers</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Scope of Work</th>
+                            <th>Material</th>
+                            <th>Supplier</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                @foreach($contract->rooms as $room)
+                    @foreach($room->scopeTypes as $scope)
+                        @foreach($scope->materials as $material)
+                            <tr>
+                                <td>{{ $scope->name }}</td>
+                                <td>{{ $material->name }}</td>
+                                <td>{{ $material->supplier->name ?? 'N/A' }}</td>
+                            </tr>
+                        @endforeach
+                    @endforeach
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+    <div class="card mb-4">
+        <div class="card-header">
             <h5 class="mb-0">Contract Items</h5>
         </div>
         <div class="card-body">

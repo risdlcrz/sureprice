@@ -552,4 +552,54 @@
           </div>
         </div>
     @endif
+
+{{-- Finance Payment/Validation Actions --}}
+@if(auth()->user()->hasRole('finance'))
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Finance Actions</h5>
+        </div>
+        <div class="card-body">
+            @if(!$payment)
+                <form action="{{ route('purchase-orders.payments.store', $purchaseOrder) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="mb-3">
+                        <label>Amount</label>
+                        <input type="number" name="amount" class="form-control" value="{{ $purchaseOrder->total_amount }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Payment Method</label>
+                        <select name="payment_method" class="form-control" required>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="check">Check</option>
+                            <option value="cash">Cash</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Reference Number</label>
+                        <input type="text" name="admin_reference_number" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Date Paid</label>
+                        <input type="date" name="admin_paid_date" class="form-control" value="{{ now()->toDateString() }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Proof of Payment</label>
+                        <input type="file" name="admin_proof" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>Notes (optional)</label>
+                        <textarea name="admin_notes" class="form-control"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Payment</button>
+                </form>
+            @elseif($payment && $payment->status === 'pending')
+                <form action="{{ route('payments.markAsPaid', $payment) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-success">Validate Client Payment</button>
+                </form>
+            @endif
+        </div>
+    </div>
+@endif
 @endsection 

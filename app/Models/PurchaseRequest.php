@@ -107,36 +107,35 @@ class PurchaseRequest extends Model
 
     public function approveByAdmin()
     {
-        if (!Auth::user()->hasRole('admin')) {
+        $user = Auth::user();
+        if (!$user || !$user->hasRole('admin')) {
             throw new \Exception('Only administrators can approve purchase requests.');
         }
-
+        if ($this->status !== 'pending_admin_approval') {
+            throw new \Exception('Purchase request is not pending admin approval.');
+        }
         $this->admin_approved = true;
         $this->admin_approved_at = now();
-        $this->admin_approved_by = Auth::id();
-        if ($this->admin_approved && $this->supplier_approved) {
-            $this->status = 'approved';
-        }
+        $this->admin_approved_by = $user->id;
+        $this->status = 'pending_supplier_approval';
         $this->save();
-
-        // $this->checkAndCreatePurchaseOrder();
     }
 
     public function approveBySupplier()
     {
-        if (!Auth::user()->hasRole('supplier')) {
+        $user = Auth::user();
+        if (!$user || !$user->hasRole('supplier')) {
             throw new \Exception('Only suppliers can approve purchase requests.');
         }
-
+        if ($this->status !== 'pending_supplier_approval') {
+            throw new \Exception('Purchase request is not pending supplier approval.');
+        }
         $this->supplier_approved = true;
         $this->supplier_approved_at = now();
-        $this->supplier_approved_by = Auth::id();
-        if ($this->admin_approved && $this->supplier_approved) {
-            $this->status = 'approved';
-        }
+        $this->supplier_approved_by = $user->id;
+        $this->status = 'approved';
         $this->save();
-
-        // $this->checkAndCreatePurchaseOrder();
+        $this->checkAndCreatePurchaseOrder();
     }
 
     protected function checkAndCreatePurchaseOrder()

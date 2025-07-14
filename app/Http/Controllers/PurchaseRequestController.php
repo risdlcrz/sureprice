@@ -175,7 +175,7 @@ class PurchaseRequestController extends Controller
                 'request_number' => 'PR-' . str_pad(PurchaseRequest::count() + 1, 6, '0', STR_PAD_LEFT),
                 'contract_id' => $validated['is_project_related'] ? $validated['contract_id'] : null,
                 'requested_by' => auth()->id(),
-                'status' => 'pending',
+                'status' => 'pending_admin_approval',
                 'is_project_related' => $validated['is_project_related'],
                 'notes' => $validated['notes']
             ]);
@@ -216,6 +216,15 @@ class PurchaseRequestController extends Controller
                 'type' => 'Purchase Request',
                 'data' => ['message' => 'Your purchase request #' . $purchaseRequest->request_number . ' has been created.'],
             ]);
+            $adminUsers = \App\Models\User::role('admin')->get();
+            foreach ($adminUsers as $admin) {
+                Notification::create([
+                    'notifiable_id' => $admin->id,
+                    'notifiable_type' => \App\Models\User::class,
+                    'type' => 'Purchase Request Approval Needed',
+                    'data' => ['message' => 'A new purchase request #' . $purchaseRequest->request_number . ' requires your approval.'],
+                ]);
+            }
             return redirect()->route('purchase-requests.show', $purchaseRequest)
                 ->with('success', 'Purchase request created successfully.');
         } catch (\Exception $e) {
@@ -375,6 +384,21 @@ class PurchaseRequestController extends Controller
                 'type' => 'Purchase Request Approved',
                 'data' => ['message' => 'Your purchase request #' . $purchaseRequest->request_number . ' has been approved.'],
             ]);
+            // Notify supplier(s) if status is now 'pending_supplier_approval':
+            if ($purchaseRequest->status === 'pending_supplier_approval') {
+                $supplierIds = $purchaseRequest->items->pluck('preferred_supplier_id')->unique()->filter();
+                $suppliers = \App\Models\Supplier::whereIn('id', $supplierIds)->get();
+                foreach ($suppliers as $supplier) {
+                    if ($supplier->user) {
+                        Notification::create([
+                            'notifiable_id' => $supplier->user->id,
+                            'notifiable_type' => \App\Models\User::class,
+                            'type' => 'Purchase Request Supplier Approval Needed',
+                            'data' => ['message' => 'Purchase request #' . $purchaseRequest->request_number . ' requires your approval.'],
+                        ]);
+                    }
+                }
+            }
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -413,6 +437,11 @@ class PurchaseRequestController extends Controller
         $isAssigned = $purchaseRequest->items()->where('preferred_supplier_id', $supplierId)->exists();
         if (!$isAssigned) {
             abort(403, 'You are not authorized to approve this request.');
+        }
+
+        // Only allow if status is 'pending_supplier_approval'
+        if ($purchaseRequest->status !== 'pending_supplier_approval') {
+            return back()->with('error', 'Only purchase requests pending supplier approval can be approved by supplier.');
         }
 
         try {

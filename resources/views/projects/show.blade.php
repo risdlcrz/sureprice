@@ -186,5 +186,20 @@
             </div>
         </div>
     </div>
+
+    @if($project->status === 'completed' && auth()->id() === $project->clientRepresentative->id)
+        @php $existingFeedback = \App\Models\ProjectFeedback::where('project_id', $project->id)->where('client_id', auth()->id())->first(); @endphp
+        @if(!$existingFeedback)
+            <div class="alert alert-info mt-4">
+                <strong>Project Completed!</strong> Please <a href="{{ route('projects.feedback', $project) }}" class="btn btn-sm btn-primary ms-2">Leave Feedback</a>
+            </div>
+        @else
+            <div class="alert alert-success mt-4">
+                <strong>Thank you for your feedback!</strong><br>
+                <span>Rating: {{ $existingFeedback->rating }} / 5</span><br>
+                <span>Comments: {{ $existingFeedback->comments }}</span>
+            </div>
+        @endif
+    @endif
 </div>
 @endsection

@@ -228,15 +228,15 @@
                     </div>
                 </div>
 
-                    <!-- Approval Actions -->
-                    @if($purchaseRequest->status === 'pending' && (auth()->user()->role === 'procurement' || auth()->user()->role === 'admin'))
+                    <!-- Approval Actions for Admin -->
+                    @if($purchaseRequest->status === 'pending_admin_approval' && (auth()->user()->role === 'admin'))
                         <div class="row mt-4">
                             <div class="col-12">
                                 <div class="card">
-                        <div class="card-header">
+                                    <div class="card-header">
                                         <h4 class="card-title">Approval Actions</h4>
-                        </div>
-                        <div class="card-body">
+                                    </div>
+                                    <div class="card-body">
                                         <form action="{{ route('purchase-requests.approve', $purchaseRequest) }}" method="POST" class="d-inline">
                                             @csrf
                                             <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to approve this request?')">
@@ -249,18 +249,14 @@
                                                 <i class="fas fa-times"></i> Reject Request
                                             </button>
                                         </form>
-                        </div>
-                    </div>
-                    </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     @endif
 
                     <!-- Supplier Approval Section -->
-                    @if(
-                        $purchaseRequest->status === 'pending' &&
-                        auth()->user()->hasRole('supplier') &&
-                        $purchaseRequest->items->every(fn($item) => $item->preferred_supplier_id === auth()->user()->company?->id)
-                    )
+                    @if($purchaseRequest->status === 'pending_supplier_approval' && auth()->user()->hasRole('supplier') && $purchaseRequest->items->every(fn($item) => $item->preferred_supplier_id === auth()->user()->company?->id))
                         <div class="card mt-4">
                             <div class="card-header">
                                 <h4 class="card-title">Supplier Approval</h4>

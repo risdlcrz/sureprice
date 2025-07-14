@@ -440,6 +440,8 @@ Route::get('/materials/all', [MaterialController::class, 'getAllMaterials'])->na
 // Project Management Routes
 Route::middleware(['auth'])->group(function () {
     Route::resource('projects', ProjectController::class);
+    Route::get('projects/{project}/feedback', [ProjectController::class, 'feedbackForm'])->name('projects.feedback');
+    Route::post('projects/{project}/feedback', [ProjectController::class, 'submitFeedback'])->name('projects.submitFeedback');
     Route::post('projects/{project}/progress', [ProjectController::class, 'updateProgress'])->name('projects.progress.update');
     Route::resource('projects.tasks', ProjectTaskController::class);
 });
@@ -518,3 +520,9 @@ Route::get('/test-notifications', function () {
         'user_name' => auth()->user()->name ?? 'Unknown'
     ]);
 })->middleware('auth');
+
+Route::middleware(['auth'])->prefix('warehouse')->name('warehouse.')->group(function () {
+    Route::resource('deliveries', \App\Http\Controllers\Warehouse\WarehouseDeliveryController::class);
+    Route::get('deliveries/{delivery}/feedback', [\App\Http\Controllers\Warehouse\WarehouseDeliveryController::class, 'feedbackForm'])->name('deliveries.feedback');
+    Route::post('deliveries/{delivery}/feedback', [\App\Http\Controllers\Warehouse\WarehouseDeliveryController::class, 'submitFeedback'])->name('deliveries.submitFeedback');
+});

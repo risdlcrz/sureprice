@@ -83,24 +83,26 @@
                     </div>
 
                     <!-- Supplier Approval Section -->
-                    <div class="card mt-4">
-                        <div class="card-header">
-                            <h4 class="card-title">Approval Actions</h4>
+                    @if($purchaseRequest->status === 'pending_supplier_approval')
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h4 class="card-title">Approval Actions</h4>
+                            </div>
+                            <div class="card-body">
+                                @if(!$purchaseRequest->supplier_approved)
+                                    <p>This request is pending your approval.</p>
+                                    <form action="{{ route('supplier.purchase-requests.approve', $purchaseRequest) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to approve this request?')">
+                                            <i class="fas fa-check"></i> Approve Request
+                                        </button>
+                                    </form>
+                                @else
+                                    <p class="text-success"><i class="fas fa-check-circle"></i> You have approved this request on {{ $purchaseRequest->supplier_approved_at->format('M d, Y H:i') }}.</p>
+                                @endif
+                            </div>
                         </div>
-                        <div class="card-body">
-                            @if(!$purchaseRequest->supplier_approved)
-                                <p>This request is pending your approval.</p>
-                                <form action="{{ route('supplier.purchase-requests.approve', $purchaseRequest) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to approve this request?')">
-                                        <i class="fas fa-check"></i> Approve Request
-                                    </button>
-                                </form>
-                            @else
-                                <p class="text-success"><i class="fas fa-check-circle"></i> You have approved this request on {{ $purchaseRequest->supplier_approved_at->format('M d, Y H:i') }}.</p>
-                            @endif
-                        </div>
-                    </div>
+                    @endif
 
                 </div>
             </div>

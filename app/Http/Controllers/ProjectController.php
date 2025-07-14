@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Services\SupplierSelectionService;
+use App\Models\ProjectFeedback;
 
 class ProjectController extends Controller
 {
@@ -308,5 +309,36 @@ class ProjectController extends Controller
             'projectFeatures' => $projectFeatures,
             'budget' => $budget,
         ]);
+    }
+
+    public function feedbackForm(Project $project)
+    {
+        if ($project->status !== 'completed' || Auth::id() !== $project->clientRepresentative->id) {
+            abort(403, 'Feedback only allowed for completed projects by the client.');
+        }
+        $existing = ProjectFeedback::where('project_id', $project->id)->where('client_id', Auth::id())->first();
+        return view('projects.feedback', compact('project', 'existing'));
+    }
+
+    public function submitFeedback(Request $request, Project $project)
+    {
+        if ($project->status !== 'completed' || Auth::id() !== $project->clientRepresentative->id) {
+            abort(403, 'Feedback only allowed for completed projects by the client.');
+        }
+        $validated = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comments' => 'nullable|string',
+        ]);
+        ProjectFeedback::updateOrCreate(
+            [
+                'project_id' => $project->id,
+                'client_id' => Auth::id(),
+            ],
+            [
+                'rating' => $validated['rating'],
+                'comments' => $validated['comments'],
+            ]
+        );
+        return redirect()->route('projects.show', $project)->with('success', 'Thank you for your feedback!');
     }
 } 

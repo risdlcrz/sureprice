@@ -127,6 +127,24 @@
         </div>
     </div>
     @endif
+
+    @if($delivery->status === 'completed' && auth()->user() && method_exists(auth()->user(), 'hasRole') && auth()->user()->hasRole('warehouse'))
+        @php
+            $userWarehouseId = property_exists(auth()->user(), 'warehouse_id') ? auth()->user()->warehouse_id : null;
+            $existingFeedback = \App\Models\DeliveryFeedback::where('delivery_id', $delivery->id)->where('warehouse_id', $userWarehouseId)->first();
+        @endphp
+        @if(!$existingFeedback)
+            <div class="alert alert-info mt-4">
+                <strong>Delivery Completed!</strong> Please <a href="{{ route('warehouse.deliveries.feedback', $delivery) }}" class="btn btn-sm btn-primary ms-2">Leave Feedback</a>
+            </div>
+        @else
+            <div class="alert alert-success mt-4">
+                <strong>Thank you for your feedback!</strong><br>
+                <span>Rating: {{ $existingFeedback->rating }} / 5</span><br>
+                <span>Comments: {{ $existingFeedback->comments }}</span>
+            </div>
+        @endif
+    @endif
 </div>
 
 @push('scripts')
