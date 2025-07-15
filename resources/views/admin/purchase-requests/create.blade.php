@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+<pre>
+{{ json_encode($prefillItems ?? 'NO prefillItems', JSON_PRETTY_PRINT) }}
+</pre>
 <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Create Purchase Request</h1>
 <div class="container-fluid">
     <div class="row">
@@ -82,6 +85,9 @@
                                         </thead>
                                         <tbody id="items-container">
                                             @if(isset($prefillItems) && count($prefillItems) > 0)
+                                            <pre>
+{{ json_encode($prefillItems, JSON_PRETTY_PRINT) }}
+</pre>
                                                 @foreach($prefillItems as $index => $item)
                                                     @php
                                                         $materialObj = $item['material_obj'];
@@ -117,7 +123,7 @@
                                                                     $suppliersForDropdown = ($materialObj) ? $materialObj->suppliers : collect();
                                                                 @endphp
                                                                 @foreach($suppliersForDropdown as $supplier)
-                                                                    <option value="{{ $supplier->id }}" {{ (isset($item['preferred_supplier_id']) && $item['preferred_supplier_id'] == $supplier->id) ? 'selected' : '' }}>{{ $supplier->company_name ?? $supplier->name }}</option>
+                                                                    <option value="{{ $supplier->id }}" data-price="{{ $supplier->pivot->price ?? $supplier->price ?? '' }}" {{ (isset($item['preferred_supplier_id']) && $item['preferred_supplier_id'] == $supplier->id) ? 'selected' : '' }}>{{ $supplier->company_name ?? $supplier->name }}</option>
                                                                 @endforeach
                                                             </select>
                                                         </td>
@@ -309,14 +315,12 @@ function addMaterialRowFromMaster(material) {
     newRow.querySelector('.unit').value = material.unit;
     newRow.querySelector('.unit-price').value = material.srp_price || material.base_price;
     newRow.querySelector('.total-amount').value = '';
-    newRow.querySelector('.supplier-select').innerHTML = '<option value="">Select Supplier</option>';
+    // Use helper to populate supplier dropdown with data-price
+    const supplierSelect = newRow.querySelector('.supplier-select');
     if (material.suppliers && material.suppliers.length > 0) {
-        material.suppliers.forEach(supplier => {
-            const option = document.createElement('option');
-            option.value = supplier.id;
-            option.textContent = supplier.name;
-            newRow.querySelector('.supplier-select').appendChild(option);
-        });
+        populateSupplierDropdown(supplierSelect, material.suppliers);
+    } else {
+        supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
     }
     document.getElementById('items-container').appendChild(newRow);
     setupRowCalculations(newRow);
@@ -331,14 +335,12 @@ function replaceMaterialInRow(row, material) {
     row.querySelector('.material-id-input').value = material.id;
     row.querySelector('.unit').value = material.unit;
     row.querySelector('.unit-price').value = material.srp_price || material.base_price;
-    row.querySelector('.supplier-select').innerHTML = '<option value="">Select Supplier</option>';
+    // Use helper to populate supplier dropdown with data-price
+    const supplierSelect = row.querySelector('.supplier-select');
     if (material.suppliers && material.suppliers.length > 0) {
-        material.suppliers.forEach(supplier => {
-            const option = document.createElement('option');
-            option.value = supplier.id;
-            option.textContent = supplier.name;
-            row.querySelector('.supplier-select').appendChild(option);
-        });
+        populateSupplierDropdown(supplierSelect, material.suppliers);
+    } else {
+        supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
     }
 }
 
@@ -515,12 +517,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     const supplierSelect = row.querySelector('.supplier-select');
                     if (item.material && item.material.suppliers && item.material.suppliers.length > 0) {
-                        item.material.suppliers.forEach(supplier => {
-                            const option = document.createElement('option');
-                            option.value = supplier.id;
-                            option.textContent = supplier.company_name || supplier.name;
-                            supplierSelect.appendChild(option);
-                        });
+                        populateSupplierDropdown(supplierSelect, item.material.suppliers);
                     }
                 });
             })
@@ -675,14 +672,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 unitPriceInput.value = price;
                 searchResultsDiv.innerHTML = ''; // Clear results
 
-                // Populate preferred supplier dropdown
-                supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
-                suppliers.forEach(supplier => {
-                    const option = document.createElement('option');
-                    option.value = supplier.id;
-                    option.textContent = supplier.name;
-                    supplierSelect.appendChild(option);
-                });
+                // Use helper to populate supplier dropdown with data-price
+                populateSupplierDropdown(supplierSelect, suppliers);
 
                 // Trigger change to recalculate total
                 const quantityInput = container.querySelector('.quantity');
@@ -832,14 +823,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update total amount
         replaceTargetRow.find('input[name="items['+index+'][total_amount]"]').val(selectedReplaceMaterial._computedTotal);
         // Optionally update suppliers dropdown
-        const supplierSelect = replaceTargetRow.find('select.supplier-select');
-        supplierSelect.empty().append('<option value="">Select Supplier</option>');
+        const supplierSelect = replaceTargetRow.find('select.supplier-select')[0];
+        supplierSelect.innerHTML = '';
         let suppliersToDisplay = (selectedReplaceMaterial.suppliers && selectedReplaceMaterial.suppliers.length > 0) ? selectedReplaceMaterial.suppliers : window.suppliers;
-        
-        supplierSelect.prop('disabled', false);
-        suppliersToDisplay.forEach(function(supplier) {
-            supplierSelect.append(`<option value="${supplier.id}">${supplier.company_name ?? supplier.name}</option>`);
-        });
+        // Use helper to populate supplier dropdown with data-price
+        populateSupplierDropdown(supplierSelect, suppliersToDisplay);
+        supplierSelect.disabled = false;
         $('#replaceMaterialModal').modal('hide');
     });
 
@@ -908,6 +897,42 @@ document.addEventListener('DOMContentLoaded', function() {
             const modalEl = document.getElementById('supplierRecommendationModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
             if (modal) modal.hide();
+        }
+    });
+
+    // When populating supplier dropdowns in JS, add data-price
+    function populateSupplierDropdown(select, suppliers) {
+        select.innerHTML = '<option value="">Select Supplier</option>';
+        suppliers.forEach(supplier => {
+            const option = document.createElement('option');
+            option.value = supplier.id;
+            option.textContent = supplier.name || supplier.company_name;
+            option.setAttribute('data-price', supplier.price || (supplier.pivot ? supplier.pivot.price : ''));
+            select.appendChild(option);
+        });
+    }
+
+    // Update all JS places that fill supplier dropdowns to use populateSupplierDropdown
+    // Example for material search:
+    // suppliers.forEach(supplier => { ... })
+    // becomes:
+    // populateSupplierDropdown(supplierSelect, suppliers);
+
+    // Add event listener to update unit price when supplier changes
+    document.getElementById('items-container').addEventListener('change', function(e) {
+        if (e.target.classList.contains('supplier-select')) {
+            const select = e.target;
+            const selectedOption = select.options[select.selectedIndex];
+            const price = selectedOption.getAttribute('data-price');
+            if (price) {
+                const row = select.closest('.item-row');
+                const unitPriceInput = row.querySelector('.unit-price');
+                unitPriceInput.value = price;
+                // Trigger total recalculation
+                const quantityInput = row.querySelector('.quantity');
+                const event = new Event('input', { bubbles: true });
+                quantityInput.dispatchEvent(event);
+            }
         }
     });
 });

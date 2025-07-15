@@ -327,6 +327,13 @@ class MaterialController extends Controller
             ->limit(20)
             ->get();
 
+            // Ensure each supplier has a price property for JS
+            $materials->each(function($material) {
+                $material->suppliers->each(function($supplier) {
+                    $supplier->price = $supplier->pivot->price ?? null;
+                });
+            });
+
             return response()->json($materials);
         } catch (\Exception $e) {
             Log::error('Material search error: ' . $e->getMessage());

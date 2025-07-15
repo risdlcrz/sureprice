@@ -24,10 +24,17 @@ class PurchaseRequestController extends Controller
 
     public function create(Request $request)
     {
-        // Eager load only linked suppliers for each material
+        // Eager load only linked suppliers for each material, including pivot price
         $materials = Material::with(['suppliers' => function($query) {
             $query->orderBy('price');
         }])->get();
+        // Make sure each supplier has pivot->price for JS
+        $materials->each(function($material) {
+            $material->suppliers->each(function($supplier) {
+                // This ensures pivot->price is loaded and accessible in JS
+                $supplier->price = $supplier->pivot->price ?? null;
+            });
+        });
         // No need to pass all suppliers for dropdown fallback
         $suppliers = collect(); // Empty collection to prevent fallback in Blade
         $validSupplierIds = $materials->flatMap(function($material) {
@@ -43,6 +50,9 @@ class PurchaseRequestController extends Controller
             if ($contract && $contract->items->isNotEmpty()) {
                 foreach ($contract->items as $item) {
                     $material = $materials->firstWhere('id', $item->material_id);
+                    if ($material) {
+                        $material->load('suppliers'); // Ensure suppliers are loaded
+                    }
                     $prefillItems[] = [
                         'material_id' => $item->material_id,
                         'material_name' => $item->material_name,
@@ -55,13 +65,14 @@ class PurchaseRequestController extends Controller
                         'preferred_brand' => null,
                         'preferred_supplier_id' => null,
                         'material_obj' => $material,
-                        'material_name' => $material->name
+                        'material_name' => $material ? $material->name : $item->material_name
                     ];
                 }
             }
         } elseif ($request->has('material_id')) {
             $material = $materials->firstWhere('id', $request->material_id);
             if ($material) {
+                $material->load('suppliers'); // Ensure suppliers are loaded
                 $prefillItems[] = [
                     'material_id' => $material->id,
                     'description' => $material->description ?? $material->name,
