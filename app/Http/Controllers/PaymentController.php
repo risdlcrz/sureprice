@@ -86,6 +86,18 @@ class PaymentController extends Controller
                 if ($allPaymentsApproved) {
                     $contract->update(['status' => 'approved']);
                 }
+                // Create a transaction record for this contract payment
+                \App\Models\Transaction::create([
+                    'payment_id' => $payment->id,
+                    'contract_id' => $payment->contract_id,
+                    'date' => now(),
+                    'amount' => $payment->amount,
+                    'type' => 'contract_payment',
+                    'reference_number' => $payment->reference_number,
+                    'description' => 'Payment for Contract #' . ($payment->contract ? $payment->contract->contract_number : $payment->contract_id),
+                    'status' => 'completed',
+                    'created_by' => auth()->id(),
+                ]);
             }
 
             // If this is a purchase order payment, check if all payments are approved

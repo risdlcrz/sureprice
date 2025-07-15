@@ -91,6 +91,16 @@
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $globalUnreadCount }}</span>
                 @endif
             </a>
+        @elseif(auth()->user()->role === 'finance')
+            <a href="{{ route('finance.dashboard') }}" class="btn">
+                <i class="fas fa-home"></i>Dashboard
+            </a>
+            <a href="{{ route('finance.payments') }}" class="btn">
+                <i class="fas fa-money-check-alt"></i>Payments
+            </a>
+            <a href="{{ route('finance.transactions') }}" class="btn">
+                <i class="fas fa-money-check-alt"></i>Transactions
+            </a>
         @else
             <a href="{{ route('admin.dbadmin') }}" class="btn">
                 <i class="fas fa-home"></i>Dashboard
@@ -109,7 +119,7 @@
         <a href="{{ route('admin.analytics') }}" class="btn">
             <i class="fas fa-chart-bar"></i>Analytics
         </a>
-        @else
+    
         <a href="{{ route('admin.project') }}" class="btn">
             <i class="fas fa-tasks"></i>Project & Procurement
         </a>

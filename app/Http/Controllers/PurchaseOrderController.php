@@ -101,7 +101,7 @@ class PurchaseOrderController extends Controller
                 'payment_terms' => $request->payment_terms,
                 'shipping_terms' => $request->shipping_terms,
                 'notes' => $request->notes,
-                'status' => 'draft'
+                'status' => 'pending_payment'
             ]);
 
             foreach ($request->items as $item) {

@@ -22,6 +22,9 @@ class PurchaseOrderPaymentController extends Controller
         $data['admin_proof'] = $request->file('admin_proof')->store('po_payments', 'public');
         $data['status'] = 'for_verification';
         $payment = $po->payments()->create($data);
+        // Update PO status to for_verification
+        $po->status = 'for_verification';
+        $po->save();
         return back()->with('success', 'Payment submitted for supplier verification.');
     }
 
@@ -44,6 +47,24 @@ class PurchaseOrderPaymentController extends Controller
                 'supplier_notes' => $data['supplier_notes'],
                 'status' => 'verified',
             ]);
+            // Create a transaction record for this PO payment
+            \App\Models\Transaction::create([
+                'payment_id' => null,
+                'purchase_order_id' => $payment->purchase_order_id,
+                'date' => now(),
+                'amount' => $payment->amount,
+                'type' => 'po_payment',
+                'reference_number' => $payment->admin_reference_number,
+                'description' => 'Payment for PO #' . ($payment->purchaseOrder ? $payment->purchaseOrder->po_number : $payment->purchase_order_id),
+                'status' => 'completed',
+                'created_by' => auth()->id(),
+            ]);
+            // Update the purchase order status to 'paid'
+            $po = $payment->purchaseOrder;
+            if ($po) {
+                $po->status = 'paid';
+                $po->save();
+            }
         } else {
             $payment->update([
                 'supplier_verified' => false,

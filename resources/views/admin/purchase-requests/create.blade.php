@@ -85,9 +85,7 @@
                                         </thead>
                                         <tbody id="items-container">
                                             @if(isset($prefillItems) && count($prefillItems) > 0)
-                                            <pre>
-{{ json_encode($prefillItems, JSON_PRETTY_PRINT) }}
-</pre>
+
                                                 @foreach($prefillItems as $index => $item)
                                                     @php
                                                         $materialObj = $item['material_obj'];

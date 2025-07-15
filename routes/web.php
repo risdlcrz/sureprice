@@ -484,6 +484,9 @@ Route::post('/purchase-orders/request-approval', [\App\Http\Controllers\Purchase
 
 Route::middleware(['auth', 'role:finance'])->group(function () {
     Route::get('/finance/dashboard', [\App\Http\Controllers\FinanceDashboardController::class, 'index'])->name('finance.dashboard');
+    Route::get('/finance/payments', [\App\Http\Controllers\FinanceDashboardController::class, 'payments'])->name('finance.payments');
+    Route::get('/finance/transactions', [\App\Http\Controllers\TransactionController::class, 'index'])->name('finance.transactions');
+    Route::post('/finance/payments/{purchaseOrder}/pay', [\App\Http\Controllers\FinanceDashboardController::class, 'pay'])->name('finance.pay');
 });
 
 // API endpoint for fetching a single quotation request by ID
@@ -568,3 +571,5 @@ Route::middleware(['auth'])->prefix('warehouse')->name('warehouse.')->group(func
     Route::get('deliveries/{delivery}/feedback', [\App\Http\Controllers\Warehouse\WarehouseDeliveryController::class, 'feedbackForm'])->name('deliveries.feedback');
     Route::post('deliveries/{delivery}/feedback', [\App\Http\Controllers\Warehouse\WarehouseDeliveryController::class, 'submitFeedback'])->name('deliveries.submitFeedback');
 });
+
+Route::post('/purchase-order-payments/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderPaymentController::class, 'store'])->name('purchase-order-payments.store');

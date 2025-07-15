@@ -90,8 +90,8 @@
                                             <td>{{ $item->material->name }}</td>
                                             <td>{{ number_format($item->quantity, 2) }} {{ $item->material->unit }}</td>
                                             <td>₱{{ number_format($item->unit_price, 2) }}</td>
-                                            <td>₱{{ number_format($item->total_price, 2) }}</td>
-                                            <td>{{ $item->specifications }}</td>
+                                            <td>₱{{ number_format($item->total_amount, 2) }}</td>
+                                            <td>{{ $item->specifications ?? '' }}</td>
                                         </tr>
                                     @endforeach
                                     <tr>

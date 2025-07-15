@@ -181,18 +181,20 @@ class PurchaseRequest extends Model
             $purchaseOrder->save();
 
             // Copy items from purchase request to purchase order
-            foreach ($this->items as $item) {
-                $unitPrice = $item->estimated_unit_price ?? 0;
-                $material = $item->material; // Eloquent relationship
-                $unit = $item->unit ?? ($material ? $material->unit : 'pcs');
+            foreach ($this->items()->get() as $item) {
                 $purchaseOrder->items()->create([
                     'material_id' => $item->material_id,
                     'quantity' => $item->quantity,
-                    'unit' => $unit,
-                    'unit_price' => $unitPrice,
-                    'total_amount' => $item->quantity * $unitPrice,
+                    'unit_price' => $item->estimated_unit_price, // Use estimated_unit_price from PR item
+                    'total_amount' => $item->quantity * $item->estimated_unit_price, // Calculate total
+                    'unit' => $item->unit,
+                    'description' => $item->description,
+                    'notes' => $item->notes ?? null
                 ]);
             }
+            // Recalculate and update PO total amount
+            $purchaseOrder->total_amount = $purchaseOrder->items()->sum('total_amount');
+            $purchaseOrder->save();
 
             $this->status = 'approved';
             $this->save();

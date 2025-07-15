@@ -13,11 +13,10 @@ class TransactionController extends Controller
     {
         $query = Transaction::with(['payment', 'contract', 'creator']);
 
-        // If user is not admin, only show their transactions
-        if (auth()->user()->user_type !== 'admin') {
+        // Only restrict for client/supplier, not for finance/admin
+        if (auth()->user()->role === 'client' || auth()->user()->role === 'supplier') {
             $party = auth()->user()->party;
             if (!$party) {
-                // No party found, show empty list and warning
                 $transactions = collect([]);
                 return view('transactions.index', [
                     'transactions' => $transactions,
@@ -28,7 +27,7 @@ class TransactionController extends Controller
                 $q->where('client_id', $party->id);
             });
         }
-
+        // Finance and admin see all
         $transactions = $query->orderBy('date', 'desc')->paginate(15);
         return view('transactions.index', compact('transactions'));
     }
