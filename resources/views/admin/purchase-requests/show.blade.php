@@ -73,8 +73,19 @@
                                 <tr>
                                     <th>Status</th>
                                     <td>
-                                        <span class="badge badge-{{ $purchaseRequest->status === 'pending' ? 'warning' : ($purchaseRequest->status === 'approved' ? 'success' : 'danger') }}">
-                                            {{ ucfirst($purchaseRequest->status) }}
+                                        @php
+                                            $statusColors = [
+                                                'pending' => 'warning',
+                                                'pending_admin_approval' => 'warning',
+                                                'pending_supplier_approval' => 'info',
+                                                'approved' => 'success',
+                                                'rejected' => 'danger',
+                                                'cancelled' => 'secondary'
+                                            ];
+                                            $statusColor = $statusColors[$purchaseRequest->status] ?? 'secondary';
+                                        @endphp
+                                        <span class="badge badge-{{ $statusColor }}">
+                                            {{ ucfirst(str_replace('_', ' ', $purchaseRequest->status)) }}
                                         </span>
                                     </td>
                                 </tr>
@@ -203,6 +214,8 @@
                                                             @if($selectedSupplierPrice)
                                                                 <span class="text-muted">(₱{{ number_format($selectedSupplierPrice, 2) }})</span>
                                                             @endif
+                                                        @elseif($item->preferred_supplier_id)
+                                                            {{ optional(\App\Models\Supplier::find($item->preferred_supplier_id))->company_name ?? 'Unknown Supplier' }}
                                                         @else
                                                             <span class="text-danger">No supplier selected by client</span>
                                                         @endif
@@ -237,6 +250,10 @@
                                         <h4 class="card-title">Approval Actions</h4>
                                     </div>
                                     <div class="card-body">
+                                        <p class="text-info mb-3">
+                                            <i class="fas fa-info-circle"></i> 
+                                            This purchase request is pending your approval. Once approved, it will be sent to the supplier for their approval.
+                                        </p>
                                         <form action="{{ route('purchase-requests.approve', $purchaseRequest) }}" method="POST" class="d-inline">
                                             @csrf
                                             <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to approve this request?')">
@@ -249,6 +266,50 @@
                                                 <i class="fas fa-times"></i> Reject Request
                                             </button>
                                         </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @elseif($purchaseRequest->status === 'pending_supplier_approval')
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title">Status Information</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-info">
+                                            <i class="fas fa-info-circle"></i> 
+                                            This purchase request has been approved by admin and is now pending supplier approval.
+                                        </p>
+                                        @if($purchaseRequest->admin_approved_at)
+                                            <p class="text-success">
+                                                <i class="fas fa-check-circle"></i> 
+                                                Approved by admin on {{ $purchaseRequest->admin_approved_at->format('M d, Y H:i') }}
+                                            </p>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @elseif($purchaseRequest->status === 'approved')
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="card-title">Approval Status</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-success">
+                                            <i class="fas fa-check-circle"></i> 
+                                            This purchase request has been fully approved by both admin and supplier.
+                                        </p>
+                                        @if($purchaseRequest->admin_approved_at)
+                                            <p>Admin approved on: {{ $purchaseRequest->admin_approved_at->format('M d, Y H:i') }}</p>
+                                        @endif
+                                        @if($purchaseRequest->supplier_approved_at)
+                                            <p>Supplier approved on: {{ $purchaseRequest->supplier_approved_at->format('M d, Y H:i') }}</p>
+                                        @endif
                                     </div>
                                 </div>
                             </div>

@@ -144,6 +144,12 @@
                                                                value="{{ $item->unit_price }}" min="0.01" step="0.01" required>
                                                     </div>
                                                 </div>
+                                                <div class="col-md-2">
+                                                    <div class="form-group">
+                                                        <label>Unit</label>
+                                                        <input type="text" class="form-control unit" name="items[{{ $index }}][unit]" value="{{ $item->unit ?? ($item->material->unit ?? '') }}" required>
+                                                    </div>
+                                                </div>
                                                 <div class="col-md-3">
                                                     <div class="form-group">
                                                         <label>Specifications</label>
@@ -220,6 +226,12 @@
                             <label>Unit Price</label>
                             <input type="number" class="form-control unit-price" 
                                    name="items[\${itemIndex}][unit_price]" min="0.01" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Unit</label>
+                            <input type="text" class="form-control unit" name="items[\${itemIndex}][unit]" required>
                         </div>
                     </div>
                     <div class="col-md-3">

@@ -222,7 +222,13 @@ class PurchaseRequestController extends Controller
                     'notifiable_id' => $admin->id,
                     'notifiable_type' => \App\Models\User::class,
                     'type' => 'Purchase Request Approval Needed',
-                    'data' => ['message' => 'A new purchase request #' . $purchaseRequest->request_number . ' requires your approval.'],
+                    'data' => [
+                        'title' => 'Purchase Request Approval Required',
+                        'message' => 'A new purchase request #' . $purchaseRequest->request_number . ' requires your approval.',
+                        'link' => route('purchase-requests.show', $purchaseRequest->id),
+                        'purchase_request_id' => $purchaseRequest->id,
+                        'request_number' => $purchaseRequest->request_number
+                    ],
                 ]);
             }
             return redirect()->route('purchase-requests.show', $purchaseRequest)
@@ -371,7 +377,7 @@ class PurchaseRequestController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        if ($purchaseRequest->status !== 'pending') {
+        if (!in_array($purchaseRequest->status, ['pending', 'pending_admin_approval'])) {
             return back()->with('error', 'Only pending purchase requests can be approved.');
         }
 
@@ -382,7 +388,13 @@ class PurchaseRequestController extends Controller
                 'notifiable_id' => $purchaseRequest->requested_by,
                 'notifiable_type' => \App\Models\User::class,
                 'type' => 'Purchase Request Approved',
-                'data' => ['message' => 'Your purchase request #' . $purchaseRequest->request_number . ' has been approved.'],
+                'data' => [
+                    'title' => 'Purchase Request Approved',
+                    'message' => 'Your purchase request #' . $purchaseRequest->request_number . ' has been approved by admin.',
+                    'link' => route('purchase-requests.show', $purchaseRequest->id),
+                    'purchase_request_id' => $purchaseRequest->id,
+                    'request_number' => $purchaseRequest->request_number
+                ],
             ]);
             // Notify supplier(s) if status is now 'pending_supplier_approval':
             if ($purchaseRequest->status === 'pending_supplier_approval') {
@@ -394,7 +406,13 @@ class PurchaseRequestController extends Controller
                             'notifiable_id' => $supplier->user->id,
                             'notifiable_type' => \App\Models\User::class,
                             'type' => 'Purchase Request Supplier Approval Needed',
-                            'data' => ['message' => 'Purchase request #' . $purchaseRequest->request_number . ' requires your approval.'],
+                            'data' => [
+                                'title' => 'Purchase Request Requires Supplier Approval',
+                                'message' => 'Purchase request #' . $purchaseRequest->request_number . ' requires your approval.',
+                                'link' => route('supplier.purchase-requests.show', $purchaseRequest->id),
+                                'purchase_request_id' => $purchaseRequest->id,
+                                'request_number' => $purchaseRequest->request_number
+                            ],
                         ]);
                     }
                 }
@@ -446,6 +464,39 @@ class PurchaseRequestController extends Controller
 
         try {
             $purchaseRequest->approveBySupplier();
+            
+            // Send notification to the requester that supplier approved
+            Notification::create([
+                'notifiable_id' => $purchaseRequest->requested_by,
+                'notifiable_type' => \App\Models\User::class,
+                'type' => 'Purchase Request Supplier Approved',
+                'data' => [
+                    'title' => 'Purchase Request Approved by Supplier',
+                    'message' => 'Purchase request #' . $purchaseRequest->request_number . ' has been approved by supplier.',
+                    'link' => route('purchase-requests.show', $purchaseRequest->id),
+                    'purchase_request_id' => $purchaseRequest->id,
+                    'request_number' => $purchaseRequest->request_number
+                ],
+            ]);
+            
+            // If fully approved, notify admins that they can create purchase order
+            if ($purchaseRequest->isFullyApproved()) {
+                $adminUsers = \App\Models\User::role('admin')->get();
+                foreach ($adminUsers as $admin) {
+                    Notification::create([
+                        'notifiable_id' => $admin->id,
+                        'notifiable_type' => \App\Models\User::class,
+                        'type' => 'Purchase Request Ready for PO',
+                        'data' => [
+                            'title' => 'Purchase Request Ready for Purchase Order',
+                            'message' => 'Purchase request #' . $purchaseRequest->request_number . ' is fully approved and ready for purchase order creation.',
+                            'link' => route('purchase-requests.show', $purchaseRequest->id),
+                            'purchase_request_id' => $purchaseRequest->id,
+                            'request_number' => $purchaseRequest->request_number
+                        ],
+                    ]);
+                }
+            }
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }

@@ -11,8 +11,9 @@ class PurchaseOrderItem extends Model
         'purchase_order_id',
         'material_id',
         'quantity',
+        'unit',
         'unit_price',
-        'total_price',
+        'total_amount',
         'specifications',
         'notes'
     ];
@@ -20,7 +21,7 @@ class PurchaseOrderItem extends Model
     protected $casts = [
         'quantity' => 'decimal:2',
         'unit_price' => 'decimal:2',
-        'total_price' => 'decimal:2'
+        'total_amount' => 'decimal:2'
     ];
 
     public function purchaseOrder(): BelongsTo

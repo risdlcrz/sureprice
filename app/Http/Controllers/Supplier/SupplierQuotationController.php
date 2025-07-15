@@ -154,7 +154,7 @@ class SupplierQuotationController extends Controller
             $responseItemsData[$materialId] = [
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
-                'total_price' => $totalPrice,
+                'total_amount' => $totalPrice,
                 // 'specifications' => '', // Add if needed in future
                 // 'notes' => '', // Add if needed in future
             ];

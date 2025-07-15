@@ -351,6 +351,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete'])->name('purchase-orders.complete');
     // Other admin routes
     Route::get('/notification-center', [\App\Http\Controllers\AdminController::class, 'notificationCenter'])->name('admin.notification');
+    Route::post('/notifications/{id}/mark-read', [\App\Http\Controllers\AdminController::class, 'markNotificationAsRead'])->name('admin.notifications.mark-read');
     Route::get('/admin/logs', [App\Http\Controllers\AdminController::class, 'administratorLogs'])->name('admin.logs');
 });
 // Supplier Evaluation Routes
@@ -519,6 +520,47 @@ Route::get('/test-notifications', function () {
         'user_id' => auth()->id(),
         'user_name' => auth()->user()->name ?? 'Unknown'
     ]);
+})->middleware('auth');
+
+// Test route for creating a sample purchase request notification (remove in production)
+Route::get('/test-purchase-request-notification', function () {
+    if (!auth()->user()->hasRole('admin')) {
+        return response()->json(['error' => 'Admin access required'], 403);
+    }
+    
+    // Create a sample notification
+    \App\Models\Notification::create([
+        'notifiable_id' => auth()->id(),
+        'notifiable_type' => \App\Models\User::class,
+        'type' => 'Purchase Request Approval Needed',
+        'data' => [
+            'title' => 'Test Purchase Request Approval Required',
+            'message' => 'A test purchase request #PR-000001 requires your approval.',
+            'link' => route('purchase-requests.index'),
+            'purchase_request_id' => 1,
+            'request_number' => 'PR-000001'
+        ],
+    ]);
+    
+    return response()->json(['success' => true, 'message' => 'Test notification created']);
+})->middleware('auth');
+
+// Clean up invalid notifications (remove in production)
+Route::get('/cleanup-notifications', function () {
+    if (!auth()->user()->hasRole('admin')) {
+        return response()->json(['error' => 'Admin access required'], 403);
+    }
+    
+    // Delete notifications with invalid purchase request data
+    $deleted = \App\Models\Notification::where('type', 'like', '%Purchase Request%')
+        ->where(function($query) {
+            $query->whereNull('data')
+                  ->orWhere('data', '')
+                  ->orWhere('data', '[]');
+        })
+        ->delete();
+    
+    return response()->json(['success' => true, 'deleted_count' => $deleted]);
 })->middleware('auth');
 
 Route::middleware(['auth'])->prefix('warehouse')->name('warehouse.')->group(function () {

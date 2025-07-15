@@ -73,7 +73,7 @@ class ProcurementSeeder extends Seeder
                     'material_id' => $material->id,
                     'quantity' => $quantity,
                     'unit_price' => $price,
-                    'total_price' => $total,
+                    'total_amount' => $total,
                 ];
             }
             $pr->total_amount = $prTotal;
@@ -156,7 +156,7 @@ class ProcurementSeeder extends Seeder
                     'material_id' => $material->id,
                     'quantity' => $quantity,
                     'unit_price' => $price,
-                    'total_price' => $total,
+                    'total_amount' => $total,
                 ]);
 
                 $po->total_amount = $total;

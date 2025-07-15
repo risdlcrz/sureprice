@@ -144,7 +144,7 @@
                                     $materials->push([
                                         'name' => $item->material->name,
                                         'quantity' => $item->quantity,
-                                        'amount' => $item->total_price,
+                                        'amount' => $item->total_amount,
                                         'status' => $po->status
                                     ]);
                                 }

@@ -105,11 +105,14 @@ class PurchaseOrderController extends Controller
             ]);
 
             foreach ($request->items as $item) {
+                $material = \App\Models\Material::find($item['material_id']);
+                $unit = $item['unit'] ?? ($material ? $material->unit : 'pcs');
                 $purchaseOrder->items()->create([
                     'material_id' => $item['material_id'],
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
-                    'total_price' => $item['quantity'] * $item['unit_price'],
+                    'unit' => $unit,
+                    'total_amount' => $item['quantity'] * $item['unit_price'],
                     'specifications' => $item['specifications'] ?? null,
                     'notes' => $item['notes'] ?? null
                 ]);
@@ -199,7 +202,7 @@ class PurchaseOrderController extends Controller
                     'material_id' => $item['material_id'],
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
-                    'total_price' => $item['quantity'] * $item['unit_price'],
+                    'total_amount' => $item['quantity'] * $item['unit_price'],
                     'specifications' => $item['specifications'] ?? null,
                     'notes' => $item['notes'] ?? null
                 ]);

@@ -21,8 +21,19 @@
                                 <tr>
                                     <th>Status</th>
                                     <td>
-                                        <span class="badge badge-{{ $purchaseRequest->status === 'pending' ? 'warning' : ($purchaseRequest->status === 'approved' ? 'success' : 'danger') }}">
-                                            {{ ucfirst($purchaseRequest->status) }}
+                                        @php
+                                            $statusColors = [
+                                                'pending' => 'warning',
+                                                'pending_admin_approval' => 'warning',
+                                                'pending_supplier_approval' => 'info',
+                                                'approved' => 'success',
+                                                'rejected' => 'danger',
+                                                'cancelled' => 'secondary'
+                                            ];
+                                            $statusColor = $statusColors[$purchaseRequest->status] ?? 'secondary';
+                                        @endphp
+                                        <span class="badge badge-{{ $statusColor }}">
+                                            {{ ucfirst(str_replace('_', ' ', $purchaseRequest->status)) }}
                                         </span>
                                     </td>
                                 </tr>
@@ -90,7 +101,16 @@
                             </div>
                             <div class="card-body">
                                 @if(!$purchaseRequest->supplier_approved)
-                                    <p>This request is pending your approval.</p>
+                                    <p class="text-info mb-3">
+                                        <i class="fas fa-info-circle"></i> 
+                                        This purchase request has been approved by admin and is now pending your approval.
+                                    </p>
+                                    @if($purchaseRequest->admin_approved_at)
+                                        <p class="text-success mb-3">
+                                            <i class="fas fa-check-circle"></i> 
+                                            Approved by admin on {{ $purchaseRequest->admin_approved_at->format('M d, Y H:i') }}
+                                        </p>
+                                    @endif
                                     <form action="{{ route('supplier.purchase-requests.approve', $purchaseRequest) }}" method="POST" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to approve this request?')">
@@ -98,8 +118,38 @@
                                         </button>
                                     </form>
                                 @else
-                                    <p class="text-success"><i class="fas fa-check-circle"></i> You have approved this request on {{ $purchaseRequest->supplier_approved_at->format('M d, Y H:i') }}.</p>
+                                    <p class="text-success">
+                                        <i class="fas fa-check-circle"></i> 
+                                        You have approved this request on {{ $purchaseRequest->supplier_approved_at->format('M d, Y H:i') }}.
+                                    </p>
                                 @endif
+                            </div>
+                        </div>
+                    @elseif($purchaseRequest->status === 'approved')
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h4 class="card-title">Approval Status</h4>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-success">
+                                    <i class="fas fa-check-circle"></i> 
+                                    This purchase request has been fully approved and is ready for purchase order creation.
+                                </p>
+                                @if($purchaseRequest->supplier_approved_at)
+                                    <p>You approved on: {{ $purchaseRequest->supplier_approved_at->format('M d, Y H:i') }}</p>
+                                @endif
+                            </div>
+                        </div>
+                    @elseif($purchaseRequest->status === 'pending_admin_approval')
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h4 class="card-title">Status Information</h4>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-warning">
+                                    <i class="fas fa-clock"></i> 
+                                    This purchase request is pending admin approval.
+                                </p>
                             </div>
                         </div>
                     @endif

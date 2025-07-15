@@ -182,13 +182,15 @@ class PurchaseRequest extends Model
 
             // Copy items from purchase request to purchase order
             foreach ($this->items as $item) {
-                $unitPrice = $item->unit_price ?? $item->estimated_unit_price ?? 0;
+                $unitPrice = $item->estimated_unit_price ?? 0;
+                $material = $item->material; // Eloquent relationship
+                $unit = $item->unit ?? ($material ? $material->unit : 'pcs');
                 $purchaseOrder->items()->create([
                     'material_id' => $item->material_id,
                     'quantity' => $item->quantity,
-                    'unit' => $item->unit,
+                    'unit' => $unit,
                     'unit_price' => $unitPrice,
-                    'total_price' => $item->quantity * $unitPrice,
+                    'total_amount' => $item->quantity * $unitPrice,
                 ]);
             }
 
