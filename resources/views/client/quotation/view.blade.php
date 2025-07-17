@@ -476,6 +476,79 @@ body {
                             <p>Request Number: <span class="badge bg-primary">{{ $quotationRequest->request_number }}</span></p>
                             <a href="{{ route('client.quotation.index') }}" class="btn btn-primary mt-3">Back to My Quotations</a>
                         </div>
+                        @if(isset($materialSupplierResponses) && isset($selectedSuppliers) && count($selectedSuppliers) > 0)
+                        <div class="card mt-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">Chosen Suppliers</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered mb-0 align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>Room</th>
+                                                <th>Scope</th>
+                                                <th>Material</th>
+                                                <th>Chosen Supplier</th>
+                                                <th>Quoted Price</th>
+                                                <th>Badges</th>
+                                                <th>Contact</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($selectedSuppliers as $materialId => $supplierId)
+                                                @php
+                                                    $materialName = null;
+                                                    $supplierName = null;
+                                                    $price = null;
+                                                    $roomName = null;
+                                                    $scopeName = null;
+                                                    $badges = [];
+                                                    $contact = null;
+                                                    if(isset($materialSupplierResponses[$materialId])) {
+                                                        foreach($materialSupplierResponses[$materialId] as $offer) {
+                                                            if($offer['supplier_id'] == $supplierId) {
+                                                                $supplierName = $offer['supplier_name'] ?? 'Unknown';
+                                                                $price = isset($offer['unit_price']) ? number_format($offer['unit_price'], 2) : '0.00';
+                                                                $badges = $offer['badges'] ?? [];
+                                                                $contact = $offer['supplier_contact'] ?? null;
+                                                                $roomName = $offer['room_name'] ?? null;
+                                                                $scopeName = $offer['scope_name'] ?? null;
+                                                            }
+                                                            $materialName = $offer['material_name'] ?? $materialName;
+                                                        }
+                                                    }
+                                                @endphp
+                                                <tr>
+                                                    <td>{{ $roomName ?? '-' }}</td>
+                                                    <td>{{ $scopeName ?? '-' }}</td>
+                                                    <td>{{ $materialName ?? 'Material #'.$materialId }}</td>
+                                                    <td>{{ $supplierName ?? 'N/A' }}</td>
+                                                    <td>₱{{ $price ?? '0.00' }}</td>
+                                                    <td>
+                                                        @if(!empty($badges))
+                                                            @foreach($badges as $badge)
+                                                                <span class="badge @if($badge=='Cheapest') badge-cheapest @elseif($badge=='Best Delivery') badge-delivery @elseif($badge=='Least Defects') badge-defects @elseif($badge=='Overall Best') badge-overall @endif" data-bs-toggle="tooltip" title="{{ $badge }}">{{ $badge }}</span>
+                                                            @endforeach
+                                                        @else
+                                                            <span class="text-muted">-</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if($contact)
+                                                            <span class="text-nowrap"><i class="fas fa-phone-alt me-1"></i>{{ $contact }}</span>
+                                                        @else
+                                                            <span class="text-muted">-</span>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -629,6 +702,9 @@ $(document).on('change', '.supplier-select', function() {
             // --- END NEW ---
         }
     });
+});
+$(function () {
+    $('[data-bs-toggle="tooltip"]').tooltip();
 });
 </script>
 @endpush 

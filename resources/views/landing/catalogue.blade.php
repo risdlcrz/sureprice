@@ -30,6 +30,9 @@
 <div class="container text-center my-5 pb-2">
     <h1 class="display-4 fw-bold mb-3 text-success">Welcome to SurePrice</h1>
     <p class="lead text-secondary mb-0">Your all-in-one platform for Construction Project & Procurement Management</p>
+    @if(auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client')
+        <a href="{{ route('client.dashboard') }}" class="btn btn-primary btn-lg mt-4">Go to Dashboard</a>
+    @endif
 </div>
 
 @php

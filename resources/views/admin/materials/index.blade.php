@@ -233,6 +233,15 @@ input.form-control:focus, select.form-control:focus {
 ::-moz-placeholder { color: #b0b3b8; }
 :-ms-input-placeholder { color: #b0b3b8; }
 ::placeholder { color: #b0b3b8; }
+.materials-fadein {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+.materials-fadein.active {
+    opacity: 1;
+    transform: none;
+}
 </style>
 @endpush
 
@@ -241,7 +250,7 @@ input.form-control:focus, select.form-control:focus {
 <div class="container-fluid py-4">
     <div class="row">
         <div class="col-12">
-            <div class="card shadow">
+            <div class="card shadow materials-fadein" id="materialsFadeinCard">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <div>
                         <button type="button" class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#bulkSrpModal">
@@ -774,6 +783,11 @@ document.addEventListener('DOMContentLoaded', function() {
             class: variance < 0 ? 'bg-success' : variance > 0 ? 'bg-danger' : 'bg-secondary'
         };
     }
+
+    setTimeout(function() {
+        var card = document.getElementById('materialsFadeinCard');
+        if(card) card.classList.add('active');
+    }, 100);
 });
 </script>
 @endpush 

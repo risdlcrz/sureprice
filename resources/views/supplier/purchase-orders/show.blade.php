@@ -4,10 +4,28 @@
     <h1>Purchase Order: {{ $purchaseOrder->po_number }}</h1>
     <div class="mb-3">
         <strong>Status:</strong> <span class="badge bg-{{ $purchaseOrder->status_color }}">{{ ucfirst($purchaseOrder->status) }}</span><br>
+        <strong>Shipping Status:</strong> <span class="badge bg-info">{{ $purchaseOrder->shipping_status ?? 'Not shipped' }}</span><br>
+        <strong>Tracking Number:</strong> <span>{{ $purchaseOrder->tracking_number ?? '-' }}</span><br>
         <strong>Total Amount:</strong> ₱{{ number_format($purchaseOrder->total_amount, 2) }}<br>
         <strong>Delivery Date:</strong> {{ $purchaseOrder->delivery_date }}<br>
         <strong>Payment Terms:</strong> {{ $purchaseOrder->payment_terms }}<br>
         <strong>Shipping Terms:</strong> {{ $purchaseOrder->shipping_terms }}<br>
+    </div>
+    <!-- Timeline/Status Badges -->
+    <div class="mb-4">
+        <span class="badge bg-secondary">Created</span>
+        @if($purchaseOrder->status === 'approved' || $purchaseOrder->status === 'pending_payment' || $purchaseOrder->status === 'confirmed' || $purchaseOrder->shipping_status)
+            <span class="badge bg-primary">Approved</span>
+        @endif
+        @if($payment && $payment->status === 'verified')
+            <span class="badge bg-success">Paid</span>
+        @endif
+        @if($purchaseOrder->shipping_status)
+            <span class="badge bg-info">Shipped Out</span>
+        @endif
+        @if($purchaseOrder->status === 'delivered')
+            <span class="badge bg-success">Delivered</span>
+        @endif
     </div>
     <h4>Items</h4>
     <table class="table table-bordered">
@@ -85,11 +103,14 @@
         <div class="alert alert-secondary">No payment submitted yet.</div>
     @endif
     {{-- Supplier Shipped Out Button --}}
-    @if(auth()->user()->isSupplier() && $purchaseOrder->status === 'confirmed' && $payment && $payment->status === 'verified')
+    @if(auth()->user()->isSupplier() && $purchaseOrder->status === 'confirmed' && $payment && $payment->status === 'verified' && !$purchaseOrder->shipping_status)
         <form method="POST" action="{{ route('purchase-orders.ship', $purchaseOrder->id) }}">
             @csrf
             <div class="mb-2">
                 <textarea name="shipping_note" class="form-control" placeholder="Shipping note (optional)"></textarea>
+            </div>
+            <div class="mb-2">
+                <input type="text" name="tracking_number" class="form-control" placeholder="Tracking number (required)" required>
             </div>
             <button type="submit" class="btn btn-info">Mark as Shipped Out</button>
         </form>

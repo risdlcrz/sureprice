@@ -28,14 +28,6 @@
         <div class="col-md-3 mb-3">
             <div class="card h-100">
                 <div class="card-body">
-                    <h3 class="card-title h5">Pending Invitations</h3>
-                    <p class="display-6 text-warning mb-0">{{ $pendingInvitations->count() }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card h-100">
-                <div class="card-body">
                     <h3 class="card-title h5">Total Sales</h3>
                     <p class="display-6 text-info mb-0">₱{{ number_format($totalSales, 2) }}</p>
                 </div>
@@ -256,6 +248,39 @@
         </div>
         @endif
     </div>
+
+    <!-- Active Quotations Table -->
+    @if($activeQuotations->count() > 0)
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Your Active Quotations</h2>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th>Quotation #</th>
+                        <th>Client</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($activeQuotations as $quotation)
+                    <tr>
+                        <td>{{ $quotation->request_number ?? $quotation->id }}</td>
+                        <td>{{ $quotation->user->getDisplayNameAttribute() ?? 'N/A' }}</td>
+                        <td><span class="badge bg-warning text-dark">{{ ucfirst($quotation->status) }}</span></td>
+                        <td>
+                            <a href="{{ route('supplier.quotations.respond', $quotation) }}" class="btn btn-sm btn-primary">View / Respond</a>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
 
     <!-- Performance Card -->
     <div class="card mb-4">

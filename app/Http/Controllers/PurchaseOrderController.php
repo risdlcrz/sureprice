@@ -467,17 +467,34 @@ class PurchaseOrderController extends Controller
     {
         $po = PurchaseOrder::findOrFail($id);
         if (auth()->user()->isSupplier() && $po->status === PurchaseOrder::STATUS_CONFIRMED) {
+            $request->validate([
+                'tracking_number' => 'required|string|max:255',
+            ]);
             $po->status = PurchaseOrder::STATUS_SHIPPING;
             $po->shipped_at = now();
             $po->shipping_note = $request->input('shipping_note');
+            $po->shipping_status = 'Shipped Out';
+            $po->tracking_number = $request->input('tracking_number');
             $po->save();
-            // Notify warehouse and admin users
-            $warehouseUsers = \App\Models\User::where('role', 'warehouse')->get();
-            $adminUsers = \App\Models\User::where('role', 'admin')->get();
-            foreach ($warehouseUsers->merge($adminUsers) as $user) {
-                $user->notify(new \App\Notifications\PurchaseOrderShipped($po));
+            // Notify admin, manager, and finance users
+            $adminUsers = \App\Models\User::role('admin')->get();
+            $managerUsers = \App\Models\User::role('manager')->get();
+            $financeUsers = \App\Models\User::role('finance')->get();
+            foreach ($adminUsers->merge($managerUsers)->merge($financeUsers) as $user) {
+                \App\Models\Notification::create([
+                    'notifiable_id' => $user->id,
+                    'notifiable_type' => \App\Models\User::class,
+                    'type' => 'Purchase Order Shipped',
+                    'data' => [
+                        'title' => 'Purchase Order Shipped',
+                        'message' => 'Purchase Order #' . $po->po_number . ' has been marked as shipped out by the supplier. Tracking #: ' . $po->tracking_number,
+                        'link' => route('purchase-orders.show', $po->id),
+                        'purchase_order_id' => $po->id,
+                        'tracking_number' => $po->tracking_number
+                    ],
+                ]);
             }
-            return back()->with('success', 'Purchase Order marked as shipped.');
+            return back()->with('success', 'Purchase Order marked as shipped out.');
         }
         abort(403);
     }

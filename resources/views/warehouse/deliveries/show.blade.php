@@ -128,10 +128,9 @@
     </div>
     @endif
 
-    @if($delivery->status === 'completed' && auth()->user() && method_exists(auth()->user(), 'hasRole') && auth()->user()->hasRole('warehouse'))
+    @if($delivery->status === 'completed' && auth()->user()->hasRole('warehouse'))
         @php
-            $userWarehouseId = property_exists(auth()->user(), 'warehouse_id') ? auth()->user()->warehouse_id : null;
-            $existingFeedback = \App\Models\DeliveryFeedback::where('delivery_id', $delivery->id)->where('warehouse_id', $userWarehouseId)->first();
+            $existingFeedback = \App\Models\DeliveryFeedback::where('delivery_id', $delivery->id)->where('warehouse_id', auth()->id())->first();
         @endphp
         @if(!$existingFeedback)
             <div class="alert alert-info mt-4">

@@ -169,7 +169,7 @@
                         <ul class="timeline mb-3">
                             <li class="{{ $purchaseOrder->status === 'confirmed' || $purchaseOrder->status === 'shipping' || $purchaseOrder->status === 'delivered' || $purchaseOrder->status === 'completed' ? 'active' : '' }}">Confirmed</li>
                             <li class="{{ $purchaseOrder->status === 'shipping' || $purchaseOrder->status === 'delivered' || $purchaseOrder->status === 'completed' ? 'active' : '' }}">Shipping</li>
-                            <li class="{{ $purchaseOrder->status === 'delivered' || $purchaseOrder->status === 'completed' ? 'active' : '' }}">Delivered</li>
+                            <li class="{{ $purchaseOrder->status === 'delivered' || $purchaseOrder->status === 'completed' ? 'active' : '' }}">Received</li>
                             <li class="{{ $purchaseOrder->status === 'completed' ? 'active' : '' }}">Completed</li>
                         </ul>
                         @if(auth()->user()->isSupplier() && $purchaseOrder->status === \App\Models\PurchaseOrder::STATUS_CONFIRMED)
@@ -184,7 +184,13 @@
                         @if((auth()->user()->isWarehouse() || auth()->user()->isAdmin()) && $purchaseOrder->status === \App\Models\PurchaseOrder::STATUS_SHIPPING)
                             <form method="POST" action="{{ route('purchase-orders.deliver', $purchaseOrder->id) }}">
                                 @csrf
-                                <button type="submit" class="btn btn-success">Mark as Delivered</button>
+                                <button type="submit" class="btn btn-success">
+                                    @if(auth()->user()->isWarehouse())
+                                        Mark as Received
+                                    @else
+                                        Mark as Delivered
+                                    @endif
+                                </button>
                             </form>
                         @endif
                         @if($purchaseOrder->shipping_note)

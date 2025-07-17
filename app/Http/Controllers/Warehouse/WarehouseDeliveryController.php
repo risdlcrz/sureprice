@@ -189,6 +189,19 @@ class WarehouseDeliveryController extends Controller
                 'comments' => $request->comments,
             ]
         );
+        // Update supplier metrics
+        if ($delivery->supplier_id) {
+            $supplier = \App\Models\Supplier::find($delivery->supplier_id);
+            if ($supplier) {
+                $avgRating = \App\Models\DeliveryFeedback::where('supplier_id', $supplier->id)->avg('rating');
+                $metrics = $supplier->metrics;
+                if (!$metrics) {
+                    $metrics = new \App\Models\SupplierMetrics(['supplier_id' => $supplier->id]);
+                }
+                $metrics->average_delivery_rating = $avgRating;
+                $metrics->save();
+            }
+        }
         return redirect()->route('warehouse.deliveries.show', $delivery)->with('success', 'Feedback submitted!');
     }
 }

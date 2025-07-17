@@ -15,14 +15,16 @@ class SupplierMetrics extends Model
         'total_deliveries',
         'ontime_deliveries',
         'average_defect_rate',
-        'average_cost_variance'
+        'average_cost_variance',
+        'average_delivery_rating',
     ];
 
     protected $casts = [
         'total_deliveries' => 'integer',
         'ontime_deliveries' => 'integer',
         'average_defect_rate' => 'decimal:2',
-        'average_cost_variance' => 'decimal:2'
+        'average_cost_variance' => 'decimal:2',
+        'average_delivery_rating' => 'decimal:2',
     ];
 
     public function supplier(): BelongsTo

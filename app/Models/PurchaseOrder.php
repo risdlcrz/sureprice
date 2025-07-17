@@ -53,6 +53,8 @@ class PurchaseOrder extends Model
         'shipped_at',
         'delivered_at',
         'shipping_note',
+        'shipping_status',
+        'tracking_number',
     ];
 
     protected $casts = [
@@ -69,6 +71,8 @@ class PurchaseOrder extends Model
         'penalty_rate' => 'decimal:2',
         'penalty_accrued' => 'decimal:2',
         'last_penalty_calculation' => 'date',
+        'shipping_status' => 'string',
+        'tracking_number' => 'string',
     ];
 
     public function purchaseRequest(): BelongsTo

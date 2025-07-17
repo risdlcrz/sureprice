@@ -81,6 +81,7 @@
                                     <tr>
                                         <th>Material</th>
                                         <th>Requested Quantity</th>
+                                        <th>SRP / Base Price</th>
                                         <th>Current Material Price</th>
                                         <th>Your Quoted Price</th>
                                         <th class="per-material-discount-header" style="display:none;">Discount Type</th>
@@ -92,6 +93,12 @@
                                     <tr>
                                         <td>{{ $material->name }} ({{ $material->code }})</td>
                                         <td>{{ $material->requested_quantity }} {{ $material->unit }}</td>
+                                        <td>
+                                            @if(isset($material->srp_price) && $material->srp_price > 0)
+                                                <span>₱{{ number_format($material->srp_price, 2) }} <small class="text-muted">(SRP)</small></span><br>
+                                            @endif
+                                            <span>₱{{ number_format($material->base_price, 2) }} <small class="text-muted">(Base)</small></span>
+                                        </td>
                                         <td>₱{{ number_format($material->price, 2) }}</td>
                                         <td>
                                             <input type="number" 
@@ -115,7 +122,7 @@
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="6" class="text-center text-muted">No materials requested for this quotation.</td>
+                                        <td colspan="7" class="text-center text-muted">No materials requested for this quotation.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>

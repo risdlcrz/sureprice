@@ -183,6 +183,19 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (badge) {
                             badge.style.display = 'none';
                         }
+                        // Update sidebar notification badge
+                        const sidebarBadge = document.querySelector('.nav-buttons .btn .badge.bg-danger');
+                        if (sidebarBadge) {
+                            let count = parseInt(sidebarBadge.textContent.trim(), 10);
+                            if (!isNaN(count) && count > 0) {
+                                count--;
+                                if (count > 0) {
+                                    sidebarBadge.textContent = count;
+                                } else {
+                                    sidebarBadge.style.display = 'none';
+                                }
+                            }
+                        }
                     }
                 })
                 .catch(error => {

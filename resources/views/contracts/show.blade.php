@@ -223,6 +223,53 @@
         </div>
     </div>
 
+    <!-- Scope, Materials, and Chosen Suppliers Table -->
+    @if($contract->project && $contract->project->quotationRequest)
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Scope of Work, Materials, and Chosen Suppliers (from Client Quotation Request)</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Room</th>
+                                <th>Scope</th>
+                                <th>Material</th>
+                                <th>Quantity</th>
+                                <th>Unit</th>
+                                <th>Chosen Supplier</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($contract->project->quotationRequest->rooms as $room)
+                                @foreach($room->scopes as $scope)
+                                    @if(is_array($scope->selected_materials) && count($scope->selected_materials) > 0)
+                                        @foreach($scope->selected_materials as $mat)
+                                            @php
+                                                $material = \App\Models\Material::find($mat['material_id']);
+                                                $supplier = isset($mat['chosen_supplier_id']) ? \App\Models\Supplier::find($mat['chosen_supplier_id']) : null;
+                                            @endphp
+                                            <tr>
+                                                <td>{{ $room->name }}</td>
+                                                <td>{{ $scope->scope_name }}</td>
+                                                <td>{{ $material ? $material->name : 'Material #'.$mat['material_id'] }}</td>
+                                                <td>{{ $mat['quantity'] ?? '-' }}</td>
+                                                <td>{{ $mat['unit'] ?? ($material ? $material->unit : '-') }}</td>
+                                                <td>{{ $supplier ? $supplier->company_name : '-' }}</td>
+                                            </tr>
+                                        @endforeach
+                                    @endif
+                                @endforeach
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Workflow Status -->
     @include('contracts.partials.workflow-status')
 </div>

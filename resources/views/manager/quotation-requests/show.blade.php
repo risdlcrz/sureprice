@@ -73,7 +73,89 @@
             @if($quotationRequest->status === 'proceeded' && !$quotationRequest->materialRequest)
                 <a href="{{ route('material-requests.create', ['quotation_id' => $quotationRequest->id]) }}" class="btn btn-primary mt-3">Create Material Request</a>
             @endif
+            <div class="card mt-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Chosen Suppliers</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Room</th>
+                                    <th>Scope</th>
+                                    <th>Material</th>
+                                    <th>Chosen Supplier</th>
+                                    <th>Quoted Price</th>
+                                    <th>Badges</th>
+                                    <th>Contact</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($selectedSuppliers as $materialId => $supplierId)
+                                    @php
+                                        $material = null;
+                                        $supplier = null;
+                                        $roomName = null;
+                                        $scopeName = null;
+                                        $price = null;
+                                        $badges = [];
+                                        $contact = null;
+                                        foreach ($rfqs as $rfq) {
+                                            $mat = $rfq->materials->firstWhere('id', $materialId);
+                                            if ($mat) {
+                                                $material = $mat;
+                                                $supplier = $rfq->suppliers->firstWhere('id', $supplierId);
+                                                $roomName = $mat->pivot->room_name ?? null;
+                                                $scopeName = $mat->pivot->scope_name ?? null;
+                                                $price = $mat->pivot->quoted_price ?? null;
+                                                $badges = $mat->pivot->badges ?? [];
+                                                $contact = $supplier->contact_number ?? null;
+                                                break;
+                                            }
+                                        }
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $roomName ?? '-' }}</td>
+                                        <td>{{ $scopeName ?? '-' }}</td>
+                                        <td>{{ $material ? $material->name : 'Material #'.$materialId }}</td>
+                                        <td>{{ $supplier ? $supplier->company_name : 'N/A' }}</td>
+                                        <td>
+                                            @if($price)
+                                                ₱{{ number_format($price, 2) }}
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if(!empty($badges))
+                                                @foreach($badges as $badge)
+                                                    <span class="badge @if($badge=='Cheapest') badge-cheapest @elseif($badge=='Best Delivery') badge-delivery @elseif($badge=='Least Defects') badge-defects @elseif($badge=='Overall Best') badge-overall @endif" data-bs-toggle="tooltip" title="{{ $badge }}">{{ $badge }}</span>
+                                                @endforeach
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($contact)
+                                                <span class="text-nowrap"><i class="fas fa-phone-alt me-1"></i>{{ $contact }}</span>
+                                            @else
+                                                <span class="text-muted">-</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-@endsection 
+@endsection
+@push('scripts')
+$(function () {
+    $('[data-bs-toggle="tooltip"]').tooltip();
+});
+@endpush
