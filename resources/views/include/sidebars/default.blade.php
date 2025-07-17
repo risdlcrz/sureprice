@@ -42,8 +42,8 @@
         </a>
         <a href="{{ route('messages.index') }}" class="btn position-relative">
             <i class="fas fa-comments"></i>Messages
-            @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $globalUnreadCount }}</span>
+            @if(isset($unreadMessagesCount) && $unreadMessagesCount > 0)
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $unreadMessagesCount }}</span>
             @endif
         </a>
     @elseif(auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'supplier')
@@ -91,6 +91,27 @@
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $globalUnreadCount }}</span>
                 @endif
             </a>
+            <a href="{{ route('admin.project') }}" class="btn">
+                <i class="fas fa-tasks"></i>Project & Procurement
+            </a>
+            <a href="{{ route('inventory.index') }}" class="btn">
+                <i class="fas fa-boxes"></i>Inventory
+            </a>
+            <a href="{{ route('admin.transactions') }}" class="btn">
+                <i class="fas fa-money-check-alt"></i>Transactions
+            </a>
+            <a href="{{ route('payments.index') }}" class="btn">
+                <i class="fas fa-money-check-alt"></i>Payments
+            </a>
+            <a href="{{ route('history.dashboard') }}" class="btn">
+                <i class="fas fa-history"></i>Project History
+            </a>
+            <a href="{{ route('messages.index') }}" class="btn position-relative">
+                <i class="fas fa-comments"></i>Messages
+                @if(isset($unreadMessagesCount) && $unreadMessagesCount > 0)
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $unreadMessagesCount }}</span>
+                @endif
+            </a>
         @elseif(auth()->user()->role === 'finance')
             <a href="{{ route('finance.dashboard') }}" class="btn">
                 <i class="fas fa-home"></i>Dashboard
@@ -107,40 +128,21 @@
             </a>
         @endif
         @if(auth()->user()->role === 'admin')
-        <a href="{{ route('information-management.index') }}" class="btn">
-            <i class="fas fa-folder-open"></i>Information Management
-        </a>
-        <a href="{{ route('admin.notification') }}" class="btn position-relative">
-            <i class="fas fa-bell"></i>Notification Hub
-            @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $globalUnreadCount }}</span>
-            @endif
-        </a>
-        <a href="{{ route('admin.analytics') }}" class="btn">
-            <i class="fas fa-chart-bar"></i>Analytics
-        </a>
-    
-        <a href="{{ route('admin.project') }}" class="btn">
-            <i class="fas fa-tasks"></i>Project & Procurement
-        </a>
-        <a href="{{ route('history.dashboard') }}" class="btn">
-            <i class="fas fa-history"></i>Project History
-        </a>
-        <a href="{{ route('inventory.index') }}" class="btn">
-            <i class="fas fa-boxes"></i>Inventory
-        </a>
-        <a href="{{ route('admin.transactions') }}" class="btn">
-            <i class="fas fa-money-check-alt"></i>Transactions
-        </a>
-        <a href="{{ route('payments.index') }}" class="btn">
-            <i class="fas fa-money-check-alt"></i>Payments
-        </a>
-        <a href="{{ route('messages.index') }}" class="btn position-relative">
-            <i class="fas fa-comments"></i>Messages
-            @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $globalUnreadCount }}</span>
-            @endif
-        </a>
+            <a href="{{ route('information-management.index') }}" class="btn">
+                <i class="fas fa-folder-open"></i>Information Management
+            </a>
+            <a href="{{ route('admin.notification') }}" class="btn position-relative">
+                <i class="fas fa-bell"></i>Notification Center
+                @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $globalUnreadCount }}</span>
+                @endif
+            </a>
+            <a href="{{ route('admin.analytics') }}" class="btn">
+                <i class="fas fa-chart-bar"></i>Analytics
+            </a>
+            <a href="{{ route('history.dashboard') }}" class="btn">
+                <i class="fas fa-history"></i>Project History
+            </a>
         @endif
     @endif
 </div>

@@ -130,7 +130,7 @@
                                     <thead>
                                         <tr>
                                             <th>Material</th>
-                                            <th>Warehouse</th>
+                                            <th>Supplier</th>
                                             <th>Requested Quantity</th>
                                             <th>Fulfilled from Stock</th>
                                             <th>Needs Purchasing</th>
@@ -156,10 +156,10 @@
                                         <tr>
                                             <td class="material-indent"></td>
                                             <td>
-                                                @if($item->warehouse)
-                                                    {{ $item->warehouse->name }}
+                                                @if($item->supplier)
+                                                    {{ $item->supplier->company_name }}
                                                 @else
-                                                    <span class="text-danger">Shortfall (Needs Purchasing)</span>
+                                                    <span class="text-danger">No Supplier</span>
                                                 @endif
                                             </td>
                                             <td>{{ number_format($item->quantity, 2) }} {{ $item->unit }}</td>

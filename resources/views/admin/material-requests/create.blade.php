@@ -37,8 +37,7 @@
                                                 <th>Material</th>
                                                 <th>Unit</th>
                                                 <th>Quantity</th>
-                                                <th>Warehouse</th>
-                                                <th>Stock</th>
+                                                <th>Supplier</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
