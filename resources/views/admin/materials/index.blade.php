@@ -233,6 +233,33 @@ input.form-control:focus, select.form-control:focus {
 ::-moz-placeholder { color: #b0b3b8; }
 :-ms-input-placeholder { color: #b0b3b8; }
 ::placeholder { color: #b0b3b8; }
+.material-row-animate {
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.material-row-animate:hover {
+    box-shadow: 0 4px 16px #38b6ff33;
+    transform: scale(1.012) translateY(-2px);
+    z-index: 2;
+    background: #e3f2fd44 !important;
+}
+.fade-in-up {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeInUp 0.4s forwards;
+}
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+.fade-out {
+    opacity: 1;
+    transition: opacity 0.4s;
+}
+.fade-out.fade-out-active {
+    opacity: 0;
+}
 </style>
 @endpush
 
@@ -323,7 +350,7 @@ input.form-control:focus, select.form-control:focus {
                             </thead>
                             <tbody id="materialsTableBody">
                                 @foreach($materials as $material)
-                                <tr>
+                                <tr class="material-row-animate">
                                     <td>{{ $material->code }}</td>
                                     <td>
                                         <strong>{{ $material->name }}</strong>
@@ -338,8 +365,14 @@ input.form-control:focus, select.form-control:focus {
                                     <td>{{ $material->unit }}</td>
                                     <td>₱{{ number_format($material->base_price, 2) }}</td>
                                     <td>
-                                        <div class="d-flex align-items-center">
-                                            ₱{{ number_format($material->srp_price, 2) }}
+                                        <div class="d-flex flex-column align-items-start">
+                                            <span>₱{{ number_format($material->srp_price, 2) }}</span>
+                                            @php
+                                                $prevSrp = optional($material->priceHistories()->latest('date')->first())->price;
+                                            @endphp
+                                            @if($prevSrp)
+                                                <small class="text-muted">Previous SRP: ₱{{ number_format($prevSrp, 2) }}</small>
+                                            @endif
                                             @php
                                                 $markup = $material->base_price > 0 
                                                     ? (($material->srp_price - $material->base_price) / $material->base_price * 100) 
@@ -561,13 +594,27 @@ document.addEventListener('DOMContentLoaded', function() {
             deleteForm.action = "{{ route('materials.destroy', ':id') }}".replace(':id', materialToDeleteId);
             const modal = new bootstrap.Modal(deleteModal);
             modal.show();
+            // Animation reset for row
+            const row = btn.closest('tr');
+            if (row) {
+                row.classList.remove('fade-out', 'fade-out-active');
+            }
         });
     });
 
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
     if (confirmDeleteBtn) {
         confirmDeleteBtn.addEventListener('click', function() {
-            deleteForm.submit();
+            const row = document.querySelector('.delete-material[data-id="' + materialToDeleteId + '"]').closest('tr');
+            if (row) {
+                row.classList.add('fade-out');
+                setTimeout(() => row.classList.add('fade-out-active'), 10);
+                setTimeout(() => row.remove(), 410);
+            }
+            // Submit form after animation
+            setTimeout(() => {
+                deleteForm.submit();
+            }, 420);
         });
     }
 
@@ -774,6 +821,20 @@ document.addEventListener('DOMContentLoaded', function() {
             class: variance < 0 ? 'bg-success' : variance > 0 ? 'bg-danger' : 'bg-secondary'
         };
     }
+
+    // Animate modals on show
+    ['bulkSrpModal', 'supplierPricesModal', 'deleteModal'].forEach(function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.addEventListener('show.bs.modal', function() {
+                const modalDialog = modal.querySelector('.modal-dialog');
+                if (modalDialog) {
+                    modalDialog.classList.add('fade-in-up');
+                    setTimeout(() => modalDialog.classList.remove('fade-in-up'), 500);
+                }
+            });
+        }
+    });
 });
 </script>
 @endpush 

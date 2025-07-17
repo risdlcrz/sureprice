@@ -87,9 +87,7 @@
             </a>
             <a href="{{ route('manager.notification') }}" class="btn position-relative">
                 <i class="fas fa-bell"></i>Notification Center
-                @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $globalUnreadCount }}</span>
-                @endif
+                <span class="notification-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em; display: none;"></span>
             </a>
             <a href="{{ route('admin.project') }}" class="btn">
                 <i class="fas fa-tasks"></i>Project & Procurement
@@ -128,21 +126,21 @@
             </a>
         @endif
         @if(auth()->user()->role === 'admin')
-            <a href="{{ route('information-management.index') }}" class="btn">
-                <i class="fas fa-folder-open"></i>Information Management
-            </a>
-            <a href="{{ route('admin.notification') }}" class="btn position-relative">
+        <a href="{{ route('information-management.index') }}" class="btn">
+            <i class="fas fa-folder-open"></i>Information Management
+        </a>
+        <a href="{{ route('admin.notification') }}" class="btn position-relative">
                 <i class="fas fa-bell"></i>Notification Center
-                @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $globalUnreadCount }}</span>
-                @endif
-            </a>
-            <a href="{{ route('admin.analytics') }}" class="btn">
-                <i class="fas fa-chart-bar"></i>Analytics
-            </a>
-            <a href="{{ route('history.dashboard') }}" class="btn">
-                <i class="fas fa-history"></i>Project History
-            </a>
+            @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $globalUnreadCount }}</span>
+            @endif
+        </a>
+        <a href="{{ route('admin.analytics') }}" class="btn">
+            <i class="fas fa-chart-bar"></i>Analytics
+        </a>
+        <a href="{{ route('history.dashboard') }}" class="btn">
+            <i class="fas fa-history"></i>Project History
+        </a>
         @endif
     @endif
 </div>
@@ -161,3 +159,26 @@
 <div class="logout-container">
     <!-- REMOVE THIS BLOCK COMPLETELY -->
 </div> 
+
+@push('scripts')
+<script>
+function updateNotificationBadge() {
+    fetch('/api/unread-notifications-count')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.querySelector('.notification-badge');
+            if (badge) {
+                if (data.count > 0) {
+                    badge.textContent = data.count;
+                    badge.style.display = '';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        });
+}
+setInterval(updateNotificationBadge, 10000); // Poll every 10 seconds
+// Initial load
+updateNotificationBadge();
+</script>
+@endpush 
