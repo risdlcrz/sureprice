@@ -466,18 +466,20 @@ class PurchaseOrderController extends Controller
     public function markAsShipped(Request $request, $id)
     {
         $po = PurchaseOrder::findOrFail($id);
-        if (auth()->user()->isSupplier() && $po->status === PurchaseOrder::STATUS_CONFIRMED) {
-            $po->status = PurchaseOrder::STATUS_SHIPPING;
-            $po->shipped_at = now();
-            $po->shipping_note = $request->input('shipping_note');
-            $po->save();
-            // Notify warehouse and admin users
-            $warehouseUsers = \App\Models\User::where('role', 'warehouse')->get();
-            $adminUsers = \App\Models\User::where('role', 'admin')->get();
-            foreach ($warehouseUsers->merge($adminUsers) as $user) {
-                $user->notify(new \App\Notifications\PurchaseOrderShipped($po));
+        if (auth()->user()->hasRole('supplier')) {
+            try {
+                $po->markAsShippedOut();
+                // Notify warehouse and admin users
+                $warehouseUsers = \App\Models\User::where('role', 'warehouse')->get();
+                $adminUsers = \App\Models\User::where('role', 'admin')->get();
+                foreach ($warehouseUsers->merge($adminUsers) as $user) {
+                    // You may want to use a notification class here
+                    // $user->notify(new \App\Notifications\PurchaseOrderShipped($po));
+                }
+                return back()->with('success', 'Purchase Order marked as shipped out.');
+            } catch (\Exception $e) {
+                return back()->with('error', $e->getMessage());
             }
-            return back()->with('success', 'Purchase Order marked as shipped.');
         }
         abort(403);
     }
@@ -485,20 +487,22 @@ class PurchaseOrderController extends Controller
     public function markAsDelivered(Request $request, $id)
     {
         $po = PurchaseOrder::findOrFail($id);
-        if ((auth()->user()->isWarehouse() || auth()->user()->isAdmin()) && $po->status === PurchaseOrder::STATUS_SHIPPING) {
-            $po->status = PurchaseOrder::STATUS_DELIVERED;
-            $po->delivered_at = now();
-            $po->save();
-            // Notify supplier and admin users
-            $supplierUser = $po->supplier ? $po->supplier->user : null;
-            $adminUsers = \App\Models\User::where('role', 'admin')->get();
-            if ($supplierUser) {
-                $supplierUser->notify(new \App\Notifications\PurchaseOrderDelivered($po));
+        if (auth()->user()->hasRole('warehouse') || auth()->user()->hasRole('admin')) {
+            try {
+                $po->markAsReceived();
+                // Notify supplier and admin users
+                $supplierUser = $po->supplier ? $po->supplier->user : null;
+                $adminUsers = \App\Models\User::where('role', 'admin')->get();
+                if ($supplierUser) {
+                    // $supplierUser->notify(new \App\Notifications\PurchaseOrderDelivered($po));
+                }
+                foreach ($adminUsers as $user) {
+                    // $user->notify(new \App\Notifications\PurchaseOrderDelivered($po));
+                }
+                return back()->with('success', 'Purchase Order marked as received.');
+            } catch (\Exception $e) {
+                return back()->with('error', $e->getMessage());
             }
-            foreach ($adminUsers as $user) {
-                $user->notify(new \App\Notifications\PurchaseOrderDelivered($po));
-            }
-            return back()->with('success', 'Purchase Order marked as delivered.');
         }
         abort(403);
     }

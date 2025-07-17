@@ -172,19 +172,19 @@
                             <li class="{{ $purchaseOrder->status === 'delivered' || $purchaseOrder->status === 'completed' ? 'active' : '' }}">Delivered</li>
                             <li class="{{ $purchaseOrder->status === 'completed' ? 'active' : '' }}">Completed</li>
                         </ul>
-                        @if(auth()->user()->isSupplier() && $purchaseOrder->status === \App\Models\PurchaseOrder::STATUS_CONFIRMED)
-                            <form method="POST" action="{{ route('purchase-orders.ship', $purchaseOrder->id) }}">
+                        @if(auth()->user()->hasRole('supplier') && $purchaseOrder->canShipOut())
+                            <form method="POST" action="{{ route('purchase-orders.mark-shipped', $purchaseOrder->id) }}">
                                 @csrf
                                 <div class="mb-2">
                                     <textarea name="shipping_note" class="form-control" placeholder="Shipping note (optional)"></textarea>
                                 </div>
-                                <button type="submit" class="btn btn-info">Mark as Shipped</button>
+                                <button type="submit" class="btn btn-info">Mark as Shipped Out</button>
                             </form>
                         @endif
-                        @if((auth()->user()->isWarehouse() || auth()->user()->isAdmin()) && $purchaseOrder->status === \App\Models\PurchaseOrder::STATUS_SHIPPING)
-                            <form method="POST" action="{{ route('purchase-orders.deliver', $purchaseOrder->id) }}">
+                        @if((auth()->user()->hasRole('warehouse') || auth()->user()->hasRole('admin')) && $purchaseOrder->canReceive())
+                            <form method="POST" action="{{ route('purchase-orders.mark-received', $purchaseOrder->id) }}">
                                 @csrf
-                                <button type="submit" class="btn btn-success">Mark as Delivered</button>
+                                <button type="submit" class="btn btn-success">Mark as Received</button>
                             </form>
                         @endif
                         @if($purchaseOrder->shipping_note)

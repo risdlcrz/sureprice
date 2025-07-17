@@ -285,4 +285,48 @@ class PurchaseOrder extends Model
         $this->save();
         return $this->penalty_accrued;
     }
+
+    public function shippedOutBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'shipped_out_by');
+    }
+
+    public function receivedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'received_by');
+    }
+
+    public function canShipOut(): bool
+    {
+        // Only supplier can ship out, and only if payment is validated (PAID)
+        return $this->status === 'pending_payment' && $this->isPaymentValidated() && is_null($this->shipped_out_at);
+    }
+
+    public function canReceive(): bool
+    {
+        // Only warehouse can receive, and only if shipped out
+        return !is_null($this->shipped_out_at) && is_null($this->received_at);
+    }
+
+    public function markAsShippedOut()
+    {
+        if (!$this->canShipOut()) {
+            throw new \Exception('Cannot ship out unless payment is validated and not already shipped.');
+        }
+        $this->shipped_out_at = now();
+        $this->shipped_out_by = auth()->id();
+        $this->status = 'shipping';
+        $this->save();
+    }
+
+    public function markAsReceived()
+    {
+        if (!$this->canReceive()) {
+            throw new \Exception('Cannot receive unless shipped out and not already received.');
+        }
+        $this->received_at = now();
+        $this->received_by = auth()->id();
+        $this->status = 'delivered';
+        $this->save();
+    }
 } 

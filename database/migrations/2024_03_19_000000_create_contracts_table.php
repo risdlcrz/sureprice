@@ -20,6 +20,8 @@ return new class extends Migration
             $table->foreign('property_id')->references('id')->on('properties');
             $table->string('title');
             $table->text('description')->nullable();
+            $table->string('property_address')->nullable();
+            $table->boolean('same_as_client_address')->default(false);
             $table->decimal('total_amount', 12, 2);
             $table->date('start_date');
             $table->date('end_date');

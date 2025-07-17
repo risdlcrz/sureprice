@@ -85,8 +85,8 @@
         <div class="alert alert-secondary">No payment submitted yet.</div>
     @endif
     {{-- Supplier Shipped Out Button --}}
-    @if(auth()->user()->isSupplier() && $purchaseOrder->status === 'confirmed' && $payment && $payment->status === 'verified')
-        <form method="POST" action="{{ route('purchase-orders.ship', $purchaseOrder->id) }}">
+    @if(auth()->user()->hasRole('supplier') && $purchaseOrder->canShipOut())
+        <form method="POST" action="{{ route('purchase-orders.mark-shipped', $purchaseOrder->id) }}">
             @csrf
             <div class="mb-2">
                 <textarea name="shipping_note" class="form-control" placeholder="Shipping note (optional)"></textarea>

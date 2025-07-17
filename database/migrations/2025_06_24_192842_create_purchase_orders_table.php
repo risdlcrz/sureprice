@@ -21,6 +21,11 @@ return new class extends Migration
                 $table->string('payment_terms');
                 $table->string('shipping_terms');
                 $table->text('notes')->nullable();
+                // Tracking fields for shipping and receiving
+                $table->timestamp('shipped_out_at')->nullable();
+                $table->foreignId('shipped_out_by')->nullable()->constrained('users')->nullOnDelete();
+                $table->timestamp('received_at')->nullable();
+                $table->foreignId('received_by')->nullable()->constrained('users')->nullOnDelete();
                 $table->timestamps();
             });
         }
