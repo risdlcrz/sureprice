@@ -39,7 +39,9 @@ class Contract extends Model
         'client_signature',
         'contractor_signature',
         'status',
-        'purchase_order_id'
+        'purchase_order_id',
+        'property_address',
+        'same_as_client_address',
     ];
 
     protected $casts = [
@@ -371,5 +373,13 @@ class Contract extends Model
                 ]);
             }
         }
+    }
+
+    public function getEffectivePropertyAddressAttribute()
+    {
+        if ($this->same_as_client_address && $this->client && isset($this->client->address)) {
+            return $this->client->address;
+        }
+        return $this->property_address;
     }
 } 

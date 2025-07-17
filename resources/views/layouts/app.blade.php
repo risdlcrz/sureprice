@@ -391,6 +391,29 @@
                 }
             });
         });
+
+        function updateNotificationBadge() {
+            fetch('/api/unread-notifications-count')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.querySelector('.notification-badge');
+                    if (badge) {
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = '';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                });
+        }
+        setInterval(updateNotificationBadge, 10000); // Poll every 10 seconds
+        // Also update on page load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', updateNotificationBadge);
+        } else {
+            updateNotificationBadge();
+        }
     </script>
 
     @auth

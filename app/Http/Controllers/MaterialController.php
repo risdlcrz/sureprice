@@ -380,6 +380,14 @@ class MaterialController extends Controller
 
             foreach ($validated['materials'] as $material) {
                 $materialModel = Material::findOrFail($material['id']);
+                // Store previous SRP in price history if changed
+                if ($materialModel->srp_price != $material['srp_price']) {
+                    \App\Models\MaterialPriceHistory::create([
+                        'material_id' => $materialModel->id,
+                        'price' => $materialModel->srp_price,
+                        'date' => now()->toDateString(),
+                    ]);
+                }
                 $materialModel->update([
                     'srp_price' => $material['srp_price']
                 ]);

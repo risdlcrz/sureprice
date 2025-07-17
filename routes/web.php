@@ -566,6 +566,14 @@ Route::get('/cleanup-notifications', function () {
     return response()->json(['success' => true, 'deleted_count' => $deleted]);
 })->middleware('auth');
 
+Route::get('/api/unread-notifications-count', function () {
+    $user = auth()->user();
+    $count = \App\Models\Notification::where('user_id', $user->id)
+        ->whereNull('read_at')
+        ->count();
+    return response()->json(['count' => $count]);
+})->middleware('auth');
+
 Route::middleware(['auth'])->prefix('warehouse')->name('warehouse.')->group(function () {
     Route::resource('deliveries', \App\Http\Controllers\Warehouse\WarehouseDeliveryController::class);
     Route::get('deliveries/{delivery}/feedback', [\App\Http\Controllers\Warehouse\WarehouseDeliveryController::class, 'feedbackForm'])->name('deliveries.feedback');

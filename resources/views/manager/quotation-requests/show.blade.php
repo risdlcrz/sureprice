@@ -70,6 +70,46 @@
                     @endforeach
                 </tbody>
             </table>
+            <h6>Chosen Suppliers</h6>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Material</th>
+                        <th>Chosen Supplier</th>
+                        <th>Quoted Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($quotationRequest->rooms as $room)
+                        @foreach($room->scopes as $scope)
+                            @if($scope->scopeType && $scope->scopeType->materials)
+                                @foreach($scope->scopeType->materials as $material)
+                                    <tr>
+                                        <td>{{ $material->name }}</td>
+                                        <td>
+                                            @php
+                                                $chosenSupplier = $material->chosenSupplier ?? null;
+                                            @endphp
+                                            @if($chosenSupplier)
+                                                {{ $chosenSupplier->company_name }}
+                                            @else
+                                                <span class="text-muted">Not chosen</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($chosenSupplier && isset($chosenSupplier->pivot->price))
+                                                ₱{{ number_format($chosenSupplier->pivot->price, 2) }}
+                                            @else
+                                                <span class="text-muted">N/A</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+                        @endforeach
+                    @endforeach
+                </tbody>
+            </table>
             @if($quotationRequest->status === 'proceeded' && !$quotationRequest->materialRequest)
                 <a href="{{ route('material-requests.create', ['quotation_id' => $quotationRequest->id]) }}" class="btn btn-primary mt-3">Create Material Request</a>
             @endif

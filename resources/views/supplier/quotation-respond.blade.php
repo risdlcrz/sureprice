@@ -80,6 +80,8 @@
                                 <thead>
                                     <tr>
                                         <th>Material</th>
+                                        <th>SRP</th>
+                                        <th>Base Price</th>
                                         <th>Requested Quantity</th>
                                         <th>SRP / Base Price</th>
                                         <th>Current Material Price</th>
@@ -92,6 +94,8 @@
                                     @forelse($materialsInQuotation as $material)
                                     <tr>
                                         <td>{{ $material->name }} ({{ $material->code }})</td>
+                                        <td>₱{{ number_format(isset($material->srp_price) ? $material->srp_price : (isset($material->material) && isset($material->material->srp_price) ? $material->material->srp_price : 0), 2) }}</td>
+                                        <td>₱{{ number_format(isset($material->base_price) ? $material->base_price : (isset($material->material) && isset($material->material->base_price) ? $material->material->base_price : 0), 2) }}</td>
                                         <td>{{ $material->requested_quantity }} {{ $material->unit }}</td>
                                         <td>
                                             @if(isset($material->srp_price) && $material->srp_price > 0)

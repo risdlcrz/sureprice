@@ -138,17 +138,10 @@
             <h5 class="mb-0">Property Information</h5>
         </div>
         <div class="card-body">
-            <p><strong>Property Type:</strong> {{ ucfirst($contract->property->property_type) }}</p>
-            <p><strong>Address:</strong><br>
-                {{ $contract->property->street }}
-                @if($contract->property->unit_number)
-                    Unit {{ $contract->property->unit_number }},<br>
-                @endif
-                Barangay {{ $contract->property->barangay }},<br>
-                {{ $contract->property->city }},<br>
-                {{ $contract->property->state }} {{ $contract->property->postal }}
+            <p><strong>Property Address:</strong><br>
+                {{ $contract->effective_property_address }}
             </p>
-            @if($contract->property->property_size)
+            @if($contract->property && $contract->property->property_size)
                 <p><strong>Property Size:</strong> {{ $contract->property->property_size }}㎡</p>
             @endif
         </div>
@@ -304,28 +297,32 @@
                 <table class="table table-bordered">
                     <thead>
                         <tr>
+                            <th>Room</th>
                             <th>Scope of Work</th>
                             <th>Material</th>
                             <th>Supplier</th>
                         </tr>
                     </thead>
                     <tbody>
-                @foreach($contract->rooms as $room)
-                    @foreach($room->scopeTypes as $scope)
-                        @foreach($scope->materials as $material)
-                            <tr>
-                                <td>{{ $scope->name }}</td>
-                                <td>{{ $material->name }}</td>
-                                <td>{{ $material->supplier->name ?? 'N/A' }}</td>
-                            </tr>
+                        @foreach($contract->quotationRequest->rooms as $room)
+                            @foreach($room->scopes as $scope)
+                                @if(is_array($scope->selected_materials))
+                                    @foreach($scope->selected_materials as $material)
+                                        <tr>
+                                            <td>{{ $room->name }}</td>
+                                            <td>{{ $scope->scope_name }}</td>
+                                            <td>{{ $material['name'] ?? $material }}</td>
+                                            <td>{{ $material['supplier'] ?? 'N/A' }}</td>
+                                        </tr>
+                                    @endforeach
+                                @endif
+                            @endforeach
                         @endforeach
-                    @endforeach
-                @endforeach
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-</div>
 
     <div class="card mb-4">
         <div class="card-header">

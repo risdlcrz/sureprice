@@ -42,8 +42,13 @@
         </a>
         <a href="{{ route('messages.index') }}" class="btn position-relative">
             <i class="fas fa-comments"></i>Messages
+<<<<<<< HEAD
             @if(isset($messagesUnreadCount) && $messagesUnreadCount > 0)
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary" style="font-size:0.8em;">{{ $messagesUnreadCount }}</span>
+=======
+            @if(isset($unreadMessagesCount) && $unreadMessagesCount > 0)
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $unreadMessagesCount }}</span>
+>>>>>>> 03ecde23ee43ab65a6b341bc88054391931f138d
             @endif
         </a>
     @elseif(auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'supplier')
@@ -87,8 +92,27 @@
             </a>
             <a href="{{ route('manager.notification') }}" class="btn position-relative">
                 <i class="fas fa-bell"></i>Notification Center
-                @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $globalUnreadCount }}</span>
+                <span class="notification-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em; display: none;"></span>
+            </a>
+            <a href="{{ route('admin.project') }}" class="btn">
+                <i class="fas fa-tasks"></i>Project & Procurement
+            </a>
+            <a href="{{ route('inventory.index') }}" class="btn">
+                <i class="fas fa-boxes"></i>Inventory
+            </a>
+            <a href="{{ route('admin.transactions') }}" class="btn">
+                <i class="fas fa-money-check-alt"></i>Transactions
+            </a>
+            <a href="{{ route('payments.index') }}" class="btn">
+                <i class="fas fa-money-check-alt"></i>Payments
+            </a>
+            <a href="{{ route('history.dashboard') }}" class="btn">
+                <i class="fas fa-history"></i>Project History
+            </a>
+            <a href="{{ route('messages.index') }}" class="btn position-relative">
+                <i class="fas fa-comments"></i>Messages
+                @if(isset($unreadMessagesCount) && $unreadMessagesCount > 0)
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $unreadMessagesCount }}</span>
                 @endif
             </a>
             <a href="{{ route('admin.project') }}" class="btn">
@@ -132,7 +156,7 @@
             <i class="fas fa-folder-open"></i>Information Management
         </a>
         <a href="{{ route('admin.notification') }}" class="btn position-relative">
-            <i class="fas fa-bell"></i>Notification Hub
+                <i class="fas fa-bell"></i>Notification Center
             @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $globalUnreadCount }}</span>
             @endif
@@ -161,3 +185,26 @@
 <div class="logout-container">
     <!-- REMOVE THIS BLOCK COMPLETELY -->
 </div> 
+
+@push('scripts')
+<script>
+function updateNotificationBadge() {
+    fetch('/api/unread-notifications-count')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.querySelector('.notification-badge');
+            if (badge) {
+                if (data.count > 0) {
+                    badge.textContent = data.count;
+                    badge.style.display = '';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        });
+}
+setInterval(updateNotificationBadge, 10000); // Poll every 10 seconds
+// Initial load
+updateNotificationBadge();
+</script>
+@endpush 

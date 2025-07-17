@@ -61,6 +61,13 @@
                 <strong>CONSTRUCTION PROPERTY</strong>
                 <p class="mt-2">
                     The Property that is to be constructed is located at the following address:<br>
+                    <input type="text" name="property_address" id="property_address" class="form-control mb-2" value="{{ old('property_address', $contract->property_address ?? '') }}" placeholder="Enter property address...">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="same_as_client_address" id="same_as_client_address" value="1" {{ old('same_as_client_address', $contract->same_as_client_address ?? false) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="same_as_client_address">
+                            Same as client address
+                        </label>
+                    </div>
                     <span class="contract-blank" id="property_address_display"></span>
                 </p>
             </div>
