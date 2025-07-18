@@ -25,7 +25,7 @@
     <!-- Analytics -->
     <div class="col">
         <div class="card" onclick="window.location.href='{{ route('admin.analytics') }}';" style="cursor:pointer;">
-            <img src="{{ asset('images/resize.jpg') }}" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';" alt="Analytics" class="card-img-top">
+            <img src="{{ asset('images/imagecard5.jpg') }}" alt="Analytics" class="card-img-top">
             <div class="card-body">
                 <h5 class="card-title">Analytics and Recommendations</h5>
             </div>

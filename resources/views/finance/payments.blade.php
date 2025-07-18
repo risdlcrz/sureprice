@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container">
-    <h1>Pending Purchase Order Payments</h1>
+    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Pending Purchase Order Payments</h1>
     <table class="table table-bordered mt-4">
         <thead>
             <tr>
@@ -86,4 +86,89 @@
         </tbody>
     </table>
 </div>
-@endsection 
+@endsection
+
+@push('styles')
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body, .container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+}
+h1, .h3 {
+    font-family: 'Inter', Arial, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: #198754;
+    font-size: 2.2rem;
+    margin-bottom: 2rem;
+}
+.table {
+    border-radius: 1.25rem;
+    box-shadow: 0 8px 32px 0 rgba(44,62,80,0.10), 0 1.5px 6px rgba(44,62,80,0.04);
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+    margin-bottom: 2rem;
+    font-size: 1.05em;
+}
+.table th {
+    font-weight: 600;
+    color: #495057;
+    background: #f8fafc;
+    border-top: none;
+    text-align: center;
+}
+.table-hover tbody tr:hover {
+    background: #f4faff;
+    transition: background 0.2s;
+}
+.table td, .table th {
+    vertical-align: middle;
+    text-align: center;
+}
+.btn-success, .btn-primary {
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%) !important;
+    color: #fff !important;
+    border: none;
+    font-weight: 600;
+    border-radius: 2rem;
+    padding: 0.5em 1.5em;
+    font-size: 1.08em;
+    letter-spacing: 0.01em;
+    box-shadow: 0 2px 8px #43e97b22;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-success:hover, .btn-primary:hover {
+    background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%) !important;
+    color: #fff;
+    box-shadow: 0 4px 16px #43e97b44;
+}
+.btn-secondary {
+    border-radius: 2rem;
+    font-weight: 600;
+    padding: 0.5em 1.5em;
+    font-size: 1.08em;
+}
+.form-select, .form-control {
+    padding: 0.7rem 1.2rem;
+    border-radius: 1.1rem;
+    border: 1.5px solid #ced4da;
+    font-size: 1.08em;
+    background: #f8fafc;
+    transition: border 0.2s, box-shadow 0.2s;
+}
+.form-select:focus, .form-control:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.2rem #19875422;
+}
+.badge {
+    font-size: 0.95em;
+    padding: 0.5em 1em;
+    border-radius: 0.7em;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    box-shadow: 0 1px 4px #38b6ff22;
+}
+</style>
+@endpush 

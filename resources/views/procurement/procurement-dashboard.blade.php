@@ -3,9 +3,9 @@
 @section('content')
     <div class="container-fluid py-4">
         <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Procurement Dashboard</h1>
-        <section class="mb-5">
-            <h2 class="mb-4 fw-semibold text-success">Procurement Management</h2>
-            <div class="row row-cols-1 row-cols-md-3 g-4">
+
+
+
                 <!-- Purchase Requests Card -->
                 <div class="col">
                     <div class="card h-100 shadow-sm border-0 hover-shadow">

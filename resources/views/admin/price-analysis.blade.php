@@ -1,13 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
-    @include('include.header_analytics')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <div class="container-fluid bg-light py-4 min-vh-100">
-        <h2 class="fw-bold text-center mb-4 text-secondary text-uppercase">Price Analytics</h2>
+    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Price Trend Analysis</h1>
         <div class="row justify-content-center mb-4">
             <div class="col-lg-10">
                 <div class="card shadow-lg rounded p-4">

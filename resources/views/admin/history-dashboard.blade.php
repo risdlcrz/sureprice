@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container mt-5">
-    <h1 class="h3 mb-4 text-gray-800">Project and Procurement Dashboard</h1>
+    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Project and Procurement Dashboard</h1>
 
     <div class="row row-cols-1 row-cols-md-3 g-4">
         <!-- Card 1: Past Transactions -->

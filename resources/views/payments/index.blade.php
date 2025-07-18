@@ -6,7 +6,7 @@
     // $grouped = $payments->groupBy('contract_id');
 @endphp
 <div class="container">
-    <h1>Payments</h1>
+<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Payments</h1>
     @foreach($pagedContracts as $contractData)
     @php
         $contract = $contractData->contract;
@@ -107,7 +107,6 @@
         {{ $pagedContracts->links() }}
     </div>
 
-    <h2>PO Payments</h2>
     <div class="card mb-4 shadow-sm rounded">
         <div class="card-header bg-white fw-semibold">Purchase Order Payments</div>
         <div class="card-body">

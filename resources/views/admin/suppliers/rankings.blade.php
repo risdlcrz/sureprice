@@ -5,10 +5,9 @@
     <div class="row mb-4">
         <div class="col-12">
             <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ route('admin.analytics') }}">Analytics Dashboard</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Supplier Rankings</li>
-                </ol>
+
+                    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Supplier Rankings</a></h1>
+
             </nav>
         </div>
     </div>
@@ -43,10 +42,10 @@
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h4 class="card-title mb-0">Supplier Rankings</h4>
                     <div>
-                        <a href="{{ route('suppliers.template.download') }}" class="btn btn-outline-primary me-2">
+                        <a href="{{ route('suppliers.template.download') }}" class="btn btn-gradient-blue me-2">
                             <i class="fas fa-download"></i> Download Template
                         </a>
-                        <a href="{{ route('suppliers.materials.template.download') }}" class="btn btn-outline-primary">
+                        <a href="{{ route('suppliers.materials.template.download') }}" class="btn btn-gradient-green">
                             <i class="fas fa-download"></i> Materials Template
                         </a>
                     </div>
@@ -504,92 +503,110 @@ document.addEventListener('DOMContentLoaded', function() {
 @endpush
 
 @push('styles')
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-.top-suppliers-legend {
-    padding: 1rem;
-    border-left: 1px solid #dee2e6;
-    height: 100%;
+body, .container-fluid {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
 }
-
-@media (max-width: 768px) {
-    .top-suppliers-legend {
-        border-left: none;
-        border-top: 1px solid #dee2e6;
-        margin-top: 1rem;
-        padding-top: 1rem;
-    }
-}
-
-.score-input {
-    position: relative;
-    width: 100px;
-}
-
-.score-input input {
-    width: 100%;
-    padding-right: 20px;
-    text-align: center;
-}
-
-.score-controls {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    display: flex;
-    flex-direction: column;
-    width: 20px;
-}
-
-.btn-increment {
+.card {
     border: none;
-    background: none;
-    padding: 0;
-    height: 50%;
-    font-size: 10px;
-    color: #666;
-    cursor: pointer;
+    border-radius: 1.25rem;
+    box-shadow: 0 8px 32px 0 rgba(44,62,80,0.10), 0 1.5px 6px rgba(44,62,80,0.04);
+    margin-bottom: 1.5rem;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    transition: box-shadow 0.2s, background 0.2s;
+}
+.card:hover {
+    box-shadow: 0 16px 48px 0 rgba(44,62,80,0.16), 0 2px 8px rgba(44,62,80,0.08);
+    background: rgba(255,255,255,0.97);
+}
+.card-header {
+    border-radius: 1.25rem 1.25rem 0 0;
+    border-bottom: 1px solid #e9ecef;
+    background: rgba(255,255,255,0.96);
+    font-family: 'Inter', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #198754;
+    letter-spacing: 0.01em;
+    box-shadow: 0 2px 8px 0 rgba(44,62,80,0.04);
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
 }
-
-.btn-increment:hover {
-    color: #000;
+.h3, h1, h4, h5, h6 {
+    font-family: 'Inter', Arial, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.01em;
 }
-
-/* Hide default number input spinners */
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-input[type="number"] {
-    -moz-appearance: textfield;
-}
-
-.metrics-section {
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    margin-top: 1rem;
-}
-
-.metrics-title {
-    font-size: 1.1rem;
-    font-weight: 500;
-    margin-bottom: 1rem;
-    color: #495057;
-}
-
-.metric-value {
-    font-size: 1.2rem;
+.table th {
     font-weight: 600;
+    color: #495057;
+    background: #f8fafc;
+    border-top: none;
 }
-
-.metric-label {
-    font-size: 0.9rem;
-    color: #6c757d;
+.table-hover tbody tr:hover {
+    background: #f4faff;
+    transition: background 0.2s;
+}
+.table td, .table th {
+    vertical-align: middle;
+}
+.btn-gradient-blue {
+    background: linear-gradient(90deg, #2196f3 0%, #21cbf3 100%);
+    color: #fff !important;
+    border: none;
+    font-weight: 600;
+    border-radius: 2rem;
+    padding: 0.5em 1.5em;
+    font-size: 1.08em;
+    letter-spacing: 0.01em;
+    box-shadow: 0 2px 8px #2196f322;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-gradient-blue:hover {
+    background: linear-gradient(90deg, #21cbf3 0%, #2196f3 100%);
+    color: #fff;
+    box-shadow: 0 4px 16px #2196f344;
+}
+.btn-gradient-green {
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+    color: #fff !important;
+    border: none;
+    font-weight: 600;
+    border-radius: 2rem;
+    padding: 0.5em 1.5em;
+    font-size: 1.08em;
+    letter-spacing: 0.01em;
+    box-shadow: 0 2px 8px #43e97b22;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-gradient-green:hover {
+    background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%);
+    color: #fff;
+    box-shadow: 0 4px 16px #43e97b44;
+}
+.btn-outline-primary, .btn-outline-success {
+    font-weight: 600;
+    border-radius: 2rem;
+    padding: 0.5em 1.5em;
+    font-size: 1.08em;
+    letter-spacing: 0.01em;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-outline-primary:hover {
+    background: #2196f3;
+    color: #fff;
+    border-color: #2196f3;
+    box-shadow: 0 2px 8px #2196f322;
+}
+.btn-outline-success:hover {
+    background: #43e97b;
+    color: #fff;
+    border-color: #43e97b;
+    box-shadow: 0 2px 8px #43e97b22;
 }
 </style>
 @endpush 

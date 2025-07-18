@@ -2,10 +2,11 @@
 
 @section('content')
 <div class="content">
-    <div class="container-fluid">
-        <!-- Page Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="h3 mb-0">Project Cost Management</h1>
+    <div class="container-fluid ps-0">
+        <!-- Standalone Page Header -->
+        <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Project Cost Management</h1>
+        <!-- Page Actions -->
+        <div class="d-flex justify-content-end align-items-center mb-4">
             <div class="d-flex gap-2">
                 <button class="btn btn-outline-primary" onclick="window.print()">
                     <i class="fas fa-print me-2"></i>Print Report
@@ -611,87 +612,162 @@ function toggleBreakdownView(type) {
 @endpush
 
 @push('styles')
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-.card {
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    border: none;
-    margin-bottom: 1rem;
+body, .content, .container-fluid {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
 }
-
+.card {
+    border: none;
+    border-radius: 1.25rem;
+    box-shadow: 0 8px 32px 0 rgba(44,62,80,0.10), 0 1.5px 6px rgba(44,62,80,0.04);
+    margin-bottom: 1.5rem;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    transition: box-shadow 0.2s, background 0.2s;
+}
+.card:hover {
+    box-shadow: 0 16px 48px 0 rgba(44,62,80,0.16), 0 2px 8px rgba(44,62,80,0.08);
+    background: rgba(255,255,255,0.97);
+}
+.card-header {
+    border-radius: 1.25rem 1.25rem 0 0;
+    border-bottom: 1px solid #e9ecef;
+    background: rgba(255,255,255,0.96);
+    font-family: 'Inter', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #198754;
+    letter-spacing: 0.01em;
+    box-shadow: 0 2px 8px 0 rgba(44,62,80,0.04);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.card-body {
+    padding: 2rem 2.2rem 2rem 2.2rem;
+}
+.h3, h1, h4, h5, h6 {
+    font-family: 'Inter', Arial, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+.btn, .btn-outline-primary, .btn-outline-success {
+    font-weight: 600;
+    border-radius: 2rem;
+    padding: 0.5em 1.5em;
+    font-size: 1.08em;
+    letter-spacing: 0.01em;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-outline-primary:hover {
+    background: #198754;
+    color: #fff;
+    border-color: #198754;
+    box-shadow: 0 2px 8px #19875422;
+}
+.btn-outline-success:hover {
+    background: #198754;
+    color: #fff;
+    border-color: #198754;
+    box-shadow: 0 2px 8px #19875422;
+}
+.form-select {
+    padding: 0.7rem 1.2rem;
+    border-radius: 1.1rem;
+    border: 1.5px solid #ced4da;
+    font-size: 1.08em;
+    background: #f8fafc;
+    transition: border 0.2s, box-shadow 0.2s;
+}
+.form-select:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.2rem #19875422;
+}
+.bg-primary {
+    border-radius: 1.1rem !important;
+    box-shadow: 0 2px 12px 0 rgba(44,62,80,0.10);
+    font-weight: 600;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 70px;
+    background: linear-gradient(90deg, #2196f3 0%, #21cbf3 100%) !important;
+    color: #fff !important;
+}
+.bg-success {
+    border-radius: 1.1rem !important;
+    box-shadow: 0 2px 12px 0 rgba(44,62,80,0.10);
+    font-weight: 600;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 70px;
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%) !important;
+    color: #fff !important;
+}
+.bg-primary i, .bg-success i {
+    font-size: 1.5em;
+    margin-right: 0.7em;
+}
+.card .badge {
+    padding: 0.5em 1em;
+    border-radius: 1.1em;
+    font-weight: 600;
+    font-size: 1em;
+    letter-spacing: 0.01em;
+}
+.alert {
+    margin-bottom: 0;
+    border-radius: 1.1rem;
+    font-size: 1.08em;
+    box-shadow: 0 2px 8px #19875411;
+}
+.alert i {
+    margin-right: 0.5rem;
+}
 .progress {
     height: 1.5rem;
+    border-radius: 1rem;
+    overflow: hidden;
 }
-
 .progress-bar {
-    font-size: 0.875rem;
+    font-size: 0.95rem;
     line-height: 1.5rem;
+    border-radius: 1rem;
 }
-
+.table th {
+    font-weight: 600;
+    color: #495057;
+}
 .list-group-item {
     border-left: none;
     border-right: none;
     transition: all 0.2s ease;
 }
-
 .list-group-item:hover {
     background-color: rgba(0,0,0,0.02);
 }
-
-.alert {
-    margin-bottom: 0;
-}
-
-.alert i {
-    margin-right: 0.5rem;
-}
-
-.form-select {
-    padding: 0.5rem;
-    border-radius: 0.25rem;
-    border: 1px solid #ced4da;
-}
-
-.badge {
-    padding: 0.5em 0.8em;
-}
-
 .border-start.border-4 {
     transition: all 0.3s ease;
 }
-
 .border-start.border-4:hover {
     transform: translateX(5px);
 }
-
-.btn-group .btn-outline-primary {
-    transition: all 0.2s ease;
-}
-
-.btn-group .btn-outline-primary:hover {
-    transform: translateY(-1px);
-}
-
-.card-header {
-    border-bottom: 1px solid rgba(0,0,0,0.125);
-    background-color: #f8f9fa;
-}
-
-.table th {
-    font-weight: 600;
-    color: #495057;
-}
-
-.progress {
-    overflow: visible;
-}
-
-@media print {
-    .btn, .form-select {
-        display: none !important;
+@media (max-width: 900px) {
+    .card-body {
+        padding: 1.2rem !important;
     }
-    
-    .card {
-        break-inside: avoid;
+    .card-header {
+        font-size: 1.05rem;
+        padding: 1rem 1.2rem;
+    }
+    .form-select {
+        font-size: 1em;
+        padding: 0.5rem 1rem;
     }
 }
 </style>

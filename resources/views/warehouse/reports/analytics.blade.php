@@ -1,65 +1,112 @@
 @extends('layouts.app')
 
 @section('content')
+@push('styles')
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-    body.analytics-bg {
-        background: linear-gradient(135deg, #e0e7ff 0%, #f8fafc 100%) !important;
-    }
-    .glass-card {
-        background: rgba(255,255,255,0.85);
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10);
-        border-radius: 1.25rem;
-        border: 1px solid rgba(255,255,255,0.18);
-        backdrop-filter: blur(6px);
-        transition: box-shadow 0.2s;
-    }
-    .glass-card:hover {
-        box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.18);
-    }
-    .summary-stat {
-        text-align: center;
-        padding: 1.5rem 0;
-    }
-    .summary-stat .stat-label {
-        font-size: 1rem;
-        color: #64748b;
-    }
-    .summary-stat .stat-value {
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: #1e293b;
-    }
-    .fab-download {
-        position: fixed;
-        bottom: 32px;
-        right: 32px;
-        z-index: 1000;
-        border-radius: 50%;
-        box-shadow: 0 4px 16px rgba(54, 162, 235, 0.18);
-        background: linear-gradient(135deg, #3b82f6 60%, #06b6d4 100%);
-        color: #fff;
-        width: 64px;
-        height: 64px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2rem;
-        transition: background 0.2s;
-    }
-    .fab-download:hover {
-        background: linear-gradient(135deg, #2563eb 60%, #0ea5e9 100%);
-        color: #fff;
-        text-decoration: none;
-    }
+body.analytics-bg {
+    background: linear-gradient(135deg, #e8f0ef 0%, #f8fafc 100%) !important;
+    font-family: 'Inter', sans-serif;
+}
+.fadein-analytics {
+    animation: fadeIn 1.2s cubic-bezier(.39,.575,.56,1.000);
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.glass-card {
+    background: rgba(255,255,255,0.85);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10);
+    border-radius: 1.5rem;
+    border: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(8px);
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.glass-card:hover {
+    box-shadow: 0 16px 40px 0 rgba(31, 38, 135, 0.18);
+    transform: translateY(-2px) scale(1.01);
+}
+.summary-stat {
+    text-align: center;
+    padding: 2rem 0 1.5rem 0;
+    border-radius: 1.5rem;
+    box-shadow: 0 2px 12px 0 rgba(31, 38, 135, 0.06);
+    background: rgba(255,255,255,0.92);
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.summary-stat:hover {
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
+    transform: translateY(-2px) scale(1.01);
+}
+.summary-stat .stat-label {
+    font-size: 1.05rem;
+    color: #64748b;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+.summary-stat .stat-value {
+    font-size: 2.3rem;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: 0.01em;
+}
+.form-select, .form-control {
+    border-radius: 12px;
+    font-size: 1rem;
+    box-shadow: 0 1px 4px rgba(44,62,80,0.04);
+}
+label.form-label {
+    font-weight: 600;
+    color: #198754;
+}
+.btn-outline-primary, .btn-primary {
+    background: linear-gradient(90deg, #56ccf2 0%, #2f80ed 100%) !important;
+    color: #fff !important;
+    border: none !important;
+    font-weight: 600;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(44,62,80,0.04);
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    transition: filter 0.2s;
+}
+.btn-outline-primary:hover, .btn-primary:hover {
+    filter: brightness(0.95);
+}
+.fab-download {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 1000;
+    border-radius: 50%;
+    box-shadow: 0 4px 16px rgba(54, 162, 235, 0.18);
+    background: linear-gradient(135deg, #3b82f6 60%, #06b6d4 100%);
+    color: #fff;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    transition: background 0.2s;
+}
+.fab-download:hover {
+    background: linear-gradient(135deg, #2563eb 60%, #0ea5e9 100%);
+    color: #fff;
+    text-decoration: none;
+}
 </style>
+@endpush
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     document.body.classList.add('analytics-bg');
 });
 </script>
-<div class="container py-4">
+<div class="container py-4 fadein-analytics">
+<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Warehouse Analytics & Trends</h1>
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="fw-bold mb-0" style="letter-spacing: -1px;">Warehouse Analytics & Trends</h1>
+        
         <a href="{{ route('warehouse.reports.analytics.pdf', request()->query()) }}" class="btn btn-outline-primary d-none d-lg-inline-block">
             <i class="fas fa-file-pdf me-1"></i> Download PDF
         </a>

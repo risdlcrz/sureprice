@@ -76,4 +76,88 @@
         </div>
     </div>
 </div>
-@endsection 
+@endsection
+@push('styles')
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body, .container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+}
+.card {
+    border: none;
+    border-radius: 1.25rem;
+    box-shadow: 0 8px 32px 0 rgba(44,62,80,0.10), 0 1.5px 6px rgba(44,62,80,0.04);
+    margin-bottom: 2rem;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    transition: box-shadow 0.2s, background 0.2s;
+}
+.card:hover {
+    box-shadow: 0 16px 48px 0 rgba(44,62,80,0.16), 0 2px 8px rgba(44,62,80,0.08);
+    background: rgba(255,255,255,0.97);
+}
+.card-header {
+    background: transparent;
+    border-bottom: none;
+    padding-bottom: 0.5rem;
+}
+.nav-tabs {
+    border-bottom: none;
+    gap: 1rem;
+}
+.nav-link {
+    font-weight: 600;
+    color: #198754;
+    border: none;
+    border-radius: 2rem 2rem 0 0;
+    background: #f8fafc;
+    padding: 0.7em 2em;
+    margin-bottom: -2px;
+    transition: background 0.2s, color 0.2s;
+}
+.nav-link.active {
+    background: linear-gradient(90deg, #2196f3 0%, #21cbf3 100%);
+    color: #fff !important;
+    box-shadow: 0 2px 8px #2196f322;
+}
+.table th {
+    font-weight: 600;
+    color: #495057;
+    background: #f8fafc;
+    border-top: none;
+}
+.table-hover tbody tr:hover {
+    background: #f4faff;
+    transition: background 0.2s;
+}
+.table td, .table th {
+    vertical-align: middle;
+}
+.badge {
+    font-size: 0.95em;
+    padding: 0.5em 1em;
+    border-radius: 0.7em;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    box-shadow: 0 1px 4px #38b6ff22;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #2196f3 0%, #21cbf3 100%) !important;
+    color: #fff !important;
+    border: none;
+    font-weight: 600;
+    border-radius: 2rem;
+    padding: 0.5em 1.5em;
+    font-size: 1.08em;
+    letter-spacing: 0.01em;
+    box-shadow: 0 2px 8px #2196f322;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.btn-primary:hover {
+    background: linear-gradient(90deg, #21cbf3 0%, #2196f3 100%) !important;
+    color: #fff;
+    box-shadow: 0 4px 16px #2196f344;
+}
+</style>
+@endpush 
