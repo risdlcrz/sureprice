@@ -156,17 +156,10 @@
                                         <tr>
                                             <td class="material-indent"></td>
                                             <td>
-<<<<<<< HEAD
-                                                @if($item->preferredSupplier)
-                                                    {{ $item->preferredSupplier->company_name }}
-                                                @else
-                                                    <span class="text-muted">-</span>
-=======
                                                 @if($item->supplier)
                                                     {{ $item->supplier->company_name }}
                                                 @else
                                                     <span class="text-danger">No Supplier</span>
->>>>>>> 03ecde23ee43ab65a6b341bc88054391931f138d
                                                 @endif
                                             </td>
                                             <td>{{ number_format($item->quantity, 2) }} {{ $item->unit }}</td>

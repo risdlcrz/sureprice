@@ -189,20 +189,6 @@ class WarehouseDeliveryController extends Controller
                 'comments' => $request->comments,
             ]
         );
-<<<<<<< HEAD
-        // Update supplier metrics
-        if ($delivery->supplier_id) {
-            $supplier = \App\Models\Supplier::find($delivery->supplier_id);
-            if ($supplier) {
-                $avgRating = \App\Models\DeliveryFeedback::where('supplier_id', $supplier->id)->avg('rating');
-                $metrics = $supplier->metrics;
-                if (!$metrics) {
-                    $metrics = new \App\Models\SupplierMetrics(['supplier_id' => $supplier->id]);
-                }
-                $metrics->average_delivery_rating = $avgRating;
-                $metrics->save();
-            }
-=======
         // Update supplier evaluation/ranking
         if ($delivery->supplier_id) {
             $supplierId = $delivery->supplier_id;
@@ -221,7 +207,6 @@ class WarehouseDeliveryController extends Controller
                     'engagement_score' => $feedbackCount,
                 ]
             );
->>>>>>> 03ecde23ee43ab65a6b341bc88054391931f138d
         }
         return redirect()->route('warehouse.deliveries.show', $delivery)->with('success', 'Feedback submitted!');
     }

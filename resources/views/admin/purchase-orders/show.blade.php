@@ -184,17 +184,7 @@
                         @if((auth()->user()->hasRole('warehouse') || auth()->user()->hasRole('admin')) && $purchaseOrder->canReceive())
                             <form method="POST" action="{{ route('purchase-orders.mark-received', $purchaseOrder->id) }}">
                                 @csrf
-<<<<<<< HEAD
-                                <button type="submit" class="btn btn-success">
-                                    @if(auth()->user()->isWarehouse())
-                                        Mark as Received
-                                    @else
-                                        Mark as Delivered
-                                    @endif
-                                </button>
-=======
                                 <button type="submit" class="btn btn-success">Mark as Received</button>
->>>>>>> 03ecde23ee43ab65a6b341bc88054391931f138d
                             </form>
                         @endif
                         @if($purchaseOrder->shipping_note)

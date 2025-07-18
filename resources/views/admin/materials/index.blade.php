@@ -233,16 +233,6 @@ input.form-control:focus, select.form-control:focus {
 ::-moz-placeholder { color: #b0b3b8; }
 :-ms-input-placeholder { color: #b0b3b8; }
 ::placeholder { color: #b0b3b8; }
-<<<<<<< HEAD
-.materials-fadein {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.4,0,0.2,1);
-}
-.materials-fadein.active {
-    opacity: 1;
-    transform: none;
-=======
 .material-row-animate {
     transition: box-shadow 0.2s, transform 0.2s;
 }
@@ -269,7 +259,6 @@ input.form-control:focus, select.form-control:focus {
 }
 .fade-out.fade-out-active {
     opacity: 0;
->>>>>>> 03ecde23ee43ab65a6b341bc88054391931f138d
 }
 </style>
 @endpush
@@ -833,12 +822,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-<<<<<<< HEAD
-    setTimeout(function() {
-        var card = document.getElementById('materialsFadeinCard');
-        if(card) card.classList.add('active');
-    }, 100);
-=======
     // Animate modals on show
     ['bulkSrpModal', 'supplierPricesModal', 'deleteModal'].forEach(function(modalId) {
         const modal = document.getElementById(modalId);
@@ -852,7 +835,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
->>>>>>> 03ecde23ee43ab65a6b341bc88054391931f138d
+
+    setTimeout(function() {
+        var card = document.getElementById('materialsFadeinCard');
+        if(card) card.classList.add('active');
+    }, 100);
 });
 </script>
 @endpush 

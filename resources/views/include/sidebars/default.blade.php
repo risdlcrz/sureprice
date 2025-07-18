@@ -42,13 +42,8 @@
         </a>
         <a href="{{ route('messages.index') }}" class="btn position-relative">
             <i class="fas fa-comments"></i>Messages
-<<<<<<< HEAD
-            @if(isset($messagesUnreadCount) && $messagesUnreadCount > 0)
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary" style="font-size:0.8em;">{{ $messagesUnreadCount }}</span>
-=======
             @if(isset($unreadMessagesCount) && $unreadMessagesCount > 0)
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $unreadMessagesCount }}</span>
->>>>>>> 03ecde23ee43ab65a6b341bc88054391931f138d
             @endif
         </a>
     @elseif(auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'supplier')
