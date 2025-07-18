@@ -59,6 +59,7 @@
                         <th>Due Date</th>
                         <th>Status</th>
                         <th># Materials</th>
+                        <th>Materials (SRP / Base)</th>
                         <th>Awarded Supplier</th>
                         <th>Awarded Amount</th>
                         <th>Actions</th>
@@ -84,6 +85,31 @@
                         </td>
                         <td>{{ $quotation->materials->count() }}</td>
                         <td>
+                            <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#materials-{{ $quotation->id }}" aria-expanded="false" aria-controls="materials-{{ $quotation->id }}">
+                                View Materials
+                            </button>
+                            <div class="collapse mt-2" id="materials-{{ $quotation->id }}">
+                                <table class="table table-sm table-bordered mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th>
+                                            <th>SRP</th>
+                                            <th>Base Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($quotation->materials as $material)
+                                        <tr>
+                                            <td>{{ $material->name }}</td>
+                                            <td>₱{{ number_format($material->srp_price, 2) }}</td>
+                                            <td>₱{{ number_format($material->base_price, 2) }}</td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                        <td>
                             @if($quotation->awarded_supplier_id)
                                 {{ optional($quotation->suppliers->find($quotation->awarded_supplier_id))->company_name ?? 'N/A' }}
                             @else
@@ -103,7 +129,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center text-muted">No quotation requests found.</td>
+                        <td colspan="9" class="text-center text-muted">No quotation requests found.</td>
                     </tr>
                     @endforelse
                 </tbody>

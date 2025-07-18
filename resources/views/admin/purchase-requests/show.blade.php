@@ -45,11 +45,14 @@
                         <a href="{{ route('purchase-requests.index') }}" class="btn btn-default">
                             <i class="fas fa-arrow-left"></i> Back to List
                         </a>
-                        @if($purchaseRequest->status === 'pending')
-                    <a href="{{ route('purchase-requests.edit', $purchaseRequest) }}" class="btn btn-primary">
-                        <i class="fas fa-edit"></i> Edit
-                    </a>
-                @endif
+                        @if(auth()->user()->hasRole('admin') && $purchaseRequest->status === 'pending_admin_approval')
+                            <form method="POST" action="{{ route('purchase-requests.approve', $purchaseRequest) }}" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Approve Purchase Request
+                                </button>
+                            </form>
+                        @endif
                         @php
                             $hasPO = $purchaseRequest->purchaseOrder && $purchaseRequest->purchaseOrder->count() > 0;
                         @endphp
@@ -58,9 +61,9 @@
                                 <i class="fas fa-file-invoice"></i> Create Purchase Order
                             </a>
                         @endif
-        </div>
                     </div>
-                    <div class="card-body">
+                </div>
+                <div class="card-body">
                     <!-- Request Information -->
                     <div class="row mb-4">
                         <div class="col-md-6">

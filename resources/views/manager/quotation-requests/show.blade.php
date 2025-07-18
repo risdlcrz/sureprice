@@ -84,12 +84,13 @@
                         @foreach($room->scopes as $scope)
                             @if($scope->scopeType && $scope->scopeType->materials)
                                 @foreach($scope->scopeType->materials as $material)
+                                    @php
+                                        $supplierId = $selectedSuppliers[$material->id] ?? null;
+                                        $chosenSupplier = $supplierId ? ($suppliers[$supplierId] ?? null) : null;
+                                    @endphp
                                     <tr>
                                         <td>{{ $material->name }}</td>
                                         <td>
-                                            @php
-                                                $chosenSupplier = $material->chosenSupplier ?? null;
-                                            @endphp
                                             @if($chosenSupplier)
                                                 {{ $chosenSupplier->company_name }}
                                             @else
@@ -170,7 +171,7 @@
                                         <td>
                                             @if(!empty($badges))
                                                 @foreach($badges as $badge)
-                                                    <span class="badge @if($badge=='Cheapest') badge-cheapest @elseif($badge=='Best Delivery') badge-delivery @elseif($badge=='Least Defects') badge-defects @elseif($badge=='Overall Best') badge-overall @endif" data-bs-toggle="tooltip" title="{{ $badge }}">{{ $badge }}</span>
+                                                    <span class="badge @if($badge=='Cheapest') badge-cheapest @elseif($badge=='Best Delivery') badge-delivery @elseif($badge=='Least Defects') badge-defects @elseif($badge=='Overall Best') badge-overall @endif" data-bs-toggle="tooltip" data-bs-title="{{ $badge }}">{{ $badge }}</span>
                                                 @endforeach
                                             @else
                                                 <span class="text-muted">-</span>

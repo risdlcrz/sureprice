@@ -101,7 +101,8 @@ class SupplierDashboardController extends Controller
         });
         
         // Fetch active quotations for this supplier
-        $activeQuotations = $supplier ? $supplier->quotations->where('status', 'pending') : collect();
+        $activeStatuses = ['pending', 'sent', 'in_progress', 'responded', 'approved', 'draft'];
+        $activeQuotations = $supplier ? $supplier->quotations->whereIn('status', $activeStatuses) : collect();
         
         // Fetch pending invitations (dummy/empty for now, unless you have a model for this)
         $pendingInvitations = collect();
@@ -254,5 +255,29 @@ class SupplierDashboardController extends Controller
             ->take(50)
             ->get();
         return view('supplier.notification-center', compact('notifications'));
+    }
+
+    public function markAllNotificationsAsRead()
+    {
+        $user = auth()->user();
+        \App\Models\Notification::where('user_id', $user->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+        return back()->with('success', 'All notifications marked as read.');
+    }
+
+    public function clearReadNotifications()
+    {
+        $user = auth()->user();
+        \App\Models\Notification::where('user_id', $user->id)
+            ->whereNotNull('read_at')
+            ->delete();
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+        return back()->with('success', 'Read notifications cleared.');
     }
 }

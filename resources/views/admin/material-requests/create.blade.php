@@ -53,7 +53,6 @@
                                                         <td>
                                                             <input type="number" name="items[{{ $index }}][quantity]" class="form-control quantity" step="0.01" value="{{ $item['quantity'] }}" required>
                                                         </td>
-                                                        <td>{{ $item['warehouse_name'] ?? 'N/A' }}</td>
                                                         <td>{{ $item['available'] ?? 0 }}</td>
                                                         <td>
                                                             <button type="button" class="btn btn-danger btn-sm remove-row" title="Remove">

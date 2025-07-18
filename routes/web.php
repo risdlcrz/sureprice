@@ -499,6 +499,9 @@ Route::middleware(['auth', 'role:manager'])->prefix('manager')->name('manager.')
     Route::get('/quotations', [\App\Http\Controllers\Manager\DashboardController::class, 'quotationsPage'])->name('quotations');
     Route::get('/quotation-requests/{id}/view', [\App\Http\Controllers\Manager\DashboardController::class, 'showClientQuotationRequest'])->name('quotation-requests.view');
     Route::post('/quotation-requests/{id}/send-to-suppliers', [\App\Http\Controllers\Manager\DashboardController::class, 'sendQuotationRequestToSuppliers'])->name('quotation-requests.send-to-suppliers');
+    Route::post('/notifications/mark-all-as-read', [\App\Http\Controllers\Manager\DashboardController::class, 'markAllNotificationsAsRead'])->name('manager.notifications.markAllAsRead');
+    Route::post('/notifications/clear-read', [\App\Http\Controllers\Manager\DashboardController::class, 'clearReadNotifications'])->name('manager.notifications.clearRead');
+    Route::post('/notifications/{id}/mark-as-read', [\App\Http\Controllers\Manager\DashboardController::class, 'markNotificationAsRead'])->name('manager.notifications.markAsRead');
     // Add more manager routes here
 });
 
@@ -581,3 +584,14 @@ Route::middleware(['auth'])->prefix('warehouse')->name('warehouse.')->group(func
 });
 
 Route::post('/purchase-order-payments/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderPaymentController::class, 'store'])->name('purchase-order-payments.store');
+
+// Admin notification center actions
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::post('/admin/notifications/mark-all-as-read', [App\Http\Controllers\AdminController::class, 'markAllNotificationsAsRead'])->name('admin.notifications.markAllAsRead');
+    Route::post('/admin/notifications/clear-read', [App\Http\Controllers\AdminController::class, 'clearReadNotifications'])->name('admin.notifications.clearRead');
+});
+// Supplier notification center actions
+Route::middleware(['auth', 'verified', App\Http\Middleware\SupplierMiddleware::class])->prefix('supplier')->name('supplier.')->group(function () {
+    Route::post('notifications/mark-all-as-read', [App\Http\Controllers\Supplier\SupplierDashboardController::class, 'markAllNotificationsAsRead'])->name('notifications.markAllAsRead');
+    Route::post('notifications/clear-read', [App\Http\Controllers\Supplier\SupplierDashboardController::class, 'clearReadNotifications'])->name('notifications.clearRead');
+});

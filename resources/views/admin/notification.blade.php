@@ -6,8 +6,18 @@
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10">
             <div class="card shadow-lg animated-fadein">
-                <div class="card-header py-3 bg-white" style="border-radius: 1.25rem 1.25rem 0 0; border-bottom: 1px solid #e9ecef;">
+                <div class="card-header py-3 bg-white d-flex justify-content-between align-items-center" style="border-radius: 1.25rem 1.25rem 0 0; border-bottom: 1px solid #e9ecef;">
                     <h6 class="m-0 font-weight-bold text-primary" style="font-size:1.2rem;">All Notifications</h6>
+                    <div>
+                        <form method="POST" action="{{ route('admin.notifications.markAllAsRead') }}" class="d-inline">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-primary btn-sm me-2">Mark All as Read</button>
+                        </form>
+                        <form method="POST" action="{{ route('admin.notifications.clearRead') }}" class="d-inline" id="clearReadForm">
+                            @csrf
+                            <button type="submit" class="btn btn-outline-danger btn-sm">Clear Read Notifications</button>
+                        </form>
+                    </div>
                 </div>
                 <div class="card-body">
                     @if(isset($notifications) && $notifications->isNotEmpty())
@@ -200,6 +210,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .catch(error => {
                     console.error('Error marking notification as read:', error);
+                });
+            }
+        });
+    });
+    // Clear read notifications
+    document.getElementById('clearReadForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        fetch(this.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+            },
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                document.querySelectorAll('.notification-item .badge').forEach(function(badge) {
+                    if (badge && badge.style.display !== 'none') {
+                        badge.style.display = 'none';
+                    }
+                });
+                document.querySelectorAll('.notification-item').forEach(function(item) {
+                    if (!item.querySelector('.badge') || item.querySelector('.badge').style.display === 'none') {
+                        item.remove();
+                    }
                 });
             }
         });

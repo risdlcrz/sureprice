@@ -185,8 +185,7 @@ function updateNotificationBadge() {
     fetch('/api/unread-notifications-count')
         .then(response => response.json())
         .then(data => {
-            const badge = document.querySelector('.notification-badge');
-            if (badge) {
+            document.querySelectorAll('.notification-badge').forEach(badge => {
                 if (data.count > 0) {
                     badge.textContent = data.count;
                     badge.style.display = '';
@@ -194,15 +193,14 @@ function updateNotificationBadge() {
                     badge.textContent = '0';
                     badge.style.display = 'none';
                 }
-            }
+            });
         });
 }
 function updateMessagesBadge() {
     fetch('/api/unread-messages-count')
         .then(response => response.json())
         .then(data => {
-            const badge = document.querySelector('.messages-badge');
-            if (badge) {
+            document.querySelectorAll('.messages-badge').forEach(badge => {
                 if (data.count > 0) {
                     badge.textContent = data.count;
                     badge.style.display = '';
@@ -210,7 +208,7 @@ function updateMessagesBadge() {
                     badge.textContent = '0';
                     badge.style.display = 'none';
                 }
-            }
+            });
         });
 }
 setInterval(updateNotificationBadge, 10000); // Poll every 10 seconds

@@ -601,4 +601,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Autofill property address if 'same as client address' is checked
+    const propertyAddressInput = document.getElementById('property_address');
+    const sameAsClientCheckbox = document.getElementById('same_as_client_address');
+    const clientAddressDisplay = document.getElementById('client_address_display');
+    function autofillPropertyAddress() {
+        if (sameAsClientCheckbox.checked) {
+            if (clientAddressDisplay && propertyAddressInput) {
+                propertyAddressInput.value = clientAddressDisplay.innerText.trim();
+                propertyAddressInput.readOnly = true;
+            }
+        } else {
+            if (propertyAddressInput) {
+                propertyAddressInput.value = '';
+                propertyAddressInput.readOnly = false;
+            }
+        }
+    }
+    if (sameAsClientCheckbox) {
+        sameAsClientCheckbox.addEventListener('change', autofillPropertyAddress);
+        // Run on page load in case it's already checked
+        autofillPropertyAddress();
+    }
+});
+</script>
 @endpush 

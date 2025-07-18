@@ -40,8 +40,18 @@ class DashboardController extends Controller
 
     public function showClientQuotationRequest($id)
     {
-        $quotationRequest = \App\Models\QuotationRequest::with(['user', 'rooms.scopes.scopeType.materials'])->findOrFail($id);
-        return view('manager.quotation-requests.show', compact('quotationRequest'));
+        $quotationRequest = \App\Models\QuotationRequest::with([
+            'rooms.scopes.scopeType.materials'
+        ])->findOrFail($id);
+
+        // Build $selectedSuppliers: [material_id => supplier_id]
+        $selectedSuppliers = $quotationRequest->selected_suppliers ?? [];
+        $supplierIds = array_values($selectedSuppliers);
+        $suppliers = \App\Models\Supplier::whereIn('id', $supplierIds)->get()->keyBy('id');
+        // Fetch all quotations (RFQs) related to this quotation request
+        $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->get();
+
+        return view('manager.quotation-requests.show', compact('quotationRequest', 'selectedSuppliers', 'suppliers', 'rfqs'));
     }
 
     public function sendQuotationRequestToSuppliers($id)
@@ -116,5 +126,42 @@ class DashboardController extends Controller
         $quotationRequest->save();
 
         return redirect()->back()->with('success', 'RFQs have been created for all relevant suppliers.');
+    }
+
+    public function markAllNotificationsAsRead()
+    {
+        $user = auth()->user();
+        \App\Models\Notification::where('user_id', $user->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+        return back()->with('success', 'All notifications marked as read.');
+    }
+
+    public function clearReadNotifications()
+    {
+        $user = auth()->user();
+        \App\Models\Notification::where('user_id', $user->id)
+            ->whereNotNull('read_at')
+            ->delete();
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+        return back()->with('success', 'Read notifications cleared.');
+    }
+
+    public function markNotificationAsRead($id)
+    {
+        $user = auth()->user();
+        $notification = \App\Models\Notification::where('user_id', $user->id)
+            ->where('id', $id)
+            ->first();
+        if ($notification && is_null($notification->read_at)) {
+            $notification->read_at = now();
+            $notification->save();
+        }
+        return response()->json(['success' => true]);
     }
 } 

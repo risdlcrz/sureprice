@@ -331,6 +331,23 @@ body {
                                 <span class="fw-bold fs-5">Choose your preferred supplier for each material below:</span>
                                 <button type="button" class="btn btn-primary" id="clientRecommendAllBtn">Recommend for All</button>
                             </div>
+                            @php
+                                $hasAnySupplierResponses = false;
+                                if(isset($materialSupplierResponses)) {
+                                    foreach($materialSupplierResponses as $materialId => $offers) {
+                                        if(count($offers) > 0) {
+                                            $hasAnySupplierResponses = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            @endphp
+                            @if(!$hasAnySupplierResponses)
+                                <div class="alert alert-warning text-center mb-3">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>No supplier responses yet!</strong> Please wait for suppliers to submit their offers before making recommendations or proceeding.
+                                </div>
+                            @endif
                             <div class="row mt-4">
                                 <div class="col-12 col-lg-6 mb-4 mb-lg-0">
                                     {{-- Materials Table (existing) --}}
@@ -445,17 +462,20 @@ body {
                         </div>
                         @php
                             $allSuppliersSelected = true;
+                            $hasAnyResponses = false;
                             if(isset($materialSupplierResponses)) {
                                 foreach($materialSupplierResponses as $materialId => $offers) {
+                                    if(count($offers) > 0) {
+                                        $hasAnyResponses = true;
+                                    }
                                     if(empty($selectedSuppliers[$materialId])) {
                                         $allSuppliersSelected = false;
-                                        break;
                                     }
                                 }
                             }
                         @endphp
                         <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
-                            @if($allSuppliersSelected)
+                            @if($allSuppliersSelected && $hasAnyResponses)
                             <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" class="d-inline proceed-quotation-btn">
                                 @csrf
                                 @foreach($selectedSuppliers as $materialId => $supplierId)
@@ -463,6 +483,16 @@ body {
                                 @endforeach
                                 <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
                             </form>
+                            @elseif($hasAnyResponses)
+                                <div class="alert alert-info text-center">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Please select suppliers for all materials before proceeding.
+                                </div>
+                            @else
+                                <div class="alert alert-warning text-center">
+                                    <i class="fas fa-clock me-2"></i>
+                                    Waiting for supplier responses. Please check back later.
+                                </div>
                             @endif
                             <form method="POST" action="{{ route('client.quotation.cancel', ['id' => $quotationRequest->id]) }}" onsubmit="return confirm('Are you sure you want to cancel this quotation?');" class="d-inline">
                                 @csrf
@@ -604,10 +634,37 @@ document.addEventListener('DOMContentLoaded', function() {
     const recommendBtn = document.getElementById('clientRecommendAllBtn');
     const recommendModal = new bootstrap.Modal(document.getElementById('clientRecommendModal'));
     const applyRecommendBtn = document.getElementById('clientApplyRecommendBtn');
+    
+    // Check if there are any supplier responses
+    let hasAnyResponses = false;
+    $('.supplier-select').each(function() {
+        if ($(this).find('option').length > 1) { // More than just "Select Supplier"
+            hasAnyResponses = true;
+        }
+    });
+    
+    // Disable recommend button if no responses
+    if (!hasAnyResponses) {
+        recommendBtn.disabled = true;
+        recommendBtn.title = 'No supplier responses available yet';
+        recommendBtn.classList.add('btn-secondary');
+        recommendBtn.classList.remove('btn-primary');
+    }
+    
     recommendBtn.addEventListener('click', function() {
+        if (!hasAnyResponses) {
+            alert('No supplier responses available yet. Please wait for suppliers to submit their offers.');
+            return;
+        }
         recommendModal.show();
     });
+    
     applyRecommendBtn.addEventListener('click', function() {
+        if (!hasAnyResponses) {
+            alert('No supplier responses available yet. Please wait for suppliers to submit their offers.');
+            return;
+        }
+        
         const category = document.getElementById('clientRecommendCategory').value;
         fetch(`{{ url('client/quotation/recommend-suppliers') }}?id={{ $quotationRequest->id }}&category=${category}`)
             .then(res => res.json())
@@ -630,7 +687,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             allSelected = false;
                         }
                     });
-                    if (allSelected) {
+                    if (allSelected && hasAnyResponses) {
                         if ($('.proceed-quotation-btn').length === 0) {
                             $('.d-flex.flex-wrap.justify-content-center.gap-3.mt-4').prepend(`
                                 <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" class="d-inline proceed-quotation-btn">
@@ -687,7 +744,7 @@ $(document).on('change', '.supplier-select', function() {
                     allSelected = false;
                 }
             });
-            if (allSelected) {
+            if (allSelected && hasAnyResponses) {
                 if ($('.proceed-quotation-btn').length === 0) {
                     $('.d-flex.flex-wrap.justify-content-center.gap-3.mt-4').prepend(`
                         <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" class="d-inline proceed-quotation-btn">

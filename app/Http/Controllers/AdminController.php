@@ -452,6 +452,32 @@ public function recommendSuppliers(Request $request, $id)
     return response()->json(['recommendations' => $recommendations]);
 }
 
+public function markAllNotificationsAsRead()
+{
+    $user = auth()->user();
+    \App\Models\Notification::where(function($query) use ($user) {
+        $query->where('notifiable_id', $user->id)
+              ->orWhere('user_id', $user->id);
+    })->whereNull('read_at')->update(['read_at' => now()]);
+    if (request()->wantsJson()) {
+        return response()->json(['success' => true]);
+    }
+    return back()->with('success', 'All notifications marked as read.');
+}
+
+public function clearReadNotifications()
+{
+    $user = auth()->user();
+    \App\Models\Notification::where(function($query) use ($user) {
+        $query->where('notifiable_id', $user->id)
+              ->orWhere('user_id', $user->id);
+    })->whereNotNull('read_at')->delete();
+    if (request()->wantsJson()) {
+        return response()->json(['success' => true]);
+    }
+    return back()->with('success', 'Read notifications cleared.');
+}
+
     /**
      * Return a finalized quotation request and its related data as JSON for contract autofill.
      */

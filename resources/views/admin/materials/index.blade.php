@@ -499,6 +499,7 @@ input.form-control:focus, select.form-control:focus {
                                 <th>Unit</th>
                                 <th>Base Price</th>
                                 <th>SRP Price</th>
+                                <th>Previous SRP</th>
                                 <th>Markup %</th>
                             </tr>
                         </thead>
@@ -631,7 +632,7 @@ document.addEventListener('DOMContentLoaded', function() {
             materials.forEach(material => {
                 const markup = material.base_price > 0 ? 
                     ((material.srp_price - material.base_price) / material.base_price * 100) : 0;
-                
+                const prevSrp = material.previous_srp !== null && material.previous_srp !== undefined ? `₱${parseFloat(material.previous_srp).toFixed(2)}` : '<span class="text-muted">N/A</span>';
                 const row = `
                     <tr>
                         <td>${material.code}</td>
@@ -655,6 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     min="0">
                             </div>
                         </td>
+                        <td>${prevSrp}</td>
                         <td>
                             <div class="input-group input-group-sm">
                                 <input type="number" class="form-control markup-percent" 

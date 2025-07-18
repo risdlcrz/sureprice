@@ -435,7 +435,21 @@ class MaterialController extends Controller
 
     public function getAllMaterials()
     {
-        return response()->json(Material::all());
+        $materials = Material::with(['category', 'priceHistories' => function($q) { $q->latest('date'); }])->get();
+        $result = $materials->map(function($material) {
+            $prevSrp = $material->priceHistories->first()->price ?? null;
+            return [
+                'id' => $material->id,
+                'code' => $material->code,
+                'name' => $material->name,
+                'category' => $material->category,
+                'unit' => $material->unit,
+                'base_price' => $material->base_price,
+                'srp_price' => $material->srp_price,
+                'previous_srp' => $prevSrp,
+            ];
+        });
+        return response()->json($result);
     }
 
     public function getSuppliersForMaterial($id)
