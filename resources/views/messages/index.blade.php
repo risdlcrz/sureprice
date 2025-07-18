@@ -461,11 +461,11 @@ body, html {
                     @csrf
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="admin_id" class="form-label">Select Admin</label>
-                            <select class="form-select" id="admin_id" name="admin_id" required>
-                                <option value="">Choose an admin...</option>
-                                @foreach(\App\Models\User::where('user_type', 'admin')->where('role', 'admin')->get() as $admin)
-                                    <option value="{{ $admin->id }}">{{ $admin->name }}</option>
+                            <label for="manager_id" class="form-label">Select Manager</label>
+                            <select class="form-select" id="manager_id" name="manager_id" required>
+                                <option value="">Choose a manager...</option>
+                                @foreach(\App\Models\User::where('role', 'manager')->get() as $manager)
+                                    <option value="{{ $manager->id }}">{{ $manager->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -654,11 +654,11 @@ body, html {
                         </script>
                     @elseif(Auth::user()->user_type === 'company' && Auth::user()->company && Auth::user()->company->designation === 'client')
                         <div class="mb-3">
-                            <label for="admin_id" class="form-label">Start conversation with</label>
-                            <select class="form-control" id="admin_id" name="admin_id" required>
-                                <option value="">Select Admin</option>
-                                @foreach(\App\Models\User::where('user_type', 'admin')->get() as $admin)
-                                    <option value="{{ $admin->id }}">{{ $admin->name }}</option>
+                            <label for="manager_id" class="form-label">Start conversation with</label>
+                            <select class="form-control" id="manager_id" name="manager_id" required>
+                                <option value="">Select Manager</option>
+                                @foreach(\App\Models\User::where('role', 'manager')->get() as $manager)
+                                    <option value="{{ $manager->id }}">{{ $manager->name }}</option>
                                 @endforeach
                             </select>
                         </div>

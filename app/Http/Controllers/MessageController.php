@@ -225,18 +225,17 @@ class MessageController extends Controller
         // Client logic
         if ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
             $request->validate([
-                'admin_id' => 'required|exists:users,id',
+                'manager_id' => 'required|exists:users,id',
                 'message' => 'required|string|max:1000'
             ]);
-            $admin = \App\Models\User::where('id', $request->admin_id)
-                ->where('user_type', 'admin')
-                ->where('role', 'admin')
+            $manager = \App\Models\User::where('id', $request->manager_id)
+                ->where('role', 'manager')
                 ->first();
-            if (!$admin) {
-                return redirect()->back()->with('error', 'Selected admin is not valid.');
+            if (!$manager) {
+                return redirect()->back()->with('error', 'Selected manager is not valid.');
             }
             $existingConversation = Conversation::where('client_id', $user->id)
-                ->where('admin_id', $request->admin_id)
+                ->where('admin_id', $request->manager_id)
                 ->whereNull('supplier_id')
                 ->first();
             if ($existingConversation) {
@@ -250,7 +249,7 @@ class MessageController extends Controller
             }
             $conversation = Conversation::create([
                 'client_id' => $user->id,
-                'admin_id' => $request->admin_id,
+                'admin_id' => $request->manager_id,
                 'status' => 'active'
             ]);
             $message = $conversation->messages()->create([
