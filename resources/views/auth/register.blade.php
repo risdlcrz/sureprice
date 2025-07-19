@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up - GDC Admin Center</title>
-  @vite(['resources/css/signup.css', 'resources/js/signup-alert.js'])
+  <link rel="stylesheet" href="{{ asset('css/signup.css') }}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     /* Enhanced error styling */
@@ -798,6 +798,7 @@
     </div>
   </div>
 </body>
+<script src="{{ asset('js/signup-alert.js') }}"></script>
 </html>
 
 <script>

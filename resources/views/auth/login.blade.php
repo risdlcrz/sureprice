@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  @vite(['resources/css/login.css', 'resources/js/login.js'])
+  <link rel="stylesheet" href="{{ asset('css/login.css') }}">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Admin Center</title>
@@ -94,4 +94,5 @@
   </div>
 
 </body>
+<script src="{{ asset('js/login.js') }}"></script>
 </html>

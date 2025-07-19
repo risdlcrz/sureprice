@@ -21,23 +21,20 @@
     <link href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@x.x.x/dist/select2-bootstrap4.min.css" rel="stylesheet">
     
     <!-- Vite Assets - Consolidated for production -->
-    @vite([
-        'resources/css/app.css',
-        'resources/css/header.css',
-        'resources/css/login.css',
-        'resources/css/messages.css',
-        'resources/css/dbadmin.css',
-        'resources/css/inventory.css',
-        'resources/css/infoman.css',
-        'resources/css/supprankings.css',
-        'resources/css/signup.css',
-        'resources/css/projectreq.css',
-        'resources/css/projectapp.css',
-        'resources/css/price.css',
-        'resources/css/forgot.css',
-        'resources/css/budget.css',
-        'resources/js/app.js',
-    ])
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/header.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/login.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/messages.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/dbadmin.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/inventory.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/infoman.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/supprankings.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/signup.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/projectreq.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/projectapp.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/price.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/forgot.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/budget.css') }}">
     
     <!-- Additional Styles -->
     @stack('styles')
@@ -343,6 +340,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="{{ asset('js/app.js') }}"></script>
     @stack('scripts')
 
     <script>
