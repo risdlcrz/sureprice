@@ -34,7 +34,3 @@
 </div>
 
 @endsection
-
-@push('styles')
-<link rel="stylesheet" href="{{ asset('resources/css/dbadmin.css') }}">
-@endpush

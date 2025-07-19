@@ -35,5 +35,16 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-    publicDir: 'public',
+    build: {
+        outDir: 'public/build',
+        assetsDir: 'assets',
+        manifest: true,
+        minify: 'esbuild',
+        sourcemap: false,
+    },
+    server: {
+        hmr: {
+            host: 'localhost',
+        },
+    },
 });
