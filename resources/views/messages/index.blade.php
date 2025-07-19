@@ -288,9 +288,27 @@ body, html {
 #attachmentViewerModal .modal-body {
     max-height: 80vh;
     overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+}
+
+#attachmentViewerContent {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
 }
 
 #attachmentViewerContent img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
     transition: transform 0.3s ease;
     cursor: zoom-in;
 }
@@ -1024,7 +1042,7 @@ body, html {
 </div>
 <!-- Attachment Viewer Modal -->
 <div class="modal fade" id="attachmentViewerModal" tabindex="-1" aria-labelledby="attachmentViewerModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 90vw;">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="attachmentViewerModalLabel">Attachment Viewer</h5>
@@ -1464,15 +1482,36 @@ class MessengerApp {
         if (type === 'image') {
             const img = document.createElement('img');
             img.src = url;
+            img.alt = name;
             img.style.maxWidth = '100%';
             img.style.maxHeight = '100%';
+            img.style.width = 'auto';
+            img.style.height = 'auto';
             img.style.objectFit = 'contain';
+            img.style.display = 'block';
+            img.style.margin = 'auto';
+            
+            // Add loading state
+            img.style.opacity = '0';
+            img.style.transition = 'opacity 0.3s ease';
+            
+            img.onload = function() {
+                this.style.opacity = '1';
+                console.log('Image loaded successfully:', url);
+            };
+            
+            img.onerror = function() {
+                console.error('Failed to load image:', url);
+                modalContent.innerHTML = `<div class="text-center text-muted">Failed to load image: ${name}</div>`;
+            };
+            
             modalContent.appendChild(img);
         } else {
             const a = document.createElement('a');
             a.href = url;
             a.download = name;
             a.textContent = name;
+            a.className = 'btn btn-primary';
             modalContent.appendChild(a);
         }
 

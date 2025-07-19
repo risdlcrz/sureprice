@@ -126,7 +126,29 @@ class Message extends Model
     public function getDownloadUrlAttribute(): string
     {
         $path = $this->getAttachmentPath();
-        return $path ? Storage::url($path) : '';
+        if (!$path) {
+            return '';
+        }
+        
+        // Check if file exists in storage
+        if (!Storage::disk('public')->exists($path)) {
+            // Try alternative paths
+            $alternativePaths = [
+                str_replace('messages/files/', 'messages/', $path),
+                str_replace('messages/', 'messages/files/', $path)
+            ];
+            
+            foreach ($alternativePaths as $altPath) {
+                if (Storage::disk('public')->exists($altPath)) {
+                    return Storage::url($altPath);
+                }
+            }
+            
+            // If file doesn't exist, return empty
+            return '';
+        }
+        
+        return Storage::url($path);
     }
 
     public function getFileIconAttribute(): string

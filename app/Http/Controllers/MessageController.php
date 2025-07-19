@@ -101,7 +101,7 @@ class MessageController extends Controller
         // Handle file upload (new system)
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-            $filePath = $file->store('messages/files', 'public');
+            $filePath = $file->store('messages', 'public'); // Store directly in messages folder
             $fileName = $file->getClientOriginalName();
             $fileType = $file->getMimeType();
             $fileSize = $file->getSize();
