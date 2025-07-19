@@ -5,6 +5,317 @@
 <meta name="start-message-route" content="{{ route('messages.start') }}">
 @endpush
 
+@push('styles')
+<style>
+body, html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: #f0f2f5;
+}
+.messenger-root {
+    display: flex;
+    height: 100vh;
+    background: #f0f2f5;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+.messenger-sidebar {
+    width: 350px;
+    background: #fff;
+    border-right: 1px solid #e4e6eb;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-width: 260px;
+    max-width: 100vw;
+}
+.messenger-sidebar-header {
+    padding: 18px 20px 10px 20px;
+    border-bottom: 1px solid #e4e6eb;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.messenger-sidebar-header h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 0;
+    flex: 1;
+}
+.messenger-search {
+    margin: 0 20px 12px 20px;
+    position: relative;
+}
+.messenger-search input {
+    width: 100%;
+    padding: 8px 36px 8px 14px;
+    border-radius: 20px;
+    border: 1px solid #e4e6eb;
+    background: #f5f6fa;
+    font-size: 1rem;
+}
+.messenger-search .bi-search {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    font-size: 1.1rem;
+}
+.messenger-chat-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 10px;
+}
+.messenger-chat-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border: none;
+    background: #fff;
+    border-bottom: 1px solid #f0f2f5;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+}
+.messenger-chat-item.active, .messenger-chat-item:hover {
+    background: #f0f2f5;
+}
+.messenger-chat-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 14px;
+}
+.messenger-chat-info {
+    flex: 1;
+    min-width: 0;
+}
+.messenger-chat-name {
+    font-weight: 600;
+    font-size: 1.08rem;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.messenger-chat-preview {
+    font-size: 0.97rem;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.messenger-unread-dot {
+    width: 10px;
+    height: 10px;
+    background: #1877f2;
+    border-radius: 50%;
+    margin-left: 8px;
+    display: inline-block;
+}
+.messenger-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-width: 0;
+    position: relative;
+    background: #f0f2f5;
+}
+.messenger-header {
+    background: #fff;
+    border-bottom: 1px solid #e4e6eb;
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    min-height: 70px;
+}
+.messenger-header .messenger-header-title {
+    font-size: 1.18rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 auto;
+}
+.messenger-header .messenger-header-actions {
+    display: none;
+}
+.messenger-header .messenger-header-actions i {
+    font-size: 1.3rem;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+.messenger-header .messenger-header-actions i:hover {
+    color: #1877f2;
+}
+.messenger-messages-area {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+    padding: 32px 0 24px 0;
+    background: #f0f2f5;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.messenger-message-row {
+    display: flex;
+    align-items: flex-end;
+    margin-bottom: 8px;
+    padding: 0 32px;
+}
+.messenger-message-row.sent {
+    justify-content: flex-end;
+}
+.messenger-message-row.received {
+    justify-content: flex-start;
+}
+.messenger-message-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+}
+.messenger-message-bubble {
+    display: inline-block;
+    max-width: 65vw;
+    min-width: 36px;
+    font-size: 1.05rem;
+    line-height: 1.1;
+    padding: 4px 12px;
+    border-radius: 18px;
+    margin: 0 0 2px 0;
+    background: #f0f2f5;
+    color: #222;
+    box-shadow: none;
+    border: none;
+    word-break: break-word;
+    white-space: pre-line;
+    vertical-align: middle;
+}
+.messenger-message-row.sent .messenger-message-bubble {
+    background: #1877f2;
+    color: #fff;
+    border-bottom-right-radius: 6px;
+    border-bottom-left-radius: 18px;
+}
+.messenger-message-row.received .messenger-message-bubble {
+    background: #f0f2f5;
+    color: #222;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 18px;
+}
+.messenger-message-time {
+    font-size: 0.82rem;
+    color: #888;
+    margin: 0 0 0 8px;
+    align-self: flex-end;
+}
+.messenger-input-area {
+    background: #fff;
+    border-top: 1px solid #e4e6eb;
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+}
+.messenger-input-box {
+    flex: 1;
+    background: #f5f6fa;
+    border-radius: 22px;
+    border: 1px solid #e4e6eb;
+    padding: 10px 16px;
+    font-size: 1.05rem;
+    outline: none;
+    resize: none;
+    min-height: 38px;
+    max-height: 120px;
+}
+.messenger-input-icon {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.3rem;
+    cursor: pointer;
+    margin: 0 2px;
+    transition: color 0.15s;
+}
+.messenger-input-icon:hover {
+    color: #1877f2;
+}
+.messenger-send-btn {
+    background: #1877f2;
+    color: #fff;
+    border: none;
+    border-radius: 22px;
+    padding: 8px 24px;
+    font-weight: 600;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.messenger-send-btn:hover {
+    background: #145dc1;
+}
+.attachment-preview {
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.attachment-preview:hover {
+    transform: scale(1.02);
+}
+
+.attachment-preview:hover .attachment-overlay {
+    opacity: 1 !important;
+}
+
+#attachmentViewerModal .modal-body {
+    max-height: 80vh;
+    overflow: auto;
+}
+
+#attachmentViewerContent img {
+    transition: transform 0.3s ease;
+    cursor: zoom-in;
+}
+
+#attachmentViewerContent img:hover {
+    cursor: zoom-out;
+}
+
+.zoom-controls {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1060;
+    background: rgba(0,0,0,0.7);
+    border-radius: 10px;
+    padding: 10px;
+    display: none;
+}
+
+.zoom-controls.show {
+    display: block;
+}
+</style>
+@endpush
+
 @section('content')
 <style>
 body, html {
@@ -405,22 +716,45 @@ body, html {
         <div class="messenger-messages-area" id="messagesArea">
             @if($messages->count() > 0)
                 @foreach($messages as $message)
-                    <div class="messenger-message-row {{ $message->sender_id === auth()->id() ? 'sent' : 'received' }}">
+                    <div class="messenger-message-row {{ $message->sender_id === auth()->id() ? 'sent' : 'received' }}" data-message-id="{{ $message->id }}">
                         @if($message->sender_id !== auth()->id())
                             <img src="https://ui-avatars.com/api/?name={{ urlencode($message->sender->name) }}&background=0D8ABC&color=fff" class="messenger-message-avatar">
                         @endif
                         <div>
                             <div class="messenger-message-bubble">
-                                {{ $message->content }}
-                                @if($message->isImage())
-                                    <a href="{{ $message->download_url }}" target="_blank">
-                                        <img src="{{ $message->download_url }}" alt="attachment" style="max-width: 200px; max-height: 200px; border-radius: 8px;">
-                                    </a>
+                                @if($message->content)
+                                    {{ $message->content }}
                                 @endif
-                                @if($message->hasAttachment() && !$message->isImage())
-                                    <a href="{{ $message->download_url }}" download>
-                                        <i class="bi bi-download"></i> Download {{ $message->getAttachmentName() }}
-                                    </a>
+                                @if($message->file_path || $message->image)
+                                    @php
+                                        $filePath = $message->file_path ?: $message->image;
+                                        $fileName = $message->file_name ?: basename($filePath);
+                                        $isImage = $message->file_type ? str_starts_with($message->file_type, 'image/') : 
+                                                  (str_contains($filePath, '.jpg') || str_contains($filePath, '.jpeg') || 
+                                                   str_contains($filePath, '.png') || str_contains($filePath, '.gif'));
+                                    @endphp
+                                    @if($isImage)
+                                        <div class="mt-2">
+                                            <div class="attachment-preview" 
+                                                 onclick="messengerApp.openAttachmentViewer('{{ Storage::url($filePath) }}', '{{ $fileName }}', 'image')"
+                                                 style="cursor: pointer; display: inline-block; position: relative;">
+                                                <img src="{{ Storage::url($filePath) }}" 
+                                                     alt="attachment" 
+                                                     style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;">
+                                                <div class="attachment-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s;">
+                                                    <i class="bi bi-zoom-in text-white fs-4"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <div class="mt-2">
+                                            <div class="attachment-preview" 
+                                                 onclick="messengerApp.openAttachmentViewer('{{ Storage::url($filePath) }}', '{{ $fileName }}', 'file')"
+                                                 style="cursor: pointer; display: inline-block; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
+                                                <i class="bi bi-file-earmark me-2"></i>{{ $fileName }}
+                                            </div>
+                                        </div>
+                                    @endif
                                 @endif
                             </div>
                             <div class="messenger-message-time">{{ $message->created_at->timezone('Asia/Manila')->format('g:i A') }}</div>
@@ -688,337 +1022,588 @@ body, html {
         </div>
     </div>
 </div>
+<!-- Attachment Viewer Modal -->
+<div class="modal fade" id="attachmentViewerModal" tabindex="-1" aria-labelledby="attachmentViewerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="attachmentViewerModalLabel">Attachment Viewer</h5>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="downloadAttachmentBtn">
+                        <i class="bi bi-download"></i> Download
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomInBtn" style="display:none;">
+                        <i class="bi bi-zoom-in"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomOutBtn" style="display:none;">
+                        <i class="bi bi-zoom-out"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="resetZoomBtn" style="display:none;">
+                        <i class="bi bi-arrow-clockwise"></i> Reset
+                    </button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            </div>
+            <div class="modal-body text-center p-0">
+                <div id="attachmentViewerContent" class="position-relative">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection 
 
 @push('scripts')
 <script>
-// Get routes from data attributes to avoid linter issues
-const routes = {
-    searchChat: document.querySelector('meta[name="search-chat-route"]').getAttribute('content'),
-    startMessage: document.querySelector('meta[name="start-message-route"]').getAttribute('content')
-};
+// Modern AJAX-based messaging system
+class MessengerApp {
+    constructor() {
+        this.conversationId = {{ $conversation->id ?? 'null' }};
+        this.currentUserId = {{ auth()->id() }};
+        this.messagesArea = document.getElementById('messagesArea');
+        this.messageForm = document.getElementById('messageForm');
+        this.messageContent = document.getElementById('messageContent');
+        this.fileInput = document.getElementById('fileInput');
+        this.attachBtn = document.getElementById('attachBtn');
+        this.attachmentPreview = document.getElementById('attachmentPreview');
+        this.sendBtn = document.querySelector('.messenger-send-btn');
+        
+        // Track processed message IDs to prevent duplicates
+        this.processedMessageIds = new Set();
+        this.lastMessageId = null;
+        
+        // Debounce sidebar updates
+        this.sidebarUpdateTimeout = null;
+        this.lastSidebarUpdate = 0;
+        
+        this.init();
+    }
 
-// ... (insert the merged scripts from previous index/show views here, including delete modal, right-click, file preview, etc.) ...
-// Responsive sidebar toggle for Messenger mobile style
-const sidebar = document.getElementById('messengerSidebar');
-const content = document.getElementById('messengerContent');
-const showSidebarBtn = document.getElementById('showSidebarBtn');
-if (showSidebarBtn) {
-    showSidebarBtn.addEventListener('click', function() {
-        sidebar.classList.remove('hide-mobile');
-        content.classList.add('hide-mobile');
+    init() {
+        this.setupEventListeners();
+        this.setupAutoResize();
+        this.scrollToBottom();
+        this.initializeMessageTracking();
+        this.setupRealTimeUpdates();
+        // Update sidebar on page load to show current state
+        this.updateSidebar();
+    }
+
+    initializeMessageTracking() {
+        // Clear processed IDs to start fresh
+        this.processedMessageIds.clear();
+        
+        // Track existing messages to prevent duplicates
+        const existingMessages = this.messagesArea.querySelectorAll('[data-message-id]');
+        existingMessages.forEach(message => {
+            const messageId = message.getAttribute('data-message-id');
+            this.processedMessageIds.add(parseInt(messageId));
+        });
+        
+        // Set the last message ID for real-time updates
+        if (existingMessages.length > 0) {
+            const lastMessage = existingMessages[existingMessages.length - 1];
+            this.lastMessageId = parseInt(lastMessage.getAttribute('data-message-id'));
+        }
+        
+        console.log('Initialized message tracking. Processed IDs:', Array.from(this.processedMessageIds));
+    }
+
+    setupEventListeners() {
+        // Form submission
+        this.messageForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.sendMessage();
+        });
+
+        // Enter key handling
+        this.messageContent.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.sendMessage();
+            }
+        });
+
+        // File attachment
+        this.attachBtn.addEventListener('click', () => {
+            this.fileInput.click();
+        });
+
+        this.fileInput.addEventListener('change', (e) => {
+            this.handleFileSelection(e.target.files[0]);
+        });
+
+        // Auto-resize textarea
+        this.messageContent.addEventListener('input', () => {
+            this.autoResizeTextarea();
+        });
+    }
+
+    setupAutoResize() {
+        this.autoResizeTextarea();
+    }
+
+    autoResizeTextarea() {
+        this.messageContent.style.height = 'auto';
+        this.messageContent.style.height = Math.min(this.messageContent.scrollHeight, 120) + 'px';
+    }
+
+    handleFileSelection(file) {
+        if (!file) {
+            this.clearAttachmentPreview();
+            return;
+        }
+
+        // Check file size (10MB limit)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('File size must be less than 10MB.');
+            this.fileInput.value = '';
+            this.clearAttachmentPreview();
+            return;
+        }
+
+        this.showAttachmentPreview(file);
+    }
+
+    showAttachmentPreview(file) {
+        const icon = this.getFileIcon(file);
+        const sizeText = this.formatFileSize(file.size);
+
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.attachmentPreview.innerHTML = `
+                    <div class="d-flex align-items-center bg-light rounded-3 p-2 border position-relative">
+                        <img src="${e.target.result}" style="max-width:60px;max-height:60px;border-radius:8px;margin-right:10px;">
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">${file.name}</div>
+                            <div class="text-muted small">${sizeText}</div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-light position-absolute top-0 end-0 m-1 p-0" 
+                                style="border-radius:50%;" onclick="messengerApp.clearAttachmentPreview()">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                `;
+                this.attachmentPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            this.attachmentPreview.innerHTML = `
+                <div class="d-flex align-items-center bg-light rounded-3 p-2 border position-relative">
+                    <i class="bi ${icon} fs-3 me-2"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold">${file.name}</div>
+                        <div class="text-muted small">${sizeText}</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light position-absolute top-0 end-0 m-1 p-0" 
+                            style="border-radius:50%;" onclick="messengerApp.clearAttachmentPreview()">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            `;
+            this.attachmentPreview.style.display = 'block';
+        }
+    }
+
+    clearAttachmentPreview() {
+        this.attachmentPreview.innerHTML = '';
+        this.attachmentPreview.style.display = 'none';
+        this.fileInput.value = '';
+    }
+
+    getFileIcon(file) {
+        if (file.type.startsWith('image/')) {
+            return 'bi-file-earmark-image text-warning';
+        } else if (file.type.startsWith('video/')) {
+            return 'bi-file-earmark-play text-danger';
+        } else if (file.type.startsWith('audio/')) {
+            return 'bi-file-earmark-music text-info';
+        } else if (file.type.includes('pdf')) {
+            return 'bi-file-earmark-pdf text-danger';
+        } else if (file.type.includes('word') || file.type.includes('document')) {
+            return 'bi-file-earmark-word text-primary';
+        } else if (file.type.includes('excel') || file.type.includes('spreadsheet')) {
+            return 'bi-file-earmark-excel text-success';
+        } else if (file.type.includes('powerpoint') || file.type.includes('presentation')) {
+            return 'bi-file-earmark-ppt text-warning';
+        } else {
+            return 'bi-file-earmark text-secondary';
+        }
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    async sendMessage() {
+        const content = this.messageContent.value.trim();
+        const file = this.fileInput.files[0];
+
+        if (!content && !file) {
+            alert('Please enter a message or attach a file.');
+            return;
+        }
+
+        // Disable send button and show loading state
+        this.sendBtn.disabled = true;
+        this.sendBtn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+
+        const formData = new FormData();
+        formData.append('content', content);
+        formData.append('_token', '{{ csrf_token() }}');
+        if (file) {
+            formData.append('file', file);
+        }
+
+        try {
+            const response = await fetch(`{{ route('messages.store', $conversation ?? 1) }}`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.ok) {
+                const messageData = await response.json();
+                this.addMessageToUI(messageData);
+                this.clearForm();
+                // Update sidebar immediately after sending message
+                this.updateSidebar();
+            } else {
+                const errorData = await response.json();
+                alert(errorData.message || 'Failed to send message.');
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+            alert('Failed to send message. Please try again.');
+        } finally {
+            // Re-enable send button
+            this.sendBtn.disabled = false;
+            this.sendBtn.innerHTML = 'Send';
+        }
+    }
+
+    addMessageToUI(messageData) {
+        const messageId = parseInt(messageData.id);
+        
+        // Check if message already exists in processed IDs
+        if (this.processedMessageIds.has(messageId)) {
+            console.log('Message already processed, skipping duplicate:', messageId);
+            return;
+        }
+
+        // Double-check if message exists in DOM
+        const existingMessage = this.messagesArea.querySelector(`[data-message-id="${messageId}"]`);
+        if (existingMessage) {
+            console.log('Message already exists in DOM, skipping duplicate:', messageId);
+            this.processedMessageIds.add(messageId); // Add to processed set anyway
+            return;
+        }
+
+        // Add message ID to processed set
+        this.processedMessageIds.add(messageId);
+        this.lastMessageId = messageId;
+
+        const messageHtml = this.createMessageHTML(messageData);
+        this.messagesArea.insertAdjacentHTML('beforeend', messageHtml);
+        this.scrollToBottom();
+        
+        console.log('Added new message:', messageId);
+    }
+
+    createMessageHTML(message) {
+        const isCurrentUser = message.sender_id === this.currentUserId;
+        const time = new Date(message.created_at).toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+
+        let attachmentHtml = '';
+        if (message.file_path || message.image) {
+            const fileUrl = `/storage/${message.file_path || message.image}`;
+            const fileName = message.file_name || 'Download';
+            const isImage = message.file_type && message.file_type.startsWith('image/');
+            
+            if (isImage) {
+                attachmentHtml = `
+                    <div class="mt-2">
+                        <div class="attachment-preview" 
+                             onclick="messengerApp.openAttachmentViewer('${fileUrl}', '${fileName}', 'image')"
+                             style="cursor: pointer; display: inline-block; position: relative;">
+                            <img src="${fileUrl}" 
+                                 alt="attachment" 
+                                 style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;">
+                            <div class="attachment-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s;">
+                                <i class="bi bi-zoom-in text-white fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                attachmentHtml = `
+                    <div class="mt-2">
+                        <div class="attachment-preview" 
+                             onclick="messengerApp.openAttachmentViewer('${fileUrl}', '${fileName}', 'file')"
+                             style="cursor: pointer; display: inline-block; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
+                            <i class="bi bi-file-earmark me-2"></i>${fileName}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        return `
+            <div class="messenger-message-row ${isCurrentUser ? 'sent' : 'received'}" data-message-id="${message.id}">
+                ${!isCurrentUser ? `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(message.sender.name)}&background=0D8ABC&color=fff" class="messenger-message-avatar">` : ''}
+                <div>
+                    <div class="messenger-message-bubble">
+                        ${message.content || ''}
+                        ${attachmentHtml}
+                    </div>
+                    <div class="messenger-message-time">${time}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    clearForm() {
+        this.messageContent.value = '';
+        this.clearAttachmentPreview();
+        this.autoResizeTextarea();
+    }
+
+    scrollToBottom() {
+        if (this.messagesArea) {
+            this.messagesArea.scrollTop = this.messagesArea.scrollHeight;
+        }
+    }
+
+    setupRealTimeUpdates() {
+        // Temporarily disable Echo to prevent conflicts
+        // if (typeof Echo !== 'undefined' && this.conversationId) {
+        //     Echo.private(`conversation.${this.conversationId}`)
+        //         .listen('NewMessage', (e) => {
+        //             if (e.message.sender_id !== this.currentUserId) {
+        //                 this.addMessageToUI(e.message);
+        //                 // Update sidebar immediately when receiving new messages
+        //                 this.updateSidebar();
+        //             }
+        //         });
+        // }
+        
+        // No automatic polling - only update when messages are sent/received
+        this.updateSidebarOnSend = true;
+    }
+
+    async updateSidebar() {
+        const now = Date.now();
+        
+        // Prevent updates more frequent than 2 seconds
+        if (now - this.lastSidebarUpdate < 2000) {
+            console.log('Sidebar update skipped - too frequent');
+            return;
+        }
+        
+        // Clear any pending timeout
+        if (this.sidebarUpdateTimeout) {
+            clearTimeout(this.sidebarUpdateTimeout);
+        }
+        
+        // Debounce the update
+        this.sidebarUpdateTimeout = setTimeout(async () => {
+            try {
+                const response = await fetch('{{ route("messages.conversations.update") }}');
+                if (response.ok) {
+                    const conversations = await response.json();
+                    this.updateConversationList(conversations);
+                    this.lastSidebarUpdate = Date.now();
+                    console.log('Sidebar updated successfully');
+                }
+            } catch (error) {
+                console.error('Error updating sidebar:', error);
+            }
+        }, 500); // 500ms debounce
+    }
+
+    updateConversationList(conversations) {
+        const chatList = document.querySelector('.messenger-chat-list');
+        if (!chatList) return;
+
+        // Clear existing conversations to prevent duplicates
+        chatList.innerHTML = '';
+
+        conversations.forEach(conversation => {
+            const conversationHtml = `
+                <a href="${conversation.url}" class="messenger-chat-item ${conversation.id == {{ $conversation->id ?? 'null' }} ? 'active' : ''}" data-conversation-id="${conversation.id}">
+                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.name)}&background=0D8ABC&color=fff" class="messenger-chat-avatar">
+                    <div class="messenger-chat-info">
+                        <div class="messenger-chat-name">${conversation.name}</div>
+                        <div class="messenger-chat-preview">${conversation.last_message}</div>
+                    </div>
+                    ${conversation.unread_count > 0 ? `<span class="messenger-unread-dot"></span>` : ''}
+                </a>
+            `;
+
+            chatList.insertAdjacentHTML('beforeend', conversationHtml);
+        });
+    }
+
+    openAttachmentViewer(url, name, type) {
+        const modalContent = document.getElementById('attachmentViewerContent');
+        modalContent.innerHTML = ''; // Clear previous content
+
+        if (type === 'image') {
+            const img = document.createElement('img');
+            img.src = url;
+            img.style.maxWidth = '100%';
+            img.style.maxHeight = '100%';
+            img.style.objectFit = 'contain';
+            modalContent.appendChild(img);
+        } else {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            a.textContent = name;
+            modalContent.appendChild(a);
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('attachmentViewerModal'));
+        modal.show();
+
+        // Add event listeners for zoom/reset buttons
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const resetZoomBtn = document.getElementById('resetZoomBtn');
+        const downloadBtn = document.getElementById('downloadAttachmentBtn');
+
+        const img = modalContent.querySelector('img');
+        if (img) {
+            img.addEventListener('load', () => {
+                this.updateZoomButtons(img.naturalWidth, img.naturalHeight);
+            });
+        }
+
+        downloadBtn.addEventListener('click', () => {
+            const a = modalContent.querySelector('a');
+            if (a && a.href) {
+                window.open(a.href, '_blank');
+            }
+        });
+
+        zoomInBtn.addEventListener('click', () => this.zoomImage(img, 'in'));
+        zoomOutBtn.addEventListener('click', () => this.zoomImage(img, 'out'));
+        resetZoomBtn.addEventListener('click', () => this.resetImageZoom(img));
+
+        // Close modal on outside click
+        modalContent.addEventListener('click', (e) => {
+            if (e.target === modalContent) {
+                modal.hide();
+            }
+        });
+    }
+
+    updateZoomButtons(width, height) {
+        const img = document.getElementById('attachmentViewerContent').querySelector('img');
+        if (img) {
+            const zoomInBtn = document.getElementById('zoomInBtn');
+            const zoomOutBtn = document.getElementById('zoomOutBtn');
+            const resetZoomBtn = document.getElementById('resetZoomBtn');
+
+            if (width > img.offsetWidth) {
+                zoomInBtn.style.display = 'inline-block';
+            } else {
+                zoomInBtn.style.display = 'none';
+            }
+            if (img.offsetWidth > 100) { // Smaller than 100px, zoom out
+                zoomOutBtn.style.display = 'inline-block';
+            } else {
+                zoomOutBtn.style.display = 'none';
+            }
+            resetZoomBtn.style.display = 'inline-block';
+        }
+    }
+
+    zoomImage(img, direction) {
+        if (!img) return;
+        const currentTransform = img.style.transform || 'scale(1)';
+        const currentScale = parseFloat(currentTransform.replace('scale(', '').replace(')', ''));
+        let newScale;
+        if (direction === 'in') {
+            newScale = currentScale * 1.2;
+        } else {
+            newScale = currentScale / 1.2;
+        }
+        img.style.transform = `scale(${newScale})`;
+        this.updateZoomButtons(img.naturalWidth, img.naturalHeight);
+    }
+
+    resetImageZoom(img) {
+        if (!img) return;
+        img.style.transform = 'scale(1)';
+        this.updateZoomButtons(img.naturalWidth, img.naturalHeight);
+    }
+}
+
+// Initialize the messenger app when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    window.messengerApp = new MessengerApp();
+});
+
+// Enhanced Enter key functionality for modal textareas
+function addEnterKeyToModals() {
+    document.querySelectorAll('.modal textarea[name="message"], .modal textarea[id="message"]').forEach(function(textarea) {
+        textarea.removeEventListener('keydown', handleModalEnterKey);
+        textarea.addEventListener('keydown', handleModalEnterKey);
     });
 }
-document.querySelectorAll('.messenger-sidebar .list-group-item').forEach(function(item) {
-    item.addEventListener('click', function() {
-        if (window.innerWidth <= 900) {
-            sidebar.classList.add('hide-mobile');
-            content.classList.remove('hide-mobile');
-        }
-    });
-});
-$(document).ready(function() {
-    // Admin: Company search for chat (custom, not Select2)
-    var $input = $('#company_search_input');
-    var $results = $('#companySearchResults');
-    var $hiddenId = $('#company_id');
-    var searchTimeout;
-    $input.on('input', function() {
-        clearTimeout(searchTimeout);
-        var term = $input.val().trim();
-        $hiddenId.val('');
-        if (term.length < 2) {
-            $results.hide().empty();
-            return;
-        }
-        searchTimeout = setTimeout(function() {
-            $.ajax({
-                url: routes.searchChat,
-                data: { search: term },
-                success: function(data) {
-                    if (data.data && data.data.length > 0) {
-                        var html = data.data.map(function(item) {
-                            return `<a href="#" class="list-group-item list-group-item-action" data-id="${item.id}" data-name="${item.text}"><div><strong>${item.text}</strong><br><small class='text-muted'>${item.designation}</small>${item.email ? '<br><small>' + item.email + '</small>' : ''}</div></a>`;
-                        }).join('');
-                        $results.html(html).show();
-                    } else {
-                        $results.html('<div class="list-group-item">No results found</div>').show();
-                    }
-                }
-            });
-        }, 250);
-    });
-    $results.on('click', '.list-group-item-action', function(e) {
+
+function handleModalEnterKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        var id = $(this).data('id');
-        var name = $(this).data('name');
-        $input.val(name);
-        $hiddenId.val(id);
-        $results.hide().empty();
-    });
-    // Hide results when clicking outside
-    $(document).on('click', function(e) {
-        if (!$(e.target).closest('#company_search_input, #companySearchResults').length) {
-            $results.hide();
-        }
-    });
-    // Clear hidden id if input is cleared
-    $input.on('change', function() {
-        if (!$input.val().trim()) {
-            $hiddenId.val('');
-        }
-    });
-    // Sidebar AJAX search for clients and suppliers (like new message modal)
-    var $sidebarInput = $('#messenger-search-input');
-    var $sidebarResults = $('#sidebarSearchResults');
-    var sidebarTimeout;
-    $sidebarInput.on('input', function() {
-        clearTimeout(sidebarTimeout);
-        var term = $sidebarInput.val().trim();
-        if (term.length < 2) {
-            $sidebarResults.hide().empty();
-            return;
-        }
-        sidebarTimeout = setTimeout(function() {
-            $.ajax({
-                url: routes.searchChat,
-                data: { search: term },
-                success: function(data) {
-                    if (data.data && data.data.length > 0) {
-                        var html = data.data.map(function(item) {
-                            return `<a href="#" class="list-group-item list-group-item-action" data-id="${item.id}" data-name="${item.text}"><div><strong>${item.text}</strong><br><small class='text-muted'>${item.designation}</small>${item.email ? '<br><small>' + item.email + '</small>' : ''}</div></a>`;
-                        }).join('');
-                        $sidebarResults.html(html).show();
-                    } else {
-                        $sidebarResults.html('<div class="list-group-item">No results found</div>').show();
-                    }
-                }
-            });
-        }, 250);
-    });
-    $sidebarResults.on('click', '.list-group-item-action', function(e) {
-        e.preventDefault();
-        var id = $(this).data('id');
-        var name = $(this).data('name');
-        var designation = $(this).find('small.text-muted').text().toLowerCase();
         
-        // Check if conversation already exists in the sidebar
-        var found = false;
-        $('.messenger-chat-item').each(function() {
-            if ($(this).find('.messenger-chat-name').text().trim() === name.trim()) {
-                found = $(this).attr('href');
-                return false;
-            }
-        });
-        if (found) {
-            window.location.href = found;
-        } else {
-            // Create new conversation via POST, then redirect
-            var postData = {
-                message: '',
-                _token: '{{ csrf_token() }}'
-            };
-            
-            // Set the correct field based on designation
-            if (designation === 'client') {
-                postData.client_id = id;
-            } else if (designation === 'supplier') {
-                postData.supplier_id = id;
-            }
-            
-            $.ajax({
-                url: routes.startMessage,
-                method: 'POST',
-                data: postData,
-                success: function(resp) {
-                    if (resp && resp.redirect) {
-                        window.location.href = resp.redirect;
-                    } else {
-                        window.location.reload();
+        const content = this.value.trim();
+        
+        if (content) {
+            const form = this.closest('form');
+            if (form) {
+                const requiredFields = form.querySelectorAll('[required]');
+                let isValid = true;
+                
+                requiredFields.forEach(function(field) {
+                    if (!field.value.trim()) {
+                        isValid = false;
+                        field.focus();
                     }
-                },
-                error: function() {
-                    window.location.reload();
+                });
+                
+                if (isValid) {
+                    form.submit();
                 }
-            });
+            }
         }
-        $sidebarResults.hide().empty();
-    });
-    // Hide results when clicking outside
-    $(document).on('click', function(e) {
-        if (!$(e.target).closest('#messenger-search-input, #sidebarSearchResults').length) {
-            $sidebarResults.hide();
-        }
-    });
-});
-$(function() {
-    function isMobile() { return window.innerWidth <= 900; }
-    var $sidebar = $('.messenger-sidebar');
-    var $main = $('.messenger-main-content');
-    var $showSidebarBtn = $('#showSidebarBtn');
-    // Show sidebar on back button
-    $showSidebarBtn.on('click', function() {
-        $sidebar.removeClass('hide-mobile');
-        $main.addClass('hide-mobile');
-    });
-    // Hide sidebar when a chat is selected (on mobile)
-    $('.messenger-chat-item').on('click', function() {
-        if (isMobile()) {
-            $sidebar.addClass('hide-mobile');
-            $main.removeClass('hide-mobile');
-        }
-    });
-    // On page load, if mobile and a conversation is open, hide sidebar
-    if (isMobile() && $('.messenger-main-content').find('.messenger-header-title').length) {
-        $sidebar.addClass('hide-mobile');
-        $main.removeClass('hide-mobile');
-        $showSidebarBtn.show();
-    } else {
-        $showSidebarBtn.hide();
     }
-    // On resize, adjust visibility
-    $(window).on('resize', function() {
-        if (isMobile()) {
-            if ($main.find('.messenger-header-title').length) {
-                $sidebar.addClass('hide-mobile');
-                $main.removeClass('hide-mobile');
-                $showSidebarBtn.show();
-            }
-        } else {
-            $sidebar.removeClass('hide-mobile');
-            $main.removeClass('hide-mobile');
-            $showSidebarBtn.hide();
-        }
-    });
-});
-// Attach image preview and removal
-$(function() {
-    const fileInput = document.getElementById('fileInput');
-    const attachBtn = document.getElementById('attachBtn');
-    const preview = document.getElementById('attachmentPreview');
-    if (fileInput && attachBtn && preview) {
-        attachBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            fileInput.click();
-        });
-        fileInput.addEventListener('change', function(e) {
-            const file = fileInput.files[0];
-            if (file) {
-                // Check file size (5MB limit)
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('File size must be less than 5MB.');
-                    fileInput.value = '';
-                    preview.innerHTML = '';
-                    preview.style.display = 'none';
-                    return;
-                }
+}
 
-                // Determine file icon based on type
-                let icon = 'bi-file-earmark text-secondary';
-                if (file.type.startsWith('image/')) {
-                    icon = 'bi-file-earmark-image text-warning';
-                } else if (file.type.startsWith('video/')) {
-                    icon = 'bi-file-earmark-play text-danger';
-                } else if (file.type.startsWith('audio/')) {
-                    icon = 'bi-file-earmark-music text-info';
-                } else if (file.type.includes('pdf')) {
-                    icon = 'bi-file-earmark-pdf text-danger';
-                } else if (file.type.includes('word') || file.type.includes('document')) {
-                    icon = 'bi-file-earmark-word text-primary';
-                } else if (file.type.includes('excel') || file.type.includes('spreadsheet')) {
-                    icon = 'bi-file-earmark-excel text-success';
-                } else if (file.type.includes('powerpoint') || file.type.includes('presentation')) {
-                    icon = 'bi-file-earmark-ppt text-warning';
-                }
-
-                // Format file size
-                let sizeText = '';
-                if (file.size < 1024) {
-                    sizeText = file.size + ' B';
-                } else if (file.size < 1024 * 1024) {
-                    sizeText = (file.size / 1024).toFixed(1) + ' KB';
-                } else {
-                    sizeText = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
-                }
-
-                if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function(ev) {
-                    preview.innerHTML = `<div style='display:flex;align-items:center;gap:8px;'><img src='${ev.target.result}' style='max-width:60px;max-height:60px;border-radius:8px;'><button type='button' id='removeAttachmentBtn' class='btn btn-sm btn-light' style='border-radius:50%;'><i class='bi bi-x-lg'></i></button></div>`;
-                    preview.style.display = '';
-                    document.getElementById('removeAttachmentBtn').onclick = function() {
-                        fileInput.value = '';
-                        preview.innerHTML = '';
-                        preview.style.display = 'none';
-                    };
-                };
-                reader.readAsDataURL(file);
-            } else {
-                    preview.innerHTML = `<div style='display:flex;align-items:center;gap:8px;'><i class='bi ${icon} fs-3'></i><div><div class='fw-semibold'>${file.name}</div><div class='text-muted small'>${sizeText}</div></div><button type='button' id='removeAttachmentBtn' class='btn btn-sm btn-light' style='border-radius:50%;'><i class='bi bi-x-lg'></i></button></div>`;
-                    preview.style.display = '';
-                    document.getElementById('removeAttachmentBtn').onclick = function() {
-                        fileInput.value = '';
-                        preview.innerHTML = '';
-                        preview.style.display = 'none';
-                    };
-                }
-            } else {
-                preview.innerHTML = '';
-                preview.style.display = 'none';
-            }
-        });
-
-        // Form validation
-        document.getElementById('messageForm').addEventListener('submit', function(e) {
-            const content = document.getElementById('messageContent').value.trim();
-            const file = fileInput.files[0];
-            
-            if (!content && !file) {
-                e.preventDefault();
-                alert('Please enter a message or attach a file.');
-                return false;
-            }
-        });
-    }
-});
+// Add Enter key functionality when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    const clientSelect = document.getElementById('client_id');
-    const supplierSelect = document.getElementById('supplier_id');
-
-    function handleSelectChange() {
-        if (clientSelect.value) {
-            supplierSelect.value = '';
-            supplierSelect.disabled = true;
-        } else {
-            supplierSelect.disabled = false;
-        }
-        if (supplierSelect.value) {
-            clientSelect.value = '';
-            clientSelect.disabled = true;
-        } else {
-            clientSelect.disabled = false;
-        }
-    }
-
-    if (clientSelect && supplierSelect) {
-        clientSelect.addEventListener('change', handleSelectChange);
-        supplierSelect.addEventListener('change', handleSelectChange);
-    }
+    addEnterKeyToModals();
 });
+
+// Add Enter key functionality when modals are shown
+document.addEventListener('shown.bs.modal', function(e) {
+    addEnterKeyToModals();
+});
+
+// Periodically check for new modals
+setInterval(addEnterKeyToModals, 1000);
 </script>
 @endpush 
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.messenger-input-icon').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const form = btn.closest('form');
-            if (form) {
-                const fileInput = form.querySelector('input[type="file"]');
-                if (fileInput) fileInput.click();
-            }
-        });
-    });
-});
-</script> 

@@ -233,6 +233,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/messages/attachment/{message}', [MessageController::class, 'removeAttachment'])->name('messages.attachment.remove');
     Route::get('/messages/attachment/{message}/download', [MessageController::class, 'downloadAttachment'])->name('messages.attachment.download');
     Route::get('/messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');
+    Route::get('/messages/conversations/update', [MessageController::class, 'getConversationsUpdate'])->name('messages.conversations.update');
     // Make company search for chat available to all authenticated users (admin check in controller)
     Route::get('/admin/companies/search-for-chat', [\App\Http\Controllers\CompanyController::class, 'searchForChat'])->name('admin.companies.search-for-chat');
     // Purchase Order Payment Routes
@@ -499,9 +500,9 @@ Route::middleware(['auth', 'role:manager'])->prefix('manager')->name('manager.')
     Route::get('/quotations', [\App\Http\Controllers\Manager\DashboardController::class, 'quotationsPage'])->name('quotations');
     Route::get('/quotation-requests/{id}/view', [\App\Http\Controllers\Manager\DashboardController::class, 'showClientQuotationRequest'])->name('quotation-requests.view');
     Route::post('/quotation-requests/{id}/send-to-suppliers', [\App\Http\Controllers\Manager\DashboardController::class, 'sendQuotationRequestToSuppliers'])->name('quotation-requests.send-to-suppliers');
-    Route::post('/notifications/mark-all-as-read', [\App\Http\Controllers\Manager\DashboardController::class, 'markAllNotificationsAsRead'])->name('manager.notifications.markAllAsRead');
-    Route::post('/notifications/clear-read', [\App\Http\Controllers\Manager\DashboardController::class, 'clearReadNotifications'])->name('manager.notifications.clearRead');
-    Route::post('/notifications/{id}/mark-as-read', [\App\Http\Controllers\Manager\DashboardController::class, 'markNotificationAsRead'])->name('manager.notifications.markAsRead');
+    Route::post('/notifications/mark-all-as-read', [\App\Http\Controllers\Manager\DashboardController::class, 'markAllNotificationsAsRead'])->name('notifications.markAllAsRead');
+    Route::post('/notifications/clear-read', [\App\Http\Controllers\Manager\DashboardController::class, 'clearReadNotifications'])->name('notifications.clearRead');
+    Route::post('/notifications/{id}/mark-as-read', [\App\Http\Controllers\Manager\DashboardController::class, 'markNotificationAsRead'])->name('notifications.markAsRead');
     // Add more manager routes here
 });
 

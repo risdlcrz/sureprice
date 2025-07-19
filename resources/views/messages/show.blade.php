@@ -270,6 +270,27 @@
             return false;
         }
     });
+
+    // Enter key to send message, Shift+Enter for new line
+    document.getElementById('messageContent').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            
+            const content = this.value.trim();
+            const file = document.getElementById('fileInput').files[0];
+            
+            // Only send if there's content or a file
+            if (content || file) {
+                document.getElementById('messageForm').submit();
+            }
+        }
+    });
+
+    // Auto-resize textarea as user types
+    document.getElementById('messageContent').addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
 </script>
 @endpush
 

@@ -86,6 +86,9 @@ class MessageController extends Controller
         ]);
 
         if (!$request->filled('content') && !$request->hasFile('image') && !$request->hasFile('file')) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Please enter a message or attach a file.'], 422);
+            }
             return back()->withErrors(['content' => 'Please enter a message or attach a file.'])->withInput();
         }
 
@@ -126,11 +129,14 @@ class MessageController extends Controller
 
         $conversation->update(['last_message_at' => now()]);
 
+        // Load the sender relationship for JSON response
+        $message->load('sender');
+
         // Broadcast the new message event
         event(new \App\Events\NewMessage($message));
 
         if ($request->wantsJson()) {
-            return response()->json($message->load('sender'));
+            return response()->json($message);
         }
 
         return redirect()->back();
@@ -372,47 +378,129 @@ class MessageController extends Controller
     public function show(Conversation $conversation)
     {
         $this->authorize('view', $conversation);
-        $user = Auth::user();
-        // Count unread messages for sidebar badge
-        $unreadMessagesCount = \App\Models\Message::whereHas('conversation', function($q) use ($user) {
-            if ($user->role === 'manager') {
-                $q->where('admin_id', $user->id);
-            } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
-                $q->where('client_id', $user->id);
-            } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
-                $q->where('supplier_id', $user->company->id);
-            } else {
-                $q->where('id', 0);
-            }
-        })
-        ->where('is_read', false)
-        ->where('sender_id', '!=', $user->id)
-        ->count();
-        // Fetch all conversations for the sidebar
-        if ($user->user_type === 'admin') {
-            $conversations = Conversation::where('admin_id', $user->id);
-        } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
-            $conversations = Conversation::where('client_id', $user->id);
-        } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
-            $conversations = Conversation::where('supplier_id', $user->company->id);
-        } else {
-            $conversations = collect();
-        }
-        $conversations = $conversations->with(['messages' => function ($query) {
-            $query->latest();
-        }, 'client', 'admin', 'supplier'])->latest('last_message_at')->get();
 
-        // Get messages for the selected conversation
+        // Mark messages as read
+        $conversation->messages()
+            ->where('sender_id', '!=', Auth::id())
+            ->where('is_read', false)
+            ->update(['is_read' => true, 'read_at' => now()]);
+
         $messages = $conversation->messages()
             ->with('sender')
             ->orderBy('created_at', 'asc')
             ->get();
 
-        // Mark unread messages as read
-        $messages->where('is_read', false)
-            ->where('sender_id', '!=', $user->id)
-            ->each->markAsRead();
+        // Get conversations for sidebar
+        $user = Auth::user();
+        $conversations = collect();
 
-        return view('messages.index', compact('conversations', 'conversation', 'messages', 'unreadMessagesCount'));
+        if ($user->user_type === 'admin') {
+            $conversations = Conversation::with(['client', 'supplier', 'messages' => function($q) {
+                $q->latest()->limit(1);
+            }])
+            ->where(function($q) use ($user) {
+                $q->where('admin_id', $user->id)
+                  ->orWhere(function($subQ) {
+                      $subQ->whereNotNull('client_id')->orWhereNotNull('supplier_id');
+                  });
+            })
+            ->orderBy('last_message_at', 'desc')
+            ->get();
+        } elseif ($user->role === 'manager') {
+            $conversations = Conversation::with(['client', 'supplier', 'messages' => function($q) {
+                $q->latest()->limit(1);
+            }])
+            ->where('admin_id', $user->id)
+            ->orderBy('last_message_at', 'desc')
+            ->get();
+        } elseif ($user->user_type === 'company') {
+            $conversations = Conversation::with(['admin', 'messages' => function($q) {
+                $q->latest()->limit(1);
+            }])
+            ->where('client_id', $user->id)
+            ->orderBy('last_message_at', 'desc')
+            ->get();
+        }
+
+        return view('messages.index', compact('conversation', 'messages', 'conversations'));
+    }
+
+    public function getConversationsUpdate(Request $request)
+    {
+        $user = Auth::user();
+        $conversations = collect();
+
+        if ($user->user_type === 'admin') {
+            $conversations = Conversation::with(['client', 'supplier', 'messages' => function($q) {
+                $q->latest()->limit(1);
+            }])
+            ->where(function($q) use ($user) {
+                $q->where('admin_id', $user->id)
+                  ->orWhere(function($subQ) {
+                      $subQ->whereNotNull('client_id')->orWhereNotNull('supplier_id');
+                  });
+            })
+            ->distinct()
+            ->orderBy('last_message_at', 'desc')
+            ->get()
+            ->map(function($conversation) {
+                $lastMessage = $conversation->messages->first();
+                $participantName = $conversation->client ? $conversation->client->company->company_name : 
+                                 ($conversation->supplier ? $conversation->supplier->company_name : 'Unknown');
+                
+                return [
+                    'id' => $conversation->id,
+                    'name' => $participantName,
+                    'last_message' => $lastMessage ? ($lastMessage->content ?: 'Attachment sent') : 'No messages yet',
+                    'last_message_time' => $lastMessage ? $lastMessage->created_at->diffForHumans() : null,
+                    'unread_count' => $conversation->messages()->where('sender_id', '!=', Auth::id())->where('is_read', false)->count(),
+                    'url' => route('messages.show', $conversation)
+                ];
+            });
+        } elseif ($user->role === 'manager') {
+            $conversations = Conversation::with(['client', 'supplier', 'messages' => function($q) {
+                $q->latest()->limit(1);
+            }])
+            ->where('admin_id', $user->id)
+            ->distinct()
+            ->orderBy('last_message_at', 'desc')
+            ->get()
+            ->map(function($conversation) {
+                $lastMessage = $conversation->messages->first();
+                $participantName = $conversation->client ? $conversation->client->company->company_name : 
+                                 ($conversation->supplier ? $conversation->supplier->company_name : 'Unknown');
+                
+                return [
+                    'id' => $conversation->id,
+                    'name' => $participantName,
+                    'last_message' => $lastMessage ? ($lastMessage->content ?: 'Attachment sent') : 'No messages yet',
+                    'last_message_time' => $lastMessage ? $lastMessage->created_at->diffForHumans() : null,
+                    'unread_count' => $conversation->messages()->where('sender_id', '!=', Auth::id())->where('is_read', false)->count(),
+                    'url' => route('messages.show', $conversation)
+                ];
+            });
+        } elseif ($user->user_type === 'company') {
+            $conversations = Conversation::with(['admin', 'messages' => function($q) {
+                $q->latest()->limit(1);
+            }])
+            ->where('client_id', $user->id)
+            ->distinct()
+            ->orderBy('last_message_at', 'desc')
+            ->get()
+            ->map(function($conversation) {
+                $lastMessage = $conversation->messages->first();
+                
+                return [
+                    'id' => $conversation->id,
+                    'name' => $conversation->admin->name,
+                    'last_message' => $lastMessage ? ($lastMessage->content ?: 'Attachment sent') : 'No messages yet',
+                    'last_message_time' => $lastMessage ? $lastMessage->created_at->diffForHumans() : null,
+                    'unread_count' => $conversation->messages()->where('sender_id', '!=', Auth::id())->where('is_read', false)->count(),
+                    'url' => route('messages.show', $conversation)
+                ];
+            });
+        }
+
+        return response()->json($conversations);
     }
 } 
