@@ -113,6 +113,6 @@
 @endpush
 
 @push('scripts')
-    @vite(['resources/js/messages/show.js'])
+    @vite(['resources/js/messages-index.js'])
 @endpush
 @endsection 

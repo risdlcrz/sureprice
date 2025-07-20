@@ -1,4 +1,4 @@
-function addRow() {
+window.addRow = function() {
     const table = document.getElementById("materials-table").getElementsByTagName('tbody')[0];
     const newRow = table.insertRow();
     newRow.innerHTML = `

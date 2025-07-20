@@ -243,5 +243,5 @@ $altColors = ['#f9fafb', '#e8f5e9'];
 @endpush
 
 @push('scripts')
-    @vite(['resources/js/landing/catalogue.js'])
+    @vite(['resources/js/landing-catalogue.js'])
 @endpush 
