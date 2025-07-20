@@ -298,71 +298,11 @@
 </div>
 
 @push('styles')
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
-<style>
-    .table-hover tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-    .btn-outline-primary.btn-sm {
-        padding: 0.25rem 0.75rem;
-        font-size: 0.9rem;
-        border-radius: 0.25rem;
-    }
-    .badge {
-        font-size: 0.95em;
-        padding: 0.4em 0.7em;
-        border-radius: 0.5em;
-    }
-</style>
+{{-- Extracted to resources/css/supplier-dashboard.css --}}
+@vite('resources/css/supplier-dashboard.css')
 @endpush
-
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Monthly Sales Chart
-    const monthlySalesCtx = document.getElementById('monthlySalesChart');
-    if (monthlySalesCtx) {
-        const monthlySalesData = JSON.parse('{!! addslashes(json_encode($monthlySales)) !!}');
-        const labels = Object.keys(monthlySalesData);
-        const data = Object.values(monthlySalesData);
-        
-        new Chart(monthlySalesCtx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Monthly Sales (₱)',
-                    data: data,
-                    borderColor: 'rgb(75, 192, 192)',
-                    backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                    tension: 0.1,
-                    fill: true
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top'
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function(value) {
-                                return '₱' + value.toLocaleString();
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-});
-</script>
+{{-- Extracted to resources/js/supplier-dashboard.js --}}
+@vite('resources/js/supplier-dashboard.js')
 @endpush
 @endsection 

@@ -9,3 +9,6 @@ function addRow() {
         <td><input type="text" name="specs[]" class="form-control"></td>
     `;
 }
+
+// Make function globally available to prevent tree-shaking
+window.addRow = addRow;

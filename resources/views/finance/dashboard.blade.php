@@ -81,47 +81,7 @@
     </div>
 </div>
 @push('styles')
-<style>
-.card {
-    border-radius: 1.25rem;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    border: none;
-    margin-bottom: 2rem;
-}
-.card-header {
-    background: #fff;
-    border-radius: 1.25rem 1.25rem 0 0;
-    border-bottom: none;
-    padding: 1.5rem 2rem 1rem 2rem;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 1rem;
-}
-.table-responsive {
-    border-radius: 1.1rem;
-    overflow-x: auto;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    background: #fff;
-    max-width: 100%;
-}
-.table th, .table td {
-    vertical-align: middle;
-    padding: 0.7rem 0.5rem;
-    border: none;
-    background: #f8fafc;
-    text-align: center;
-}
-.table thead th {
-    background: #e8f5e9;
-    font-weight: 700;
-    color: #198754;
-    border-bottom: 2px solid #e3e3e3;
-    text-align: center;
-}
-.table-hover tbody tr:hover {
-    background: #e3f2fd44;
-}
-</style>
+{{-- Extracted to resources/css/finance-dashboard.css --}}
+@vite('resources/css/finance-dashboard.css')
 @endpush
 @endsection 

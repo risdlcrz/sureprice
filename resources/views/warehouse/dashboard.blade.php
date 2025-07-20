@@ -192,128 +192,13 @@
     </div>
 </div>
 
+@push('styles')
+{{-- Extracted to resources/css/warehouse-dashboard.css --}}
+@vite('resources/css/warehouse-dashboard.css')
+@endpush
+
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('monthlyMovementsChart').getContext('2d');
-    const monthlyData = JSON.parse('@json($monthlyMovements)');
-    const months = monthlyData.map(item => {
-        const date = new Date();
-        date.setMonth(item.month - 1);
-        return date.toLocaleString('default', { month: 'short' });
-    });
-    const incomingData = monthlyData.map(item => item.incoming);
-    const outgoingData = monthlyData.map(item => item.outgoing);
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: months,
-            datasets: [
-                {
-                    label: 'Incoming',
-                    data: incomingData,
-                    borderColor: '#198754',
-                    backgroundColor: 'rgba(25, 135, 84, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                },
-                {
-                    label: 'Outgoing',
-                    data: outgoingData,
-                    borderColor: '#dc3545',
-                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                }
-            }
-        }
-    });
-});
-</script>
+{{-- Extracted to resources/js/warehouse-dashboard.js --}}
+@vite('resources/js/warehouse-dashboard.js')
 @endpush
 @endsection 
-
-@push('styles')
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-body, .container {
-    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
-    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-}
-h1, .h3 {
-    font-family: 'Inter', Arial, sans-serif;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    color: #198754;
-    font-size: 2.2rem;
-    margin-bottom: 2rem;
-}
-.card {
-    border: none;
-    border-radius: 1.25rem;
-    box-shadow: 0 8px 32px 0 rgba(44,62,80,0.10), 0 1.5px 6px rgba(44,62,80,0.04);
-    margin-bottom: 1.5rem;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(8px);
-    transition: box-shadow 0.2s, background 0.2s, transform 0.2s;
-}
-/* Gradient backgrounds for stat cards */
-.row.g-4.mb-4 > .col-12.col-md-6.col-lg-3:nth-child(1) .card {
-    background: linear-gradient(90deg, #1565c0 0%, #1e88e5 100%) !important;
-    color: #fff;
-}
-.row.g-4.mb-4 > .col-12.col-md-6.col-lg-3:nth-child(2) .card {
-    background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%) !important;
-    color: #fff;
-}
-.row.g-4.mb-4 > .col-12.col-md-6.col-lg-3:nth-child(3) .card {
-    background: linear-gradient(90deg, #f7971e 0%, #f7971e 80%, #ffd200 100%) !important;
-    color: #fff;
-}
-.row.g-4.mb-4 > .col-12.col-md-6.col-lg-3:nth-child(4) .card {
-    background: linear-gradient(90deg, #c33764 0%, #f857a6 100%) !important;
-    color: #fff;
-}
-.card:hover {
-    box-shadow: 0 16px 48px 0 rgba(44,62,80,0.16), 0 2px 8px rgba(44,62,80,0.08);
-    background: rgba(255,255,255,0.97);
-    transform: translateY(-4px) scale(1.02);
-}
-.card-header {
-    background: #fff;
-    border-radius: 1.25rem 1.25rem 0 0;
-    border-bottom: none;
-    padding: 1.5rem 2rem 1rem 2rem;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 1rem;
-}
-.bg-info, .bg-primary, .bg-success, .bg-warning, .bg-danger {
-    border-radius: 50% !important;
-    box-shadow: 0 2px 8px 0 rgba(44,62,80,0.10);
-    font-size: 1.5em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.badge {
-    font-size: 0.95em;
-    padding: 0.5em 1em;
-    border-radius: 0.7em;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    box-shadow: 0 1px 4px #38b6ff22;
-}
-</style>
-@endpush

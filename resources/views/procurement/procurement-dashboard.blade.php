@@ -191,13 +191,9 @@
         </section>
     </div>
     <style>
-    .hover-shadow:hover {
-        box-shadow: 0 8px 32px 0 rgba(56, 142, 60, 0.15) !important;
-        transform: translateY(-4px) scale(1.02);
-        transition: box-shadow 0.2s, transform 0.2s;
-        }
-        .card-img-top {
-        border-radius: 1.5rem 1.5rem 0 0;
-        }
+    /* Extracted to resources/css/procurement-dashboard.css */
     </style>
+    @push('styles')
+    @vite('resources/css/procurement-dashboard.css')
+    @endpush
 @endsection 

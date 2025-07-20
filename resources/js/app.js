@@ -16,6 +16,14 @@ import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
 import 'tippy.js/themes/light.css';
 
+// Import individual page-specific JS files
+import './projectreq.js';
+import './quotations-form.js';
+import './procurement-dashboard-main.js';
+import './messages-index.js';
+import './payments-index.js';
+import './projects-index.js';
+
 // Expose Calendar and Gantt globally if needed in Blade files (alternative to direct CDN use)
 window.FullCalendar = { Calendar, dayGridPlugin, timeGridPlugin, resourceTimelinePlugin, interactionPlugin };
 window.Gantt = Gantt;

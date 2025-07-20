@@ -1,0 +1,71 @@
+.projects-table-container {
+    border-radius: 20px;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    border: none;
+    margin-bottom: 2rem;
+}
+.projects-table th, .projects-table td {
+    vertical-align: middle;
+    text-align: center;
+    padding: 0.9rem 0.5rem;
+    border: none;
+    background: #f8fafc;
+}
+.projects-table thead th {
+    background: #e8f5e9;
+    font-weight: 700;
+    color: #198754;
+    border-bottom: 2px solid #e3e3e3;
+}
+.projects-table tbody tr:hover {
+    background: #e3f2fd44;
+}
+.projects-table .progress {
+    background: #e9ecef;
+    height: 16px;
+    border-radius: 8px;
+    box-shadow: none;
+}
+.projects-table .progress-bar {
+    font-size: 0.95em;
+    font-weight: 600;
+}
+.card {
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    border: none;
+    margin-bottom: 2rem;
+}
+.card-header {
+    background: #fff;
+    border-radius: 1.25rem 1.25rem 0 0;
+    border-bottom: none;
+    padding: 1.5rem 2rem 1rem 2rem;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 1rem;
+}
+.badge {
+    font-size: 0.85em;
+    padding: 0.4em 0.9em;
+    border-radius: 1em;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+.btn-group .btn {
+    margin-right: 0.25rem;
+}
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+.progress {
+    background: #e9ecef;
+    height: 12px;
+    border-radius: 8px;
+    box-shadow: none;
+}
+.progress-bar {
+    font-size: 0.85em;
+    font-weight: 600;
+} 

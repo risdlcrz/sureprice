@@ -1,0 +1,73 @@
+.contract-template {
+    max-width: 950px;
+    margin: 32px auto 32px auto;
+    padding-left: 0;
+    padding-right: 0;
+}
+.contract-border {
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    background: #fff;
+    padding: 2.5rem 2.5rem 2rem 2.5rem;
+    margin-left: 0;
+    margin-right: 0;
+}
+.contract-title {
+    font-size: 2.2rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.5em;
+}
+.section strong {
+    font-size: 1.08rem;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+}
+.contract-blank {
+    display: inline-block;
+    min-width: 110px;
+    border-bottom: 1.5px solid #222;
+    padding: 0 0.4em;
+    margin: 0 0.15em;
+    font-weight: 500;
+    color: #222;
+    background: #f8fafc;
+}
+.contract-scope-list {
+    margin-left: 1.2em;
+    margin-bottom: 0.5em;
+}
+.contract-scope-list li {
+    border-bottom: 1px dotted #bbb;
+    margin-bottom: 0.2em;
+    padding-bottom: 0.15em;
+    font-size: 1.04em;
+}
+.contract-inline-input {
+    border: none;
+    border-bottom: 1.5px solid #222;
+    background: #f8fafc;
+    font-size: 1.08rem;
+    font-weight: 500;
+    color: #222;
+    min-width: 120px;
+    margin: 0 0.2em;
+    padding: 0 0.2em 2px 0.2em;
+    outline: none;
+    display: inline-block;
+    box-shadow: none;
+}
+.contract-inline-input:focus {
+    border-bottom: 2px solid #198754;
+    background: #e9fbe9;
+}
+@media (max-width: 900px) {
+    .contract-template { max-width: 100vw; padding-left: 0.5rem; padding-right: 0.5rem; }
+    .contract-border { padding: 1.2rem 0.5rem; }
+}
+@media print {
+    .contract-template, .contract-border { box-shadow: none !important; border-color: #000 !important; }
+    .btn, #po-search, #po-search-results, #save-btn, #download-pdf { display: none !important; }
+    body { background: #fff !important; }
+} 

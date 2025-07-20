@@ -232,4 +232,13 @@
         </div>
     </div>
 </div>
-@endsection 
+@endsection
+
+@push('styles')
+{{-- Extracted to resources/css/procurement-dashboard-main.css --}}
+@vite('resources/css/procurement-dashboard-main.css')
+@endpush
+@push('scripts')
+{{-- Extracted to resources/js/procurement-dashboard-main.js --}}
+@vite('resources/js/procurement-dashboard-main.js')
+@endpush 

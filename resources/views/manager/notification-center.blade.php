@@ -52,92 +52,12 @@
     </div>
 </div>
 @push('styles')
-<style>
-.card {
-    border-radius: 1.25rem;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    border: none;
-    margin-bottom: 2rem;
-}
-.card-header {
-    background: #fff;
-    border-radius: 1.25rem 1.25rem 0 0;
-    border-bottom: none;
-    padding: 1.5rem 2rem 1rem 2rem;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 1rem;
-}
-.card-body {
-    background: #f8fafc;
-    border-radius: 0 0 1.25rem 1.25rem;
-}
-.list-group-item {
-    border: none;
-    border-radius: 1rem !important;
-    margin-bottom: 0.5rem;
-    background: #fff;
-    transition: box-shadow 0.2s;
-}
-.list-group-item.bg-light {
-    background: #f8fafc !important;
-}
-.list-group-item.bg-white {
-    background: #fff !important;
-    box-shadow: 0 2px 8px #38b6ff11;
-}
-.list-group-item:hover {
-    box-shadow: 0 4px 16px #38b6ff22;
-}
-</style>
+<link href="{{ asset('resources/css/manager-notification-center.css') }}" rel="stylesheet" />
 @endpush
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Mark notification as read on click
-    document.querySelectorAll('.notification-item').forEach(function(item) {
-        item.addEventListener('click', function(e) {
-            var id = this.getAttribute('data-id');
-            var isRead = this.getAttribute('data-read') === '1';
-            if (!isRead) {
-                fetch('/manager/notifications/' + id + '/mark-as-read', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json',
-                    },
-                }).then(res => {
-                    if (res.ok) {
-                        this.classList.remove('fw-bold', 'bg-white');
-                        this.classList.add('bg-light');
-                        this.setAttribute('data-read', '1');
-                        var badge = this.querySelector('.badge.bg-warning');
-                        if (badge) badge.remove();
-                        // Optionally update badge count in sidebar
-                    }
-                });
-            }
-        });
-    });
-    // Clear read notifications
-    document.getElementById('clearReadForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        fetch(this.action, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-            },
-        }).then(res => res.json()).then(data => {
-            if (data.success) {
-                document.querySelectorAll('.notification-item[data-read="1"]').forEach(function(item) {
-                    item.remove();
-                });
-            }
-        });
-    });
-});
+window.csrfToken = '{{ csrf_token() }}';
 </script>
+<script src="{{ asset('resources/js/manager-notification-center.js') }}"></script>
 @endpush
 @endsection 
