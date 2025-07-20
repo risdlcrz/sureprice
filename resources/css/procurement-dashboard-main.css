@@ -1,1 +1,298 @@
-/* CSS for procurement main dashboard (add as needed) */ 
+/* Procurement Project Dashboard Styles */
+
+.hover-shadow:hover {
+    box-shadow: 0 8px 32px 0 rgba(56, 142, 60, 0.15) !important;
+    transform: translateY(-4px) scale(1.02);
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.card-img-top {
+    border-radius: 1.5rem 1.5rem 0 0;
+}
+
+/* Fix card layout issues */
+.card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 450px;
+    margin-bottom: 1.5rem;
+    border: none;
+    border-radius: 1.25rem;
+    box-shadow: 0 8px 32px 0 rgba(44,62,80,0.10), 0 1.5px 6px rgba(44,62,80,0.04);
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(8px);
+    transition: box-shadow 0.2s, background 0.2s, transform 0.2s;
+    overflow: hidden;
+}
+
+.card:hover {
+    box-shadow: 0 16px 48px 0 rgba(44,62,80,0.16), 0 2px 8px rgba(44,62,80,0.08);
+    background: rgba(255,255,255,0.97);
+    transform: translateY(-4px) scale(1.02);
+}
+
+.card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+    min-height: 120px;
+}
+
+.card-title {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.3;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #198754;
+    min-height: 2.6rem;
+    display: flex;
+    align-items: center;
+}
+
+.card-text {
+    flex: 1;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.5;
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    min-height: 3rem;
+}
+
+.card-footer {
+    margin-top: auto;
+    padding: 1.5rem;
+    background: transparent;
+    border-top: 1px solid rgba(0,0,0,.125);
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Improve button layout in card footers */
+.card-footer .d-flex {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.card-footer .btn {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.9rem;
+    padding: 0.6rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-footer .btn.w-100 {
+    width: 100% !important;
+    margin-bottom: 0.5rem;
+}
+
+/* Grid layout improvements */
+.row-cols-1.row-cols-md-3.g-4 {
+    margin-left: -1rem;
+    margin-right: -1rem;
+}
+
+.row-cols-1.row-cols-md-3.g-4 > .col {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    margin-bottom: 2rem;
+}
+
+/* --- IMPROVED CARD SPACING --- */
+.row-cols-1.row-cols-md-3.g-4 {
+    gap: 2rem 2rem !important;
+    margin-bottom: 2rem !important;
+}
+.row-cols-1.row-cols-md-3.g-4 > .col {
+    margin-bottom: 2.5rem !important;
+}
+.card {
+    margin-bottom: 2.5rem !important;
+    min-height: 440px;
+}
+@media (max-width: 1200px) {
+    .card {
+        min-height: 400px;
+    }
+}
+@media (max-width: 768px) {
+    .row-cols-1.row-cols-md-3.g-4 {
+        gap: 1.2rem 0.8rem !important;
+    }
+    .card {
+        min-height: 340px;
+        margin-bottom: 2rem !important;
+    }
+    .row-cols-1.row-cols-md-3.g-4 > .col {
+        margin-bottom: 2rem !important;
+    }
+}
+
+/* Responsive improvements */
+@media (max-width: 1200px) {
+    .row-cols-md-3 > * {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+}
+
+@media (max-width: 768px) {
+    .row-cols-md-3 > * {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .card {
+        min-height: 400px;
+    }
+    
+    .card-footer .d-flex {
+        flex-direction: column;
+    }
+    
+    .card-footer .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .card-title {
+        font-size: 1.1rem;
+        min-height: 2.4rem;
+    }
+    
+    .card-text {
+        font-size: 0.9rem;
+        min-height: 2.5rem;
+    }
+}
+
+/* Ensure proper spacing */
+.row-cols-1.row-cols-md-3.g-4 > .col {
+    margin-bottom: 2rem;
+}
+
+/* Fix image aspect ratio */
+.card-img-top {
+    height: 180px !important;
+    object-fit: cover;
+    object-position: center;
+}
+
+/* Section spacing */
+section {
+    margin-bottom: 3rem;
+}
+
+/* Improve overall container spacing */
+.container-fluid {
+    padding-left: 2rem;
+    padding-right: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+/* Button styling improvements */
+.btn-primary {
+    background: linear-gradient(90deg, #2196f3 0%, #21cbf3 100%) !important;
+    color: #fff !important;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(90deg, #21cbf3 0%, #2196f3 100%) !important;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(33, 150, 243, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%) !important;
+    color: #fff !important;
+    border: none;
+}
+
+.btn-success:hover {
+    background: linear-gradient(90deg, #38f9d7 0%, #43e97b 100%) !important;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(67, 233, 123, 0.4);
+}
+
+.btn-secondary {
+    background: linear-gradient(90deg, #6c757d 0%, #495057 100%) !important;
+    color: #fff !important;
+    border: none;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(90deg, #495057 0%, #6c757d 100%) !important;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(108, 117, 125, 0.4);
+}
+
+.btn-outline-success {
+    border: 2px solid #198754;
+    color: #198754;
+    background: #fff;
+}
+
+.btn-outline-success:hover {
+    background: linear-gradient(90deg, #198754 0%, #20c997 100%) !important;
+    color: #fff !important;
+    border: none;
+    box-shadow: 0 4px 16px rgba(25, 135, 84, 0.4);
+}
+
+/* Ensure text doesn't get cut off */
+.card-title, .card-text {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Force proper grid layout */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: -1rem;
+    margin-right: -1rem;
+}
+
+.col {
+    flex: 1 0 0%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+@media (min-width: 768px) {
+    .row-cols-md-3 > .col {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
+    }
+} 

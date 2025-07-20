@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/admin-suppliers.css') }}">
+@endpush
+
 @section('content')
 <div class="container-fluid py-4">
     <div class="row">
@@ -206,22 +210,5 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 @endpush
 
-@push('styles')
-<style>
-    .table td {
-        vertical-align: middle;
-    }
-    .badge {
-        font-size: 0.9em;
-    }
-    .btn-group .btn {
-        margin-right: 2px;
-    }
-    .fas {
-        width: 16px;
-        text-align: center;
-        margin-right: 5px;
-    }
-</style>
-@endpush
+
 @endsection 

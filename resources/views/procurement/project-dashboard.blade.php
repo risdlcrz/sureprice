@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/procurement-dashboard-main.css') }}">
+@endpush
+
 @section('content')
 <div class="container-fluid py-4">
     <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Project & Procurement Dashboard</h1>
@@ -261,123 +265,4 @@
             </div>
         </div>
     </section>
-    <style>
-    .hover-shadow:hover {
-        box-shadow: 0 8px 32px 0 rgba(56, 142, 60, 0.15) !important;
-        transform: translateY(-4px) scale(1.02);
-        transition: box-shadow 0.2s, transform 0.2s;
-    }
-    .card-img-top {
-        border-radius: 1.5rem 1.5rem 0 0;
-    }
-    
-    /* Fix card layout issues */
-    .card {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        min-height: 400px;
-    }
-    
-    .card-body {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        padding: 1.25rem;
-    }
-    
-    .card-title {
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        hyphens: auto;
-        line-height: 1.2;
-        margin-bottom: 0.75rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-    }
-    
-    .card-text {
-        flex: 1;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-        line-height: 1.4;
-        color: #6c757d;
-        margin-bottom: 1rem;
-    }
-    
-    .card-footer {
-        margin-top: auto;
-        padding: 1rem;
-        background: transparent;
-        border-top: 1px solid rgba(0,0,0,.125);
-    }
-    
-    /* Improve button layout in card footers */
-    .card-footer .d-flex {
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-    
-    .card-footer .btn {
-        flex: 1;
-        min-width: 0;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-size: 0.875rem;
-        padding: 0.5rem 0.75rem;
-        border-radius: 0.5rem;
-    }
-    
-    /* Responsive improvements */
-    @media (max-width: 768px) {
-        .row-cols-md-3 > * {
-            flex: 0 0 100%;
-            max-width: 100%;
-        }
-        
-        .card-footer .d-flex {
-            flex-direction: column;
-        }
-        
-        .card-footer .btn {
-            width: 100%;
-            margin-bottom: 0.25rem;
-        }
-        
-        .card {
-            min-height: 350px;
-        }
-    }
-    
-    /* Ensure proper spacing */
-    .row-cols-1.row-cols-md-3.g-4 > .col {
-        margin-bottom: 1.5rem;
-    }
-    
-    /* Fix image aspect ratio */
-    .card-img-top {
-        height: 180px !important;
-        object-fit: cover;
-        object-position: center;
-    }
-    
-    /* Section spacing */
-    section {
-        margin-bottom: 3rem;
-    }
-    
-    /* Improve overall container spacing */
-    .container-fluid {
-        padding-left: 2rem;
-        padding-right: 2rem;
-    }
-    
-    @media (max-width: 768px) {
-        .container-fluid {
-            padding-left: 1rem;
-            padding-right: 1rem;
-        }
-    }
-    </style>
 @endsection 
