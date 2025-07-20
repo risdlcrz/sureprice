@@ -7,14 +7,14 @@
 <div id="landingCarousel" class="carousel slide mb-0" data-bs-ride="carousel">
     <div class="carousel-inner">
         <div class="carousel-item active">
-            <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80" class="d-block w-100 landing-carousel-img" alt="Construction site">
+            <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=1200&q=80" class="d-block w-100 landing-carousel-img" alt="Forest landscape">
             <div class="carousel-caption-custom" data-aos="fade-up">
                 <h1>Build with Confidence</h1>
                 <p>Your trusted partner for construction, renovation, and project management. Get transparent pricing, expert teams, and seamless project delivery.</p>
             </div>
         </div>
         <div class="carousel-item">
-            <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=1200&q=80" class="d-block w-100 landing-carousel-img" alt="Modern interior">
+            <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80" class="d-block w-100 landing-carousel-img" alt="Mountain landscape">
             <div class="carousel-caption-custom" data-aos="fade-up">
                 <h1>Modern Interiors</h1>
                 <p>Transform your space with style, function, and quality craftsmanship. SurePrice makes it easy.</p>
@@ -39,12 +39,14 @@
 </div>
 
 <!-- Welcome Text Section -->
-<div class="container text-center my-5 pb-2">
-    <h1 class="display-4 fw-bold mb-3 text-success">Welcome to SurePrice</h1>
-    <p class="lead text-secondary mb-0">Your all-in-one platform for Construction Project & Procurement Management</p>
-    @if(auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client')
-        <a href="{{ route('client.dashboard') }}" class="btn btn-primary btn-lg mt-4">Go to Dashboard</a>
-    @endif
+<div class="welcome-section">
+    <div class="container text-center py-5">
+        <h1 class="display-4 fw-bold mb-3">Welcome to SurePrice</h1>
+        <p class="lead mb-0">Your all-in-one platform for Construction Project & Procurement Management</p>
+        @if(auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client')
+            <a href="{{ route('client.dashboard') }}" class="btn btn-light btn-lg mt-4">Go to Dashboard</a>
+        @endif
+    </div>
 </div>
 
 @php
@@ -218,7 +220,7 @@ $altColors = ['#f9fafb', '#e8f5e9'];
     </div>
 </div>
 
-<div class="bg-light py-5">
+<div class="join-section py-5">
     <div class="container text-center">
         <h3 class="fw-bold mb-3 text-success">Be a part of the SurePrice team</h3>
         <a href="
@@ -229,7 +231,7 @@ $altColors = ['#f9fafb', '#e8f5e9'];
             @else
                 {{ route('contracts.index') }}
             @endif
-        " class="btn btn-lg btn-success px-5 py-3 join-btn">
+        " class="btn btn-lg px-5 py-3 join-btn">
             {{ auth()->check() ? 'Go to Dashboard' : 'Sign Up / Log In' }}
         </a>
         <p class="mt-3 text-muted">Join us to access personalized quotations and more features for your projects.</p>

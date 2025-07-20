@@ -177,4 +177,33 @@ document.addEventListener('DOMContentLoaded', function() {
         // Run on page load in case it's already checked
         autofillPropertyAddress();
     }
+
+    // Signature restrictions based on user role
+    function setupSignatureRestrictions() {
+        // Check if user is a client (you may need to adjust this based on your auth system)
+        const isClient = document.body.classList.contains('client-user') || 
+                        window.location.pathname.includes('/client/') ||
+                        (typeof window.currentUser !== 'undefined' && window.currentUser.role === 'client');
+        
+        if (isClient) {
+            document.body.classList.add('client-signature-only');
+            
+            // Disable contractor signature pad
+            const contractorPad = document.getElementById('contractor-signature-pad');
+            if (contractorPad) {
+                contractorPad.style.pointerEvents = 'none';
+                contractorPad.style.opacity = '0.6';
+            }
+            
+            // Disable contractor clear button
+            const contractorClearBtn = document.querySelector('button[onclick="clearSignature(\'contractor\')"]');
+            if (contractorClearBtn) {
+                contractorClearBtn.disabled = true;
+                contractorClearBtn.style.opacity = '0.6';
+            }
+        }
+    }
+
+    // Initialize signature restrictions
+    setupSignatureRestrictions();
 }); 

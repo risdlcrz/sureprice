@@ -1,6 +1,6 @@
 body {
     background: #f4f7f6;
-    font-family: 'Poppins', Arial, sans-serif;
+    font-family: 'Inter', 'Poppins', Arial, sans-serif;
 }
 
 .landing-navbar {
@@ -24,24 +24,60 @@ body {
     z-index: 10;
     max-width: 800px;
     width: 90%;
+    background: rgba(27, 94, 32, 0.9);
+    padding: 3rem;
+    border-radius: 1rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .carousel-caption-custom h1 {
     font-size: 3.5rem;
     font-weight: 700;
     margin-bottom: 1rem;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
 .carousel-caption-custom p {
     font-size: 1.25rem;
     margin-bottom: 2rem;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    line-height: 1.6;
+}
+
+/* Welcome Section */
+.display-4 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #fff !important;
+}
+
+.lead {
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: #fff !important;
+}
+
+/* Welcome Section - Dark Green Background */
+.welcome-section {
+    background: #1b5e20;
+    color: #fff;
+    padding: 4rem 0;
+    margin: 0;
+    width: 100%;
+}
+
+.welcome-section h1 {
+    color: #fff !important;
+}
+
+.welcome-section p {
+    color: #fff !important;
 }
 
 /* Catalogue Section Styles */
 .catalogue-bg {
-    background: #f8f9fa;
+    background: #e8f5e9;
     padding: 4rem 0;
 }
 
@@ -76,12 +112,14 @@ body {
 .category-content h2 {
     font-size: 1.75rem;
     margin-bottom: 1rem;
+    color: #1b5e20;
 }
 
 .category-content p {
     font-size: 1.1rem;
     line-height: 1.6;
     margin-bottom: 1.5rem;
+    color: #495057;
 }
 
 .ask-quote-btn {
@@ -89,22 +127,14 @@ body {
     padding: 0.75rem 2rem;
     font-weight: 600;
     transition: all 0.3s ease;
+    background: #1b5e20;
+    border: none;
 }
 
 .ask-quote-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(25, 135, 84, 0.3);
-}
-
-/* Welcome Section */
-.display-4 {
-    font-size: 3rem;
-    font-weight: 700;
-}
-
-.lead {
-    font-size: 1.25rem;
-    font-weight: 400;
+    background: #0d4a14;
 }
 
 /* Responsive Design */
@@ -127,6 +157,11 @@ body {
     
     .category-img {
         height: 200px;
+    }
+    
+    .carousel-caption-custom {
+        padding: 2rem;
+        width: 95%;
     }
 }
 
@@ -190,4 +225,26 @@ body {
 .service-item input[type="checkbox"]:checked + label {
     color: #1b5e20;
     font-weight: 600;
+}
+
+/* Join Section */
+.join-section {
+    background: #f8f9fa;
+}
+
+.join-btn {
+    background: #1b5e20;
+    color: #fff;
+    border: none;
+    border-radius: 2rem;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.join-btn:hover {
+    background: #0d4a14;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(25, 135, 84, 0.3);
 } 

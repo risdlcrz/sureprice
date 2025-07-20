@@ -26,19 +26,19 @@
 <div class="nav-buttons">
     @if(auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client')
         <a href="{{ url('/') }}" class="btn" style="display: flex; align-items: center; gap: 8px;">
-            <img src="{{ asset('images/sureprice_logo.png') }}" alt="Home" style="height: 24px; width: 24px;"> <span>Home</span>
+            <i class="fas fa-building"></i> <span>Home</span>
         </a>
         <a href="{{ route('client.dashboard') }}" class="btn">
-            <i class="fas fa-home"></i>Dashboard
+            <i class="fas fa-tachometer-alt"></i>Dashboard
         </a>
         <a href="{{ route('client.project.procurement') }}" class="btn">
             <i class="fas fa-tasks"></i>Project & Procurement
         </a>
-        <a href="{{ route('client.payments') }}" class="btn">
-            <i class="fas fa-money-check-alt"></i>Payments
-        </a>
         <a href="{{ route('client.quotation.index') }}" class="btn">
-            <i class="fas fa-file-alt"></i>View Quotation
+            <i class="fas fa-file-alt"></i>My Quotations
+        </a>
+        <a href="{{ route('client.payments') }}" class="btn">
+            <i class="fas fa-money-check-alt"></i>My Payments
         </a>
         <a href="{{ route('messages.index') }}" class="btn position-relative">
             <i class="fas fa-comments position-relative">

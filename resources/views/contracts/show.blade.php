@@ -41,7 +41,7 @@
             </form>
             <a href="{{ route('contracts.pdf', $contract) }}" 
                class="btn btn-success">
-                <i class="fas fa-download"></i> Download PDF
+                <i class="fas fa-download"></i> Download/Print
             </a>
             <a href="{{ route('contracts.index') }}" 
                class="btn btn-secondary">

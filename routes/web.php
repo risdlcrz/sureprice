@@ -94,6 +94,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/{contract}', [ContractController::class, 'update'])->name('update');
         Route::get('/{contract}', [ContractController::class, 'show'])->name('show');
         Route::get('/{contract}/download', [ContractController::class, 'download'])->name('download');
+        Route::get('/{contract}/pdf', [ContractController::class, 'download'])->name('pdf');
         Route::patch('/{contract}/status', [ContractController::class, 'updateStatus'])->name('updateStatus');
         Route::post('/{contract}/status', [ContractController::class, 'updateStatus']);
         Route::post('/{contract}/signatures', [ContractController::class, 'updateSignatures'])->name('updateSignatures');

@@ -1,7 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container contract-template" id="contract-editor-root">
+@php
+    $isClient = auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client';
+@endphp
+<div class="container contract-template {{ $isClient ? 'client-user' : '' }}" id="contract-editor-root">
     <form id="contractEditorForm" method="POST" action="{{ isset($contract) ? route('contracts.update', $contract->id) : route('contracts.store') }}">
         @csrf
         @if(isset($contract))
@@ -135,12 +138,12 @@
                 <strong>ADDITIONAL TERMS</strong>
                 <p class="mt-2"><span class="contract-blank" id="additional_terms_display">All changes to the scope of work must be agreed upon in writing. The contractor will comply with all applicable laws and regulations.</span></p>
             </div>
-            <div class="section mb-3">
+            <div class="section mb-3 signature-section">
                 <strong>SIGNATURES</strong>
                 <div class="row mt-4">
-                    <div class="col-md-6 text-center">
+                    <div class="col-md-6 text-center contractor-signature-section">
                         <p><b>Contractor Signature:</b></p>
-                        <canvas id="contractor-signature-pad" width="300" height="100" style="border:1px solid #000;"></canvas>
+                        <canvas id="contractor-signature-pad" width="300" height="100" class="signature-pad"></canvas>
                         <input type="hidden" name="contractor_signature" id="contractor_signature">
                         <input type="hidden" name="contractor_date_signed" id="contractor_date_signed">
                         <div class="mt-2">
@@ -149,9 +152,9 @@
                         <p class="mt-2"><b>Name:</b> <span class="contract-blank" id="contractor_name_signed_display"></span></p>
                         <p><b>Date:</b> <span class="contract-blank" id="contractor_date_signed_display"></span></p>
                     </div>
-                    <div class="col-md-6 text-center">
+                    <div class="col-md-6 text-center client-signature-section">
                         <p><b>Client Signature:</b></p>
-                        <canvas id="client-signature-pad" width="300" height="100" style="border:1px solid #000;"></canvas>
+                        <canvas id="client-signature-pad" width="300" height="100" class="signature-pad"></canvas>
                         <input type="hidden" name="client_signature" id="client_signature">
                         <input type="hidden" name="client_date_signed" id="client_date_signed">
                         <div class="mt-2">
