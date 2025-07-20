@@ -3,6 +3,66 @@
 @section('content')
 <div class="container-fluid py-4">
     <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Project & Procurement Dashboard</h1>
+    
+    <!-- Project Management Section -->
+    <section class="mb-5">
+        <h2 class="mb-4 fw-semibold text-success">Project Management</h2>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            <!-- Create Contract Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 hover-shadow">
+                    <img src="{{ asset('images/ppimage1.jpg') }}" class="card-img-top rounded-top-4" alt="Create Contract" style="object-fit:cover; height:180px;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <div class="card-body">
+                        <h5 class="card-title fw-semibold">Create Contract</h5>
+                        <p class="card-text text-muted">Start a new contract and set up initial terms and conditions.</p>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <a href="{{ route('contracts.create') }}" class="btn btn-primary w-100">Create New Contract</a>
+                    </div>
+                </div>
+            </div>
+            <!-- View Contracts Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 hover-shadow">
+                    <img src="{{ asset('images/ppimage2.jpg') }}" class="card-img-top rounded-top-4" alt="View Contracts" style="object-fit:cover; height:180px;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <div class="card-body">
+                        <h5 class="card-title fw-semibold">View Contracts</h5>
+                        <p class="card-text text-muted">Access and manage existing contracts, track status and approvals.</p>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <a href="{{ route('contracts.index') }}" class="btn btn-secondary w-100">View All Contracts</a>
+                    </div>
+                </div>
+            </div>
+            <!-- View Projects Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 hover-shadow">
+                    <img src="{{ asset('images/projectdash1.jpg') }}" class="card-img-top rounded-top-4" alt="View Projects" style="object-fit:cover; height:180px;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <div class="card-body">
+                        <h5 class="card-title fw-semibold">View Projects</h5>
+                        <p class="card-text text-muted">Browse and manage all projects created from contracts (Step 2).</p>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <a href="{{ route('projects.index') }}" class="btn btn-success w-100">View All Projects</a>
+                    </div>
+                </div>
+            </div>
+            <!-- Project Timeline Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 hover-shadow">
+                    <img src="{{ asset('images/ppimage3.jpg') }}" class="card-img-top rounded-top-4" alt="Project Timeline" style="object-fit:cover; height:180px;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <div class="card-body">
+                        <h5 class="card-title fw-semibold">Project Timeline</h5>
+                        <p class="card-text text-muted">Visualize project schedules, milestones, and deadlines.</p>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <a href="{{ route('project-timeline.index') }}" class="btn btn-outline-success w-100">View Timeline</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Procurement Management Section -->
     <section class="mb-5">
         <h2 class="mb-4 fw-semibold text-success">Procurement Management</h2>
@@ -206,9 +266,118 @@
         box-shadow: 0 8px 32px 0 rgba(56, 142, 60, 0.15) !important;
         transform: translateY(-4px) scale(1.02);
         transition: box-shadow 0.2s, transform 0.2s;
-        }
-        .card-img-top {
+    }
+    .card-img-top {
         border-radius: 1.5rem 1.5rem 0 0;
+    }
+    
+    /* Fix card layout issues */
+    .card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 400px;
+    }
+    
+    .card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 1.25rem;
+    }
+    
+    .card-title {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        line-height: 1.2;
+        margin-bottom: 0.75rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .card-text {
+        flex: 1;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.4;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    
+    .card-footer {
+        margin-top: auto;
+        padding: 1rem;
+        background: transparent;
+        border-top: 1px solid rgba(0,0,0,.125);
+    }
+    
+    /* Improve button layout in card footers */
+    .card-footer .d-flex {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .card-footer .btn {
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+    }
+    
+    /* Responsive improvements */
+    @media (max-width: 768px) {
+        .row-cols-md-3 > * {
+            flex: 0 0 100%;
+            max-width: 100%;
         }
+        
+        .card-footer .d-flex {
+            flex-direction: column;
+        }
+        
+        .card-footer .btn {
+            width: 100%;
+            margin-bottom: 0.25rem;
+        }
+        
+        .card {
+            min-height: 350px;
+        }
+    }
+    
+    /* Ensure proper spacing */
+    .row-cols-1.row-cols-md-3.g-4 > .col {
+        margin-bottom: 1.5rem;
+    }
+    
+    /* Fix image aspect ratio */
+    .card-img-top {
+        height: 180px !important;
+        object-fit: cover;
+        object-position: center;
+    }
+    
+    /* Section spacing */
+    section {
+        margin-bottom: 3rem;
+    }
+    
+    /* Improve overall container spacing */
+    .container-fluid {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+    
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+    }
     </style>
 @endsection 

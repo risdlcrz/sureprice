@@ -100,7 +100,7 @@
                 </span>
                 <span class="ms-2">Notification Center</span>
             </a>
-            <a href="{{ route('admin.project') }}" class="btn">
+            <a href="{{ route('procurement.projects.index') }}" class="btn">
                 <i class="fas fa-tasks"></i>Project & Procurement
             </a>
             <a href="{{ route('inventory.index') }}" class="btn">
