@@ -64,8 +64,6 @@ export default defineConfig({
                 'resources/css/procurement/suppliers-rankings.css',
                 'resources/js/procurement/suppliers-rankings.js',
                 'resources/css/client/quotation/create.css',
-                'resources/css/landing/catalogue.css',
-                'resources/js/landing/catalogue.js',
                 'resources/css/messages/show.css',
                 //'resources/js/messages/show.js',
                 'resources/css/procurement/analytics/price-analysis.css',

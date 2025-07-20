@@ -30,8 +30,6 @@
         'resources/css/messages.css',
         'resources/js/app.js',
     ])
-    <!-- Direct link to dbadmin.css for admin dashboard -->
-    <link rel="stylesheet" href="{{ asset('resources/css/dbadmin.css') }}">
     <!-- Additional Styles -->
     @stack('styles')
 
@@ -39,20 +37,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     @vite(['resources/css/app-layout.css'])
     <link rel="icon" type="image/png" href="{{ asset('images/sureprice.png') }}" />
-    <link rel="stylesheet" href="{{ asset('resources/css/app.css') }}">
-    <link rel="stylesheet" href="{{ asset('resources/css/header.css') }}">
-    <link rel="stylesheet" href="{{ asset('resources/css/inventory.css') }}">
-    <link rel="stylesheet" href="{{ asset('resources/css/infoman.css') }}">
-    <link rel="stylesheet" href="{{ asset('resources/css/dbadmin.css') }}">
-    <link rel="stylesheet" href="{{ asset('resources/css/supprankings.css') }}">
-    <link rel="stylesheet" href="{{ asset('resources/css/signup.css') }}">
-    <link rel="stylesheet" href="{{ asset('resources/css/projectreq.css') }}">
-    <link rel="stylesheet" href="{{ asset('resources/css/projectapp.css') }}">
-    <link rel="stylesheet" href="{{ asset('resources/css/price.css') }}">
-    <link rel="stylesheet" href="{{ asset('resources/css/messages.css') }}">
-    <link rel="stylesheet" href="{{ asset('resources/css/login.css') }}">
-    <link rel="stylesheet" href="{{ asset('resources/css/forgot.css') }}">
-    <link rel="stylesheet" href="{{ asset('resources/css/budget.css') }}">
 </head>
 <body>
     @if(View::hasSection('is_landing'))
