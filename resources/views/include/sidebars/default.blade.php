@@ -96,7 +96,9 @@
             <a href="{{ route('manager.notification') }}" class="btn position-relative d-flex align-items-center">
                 <span class="icon-badge-wrapper position-relative" style="display: inline-block; width: 28px;">
                     <i class="fas fa-bell"></i>
-                    <span class="notification-badge position-absolute badge rounded-pill bg-danger" style="font-size:0.8em; top: -6px; right: -6px; display: none;">0</span>
+                    @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
+                        <span class="notification-badge position-absolute badge rounded-pill bg-danger" style="font-size:0.8em; top: -6px; right: -6px;">{{ $globalUnreadCount }}</span>
+                    @endif
                 </span>
                 <span class="ms-2">Notification Center</span>
             </a>

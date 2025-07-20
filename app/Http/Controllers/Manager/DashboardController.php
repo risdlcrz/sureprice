@@ -23,7 +23,8 @@ class DashboardController extends Controller
         $unreadCount = \App\Models\Notification::where('user_id', $user->id)
             ->whereNull('read_at')
             ->count();
-        return view('manager.notification-center', compact('notifications', 'unreadCount'));
+        $globalUnreadCount = $unreadCount;
+        return view('manager.notification-center', compact('notifications', 'unreadCount', 'globalUnreadCount'));
     }
 
     public function quotationsPage()

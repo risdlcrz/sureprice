@@ -171,7 +171,18 @@
                                         <td>
                                             @if(!empty($badges))
                                                 @foreach($badges as $badge)
-                                                    <span class="badge @if($badge=='Cheapest') badge-cheapest @elseif($badge=='Best Delivery') badge-delivery @elseif($badge=='Least Defects') badge-defects @elseif($badge=='Overall Best') badge-overall @endif" data-bs-toggle="tooltip" data-bs-title="{{ $badge }}">{{ $badge }}</span>
+                                                    <span
+                                                        class="badge
+                                                            @if($badge=='Cheapest') badge-cheapest
+                                                            @elseif($badge=='Best Delivery') badge-delivery
+                                                            @elseif($badge=='Least Defects') badge-defects
+                                                            @elseif($badge=='Overall Best') badge-overall
+                                                            @endif"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-title="{{ $badge }}"
+                                                    >
+                                                        {{ $badge }}
+                                                    </span>
                                                 @endforeach
                                             @else
                                                 <span class="text-muted">-</span>
