@@ -1,0 +1,18 @@
+.card {
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.list-group-item {
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    background: #f8f9fa;
+    transition: background 0.2s;
+}
+.list-group-item-action:hover {
+    background: #e9ecef;
+}
+.badge.bg-primary {
+    font-size: 0.95em;
+    padding: 0.4em 0.8em;
+    border-radius: 0.5em;
+} 

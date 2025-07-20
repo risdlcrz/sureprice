@@ -1,0 +1,25 @@
+.card {
+    border-radius: 1.5rem;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.card:hover {
+    box-shadow: 0 8px 32px 0 rgba(56, 142, 60, 0.15);
+    transform: translateY(-4px) scale(1.02);
+}
+.card-img-top {
+    border-radius: 1.5rem 1.5rem 0 0;
+    height: 150px;
+    object-fit: contain;
+}
+.text-center {
+    text-align: center !important;
+}
+.mb-4 {
+    margin-bottom: 1.5rem !important;
+}
+.g-4 {
+    gap: 1.5rem !important;
+} 

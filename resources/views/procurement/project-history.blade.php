@@ -8,7 +8,7 @@
         <!-- Card 1: Past Transactions -->
         <div class="col">
             <div class="card h-100 shadow-sm" onclick="window.location.href = '{{ route('procurement.analytics.transactions') }}';" style="cursor:pointer;">
-                <img src="{{ asset('images/historydash1.svg') }}" class="card-img-top" alt="Past Transactions" style="height: 150px; object-fit: contain;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                <img src="{{ asset('images/historydash1.svg') }}" class="card-img-top" alt="Past Transactions" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                 <div class="card-body">
                     <h5 class="card-title">Past Transactions</h5>
                 </div>
@@ -18,7 +18,7 @@
         <!-- Card 2: Supplier Performance Records -->
         <div class="col">
             <div class="card h-100 shadow-sm" onclick="window.location.href = '{{ route('procurement.suppliers.rankings', ['from' => 'history']) }}';" style="cursor:pointer;">
-                <img src="{{ asset('images/historydash2.svg') }}" class="card-img-top" alt="Supplier Performance Records" style="height: 150px; object-fit: contain;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                <img src="{{ asset('images/historydash2.svg') }}" class="card-img-top" alt="Supplier Performance Records" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                 <div class="card-body">
                     <h5 class="card-title">Supplier Performance Records</h5>
                 </div>
@@ -28,7 +28,7 @@
         <!-- Card 3: Procurement Logs -->
         <div class="col">
             <div class="card h-100 shadow-sm" onclick="window.location.href = '{{ route('procurement.logs') }}';" style="cursor:pointer;">
-                <img src="{{ asset('images/historydash3.svg') }}" class="card-img-top" alt="Procurement Logs" style="height: 150px; object-fit: contain;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                <img src="{{ asset('images/historydash3.svg') }}" class="card-img-top" alt="Procurement Logs" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                 <div class="card-body">
                     <h5 class="card-title">Procurement Logs</h5>
                 </div>
@@ -36,4 +36,7 @@
         </div>
     </div>
 </div>
+@push('styles')
+    @vite(['resources/css/procurement/project-history.css'])
+@endpush
 @endsection 

@@ -55,10 +55,10 @@
                                 </span>
                             </td>
                             <td>
-                                <div class="progress" style="height: 20px;">
+                                <div class="progress">
                                     <div class="progress-bar {{ $task->progress >= 100 ? 'bg-success' : 'bg-primary' }}" 
                                          role="progressbar" 
-                                         @style(['width' => $task->progress.'%'])
+                                         style="width: {{ $task->progress }}%"
                                          aria-valuenow="{{ $task->progress }}" 
                                          aria-valuemin="0" 
                                          aria-valuemax="100">
@@ -84,3 +84,7 @@
     </div>
 </div>
 @endsection 
+
+@push('styles')
+    @vite(['resources/css/procurement/projects/tasks.css'])
+@endpush 

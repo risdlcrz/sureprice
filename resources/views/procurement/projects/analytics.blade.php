@@ -45,11 +45,10 @@
                             <div class="border rounded p-3">
                                 <h6 class="text-muted">Budget Utilization</h6>
                                 <h3>{{ number_format($budgetUtilization, 1) }}%</h3>
-                                <div class="progress mt-2" style="height: 10px;">
-                                    <div class="progress-bar {{ $budgetUtilization > 90 ? 'bg-danger' : 
-                                        ($budgetUtilization > 70 ? 'bg-warning' : 'bg-success') }}" 
+                                <div class="progress mt-2">
+                                    <div class="progress-bar {{ $budgetUtilization > 90 ? 'bg-danger' : ($budgetUtilization > 70 ? 'bg-warning' : 'bg-success') }}" 
                                          role="progressbar" 
-                                         @style(['width' => $budgetUtilization.'%'])></div>
+                                         style="width: {{ $budgetUtilization }}%"></div>
                                 </div>
                             </div>
                         </div>
@@ -88,10 +87,10 @@
                             <div class="border rounded p-3">
                                 <h6 class="text-muted">Task Completion</h6>
                                 <h3>{{ number_format($taskCompletion, 1) }}%</h3>
-                                <div class="progress mt-2" style="height: 10px;">
+                                <div class="progress mt-2">
                                     <div class="progress-bar {{ $taskCompletion >= 100 ? 'bg-success' : 'bg-primary' }}" 
                                          role="progressbar" 
-                                         @style(['width' => $taskCompletion.'%'])></div>
+                                         style="width: {{ $taskCompletion }}%"></div>
                                 </div>
                             </div>
                         </div>
@@ -154,3 +153,7 @@
     </div>
 </div>
 @endsection 
+
+@push('styles')
+    @vite(['resources/css/procurement/projects/analytics.css'])
+@endpush 

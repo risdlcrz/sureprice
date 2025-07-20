@@ -1,0 +1,23 @@
+#general-recommendation-form {
+    background: #fff;
+    border-radius: 0.5rem;
+    padding: 1.5rem 1rem 1rem 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    margin-bottom: 2rem;
+}
+#general-recommendation-form label {
+    font-weight: 500;
+}
+#general-recommendation-form .form-control, #general-recommendation-form .form-select {
+    border-radius: 0.375rem;
+}
+#general-recommendation-tables table {
+    margin-top: 1.5rem;
+    background: #fff;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+#general-recommendation-tables th, #general-recommendation-tables td {
+    vertical-align: middle;
+} 

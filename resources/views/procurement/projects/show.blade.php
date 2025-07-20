@@ -57,12 +57,10 @@
                     </div>
                     <div class="mb-3">
                         <label class="fw-bold">Progress</label>
-                        <div class="progress" style="height: 20px;">
+                        <div class="progress">
                             <div class="progress-bar {{ $project->progress >= 100 ? 'bg-success' : 'bg-primary' }}" 
                                 role="progressbar" 
-                                @style([
-                                    'width' => $project->progress . '%'
-                                ])
+                                style="width: {{ $project->progress }}%"
                                 aria-valuenow="{{ $project->progress }}" 
                                 aria-valuemin="0" 
                                 aria-valuemax="100">
@@ -158,12 +156,10 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <div class="progress" style="height: 20px;">
+                                        <div class="progress">
                                             <div class="progress-bar {{ $task->progress >= 100 ? 'bg-success' : 'bg-primary' }}" 
                                                 role="progressbar" 
-                                                @style([
-                                                    'width' => $task->progress . '%'
-                                                ])
+                                                style="width: {{ $task->progress }}%"
                                                 aria-valuenow="{{ $task->progress }}" 
                                                 aria-valuemin="0" 
                                                 aria-valuemax="100">
@@ -186,3 +182,7 @@
     </div>
 </div>
 @endsection 
+
+@push('styles')
+    @vite(['resources/css/procurement/projects/show.css'])
+@endpush 

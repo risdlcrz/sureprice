@@ -1,0 +1,24 @@
+.card {
+    border-radius: 1.5rem;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.progress {
+    height: 20px;
+    background: #e9ecef;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+.progress-bar {
+    font-weight: 500;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    transition: width 0.4s;
+}
+.table {
+    border-radius: 1rem;
+    overflow: hidden;
+} 

@@ -42,4 +42,8 @@
         </div>
     </div>
 </div>
-@endsection 
+@endsection
+
+@push('styles')
+    @vite(['resources/css/procurement/logs.css'])
+@endpush 

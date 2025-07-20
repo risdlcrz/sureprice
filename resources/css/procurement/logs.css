@@ -1,0 +1,16 @@
+.card {
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.table {
+    background: #fff;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+.table thead th {
+    background: #f8f9fa;
+    font-weight: 600;
+}
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: #f6f6f6;
+} 

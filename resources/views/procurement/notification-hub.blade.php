@@ -36,4 +36,8 @@
         </div>
     </div>
 </div>
-@endsection 
+@endsection
+
+@push('styles')
+    @vite(['resources/css/procurement/notification-hub.css'])
+@endpush 
