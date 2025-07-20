@@ -38,101 +38,10 @@
 </div>
 @endsection
 
-@push('scripts')
-<script>
-    document.getElementById('general-recommendation-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const form = e.target;
-        const params = new URLSearchParams(new FormData(form)).toString();
-        const url = window.location.pathname + '?' + params;
-        fetch(url, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('general-recommendation-tables').innerHTML = data.html;
-        });
-    });
-</script>
+@push('styles')
+    @vite(['resources/css/admin/suppliers/general-recommendation.css'])
 @endpush
 
-@push('styles')
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-body, .container {
-    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
-    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-}
-h1, .h3 {
-    font-family: 'Inter', Arial, sans-serif;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    color: #198754;
-    font-size: 2.2rem;
-    margin-bottom: 2rem;
-}
-.card, .main-box, .recommendation-box {
-    border: none;
-    border-radius: 1.25rem;
-    box-shadow: 0 8px 32px 0 rgba(44,62,80,0.10), 0 1.5px 6px rgba(44,62,80,0.04);
-    margin-bottom: 1.5rem;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(8px);
-    transition: box-shadow 0.2s, background 0.2s;
-    padding: 2rem 2.2rem;
-}
-.card:hover, .main-box:hover, .recommendation-box:hover {
-    box-shadow: 0 16px 48px 0 rgba(44,62,80,0.16), 0 2px 8px rgba(44,62,80,0.08);
-    background: rgba(255,255,255,0.97);
-}
-.form-label {
-    font-weight: 600;
-    color: #198754;
-}
-.form-select, .form-control {
-    padding: 0.7rem 1.2rem;
-    border-radius: 1.1rem;
-    border: 1.5px solid #ced4da;
-    font-size: 1.08em;
-    background: #f8fafc;
-    transition: border 0.2s, box-shadow 0.2s;
-}
-.form-select:focus, .form-control:focus {
-    border-color: #198754;
-    box-shadow: 0 0 0 0.2rem #19875422;
-}
-.btn-primary, .btn-gradient-blue {
-    background: linear-gradient(90deg, #2196f3 0%, #21cbf3 100%) !important;
-    color: #fff !important;
-    border: none;
-    font-weight: 600;
-    border-radius: 2rem;
-    padding: 0.7em 1.5em;
-    font-size: 1.08em;
-    letter-spacing: 0.01em;
-    box-shadow: 0 2px 8px #2196f322;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-}
-.btn-primary:hover, .btn-gradient-blue:hover {
-    background: linear-gradient(90deg, #21cbf3 0%, #2196f3 100%) !important;
-    color: #fff;
-    box-shadow: 0 4px 16px #2196f344;
-}
-.table th {
-    font-weight: 600;
-    color: #495057;
-    background: #f8fafc;
-    border-top: none;
-}
-.table-hover tbody tr:hover {
-    background: #f4faff;
-    transition: background 0.2s;
-}
-.table td, .table th {
-    vertical-align: middle;
-}
-</style>
+@push('scripts')
+    @vite(['resources/js/admin/suppliers/general-recommendation.js'])
 @endpush 

@@ -1,0 +1,170 @@
+body {
+    font-family: 'Inter', Arial, sans-serif;
+    background: #f7f9fb;
+    color: #222;
+}
+.app-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: row;
+}
+.left-header {
+    background: #1b5e20;
+    min-width: 220px;
+    max-width: 260px;
+    padding: 2rem 1rem 2rem 1rem;
+    border-radius: 0 2rem 2rem 0;
+    box-shadow: 2px 0 16px 0 rgba(0,0,0,0.04);
+}
+.left-header .nav-link, .left-header button, .left-header a {
+    color: #fff;
+    font-size: 1.1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem 1rem;
+    transition: background 0.2s;
+}
+.left-header .nav-link.active, .left-header .nav-link:hover, .left-header button:hover, .left-header a:hover {
+    background: #388e3c;
+    color: #fff;
+}
+.content {
+    flex: 1;
+    padding: 2.5rem 2rem 2rem 2rem;
+    background: #f7f9fb;
+    border-radius: 2rem 0 0 2rem;
+    min-height: 100vh;
+}
+.navbar, .mobile-topbar {
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px 0 rgba(0,0,0,0.03);
+    border-radius: 0 0 1rem 1rem;
+    padding: 1rem 2rem;
+    margin-bottom: 2rem;
+}
+.navbar .logo, .mobile-topbar .logo {
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #1b5e20;
+}
+.btn, .btn-primary, .btn-secondary {
+    border-radius: 2rem !important;
+    font-weight: 500;
+    font-size: 1rem;
+    padding: 0.5rem 1.5rem;
+}
+.card, .modal-content {
+    border-radius: 1.5rem;
+    box-shadow: 0 2px 16px 0 rgba(0,0,0,0.06);
+    border: none;
+}
+.modal-header, .modal-footer {
+    border: none;
+    background: #f7f9fb;
+    border-radius: 1.5rem 1.5rem 0 0;
+}
+.form-label {
+    font-weight: 500;
+    color: #1b5e20;
+}
+.form-control, .form-select {
+    border-radius: 0.75rem;
+    border: 1px solid #cfd8dc;
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+}
+.alert {
+    border-radius: 1rem;
+    font-size: 1rem;
+}
+@media (max-width: 900px) {
+    .app-container { flex-direction: column; }
+    .left-header { max-width: 100vw; min-width: 0; border-radius: 0; }
+    .content { border-radius: 0; padding: 1rem; }
+}
+.sidebar-collapsed .left-header {
+    min-width: 60px !important;
+    max-width: 60px !important;
+    padding: 2rem 0.5rem 2rem 0.5rem;
+    transition: all 0.2s;
+}
+.sidebar-collapsed .left-header .header-title,
+.sidebar-collapsed .left-header .profile-container,
+.sidebar-collapsed .left-header .nav-buttons,
+.sidebar-collapsed .left-header .sidebar-bottom {
+    display: none !important;
+}
+.sidebar-collapsed .left-header .header-logo {
+    margin: 0 auto;
+    display: block;
+}
+.sidebar-collapsed .content {
+    padding-left: 1rem !important;
+}
+.sidebar-toggle-btn {
+    position: absolute;
+    top: 1rem;
+    right: -1.5rem;
+    z-index: 10;
+    background: #fff;
+    border-radius: 50%;
+    border: 1px solid #e0e0e0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: right 0.2s;
+}
+@media (max-width: 900px) {
+    .sidebar-toggle-btn { display: none; }
+}
+.landing-navbar {
+    background: #1b5e20 !important;
+    color: #fff !important;
+    border-radius: 0;
+    box-shadow: 0 4px 24px 0 rgba(27, 94, 32, 0.10);
+    margin-bottom: 0;
+}
+.landing-navbar .navbar-brand,
+.landing-navbar .navbar-brand:visited {
+    color: #fff !important;
+}
+.landing-navbar .btn-outline-light {
+    border-color: #fff;
+    color: #fff;
+}
+.landing-navbar .btn-outline-light:hover,
+.landing-navbar .btn-outline-light:focus {
+    background: #fff;
+    color: #1b5e20;
+}
+.landing-navbar .btn-light {
+    background: #fff;
+    color: #1b5e20;
+    border: none;
+}
+.landing-navbar .btn-light:hover,
+.landing-navbar .btn-light:focus {
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+/* Notification badge styles */
+.position-relative .badge {
+    position: absolute !important;
+    top: 0 !important;
+    right: 0 !important;
+    transform: translate(50%, -50%) !important;
+    font-size: 0.75em !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 9px !important;
+    z-index: 10 !important;
+} 

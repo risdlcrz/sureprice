@@ -1,0 +1,53 @@
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.table th {
+    background-color: #f8f9fa;
+}
+
+.badge {
+    font-size: 0.875rem;
+    padding: 0.5em 1em;
+}
+
+.workflow-steps .step {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.workflow-steps .step.completed {
+    border-color: #28a745;
+    background-color: #f8fff8;
+}
+
+.workflow-steps .step.pending {
+    border-color: #ffc107;
+    background-color: #fffff8;
+}
+
+.stock-results {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.approval-status, 
+.payment-status {
+    margin: 10px 0;
+}
+
+.btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+} 

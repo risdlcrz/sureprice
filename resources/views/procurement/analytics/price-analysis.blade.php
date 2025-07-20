@@ -54,87 +54,9 @@
 @endsection
 
 @push('styles')
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+    @vite(['resources/css/procurement/analytics/price-analysis.css'])
 @endpush
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        $('#material_ids').select2({
-            theme: 'bootstrap-5',
-            placeholder: 'Select materials to view their price trends',
-            allowClear: true
-        });
-
-        const ctx = document.getElementById('priceTrendChart');
-        if (ctx) {
-            const priceData = JSON.parse('@json($priceData)');
-
-            const datasets = priceData.map((material, index) => {
-                const color = `hsl(${(index * 137.508) % 360}, 50%, 50%)`;
-                return {
-                    label: material.label,
-                    data: material.data,
-                    borderColor: color,
-                    backgroundColor: color + '33', // Add some transparency
-                    tension: 0.1
-                };
-            });
-
-            new Chart(ctx.getContext('2d'), {
-                type: 'line',
-                data: {
-                    datasets: datasets
-                },
-                options: {
-                    scales: {
-                        x: {
-                            type: 'time',
-                            time: {
-                                unit: 'day'
-                            },
-                            title: {
-                                display: true,
-                                text: 'Date'
-                            }
-                        },
-                        y: {
-                            beginAtZero: false,
-                            title: {
-                                display: true,
-                                text: 'Unit Price'
-                            },
-                            ticks: {
-                                callback: function(value, index, values) {
-                                    return '₱' + value.toLocaleString();
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.dataset.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    if (context.parsed.y !== null) {
-                                        label += '₱' + context.parsed.y.toLocaleString();
-                                    }
-                                    return label;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    });
-</script>
+    @vite(['resources/js/procurement/analytics/price-analysis.js'])
 @endpush
