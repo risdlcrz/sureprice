@@ -35,5 +35,9 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-    publicDir: 'public',
+    base: '/build/',
+    build: {
+        outDir: 'public/build', // Explicit output path
+        emptyOutDir: true, 
+        },    // Clears the directory on rebuild
 });
