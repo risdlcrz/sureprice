@@ -76,15 +76,34 @@
             </div>
             <div class="section mb-3">
                 <strong>SCOPE OF WORK</strong>
+                <p class="mt-2">
+                    The Constructor agrees to perform the following work as per the purchase order:
+                </p>
+                <!-- Moved Selected Scopes Section here -->
                 <div class="mb-3" id="selected-scopes-section">
                     <label class="form-label fw-bold" style="font-size:1.1rem;">Selected Scope(s) of Work</label>
                     <div id="selected-scopes" class="selected-scopes-list">
                         <span class="text-muted">No scope selected yet.</span>
                     </div>
                 </div>
-                <p class="mt-2">
-                    The Constructor agrees to perform the following work as per the purchase order:
-                </p>
+                <!-- Tabular summary of scope, room, supplier -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold" style="font-size:1.1rem;">Scope Summary</label>
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="scope-summary-table">
+                            <thead>
+                                <tr>
+                                    <th>Room</th>
+                                    <th>Scope</th>
+                                    <th>Chosen Supplier</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- To be dynamically populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 <div class="row mb-2">
                     <div class="col-md-6">
                         <label class="form-label">Total Materials Cost:</label>

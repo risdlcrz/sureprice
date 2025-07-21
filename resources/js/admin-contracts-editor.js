@@ -134,6 +134,28 @@ document.addEventListener('DOMContentLoaded', function() {
                         scopesDiv.innerHTML = '<span class="text-muted">No scope selected yet.</span>';
                     }
                 }
+                // Populate Scope Summary Table
+                const summaryTableBody = document.querySelector('#scope-summary-table tbody');
+                if (summaryTableBody) {
+                    summaryTableBody.innerHTML = '';
+                    if (data.rooms && Array.isArray(data.rooms)) {
+                        data.rooms.forEach(room => {
+                            if (room.scopes && Array.isArray(room.scopes)) {
+                                room.scopes.forEach(scope => {
+                                    // If your API provides supplier info, use it here
+                                    const supplier = (scope.chosen_supplier_name || scope.supplier || 'N/A');
+                                    const tr = document.createElement('tr');
+                                    tr.innerHTML = `
+                                        <td>${room.name || ''}</td>
+                                        <td>${scope.scope_name || ''}</td>
+                                        <td>${supplier}</td>
+                                    `;
+                                    summaryTableBody.appendChild(tr);
+                                });
+                            }
+                        });
+                    }
+                }
                 // Add/change event for start date
                 // The startDateInput.onchange handler is already attached above.
             });

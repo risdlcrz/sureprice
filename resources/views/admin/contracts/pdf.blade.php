@@ -187,11 +187,74 @@
     </div>
 
     <div class="section">
+        <h2 class="section-title">Scope Summary</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Room</th>
+                    <th>Scope</th>
+                    <th>Chosen Supplier</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if($contract->rooms && $contract->rooms->count())
+                    @foreach($contract->rooms as $room)
+                        @if($room->scopeTypes && $room->scopeTypes->count())
+                            @foreach($room->scopeTypes as $scope)
+                                <tr>
+                                    <td>{{ $room->name }}</td>
+                                    <td>{{ $scope->name }}</td>
+                                    <td>
+                                        @php
+                                            $supplier = null;
+                                            foreach($scope->materials as $material) {
+                                                if($material->suppliers && $material->suppliers->count()) {
+                                                    $supplier = $material->suppliers->first();
+                                                    break;
+                                                }
+                                            }
+                                        @endphp
+                                        {{ $supplier ? $supplier->company_name : 'N/A' }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @endif
+                    @endforeach
+                @else
+                    <tr><td colspan="3">No scope summary available.</td></tr>
+                @endif
+            </tbody>
+        </table>
+    </div>
+    <div class="section">
+        <h2 class="section-title">Project Timeline</h2>
+        <div class="party-info">
+            <p><strong>Start Date:</strong> {{ $contract->start_date ? \Carbon\Carbon::parse($contract->start_date)->format('F j, Y') : 'N/A' }}</p>
+            <p><strong>End Date:</strong> {{ $contract->end_date ? \Carbon\Carbon::parse($contract->end_date)->format('F j, Y') : 'N/A' }}</p>
+            <p><strong>Estimated Days:</strong> {{ $contract->estimated_days ?? 'N/A' }}</p>
+        </div>
+    </div>
+    <div class="section">
+        <h2 class="section-title">Totals</h2>
+        <div class="party-info">
+            <p><strong>Total Materials Cost:</strong> ₱{{ number_format($contract->materials_cost, 2) }}</p>
+            <p><strong>Labor Fee:</strong> ₱{{ number_format($contract->labor_cost, 2) }}</p>
+            <p><strong>Grand Total:</strong> ₱{{ number_format($contract->total_amount, 2) }}</p>
+        </div>
+    </div>
+
+    <div class="section">
         <h2 class="section-title">Property Details</h2>
         <div class="party-info">
             <p><strong>Construction Property Address:</strong></p>
-            <p>{{ $property->street }}</p>
-            <p>{{ $property->city }}, {{ $property->state }} {{ $property->postal }}</p>
+            @php
+                $propertyAddress = trim(($property->street ?? '') . ', ' . ($property->city ?? '') . ', ' . ($property->state ?? '') . ' ' . ($property->postal ?? ''));
+                $clientAddress = trim(($client->street ?? '') . ', ' . ($client->city ?? '') . ', ' . ($client->state ?? '') . ' ' . ($client->postal ?? ''));
+            @endphp
+            <p>{{ $propertyAddress }}</p>
+            @if($propertyAddress === $clientAddress)
+                <p><em>(Same as client address)</em></p>
+            @endif
         </div>
     </div>
 
@@ -261,8 +324,7 @@
         <div class="signature-box">
             <h3>Contractor Signature</h3>
             @if($contract->contractor_signature)
-                <img src="{{ storage_path('app/public/' . str_replace('/storage/', '', $contract->contractor_signature)) }}" 
-                     alt="Contractor Signature" class="signature-image">
+                <img src="{{ asset('storage/' . ltrim($contract->contractor_signature, '/')) }}" alt="Contractor Signature" class="signature-image">
             @else
                 <div class="signature-line"></div>
             @endif
@@ -271,12 +333,10 @@
                 <p><strong>Date:</strong> {{ $contract->contractor_date_signed ? date('F j, Y', strtotime($contract->contractor_date_signed)) : '-' }}</p>
             </div>
         </div>
-
         <div class="signature-box">
             <h3>Client Signature</h3>
             @if($contract->client_signature)
-                <img src="{{ storage_path('app/public/' . str_replace('/storage/', '', $contract->client_signature)) }}" 
-                     alt="Client Signature" class="signature-image">
+                <img src="{{ asset('storage/' . ltrim($contract->client_signature, '/')) }}" alt="Client Signature" class="signature-image">
             @else
                 <div class="signature-line"></div>
             @endif
