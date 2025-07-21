@@ -399,6 +399,7 @@ Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'verified', \A
 
     Route::get('quotations', [SupplierQuotationController::class, 'index'])->name('quotations.index');
     Route::get('quotations/{quotation}', [SupplierQuotationController::class, 'show'])->name('quotations.show');
+    Route::get('quotations/{quotation}/respond', [SupplierQuotationController::class, 'show'])->name('quotations.respond.form');
     Route::post('quotations/{quotation}/respond', [SupplierQuotationController::class, 'respond'])->name('quotations.respond');
     Route::post('quotations/discount-info', [SupplierQuotationController::class, 'getDiscountInfo'])->name('quotations.discount-info');
 
