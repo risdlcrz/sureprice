@@ -1,9 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<pre>
-{{ json_encode($prefillItems ?? 'NO prefillItems', JSON_PRETTY_PRINT) }}
-</pre>
+
 <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Create Purchase Request</h1>
 <div class="container-fluid">
     <div class="row">

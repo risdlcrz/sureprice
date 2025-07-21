@@ -79,50 +79,49 @@ class QuotationRequestController extends Controller
         }
         $grandTotal = $totalMaterialsCost + $laborFee;
         $totalHours = $quotation->total_hours ?? 0;
-        $totalDays = $totalHours > 0 ? ceil($totalHours / 8) : 0;
-        $startDate = $quotation->start_date ?? now()->format('Y-m-d');
-        if (!$totalDays) {
-            $crewSize = 8;
-            $hoursPerDay = 8;
-            foreach ($quotation->rooms as $room) {
-                $roomEstimatedDays = 0;
-                foreach ($room->scopes as $scope) {
-                    $scopeType = $scope->scopeType;
-                    $isWallWork = $scopeType && $scopeType->is_wall_work;
-                    $area = $isWallWork
-                        ? 2 * ($room->length + $room->width) * $room->height
-                        : $room->length * $room->width;
-                    // Fix: sum labor_hours_per_sqm from tasks if not set directly
-                    $laborHoursPerSqm = 1;
-                    if ($scopeType) {
-                        if ($scopeType->labor_hours_per_sqm) {
-                            $laborHoursPerSqm = $scopeType->labor_hours_per_sqm;
-                        } elseif ($scopeType->tasks) {
-                            $tasks = is_array($scopeType->tasks) ? $scopeType->tasks : json_decode($scopeType->tasks, true);
-                            if (is_array($tasks)) {
-                                $laborHoursPerSqm = array_sum(array_column($tasks, 'labor_hours_per_sqm'));
-                            }
-                        }
-                    }
-                    $totalLaborHours = $area * $laborHoursPerSqm;
-                    $days = $totalLaborHours / ($crewSize * $hoursPerDay);
-                    $days = ceil($days * 2) / 2;
-                    $days = max(0.5, $days);
-                    if ($scopeType && $scopeType->estimated_days) {
-                        $roomEstimatedDays += $scopeType->estimated_days;
-                    } else {
-                        $roomEstimatedDays += $days;
-                    }
-                }
-                $totalDays += $roomEstimatedDays;
+        // Dynamic duration calculation matching client UI
+        $DEFAULT_CREW_SIZE = 8;
+        $DEFAULT_HOURS_PER_DAY = 8;
+        $totalDays = 0;
+        foreach ($quotation->rooms as $room) {
+            $length = floatval($room->length ?? 1);
+            $width = floatval($room->width ?? 1);
+            $height = floatval($room->height ?? 1);
+            $floorArea = $length * $width;
+            $wallArea = 2 * ($length + $width) * $height;
+            foreach ($room->scopes as $scope) {
+                $scopeType = $scope->scopeType;
+                if (!$scopeType) continue;
+                $area = $scopeType->is_wall_work ? $wallArea : $floorArea;
+                $laborHoursPerSqm = isset($scopeType->labor_hours_per_sqm) ? floatval($scopeType->labor_hours_per_sqm) : 1;
+                $totalLaborHours = $area * $laborHoursPerSqm;
+                $days = $totalLaborHours / ($DEFAULT_CREW_SIZE * $DEFAULT_HOURS_PER_DAY);
+                $days = ceil($days * 2) / 2; // round up to nearest half day
+                $days = max(0.5, $days); // minimum 0.5 days
+                \Log::info('Scope dynamic days', [
+                    'scope_name' => $scopeType->name,
+                    'area' => $area,
+                    'labor_hours_per_sqm' => $laborHoursPerSqm,
+                    'total_labor_hours' => $totalLaborHours,
+                    'days' => $days,
+                ]);
+                $totalDays += $days;
             }
         }
-        // Always recalculate end date after totalDays is finalized
-        $endDate = \Carbon\Carbon::parse($startDate)->addDays(ceil($totalDays))->format('Y-m-d');
+        $startDate = $quotation->start_date ?? now()->format('Y-m-d');
+        $endDate = $totalDays > 0
+            ? \Carbon\Carbon::parse($startDate)->addDays(ceil($totalDays) - 1)->format('Y-m-d')
+            : $startDate;
         \Log::info('Quotation timeline calculation', [
             'quotation_id' => $quotation->id,
             'total_days' => $totalDays,
             'rooms' => $quotation->rooms ? $quotation->rooms->toArray() : null,
+        ]);
+        // Debug log for duration calculation
+        \Log::info('Contract duration debug', [
+            'start_date' => $startDate,
+            'total_days' => $totalDays,
+            'end_date' => $endDate,
         ]);
         return response()->json([
             'client' => [
@@ -144,6 +143,44 @@ class QuotationRequestController extends Controller
             'total_days' => $totalDays,
             'start_date' => $startDate,
             'end_date' => $endDate,
+            // Add selected scopes for each room
+            'rooms' => $quotation->rooms->map(function($room) {
+                return [
+                    'name' => $room->name,
+                    'scopes' => $room->scopes->map(function($scope) {
+                        return [
+                            'scope_name' => $scope->scopeType->name ?? $scope->scope_name ?? '',
+                        ];
+                    })->values(),
+                ];
+            })->values(),
         ]);
+    }
+
+    /**
+     * AJAX search for Select2 dropdown (contracts)
+     */
+    public function search(Request $request)
+    {
+        $term = $request->input('q');
+        $query = QuotationRequest::with('user');
+        if ($term) {
+            $query->where('request_number', 'like', "%$term%")
+                  ->orWhereHas('user', function($q) use ($term) {
+                      $q->where('name', 'like', "%$term%")
+                        ->orWhere('username', 'like', "%$term%")
+                        ->orWhere('email', 'like', "%$term%")
+                        ;
+                  });
+        }
+        $results = $query->orderByDesc('created_at')->limit(20)->get()->map(function($qr) {
+            return [
+                'id' => $qr->id,
+                'request_number' => $qr->request_number,
+                'client_name' => $qr->user->name ?? 'Unknown',
+                'created_at' => $qr->created_at ? $qr->created_at->format('Y-m-d') : '',
+            ];
+        });
+        return response()->json(['data' => $results]);
     }
 } 

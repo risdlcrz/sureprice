@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
         allowClear: true,
         minimumInputLength: 1,
         ajax: {
-            url: '/search/quotation-requests',
+            url: window.quotationRequestApiUrl, // use Blade-provided URL for environment-agnostic requests
             dataType: 'json',
             delay: 250,
             data: function(params) {
@@ -42,58 +42,100 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Quotation Request Autofill ---
     const qrSelect = document.getElementById('quotation_request_id');
     const saveBtn = document.getElementById('save-btn');
+    let lastTotalDays = 0; // Store the duration for recalculation
+
+    // Always attach the event handler on page load
+    const startDateInput = document.getElementById('project_start_date');
+    if (startDateInput) {
+        startDateInput.onchange = function() {
+            // If lastTotalDays is 0, show a warning and do not update end date
+            if (!lastTotalDays) {
+                alert('Please select a Quotation Request first to determine the project duration.');
+                return;
+            }
+            // Parse as local date to avoid timezone issues
+            const [yyyy, mm, dd] = this.value.split('-');
+            const start = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+            if (isNaN(start)) return;
+            const end = new Date(start);
+            end.setDate(start.getDate() + lastTotalDays - 1);
+            const yyyyEnd = end.getFullYear();
+            const mmEnd = String(end.getMonth() + 1).padStart(2, '0');
+            const ddEnd = String(end.getDate()).padStart(2, '0');
+            document.getElementById('project_end_date').value = `${yyyyEnd}-${mmEnd}-${ddEnd}`;
+            console.log('Start:', start, 'Start.getDate():', start.getDate(), 'Duration:', lastTotalDays, 'End (raw):', end, 'End:', `${yyyyEnd}-${mmEnd}-${ddEnd}`);
+            // Sync signature date with contract start date
+            const signatureDateInput = document.getElementById('contractor_signature_date');
+            if (signatureDateInput) {
+                signatureDateInput.value = this.value;
+            }
+        };
+        // Also sync on page load
+        const signatureDateInput = document.getElementById('contractor_signature_date');
+        if (signatureDateInput) {
+            signatureDateInput.value = startDateInput.value;
+        }
+    }
+
     $('#quotation_request_id').on('select2:select', function(e) {
         const qrId = e.params.data.id;
         if (!qrId) return;
-        fetch(`/api/quotation-requests/${qrId}`)
+        fetch(window.quotationRequestApiUrl.replace(/\/$/, '') + '/' + qrId)
             .then(res => res.json())
             .then(data => {
-                // Autofill contract fields
-                const startDateInput = document.getElementById('project_start_date');
-                const endDateInput = document.getElementById('project_end_date');
-                if (startDateInput && data.start_date) startDateInput.value = data.start_date;
-                if (endDateInput && data.end_date) endDateInput.value = data.end_date;
-                // Autofill contract fields (with element existence checks)
-                const clientNameDisplay = document.getElementById('client_name_display');
-                if (clientNameDisplay) clientNameDisplay.innerText = data.client?.name || '';
-                const clientAddressDisplay = document.getElementById('client_address_display');
-                if (clientAddressDisplay) clientAddressDisplay.innerText = data.client?.address || '';
-                const scopeOfWorkDisplay = document.getElementById('scope_of_work_display');
-                if (scopeOfWorkDisplay) scopeOfWorkDisplay.innerText = data.scope_of_work || '';
-                const materialsTotalDisplay = document.getElementById('materials_total_display');
-                if (materialsTotalDisplay) materialsTotalDisplay.innerText = '₱' + (data.total_materials_cost?.toFixed(2) || '0.00');
-                const laborFeeDisplay = document.getElementById('labor_fee_display');
-                if (laborFeeDisplay) laborFeeDisplay.innerText = '₱' + (data.labor_fee?.toFixed(2) || '0.00');
-                const grandTotalDisplay = document.getElementById('grand_total_display');
-                if (grandTotalDisplay) grandTotalDisplay.innerText = '₱' + (data.grand_total?.toFixed(2) || '0.00');
-                // Hidden fields for backend (with checks)
-                const clientName = document.getElementById('client_name');
-                if (clientName) clientName.value = data.client?.name || '';
-                const clientStreet = document.getElementById('client_street');
-                if (clientStreet) clientStreet.value = data.client?.street || '';
-                const clientCity = document.getElementById('client_city');
-                if (clientCity) clientCity.value = data.client?.city || '';
-                const clientState = document.getElementById('client_state');
-                if (clientState) clientState.value = data.client?.state || '';
-                const clientPostal = document.getElementById('client_postal');
-                if (clientPostal) clientPostal.value = data.client?.postal || '';
-                const clientEmail = document.getElementById('client_email');
-                if (clientEmail) clientEmail.value = data.client?.email || '';
-                const clientPhone = document.getElementById('client_phone');
-                if (clientPhone) clientPhone.value = data.client?.phone || '';
-                const scopeOfWork = document.getElementById('scope_of_work');
-                if (scopeOfWork) scopeOfWork.value = data.scope_of_work || '';
-                const materialsTotal = document.getElementById('materials_total');
-                if (materialsTotal) materialsTotal.value = data.total_materials_cost?.toFixed(2) || '0.00';
-                const laborFee = document.getElementById('labor_fee');
-                if (laborFee) laborFee.value = data.labor_fee?.toFixed(2) || '0.00';
-                const grandTotal = document.getElementById('grand_total');
-                if (grandTotal) grandTotal.value = data.grand_total?.toFixed(2) || '0.00';
-                // Autofill client signature name and date
-                const clientNameSigned = document.getElementById('client_name_signed_display');
-                if (clientNameSigned) clientNameSigned.innerText = data.client?.name || '';
-                const clientDateSigned = document.getElementById('client_date_signed_display');
-                if (clientDateSigned) clientDateSigned.innerText = (new Date()).toLocaleDateString();
+                const client = data.client || {};
+                // Debug log for duration
+                console.log('QR Start:', data.start_date, 'End:', data.end_date, 'Total Days:', data.total_days);
+                // Use only the backend's total_days for duration
+                lastTotalDays = data.total_days || 0;
+                // Display fields
+                const setText = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val || ''; };
+                const setValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+                setText('client_name_display', client.name);
+                setText('client_address_display', client.address);
+                setText('scope_of_work_display', data.scope_of_work);
+                // Update material cost and labor fee as input values
+                setValue('materials_total_display', '₱' + (data.total_materials_cost?.toFixed(2) || '0.00'));
+                setValue('labor_fee_display', '₱' + (data.labor_fee?.toFixed(2) || '0.00'));
+                setText('grand_total_display', '₱' + (data.grand_total?.toFixed(2) || '0.00'));
+                // Input fields
+                setValue('property_address', client.address);
+                setValue('client_email', client.email);
+                setValue('client_phone', client.phone);
+                setValue('project_start_date', data.start_date);
+                setValue('project_end_date', data.end_date);
+                // Sync signature date after setting start date
+                const signatureDateInput = document.getElementById('contractor_signature_date');
+                const contractStartDateInput = document.getElementById('project_start_date');
+                console.log('Signature date input(s):', document.querySelectorAll('#contractor_signature_date'));
+                if (signatureDateInput && contractStartDateInput) {
+                    // Ensure value is set in YYYY-MM-DD format
+                    signatureDateInput.value = contractStartDateInput.value;
+                    console.log('Setting signature date to:', contractStartDateInput.value);
+                }
+                // Display selected scopes
+                const scopesDiv = document.getElementById('selected-scopes');
+                if (scopesDiv) {
+                    let scopes = [];
+                    if (data.rooms && Array.isArray(data.rooms)) {
+                        data.rooms.forEach(room => {
+                            if (room.scopes && Array.isArray(room.scopes)) {
+                                room.scopes.forEach(scope => {
+                                    if (scope.scope_name) scopes.push(scope.scope_name);
+                                });
+                            }
+                        });
+                    }
+                    scopes = [...new Set(scopes)]; // unique
+                    console.log('Scopes found:', scopes);
+                    if (scopes.length > 0) {
+                        scopesDiv.innerHTML = `<ul>${scopes.map(s => `<li>${s}</li>`).join('')}</ul>`;
+                    } else {
+                        scopesDiv.innerHTML = '<span class="text-muted">No scope selected yet.</span>';
+                    }
+                }
+                // Add/change event for start date
+                // The startDateInput.onchange handler is already attached above.
             });
     });
     // --- End Quotation Request Autofill ---
@@ -137,8 +179,19 @@ document.addEventListener('DOMContentLoaded', function() {
             // Autofill contractor signature name and date
             const nameSignedSpan = document.getElementById('contractor_name_signed_display');
             if (nameSignedSpan) nameSignedSpan.innerText = fullName;
-            const contractorDateSigned = document.getElementById('contractor_date_signed_display');
-            if (contractorDateSigned) contractorDateSigned.innerText = (new Date()).toLocaleDateString();
+            // Sync signature date to contract start date
+            const contractStartDateInput = document.getElementById('project_start_date');
+            const contractorSignatureDateInput = document.getElementById('contractor_signature_date');
+            if (contractorSignatureDateInput && contractStartDateInput) {
+                contractorSignatureDateInput.value = contractStartDateInput.value;
+                console.log('Setting signature date after contractor selection to:', contractStartDateInput.value);
+            }
+            // Sync signature date to contract start date (for span)
+            const contractorSignatureDateSpan = document.getElementById('contractor_date_signed_display');
+            if (contractorSignatureDateSpan && contractStartDateInput) {
+                contractorSignatureDateSpan.innerText = contractStartDateInput.value;
+                console.log('Setting signature date after contractor selection to:', contractStartDateInput.value);
+            }
             // Fill hidden fields
             document.getElementById('contractor_name').value = fullName;
             document.getElementById('contractor_street').value = selected.dataset.street || '';

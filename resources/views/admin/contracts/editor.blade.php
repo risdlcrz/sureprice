@@ -76,14 +76,23 @@
             </div>
             <div class="section mb-3">
                 <strong>SCOPE OF WORK</strong>
-                <p class="mt-2 mb-1">The Constructor agrees to perform the following work as per the purchase order:</p>
-                <ol id="scope-list" class="contract-scope-list mb-2"></ol>
-                <div class="row">
+                <div class="mb-3" id="selected-scopes-section">
+                    <label class="form-label fw-bold" style="font-size:1.1rem;">Selected Scope(s) of Work</label>
+                    <div id="selected-scopes" class="selected-scopes-list">
+                        <span class="text-muted">No scope selected yet.</span>
+                    </div>
+                </div>
+                <p class="mt-2">
+                    The Constructor agrees to perform the following work as per the purchase order:
+                </p>
+                <div class="row mb-2">
                     <div class="col-md-6">
-                        <span class="fw-bold">Total Materials Cost:</span> <span class="contract-blank" id="materials_total_display"></span>
+                        <label class="form-label">Total Materials Cost:</label>
+                        <input type="text" class="form-control" id="materials_total_display" readonly>
                     </div>
                     <div class="col-md-6">
-                        <span class="fw-bold">Labor Fee:</span> <span class="contract-blank" id="labor_fee_display"></span>
+                        <label class="form-label">Labor Fee:</label>
+                        <input type="text" class="form-control" id="labor_fee_display" readonly>
                     </div>
                 </div>
             </div>
@@ -200,6 +209,7 @@
         <input type="hidden" name="labor_fee" id="labor_fee" />
         <input type="hidden" name="grand_total" id="grand_total" />
     </form>
+  
 </div>
 @endsection
 
@@ -208,6 +218,9 @@
 @endpush
 
 @push('scripts')
+<script>
+    window.quotationRequestApiUrl = '{{ url('api/quotation-requests') }}';
+</script>
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 @vite(['resources/js/admin-contracts-editor.js'])
 @endpush 

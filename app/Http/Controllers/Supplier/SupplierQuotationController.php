@@ -154,7 +154,7 @@ class SupplierQuotationController extends Controller
             $responseItemsData[$materialId] = [
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
-                'total_amount' => $totalPrice,
+                'total_price' => $totalPrice,
                 // 'specifications' => '', // Add if needed in future
                 // 'notes' => '', // Add if needed in future
             ];
@@ -222,8 +222,10 @@ class SupplierQuotationController extends Controller
                 'notifiable_id' => $quotation->id,
                 'data' => [
                     'title' => 'Supplier Quotation Response Submitted',
-                    'message' => 'A supplier has submitted a response to RFQ #' . $quotation->rfq_number . '.',
+                    'message' => $supplier->company_name . ' has submitted a response to RFQ #' . $quotation->rfq_number . '.',
                     'link' => route('quotations.show', $quotation->id),
+                    'supplier_id' => $supplier->id,
+                    'supplier_name' => $supplier->company_name,
                 ],
                 'for_role' => 'admin',
             ]);
@@ -238,8 +240,10 @@ class SupplierQuotationController extends Controller
                 'notifiable_id' => $quotation->id,
                 'data' => [
                     'title' => 'Supplier Quotation Response Submitted',
-                    'message' => 'A supplier has submitted a response to RFQ #' . $quotation->rfq_number . '.',
+                    'message' => $supplier->company_name . ' has submitted a response to RFQ #' . $quotation->rfq_number . '.',
                     'link' => route('quotations.show', $quotation->id),
+                    'supplier_id' => $supplier->id,
+                    'supplier_name' => $supplier->company_name,
                 ],
                 'for_role' => 'manager',
             ]);

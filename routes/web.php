@@ -493,6 +493,7 @@ Route::middleware(['auth', 'role:finance'])->group(function () {
 
 // API endpoint for fetching a single quotation request by ID
 Route::get('/api/quotation-requests/{id}', [App\Http\Controllers\QuotationRequestController::class, 'showJson']);
+Route::get('/api/quotation-requests', [\App\Http\Controllers\QuotationRequestController::class, 'search']);
 
 // Manager dashboard and routes
 Route::middleware(['auth', 'role:manager'])->prefix('manager')->name('manager.')->group(function () {

@@ -7,7 +7,7 @@
 <div class="profile-container">
     <div class="label">Logged in as</div>
     @if(auth()->check())
-        <div class="username">{{ auth()->user()->getDisplayNameAttribute() }}</div>
+        <div class="username">{{ auth()->user() ? auth()->user()->getDisplayNameAttribute() : 'N/A' }}</div>
         <div class="role">{{ ucfirst(auth()->user()->role) }}</div>
     @else
         <div class="username">Guest</div>

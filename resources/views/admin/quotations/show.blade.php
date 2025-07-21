@@ -158,16 +158,27 @@
                                 <tbody>
                                     @foreach($quotation->suppliers as $supplier)
                                     <tr>
-                                        <td>{{ $supplier->company_name }}</td>
-                                        <td>
-                                            {{ $supplier->email }}<br>
-                                            {{ $supplier->phone }}
-                                        </td>
-                                        <td>{{ $supplier->pivot->notes }}</td>
                                         <td>
                                             @php
                                                 $response = $quotation->responses->where('supplier_id', $supplier->id)->first();
                                             @endphp
+                                            @if($response && $response->supplier)
+                                                {{ $response->supplier->company_name }}
+                                            @else
+                                                {{ $supplier->company_name }}
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if($response && $response->supplier)
+                                                {{ $response->supplier->email }}<br>
+                                                {{ $response->supplier->phone }}
+                                            @else
+                                                {{ $supplier->email }}<br>
+                                                {{ $supplier->phone }}
+                                            @endif
+                                        </td>
+                                        <td>{{ $supplier->pivot->notes }}</td>
+                                        <td>
                                             @if($response)
                                                 <span class="badge badge-success">Responded</span>
                                             @else
@@ -241,7 +252,7 @@
                                                 <td>{{ $item->material->name }}</td>
                                                 <td>{{ $item->quantity }}</td>
                                                 <td>₱{{ number_format($item->unit_price, 2) }}</td>
-                                                <td>₱{{ number_format($item->total_amount, 2) }}</td>
+                                                <td>₱{{ number_format($item->quantity * $item->unit_price, 2) }}</td>
                                                 <td>{{ $item->specifications }}</td>
                                             </tr>
                                             @endforeach

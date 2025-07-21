@@ -12,7 +12,7 @@ class QuotationResponseItem extends Model
         'material_id',
         'quantity',
         'unit_price',
-        'total_amount',
+        'total_price',
         'specifications',
         'notes'
     ];
@@ -20,7 +20,7 @@ class QuotationResponseItem extends Model
     protected $casts = [
         'quantity' => 'decimal:2',
         'unit_price' => 'decimal:2',
-        'total_amount' => 'decimal:2'
+        'total_price' => 'decimal:2'
     ];
 
     // Relationships
@@ -42,7 +42,7 @@ class QuotationResponseItem extends Model
         static::saving(function ($item) {
             // Auto-calculate total price if unit price and quantity are set
             if ($item->unit_price && $item->quantity) {
-                $item->total_amount = $item->unit_price * $item->quantity;
+                $item->total_price = $item->unit_price * $item->quantity;
             }
         });
     }

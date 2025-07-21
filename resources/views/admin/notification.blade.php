@@ -79,6 +79,9 @@
                                         </h5>
                                         <small style="color:#6c757d; font-size:0.98em;">{{ $notification->created_at->diffForHumans() }}</small>
                                     </div>
+                                    @if(isset($data['supplier_name']))
+                                        <div class="mb-1"><span class="fw-bold text-primary">Supplier:</span> {{ $data['supplier_name'] }}</div>
+                                    @endif
                                     <p class="mb-1" style="font-size:1.08em; color:#495057;">
                                         {{ $message }}
                                     </p>

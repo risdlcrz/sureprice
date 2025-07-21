@@ -12,7 +12,7 @@
             @elseif(auth()->user()->role === 'admin')
                 Admin
             @else
-                {{ auth()->user()->getDisplayNameAttribute() }}
+                {{ auth()->user() ? auth()->user()->getDisplayNameAttribute() : 'N/A' }}
             @endif
         </div>
         <div class="role">{{ ucfirst(auth()->user()->role) }}</div>

@@ -498,33 +498,47 @@ class ClientQuotationController extends Controller
         // For each material, update the selected_supplier_id and unit_price in material_quotation
         foreach ($selectedSuppliers as $materialId => $supplierId) {
             $found = false;
-            foreach ($rfqs as $rfq) {
-                $quotedPrice = null;
-                foreach ($rfq->responses as $response) {
-                    if ($response->supplier_id == $supplierId) {
-                        foreach ($response->items as $item) {
-                            if ($item->material_id == $materialId) {
-                                $quotedPrice = $item->unit_price;
-                                // Only update the pivot for this RFQ and break out of both loops
-                                \Log::info('Pivot update', [
-                                    'material_id' => $materialId,
-                                    'supplier_id' => $supplierId,
-                                    'quoted_price' => $quotedPrice,
-                                    'rfq_id' => $rfq->id,
-                                ]);
-                                $rfq->materials()->updateExistingPivot($materialId, [
-                                    'selected_supplier_id' => $supplierId,
-                                    'unit_price' => $quotedPrice,
-                                ]);
-                                $found = true;
-                                break 3;
-                            }
-                        }
+            $quotedPrice = null;
+            $roomName = null;
+            $scopeName = null;
+            // Find room and scope for this material
+            foreach ($quotationRequest->rooms as $room) {
+                foreach ($room->scopes as $scope) {
+                    if ($scope->scopeType && $scope->scopeType->materials->contains('id', $materialId)) {
+                        $roomName = $room->name;
+                        $scopeName = $scope->scopeType->name ?? null;
+                        break 2;
                     }
                 }
             }
-            // Optionally, log if no quoted price was found for this material/supplier
+            foreach ($rfqs as $rfq) {
+                // Try to find the supplier's response for this material
+                $response = $rfq->responses->where('supplier_id', $supplierId)->first();
+                if ($response) {
+                    $item = $response->items->where('material_id', $materialId)->first();
+                    if ($item) {
+                        $quotedPrice = $item->unit_price;
+                        $rfq->materials()->updateExistingPivot($materialId, [
+                            'selected_supplier_id' => $supplierId,
+                            'unit_price' => $quotedPrice,
+                            'room_name' => $roomName,
+                            'scope_name' => $scopeName,
+                        ]);
+                        $found = true;
+                        break;
+                    }
+                }
+            }
+            // If not found, still update the pivot with 0 price to avoid N/A
             if (!$found) {
+                foreach ($rfqs as $rfq) {
+                    $rfq->materials()->updateExistingPivot($materialId, [
+                        'selected_supplier_id' => $supplierId,
+                        'unit_price' => 0,
+                        'room_name' => $roomName,
+                        'scope_name' => $scopeName,
+                    ]);
+                }
                 \Log::warning('No quoted price found for material/supplier', [
                     'material_id' => $materialId,
                     'supplier_id' => $supplierId,

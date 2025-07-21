@@ -3,7 +3,7 @@
 @section('content')
 <div class="container py-4">
     <div class="mb-4">
-        <h1 class="display-5 fw-bold">Welcome, {{ auth()->user()->getDisplayNameAttribute() }}</h1>
+        <h1 class="display-5 fw-bold">Welcome, {{ auth()->user() ? auth()->user()->getDisplayNameAttribute() : 'N/A' }}</h1>
         <p class="text-muted">Supplier Dashboard</p>
     </div>
 
@@ -269,7 +269,7 @@
                     @foreach($activeQuotations as $quotation)
                     <tr>
                         <td>{{ $quotation->request_number ?? $quotation->id }}</td>
-                        <td>{{ $quotation->user->getDisplayNameAttribute() ?? 'N/A' }}</td>
+                        <td>{{ $quotation->user ? $quotation->user->getDisplayNameAttribute() : 'N/A' }}</td>
                         <td><span class="badge bg-warning text-dark">{{ ucfirst($quotation->status) }}</span></td>
                         <td>
                             <a href="{{ route('supplier.quotations.respond', $quotation) }}" class="btn btn-sm btn-primary">View / Respond</a>

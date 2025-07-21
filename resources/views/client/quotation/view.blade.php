@@ -535,11 +535,12 @@ body {
                                                     $scopeName = null;
                                                     $badges = [];
                                                     $contact = null;
+                                                    // Try to get from offers (supplier responses)
                                                     if(isset($materialSupplierResponses[$materialId])) {
                                                         foreach($materialSupplierResponses[$materialId] as $offer) {
                                                             if($offer['supplier_id'] == $supplierId) {
                                                                 $supplierName = $offer['supplier_name'] ?? 'Unknown';
-                                                                $price = isset($offer['unit_price']) ? number_format($offer['unit_price'], 2) : '0.00';
+                                                                $price = isset($offer['unit_price']) ? $offer['unit_price'] : null;
                                                                 $badges = $offer['badges'] ?? [];
                                                                 $contact = $offer['supplier_contact'] ?? null;
                                                                 $roomName = $offer['room_name'] ?? null;
@@ -548,13 +549,31 @@ body {
                                                             $materialName = $offer['material_name'] ?? $materialName;
                                                         }
                                                     }
+                                                    // Fallback: try to get from pivot (material_quotation)
+                                                    if ($price === null && isset($rfqs)) {
+                                                        foreach ($rfqs as $rfq) {
+                                                            $mat = $rfq->materials->firstWhere('id', $materialId);
+                                                            if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id == $supplierId) {
+                                                                $price = $mat->pivot->unit_price ?? null;
+                                                                $roomName = $roomName ?? ($mat->pivot->room_name ?? null);
+                                                                $scopeName = $scopeName ?? ($mat->pivot->scope_name ?? null);
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
                                                 @endphp
                                                 <tr>
                                                     <td>{{ $roomName ?? '-' }}</td>
                                                     <td>{{ $scopeName ?? '-' }}</td>
                                                     <td>{{ $materialName ?? 'Material #'.$materialId }}</td>
                                                     <td>{{ $supplierName ?? 'N/A' }}</td>
-                                                    <td>₱{{ $price ?? '0.00' }}</td>
+                                                    <td>
+                                                        @if($price && $price > 0)
+                                                            ₱{{ number_format($price, 2) }}
+                                                        @else
+                                                            <span class="text-muted">-</span>
+                                                        @endif
+                                                    </td>
                                                     <td>
                                                         @if(!empty($badges))
                                                             @foreach($badges as $badge)
