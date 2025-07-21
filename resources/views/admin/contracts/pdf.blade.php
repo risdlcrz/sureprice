@@ -211,7 +211,9 @@
             <thead>
                 <tr>
                     <th>Material</th>
+                    <th>Supplier</th>
                     <th>Quantity</th>
+                    <th>Unit</th>
                     <th>Unit Price</th>
                     <th>Total</th>
                 </tr>
@@ -219,14 +221,16 @@
             <tbody>
                 @foreach($items as $item)
                 <tr>
-                    <td>{{ $item->material->name ?? 'Material' }}</td>
-                    <td>{{ $item->quantity }} {{ $item->unit ?? 'units' }}</td>
+                    <td>{{ $item->material->name ?? $item->material_name ?? 'Material' }}</td>
+                    <td>{{ $item->supplier_name ?? ($item->supplier->company_name ?? '-') }}</td>
+                    <td>{{ $item->quantity }}</td>
+                    <td>{{ $item->unit ?? ($item->material->unit ?? '-') }}</td>
                     <td>₱{{ number_format($item->amount, 2) }}</td>
                     <td>₱{{ number_format($item->total, 2) }}</td>
                 </tr>
                 @endforeach
                 <tr class="total-row">
-                    <td colspan="3" style="text-align: right;"><strong>Total Amount:</strong></td>
+                    <td colspan="5" style="text-align: right;"><strong>Total Amount:</strong></td>
                     <td><strong>₱{{ number_format($contract->total_amount, 2) }}</strong></td>
                 </tr>
             </tbody>
@@ -264,7 +268,7 @@
             @endif
             <div class="signature-info">
                 <p><strong>Name:</strong> {{ $contract->contractor->name }}</p>
-                <p><strong>Date:</strong> {{ $contract->contractor_date_signed ? date('F j, Y', strtotime($contract->contractor_date_signed)) : '________________' }}</p>
+                <p><strong>Date:</strong> {{ $contract->contractor_date_signed ? date('F j, Y', strtotime($contract->contractor_date_signed)) : '-' }}</p>
             </div>
         </div>
 
@@ -278,7 +282,7 @@
             @endif
             <div class="signature-info">
                 <p><strong>Name:</strong> {{ $contract->client->name }}</p>
-                <p><strong>Date:</strong> {{ $contract->client_date_signed ? date('F j, Y', strtotime($contract->client_date_signed)) : '________________' }}</p>
+                <p><strong>Date:</strong> {{ $contract->client_date_signed ? date('F j, Y', strtotime($contract->client_date_signed)) : '-' }}</p>
             </div>
         </div>
     </div>

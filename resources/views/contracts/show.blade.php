@@ -240,6 +240,8 @@
                                 <th>Quantity</th>
                                 <th>Unit</th>
                                 <th>Chosen Supplier</th>
+                                <th>Unit Price</th>
+                                <th>Total</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -250,14 +252,37 @@
                                             @php
                                                 $material = \App\Models\Material::find($mat['material_id']);
                                                 $supplier = isset($mat['chosen_supplier_id']) ? \App\Models\Supplier::find($mat['chosen_supplier_id']) : null;
+                                                $unitPrice = null;
+                                                if ($material && $supplier) {
+                                                    // Find the unit price from the material_quotation pivot
+                                                    $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #' . $contract->project->quotationRequest->request_number . '%')->with(['materials'])->get();
+                                                    foreach ($rfqs as $rfq) {
+                                                        $pivot = \DB::table('material_quotation')
+                                                            ->where('quotation_id', $rfq->id)
+                                                            ->where('material_id', $material->id)
+                                                            ->where('selected_supplier_id', $supplier->id)
+                                                            ->first();
+                                                        if ($pivot && $pivot->unit_price) {
+                                                            $unitPrice = $pivot->unit_price;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                if (!$unitPrice && $material) {
+                                                    $unitPrice = $material->base_price;
+                                                }
+                                                $qty = $mat['quantity'] ?? 1;
+                                                $total = $unitPrice * $qty;
                                             @endphp
                                             <tr>
                                                 <td>{{ $room->name }}</td>
                                                 <td>{{ $scope->scope_name }}</td>
                                                 <td>{{ $material ? $material->name : 'Material #'.$mat['material_id'] }}</td>
-                                                <td>{{ $mat['quantity'] ?? '-' }}</td>
+                                                <td>{{ $qty }}</td>
                                                 <td>{{ $mat['unit'] ?? ($material ? $material->unit : '-') }}</td>
                                                 <td>{{ $supplier ? $supplier->company_name : '-' }}</td>
+                                                <td>₱{{ number_format($unitPrice, 2) }}</td>
+                                                <td>₱{{ number_format($total, 2) }}</td>
                                             </tr>
                                         @endforeach
                                     @endif

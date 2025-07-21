@@ -246,6 +246,9 @@ $altColors = ['#f9fafb', '#e8f5e9'];
 @endpush
 
 @push('scripts')
+    <script>
+        window.landingCatalogueQuotationRoute = "{{ route('client.quotation.create') }}";
+    </script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     @vite(['resources/js/landing-catalogue.js'])
 @endpush 

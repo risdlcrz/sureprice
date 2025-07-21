@@ -90,6 +90,10 @@ class SupplierDashboardController extends Controller
     public function index()
     {
         $supplier = Auth::user()->supplier;
+        if (!$supplier) {
+            // Show a friendly error or redirect
+            return redirect()->route('landing.catalogue')->with('error', 'Your account is not linked to a supplier profile.');
+        }
         
         // Fetch supplier's materials with inventory and category
         $materials = $supplier ? $supplier->materials()->with(['inventory', 'category'])->get() : collect();
