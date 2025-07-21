@@ -159,19 +159,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const propertyAddressInput = document.getElementById('property_address');
     const sameAsClientCheckbox = document.getElementById('same_as_client_address');
     const clientAddressDisplay = document.getElementById('client_address_display');
+    
     function autofillPropertyAddress() {
-        if (sameAsClientCheckbox.checked) {
+        if (sameAsClientCheckbox && sameAsClientCheckbox.checked) {
             if (clientAddressDisplay && propertyAddressInput) {
-                propertyAddressInput.value = clientAddressDisplay.innerText.trim();
-                propertyAddressInput.readOnly = true;
+                const clientAddress = clientAddressDisplay.innerText.trim();
+                if (clientAddress) {
+                    propertyAddressInput.value = clientAddress;
+                    propertyAddressInput.readOnly = true;
+                    propertyAddressInput.style.backgroundColor = '#e9ecef';
+                    propertyAddressInput.style.color = '#6c757d';
+                }
             }
         } else {
             if (propertyAddressInput) {
                 propertyAddressInput.value = '';
                 propertyAddressInput.readOnly = false;
+                propertyAddressInput.style.backgroundColor = '#f8f9fa';
+                propertyAddressInput.style.color = '#333';
             }
         }
     }
+    
     if (sameAsClientCheckbox) {
         sameAsClientCheckbox.addEventListener('change', autofillPropertyAddress);
         // Run on page load in case it's already checked
@@ -206,4 +215,94 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize signature restrictions
     setupSignatureRestrictions();
+    
+    // Initialize signature pads
+    function initializeSignaturePads() {
+        // Check if SignaturePad is available
+        if (typeof SignaturePad !== 'undefined') {
+            // Initialize contractor signature pad
+            const contractorCanvas = document.getElementById('contractor-signature-pad');
+            if (contractorCanvas) {
+                window.contractorSignaturePad = new SignaturePad(contractorCanvas, {
+                    backgroundColor: 'rgb(255, 255, 255)',
+                    penColor: 'rgb(0, 0, 0)'
+                });
+            }
+            
+            // Initialize client signature pad
+            const clientCanvas = document.getElementById('client-signature-pad');
+            if (clientCanvas) {
+                window.clientSignaturePad = new SignaturePad(clientCanvas, {
+                    backgroundColor: 'rgb(255, 255, 255)',
+                    penColor: 'rgb(0, 0, 0)'
+                });
+            }
+        }
+    }
+    
+    // Initialize signature pads when DOM is loaded
+    initializeSignaturePads();
+    
+    // Download/Print functionality
+    document.getElementById('download-pdf').addEventListener('click', function() {
+        // Create a new window for printing
+        const printWindow = window.open('', '_blank');
+        const contractContent = document.querySelector('.contract-border').innerHTML;
+        
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Contract Agreement</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    .contract-title { font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 20px; }
+                    .section strong { font-size: 16px; font-weight: bold; margin-bottom: 10px; display: block; }
+                    .contract-blank { border-bottom: 1px solid #000; padding: 0 5px; }
+                    .contract-inline-input { border-bottom: 1px solid #000; padding: 0 5px; }
+                    .signature-pad { border: 1px solid #000; width: 300px; height: 100px; }
+                    @media print {
+                        .btn { display: none !important; }
+                        body { margin: 0; }
+                    }
+                </style>
+            </head>
+            <body>
+                ${contractContent}
+                <script>window.print();</script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    });
+    
+    // Global function for clearing signatures
+    window.clearSignature = function(type) {
+        if (type === 'contractor' && window.contractorSignaturePad) {
+            window.contractorSignaturePad.clear();
+            document.getElementById('contractor_signature').value = '';
+        } else if (type === 'client' && window.clientSignaturePad) {
+            window.clientSignaturePad.clear();
+            document.getElementById('client_signature').value = '';
+        }
+    };
+    
+    // Save signatures when form is submitted
+    document.getElementById('contractEditorForm').addEventListener('submit', function(e) {
+        // Check if quotation request is selected
+        const quotationRequest = document.getElementById('quotation_request_id');
+        if (!quotationRequest.value) {
+            alert('Please select a quotation request before submitting the contract.');
+            e.preventDefault();
+            return;
+        }
+        
+        // Save signatures
+        if (window.contractorSignaturePad && !window.contractorSignaturePad.isEmpty()) {
+            document.getElementById('contractor_signature').value = window.contractorSignaturePad.toDataURL();
+        }
+        if (window.clientSignaturePad && !window.clientSignaturePad.isEmpty()) {
+            document.getElementById('client_signature').value = window.clientSignaturePad.toDataURL();
+        }
+    });
 }); 

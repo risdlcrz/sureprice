@@ -24,7 +24,7 @@ body {
     z-index: 10;
     max-width: 800px;
     width: 90%;
-    background: rgba(27, 94, 32, 0.9);
+    background: rgba(27, 94, 32, 0.7);
     padding: 3rem;
     border-radius: 1rem;
     backdrop-filter: blur(10px);
