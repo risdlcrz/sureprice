@@ -13,6 +13,11 @@ use App\Models\Notification;
 
 class SupplierQuotationController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index(Request $request)
     {
         $supplier = Auth::user()->supplier;
@@ -85,12 +90,9 @@ class SupplierQuotationController extends Controller
         \Log::info('Quotation Materials:', $quotation->materials->pluck('id')->toArray());
         $materialsInQuotation = $quotation->materials->map(function($material) use ($materialQuantities, $supplier) {
             $material->requested_quantity = $materialQuantities[$material->id] ?? 1;
-            // Fetch the supplier's price from the pivot table
-            $pivot = \DB::table('material_supplier')
-                ->where('material_id', $material->id)
-                ->where('supplier_id', $supplier->id)
-                ->first();
-            $material->price = $pivot ? $pivot->price : 0;
+            // Fetch the supplier's price from the Eloquent relationship pivot
+            $supplierPivot = $material->suppliers->firstWhere('id', $supplier->id);
+            $material->price = $supplierPivot ? $supplierPivot->pivot->price : 0;
             return $material;
         });
         $existingResponse = QuotationResponse::where('quotation_id', $quotation->id)
@@ -159,13 +161,10 @@ class SupplierQuotationController extends Controller
                 // 'notes' => '', // Add if needed in future
             ];
 
-            // Update the material's price for this supplier
-            $material = Material::find($materialId);
-            if ($material) {
-                // Update the material's price in supplier's inventory
-                // Assuming 'price' is the field for supplier's selling price
-                $material->update(['price' => $unitPrice]);
-            }
+            // Update the material's price for this supplier in the pivot table
+            $supplier->materials()->updateExistingPivot($materialId, [
+                'price' => $unitPrice
+            ]);
         }
 
         // Calculate discount and final amount

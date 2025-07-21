@@ -517,190 +517,189 @@ class ContractController extends Controller
     public function store(Request $request)
     {
         try {
-            DB::beginTransaction();
+            $contract = DB::transaction(function () {
+                // Create or update contractor party
+                $contractor = Party::updateOrCreate(
+                    ['email' => session('contract_step1.contractor_email')],
+                    [
+                        'name' => session('contract_step1.contractor_name'),
+                        'company_name' => session('contract_step1.contractor_company'),
+                        'phone' => session('contract_step1.contractor_phone'),
+                        'street' => session('contract_step1.contractor_street'),
+                        'barangay' => session('contract_step1.contractor_barangay'),
+                        'city' => session('contract_step1.contractor_city'),
+                        'state' => session('contract_step1.contractor_state'),
+                        'postal' => session('contract_step1.contractor_postal'),
+                        'entity_type' => 'contractor'
+                    ]
+                );
 
-            // Create or update contractor party
-            $contractor = Party::updateOrCreate(
-                ['email' => session('contract_step1.contractor_email')],
-                [
-                    'name' => session('contract_step1.contractor_name'),
-                    'company_name' => session('contract_step1.contractor_company'),
-                    'phone' => session('contract_step1.contractor_phone'),
-                    'street' => session('contract_step1.contractor_street'),
-                    'barangay' => session('contract_step1.contractor_barangay'),
-                    'city' => session('contract_step1.contractor_city'),
-                    'state' => session('contract_step1.contractor_state'),
-                    'postal' => session('contract_step1.contractor_postal'),
-                    'entity_type' => 'contractor'
-                ]
-            );
+                // Create or update client party
+                $client = Party::updateOrCreate(
+                    ['email' => session('contract_step1.client_email')],
+                    [
+                        'name' => session('contract_step1.client_name'),
+                        'company_name' => session('contract_step1.client_company'),
+                        'phone' => session('contract_step1.client_phone'),
+                        'street' => session('contract_step1.client_street'),
+                        'barangay' => session('contract_step1.client_barangay'),
+                        'city' => session('contract_step1.client_city'),
+                        'state' => session('contract_step1.client_state'),
+                        'postal' => session('contract_step1.client_postal'),
+                        'entity_type' => 'client'
+                    ]
+                );
 
-            // Create or update client party
-            $client = Party::updateOrCreate(
-                ['email' => session('contract_step1.client_email')],
-                [
-                    'name' => session('contract_step1.client_name'),
-                    'company_name' => session('contract_step1.client_company'),
-                    'phone' => session('contract_step1.client_phone'),
-                    'street' => session('contract_step1.client_street'),
-                    'barangay' => session('contract_step1.client_barangay'),
-                    'city' => session('contract_step1.client_city'),
-                    'state' => session('contract_step1.client_state'),
-                    'postal' => session('contract_step1.client_postal'),
-                    'entity_type' => 'client'
-                ]
-            );
-
-            // Check if client is banned
-            if ($client->banned) {
-                DB::rollBack();
-                return redirect()->back()->with('error', 'This client is banned and cannot be assigned to a new contract.');
-            }
-
-            // Create property
-            $property = Property::create([
-                'property_type' => session('contract_step1.property_type'),
-                'street' => session('contract_step1.property_street'),
-                'barangay' => session('contract_step1.property_barangay'),
-                'city' => session('contract_step1.property_city'),
-                'state' => session('contract_step1.property_state'),
-                'postal' => session('contract_step1.property_postal')
-            ]);
-
-            // Create contract
-            $contract = Contract::create([
-                'contractor_id' => $contractor->id,
-                'client_id' => $client->id,
-                'property_id' => $property->id,
-                'title' => 'Contract for ' . $client->name,
-                'scope_of_work' => collect(session('contract_step2.rooms'))->first()['scope'] ? 
-                    \App\Models\ScopeType::whereIn('id', collect(session('contract_step2.rooms'))->first()['scope'])
-                        ->pluck('name')
-                        ->implode(', ') : 
-                    'General Construction Work',
-                'scope_description' => 'Construction work as per agreed specifications',
-                'start_date' => session('contract_step2.start_date'),
-                'end_date' => session('contract_step2.end_date'),
-                'total_amount' => session('contract_step2.grand_total'),
-                'materials_cost' => session('contract_step2.total_materials'),
-                'labor_cost' => session('contract_step2.total_labor'),
-                'payment_terms' => session('contract_step3.payment_terms'),
-                'payment_method' => session('contract_step4.payment_method', 'cash'),
-                'bank_name' => session('contract_step4.bank_name'),
-                'bank_account_name' => session('contract_step4.bank_account_name'),
-                'bank_account_number' => session('contract_step4.bank_account_number'),
-                'check_number' => session('contract_step4.check_number'),
-                'check_date' => session('contract_step4.check_date'),
-                'contractor_signature' => session('contract_step3.contractor_signature'),
-                'client_signature' => session('contract_step3.client_signature'),
-                'payment_schedule' => session('contract_step4.payment_schedule'),
-                'status' => 'draft'
-            ]);
-
-            // Create rooms and their scopes
-            $crewSize = 8;
-            $hoursPerDay = 8;
-            $totalEstimatedDays = 0;
-            foreach (session('contract_step2.rooms', []) as $roomId => $roomData) {
-                $roomEstimatedDays = 0;
-                if (!empty($roomData['scope'])) {
-                    foreach ($roomData['scope'] as $scopeId) {
-                        $scope = \App\Models\ScopeType::find($scopeId);
-                        $isWallWork = $scope && $scope->is_wall_work;
-                        $area = $isWallWork
-                            ? 2 * ($roomData['length'] + $roomData['width']) * $roomData['height']
-                            : $roomData['length'] * $roomData['width'];
-                        $laborHoursPerSqm = $scope && $scope->labor_hours_per_sqm ? $scope->labor_hours_per_sqm : 1;
-                        $totalLaborHours = $area * $laborHoursPerSqm;
-                        $days = $totalLaborHours / ($crewSize * $hoursPerDay);
-                        $days = ceil($days * 2) / 2;
-                        $days = max(0.5, $days);
-                        $roomEstimatedDays += $days;
-                    }
+                // Check if client is banned
+                if ($client->banned) {
+                    throw new \Exception('This client is banned and cannot be assigned to a new contract.');
                 }
-                $room = $contract->rooms()->create([
-                    'name' => $roomData['name'],
-                    'length' => $roomData['length'],
-                    'width' => $roomData['width'],
-                    'height' => $roomData['height'] ?? null,
-                    'area' => $roomData['length'] * $roomData['width'],
-                    'floor_area' => $roomData['floor_area'] ?? null,
-                    'wall_area' => $roomData['wall_area'] ?? null,
-                    'materials_cost' => $roomData['materials_cost'] ?? 0,
-                    'labor_cost' => $roomData['labor_cost'] ?? 0,
-                    'estimated_days' => $roomEstimatedDays
+
+                // Create property
+                $property = Property::create([
+                    'property_type' => session('contract_step1.property_type'),
+                    'street' => session('contract_step1.property_street'),
+                    'barangay' => session('contract_step1.property_barangay'),
+                    'city' => session('contract_step1.property_city'),
+                    'state' => session('contract_step1.property_state'),
+                    'postal' => session('contract_step1.property_postal')
                 ]);
-                if (!empty($roomData['scope'])) {
-                    $room->scopeTypes()->attach($roomData['scope']);
-                }
-                $totalEstimatedDays += $roomEstimatedDays;
-            }
-            $contract->estimated_days = $totalEstimatedDays;
-            $contract->end_date = \Carbon\Carbon::parse($contract->start_date)->addDays((int)ceil($totalEstimatedDays));
-            $contract->save();
 
-            // Create contract items
-            foreach ($contract->rooms as $room) {
-                $room->load(['scopeTypes' => function($query) {
-                    $query->with(['materials' => function($q) {
-                        $q->with(['suppliers' => function($sq) {
-                            $sq->wherePivot('is_preferred', true);
+                // Create contract
+                $contract = Contract::create([
+                    'contractor_id' => $contractor->id,
+                    'client_id' => $client->id,
+                    'property_id' => $property->id,
+                    'title' => 'Contract for ' . $client->name,
+                    'scope_of_work' => collect(session('contract_step2.rooms'))->first()['scope'] ? 
+                        \App\Models\ScopeType::whereIn('id', collect(session('contract_step2.rooms'))->first()['scope'])
+                            ->pluck('name')
+                            ->implode(', ') : 
+                        'General Construction Work',
+                    'scope_description' => 'Construction work as per agreed specifications',
+                    'start_date' => session('contract_step2.start_date'),
+                    'end_date' => session('contract_step2.end_date'),
+                    'total_amount' => session('contract_step2.grand_total'),
+                    'materials_cost' => session('contract_step2.total_materials'),
+                    'labor_cost' => session('contract_step2.total_labor'),
+                    'payment_terms' => session('contract_step3.payment_terms'),
+                    'payment_method' => session('contract_step4.payment_method', 'cash'),
+                    'bank_name' => session('contract_step4.bank_name'),
+                    'bank_account_name' => session('contract_step4.bank_account_name'),
+                    'bank_account_number' => session('contract_step4.bank_account_number'),
+                    'check_number' => session('contract_step4.check_number'),
+                    'check_date' => session('contract_step4.check_date'),
+                    'contractor_signature' => session('contract_step3.contractor_signature'),
+                    'client_signature' => session('contract_step3.client_signature'),
+                    'payment_schedule' => session('contract_step4.payment_schedule'),
+                    'status' => 'draft'
+                ]);
+
+                // Create rooms and their scopes
+                $crewSize = 8;
+                $hoursPerDay = 8;
+                $totalEstimatedDays = 0;
+                foreach (session('contract_step2.rooms', []) as $roomId => $roomData) {
+                    $roomEstimatedDays = 0;
+                    if (!empty($roomData['scope'])) {
+                        foreach ($roomData['scope'] as $scopeId) {
+                            $scope = \App\Models\ScopeType::find($scopeId);
+                            $isWallWork = $scope && $scope->is_wall_work;
+                            $area = $isWallWork
+                                ? 2 * ($roomData['length'] + $roomData['width']) * $roomData['height']
+                                : $roomData['length'] * $roomData['width'];
+                            $laborHoursPerSqm = $scope && $scope->labor_hours_per_sqm ? $scope->labor_hours_per_sqm : 1;
+                            $totalLaborHours = $area * $laborHoursPerSqm;
+                            $days = $totalLaborHours / ($crewSize * $hoursPerDay);
+                            $days = ceil($days * 2) / 2;
+                            $days = max(0.5, $days);
+                            $roomEstimatedDays += $days;
+                        }
+                    }
+                    $room = $contract->rooms()->create([
+                        'name' => $roomData['name'],
+                        'length' => $roomData['length'],
+                        'width' => $roomData['width'],
+                        'height' => $roomData['height'] ?? null,
+                        'area' => $roomData['length'] * $roomData['width'],
+                        'floor_area' => $roomData['floor_area'] ?? null,
+                        'wall_area' => $roomData['wall_area'] ?? null,
+                        'materials_cost' => $roomData['materials_cost'] ?? 0,
+                        'labor_cost' => $roomData['labor_cost'] ?? 0,
+                        'estimated_days' => $roomEstimatedDays
+                    ]);
+                    if (!empty($roomData['scope'])) {
+                        $room->scopeTypes()->attach($roomData['scope']);
+                    }
+                    $totalEstimatedDays += $roomEstimatedDays;
+                }
+                $contract->estimated_days = $totalEstimatedDays;
+                $contract->end_date = \Carbon\Carbon::parse($contract->start_date)->addDays((int)ceil($totalEstimatedDays));
+                $contract->save();
+
+                // Create contract items
+                foreach ($contract->rooms as $room) {
+                    $room->load(['scopeTypes' => function($query) {
+                        $query->with(['materials' => function($q) {
+                            $q->with(['suppliers' => function($sq) {
+                                $sq->wherePivot('is_preferred', true);
+                            }]);
                         }]);
                     }]);
-                }]);
 
-                foreach ($room->scopeTypes as $scope) {
-                    foreach ($scope->materials as $material) {
-                        \Log::info('Processing material for contract item:', [
-                            'material_name' => $material->name,
-                            'srp_price' => $material->srp_price,
-                            'base_price' => $material->base_price
-                        ]);
-                        // Get the price from either srp_price or base_price
-                        $price = ($material->srp_price > 0) ? floatval($material->srp_price) : floatval($material->base_price ?? 0);
-                        $quantity = 1;
-                        
-                        // Calculate quantity based on area if needed
-                        if ($material->is_per_area) {
-                            $coverage = floatval($material->coverage_rate ?? 1);
-                            $quantity = ceil($room->area / $coverage);
-                        }
+                    foreach ($room->scopeTypes as $scope) {
+                        foreach ($scope->materials as $material) {
+                            \Log::info('Processing material for contract item:', [
+                                'material_name' => $material->name,
+                                'srp_price' => $material->srp_price,
+                                'base_price' => $material->base_price
+                            ]);
+                            // Get the price from either srp_price or base_price
+                            $price = ($material->srp_price > 0) ? floatval($material->srp_price) : floatval($material->base_price ?? 0);
+                            $quantity = 1;
+                            
+                            // Calculate quantity based on area if needed
+                            if ($material->is_per_area) {
+                                $coverage = floatval($material->coverage_rate ?? 1);
+                                $quantity = ceil($room->area / $coverage);
+                            }
 
-                        // Apply waste factor
-                        $wasteFactor = floatval($material->waste_factor ?? 1.1);
-                        $quantity = ceil($quantity * $wasteFactor);
+                            // Apply waste factor
+                            $wasteFactor = floatval($material->waste_factor ?? 1.1);
+                            $quantity = ceil($quantity * $wasteFactor);
 
-                        // Check for bulk pricing
-                        if ($material->bulk_pricing) {
-                            $bulkPricing = is_array($material->bulk_pricing) ? $material->bulk_pricing : json_decode($material->bulk_pricing, true);
-                            if (is_array($bulkPricing)) {
-                                foreach ($bulkPricing as $tier) {
-                                    if ($quantity >= ($tier['min_quantity'] ?? 0)) {
-                                        $price = floatval($tier['price'] ?? $price);
+                            // Check for bulk pricing
+                            if ($material->bulk_pricing) {
+                                $bulkPricing = is_array($material->bulk_pricing) ? $material->bulk_pricing : json_decode($material->bulk_pricing, true);
+                                if (is_array($bulkPricing)) {
+                                    foreach ($bulkPricing as $tier) {
+                                        if ($quantity >= ($tier['min_quantity'] ?? 0)) {
+                                            $price = floatval($tier['price'] ?? $price);
+                                        }
                                     }
                                 }
                             }
+
+                            // Get preferred supplier if exists
+                            $supplier = $material->suppliers->first();
+
+                            // Create contract item
+                            $contract->items()->create([
+                                'material_id' => $material->id,
+                                'material_name' => $material->name,
+                                'unit' => $material->unit ?? 'pcs',
+                                'supplier_id' => $supplier ? $supplier->id : null,
+                                'supplier_name' => $supplier ? $supplier->company_name : null,
+                                'quantity' => $quantity,
+                                'amount' => $price,
+                                'total' => $quantity * $price
+                            ]);
                         }
-
-                        // Get preferred supplier if exists
-                        $supplier = $material->suppliers->first();
-
-                        // Create contract item
-                        $contract->items()->create([
-                            'material_id' => $material->id,
-                            'material_name' => $material->name,
-                            'unit' => $material->unit ?? 'pcs',
-                            'supplier_id' => $supplier ? $supplier->id : null,
-                            'supplier_name' => $supplier ? $supplier->company_name : null,
-                            'quantity' => $quantity,
-                            'amount' => $price,
-                            'total' => $quantity * $price
-                        ]);
                     }
                 }
-            }
 
-            DB::commit();
+                return $contract;
+            });
 
             // Clear session data
             session()->forget(['contract_step1', 'contract_step2', 'contract_step3']);
@@ -709,8 +708,10 @@ class ContractController extends Controller
                 ->with('success', 'Contract created successfully!');
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Contract creation failed: ' . $e->getMessage());
+            \Log::error('Contract creation failed: ' . $e->getMessage(), [
+                'user_id' => auth()->id(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return redirect()->back()
                 ->with('error', 'Contract creation failed: ' . $e->getMessage())
                 ->withInput();

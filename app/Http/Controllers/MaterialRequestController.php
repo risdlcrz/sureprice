@@ -74,127 +74,131 @@ class MaterialRequestController extends Controller
             'items.*.quantity' => 'required|numeric|min:0.01',
         ]);
 
-        DB::beginTransaction();
         try {
-            $materialRequest = MaterialRequest::create([
-                'quotation_request_id' => $validated['quotation_request_id'],
-                'requested_by' => auth()->id(),
-                'status' => 'pending',
-                'notes' => $validated['notes'],
-            ]);
-
-            $purchaseRequestItems = [];
-            foreach ($validated['items'] as $itemData) {
-                $material = Material::find($itemData['material_id']);
-                $requestedQty = $itemData['quantity'];
-                $remainingQty = $requestedQty;
-                $unit = $itemData['unit'] ?? ($material ? $material->unit : null);
-                if (empty($unit)) {
-                    throw new \RuntimeException('Material "' . ($material ? $material->name : 'Unknown') . '" (ID: ' . ($material ? $material->id : 'N/A') . ') is missing a unit. Please check your materials data.');
-                }
-
-                // Deduct from stock across all warehouses
-                $totalStock = Stock::where('material_id', $material->id)->sum('current_stock');
-                if ($totalStock >= $remainingQty) {
-                    // Fulfill from stock (across warehouses)
-                    $warehouses = Warehouse::all();
-                    foreach ($warehouses as $warehouse) {
-                        $stock = $warehouse->stocks()->where('material_id', $material->id)->first();
-                        if ($stock && $stock->current_stock > 0 && $remainingQty > 0) {
-                            $deduct = min($stock->current_stock, $remainingQty);
-                            $stock->current_stock -= $deduct;
-                            $stock->save();
-                            $materialRequest->items()->create([
-                                'material_id' => $material->id,
-                                'warehouse_id' => $warehouse->id,
-                                'quantity' => $deduct,
-                                'unit' => $unit,
-                                'fulfilled_quantity' => $deduct,
-                            ]);
-                            $remainingQty -= $deduct;
-                        }
-                    }
-                } else {
-                    // Fulfill as much as possible from stock, rest goes to purchase request
-                    $warehouses = Warehouse::all();
-                    foreach ($warehouses as $warehouse) {
-                        $stock = $warehouse->stocks()->where('material_id', $material->id)->first();
-                        if ($stock && $stock->current_stock > 0 && $remainingQty > 0) {
-                            $deduct = min($stock->current_stock, $remainingQty);
-                            $stock->current_stock -= $deduct;
-                            $stock->save();
-                            $materialRequest->items()->create([
-                                'material_id' => $material->id,
-                                'warehouse_id' => $warehouse->id,
-                                'quantity' => $deduct,
-                                'unit' => $unit,
-                                'fulfilled_quantity' => $deduct,
-                            ]);
-                            $remainingQty -= $deduct;
-                        }
-                    }
-                    // Add shortfall to purchase request
-                    if ($remainingQty > 0) {
-                        $materialRequest->items()->create([
-                            'material_id' => $material->id,
-                            'warehouse_id' => null,
-                            'quantity' => $remainingQty,
-                            'unit' => $unit,
-                            'fulfilled_quantity' => 0,
-                        ]);
-                        // Fetch supplier and price from material_quotation
-                        $preferredSupplierId = null;
-                        $estimatedUnitPrice = $material->base_price;
-                        $quotationRequest = $materialRequest->quotationRequest;
-                        if ($quotationRequest) {
-                            $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with(['materials'])->get();
-                            foreach ($rfqs as $rfq) {
-                                $mat = $rfq->materials->firstWhere('id', $material->id);
-                                if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id) {
-                                    $preferredSupplierId = $mat->pivot->selected_supplier_id;
-                                    $estimatedUnitPrice = $mat->pivot->unit_price ?? $estimatedUnitPrice;
-                                    break;
-                                }
-                            }
-                        }
-                        $purchaseRequestItems[] = [
-                            'material_id' => $material->id,
-                            'description' => $material->name,
-                            'quantity' => $remainingQty,
-                            'unit' => $unit,
-                            'preferred_supplier_id' => $preferredSupplierId,
-                            'estimated_unit_price' => $estimatedUnitPrice,
-                            'total_amount' => $remainingQty * $estimatedUnitPrice,
-                        ];
-                    }
-                }
-            }
-
-            // If any item was short, create a purchase request
-            if (!empty($purchaseRequestItems)) {
-                $purchaseRequest = PurchaseRequest::create([
-                    'request_number' => 'PR-' . str_pad(PurchaseRequest::count() + 1, 6, '0', STR_PAD_LEFT),
-                    'material_request_id' => $materialRequest->id,
+            $materialRequest = DB::transaction(function () use ($validated) {
+                $materialRequest = MaterialRequest::create([
+                    'quotation_request_id' => $validated['quotation_request_id'],
                     'requested_by' => auth()->id(),
                     'status' => 'pending',
-                    'is_project_related' => false,
-                    'notes' => 'Auto-generated from Material Request #' . $materialRequest->id,
+                    'notes' => $validated['notes'],
                 ]);
-                $totalAmount = 0;
-                foreach ($purchaseRequestItems as $prItem) {
-                    $purchaseRequest->items()->create($prItem);
-                    $totalAmount += $prItem['total_amount'];
-                }
-                $purchaseRequest->total_amount = $totalAmount;
-                $purchaseRequest->save();
-            }
 
-            $materialRequest->save();
-            DB::commit();
+                $purchaseRequestItems = [];
+                foreach ($validated['items'] as $itemData) {
+                    $material = Material::find($itemData['material_id']);
+                    $requestedQty = $itemData['quantity'];
+                    $remainingQty = $requestedQty;
+                    $unit = $itemData['unit'] ?? ($material ? $material->unit : null);
+                    if (empty($unit)) {
+                        throw new \RuntimeException('Material "' . ($material ? $material->name : 'Unknown') . '" (ID: ' . ($material ? $material->id : 'N/A') . ') is missing a unit. Please check your materials data.');
+                    }
+
+                    // Deduct from stock across all warehouses
+                    $totalStock = Stock::where('material_id', $material->id)->sum('current_stock');
+                    if ($totalStock >= $remainingQty) {
+                        // Fulfill from stock (across warehouses)
+                        $warehouses = Warehouse::all();
+                        foreach ($warehouses as $warehouse) {
+                            $stock = $warehouse->stocks()->where('material_id', $material->id)->first();
+                            if ($stock && $stock->current_stock > 0 && $remainingQty > 0) {
+                                $deduct = min($stock->current_stock, $remainingQty);
+                                $stock->current_stock -= $deduct;
+                                $stock->save();
+                                $materialRequest->items()->create([
+                                    'material_id' => $material->id,
+                                    'warehouse_id' => $warehouse->id,
+                                    'quantity' => $deduct,
+                                    'unit' => $unit,
+                                    'fulfilled_quantity' => $deduct,
+                                ]);
+                                $remainingQty -= $deduct;
+                            }
+                        }
+                    } else {
+                        // Fulfill as much as possible from stock, rest goes to purchase request
+                        $warehouses = Warehouse::all();
+                        foreach ($warehouses as $warehouse) {
+                            $stock = $warehouse->stocks()->where('material_id', $material->id)->first();
+                            if ($stock && $stock->current_stock > 0 && $remainingQty > 0) {
+                                $deduct = min($stock->current_stock, $remainingQty);
+                                $stock->current_stock -= $deduct;
+                                $stock->save();
+                                $materialRequest->items()->create([
+                                    'material_id' => $material->id,
+                                    'warehouse_id' => $warehouse->id,
+                                    'quantity' => $deduct,
+                                    'unit' => $unit,
+                                    'fulfilled_quantity' => $deduct,
+                                ]);
+                                $remainingQty -= $deduct;
+                            }
+                        }
+                        // Add shortfall to purchase request
+                        if ($remainingQty > 0) {
+                            $materialRequest->items()->create([
+                                'material_id' => $material->id,
+                                'warehouse_id' => null,
+                                'quantity' => $remainingQty,
+                                'unit' => $unit,
+                                'fulfilled_quantity' => 0,
+                            ]);
+                            // Fetch supplier and price from material_quotation
+                            $preferredSupplierId = null;
+                            $estimatedUnitPrice = $material->base_price;
+                            $quotationRequest = $materialRequest->quotationRequest;
+                            if ($quotationRequest) {
+                                $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with(['materials'])->get();
+                                foreach ($rfqs as $rfq) {
+                                    $mat = $rfq->materials->firstWhere('id', $material->id);
+                                    if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id) {
+                                        $preferredSupplierId = $mat->pivot->selected_supplier_id;
+                                        $estimatedUnitPrice = $mat->pivot->unit_price ?? $estimatedUnitPrice;
+                                        break;
+                                    }
+                                }
+                            }
+                            $purchaseRequestItems[] = [
+                                'material_id' => $material->id,
+                                'description' => $material->name,
+                                'quantity' => $remainingQty,
+                                'unit' => $unit,
+                                'preferred_supplier_id' => $preferredSupplierId,
+                                'estimated_unit_price' => $estimatedUnitPrice,
+                                'total_amount' => $remainingQty * $estimatedUnitPrice,
+                            ];
+                        }
+                    }
+                }
+
+                // If any item was short, create a purchase request
+                if (!empty($purchaseRequestItems)) {
+                    $purchaseRequest = PurchaseRequest::create([
+                        'request_number' => 'PR-' . str_pad(PurchaseRequest::count() + 1, 6, '0', STR_PAD_LEFT),
+                        'material_request_id' => $materialRequest->id,
+                        'requested_by' => auth()->id(),
+                        'status' => 'pending',
+                        'is_project_related' => false,
+                        'notes' => 'Auto-generated from Material Request #' . $materialRequest->id,
+                    ]);
+                    $totalAmount = 0;
+                    foreach ($purchaseRequestItems as $prItem) {
+                        $purchaseRequest->items()->create($prItem);
+                        $totalAmount += $prItem['total_amount'];
+                    }
+                    $purchaseRequest->total_amount = $totalAmount;
+                    $purchaseRequest->save();
+                }
+
+                $materialRequest->save();
+                return $materialRequest;
+            });
             return redirect()->route('material-requests.show', $materialRequest)->with('success', 'Material request created successfully.');
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error creating material request: ' . $e->getMessage());
+            Log::error('Error creating material request: ' . $e->getMessage(), [
+                'user_id' => auth()->id(),
+                'quotation_request_id' => $request->input('quotation_request_id'),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return back()->with('error', 'There was an error creating the material request. Please try again.');
         }
     }

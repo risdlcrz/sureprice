@@ -27,40 +27,46 @@ class WarehouseDashboardController extends Controller
     public function index()
     {
         $this->logPageView('Viewed Warehouse Dashboard');
-        // Get total materials count
-        $totalMaterials = Material::count();
-        
-        // Get low stock materials (less than 10% of minimum stock)
-        $lowStockMaterials = Material::whereRaw('current_stock < (minimum_stock * 0.1)')
-            ->with('category')
+        try {
+            // Get total materials count
+            $totalMaterials = Material::count();
+            // Get low stock materials (less than 10% of minimum stock)
+            $lowStockMaterials = Material::whereRaw('current_stock < (minimum_stock * 0.1)')
+                ->with('category')
+                ->get();
+            // Get pending deliveries
+            $pendingDeliveries = Delivery::where('status', 'pending')
+                ->with(['items.material'])
+                ->latest()
+                ->take(5)
+                ->get();
+            // Get recent stock movements
+            $recentMovements = StockMovement::with(['material'])
+                ->latest()
+                ->take(10)
+                ->get();
+            // Get stock value statistics
+            $stockValue = Material::sum(DB::raw('IFNULL(current_stock,0) * IFNULL(base_price,0)'));
+            // Get monthly stock movements
+            $monthlyMovements = StockMovement::select(
+                DB::raw('MONTH(created_at) as month'),
+                DB::raw('SUM(CASE WHEN type = "in" THEN quantity ELSE 0 END) as incoming'),
+                DB::raw('SUM(CASE WHEN type = "out" THEN quantity ELSE 0 END) as outgoing')
+            )
+            ->whereYear('created_at', Carbon::now()->year)
+            ->groupBy('month')
             ->get();
-            
-        // Get pending deliveries
-        $pendingDeliveries = Delivery::where('status', 'pending')
-            ->with(['items.material'])
-            ->latest()
-            ->take(5)
-            ->get();
-            
-        // Get recent stock movements
-        $recentMovements = StockMovement::with(['material'])
-            ->latest()
-            ->take(10)
-            ->get();
-            
-        // Get stock value statistics
-        $stockValue = Material::sum(DB::raw('current_stock * base_price'));
-        
-        // Get monthly stock movements
-        $monthlyMovements = StockMovement::select(
-            DB::raw('MONTH(created_at) as month'),
-            DB::raw('SUM(CASE WHEN type = "in" THEN quantity ELSE 0 END) as incoming'),
-            DB::raw('SUM(CASE WHEN type = "out" THEN quantity ELSE 0 END) as outgoing')
-        )
-        ->whereYear('created_at', Carbon::now()->year)
-        ->groupBy('month')
-        ->get();
-        
+        } catch (\Exception $e) {
+            return view('warehouse.dashboard', [
+                'totalMaterials' => 0,
+                'lowStockMaterials' => collect(),
+                'pendingDeliveries' => collect(),
+                'recentMovements' => collect(),
+                'stockValue' => 0,
+                'monthlyMovements' => collect(),
+                'error' => $e->getMessage()
+            ]);
+        }
         return view('warehouse.dashboard', compact(
             'totalMaterials',
             'lowStockMaterials',

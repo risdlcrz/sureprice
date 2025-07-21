@@ -6,6 +6,11 @@ use App\Http\Controllers\Controller;
 
 class DashboardController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function index()
     {
         $user = auth()->user();
@@ -78,53 +83,56 @@ class DashboardController extends Controller
             $q->whereIn('materials.id', $materialIds);
         })->get();
 
-        foreach ($suppliers as $supplier) {
-            $supplierMaterialIds = $supplier->materials()->whereIn('materials.id', $materialIds)->pluck('materials.id');
-            if ($supplierMaterialIds->isEmpty()) continue;
+        \DB::transaction(function () use ($suppliers, $materialIds, $quotationRequest) {
+            foreach ($suppliers as $supplier) {
+                $supplierMaterialIds = $supplier->materials()->whereIn('materials.id', $materialIds)->pluck('materials.id');
+                if ($supplierMaterialIds->isEmpty()) continue;
 
-            // Generate RFQ number
-            $lastQuotation = \App\Models\Quotation::orderByDesc('id')->first();
-            if ($lastQuotation && preg_match('/RFQ-(\\d+)/i', $lastQuotation->rfq_number, $matches)) {
-                $nextNumber = intval($matches[1]) + 1;
-            } else {
-                $nextNumber = 1;
-            }
-            $rfqNumber = 'RFQ-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+                // Generate RFQ number with unique constraint check
+                do {
+                    $lastQuotation = \App\Models\Quotation::orderByDesc('id')->first();
+                    if ($lastQuotation && preg_match('/RFQ-(\\d+)/i', $lastQuotation->rfq_number, $matches)) {
+                        $nextNumber = intval($matches[1]) + 1;
+                    } else {
+                        $nextNumber = 1;
+                    }
+                    $rfqNumber = 'RFQ-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+                } while (\App\Models\Quotation::where('rfq_number', $rfqNumber)->exists());
 
-            $quotation = \App\Models\Quotation::create([
-                'purchase_request_id' => null,
-                'rfq_number' => $rfqNumber,
-                'status' => 'draft',
-                'notes' => 'Auto-generated from client quotation request #' . $quotationRequest->request_number,
-                'due_date' => now()->addDays(7),
-            ]);
-            // Attach supplier
-            $quotation->suppliers()->attach($supplier->id);
-            // Attach materials
-            $materialSyncData = [];
-            foreach ($supplierMaterialIds as $matId) {
-                $materialSyncData[$matId] = ['quantity' => 1];
-            }
-            $quotation->materials()->sync($materialSyncData);
-            // Notify supplier's user
-            if ($supplier->user) {
-                \App\Models\Notification::create([
-                    'user_id' => $supplier->user->id,
-                    'type' => 'rfq_created',
-                    'notifiable_type' => \App\Models\Quotation::class,
-                    'notifiable_id' => $quotation->id,
-                    'data' => [
-                        'title' => 'New RFQ Created',
-                        'message' => 'A new Request for Quotation (RFQ #' . $quotation->rfq_number . ') has been created for you.',
-                        'link' => route('supplier.quotations.show', $quotation->id),
-                    ],
-                    'for_role' => 'supplier',
+                $quotation = \App\Models\Quotation::create([
+                    'purchase_request_id' => null,
+                    'rfq_number' => $rfqNumber,
+                    'status' => 'draft',
+                    'notes' => 'Auto-generated from client quotation request #' . $quotationRequest->request_number,
+                    'due_date' => now()->addDays(7),
                 ]);
+                // Attach supplier
+                $quotation->suppliers()->attach($supplier->id);
+                // Attach materials
+                $materialSyncData = [];
+                foreach ($supplierMaterialIds as $matId) {
+                    $materialSyncData[$matId] = ['quantity' => 1];
+                }
+                $quotation->materials()->sync($materialSyncData);
+                // Notify supplier's user
+                if ($supplier->user) {
+                    \App\Models\Notification::create([
+                        'user_id' => $supplier->user->id,
+                        'type' => 'rfq_created',
+                        'notifiable_type' => \App\Models\Quotation::class,
+                        'notifiable_id' => $quotation->id,
+                        'data' => [
+                            'title' => 'New RFQ Created',
+                            'message' => 'A new Request for Quotation (RFQ #' . $quotation->rfq_number . ') has been created for you.',
+                            'link' => route('supplier.quotations.show', $quotation->id),
+                        ],
+                        'for_role' => 'supplier',
+                    ]);
+                }
             }
-        }
-
-        $quotationRequest->status = 'reviewed';
-        $quotationRequest->save();
+            $quotationRequest->status = 'reviewed';
+            $quotationRequest->save();
+        });
 
         return redirect()->back()->with('success', 'RFQs have been created for all relevant suppliers.');
     }

@@ -70,7 +70,7 @@ class InquiryController extends Controller
             'materials.*.id' => 'required|exists:materials,id',
             'materials.*.quantity' => 'required|numeric|min:1',
             'materials.*.notes' => 'nullable|string',
-            'attachments.*' => 'nullable|file|max:10240'
+            'attachments.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg,gif,txt|max:10240'
         ]);
 
         $inquiry = Inquiry::create([
@@ -92,11 +92,16 @@ class InquiryController extends Controller
 
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('inquiries/' . $inquiry->id);
-                $inquiry->attachments()->create([
-                    'path' => $path,
-                    'original_name' => $file->getClientOriginalName()
-                ]);
+                try {
+                    $path = $file->store('inquiries/' . $inquiry->id);
+                    $inquiry->attachments()->create([
+                        'path' => $path,
+                        'original_name' => $file->getClientOriginalName()
+                    ]);
+                } catch (\Exception $e) {
+                    return redirect()->route('inquiries.index')
+                        ->with('error', 'Failed to upload attachment: ' . $e->getMessage());
+                }
             }
         }
 
@@ -132,7 +137,7 @@ class InquiryController extends Controller
             'materials.*.id' => 'required|exists:materials,id',
             'materials.*.quantity' => 'required|numeric|min:1',
             'materials.*.notes' => 'nullable|string',
-            'attachments.*' => 'nullable|file|max:10240'
+            'attachments.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg,gif,txt|max:10240'
         ]);
 
         $inquiry->update([
@@ -155,11 +160,16 @@ class InquiryController extends Controller
 
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $path = $file->store('inquiries/' . $inquiry->id);
-                $inquiry->attachments()->create([
-                    'path' => $path,
-                    'original_name' => $file->getClientOriginalName()
-                ]);
+                try {
+                    $path = $file->store('inquiries/' . $inquiry->id);
+                    $inquiry->attachments()->create([
+                        'path' => $path,
+                        'original_name' => $file->getClientOriginalName()
+                    ]);
+                } catch (\Exception $e) {
+                    return redirect()->route('inquiries.index')
+                        ->with('error', 'Failed to upload attachment: ' . $e->getMessage());
+                }
             }
         }
 

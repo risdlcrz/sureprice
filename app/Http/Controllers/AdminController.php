@@ -49,40 +49,53 @@ public function pending()
 
 public function approve(Company $company)
 {
-    $company->update(['status' => 'approved']);
+    try {
+        $company->update(['status' => 'approved']);
 
-    if ($company->designation === 'supplier') {
-        $address = trim(implode(', ', array_filter([
-            $company->street,
-            $company->barangay,
-            $company->city,
-            $company->state,
-            $company->postal
-        ])));
-        
-        \App\Models\Supplier::updateOrCreate(
-            [
-                'email' => $company->email,
-            ],
-            [
-                'company_name' => $company->company_name,
-                'contact_person' => $company->contact_person,
-                'phone' => $company->mobile_number,
+        if ($company->designation === 'supplier') {
+            $address = trim(implode(', ', array_filter([
+                $company->street,
+                $company->barangay,
+                $company->city,
+                $company->state,
+                $company->postal
+            ])));
+            // Ensure required fields are not null
+            $supplierData = [
+                'company_name' => $company->company_name ?? '',
+                'contact_person' => $company->contact_person ?? '',
+                'phone' => $company->mobile_number ?? '',
                 'address' => $address,
                 'status' => 'active',
-                'registration_number' => $company->business_reg_no,
+                'registration_number' => $company->business_reg_no ?? '',
                 'user_id' => $company->user_id,
                 'company_id' => $company->id,
-            ]
-        );
+            ];
+            // Only add email if not null
+            $email = $company->email ?? null;
+            if ($email) {
+                \App\Models\Supplier::updateOrCreate(
+                    [ 'email' => $email ],
+                    array_merge($supplierData, ['email' => $email])
+                );
+            } else {
+                \Log::warning('Company approval: Supplier email is null', ['company_id' => $company->id]);
+            }
+        }
+        // Send approval notification to the company user
+        if ($company->user) {
+            $company->user->notify(new CompanyApprovedNotification());
+        } else {
+            \Log::warning('Company approval: No user found for company', ['company_id' => $company->id]);
+        }
+        return back()->with('success', 'Company approved successfully!');
+    } catch (\Exception $e) {
+        \Log::error('Company approval failed: ' . $e->getMessage(), [
+            'company_id' => $company->id,
+            'trace' => $e->getTraceAsString(),
+        ]);
+        return back()->with('error', 'Company approval failed: ' . $e->getMessage());
     }
-    
-    // Send approval notification to the company user
-    if ($company->user) {
-        $company->user->notify(new CompanyApprovedNotification());
-    }
-    
-    return back()->with('success', 'Company approved successfully!');
 }
 
 public function reject(Request $request, Company $company)

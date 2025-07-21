@@ -14,6 +14,11 @@ use App\Models\Notification;
 
 class SupplierDashboardController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     public function ranking()
     {
         $supplier = Auth::user()->supplier;
@@ -34,7 +39,7 @@ class SupplierDashboardController extends Controller
             ->count();
         $onTimeDeliveries = PurchaseOrder::where('supplier_id', $supplier->id)
             ->where('status', 'completed')
-            ->where('delivery_date', '<=', DB::raw('delivery_date'))
+            ->whereColumn('delivery_date', '<=', 'expected_delivery_date')
             ->count();
         $onTimeRate = $totalDeliveries > 0 ? round(($onTimeDeliveries / $totalDeliveries) * 100) : 0;
 
@@ -47,7 +52,7 @@ class SupplierDashboardController extends Controller
         // Get late deliveries count
         $lateDeliveries = PurchaseOrder::where('supplier_id', $supplier->id)
             ->where('status', 'completed')
-            ->where('delivery_date', '>', DB::raw('delivery_date'))
+            ->whereColumn('delivery_date', '>', 'expected_delivery_date')
             ->count();
 
         // Get quality metrics
@@ -127,7 +132,7 @@ class SupplierDashboardController extends Controller
             $ranking = SupplierRanking::where('supplier_id', $supplier->id)->first();
             $completedOrders = PurchaseOrder::where('supplier_id', $supplier->id)->where('status', 'completed')->count();
             $totalDeliveries = PurchaseOrder::where('supplier_id', $supplier->id)->where('status', 'completed')->count();
-            $onTimeDeliveries = PurchaseOrder::where('supplier_id', $supplier->id)->where('status', 'completed')->where('delivery_date', '<=', DB::raw('delivery_date'))->count();
+            $onTimeDeliveries = PurchaseOrder::where('supplier_id', $supplier->id)->where('status', 'completed')->whereColumn('delivery_date', '<=', 'expected_delivery_date')->count();
             $onTimeRate = $totalDeliveries > 0 ? round(($onTimeDeliveries / $totalDeliveries) * 100) : 0;
             $averageRating = OrderEvaluation::whereHas('order', function($query) use ($supplier) {
                 $query->where('supplier_id', $supplier->id);

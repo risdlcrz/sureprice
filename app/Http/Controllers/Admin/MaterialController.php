@@ -86,7 +86,11 @@ class MaterialController extends Controller
             $sumXY += $x[$i] * $y[$i];
             $sumX2 += $x[$i] * $x[$i];
         }
-        $slope = ($n * $sumXY - $sumX * $sumY) / ($n * $sumX2 - $sumX * $sumX);
+        $denominator = ($n * $sumX2 - $sumX * $sumX);
+        if ($denominator == 0) {
+            return null; // Prevent division by zero
+        }
+        $slope = ($n * $sumXY - $sumX * $sumY) / $denominator;
         $intercept = ($sumY - $slope * $sumX) / $n;
         $nextX = $n + 1;
         $forecast = $slope * $nextX + $intercept;
@@ -133,7 +137,11 @@ class MaterialController extends Controller
             $sumXY += $x[$i] * $y[$i];
             $sumX2 += $x[$i] * $x[$i];
         }
-        $slope = ($n * $sumXY - $sumX * $sumY) / ($n * $sumX2 - $sumX * $sumX);
+        $denominator = ($n * $sumX2 - $sumX * $sumX);
+        if ($denominator == 0) {
+            return null; // Prevent division by zero
+        }
+        $slope = ($n * $sumXY - $sumX * $sumY) / $denominator;
         $intercept = ($sumY - $slope * $sumX) / $n;
         $nextX = $n + 1;
         $forecast = $slope * $nextX + $intercept;

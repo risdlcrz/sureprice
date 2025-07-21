@@ -148,53 +148,58 @@ class WarehouseInventoryController extends Controller
             'quantity' => 'required|integer|min:0',
             'notes' => 'nullable|string'
         ]);
-        DB::transaction(function() use ($request) {
-            $stock = Stock::firstOrCreate([
-                'warehouse_id' => $request->warehouse_id,
-                'material_id' => $request->material_id,
-            ], [
-                'current_stock' => 0,
-                'threshold' => 0,
-            ]);
-            $oldStock = $stock->current_stock;
-            switch ($request->adjustment_type) {
-                case 'add':
-                    $stock->current_stock += $request->quantity;
-                    $type = 'in';
-                    break;
-                case 'remove':
-                    if ($request->quantity > $stock->current_stock) {
-                        throw new \Exception('Cannot remove more stock than available');
-                    }
-                    $stock->current_stock -= $request->quantity;
-                    $type = 'out';
-                    break;
-                case 'set':
-                    $type = $request->quantity > $oldStock ? 'in' : 'out';
-                    $stock->current_stock = $request->quantity;
-                    break;
-            }
-            $stock->save();
-            StockMovement::create([
-                'material_id' => $stock->material_id,
-                'type' => $type,
-                'quantity' => abs($request->quantity - $oldStock),
-                'previous_stock' => $oldStock,
-                'new_stock' => $stock->current_stock,
-                'notes' => $request->notes,
-                'reference_number' => 'STK-' . strtoupper(uniqid()),
-                'warehouse_id' => $stock->warehouse_id,
-            ]);
-            // Sync to admin Inventory if Main Warehouse
-            $mainWarehouse = \App\Models\Warehouse::where('name', 'Main Warehouse')->first();
-            if ($mainWarehouse && $mainWarehouse->id == $request->warehouse_id) {
-                $inventory = \App\Models\Inventory::firstOrCreate([
-                    'material_id' => $request->material_id
+        try {
+            DB::transaction(function() use ($request) {
+                $stock = Stock::firstOrCreate([
+                    'warehouse_id' => $request->warehouse_id,
+                    'material_id' => $request->material_id,
+                ], [
+                    'current_stock' => 0,
+                    'threshold' => 0,
                 ]);
-                $inventory->quantity = $stock->current_stock;
-                $inventory->save();
-            }
-        });
+                $oldStock = $stock->current_stock;
+                switch ($request->adjustment_type) {
+                    case 'add':
+                        $stock->current_stock += $request->quantity;
+                        $type = 'in';
+                        break;
+                    case 'remove':
+                        if ($request->quantity > $stock->current_stock) {
+                            throw new \Exception('Cannot remove more stock than available');
+                        }
+                        $stock->current_stock -= $request->quantity;
+                        $type = 'out';
+                        break;
+                    case 'set':
+                        $type = $request->quantity > $oldStock ? 'in' : 'out';
+                        $stock->current_stock = $request->quantity;
+                        break;
+                }
+                $stock->save();
+                StockMovement::create([
+                    'material_id' => $stock->material_id,
+                    'type' => $type,
+                    'quantity' => abs($request->quantity - $oldStock),
+                    'previous_stock' => $oldStock,
+                    'new_stock' => $stock->current_stock,
+                    'notes' => $request->notes,
+                    'reference_number' => 'STK-' . strtoupper(uniqid()),
+                    'warehouse_id' => $stock->warehouse_id,
+                ]);
+                // Sync to admin Inventory if Main Warehouse
+                $mainWarehouse = \App\Models\Warehouse::where('name', 'Main Warehouse')->first();
+                if ($mainWarehouse && $mainWarehouse->id == $request->warehouse_id) {
+                    $inventory = \App\Models\Inventory::firstOrCreate([
+                        'material_id' => $request->material_id
+                    ]);
+                    $inventory->quantity = $stock->current_stock;
+                    $inventory->save();
+                }
+            });
+        } catch (\Exception $e) {
+            return redirect()->route('warehouse.inventory.index', ['warehouse_id' => $request->warehouse_id])
+                ->with('error', $e->getMessage());
+        }
         return redirect()->route('warehouse.inventory.index', ['warehouse_id' => $request->warehouse_id])
             ->with('success', 'Stock updated successfully');
     }

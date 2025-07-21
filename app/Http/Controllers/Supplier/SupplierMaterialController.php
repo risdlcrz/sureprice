@@ -80,15 +80,22 @@ class SupplierMaterialController extends Controller
             'category_id' => 'nullable|exists:categories,id',
         ]);
 
-        // Create the material (can be shared among suppliers initially, or link directly)
-        // For now, let's assume a material is created globally and then associated with the supplier
-        $material = Material::create($validated);
+        // Check for existing material by name and code
+        $material = Material::where('name', $validated['name'])
+            ->where('code', $validated['code'])
+            ->first();
+        if (!$material) {
+            // Create the material if it doesn't exist
+            $material = Material::create($validated);
+        }
 
-        // Attach the material to the supplier with the specific price
-        $supplier->materials()->attach($material->id, [
-            'price' => $validated['price'],
-            'is_preferred' => false // Default to not preferred when created by supplier
-        ]);
+        // Attach the material to the supplier with the specific price if not already linked
+        if (!$supplier->materials()->where('material_id', $material->id)->exists()) {
+            $supplier->materials()->attach($material->id, [
+                'price' => $validated['price'],
+                'is_preferred' => false // Default to not preferred when created by supplier
+            ]);
+        }
 
         return redirect()->route('supplier.materials.index')
             ->with('success', 'Material added successfully.');

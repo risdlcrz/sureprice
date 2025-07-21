@@ -122,6 +122,24 @@ class SupplierController extends Controller
             ->where('supplier_id', $supplier->id)
             ->selectRaw('AVG(ontime_deliveries) as ontime_deliveries, AVG(total_deliveries) as total_deliveries, AVG(defective_units) as defective_units, AVG(total_units) as total_units, AVG(actual_cost) as actual_cost, AVG(estimated_cost) as estimated_cost')
             ->first();
+        // Add null checks for view
+        $latestOrder = $latestOrder ?: (object)[
+            'order_date' => null,
+            'ontime_deliveries' => null,
+            'total_deliveries' => null,
+            'defective_units' => null,
+            'total_units' => null,
+            'actual_cost' => null,
+            'estimated_cost' => null
+        ];
+        $avgOrder = $avgOrder ?: (object)[
+            'ontime_deliveries' => null,
+            'total_deliveries' => null,
+            'defective_units' => null,
+            'total_units' => null,
+            'actual_cost' => null,
+            'estimated_cost' => null
+        ];
         return view('admin.suppliers.show', compact('supplier', 'latestOrder', 'avgOrder'));
     }
 
