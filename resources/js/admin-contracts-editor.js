@@ -89,6 +89,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (laborFee) laborFee.value = data.labor_fee?.toFixed(2) || '0.00';
                 const grandTotal = document.getElementById('grand_total');
                 if (grandTotal) grandTotal.value = data.grand_total?.toFixed(2) || '0.00';
+                // Autofill client signature name and date
+                const clientNameSigned = document.getElementById('client_name_signed_display');
+                if (clientNameSigned) clientNameSigned.innerText = data.client?.name || '';
+                const clientDateSigned = document.getElementById('client_date_signed_display');
+                if (clientDateSigned) clientDateSigned.innerText = (new Date()).toLocaleDateString();
             });
     });
     // --- End Quotation Request Autofill ---
@@ -129,8 +134,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (nameSpan) nameSpan.innerText = fullName;
             const addressSpan = document.getElementById('contractor_address_display');
             if (addressSpan) addressSpan.innerText = address;
+            // Autofill contractor signature name and date
             const nameSignedSpan = document.getElementById('contractor_name_signed_display');
             if (nameSignedSpan) nameSignedSpan.innerText = fullName;
+            const contractorDateSigned = document.getElementById('contractor_date_signed_display');
+            if (contractorDateSigned) contractorDateSigned.innerText = (new Date()).toLocaleDateString();
             // Fill hidden fields
             document.getElementById('contractor_name').value = fullName;
             document.getElementById('contractor_street').value = selected.dataset.street || '';
