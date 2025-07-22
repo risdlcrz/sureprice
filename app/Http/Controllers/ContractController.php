@@ -175,6 +175,9 @@ class ContractController extends Controller
                 // Find all RFQs (Quotations) generated for this QuotationRequest
                 $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with('materials')->get();
 
+                // Get the finalized supplier mapping from the quotation request
+                $finalizedSuppliers = $quotationRequest->selected_suppliers ?? [];
+
                 foreach ($quotationRequest->rooms as $room) {
                     $newRoom = $contract->rooms()->create([
                         'name' => $room->name,
@@ -198,17 +201,17 @@ class ContractController extends Controller
                                 $material = $materialId ? \App\Models\Material::find($materialId) : null;
                                 $qty = $mat['quantity'] ?? 1;
                                 $unit = $mat['unit'] ?? ($material ? $material->unit : 'pcs');
-                                
-                                // Find the selected supplier and unit price from the RFQ pivot table
-                                $supplierId = null;
-                                $unitPrice = $material ? $material->base_price : 0;
 
-                                foreach ($rfqs as $rfq) {
-                                    $pivotData = $rfq->materials()->where('material_id', $materialId)->first();
-                                    if ($pivotData && $pivotData->pivot->selected_supplier_id) {
-                                        $supplierId = $pivotData->pivot->selected_supplier_id;
-                                        $unitPrice = $pivotData->pivot->unit_price ?? $unitPrice;
-                                        break;
+                                // Only use the supplier that the client finalized
+                                $supplierId = $finalizedSuppliers[$materialId] ?? null;
+                                $unitPrice = $material ? $material->base_price : 0;
+                                if ($supplierId) {
+                                    foreach ($rfqs as $rfq) {
+                                        $pivotData = $rfq->materials()->where('material_id', $materialId)->first();
+                                        if ($pivotData && $pivotData->pivot->selected_supplier_id == $supplierId) {
+                                            $unitPrice = $pivotData->pivot->unit_price ?? $unitPrice;
+                                            break;
+                                        }
                                     }
                                 }
 

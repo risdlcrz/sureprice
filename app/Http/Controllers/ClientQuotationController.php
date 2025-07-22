@@ -598,17 +598,13 @@ class ClientQuotationController extends Controller
             'supplier_id' => 'nullable|integer',
         ]);
         $quotationRequest = \App\Models\QuotationRequest::findOrFail($request->quotation_request_id);
-        // Save or update the selected supplier for this material
+        // Save or update the selected supplier for this material in the quotation_requests table only
         $selected = $quotationRequest->selected_suppliers ?? [];
         $selected[$request->material_id] = $request->supplier_id;
         $quotationRequest->selected_suppliers = $selected;
         $quotationRequest->save();
 
-        // Update the pivot table for all related RFQs
-        $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #' . $quotationRequest->request_number . '%')->get();
-        foreach ($rfqs as $rfq) {
-            $rfq->materials()->updateExistingPivot($request->material_id, ['selected_supplier_id' => $request->supplier_id]);
-        }
+        // Do NOT update the pivot table here. Only update it in finalizeSelection.
 
         return response()->json(['success' => true]);
     }

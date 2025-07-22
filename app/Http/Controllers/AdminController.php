@@ -370,12 +370,12 @@ public function finalizeQuotationSelection(Request $request, $id)
     $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with(['materials'])->get();
 
     // For each material, update the selected_supplier_id in material_quotation
-    foreach ($selectedSuppliers as $materialId => $supplierId) {
-        foreach ($rfqs as $rfq) {
-            // Update the pivot for this material in this RFQ
-            $rfq->materials()->updateExistingPivot($materialId, ['selected_supplier_id' => $supplierId]);
-        }
-    }
+    // Remove or comment out any code like this in AdminController:
+    // foreach ($selectedSuppliers as $materialId => $supplierId) {
+    //     foreach ($rfqs as $rfq) {
+    //         $rfq->materials()->updateExistingPivot($materialId, ['selected_supplier_id' => $supplierId]);
+    //     }
+    // }
 
     // Notify the client (user who created the quotation request)
     if ($quotationRequest->user_id) {

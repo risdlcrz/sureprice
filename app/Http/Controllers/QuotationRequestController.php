@@ -39,25 +39,27 @@ class QuotationRequestController extends Controller
                         $qty = $mat['quantity'] ?? 1;
                         $unitPrice = 0;
                         // Try to get the selected supplier's quoted price from the pivot
-                        if ($materialId && isset($selectedSuppliers[$materialId])) {
-                            $selectedSupplierId = $selectedSuppliers[$materialId];
-                            foreach (array_reverse($rfqs->all()) as $rfq) {
+                        $pivot = null;
+                        $finalizedSupplierId = $quotation->selected_suppliers[$materialId] ?? null;
+                        if ($materialId && $finalizedSupplierId) {
+                            foreach ($rfqs as $rfq) {
                                 $pivot = \DB::table('material_quotation')
                                     ->where('quotation_id', $rfq->id)
                                     ->where('material_id', $materialId)
-                                    ->where('selected_supplier_id', $selectedSupplierId)
+                                    ->where('selected_supplier_id', $finalizedSupplierId)
                                     ->first();
-                                if ($pivot && $pivot->unit_price) {
-                                    $unitPrice = $pivot->unit_price;
-                                    \Log::info('Contract showJson material (DB direct)', [
-                                        'material_id' => $materialId,
-                                        'selected_supplier_id' => $selectedSupplierId,
-                                        'unit_price' => $unitPrice,
-                                        'rfq_id' => $rfq->id,
-                                    ]);
-                                    break;
-                                }
+                                if ($pivot) break;
                             }
+                        }
+                        \Log::info('Pivot row found', ['pivot' => $pivot]);
+                        if ($pivot && $pivot->unit_price) {
+                            $unitPrice = $pivot->unit_price;
+                            \Log::info('Contract showJson material (DB direct)', [
+                                'material_id' => $materialId,
+                                'selected_supplier_id' => $finalizedSupplierId,
+                                'unit_price' => $unitPrice,
+                                'rfq_id' => $pivot->quotation_id ?? null,
+                            ]);
                         }
                         // Fallback to base price if no supplier price found
                         if (!$unitPrice && $materialId) {
@@ -144,10 +146,10 @@ class QuotationRequestController extends Controller
             'start_date' => $startDate,
             'end_date' => $endDate,
             // Add selected scopes for each room, now including chosen supplier
-            'rooms' => $quotation->rooms->map(function($room) use ($quotation) {
+            'rooms' => $quotation->rooms->map(function($room) use ($quotation, $rfqs) {
                 return [
                     'name' => $room->name,
-                    'scopes' => $room->scopes->map(function($scope) use ($quotation) {
+                    'scopes' => $room->scopes->map(function($scope) use ($quotation, $rfqs) {
                         $scopeName = $scope->scopeType->name ?? $scope->scope_name ?? '';
                         $chosenSupplier = 'none selected';
                         $selectedMaterials = [];
@@ -165,36 +167,25 @@ class QuotationRequestController extends Controller
                                 ]);
                                 // --- Improved supplier lookup ---
                                 $pivot = null;
-                                if ($materialId) {
-                                    $pivot = \DB::table('material_quotation')
-                                        ->where('quotation_id', $quotation->id)
-                                        ->where('material_id', $materialId)
-                                        ->whereNotNull('selected_supplier_id')
-                                        ->first();
-                                }
-                                if (!$pivot && !empty($mat['name'])) {
-                                    $materialByName = \App\Models\Material::where('name', $mat['name'])->first();
-                                    if ($materialByName) {
+                                $finalizedSupplierId = $quotation->selected_suppliers[$materialId] ?? null;
+                                if ($materialId && $finalizedSupplierId) {
+                                    foreach ($rfqs as $rfq) {
                                         $pivot = \DB::table('material_quotation')
-                                            ->where('quotation_id', $quotation->id)
-                                            ->where('material_id', $materialByName->id)
-                                            ->whereNotNull('selected_supplier_id')
+                                            ->where('quotation_id', $rfq->id)
+                                            ->where('material_id', $materialId)
+                                            ->where('selected_supplier_id', $finalizedSupplierId)
                                             ->first();
+                                        if ($pivot) break;
                                     }
                                 }
+                                \Log::info('Pivot row found', ['pivot' => $pivot]);
                                 $selectedSupplierId = null;
                                 $supplierName = 'none selected';
-                                if ($pivot) {
+                                if ($pivot && $pivot->selected_supplier_id) {
                                     $selectedSupplierId = $pivot->selected_supplier_id;
                                     $supplier = \App\Models\Supplier::find($selectedSupplierId);
-                                    $supplierName = $supplier ? $supplier->company_name : 'none selected';
+                                    $supplierName = $supplier && $supplier->company_name ? $supplier->company_name : 'none selected';
                                 }
-                                // --- DEBUG LOGGING ---
-                                \Log::info('Supplier lookup result', [
-                                    'pivot' => $pivot,
-                                    'selectedSupplierId' => $selectedSupplierId,
-                                    'supplierName' => $supplierName,
-                                ]);
                                 $mat['supplier_id'] = $selectedSupplierId;
                                 $mat['supplier_name'] = $supplierName;
                                 // --- END improved supplier lookup ---

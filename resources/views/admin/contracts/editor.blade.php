@@ -9,7 +9,21 @@
         @csrf
         <input type="hidden" name="contractor[name]" id="contractor_name" />
         <input type="hidden" name="contractor[email]" id="contractor_email" />
+        <!-- Contractor Address Fields -->
+        <input type="hidden" name="contractor[street]" id="contractor_street" />
+        <input type="hidden" name="contractor[barangay]" id="contractor_barangay" />
+        <input type="hidden" name="contractor[city]" id="contractor_city" />
+        <input type="hidden" name="contractor[state]" id="contractor_state" />
+        <input type="hidden" name="contractor[postal]" id="contractor_postal" />
+        <!-- Removed contractor phone field -->
         <input type="hidden" name="client[email]" id="client_email" />
+        <!-- Client Address Fields -->
+        <input type="hidden" name="client[street]" id="client_street" />
+        <input type="hidden" name="client[barangay]" id="client_barangay" />
+        <input type="hidden" name="client[city]" id="client_city" />
+        <input type="hidden" name="client[state]" id="client_state" />
+        <input type="hidden" name="client[postal]" id="client_postal" />
+        <!-- Removed client phone field -->
         @if(isset($contract))
             @method('PUT')
         @endif

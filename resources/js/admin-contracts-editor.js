@@ -105,6 +105,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 setValue('property_state', client.state || '');
                 setValue('property_postal', client.postal || '');
                 setValue('property_barangay', ''); // Always set property barangay to empty string if not present
+                // Set client address fields for contract saving
+                setValue('client_street', client.street || '');
+                setValue('client_barangay', client.barangay || '');
+                setValue('client_city', client.city || '');
+                setValue('client_state', client.state || '');
+                setValue('client_postal', client.postal || '');
                 setValue('contract_scope_of_work', data.scope_of_work || '');
                 setValue('contract_scope_description', data.scope_of_work || ''); // Use scope_of_work as description if no separate field
                 setValue('contract_payment_terms', 'To be agreed'); // Default value
@@ -155,7 +161,17 @@ document.addEventListener('DOMContentLoaded', function() {
                                         const materialName = material.name || material.material_name || 'N/A';
                                         const quantity = material.quantity || 'N/A';
                                         const unit = material.unit || 'N/A';
-                                        const supplier = material.supplier_name || material.supplier || (scope.selected_supplier && scope.selected_supplier.company_name) || scope.supplier_name || 'N/A';
+                                        // Stricter supplier display logic
+                                        let supplier = '';
+                                        if (
+                                            material.supplier_name &&
+                                            material.supplier_name !== 'N/A' &&
+                                            material.supplier_name.toLowerCase() !== 'none selected'
+                                        ) {
+                                            supplier = material.supplier_name;
+                                        } else {
+                                            supplier = 'N/A';
+                                        }
                                         const unitPrice = material.unit_price || material.price || '';
                                         const totalPrice = (unitPrice && quantity && !isNaN(unitPrice) && !isNaN(quantity)) ? (parseFloat(unitPrice) * parseFloat(quantity)).toFixed(2) : '';
                                         summaryRows.push(`<tr>

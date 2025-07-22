@@ -167,16 +167,15 @@
                     <p><strong>Company:</strong> {{ $contract->contractor->company_name }}</p>
                     @endif
                     <p><strong>Address:</strong><br>
-                        {{ $contract->contractor->street }}
-                        @if($contract->contractor->unit)
-                            Unit {{ $contract->contractor->unit }},<br>
+                        @if($contract->contractor->street) {{ $contract->contractor->street }}<br> @endif
+                        @if($contract->contractor->unit) Unit {{ $contract->contractor->unit }},<br> @endif
+                        @if($contract->contractor->barangay) Barangay {{ $contract->contractor->barangay }},<br> @endif
+                        @if($contract->contractor->city) {{ $contract->contractor->city }},<br> @endif
+                        @if($contract->contractor->state || $contract->contractor->postal)
+                            {{ $contract->contractor->state }} {{ $contract->contractor->postal }}
                         @endif
-                        Barangay {{ $contract->contractor->barangay }},<br>
-                        {{ $contract->contractor->city }},<br>
-                        {{ $contract->contractor->state }} {{ $contract->contractor->postal }}
                     </p>
                     <p><strong>Email:</strong> {{ $contract->contractor->email }}</p>
-                    <p><strong>Phone:</strong> {{ $contract->contractor->phone ?? 'N/A' }}</p>
                 </div>
             </div>
         </div>
@@ -192,16 +191,15 @@
                         <p><strong>Company:</strong> {{ $contract->client->company_name }}</p>
                     @endif
                     <p><strong>Address:</strong><br>
-                        {{ $contract->client->street }}
-                        @if($contract->client->unit)
-                            Unit {{ $contract->client->unit }},<br>
+                        @if($contract->client->street) {{ $contract->client->street }}<br> @endif
+                        @if($contract->client->unit) Unit {{ $contract->client->unit }},<br> @endif
+                        @if($contract->client->barangay) Barangay {{ $contract->client->barangay }},<br> @endif
+                        @if($contract->client->city) {{ $contract->client->city }},<br> @endif
+                        @if($contract->client->state || $contract->client->postal)
+                            {{ $contract->client->state }} {{ $contract->client->postal }}
                         @endif
-                        Barangay {{ $contract->client->barangay }},<br>
-                        {{ $contract->client->city }},<br>
-                        {{ $contract->client->state }} {{ $contract->client->postal }}
                     </p>
                     <p><strong>Email:</strong> {{ $contract->client->email }}</p>
-                    <p><strong>Phone:</strong> {{ $contract->client->phone ?? 'N/A' }}</p>
                 </div>
             </div>
         </div>
