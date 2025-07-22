@@ -88,12 +88,18 @@ public function approve(Company $company)
         } else {
             \Log::warning('Company approval: No user found for company', ['company_id' => $company->id]);
         }
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Company approved successfully!']);
+        }
         return back()->with('success', 'Company approved successfully!');
     } catch (\Exception $e) {
         \Log::error('Company approval failed: ' . $e->getMessage(), [
             'company_id' => $company->id,
             'trace' => $e->getTraceAsString(),
         ]);
+        if (request()->wantsJson()) {
+            return response()->json(['success' => false, 'message' => 'Company approval failed: ' . $e->getMessage()], 500);
+        }
         return back()->with('error', 'Company approval failed: ' . $e->getMessage());
     }
 }

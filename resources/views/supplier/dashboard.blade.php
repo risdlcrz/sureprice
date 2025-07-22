@@ -13,7 +13,7 @@
             <div class="card h-100">
                 <div class="card-body">
                     <h3 class="card-title h5">Total Materials</h3>
-                    <p class="display-6 text-primary mb-0">{{ $materials->count() }}</p>
+                    <p class="display-6 text-primary mb-0">{{ ($materials ?? collect())->count() }}</p>
                 </div>
             </div>
         </div>
@@ -21,7 +21,7 @@
             <div class="card h-100">
                 <div class="card-body">
                     <h3 class="card-title h5">Active Quotations</h3>
-                    <p class="display-6 text-success mb-0">{{ $activeQuotations->count() }}</p>
+                    <p class="display-6 text-success mb-0">{{ ($activeQuotations ?? collect())->count() }}</p>
                 </div>
             </div>
         </div>
@@ -29,7 +29,7 @@
             <div class="card h-100">
                 <div class="card-body">
                     <h3 class="card-title h5">Total Sales</h3>
-                    <p class="display-6 text-info mb-0">₱{{ number_format($totalSales, 2) }}</p>
+                    <p class="display-6 text-info mb-0">₱{{ number_format($totalSales ?? 0, 2) }}</p>
                 </div>
             </div>
         </div>
@@ -56,11 +56,11 @@
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="text-muted">Current Period (6 months)</span>
-                            <span class="fw-bold">₱{{ number_format($salesTrend['current_period'] ?? 0, 2) }}</span>
+                            <span class="fw-bold">₱{{ number_format(($salesTrend['current_period'] ?? 0), 2) }}</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <span class="text-muted">Previous Period (6 months)</span>
-                            <span class="fw-bold">₱{{ number_format($salesTrend['previous_period'] ?? 0, 2) }}</span>
+                            <span class="fw-bold">₱{{ number_format(($salesTrend['previous_period'] ?? 0), 2) }}</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="text-muted">Growth Rate</span>
@@ -86,7 +86,7 @@
                     <h5 class="mb-0">Top Selling Materials</h5>
                 </div>
                 <div class="card-body">
-                    @if(count($topSellingMaterials) > 0)
+                    @if(count($topSellingMaterials ?? []) > 0)
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -98,7 +98,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($topSellingMaterials as $material)
+                                    @foreach(($topSellingMaterials ?? []) as $material)
                                     <tr>
                                         <td>
                                             <span class="me-2">
@@ -169,7 +169,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($materials->take(5) as $material)
+                    @forelse(($materials ?? collect())->take(5) as $material)
                     <tr>
                         <td>
                             <span class="me-2">
@@ -198,7 +198,7 @@
                 </tbody>
             </table>
         </div>
-        @if($materials->count() > 5)
+        @if(($materials ?? collect())->count() > 5)
         <div class="card-footer bg-white border-0">
             <a href="{{ route('supplier.materials.index') }}" class="btn btn-link p-0">View all materials &rarr;</a>
         </div>
@@ -221,7 +221,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($activeQuotations->take(5) as $quotation)
+                    @forelse(($activeQuotations ?? collect())->take(5) as $quotation)
                     <tr>
                         <td>{{ $quotation->quotation_number }}</td>
                         <td>
@@ -242,7 +242,7 @@
                 </tbody>
             </table>
         </div>
-        @if($activeQuotations->count() > 5)
+        @if(($activeQuotations ?? collect())->count() > 5)
         <div class="card-footer">
             <a href="{{ route('supplier.quotations.index') }}" class="btn btn-link">View all quotations →</a>
         </div>
@@ -250,7 +250,7 @@
     </div>
 
     <!-- Active Quotations Table -->
-    @if($activeQuotations->count() > 0)
+    @if(($activeQuotations ?? collect())->count() > 0)
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h2 class="h5 mb-0">Your Active Quotations</h2>
@@ -266,7 +266,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($activeQuotations as $quotation)
+                    @foreach(($activeQuotations ?? collect()) as $quotation)
                     <tr>
                         <td>{{ $quotation->request_number ?? $quotation->id }}</td>
                         <td>{{ $quotation->user ? $quotation->user->getDisplayNameAttribute() : 'N/A' }}</td>
