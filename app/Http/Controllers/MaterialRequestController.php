@@ -135,13 +135,6 @@ class MaterialRequestController extends Controller
                     }
                     // Add shortfall to purchase request
                     if ($remainingQty > 0) {
-                        $materialRequest->items()->create([
-                            'material_id' => $material->id,
-                            'warehouse_id' => null,
-                            'quantity' => $remainingQty,
-                            'unit' => $unit,
-                            'fulfilled_quantity' => 0,
-                        ]);
                         // Fetch supplier and price from material_quotation
                         $preferredSupplierId = null;
                         $estimatedUnitPrice = $material->base_price;
@@ -157,6 +150,14 @@ class MaterialRequestController extends Controller
                                 }
                             }
                         }
+                        $materialRequest->items()->create([
+                            'material_id' => $material->id,
+                            'warehouse_id' => null,
+                            'quantity' => $remainingQty,
+                            'unit' => $unit,
+                            'fulfilled_quantity' => 0,
+                            'supplier_id' => $preferredSupplierId,
+                        ]);
                         $purchaseRequestItems[] = [
                             'material_id' => $material->id,
                             'description' => $material->name,
@@ -194,7 +195,7 @@ class MaterialRequestController extends Controller
             return redirect()->route('material-requests.show', $materialRequest)->with('success', 'Material request created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error creating material request: ' . $e->getMessage());
+            Log::error('Error creating material request: ' . $e->getMessage(), ['exception' => $e]);
             return back()->with('error', 'There was an error creating the material request. Please try again.');
         }
     }

@@ -24,33 +24,6 @@ class ContractController extends Controller
         // No need for middleware here as routes are already protected
     }
 
-    public function clearContractSession()
-    {
-        // Clear all possible session keys
-        session()->forget([
-            'contract_step1',
-            'contract_step2',
-            'contract_step3',
-            'contract_step4',
-            'step3_data',
-            'step4_data',
-            'contract_id',
-            'contract_step1.contract_id',
-            'contract_step2.contract_id',
-            'contract_step3.contract_id',
-            'contract_step4.contract_id',
-            'contract_step1.rooms',
-            'contract_step2.rooms',
-            'contract_step3.rooms',
-            'contract_step4.rooms'
-        ]);
-        
-        // Also clear any flash data
-        session()->forget(['success', 'error', 'warning', 'info']);
-        
-        return redirect()->route('contracts.index')->with('success', 'Contract creation cancelled. All data has been cleared.');
-    }
-
     public function index()
     {
         $contracts = Contract::with(['contractor', 'client', 'property'])
@@ -85,635 +58,102 @@ class ContractController extends Controller
         return view('admin.contracts.create', compact('contractors', 'quotationRequests'));
     }
 
-    public function step1()
-    {
-        // Do NOT clear session here! Only show the view.
-        return view('admin.contracts.step1');
-    }
-
-    public function storeStep1(Request $request)
-    {
-        // Log that the method is being hit
-        \Log::info('storeStep1 method hit');
-
-        try {
-            $validated = $request->validate([
-                'contractor_name' => 'required|string|max:255',
-                'contractor_company' => 'nullable|string|max:255',
-                'contractor_email' => 'required|email|max:255',
-                'contractor_phone' => 'required|string|max:20',
-                'contractor_street' => 'required|string|max:255',
-                'contractor_barangay' => 'required|string|max:255',
-                'contractor_city' => 'required|string|max:255',
-                'contractor_state' => 'required|string|max:255',
-                'contractor_postal' => 'required|string|max:20',
-                
-                'client_name' => 'required|string|max:255',
-                'client_company' => 'nullable|string|max:255',
-                'client_email' => 'required|email|max:255',
-                'client_phone' => 'required|string|max:20',
-                'client_street' => 'required|string|max:255',
-                'client_unit' => 'nullable|string|max:255',
-                'client_barangay' => 'required|string|max:255',
-                'client_city' => 'required|string|max:255',
-                'client_state' => 'required|string|max:255',
-                'client_postal' => 'required|string|max:20',
-                
-                'property_type' => 'required|string|in:residential,commercial,industrial',
-                'property_street' => 'required|string|max:255',
-                'property_unit' => 'nullable|string|max:255',
-                'property_barangay' => 'required|string|max:255',
-                'property_city' => 'required|string|max:255',
-                'property_state' => 'required|string|max:255',
-                'property_postal' => 'required|string|max:20',
-            ]);
-
-            // Log validated data
-            \Log::info('Validation successful for Step 1:', $validated);
-
-            // Store in session
-            session(['contract_step1' => $validated]);
-
-            return redirect()->route('contracts.step2');
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            // Log validation errors
-            \Log::error('Validation error in Step 1:', $e->errors());
-            return back()->withErrors($e->errors())->withInput();
-        } catch (\Exception $e) {
-            // Catch any other exceptions
-            \Log::error('Error in storeStep1:', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return back()->with('error', 'An unexpected error occurred.')->withInput();
-        }
-    }
-
-    public function saveStep1(Request $request)
-    {
-        // Store the current state in session without validation
-        session([
-            'contract_step1' => [
-                'contractor_name' => $request->input('contractor_name'),
-                'contractor_company' => $request->input('contractor_company'),
-                'contractor_email' => $request->input('contractor_email'),
-                'contractor_phone' => $request->input('contractor_phone'),
-                'contractor_street' => $request->input('contractor_street'),
-                'contractor_barangay' => $request->input('contractor_barangay'),
-                'contractor_city' => $request->input('contractor_city'),
-                'contractor_state' => $request->input('contractor_state'),
-                'contractor_postal' => $request->input('contractor_postal'),
-                
-                'client_name' => $request->input('client_name'),
-                'client_company' => $request->input('client_company'),
-                'client_email' => $request->input('client_email'),
-                'client_phone' => $request->input('client_phone'),
-                'client_street' => $request->input('client_street'),
-                'client_unit' => $request->input('client_unit'),
-                'client_barangay' => $request->input('client_barangay'),
-                'client_city' => $request->input('client_city'),
-                'client_state' => $request->input('client_state'),
-                'client_postal' => $request->input('client_postal'),
-                
-                'property_type' => $request->input('property_type'),
-                'property_street' => $request->input('property_street'),
-                'property_unit' => $request->input('property_unit'),
-                'property_barangay' => $request->input('property_barangay'),
-                'property_city' => $request->input('property_city'),
-                'property_state' => $request->input('property_state'),
-                'property_postal' => $request->input('property_postal')
-            ]
-        ]);
-
-        return response()->json(['success' => true]);
-    }
-
-    public function step2()
-    {
-        // Check if we have step1 data, if not redirect to create
-        if (!session()->has('contract_step1')) {
-            return redirect()->route('contracts.create');
-        }
-
-        // Get scope types with materials through relationship
-        $scopeTypes = \App\Models\ScopeType::with('materials')->get()->map(function ($scope) {
-            // Manually ensure tasks is an array, as the model cast might not apply here.
-            if (is_string($scope->tasks)) {
-                $scope->tasks = json_decode($scope->tasks, true);
-            }
-            return $scope;
-        });
-
-        // Prepare scope types by code (ID) for JavaScript access, AND pass the original collection
-        $scopeTypesForJs = $scopeTypes->keyBy('id');
-
-        // Get session data if it exists
-        $sessionData = session('contract_step2', []);
-        
-        // Ensure rooms is always an array, not an object. If sessionData is empty, initialize rooms as an empty array.
-        if (!isset($sessionData['rooms']) || !is_array($sessionData['rooms'])) {
-            $sessionData['rooms'] = [];
-        }
-
-        // If rooms was an object (from old session format), convert it to an array
-        if (is_object($sessionData['rooms'])) {
-            $rooms = [];
-            foreach ($sessionData['rooms'] as $roomId => $roomData) {
-                // Ensure 'id' is set in each roomData if it's not already
-                if (!isset($roomData['id'])) {
-                    $roomData['id'] = $roomId; // Use the key as id if not present
-                }
-                $rooms[] = $roomData;
-            }
-            $sessionData['rooms'] = $rooms;
-        }
-
-        \Log::info('Loading Step 2 with session data:', [
-            'has_session_data' => !empty($sessionData),
-            'session_data' => $sessionData,
-            'contract_step1_session' => session('contract_step1'),
-            'contract_step2_session' => session('contract_step2'),
-        ]);
-
-        return view('admin.contracts.step2', [
-            'scopeTypes' => $scopeTypes, // Pass the raw collection for iteration
-            'scopeTypesByCode' => $scopeTypesForJs, // Pass the keyed object for lookups
-            'sessionData' => $sessionData
-        ]);
-    }
-
-    public function storeStep2(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'rooms' => 'required|array',
-                'rooms.*.name' => 'required|string|max:255',
-                'rooms.*.length' => 'required|numeric|min:0.1',
-                'rooms.*.width' => 'required|numeric|min:0.1',
-                'rooms.*.height' => 'required|numeric|min:0.1',
-                'rooms.*.floor_area' => 'required|numeric|min:0',
-                'rooms.*.wall_area' => 'required|numeric|min:0',
-                'rooms.*.scope' => 'required|array',
-                'rooms.*.scope.*' => 'required|string',
-                'rooms.*.materials_cost' => 'nullable|numeric|min:0',
-                'rooms.*.labor_cost' => 'nullable|numeric|min:0',
-                'start_date' => 'required|date',
-                'end_date' => 'required|date|after:start_date',
-                'total_materials' => 'required|numeric|min:0',
-                'total_labor' => 'required|numeric|min:0',
-                'grand_total' => 'required|numeric|min:0',
-            ]);
-
-            // Store in session
-            $sessionData = [
-                'rooms' => $validated['rooms'],
-                'start_date' => $validated['start_date'],
-                'end_date' => $validated['end_date'],
-                'total_materials' => $validated['total_materials'],
-                'total_labor' => $validated['total_labor'],
-                'grand_total' => $validated['grand_total'],
-                'total_amount' => $validated['grand_total'],
-                'labor_cost' => $validated['total_labor'],
-                'materials_cost' => $validated['total_materials']
-            ];
-            
-            session(['contract_step2' => $sessionData]);
-            \Log::info('Saved Step 2 data to session:', $sessionData);
-
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => true]);
-            }
-
-            return redirect()->route('contracts.step3');
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Validation error in Step 2:', $e->errors());
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'errors' => $e->errors()
-                ], 422);
-            }
-            return back()->withErrors($e->errors())->withInput();
-        } catch (\Exception $e) {
-            \Log::error('Error in Step 2:', ['error' => $e->getMessage()]);
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'An error occurred while saving the data.'
-                ], 500);
-            }
-            return back()->with('error', 'An error occurred while saving the data.')->withInput();
-        }
-    }
-
-    public function saveStep2(Request $request)
-    {
-        try {
-            // Get the input data
-            $data = $request->all();
-            
-            // Ensure rooms is an array
-            if (isset($data['rooms']) && !is_array($data['rooms'])) {
-                $rooms = [];
-                foreach ($data['rooms'] as $roomId => $roomData) {
-                    $roomData['id'] = $roomId;
-                    $rooms[] = $roomData;
-                }
-                $data['rooms'] = $rooms;
-            }
-
-            // Store in session
-            $sessionData = [
-                'rooms' => $data['rooms'] ?? [],
-                'start_date' => $data['start_date'] ?? null,
-                'end_date' => $data['end_date'] ?? null,
-                'total_materials' => $data['total_materials'] ?? 0,
-                'total_labor' => $data['total_labor'] ?? 0,
-                'grand_total' => $data['grand_total'] ?? 0,
-                'total_amount' => $data['grand_total'] ?? 0,
-                'labor_cost' => $data['total_labor'] ?? 0,
-                'materials_cost' => $data['total_materials'] ?? 0,
-                'breakdown' => $data['breakdown'] ?? []
-            ];
-            
-            session(['contract_step2' => $sessionData]);
-            \Log::info('Auto-saved Step 2 data to session:', $sessionData);
-
-            return response()->json(['success' => true]);
-        } catch (\Exception $e) {
-            \Log::error('Error in Step 2 auto-save:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while saving the data.'
-            ], 500);
-        }
-    }
-
-    public function step3()
-    {
-        if (!session()->has('contract_step2')) {
-            return redirect()->route('contracts.create');
-        }
-
-        return view('admin.contracts.step3');
-    }
-
-    public function storeStep3(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'payment_terms' => 'required|string',
-                'warranty_terms' => 'required|string',
-                'cancellation_terms' => 'required|string',
-                'additional_terms' => 'nullable|string',
-                'contractor_signature' => 'nullable|string',
-                'client_signature' => 'nullable|string',
-            ]);
-
-            // Process signatures if provided
-            foreach (['contractor', 'client'] as $type) {
-                $signatureData = $request->input($type . '_signature');
-                if ($signatureData && strpos($signatureData, 'data:image') === 0) {
-                    list(, $data) = explode(',', $signatureData);
-                    $image_data = base64_decode($data);
-                    $filename = 'signatures/' . uniqid($type . '_') . '.png';
-                    
-                    if (Storage::disk('public')->put($filename, $image_data)) {
-                        $validated[$type . '_signature'] = $filename;
-                    }
-                }
-            }
-
-            // Store in session
-            session(['contract_step3' => $validated]);
-            session(['step3_data' => $validated]);
-
-            return redirect()->route('contracts.step4');
-        } catch (\Exception $e) {
-            \Log::error('Error in storeStep3: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Error saving contract data: ' . $e->getMessage()]);
-        }
-    }
-
-    public function saveStep3(Request $request)
-    {
-        try {
-            $data = $request->validate([
-                'payment_terms' => 'nullable|string',
-                'warranty_terms' => 'nullable|string',
-                'cancellation_terms' => 'nullable|string',
-                'additional_terms' => 'nullable|string',
-                'contractor_signature' => 'nullable|string',
-                'client_signature' => 'nullable|string'
-            ]);
-
-            // Process signatures if they are new data URLs
-            foreach (['contractor', 'client'] as $type) {
-                $signatureKey = $type . '_signature';
-                $signatureData = $data[$signatureKey] ?? null;
-                
-                // If it's a new signature (data URL)
-                if ($signatureData && strpos($signatureData, 'data:image') === 0) {
-                    list(, $imageData) = explode(',', $signatureData);
-                    $decodedData = base64_decode($imageData);
-                    $filename = 'signatures/' . uniqid($type . '_') . '.png';
-                    
-                    if (Storage::disk('public')->put($filename, $decodedData)) {
-                        $data[$signatureKey] = $filename;
-                    }
-                }
-                // If no new signature and we want to keep the old one
-                elseif (!$signatureData && session()->has('contract_step3.' . $signatureKey)) {
-                    $data[$signatureKey] = session('contract_step3.' . $signatureKey);
-                }
-            }
-
-            // Save to both session keys to ensure compatibility
-            session(['step3_data' => $data]);
-            session(['contract_step3' => $data]);
-
-            \Log::info('Saved Step 3 data to session:', $data);
-
-            return response()->json(['success' => true]);
-        } catch (\Exception $e) {
-            \Log::error('Error saving Step 3 data:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while saving the data.'
-            ], 500);
-        }
-    }
-
-    public function step4()
-    {
-        if (!session()->has('step3_data')) {
-            return redirect()->route('contracts.create');
-        }
-
-        $contractStep2Data = session('contract_step2', []);
-
-        // Get scope types with materials through relationship, similar to step2
-        $scopeTypes = \App\Models\ScopeType::with('materials')->get()->map(function ($scope) {
-            // Manually ensure tasks is an array, as the model cast might not apply here.
-            if (is_string($scope->tasks)) {
-                $scope->tasks = json_decode($scope->tasks, true);
-            }
-            return $scope;
-        });
-
-        // Prepare scope types by code (ID) for JavaScript access and view display
-        $scopeTypesByCode = $scopeTypes->keyBy('id');
-
-        \Log::info('Loading Step 4 with contract_step2 data:', [
-            'has_contract_step2' => !empty($contractStep2Data),
-            'contract_step2_data' => $contractStep2Data,
-            'contract_step2_rooms' => $contractStep2Data['rooms'] ?? []
-        ]);
-
-        return view('admin.contracts.step4', compact('contractStep2Data', 'scopeTypesByCode'));
-    }
-
-    public function storeStep4(Request $request)
-    {
-        $data = $request->validate([
-            'payment_method' => 'required|in:bank_transfer,check,cash',
-            'bank_name' => 'required_if:payment_method,bank_transfer',
-            'bank_account_name' => 'required_if:payment_method,bank_transfer',
-            'bank_account_number' => 'required_if:payment_method,bank_transfer',
-            'check_number' => 'required_if:payment_method,check',
-            'check_date' => 'required_if:payment_method,check|date',
-            'payment_schedule' => 'required|json'
-        ]);
-
-        session(['contract_step4' => $data]);
-
-        // Create the contract
-        $contract = $this->createContract();
-
-        return redirect()->route('contracts.show', $contract)
-            ->with('success', 'Contract created successfully.');
-    }
-
-    public function saveStep4(Request $request)
-    {
-        $data = $request->validate([
-            'payment_method' => 'nullable|in:bank_transfer,check,cash',
-            'bank_name' => 'nullable|string',
-            'bank_account_name' => 'nullable|string',
-            'bank_account_number' => 'nullable|string',
-            'check_number' => 'nullable|string',
-            'check_date' => 'nullable|date',
-            'payment_schedule' => 'nullable|json'
-        ]);
-
-        session(['contract_step4' => $data]);
-
-        return response()->json(['success' => true]);
-    }
-
     public function store(Request $request)
     {
-        try {
+        $contractorData = $request->input('contractor', []);
+        $clientData = $request->input('client', []);
+        $propertyData = $request->input('property', []);
+        $contractData = $request->input('contract', []);
+
+        // Validate required fields
+        $request->validate([
+            'contractor.name' => 'required|string',
+            'contractor.email' => 'required|email',
+            'client.name' => 'required|string',
+            'client.email' => 'required|email',
+            'property.street' => 'required|string',
+            'property.city' => 'required|string',
+            'property.state' => 'required|string',
+            'property.postal' => 'required|string',
+            'contract.scope_of_work' => 'required',
+            'contract.scope_description' => 'required',
+            'contract.payment_terms' => 'required',
+            'contract.warranty_terms' => 'required',
+            'contract.cancellation_terms' => 'required',
+            'contract.additional_terms' => 'required',
+            'materials_total' => 'required|numeric',
+            'labor_fee' => 'required|numeric',
+            'grand_total' => 'required|numeric',
+        ]);
+
             DB::beginTransaction();
-
-            // Create or update contractor party
+        try {
             $contractor = Party::updateOrCreate(
-                ['email' => session('contract_step1.contractor_email')],
+                ['email' => $contractorData['email'], 'type' => 'contractor'],
                 [
-                    'name' => session('contract_step1.contractor_name'),
-                    'company_name' => session('contract_step1.contractor_company'),
-                    'phone' => session('contract_step1.contractor_phone'),
-                    'street' => session('contract_step1.contractor_street'),
-                    'barangay' => session('contract_step1.contractor_barangay'),
-                    'city' => session('contract_step1.contractor_city'),
-                    'state' => session('contract_step1.contractor_state'),
-                    'postal' => session('contract_step1.contractor_postal'),
-                    'entity_type' => 'contractor'
+                    'type' => 'contractor',
+                    'name' => $contractorData['name'],
+                    'company_name' => $contractorData['company_name'] ?? null,
+                    'phone' => $contractorData['phone'] ?? null,
+                    'street' => $contractorData['street'] ?? null,
+                    'city' => $contractorData['city'] ?? null,
+                    'state' => $contractorData['state'] ?? null,
+                    'postal' => $contractorData['postal'] ?? null,
+                    'email' => $contractorData['email'],
                 ]
             );
-
-            // Create or update client party
             $client = Party::updateOrCreate(
-                ['email' => session('contract_step1.client_email')],
+                ['email' => $clientData['email'], 'type' => 'client'],
                 [
-                    'name' => session('contract_step1.client_name'),
-                    'company_name' => session('contract_step1.client_company'),
-                    'phone' => session('contract_step1.client_phone'),
-                    'street' => session('contract_step1.client_street'),
-                    'barangay' => session('contract_step1.client_barangay'),
-                    'city' => session('contract_step1.client_city'),
-                    'state' => session('contract_step1.client_state'),
-                    'postal' => session('contract_step1.client_postal'),
-                    'entity_type' => 'client'
+                    'type' => 'client',
+                    'name' => $clientData['name'],
+                    'company_name' => $clientData['company_name'] ?? null,
+                    'phone' => $clientData['phone'] ?? null,
+                    'street' => $clientData['street'] ?? null,
+                    'city' => $clientData['city'] ?? null,
+                    'state' => $clientData['state'] ?? null,
+                    'postal' => $clientData['postal'] ?? null,
+                    'email' => $clientData['email'],
                 ]
             );
-
-            // Check if client is banned
-            if ($client->banned) {
-                DB::rollBack();
-                return redirect()->back()->with('error', 'This client is banned and cannot be assigned to a new contract.');
-            }
-
-            // Create property
             $property = Property::create([
-                'property_type' => session('contract_step1.property_type'),
-                'street' => session('contract_step1.property_street'),
-                'barangay' => session('contract_step1.property_barangay'),
-                'city' => session('contract_step1.property_city'),
-                'state' => session('contract_step1.property_state'),
-                'postal' => session('contract_step1.property_postal')
+                'street' => $propertyData['street'],
+                'city' => $propertyData['city'],
+                'state' => $propertyData['state'],
+                'postal' => $propertyData['postal'],
             ]);
-
-            // Create contract
             $contract = Contract::create([
                 'contractor_id' => $contractor->id,
                 'client_id' => $client->id,
                 'property_id' => $property->id,
                 'title' => 'Contract for ' . $client->name,
-                'scope_of_work' => collect(session('contract_step2.rooms'))->first()['scope'] ? 
-                    \App\Models\ScopeType::whereIn('id', collect(session('contract_step2.rooms'))->first()['scope'])
-                        ->pluck('name')
-                        ->implode(', ') : 
-                    'General Construction Work',
-                'scope_description' => 'Construction work as per agreed specifications',
-                'start_date' => session('contract_step2.start_date'),
-                'end_date' => session('contract_step2.end_date'),
-                'total_amount' => session('contract_step2.grand_total'),
-                'materials_cost' => session('contract_step2.total_materials'),
-                'labor_cost' => session('contract_step2.total_labor'),
-                'payment_terms' => session('contract_step3.payment_terms'),
-                'payment_method' => session('contract_step4.payment_method', 'cash'),
-                'bank_name' => session('contract_step4.bank_name'),
-                'bank_account_name' => session('contract_step4.bank_account_name'),
-                'bank_account_number' => session('contract_step4.bank_account_number'),
-                'check_number' => session('contract_step4.check_number'),
-                'check_date' => session('contract_step4.check_date'),
-                'contractor_signature' => session('contract_step3.contractor_signature'),
-                'client_signature' => session('contract_step3.client_signature'),
-                'payment_schedule' => session('contract_step4.payment_schedule'),
-                'status' => 'draft'
+                'scope_of_work' => $contractData['scope_of_work'],
+                'scope_description' => $contractData['scope_description'],
+                'start_date' => $request->input('project_start_date'),
+                'end_date' => $request->input('project_end_date'),
+                'total_amount' => $request->input('grand_total'),
+                'materials_cost' => $request->input('materials_total'),
+                'labor_cost' => $request->input('labor_fee'),
+                'payment_terms' => $contractData['payment_terms'],
+                'payment_method' => $request->input('payment_method'),
+                'bank_name' => $request->input('bank_name'),
+                'bank_account_name' => $request->input('bank_account_name'),
+                'bank_account_number' => $request->input('bank_account_number'),
+                'check_number' => $request->input('check_number'),
+                'check_date' => $request->input('check_date'),
+                'contractor_signature' => $request->input('contractor_signature'),
+                'client_signature' => $request->input('client_signature'),
+                'payment_schedule' => $request->input('payment_schedule'),
+                'warranty_terms' => $contractData['warranty_terms'],
+                'cancellation_terms' => $contractData['cancellation_terms'],
+                'additional_terms' => $contractData['additional_terms'],
+                'status' => 'draft',
             ]);
-
-            // Create rooms and their scopes
-            $crewSize = 8;
-            $hoursPerDay = 8;
-            $totalEstimatedDays = 0;
-            foreach (session('contract_step2.rooms', []) as $roomId => $roomData) {
-                $roomEstimatedDays = 0;
-                if (!empty($roomData['scope'])) {
-                    foreach ($roomData['scope'] as $scopeId) {
-                        $scope = \App\Models\ScopeType::find($scopeId);
-                        $isWallWork = $scope && $scope->is_wall_work;
-                        $area = $isWallWork
-                            ? 2 * ($roomData['length'] + $roomData['width']) * $roomData['height']
-                            : $roomData['length'] * $roomData['width'];
-                        $laborHoursPerSqm = $scope && $scope->labor_hours_per_sqm ? $scope->labor_hours_per_sqm : 1;
-                        $totalLaborHours = $area * $laborHoursPerSqm;
-                        $days = $totalLaborHours / ($crewSize * $hoursPerDay);
-                        $days = ceil($days * 2) / 2;
-                        $days = max(0.5, $days);
-                        $roomEstimatedDays += $days;
-                    }
-                }
-                $room = $contract->rooms()->create([
-                    'name' => $roomData['name'],
-                    'length' => $roomData['length'],
-                    'width' => $roomData['width'],
-                    'height' => $roomData['height'] ?? null,
-                    'area' => $roomData['length'] * $roomData['width'],
-                    'floor_area' => $roomData['floor_area'] ?? null,
-                    'wall_area' => $roomData['wall_area'] ?? null,
-                    'materials_cost' => $roomData['materials_cost'] ?? 0,
-                    'labor_cost' => $roomData['labor_cost'] ?? 0,
-                    'estimated_days' => $roomEstimatedDays
-                ]);
-                if (!empty($roomData['scope'])) {
-                    $room->scopeTypes()->attach($roomData['scope']);
-                }
-                $totalEstimatedDays += $roomEstimatedDays;
-            }
-            $contract->estimated_days = $totalEstimatedDays;
-            $contract->end_date = \Carbon\Carbon::parse($contract->start_date)->addDays((int)ceil($totalEstimatedDays));
-            $contract->save();
-
-            // Create contract items
-            foreach ($contract->rooms as $room) {
-                $room->load(['scopeTypes' => function($query) {
-                    $query->with(['materials' => function($q) {
-                        $q->with(['suppliers' => function($sq) {
-                            $sq->wherePivot('is_preferred', true);
-                        }]);
-                    }]);
-                }]);
-
-                foreach ($room->scopeTypes as $scope) {
-                    foreach ($scope->materials as $material) {
-                        \Log::info('Processing material for contract item:', [
-                            'material_name' => $material->name,
-                            'srp_price' => $material->srp_price,
-                            'base_price' => $material->base_price
-                        ]);
-                        // Get the price from either srp_price or base_price
-                        $price = ($material->srp_price > 0) ? floatval($material->srp_price) : floatval($material->base_price ?? 0);
-                        $quantity = 1;
-                        
-                        // Calculate quantity based on area if needed
-                        if ($material->is_per_area) {
-                            $coverage = floatval($material->coverage_rate ?? 1);
-                            $quantity = ceil($room->area / $coverage);
-                        }
-
-                        // Apply waste factor
-                        $wasteFactor = floatval($material->waste_factor ?? 1.1);
-                        $quantity = ceil($quantity * $wasteFactor);
-
-                        // Check for bulk pricing
-                        if ($material->bulk_pricing) {
-                            $bulkPricing = is_array($material->bulk_pricing) ? $material->bulk_pricing : json_decode($material->bulk_pricing, true);
-                            if (is_array($bulkPricing)) {
-                                foreach ($bulkPricing as $tier) {
-                                    if ($quantity >= ($tier['min_quantity'] ?? 0)) {
-                                        $price = floatval($tier['price'] ?? $price);
-                                    }
-                                }
-                            }
-                        }
-
-                        // Get preferred supplier if exists
-                        $supplier = $material->suppliers->first();
-
-                        // Create contract item
-                        $contract->items()->create([
-                            'material_id' => $material->id,
-                            'material_name' => $material->name,
-                            'unit' => $material->unit ?? 'pcs',
-                            'supplier_id' => $supplier ? $supplier->id : null,
-                            'supplier_name' => $supplier ? $supplier->company_name : null,
-                            'quantity' => $quantity,
-                            'amount' => $price,
-                            'total' => $quantity * $price
-                        ]);
-                    }
-                }
-            }
-
             DB::commit();
-
-            // Clear session data
-            session()->forget(['contract_step1', 'contract_step2', 'contract_step3']);
-
-            return redirect()->route('contracts.show', $contract->id)
-                ->with('success', 'Contract created successfully!');
-
+            return redirect()->route('contracts.show', $contract->id)->with('success', 'Contract created successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Contract creation failed: ' . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'Contract creation failed: ' . $e->getMessage())
-                ->withInput();
+            return back()->withInput()->withErrors(['error' => 'Error saving contract: ' . $e->getMessage()]);
         }
     }
 

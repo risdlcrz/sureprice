@@ -202,6 +202,40 @@
             <p><strong>Description:</strong></p>
             <p>{{ $contract->scope_description ?? 'Construction work as per agreement' }}</p>
         </div>
+        <div class="terms-section">
+            <p><strong>Scope Summary:</strong></p>
+            <table style="width:100%;border-collapse:collapse;" border="1" cellpadding="5">
+                <thead>
+                    <tr>
+                        <th>Room</th>
+                        <th>Scope</th>
+                        <th>Chosen Supplier</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if($contract->rooms && $contract->rooms->count())
+                    @foreach($contract->rooms as $room)
+                        @if($room->scopeTypes && $room->scopeTypes->count())
+                            @foreach($room->scopeTypes as $scope)
+                                <tr>
+                                    <td>{{ $room->name }}</td>
+                                    <td>{{ $scope->name }}</td>
+                                    <td>
+                                        @php
+                                            $supplier = $scope->pivot->supplier_name ?? null;
+                                        @endphp
+                                        {{ $supplier ?: 'none selected' }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @endif
+                    @endforeach
+                @else
+                    <tr><td colspan="3" style="text-align:center;">No data yet.</td></tr>
+                @endif
+                </tbody>
+            </table>
+        </div>
     </div>
 
     @if($items && $items->count() > 0)

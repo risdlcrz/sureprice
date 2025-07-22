@@ -158,6 +158,27 @@
                                             <td>
                                                 @if($item->supplier)
                                                     {{ $item->supplier->company_name }}
+                                                @elseif($materialRequest->quotationRequest)
+                                                    @php
+                                                        $supplierName = null;
+                                                        $quotationRequest = $materialRequest->quotationRequest;
+                                                        $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'.$quotationRequest->request_number.'%')->with(['materials', 'suppliers'])->get();
+                                                        foreach ($rfqs as $rfq) {
+                                                            $mat = $rfq->materials->firstWhere('id', $item->material_id);
+                                                            if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id) {
+                                                                $supplier = $rfq->suppliers->firstWhere('id', $mat->pivot->selected_supplier_id);
+                                                                if ($supplier) {
+                                                                    $supplierName = $supplier->company_name;
+                                                                    break;
+                                                                }
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    @if($supplierName)
+                                                        {{ $supplierName }}
+                                                    @else
+                                                        <span class="text-danger">No Supplier</span>
+                                                    @endif
                                                 @else
                                                     <span class="text-danger">No Supplier</span>
                                                 @endif

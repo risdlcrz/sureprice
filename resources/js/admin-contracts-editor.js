@@ -115,23 +115,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 // Display selected scopes
                 const scopesDiv = document.getElementById('selected-scopes');
-                if (scopesDiv) {
+                const scopeSummaryBody = document.getElementById('scope-summary-table-body');
+                let summaryRows = [];
+                if (data.rooms && Array.isArray(data.rooms)) {
                     let scopes = [];
-                    if (data.rooms && Array.isArray(data.rooms)) {
-                        data.rooms.forEach(room => {
-                            if (room.scopes && Array.isArray(room.scopes)) {
-                                room.scopes.forEach(scope => {
-                                    if (scope.scope_name) scopes.push(scope.scope_name);
-                                });
-                            }
-                        });
-                    }
+                    data.rooms.forEach(room => {
+                        if (room.scopes && Array.isArray(room.scopes)) {
+                            room.scopes.forEach(scope => {
+                                if (scope.scope_name) scopes.push(scope.scope_name);
+                                // For summary table
+                                let supplier = 'none selected';
+                                if (scope.selected_supplier && scope.selected_supplier.company_name) {
+                                    supplier = scope.selected_supplier.company_name;
+                                } else if (scope.supplier_name) {
+                                    supplier = scope.supplier_name;
+                                }
+                                summaryRows.push(`<tr><td>${room.name}</td><td>${scope.scope_name || ''}</td><td>${supplier}</td></tr>`);
+                            });
+                        }
+                    });
                     scopes = [...new Set(scopes)]; // unique
-                    console.log('Scopes found:', scopes);
                     if (scopes.length > 0) {
                         scopesDiv.innerHTML = `<ul>${scopes.map(s => `<li>${s}</li>`).join('')}</ul>`;
                     } else {
                         scopesDiv.innerHTML = '<span class="text-muted">No scope selected yet.</span>';
+                    }
+                }
+                // Update scope summary table
+                if (scopeSummaryBody) {
+                    if (summaryRows.length > 0) {
+                        scopeSummaryBody.innerHTML = summaryRows.join('');
+                    } else {
+                        scopeSummaryBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No data yet.</td></tr>';
                     }
                 }
                 // Add/change event for start date
@@ -232,6 +247,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     propertyAddressInput.style.color = '#6c757d';
                 }
             }
+            // Copy all client address fields to property fields
+            const fields = ['street', 'barangay', 'city', 'state', 'postal'];
+            fields.forEach(function(field) {
+                const clientField = document.getElementById('client_' + field);
+                const propertyField = document.getElementById('property_' + field);
+                if (clientField && propertyField) {
+                    propertyField.value = clientField.value;
+                }
+            });
         } else {
             if (propertyAddressInput) {
                 propertyAddressInput.value = '';
@@ -239,6 +263,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 propertyAddressInput.style.backgroundColor = '#f8f9fa';
                 propertyAddressInput.style.color = '#333';
             }
+            // Optionally clear property fields if unchecked
+            const fields = ['street', 'barangay', 'city', 'state', 'postal'];
+            fields.forEach(function(field) {
+                const propertyField = document.getElementById('property_' + field);
+                if (propertyField) {
+                    propertyField.value = '';
+                }
+            });
         }
     }
     

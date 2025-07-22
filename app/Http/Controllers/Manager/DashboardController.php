@@ -50,7 +50,9 @@ class DashboardController extends Controller
         $supplierIds = array_values($selectedSuppliers);
         $suppliers = \App\Models\Supplier::whereIn('id', $supplierIds)->get()->keyBy('id');
         // Fetch all quotations (RFQs) related to this quotation request
-        $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->get();
+        $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')
+            ->with(['materials', 'responses.items', 'responses.supplier'])
+            ->get();
 
         return view('manager.quotation-requests.show', compact('quotationRequest', 'selectedSuppliers', 'suppliers', 'rfqs'));
     }

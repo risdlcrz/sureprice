@@ -33,4 +33,9 @@ class MaterialRequestItem extends Model
     {
         return $this->belongsTo(\App\Models\Warehouse::class);
     }
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
 } 

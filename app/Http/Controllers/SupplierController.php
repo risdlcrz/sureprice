@@ -113,6 +113,9 @@ class SupplierController extends Controller
 
     public function show(Supplier $supplier)
     {
+        if (!$supplier) {
+            return redirect()->route('suppliers.index')->with('error', 'Supplier not found.');
+        }
         $supplier->load(['materials.category']);
         $latestOrder = \DB::table('order_evaluations')
             ->where('supplier_id', $supplier->id)
@@ -135,7 +138,10 @@ class SupplierController extends Controller
     // Show a single supplier's pending update
     public function reviewUpdate($id)
     {
-        $supplier = \App\Models\Supplier::findOrFail($id);
+        $supplier = \App\Models\Supplier::find($id);
+        if (!$supplier) {
+            return redirect()->route('admin.suppliers.pending-updates')->with('error', 'Supplier not found.');
+        }
         $pending = $supplier->pending_changes ? json_decode($supplier->pending_changes, true) : null;
         return view('admin.suppliers.review-update', compact('supplier', 'pending'));
     }
@@ -143,7 +149,10 @@ class SupplierController extends Controller
     // Approve the pending update
     public function approveUpdate($id)
     {
-        $company = \App\Models\Company::findOrFail($id);
+        $company = \App\Models\Company::find($id);
+        if (!$company) {
+            return redirect()->route('admin.suppliers.pending-updates')->with('error', 'Company not found.');
+        }
         if ($company->pending_changes) {
             $changes = json_decode($company->pending_changes, true);
             $company->fill($changes);

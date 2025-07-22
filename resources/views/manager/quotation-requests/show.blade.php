@@ -70,66 +70,6 @@
                     @endforeach
                 </tbody>
             </table>
-            <h6>Chosen Suppliers</h6>
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Material</th>
-                        <th>Chosen Supplier</th>
-                        <th>Quoted Price</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($quotationRequest->rooms as $room)
-                        @foreach($room->scopes as $scope)
-                            @if($scope->scopeType && $scope->scopeType->materials)
-                                @foreach($scope->scopeType->materials as $material)
-                                    @php
-                                        $supplierId = $selectedSuppliers[$material->id] ?? null;
-                                        $chosenSupplier = $supplierId ? ($suppliers[$supplierId] ?? null) : null;
-                                        $quotedPrice = null;
-                                        // Try to get from pivot (rfqs)
-                                        foreach ($rfqs as $rfq) {
-                                            $mat = $rfq->materials->firstWhere('id', $material->id);
-                                            if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id == $supplierId) {
-                                                $quotedPrice = $mat->pivot->unit_price ?? null;
-                                                // Fallback: if no price in pivot, try to get from supplier response
-                                                if ((!$quotedPrice || $quotedPrice == 0) && $rfq->responses) {
-                                                    $response = $rfq->responses->where('supplier_id', $supplierId)->first();
-                                                    if ($response) {
-                                                        $item = $response->items->where('material_id', $material->id)->first();
-                                                        if ($item && $item->unit_price) {
-                                                            $quotedPrice = $item->unit_price;
-                                                        }
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                        }
-                                    @endphp
-                                    <tr>
-                                        <td>{{ $material->name }}</td>
-                                        <td>
-                                            @if($chosenSupplier)
-                                                {{ $chosenSupplier->company_name }}
-                                            @else
-                                                <span class="text-muted">Not chosen</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if($quotedPrice && $quotedPrice > 0)
-                                                ₱{{ number_format($quotedPrice, 2) }}
-                                            @else
-                                                <span class="text-muted">N/A</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            @endif
-                        @endforeach
-                    @endforeach
-                </tbody>
-            </table>
             @if($quotationRequest->status === 'proceeded' && !$quotationRequest->materialRequest)
                 <a href="{{ route('material-requests.create', ['quotation_id' => $quotationRequest->id]) }}" class="btn btn-primary mt-3">Create Material Request</a>
             @endif
@@ -142,12 +82,9 @@
                         <table class="table table-bordered mb-0 align-middle">
                             <thead>
                                 <tr>
-                                    <th>Room</th>
-                                    <th>Scope</th>
                                     <th>Material</th>
                                     <th>Chosen Supplier</th>
                                     <th>Quoted Price</th>
-                                    <th>Badges</th>
                                     <th>Contact</th>
                                 </tr>
                             </thead>
@@ -157,9 +94,6 @@
                                         $materialName = null;
                                         $supplierName = null;
                                         $price = null;
-                                        $roomName = null;
-                                        $scopeName = null;
-                                        $badges = [];
                                         $contact = null;
                                         // Try to get from supplier response (rfqs.responses.items)
                                         foreach ($rfqs as $rfq) {
@@ -169,13 +103,10 @@
                                                         if ($item->material_id == $materialId) {
                                                             $supplierName = $response->supplier->company_name ?? 'N/A';
                                                             $price = $item->unit_price ?? null;
-                                                            $badges = $badges ?? [];
                                                             $contact = $response->supplier->phone ?? null;
-                                                            // Try to get room/scope from pivot if available
                                                             $mat = $rfq->materials->firstWhere('id', $materialId);
-                                                            if ($mat && $mat->pivot) {
-                                                                $roomName = $mat->pivot->room_name ?? null;
-                                                                $scopeName = $mat->pivot->scope_name ?? null;
+                                                            if ($mat) {
+                                                                $materialName = $mat->name ?? $materialName;
                                                             }
                                                             break 3;
                                                         }
@@ -190,31 +121,19 @@
                                                 if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id == $supplierId) {
                                                     $supplierName = $supplierName ?? ($rfq->suppliers->firstWhere('id', $supplierId)->company_name ?? 'N/A');
                                                     $price = $price ?? $mat->pivot->unit_price ?? null;
-                                                    $roomName = $roomName ?? $mat->pivot->room_name ?? null;
-                                                    $scopeName = $scopeName ?? $mat->pivot->scope_name ?? null;
                                                     $contact = $contact ?? ($rfq->suppliers->firstWhere('id', $supplierId)->phone ?? null);
+                                                    $materialName = $mat->name ?? $materialName;
                                                     break;
                                                 }
                                             }
                                         }
                                     @endphp
                                     <tr>
-                                        <td>{{ $roomName ?? '-' }}</td>
-                                        <td>{{ $scopeName ?? '-' }}</td>
                                         <td>{{ $materialName ?? 'Material #'.$materialId }}</td>
                                         <td>{{ $supplierName ?? 'N/A' }}</td>
                                         <td>
                                             @if($price && $price > 0)
                                                 ₱{{ number_format($price, 2) }}
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if(!empty($badges))
-                                                @foreach($badges as $badge)
-                                                    <span class="badge @if($badge=='Cheapest') badge-cheapest @elseif($badge=='Best Delivery') badge-delivery @elseif($badge=='Least Defects') badge-defects @elseif($badge=='Overall Best') badge-overall @endif" data-bs-toggle="tooltip" title="{{ $badge }}">{{ $badge }}</span>
-                                                @endforeach
                                             @else
                                                 <span class="text-muted">-</span>
                                             @endif
@@ -237,8 +156,3 @@
     </div>
 </div>
 @endsection
-@push('scripts')
-$(function () {
-    $('[data-bs-toggle="tooltip"]').tooltip();
-});
-@endpush
