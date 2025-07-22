@@ -86,20 +86,12 @@ Route::middleware(['auth'])->group(function () {
     // Contract Dashboard
     Route::get('/contract-dashboard', [ContractController::class, 'dashboard'])->name('admin.contract');
     // Contract Routes
-    Route::prefix('contracts')->name('contracts.')->group(function () {
-        Route::get('/', [ContractController::class, 'index'])->name('index');
-        Route::get('/create', [ContractController::class, 'create'])->name('create');
-        Route::post('/', [ContractController::class, 'store'])->name('store');
-        Route::get('/{contract}/edit', [ContractController::class, 'edit'])->name('edit');
-        Route::put('/{contract}', [ContractController::class, 'update'])->name('update');
-        Route::get('/{contract}', [ContractController::class, 'show'])->name('show');
-        Route::get('/{contract}/download', [ContractController::class, 'download'])->name('download');
-        Route::get('/{contract}/pdf', [ContractController::class, 'download'])->name('pdf');
-        Route::patch('/{contract}/status', [ContractController::class, 'updateStatus'])->name('updateStatus');
-        Route::post('/{contract}/status', [ContractController::class, 'updateStatus']);
-        Route::post('/{contract}/signatures', [ContractController::class, 'updateSignatures'])->name('updateSignatures');
-        Route::post('/save-signature', [ContractController::class, 'saveSignature'])->name('contracts.save.signature');
-    });
+    Route::resource('contracts', ContractController::class);
+    Route::get('/contracts/{contract}/download', [ContractController::class, 'download'])->name('contracts.download');
+    Route::get('/contracts/{contract}/pdf', [ContractController::class, 'download'])->name('contracts.pdf');
+    Route::patch('/contracts/{contract}/status', [ContractController::class, 'updateStatus'])->name('contracts.updateStatus');
+    Route::post('/contracts/{contract}/status', [ContractController::class, 'updateStatus']);
+    Route::post('/contracts/{contract}/signatures', [ContractController::class, 'updateSignatures'])->name('contracts.updateSignatures');
     // Supporting routes for contract form
     Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
     Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
@@ -269,7 +261,6 @@ Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefi
     });
     Route::get('/quotation', [\App\Http\Controllers\ClientQuotationController::class, 'index'])->name('quotation.index');
     Route::get('/quotation/create', [\App\Http\Controllers\ClientQuotationController::class, 'create'])->name('quotation.create');
-    Route::post('/quotation', [\App\Http\Controllers\ClientQuotationController::class, 'store'])->name('quotation.store');
     Route::get('/quotation/view', [\App\Http\Controllers\ClientQuotationController::class, 'view'])->name('quotation.view');
     Route::post('/quotation/{id}/finalize', [\App\Http\Controllers\ClientQuotationController::class, 'finalizeSelection'])->name('quotation.finalize');
 });
