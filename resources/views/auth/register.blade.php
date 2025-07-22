@@ -399,7 +399,7 @@
           
           <div class="form-row">
             <div class="form-group @error('supplier_type') has-error @enderror">
-              <label for="supplier_type">Type of Company <span class="text-danger">*</span></label>
+              <label for="supplier_type" id="supplier_type_label">Type of Company <span class="text-danger" id="supplier_type_required_star">*</span></label>
                 @php
                     $company_types = [
                         'Construction & Engineering',
@@ -920,6 +920,34 @@ function updateFormFields() {
     samplePriceListGroup.style.display = '';
   } else {
     samplePriceListGroup.style.display = 'none';
+  }
+
+  // Handle "Other" company type field visibility
+  const otherTypeGroup = document.getElementById('other_supplier_type_group');
+  const otherTypeInput = document.getElementById('other_supplier_type');
+  
+  if (role === 'supplier') {
+    otherTypeGroup.style.display = 'block';
+    otherTypeInput.required = true;
+  } else {
+    otherTypeGroup.style.display = 'none';
+    otherTypeInput.required = false;
+    otherTypeInput.value = '';
+  }
+
+  // Update supplier type options
+  const supplierTypeSelect = document.getElementById('supplier_type');
+  const supplierTypeLabel = document.getElementById('supplier_type_label');
+  const supplierTypeRequiredStar = document.getElementById('supplier_type_required_star');
+
+  if (role === 'supplier') {
+    supplierTypeSelect.removeAttribute('required');
+    supplierTypeRequiredStar.style.display = 'none';
+    supplierTypeLabel.innerHTML = 'Type of Company <span class="text-muted">(Optional)</span>';
+  } else {
+    supplierTypeSelect.setAttribute('required', 'required');
+    supplierTypeRequiredStar.style.display = '';
+    supplierTypeLabel.innerHTML = 'Type of Company <span class="text-danger" id="supplier_type_required_star">*</span>';
   }
 }
 
