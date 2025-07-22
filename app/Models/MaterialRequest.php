@@ -37,4 +37,9 @@ class MaterialRequest extends Model
     {
         return $this->hasMany(\App\Models\MaterialRequestItem::class);
     }
+
+    public function contract()
+    {
+        return $this->belongsTo(\App\Models\Contract::class);
+    }
 } 

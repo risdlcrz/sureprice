@@ -23,7 +23,7 @@ class MaterialRequestApprovalController extends Controller
     public function index()
     {
         $this->logPageView('Viewed Material Request Approvals Index');
-        $materialRequests = MaterialRequest::with(['contract', 'user'])
+        $materialRequests = MaterialRequest::with(['contract', 'user', 'requestedBy'])
             ->orderByDesc('created_at')
             ->paginate(15);
         return view('warehouse.material-requests', compact('materialRequests'));

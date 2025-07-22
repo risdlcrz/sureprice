@@ -101,8 +101,8 @@ body {
                     @forelse($materialRequests as $request)
                         <tr>
                             <td>{{ $request->id }}</td>
-                            <td>{{ $request->contract->contract_number ?? '-' }}</td>
-                            <td>{{ $request->user->name ?? '-' }}</td>
+                            <td>{{ $request->quotationRequest->user->name ?? '-' }}</td>
+                            <td>{{ $request->requestedBy->name ?? $request->user->name ?? '-' }}</td>
                             <td>
                                 <span class="badge bg-{{ $request->status === 'approved' ? 'success' : ($request->status === 'pending' ? 'warning' : 'secondary') }}">
                                     {{ ucfirst($request->status) }}
