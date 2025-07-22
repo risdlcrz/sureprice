@@ -740,7 +740,10 @@ class ContractController extends Controller
 
     public function update(Request $request, Contract $contract)
     {
-        return $this->saveContract($request, $contract);
+        // Wrap update logic in a transaction for data integrity
+        return DB::transaction(function () use ($request, $contract) {
+            return $this->saveContract($request, $contract);
+        });
     }
 
     public function download(Contract $contract)

@@ -70,7 +70,7 @@ class InquiryController extends Controller
             'materials.*.id' => 'required|exists:materials,id',
             'materials.*.quantity' => 'required|numeric|min:1',
             'materials.*.notes' => 'nullable|string',
-            'attachments.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg,gif,txt|max:10240'
+            'attachments.*' => 'nullable|file|mimes:pdf,png,jpg,jpeg,gif|max:10240'
         ]);
 
         $inquiry = Inquiry::create([
@@ -137,7 +137,7 @@ class InquiryController extends Controller
             'materials.*.id' => 'required|exists:materials,id',
             'materials.*.quantity' => 'required|numeric|min:1',
             'materials.*.notes' => 'nullable|string',
-            'attachments.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg,gif,txt|max:10240'
+            'attachments.*' => 'nullable|file|mimes:pdf,png,jpg,jpeg,gif|max:10240'
         ]);
 
         $inquiry->update([
