@@ -7,9 +7,28 @@
 <div class="container contract-template {{ $isClient ? 'client-user' : '' }}" id="contract-editor-root">
     <form id="contractEditorForm" method="POST" action="{{ isset($contract) ? route('contracts.update', $contract->id) : route('contracts.store') }}">
         @csrf
+        <input type="hidden" name="contractor[name]" id="contractor_name" />
+        <input type="hidden" name="contractor[email]" id="contractor_email" />
+        <input type="hidden" name="client[email]" id="client_email" />
         @if(isset($contract))
             @method('PUT')
         @endif
+        <!-- Hidden fields for backend validation (NO DUPLICATES, ONLY THIS SET) -->
+        <input type="hidden" name="client[name]" id="client_name" />
+        <input type="hidden" name="property[street]" id="property_street" />
+        <input type="hidden" name="property[city]" id="property_city" />
+        <input type="hidden" name="property[state]" id="property_state" />
+        <input type="hidden" name="property[postal]" id="property_postal" />
+        <input type="hidden" name="property[barangay]" id="property_barangay" />
+        <input type="hidden" name="contract[scope_of_work]" id="contract_scope_of_work" />
+        <input type="hidden" name="contract[scope_description]" id="contract_scope_description" />
+        <input type="hidden" name="contract[payment_terms]" id="contract_payment_terms" />
+        <input type="hidden" name="contract[warranty_terms]" id="contract_warranty_terms" />
+        <input type="hidden" name="contract[cancellation_terms]" id="contract_cancellation_terms" />
+        <input type="hidden" name="contract[additional_terms]" id="contract_additional_terms" />
+        <input type="hidden" name="materials_total" id="materials_total" />
+        <input type="hidden" name="labor_fee" id="labor_fee" />
+        <input type="hidden" name="grand_total" id="grand_total" />
         <div class="mb-4 row align-items-end justify-content-between">
             <div class="col-md-6">
                 <label for="quotation_request_id" class="form-label"><strong>Client Quotation Request</strong> <span class="text-danger">*</span></label>
@@ -56,7 +75,7 @@
                             </option>
                         @endforeach
                     </select>
-                    , with an address of <span class="contract-blank" id="contractor_address_display"></span> (the <b>"Constructor"</b>), and
+                    , with an address of <span class="contract-blank" id="contractor_address_display"></span> (the <b>"Constructor"</b>), <span class="contract-blank" id="contractor_email_display"></span>, and
                     <span class="contract-blank" id="client_name_display"></span>, with an address of <span class="contract-blank" id="client_address_display"></span> (the <b>"Client"</b>), (collectively referred to as the <b>"Parties"</b>).
                 </p>
             </div>
@@ -90,11 +109,16 @@
                                 <tr>
                                     <th>Room</th>
                                     <th>Scope</th>
+                                    <th>Material</th>
+                                    <th>Quantity</th>
+                                    <th>Unit</th>
                                     <th>Chosen Supplier</th>
+                                    <th>Unit Price</th>
+                                    <th>Total Price</th>
                                 </tr>
                             </thead>
                             <tbody id="scope-summary-table-body">
-                                <tr><td colspan="3" class="text-center text-muted">No data yet.</td></tr>
+                                <tr><td colspan="8" class="text-center text-muted">No data yet.</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -197,35 +221,7 @@
                 </div>
             </div>
         </div>
-        <!-- Hidden fields for backend submission -->
-        <input type="hidden" name="contractor[name]" id="contractor_name" />
-        <input type="hidden" name="contractor[street]" id="contractor_street" />
-        <input type="hidden" name="contractor[city]" id="contractor_city" />
-        <input type="hidden" name="contractor[state]" id="contractor_state" />
-        <input type="hidden" name="contractor[postal]" id="contractor_postal" />
-        <input type="hidden" name="contractor[email]" id="contractor_email" />
-        <input type="hidden" name="contractor[phone]" id="contractor_phone" />
-        <input type="hidden" name="client[name]" id="client_name" />
-        <input type="hidden" name="client[street]" id="client_street" />
-        <input type="hidden" name="client[city]" id="client_city" />
-        <input type="hidden" name="client[state]" id="client_state" />
-        <input type="hidden" name="client[postal]" id="client_postal" />
-        <input type="hidden" name="client[email]" id="client_email" />
-        <input type="hidden" name="client[phone]" id="client_phone" />
-        <input type="hidden" name="property[street]" id="property_street" />
-        <input type="hidden" name="property[city]" id="property_city" />
-        <input type="hidden" name="property[state]" id="property_state" />
-        <input type="hidden" name="property[postal]" id="property_postal" />
-        <input type="hidden" name="contract[scope_of_work]" id="scope_of_work" />
-        <input type="hidden" name="contract[scope_description]" id="scope_description" />
-        <input type="hidden" name="contract[payment_terms]" id="payment_terms" />
-        <input type="hidden" name="contract[warranty_terms]" id="warranty_terms" />
-        <input type="hidden" name="contract[cancellation_terms]" id="cancellation_terms" />
-        <input type="hidden" name="contract[additional_terms]" id="additional_terms" />
-        <input type="hidden" name="materials_total" id="materials_total" />
-        <input type="hidden" name="labor_fee" id="labor_fee" />
-        <input type="hidden" name="grand_total" id="grand_total" />
-    </form>
+        
   
 </div>
 @endsection

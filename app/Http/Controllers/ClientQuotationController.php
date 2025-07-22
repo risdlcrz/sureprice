@@ -529,7 +529,7 @@ class ClientQuotationController extends Controller
                     }
                 }
             }
-            // If not found, still update the pivot with 0 price to avoid N/A
+            // If not found, still update the pivot with 0 price to avoid N/A, but always set room_name and scope_name
             if (!$found) {
                 foreach ($rfqs as $rfq) {
                     $rfq->materials()->updateExistingPivot($materialId, [

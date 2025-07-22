@@ -44,8 +44,11 @@ class ContractController extends Controller
             'property',
             'items.material',
             'items.supplier',
+            'items.room',
+            'items.scope',
             'purchaseOrder',
-            'purchaseOrder.supplier'
+            'purchaseOrder.supplier',
+            'rooms.scopes.scopeType',
         ]);
 
         return view('admin.contracts.show', compact('contract'));
@@ -54,7 +57,7 @@ class ContractController extends Controller
     public function create()
     {
         $contractors = Employee::where('role', 'contractor')->get();
-        $quotationRequests = \App\Models\QuotationRequest::with('user')->orderByDesc('created_at')->get();
+        $quotationRequests = \App\Models\QuotationRequest::doesntHave('contract')->with('user')->orderByDesc('created_at')->get();
         return view('admin.contracts.create', compact('contractors', 'quotationRequests'));
     }
 
@@ -67,6 +70,7 @@ class ContractController extends Controller
 
         // Validate required fields
         $request->validate([
+            'quotation_request_id' => 'required|exists:quotation_requests,id',
             'contractor.name' => 'required|string',
             'contractor.email' => 'required|email',
             'client.name' => 'required|string',
@@ -86,19 +90,26 @@ class ContractController extends Controller
             'grand_total' => 'required|numeric',
         ]);
 
+        // Prevent duplicate contracts for the same Quotation Request
+        if (\App\Models\Contract::where('quotation_request_id', $request->quotation_request_id)->exists()) {
+            return back()->withErrors(['quotation_request_id' => 'A contract already exists for this Quotation Request.'])->withInput();
+        }
+
             DB::beginTransaction();
         try {
             $contractor = Party::updateOrCreate(
                 ['email' => $contractorData['email'], 'type' => 'contractor'],
                 [
                     'type' => 'contractor',
+                    'entity_type' => 'company', // default to company for contractor
                     'name' => $contractorData['name'],
                     'company_name' => $contractorData['company_name'] ?? null,
-                    'phone' => $contractorData['phone'] ?? null,
-                    'street' => $contractorData['street'] ?? null,
-                    'city' => $contractorData['city'] ?? null,
-                    'state' => $contractorData['state'] ?? null,
-                    'postal' => $contractorData['postal'] ?? null,
+                    'phone' => $contractorData['phone'] ?? '',
+                    'street' => $contractorData['street'] ?? '',
+                    'barangay' => $contractorData['barangay'] ?? '',
+                    'city' => $contractorData['city'] ?? '',
+                    'state' => $contractorData['state'] ?? '',
+                    'postal' => $contractorData['postal'] ?? '',
                     'email' => $contractorData['email'],
                 ]
             );
@@ -106,23 +117,27 @@ class ContractController extends Controller
                 ['email' => $clientData['email'], 'type' => 'client'],
                 [
                     'type' => 'client',
+                    'entity_type' => 'person', // default to person for client
                     'name' => $clientData['name'],
                     'company_name' => $clientData['company_name'] ?? null,
-                    'phone' => $clientData['phone'] ?? null,
-                    'street' => $clientData['street'] ?? null,
-                    'city' => $clientData['city'] ?? null,
-                    'state' => $clientData['state'] ?? null,
-                    'postal' => $clientData['postal'] ?? null,
+                    'phone' => $clientData['phone'] ?? '',
+                    'street' => $clientData['street'] ?? '',
+                    'barangay' => $clientData['barangay'] ?? '',
+                    'city' => $clientData['city'] ?? '',
+                    'state' => $clientData['state'] ?? '',
+                    'postal' => $clientData['postal'] ?? '',
                     'email' => $clientData['email'],
                 ]
             );
             $property = Property::create([
-                'street' => $propertyData['street'],
-                'city' => $propertyData['city'],
-                'state' => $propertyData['state'],
-                'postal' => $propertyData['postal'],
+                'street' => $propertyData['street'] ?? '',
+                'barangay' => $propertyData['barangay'] ?? '',
+                'city' => $propertyData['city'] ?? '',
+                'state' => $propertyData['state'] ?? '',
+                'postal' => $propertyData['postal'] ?? '',
             ]);
             $contract = Contract::create([
+                'quotation_request_id' => $request->input('quotation_request_id'),
                 'contractor_id' => $contractor->id,
                 'client_id' => $client->id,
                 'property_id' => $property->id,
@@ -149,7 +164,83 @@ class ContractController extends Controller
                 'additional_terms' => $contractData['additional_terms'],
                 'status' => 'draft',
             ]);
+            // Link to QuotationRequest if provided
+            $quotationRequestId = $request->input('quotation_request_id');
+            $quotationRequest = null;
+            if ($quotationRequestId) {
+                $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType.materials'])->find($quotationRequestId);
+            }
+            // Copy rooms, scopes, and materials from QuotationRequest
+            if ($quotationRequest) {
+                // Find all RFQs (Quotations) generated for this QuotationRequest
+                $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with('materials')->get();
+
+                foreach ($quotationRequest->rooms as $room) {
+                    $newRoom = $contract->rooms()->create([
+                        'name' => $room->name,
+                        'length' => $room->length,
+                        'width' => $room->width,
+                        'height' => $room->height,
+                        'area' => $room->area,
+                        'volume' => $room->volume,
+                    ]);
+                    foreach ($room->scopes as $scope) {
+                        $newScope = $newRoom->scopes()->create([
+                            'scope_type_id' => $scope->scope_type_id,
+                            'scope_name' => $scope->scope_name,
+                            'scope_category' => $scope->scope_category,
+                            'selected_materials' => $scope->selected_materials,
+                        ]);
+                        // Create contract items for each material
+                        if (is_array($scope->selected_materials)) {
+                            foreach ($scope->selected_materials as $mat) {
+                                $materialId = $mat['material_id'] ?? $mat['id'] ?? null;
+                                $material = $materialId ? \App\Models\Material::find($materialId) : null;
+                                $qty = $mat['quantity'] ?? 1;
+                                $unit = $mat['unit'] ?? ($material ? $material->unit : 'pcs');
+                                
+                                // Find the selected supplier and unit price from the RFQ pivot table
+                                $supplierId = null;
+                                $unitPrice = $material ? $material->base_price : 0;
+
+                                foreach ($rfqs as $rfq) {
+                                    $pivotData = $rfq->materials()->where('material_id', $materialId)->first();
+                                    if ($pivotData && $pivotData->pivot->selected_supplier_id) {
+                                        $supplierId = $pivotData->pivot->selected_supplier_id;
+                                        $unitPrice = $pivotData->pivot->unit_price ?? $unitPrice;
+                                        break;
+                                    }
+                                }
+
+                                \Log::info('Creating contract item', [
+                                    'room_id' => $newRoom->id ?? null,
+                                    'scope_id' => $newScope->id ?? null,
+                                    'material' => $materialId,
+                                    'room_name' => $newRoom->name ?? null,
+                                    'scope_name' => $newScope->scope_name ?? null,
+                                    'quotation_request_id' => $quotationRequestId,
+                                ]);
+                                $contract->items()->create([
+                                    'material_id' => $materialId,
+                                    'material_name' => $material ? $material->name : ($mat['name'] ?? 'Material'),
+                                    'unit' => $unit,
+                                    'supplier_id' => $supplierId,
+                                    'supplier_name' => $supplierId ? (\App\Models\Supplier::find($supplierId)->company_name ?? 'N/A') : null,
+                                    'quantity' => $qty,
+                                    'amount' => $unitPrice,
+                                    'total' => $qty * $unitPrice,
+                                    'room_id' => $newRoom->id,
+                                    'scope_id' => $newScope->id,
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
             DB::commit();
+            // Clear session data after contract creation
+            session()->forget('quotation_request_id');
+            session()->forget('client_quotation_data');
             return redirect()->route('contracts.show', $contract->id)->with('success', 'Contract created successfully!');
         } catch (\Exception $e) {
             DB::rollBack();

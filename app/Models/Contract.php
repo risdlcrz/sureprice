@@ -17,6 +17,7 @@ class Contract extends Model
         'contractor_id',
         'client_id',
         'property_id',
+        'quotation_request_id',
         'title',
         'scope_of_work',
         'scope_description',

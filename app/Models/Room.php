@@ -15,6 +15,11 @@ class Room extends Model
         return $this->belongsTo(Contract::class);
     }
 
+    public function scopes()
+    {
+        return $this->hasMany(\App\Models\ContractScope::class);
+    }
+
     public function scopeTypes()
     {
         return $this->belongsToMany(ScopeType::class, 'room_scope_type', 'room_id', 'scope_type_id');

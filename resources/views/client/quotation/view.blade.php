@@ -516,8 +516,6 @@ body {
                                     <table class="table table-bordered mb-0 align-middle">
                                         <thead>
                                             <tr>
-                                                <th>Room</th>
-                                                <th>Scope</th>
                                                 <th>Material</th>
                                                 <th>Chosen Supplier</th>
                                                 <th>Quoted Price</th>
@@ -531,8 +529,6 @@ body {
                                                     $materialName = null;
                                                     $supplierName = null;
                                                     $price = null;
-                                                    $roomName = null;
-                                                    $scopeName = null;
                                                     $badges = [];
                                                     $contact = null;
                                                     // Try to get from offers (supplier responses)
@@ -543,8 +539,6 @@ body {
                                                                 $price = isset($offer['unit_price']) ? $offer['unit_price'] : null;
                                                                 $badges = $offer['badges'] ?? [];
                                                                 $contact = $offer['supplier_contact'] ?? null;
-                                                                $roomName = $offer['room_name'] ?? null;
-                                                                $scopeName = $offer['scope_name'] ?? null;
                                                             }
                                                             $materialName = $offer['material_name'] ?? $materialName;
                                                         }
@@ -555,18 +549,23 @@ body {
                                                             $mat = $rfq->materials->firstWhere('id', $materialId);
                                                             if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id == $supplierId) {
                                                                 $price = $mat->pivot->unit_price ?? null;
-                                                                $roomName = $roomName ?? ($mat->pivot->room_name ?? null);
-                                                                $scopeName = $scopeName ?? ($mat->pivot->scope_name ?? null);
                                                                 break;
                                                             }
                                                         }
                                                     }
+                                                    $contact = $contact ?? (isset($supplierId) ? (\App\Models\Supplier::find($supplierId)->phone ?? null) : null);
                                                 @endphp
                                                 <tr>
-                                                    <td>{{ $roomName ?? '-' }}</td>
-                                                    <td>{{ $scopeName ?? '-' }}</td>
                                                     <td>{{ $materialName ?? 'Material #'.$materialId }}</td>
-                                                    <td>{{ $supplierName ?? 'N/A' }}</td>
+                                                    <td>
+                                                        @if($supplierName)
+                                                            {{ $supplierName }}
+                                                        @elseif($supplierId)
+                                                            {{ \App\Models\Supplier::find($supplierId)->company_name ?? 'N/A' }}
+                                                        @else
+                                                            N/A
+                                                        @endif
+                                                    </td>
                                                     <td>
                                                         @if($price && $price > 0)
                                                             ₱{{ number_format($price, 2) }}

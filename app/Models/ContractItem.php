@@ -9,6 +9,8 @@ class ContractItem extends Model
 {
     protected $fillable = [
         'contract_id',
+        'room_id',
+        'scope_id',
         'material_id',
         'material_name',
         'unit',
@@ -47,5 +49,15 @@ class ContractItem extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
+    }
+
+    public function scope()
+    {
+        return $this->belongsTo(ContractScope::class, 'scope_id');
     }
 } 

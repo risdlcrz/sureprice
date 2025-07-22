@@ -143,13 +143,68 @@ class QuotationRequestController extends Controller
             'total_days' => $totalDays,
             'start_date' => $startDate,
             'end_date' => $endDate,
-            // Add selected scopes for each room
-            'rooms' => $quotation->rooms->map(function($room) {
+            // Add selected scopes for each room, now including chosen supplier
+            'rooms' => $quotation->rooms->map(function($room) use ($quotation) {
                 return [
                     'name' => $room->name,
-                    'scopes' => $room->scopes->map(function($scope) {
+                    'scopes' => $room->scopes->map(function($scope) use ($quotation) {
+                        $scopeName = $scope->scopeType->name ?? $scope->scope_name ?? '';
+                        $chosenSupplier = 'none selected';
+                        $selectedMaterials = [];
+                        if (is_array($scope->selected_materials)) {
+                            foreach ($scope->selected_materials as $mat) {
+                                $materialId = $mat['material_id'] ?? $mat['id'] ?? null;
+                                $material = $materialId ? \App\Models\Material::find($materialId) : null;
+                                $mat['name'] = $material ? $material->name : ($mat['name'] ?? 'N/A');
+                                $mat['unit_price'] = $mat['unit_price'] ?? ($material ? $material->base_price : 0);
+                                // --- DEBUG LOGGING ---
+                                \Log::info('Supplier lookup debug', [
+                                    'material_id' => $materialId,
+                                    'material_name' => $mat['name'] ?? null,
+                                    'quotation_id' => $quotation->id,
+                                ]);
+                                // --- Improved supplier lookup ---
+                                $pivot = null;
+                                if ($materialId) {
+                                    $pivot = \DB::table('material_quotation')
+                                        ->where('quotation_id', $quotation->id)
+                                        ->where('material_id', $materialId)
+                                        ->whereNotNull('selected_supplier_id')
+                                        ->first();
+                                }
+                                if (!$pivot && !empty($mat['name'])) {
+                                    $materialByName = \App\Models\Material::where('name', $mat['name'])->first();
+                                    if ($materialByName) {
+                                        $pivot = \DB::table('material_quotation')
+                                            ->where('quotation_id', $quotation->id)
+                                            ->where('material_id', $materialByName->id)
+                                            ->whereNotNull('selected_supplier_id')
+                                            ->first();
+                                    }
+                                }
+                                $selectedSupplierId = null;
+                                $supplierName = 'none selected';
+                                if ($pivot) {
+                                    $selectedSupplierId = $pivot->selected_supplier_id;
+                                    $supplier = \App\Models\Supplier::find($selectedSupplierId);
+                                    $supplierName = $supplier ? $supplier->company_name : 'none selected';
+                                }
+                                // --- DEBUG LOGGING ---
+                                \Log::info('Supplier lookup result', [
+                                    'pivot' => $pivot,
+                                    'selectedSupplierId' => $selectedSupplierId,
+                                    'supplierName' => $supplierName,
+                                ]);
+                                $mat['supplier_id'] = $selectedSupplierId;
+                                $mat['supplier_name'] = $supplierName;
+                                // --- END improved supplier lookup ---
+                                $selectedMaterials[] = $mat;
+                            }
+                        }
                         return [
-                            'scope_name' => $scope->scopeType->name ?? $scope->scope_name ?? '',
+                            'scope_name' => $scopeName,
+                            'supplier_name' => $chosenSupplier,
+                            'selected_materials' => $selectedMaterials,
                         ];
                     })->values(),
                 ];
@@ -163,7 +218,7 @@ class QuotationRequestController extends Controller
     public function search(Request $request)
     {
         $term = $request->input('q');
-        $query = QuotationRequest::with('user');
+        $query = QuotationRequest::doesntHave('contract')->with('user');
         if ($term) {
             $query->where('request_number', 'like', "%$term%")
                   ->orWhereHas('user', function($q) use ($term) {

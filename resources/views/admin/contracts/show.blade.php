@@ -138,11 +138,19 @@
             <h5 class="mb-0">Property Information</h5>
         </div>
         <div class="card-body">
-            <p><strong>Property Address:</strong><br>
-                {{ $contract->effective_property_address }}
-            </p>
-            @if($contract->property && $contract->property->property_size)
-                <p><strong>Property Size:</strong> {{ $contract->property->property_size }}㎡</p>
+            @if($contract->property)
+                <p><strong>Property Address:</strong><br>
+                    {{ $contract->property->street ?? '' }}
+                    {{ $contract->property->barangay ?? '' }}
+                    {{ $contract->property->city ?? '' }}
+                    {{ $contract->property->state ?? '' }}
+                    {{ $contract->property->postal ?? '' }}
+                </p>
+                @if($contract->property->property_size)
+                    <p><strong>Property Size:</strong> {{ $contract->property->property_size }}㎡</p>
+                @endif
+            @else
+                <p><strong>Property Address:</strong> N/A</p>
             @endif
         </div>
     </div>
@@ -168,7 +176,7 @@
                         {{ $contract->contractor->state }} {{ $contract->contractor->postal }}
                     </p>
                     <p><strong>Email:</strong> {{ $contract->contractor->email }}</p>
-                    <p><strong>Phone:</strong> {{ $contract->contractor->phone }}</p>
+                    <p><strong>Phone:</strong> {{ $contract->contractor->phone ?? 'N/A' }}</p>
                 </div>
             </div>
         </div>
@@ -193,7 +201,7 @@
                         {{ $contract->client->state }} {{ $contract->client->postal }}
                     </p>
                     <p><strong>Email:</strong> {{ $contract->client->email }}</p>
-                    <p><strong>Phone:</strong> {{ $contract->client->phone }}</p>
+                    <p><strong>Phone:</strong> {{ $contract->client->phone ?? 'N/A' }}</p>
                 </div>
             </div>
         </div>
@@ -240,9 +248,11 @@
                             <div class="review-item">
                                 <span class="review-label">Project Timeline:</span>
                                 <span class="review-value">
-                                    {{ \Carbon\Carbon::parse($contract->start_date)->format('M d, Y') }} to 
-                                    {{ \Carbon\Carbon::parse($contract->end_date)->format('M d, Y') }}
-                                    ({{ $contract->estimated_days }} days)
+                                    {{ $contract->start_date ? \Carbon\Carbon::parse($contract->start_date)->format('M d, Y') : '-' }} to 
+                                    {{ $contract->end_date ? \Carbon\Carbon::parse($contract->end_date)->format('M d, Y') : '-' }}
+                                    @if($contract->estimated_days)
+                                        ({{ $contract->estimated_days }} days)
+                                    @endif
                                 </span>
                             </div>
                         </div>
@@ -252,35 +262,43 @@
             <div class="row">
                 <div class="col-md-12">
                     <h6>Rooms & Work Categories</h6>
-                    @forelse($contract->rooms as $room)
-                        <div class="room-section mb-4">
-                            <h6>{{ $room->name }}</h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>Dimensions:</strong> {{ $room->length }}m x {{ $room->width }}m (Area: {{ $room->area }}㎡)</p>
+                    @if($contract->rooms && $contract->rooms->count())
+                        @foreach($contract->rooms as $room)
+                            <div class="room-section mb-4">
+                                <h6>{{ $room->name }}</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Dimensions:</strong> {{ $room->length }}m x {{ $room->width }}m (Area: {{ $room->area }}㎡)</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <!--<p><strong>Total Cost:</strong> ₱{{ number_format(($room->materials_cost ?? 0) + ($room->labor_cost ?? 0), 2) }}</p>-->
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <p><strong>Total Cost:</strong> ₱{{ number_format($room->materials_cost + $room->labor_cost, 2) }}</p>
-                                </div>
+                                @if($room->scopeTypes && $room->scopeTypes->count())
+                                    <div class="scope-types mt-2">
+                                        <strong>Work Categories:</strong>
+                                        <ul class="list-unstyled">
+                                            @foreach($room->scopeTypes as $scope)
+                                                <li>
+                                                    <i class="fas fa-check-circle text-success"></i>
+                                                    {{ $scope->name }} ({{ $scope->category }})
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
                             </div>
-                            
-                            @if($room->scopeTypes->count() > 0)
-                                <div class="scope-types mt-2">
-                                    <strong>Work Categories:</strong>
-                                    <ul class="list-unstyled">
-                                        @foreach($room->scopeTypes as $scope)
-                                            <li>
-                                                <i class="fas fa-check-circle text-success"></i>
-                                                {{ $scope->name }} ({{ $scope->category }})
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif
-                        </div>
-                    @empty
+                        @endforeach
+                    @elseif($contract->quotationRequest && $contract->quotationRequest->rooms && $contract->quotationRequest->rooms->count())
+                        @foreach($contract->quotationRequest->rooms as $room)
+                            <div class="room-section mb-4">
+                                <h6>{{ $room->name }}</h6>
+                                <!-- Add more details if needed -->
+                            </div>
+                        @endforeach
+                    @else
                         <p class="text-center">No rooms defined for this contract.</p>
-                    @endforelse
+                    @endif
                     <h6>Description</h6>
                     <p>{{ $contract->scope_description }}</p>
                 </div>
@@ -304,20 +322,33 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($contract->quotationRequest->rooms as $room)
-                            @foreach($room->scopes as $scope)
-                                @if(is_array($scope->selected_materials))
-                                    @foreach($scope->selected_materials as $material)
-                                        <tr>
-                                            <td>{{ $room->name }}</td>
-                                            <td>{{ $scope->scope_name }}</td>
-                                            <td>{{ $material['name'] ?? $material }}</td>
-                                            <td>{{ $material['supplier'] ?? 'N/A' }}</td>
-                                        </tr>
-                                    @endforeach
-                                @endif
+                        @if($contract->items && $contract->items->count())
+                            @foreach($contract->items as $item)
+                                <tr>
+                                    <td>{{ $item->room->name ?? '-' }}</td>
+                                    <td>{{ $item->scope->scope_name ?? '-' }}</td>
+                                    <td>{{ $item->material_name }}</td>
+                                    <td>{{ $item->supplier_name ?? 'N/A' }}</td>
+                                </tr>
                             @endforeach
-                        @endforeach
+                        @elseif($contract->quotationRequest && $contract->quotationRequest->rooms && $contract->quotationRequest->rooms->count())
+                            @foreach($contract->quotationRequest->rooms as $room)
+                                @foreach($room->scopes as $scope)
+                                    @if(is_array($scope->selected_materials))
+                                        @foreach($scope->selected_materials as $material)
+                                            <tr>
+                                                <td>{{ $room->name }}</td>
+                                                <td>{{ $scope->scope_name }}</td>
+                                                <td>{{ $material['name'] ?? $material }}</td>
+                                                <td>{{ $material['supplier'] ?? 'N/A' }}</td>
+                                            </tr>
+                                        @endforeach
+                                    @endif
+                                @endforeach
+                            @endforeach
+                        @else
+                            <tr><td colspan="4">No rooms or materials found for this contract.</td></tr>
+                        @endif
                     </tbody>
                 </table>
             </div>

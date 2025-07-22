@@ -98,6 +98,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 setValue('materials_total_display', '₱' + (data.total_materials_cost?.toFixed(2) || '0.00'));
                 setValue('labor_fee_display', '₱' + (data.labor_fee?.toFixed(2) || '0.00'));
                 setText('grand_total_display', '₱' + (data.grand_total?.toFixed(2) || '0.00'));
+                // Populate hidden inputs for backend validation (BASED ON QUOTATION REQUEST)
+                setValue('client_name', client.name || '');
+                setValue('property_street', client.street || '');
+                setValue('property_city', client.city || '');
+                setValue('property_state', client.state || '');
+                setValue('property_postal', client.postal || '');
+                setValue('property_barangay', ''); // Always set property barangay to empty string if not present
+                setValue('contract_scope_of_work', data.scope_of_work || '');
+                setValue('contract_scope_description', data.scope_of_work || ''); // Use scope_of_work as description if no separate field
+                setValue('contract_payment_terms', 'To be agreed'); // Default value
+                setValue('contract_warranty_terms', 'Standard warranty applies'); // Default value
+                setValue('contract_cancellation_terms', 'Subject to contract'); // Default value
+                setValue('contract_additional_terms', 'None'); // Default value
+                setValue('materials_total', data.total_materials_cost || '');
+                setValue('labor_fee', data.labor_fee || '');
+                setValue('grand_total', data.grand_total || '');
+                // Fallback defaults for required fields
+                [
+                  'client_name', 'property_street', 'property_city', 'property_state', 'property_postal',
+                  'contract_scope_of_work', 'contract_scope_description', 'contract_payment_terms',
+                  'contract_warranty_terms', 'contract_cancellation_terms', 'contract_additional_terms',
+                  'materials_total', 'labor_fee', 'grand_total'
+                ].forEach(function(id) {
+                  var el = document.getElementById(id);
+                  if (el && !el.value) el.value = 'N/A';
+                });
                 // Input fields
                 setValue('property_address', client.address);
                 setValue('client_email', client.email);
@@ -123,14 +149,34 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (room.scopes && Array.isArray(room.scopes)) {
                             room.scopes.forEach(scope => {
                                 if (scope.scope_name) scopes.push(scope.scope_name);
-                                // For summary table
-                                let supplier = 'none selected';
-                                if (scope.selected_supplier && scope.selected_supplier.company_name) {
-                                    supplier = scope.selected_supplier.company_name;
-                                } else if (scope.supplier_name) {
-                                    supplier = scope.supplier_name;
+                                // For each material in this scope
+                                if (scope.selected_materials && Array.isArray(scope.selected_materials)) {
+                                    scope.selected_materials.forEach(material => {
+                                        const materialName = material.name || material.material_name || 'N/A';
+                                        const quantity = material.quantity || 'N/A';
+                                        const unit = material.unit || 'N/A';
+                                        const supplier = material.supplier_name || material.supplier || (scope.selected_supplier && scope.selected_supplier.company_name) || scope.supplier_name || 'N/A';
+                                        const unitPrice = material.unit_price || material.price || '';
+                                        const totalPrice = (unitPrice && quantity && !isNaN(unitPrice) && !isNaN(quantity)) ? (parseFloat(unitPrice) * parseFloat(quantity)).toFixed(2) : '';
+                                        summaryRows.push(`<tr>
+                                            <td>${room.name || 'N/A'}</td>
+                                            <td>${scope.scope_name || 'N/A'}</td>
+                                            <td>${materialName}</td>
+                                            <td>${quantity}</td>
+                                            <td>${unit}</td>
+                                            <td>${supplier}</td>
+                                            <td>${unitPrice ? '₱' + parseFloat(unitPrice).toFixed(2) : ''}</td>
+                                            <td>${totalPrice ? '₱' + totalPrice : ''}</td>
+                                        </tr>`);
+                                    });
+                                } else {
+                                    // If no materials, still show the scope
+                                    summaryRows.push(`<tr>
+                                        <td>${room.name || 'N/A'}</td>
+                                        <td>${scope.scope_name || 'N/A'}</td>
+                                        <td colspan="6" class="text-center text-muted">No materials for this scope.</td>
+                                    </tr>`);
                                 }
-                                summaryRows.push(`<tr><td>${room.name}</td><td>${scope.scope_name || ''}</td><td>${supplier}</td></tr>`);
                             });
                         }
                     });
@@ -146,11 +192,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (summaryRows.length > 0) {
                         scopeSummaryBody.innerHTML = summaryRows.join('');
                     } else {
-                        scopeSummaryBody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No data yet.</td></tr>';
+                        scopeSummaryBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No data yet.</td></tr>';
                     }
                 }
                 // Add/change event for start date
                 // The startDateInput.onchange handler is already attached above.
+                // Fallback defaults for required fields
+                [
+                  'property_street', 'property_city', 'property_state', 'property_postal',
+                  'contract_scope_of_work', 'contract_scope_description', 'contract_payment_terms',
+                  'contract_warranty_terms', 'contract_cancellation_terms', 'contract_additional_terms',
+                  'materials_total', 'labor_fee', 'grand_total'
+                ].forEach(function(id) {
+                  var el = document.getElementById(id);
+                  if (el && !el.value) el.value = 'N/A';
+                });
             });
     });
     // --- End Quotation Request Autofill ---
@@ -191,6 +247,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (nameSpan) nameSpan.innerText = fullName;
             const addressSpan = document.getElementById('contractor_address_display');
             if (addressSpan) addressSpan.innerText = address;
+            // Show contractor email in contract
+            const emailSpan = document.getElementById('contractor_email_display');
+            if (emailSpan) emailSpan.innerText = selected.dataset.email || '';
             // Autofill contractor signature name and date
             const nameSignedSpan = document.getElementById('contractor_name_signed_display');
             if (nameSignedSpan) nameSignedSpan.innerText = fullName;
@@ -209,11 +268,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             // Fill hidden fields
             document.getElementById('contractor_name').value = fullName;
+            document.getElementById('contractor_email').value = selected.dataset.email || '';
             document.getElementById('contractor_street').value = selected.dataset.street || '';
             document.getElementById('contractor_city').value = selected.dataset.city || '';
             document.getElementById('contractor_state').value = selected.dataset.state || '';
             document.getElementById('contractor_postal').value = selected.dataset.postal || '';
-            document.getElementById('contractor_email').value = selected.dataset.email || '';
             document.getElementById('contractor_phone').value = selected.dataset.phone || '';
         });
     }

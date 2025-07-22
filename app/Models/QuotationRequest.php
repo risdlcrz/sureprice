@@ -41,6 +41,11 @@ class QuotationRequest extends Model
         return $this->hasMany(QuotationRequestRoom::class);
     }
 
+    public function contract()
+    {
+        return $this->hasOne(\App\Models\Contract::class, 'quotation_request_id');
+    }
+
     // Helper methods
     public function getStatusColorAttribute()
     {
