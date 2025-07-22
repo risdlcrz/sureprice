@@ -157,7 +157,7 @@ class RegisteredUserController extends Controller
             'contact_person' => 'required|string|max:100',
             'mobile_number' => 'required|string|max:20',
             'telephone_number' => 'nullable|string|max:20',
-            'supplier_type' => 'required|in:Construction & Engineering,Architecture & Design,Real Estate & Property Development,Manufacturing,Wholesale & Distribution,Retail & E-Commerce,Information Technology & Software,Telecommunications,Healthcare & Medical,Logistics & Transportation,Energy & Utilities,Financial Services,Legal & Compliance,Education & Training,Marketing & Advertising,Hospitality & Tourism,Government & Public Sector,Nonprofit / NGO,Other',
+            'supplier_type' => $request->designation === 'supplier' ? 'nullable|string' : 'required|in:Construction & Engineering,Architecture & Design,Real Estate & Property Development,Manufacturing,Wholesale & Distribution,Retail & E-Commerce,Information Technology & Software,Telecommunications,Healthcare & Medical,Logistics & Transportation,Energy & Utilities,Financial Services,Legal & Compliance,Education & Training,Marketing & Advertising,Hospitality & Tourism,Government & Public Sector,Nonprofit / NGO,Other',
             'designation' => 'required|in:client,supplier',
             'business_reg_no' => 'nullable|string|max:100',
             'street' => 'required|string|max:255',
@@ -209,7 +209,7 @@ class RegisteredUserController extends Controller
             \Log::warning('Unknown designation: ' . $request->designation);
         }
 
-        if ($request->supplier_type === 'Other') {
+        if ($request->supplier_type === 'Other' && $request->designation !== 'supplier') {
             $rules['other_supplier_type'] = 'required|string|max:100';
         }
 

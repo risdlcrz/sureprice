@@ -54,13 +54,12 @@ public function approve(Company $company)
 
         if ($company->designation === 'supplier') {
             $address = trim(implode(', ', array_filter([
-                $company->street,
-                $company->barangay,
-                $company->city,
-                $company->state,
-                $company->postal
+                $company->street ?? '',
+                $company->barangay ?? '',
+                $company->city ?? '',
+                $company->state ?? '',
+                $company->postal ?? ''
             ])));
-            // Ensure required fields are not null
             $supplierData = [
                 'company_name' => $company->company_name ?? '',
                 'contact_person' => $company->contact_person ?? '',
@@ -68,10 +67,9 @@ public function approve(Company $company)
                 'address' => $address,
                 'status' => 'active',
                 'registration_number' => $company->business_reg_no ?? '',
-                'user_id' => $company->user_id,
+                'user_id' => $company->user_id ?? null,
                 'company_id' => $company->id,
             ];
-            // Only add email if not null
             $email = $company->email ?? null;
             if ($email) {
                 \App\Models\Supplier::updateOrCreate(
@@ -82,7 +80,7 @@ public function approve(Company $company)
                 \Log::warning('Company approval: Supplier email is null', ['company_id' => $company->id]);
             }
         }
-        // Send approval notification to the company user
+        // Defensive: Only notify if user exists
         if ($company->user) {
             $company->user->notify(new CompanyApprovedNotification());
         } else {
