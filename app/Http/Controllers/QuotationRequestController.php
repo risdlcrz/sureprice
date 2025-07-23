@@ -79,7 +79,31 @@ class QuotationRequestController extends Controller
                 }
             }
         }
-        $grandTotal = $totalMaterialsCost + $laborFee;
+        // After determining the awarded supplier (awarded_supplier_id), fetch their discount info from the QuotationResponse and include it at the top level of the API response.
+        $awardedSupplierId = $quotation->awarded_supplier_id ?? null;
+        $awardedDiscount = null;
+        if ($awardedSupplierId) {
+            // Find the awarded supplier's quotation (RFQ)
+            $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #' . $quotation->request_number . '%')->get();
+            foreach ($rfqs as $rfq) {
+                $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
+                    ->where('supplier_id', $awardedSupplierId)
+                    ->first();
+                if ($response) {
+                    $awardedDiscount = [
+                        'discount_type' => $response->discount_type,
+                        'discount_percentage' => $response->discount_percentage,
+                        'discount_amount' => $response->discount_amount,
+                        'final_amount' => $response->final_amount,
+                        'total_amount' => $response->total_amount,
+                    ];
+                    break;
+                }
+            }
+        }
+        // Calculate discounted materials cost and grand total AFTER awardedDiscount is set
+        $discountedMaterialsCost = $awardedDiscount['final_amount'] ?? $totalMaterialsCost;
+        $grandTotal = $discountedMaterialsCost + $laborFee;
         $totalHours = $quotation->total_hours ?? 0;
         // Dynamic duration calculation matching client UI
         $DEFAULT_CREW_SIZE = 8;
@@ -125,28 +149,6 @@ class QuotationRequestController extends Controller
             'total_days' => $totalDays,
             'end_date' => $endDate,
         ]);
-        // After determining the awarded supplier (awarded_supplier_id), fetch their discount info from the QuotationResponse and include it at the top level of the API response.
-        $awardedSupplierId = $quotation->awarded_supplier_id ?? null;
-        $awardedDiscount = null;
-        if ($awardedSupplierId) {
-            // Find the awarded supplier's quotation (RFQ)
-            $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #' . $quotation->request_number . '%')->get();
-            foreach ($rfqs as $rfq) {
-                $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
-                    ->where('supplier_id', $awardedSupplierId)
-                    ->first();
-                if ($response) {
-                    $awardedDiscount = [
-                        'discount_type' => $response->discount_type,
-                        'discount_percentage' => $response->discount_percentage,
-                        'discount_amount' => $response->discount_amount,
-                        'final_amount' => $response->final_amount,
-                        'total_amount' => $response->total_amount,
-                    ];
-                    break;
-                }
-            }
-        }
         return response()->json([
             'client' => [
                 'name' => $company->company_name ?? $quotation->user->name,
@@ -161,6 +163,7 @@ class QuotationRequestController extends Controller
             ],
             'scope_of_work' => implode(', ', array_unique($scopeOfWork)),
             'total_materials_cost' => $totalMaterialsCost,
+            'discounted_materials_cost' => $discountedMaterialsCost,
             'labor_fee' => $laborFee,
             'grand_total' => $grandTotal,
             'total_hours' => $totalHours,

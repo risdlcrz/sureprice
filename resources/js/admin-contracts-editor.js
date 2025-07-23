@@ -96,16 +96,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 setText('client_address_display', client.address);
                 setText('scope_of_work_display', data.scope_of_work);
                 // Update material cost and labor fee as input values
-                setValue('materials_total_display', '₱' + (data.total_materials_cost?.toFixed(2) || '0.00'));
-                setValue('labor_fee_display', '₱' + (data.labor_fee?.toFixed(2) || '0.00'));
-                // Set Grand Total to awarded supplier's final amount after discount if available
-                if (data.awarded_supplier_discount && data.awarded_supplier_discount.final_amount) {
-                    setText('grand_total_display', '₱' + parseFloat(data.awarded_supplier_discount.final_amount).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}));
-                    setValue('grand_total', data.awarded_supplier_discount.final_amount);
-                } else {
-                    setText('grand_total_display', '₱' + (data.grand_total?.toFixed(2) || '0.00'));
-                    setValue('grand_total', data.grand_total || '');
+                // Use discounted materials cost if available
+                const discountedMaterials = data.discounted_materials_cost !== undefined ? data.discounted_materials_cost : data.total_materials_cost;
+                const materialsTotalInput = document.getElementById('materials_total_display');
+                if (materialsTotalInput) {
+                  materialsTotalInput.value = '₱' + (parseFloat(discountedMaterials).toFixed(2));
                 }
+                setValue('materials_total', discountedMaterials);
+                setValue('labor_fee_display', '₱' + (data.labor_fee?.toFixed(2) || '0.00'));
+                setValue('labor_fee', data.labor_fee || 0);
+                // Grand total = discounted materials + labor fee
+                const grandTotal = parseFloat(discountedMaterials) + parseFloat(data.labor_fee || 0);
+                setText('grand_total_display', '₱' + grandTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}));
+                setValue('grand_total', grandTotal);
                 // Show awarded supplier discount if available
                 const discountDiv = document.getElementById('awarded-discount-summary');
                 if (discountDiv) {
