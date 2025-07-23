@@ -252,3 +252,202 @@ $altColors = ['#f9fafb', '#e8f5e9'];
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     @vite(['resources/js/landing-catalogue.js'])
 @endpush 
+
+<style>
+body {
+    background: #f7fafc;
+    font-family: 'Poppins', 'Inter', Arial, sans-serif;
+    color: #222;
+}
+#landingCarousel {
+    width: 100vw;
+    max-width: 100vw;
+    margin-left: 50%;
+    transform: translateX(-50%);
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10), 0 2px 8px 0 rgba(0,0,0,0.08);
+    position: relative;
+    background: #fff;
+    border: 1.5px solid #e0e0e0;
+}
+.landing-carousel-img {
+    width: 100%;
+    height: 38vw;
+    min-height: 220px;
+    max-height: 420px;
+    object-fit: cover;
+    filter: brightness(0.97) saturate(1.04);
+    transition: transform 0.7s cubic-bezier(.4,2,.3,1), box-shadow 0.3s;
+    border-radius: 0.5rem;
+}
+.carousel-item:hover .landing-carousel-img {
+    transform: scale(1.03);
+    box-shadow: 0 8px 32px 0 rgba(34,70,34,0.10);
+}
+.carousel-caption-custom {
+    position: absolute;
+    top: 25%;
+    left: 37%;
+    max-width: 480px;
+    background: rgba(255,255,255,0.82);
+    border-radius: 18px;
+    padding: 1.7rem 2rem 1.5rem 2rem;
+    color: #1b5e20;
+    box-shadow: 0 4px 24px 0 rgba(31, 38, 135, 0.10);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid #e0e0e0;
+    z-index: 2;
+    text-align: left;
+    animation: fadeInDown 1s;
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+.carousel-caption-custom:hover {
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+    transform: scale(1.03) translateY(-6px);
+}
+.carousel-caption-custom h1 {
+    font-family: 'Poppins', 'Inter', Arial, sans-serif;
+    font-size: 2.3rem;
+    font-weight: 800;
+    margin-bottom: 0.7rem;
+    letter-spacing: 1px;
+    color: #1b5e20;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+.carousel-caption-custom p {
+    font-size: 1.15rem;
+    font-weight: 400;
+    color: #333;
+    margin-bottom: 0;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.ask-quote-btn {
+    background: #219150;
+    color: #fff !important;
+    border: 2px solid #1b5e20;
+    font-weight: 700;
+    border-radius: 2rem;
+    box-shadow: 0 2px 8px 0 rgba(34,70,34,0.10);
+    transition: box-shadow 0.3s, filter 0.3s, background 0.3s, border 0.3s;
+    padding: 0.8rem 2.5rem;
+    font-size: 1.15rem;
+    letter-spacing: 0.5px;
+    outline: none;
+    display: inline-block;
+    opacity: 1;
+    cursor: pointer;
+}
+.ask-quote-btn:hover, .ask-quote-btn:focus {
+    background: #17693a;
+    color: #fff !important;
+    box-shadow: 0 4px 16px 0 #1b5e2088;
+    border: 2px solid #17693a;
+    filter: brightness(1.08);
+    text-decoration: none;
+}
+
+.join-btn {
+    background: #fff;
+    color: #219150 !important;
+    border: 2px solid #219150;
+    font-weight: 700;
+    border-radius: 2rem;
+    box-shadow: 0 2px 8px 0 rgba(34,70,34,0.08);
+    transition: box-shadow 0.3s, filter 0.3s, background 0.3s, color 0.3s, border 0.3s;
+    padding: 0.8rem 2.5rem;
+    font-size: 1.15rem;
+    letter-spacing: 0.5px;
+    outline: none;
+    display: inline-block;
+    opacity: 1;
+    cursor: pointer;
+}
+.join-btn:hover, .join-btn:focus {
+    background: #219150;
+    color: #111 !important;
+    border: 2px solid #17693a;
+    box-shadow: 0 4px 16px 0 #1b5e2088;
+    filter: brightness(1.08);
+    text-decoration: none;
+}
+
+.category-card {
+    background: rgba(255,255,255,0.92);
+    border-radius: 1.5rem;
+    box-shadow: 0 2px 8px 0 rgba(31, 38, 135, 0.06);
+    margin-bottom: 2.5rem;
+    transition: box-shadow 0.3s, transform 0.3s;
+    animation: fadeInUp 1.2s;
+}
+.category-card:hover {
+    box-shadow: 0 8px 32px 0 #1b5e2055;
+    transform: scale(1.02) translateY(-4px);
+}
+.category-img {
+    border-radius: 1.2rem;
+    box-shadow: 0 2px 8px 0 #1b5e2044;
+    transition: box-shadow 0.3s, transform 0.3s;
+}
+.category-img:hover {
+    box-shadow: 0 8px 32px 0 #1b5e2055;
+    transform: scale(1.04);
+}
+.catalogue-heading {
+    font-family: 'Poppins', 'Inter', Arial, sans-serif;
+    font-size: 2.3rem;
+    font-weight: 700;
+    color: #1b5e20;
+    margin-bottom: 2.5rem;
+    letter-spacing: 1px;
+    text-align: center;
+    text-shadow: 0 2px 8px #e0e0e055;
+    animation: fadeInDown 1.2s;
+}
+.welcome-section {
+    margin-top: 2.5rem;
+    margin-bottom: 2.5rem;
+    animation: fadeIn 1.2s;
+}
+.join-section {
+    margin-top: 3.5rem;
+    margin-bottom: 2.5rem;
+    animation: fadeIn 1.2s;
+}
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@media (max-width: 992px) {
+    #landingCarousel {
+        border-radius: 1rem;
+    }
+    .landing-carousel-img {
+        height: 38vw;
+        min-height: 140px;
+        max-height: 220px;
+    }
+    .carousel-caption-custom {
+        top: 10%;
+        left: 4%;
+        max-width: 90vw;
+        padding: 1rem 1.2rem 1rem 1.2rem;
+        border-radius: 1.2rem;
+    }
+    .carousel-caption-custom h1 {
+        font-size: 1.2rem;
+    }
+    .carousel-caption-custom p {
+        font-size: 0.95rem;
+    }
+}
+</style> 
