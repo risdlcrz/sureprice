@@ -125,6 +125,28 @@ class QuotationRequestController extends Controller
             'total_days' => $totalDays,
             'end_date' => $endDate,
         ]);
+        // After determining the awarded supplier (awarded_supplier_id), fetch their discount info from the QuotationResponse and include it at the top level of the API response.
+        $awardedSupplierId = $quotation->awarded_supplier_id ?? null;
+        $awardedDiscount = null;
+        if ($awardedSupplierId) {
+            // Find the awarded supplier's quotation (RFQ)
+            $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #' . $quotation->request_number . '%')->get();
+            foreach ($rfqs as $rfq) {
+                $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
+                    ->where('supplier_id', $awardedSupplierId)
+                    ->first();
+                if ($response) {
+                    $awardedDiscount = [
+                        'discount_type' => $response->discount_type,
+                        'discount_percentage' => $response->discount_percentage,
+                        'discount_amount' => $response->discount_amount,
+                        'final_amount' => $response->final_amount,
+                        'total_amount' => $response->total_amount,
+                    ];
+                    break;
+                }
+            }
+        }
         return response()->json([
             'client' => [
                 'name' => $company->company_name ?? $quotation->user->name,
@@ -145,6 +167,7 @@ class QuotationRequestController extends Controller
             'total_days' => $totalDays,
             'start_date' => $startDate,
             'end_date' => $endDate,
+            'awarded_supplier_discount' => $awardedDiscount,
             // Add selected scopes for each room, now including chosen supplier
             'rooms' => $quotation->rooms->map(function($room) use ($quotation, $rfqs) {
                 return [
@@ -158,7 +181,44 @@ class QuotationRequestController extends Controller
                                 $materialId = $mat['material_id'] ?? $mat['id'] ?? null;
                                 $material = $materialId ? \App\Models\Material::find($materialId) : null;
                                 $mat['name'] = $material ? $material->name : ($mat['name'] ?? 'N/A');
-                                $mat['unit_price'] = $mat['unit_price'] ?? ($material ? $material->base_price : 0);
+                                // Set unit_price to awarded supplier's price if available
+                                $finalizedSupplierId = $quotation->selected_suppliers[$materialId] ?? null;
+                                $unitPrice = null;
+                                $discountType = null;
+                                $discountPercentage = null;
+                                $discountAmount = null;
+                                $finalAmount = null;
+                                if ($materialId && $finalizedSupplierId) {
+                                    foreach ($rfqs as $rfq) {
+                                        $pivot = \DB::table('material_quotation')
+                                            ->where('quotation_id', $rfq->id)
+                                            ->where('material_id', $materialId)
+                                            ->where('selected_supplier_id', $finalizedSupplierId)
+                                            ->first();
+                                        if ($pivot && $pivot->unit_price) {
+                                            $unitPrice = $pivot->unit_price;
+                                            // Fetch discount info from QuotationResponse
+                                            $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
+                                                ->where('supplier_id', $finalizedSupplierId)
+                                                ->first();
+                                            if ($response) {
+                                                $discountType = $response->discount_type;
+                                                $discountPercentage = $response->discount_percentage;
+                                                $discountAmount = $response->discount_amount;
+                                                $finalAmount = $response->final_amount;
+                                            }
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (!$unitPrice && $material) {
+                                    $unitPrice = $material->base_price;
+                                }
+                                $mat['unit_price'] = $unitPrice;
+                                $mat['discount_type'] = $discountType;
+                                $mat['discount_percentage'] = $discountPercentage;
+                                $mat['discount_amount'] = $discountAmount;
+                                $mat['final_amount'] = $finalAmount;
                                 // --- DEBUG LOGGING ---
                                 \Log::info('Supplier lookup debug', [
                                     'material_id' => $materialId,

@@ -444,6 +444,7 @@ class ClientQuotationController extends Controller
                                     'supplier_id' => $response->supplier_id,
                                     'supplier_name' => $response->supplier->company_name,
                                     'unit_price' => $item->unit_price,
+                                    'quantity' => $item->quantity, // ADD THIS LINE
                                     'metrics' => $response->supplier->metrics,
                                 ];
                             }
@@ -483,7 +484,7 @@ class ClientQuotationController extends Controller
                 }
             }
         }
-        return view('client.quotation.view', compact('quotationRequest', 'sessionData', 'materialSupplierResponses', 'selectedSuppliers'));
+        return view('client.quotation.view', compact('quotationRequest', 'sessionData', 'materialSupplierResponses', 'selectedSuppliers', 'rfqs'));
     }
 
     public function finalizeSelection(Request $request, $id)
@@ -548,6 +549,13 @@ class ClientQuotationController extends Controller
 
         // Set status to proceeded only after client finalizes selection
         $quotationRequest->status = 'proceeded';
+        // Set awarded_supplier_id if all selected_suppliers are the same and not empty
+        $uniqueSuppliers = collect($selectedSuppliers)->unique()->filter();
+        if ($uniqueSuppliers->count() === 1) {
+            $quotationRequest->awarded_supplier_id = $uniqueSuppliers->first();
+        } else {
+            $quotationRequest->awarded_supplier_id = null;
+        }
         $quotationRequest->save();
 
         // Store selected_suppliers in session for contract calculation

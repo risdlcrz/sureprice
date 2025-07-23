@@ -255,12 +255,12 @@ class SupplierQuotationController extends Controller
             return back()->withInput()->withErrors(['discount' => $discountErrors]);
         }
 
-        // Update the overall quotation status if all invited suppliers have responded
+        // Update the overall quotation status if at least one invited supplier has responded
         $totalSuppliers = $quotation->suppliers->count();
         $respondedSuppliers = $quotation->responses()->where('status', QuotationResponse::STATUS_SUBMITTED)->count();
 
-        if ($totalSuppliers === $respondedSuppliers) {
-            $quotation->update(['status' => Quotation::STATUS_IN_PROGRESS]); // Or 'responded'
+        if ($respondedSuppliers > 0) {
+            $quotation->update(['status' => Quotation::STATUS_IN_PROGRESS]);
         }
 
         $successMessage = 'Quotation response submitted successfully and material prices updated!';

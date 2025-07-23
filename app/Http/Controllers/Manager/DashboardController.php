@@ -31,8 +31,8 @@ class DashboardController extends Controller
     {
         $quotationRequests = \App\Models\QuotationRequest::with('user')->latest()->get();
         // Only show quotations that have been sent to suppliers
-        $supplierQuotations = \App\Models\Quotation::with(['suppliers', 'materials', 'purchaseRequest'])
-            ->where('status', 'sent')
+        $supplierQuotations = \App\Models\Quotation::with(['suppliers', 'materials', 'purchaseRequest', 'responses.supplier'])
+            ->where('status', 'in_progress')
             ->latest()
             ->get();
         $activeTab = request('tab', 'client');
@@ -96,7 +96,7 @@ class DashboardController extends Controller
             $quotation = \App\Models\Quotation::create([
                 'purchase_request_id' => null,
                 'rfq_number' => $rfqNumber,
-                'status' => 'draft',
+                'status' => 'sent',
                 'notes' => 'Auto-generated from client quotation request #' . $quotationRequest->request_number,
                 'due_date' => now()->addDays(7),
             ]);

@@ -57,6 +57,8 @@ class QuotationController extends Controller
         // Status filter
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
+        } elseif ($request->input('tab') === 'supplier') {
+            $query->where('status', 'in_progress');
         }
 
         // Purchase Request filter

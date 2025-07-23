@@ -6,6 +6,46 @@ document.addEventListener('DOMContentLoaded', function () {
         return isNaN(n) ? 0 : n;
     }
 
+    // Discount rules from backend (should match QuotationResponse::DISCOUNT_RULES)
+    const discountRules = {
+        'bulk': { max_percentage: 25, description: 'Bulk order discount for large quantities' },
+        'seasonal': { max_percentage: 15, description: 'Seasonal promotion discount' },
+        'loyalty': { max_percentage: 10, description: 'Loyalty discount for repeat customers' },
+        'new_customer': { max_percentage: 20, description: 'New customer welcome discount' },
+        'payment_terms': { max_percentage: 5, description: 'Early payment discount' },
+        'delivery_terms': { max_percentage: 8, description: 'Flexible delivery terms discount' },
+        'custom': { max_percentage: 30, description: 'Custom discount (requires approval)' },
+        'none': { max_percentage: 0, description: 'No discount' }
+    };
+
+    function updateDiscountFields() {
+        const discountType = document.getElementById('discount-type')?.value || 'none';
+        const percentDiv = document.getElementById('percentage-discount');
+        const percentInput = document.getElementById('discount-percentage');
+        const maxPercentSpan = document.getElementById('max-percentage');
+        const descDiv = document.getElementById('discount-info');
+        const descText = document.getElementById('discount-description');
+
+        if (discountType !== 'none') {
+            percentDiv.style.display = '';
+            percentInput.disabled = false;
+            if (discountRules[discountType]) {
+                maxPercentSpan.textContent = discountRules[discountType].max_percentage;
+                descDiv.style.display = '';
+                descText.textContent = discountRules[discountType].description;
+                percentInput.max = discountRules[discountType].max_percentage;
+            } else {
+                maxPercentSpan.textContent = '0';
+                descDiv.style.display = 'none';
+                percentInput.max = 100;
+            }
+        } else {
+            percentDiv.style.display = 'none';
+            percentInput.disabled = true;
+            descDiv.style.display = 'none';
+        }
+    }
+
     function updateSummary() {
         let subtotal = 0;
         document.querySelectorAll('.material-price').forEach(function (input) {
@@ -21,12 +61,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (discountType !== 'none') {
             const discountPercentageInput = document.getElementById('discount-percentage');
-            const discountAmountInput = document.getElementById('discount-amount');
-            if (discountPercentageInput && !discountPercentageInput.closest('.discount-option').style.display.includes('none')) {
+            if (discountPercentageInput && !discountPercentageInput.disabled) {
                 const percent = parseNumber(discountPercentageInput.value);
                 discount = subtotal * (percent / 100);
-            } else if (discountAmountInput && !discountAmountInput.closest('.discount-option').style.display.includes('none')) {
-                discount = parseNumber(discountAmountInput.value);
             }
             if (discount > subtotal) discount = subtotal;
             finalAmount = subtotal - discount;
@@ -45,17 +82,17 @@ document.addEventListener('DOMContentLoaded', function () {
     // Listen for changes in discount fields
     const discountType = document.getElementById('discount-type');
     if (discountType) {
-        discountType.addEventListener('change', updateSummary);
+        discountType.addEventListener('change', function() {
+            updateDiscountFields();
+            updateSummary();
+        });
     }
     const discountPercentage = document.getElementById('discount-percentage');
     if (discountPercentage) {
         discountPercentage.addEventListener('input', updateSummary);
     }
-    const discountAmount = document.getElementById('discount-amount');
-    if (discountAmount) {
-        discountAmount.addEventListener('input', updateSummary);
-    }
 
-    // Initial calculation
+    // Initial setup
+    updateDiscountFields();
     updateSummary();
 }); 

@@ -115,6 +115,7 @@
                         <span class="text-muted">No scope selected yet.</span>
                     </div>
                 </div>
+                <div class="mb-3" id="awarded-discount-summary"></div>
                 <div class="mb-3">
                     <label class="form-label fw-bold" style="font-size:1.1rem;">Scope Summary</label>
                     <div class="table-responsive">

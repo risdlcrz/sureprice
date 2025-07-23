@@ -61,11 +61,16 @@
                                 <td><span class="badge bg-{{ $q->status_color }}">{{ ucfirst($q->status) }}</span></td>
                                 <td>{{ $q->due_date ? $q->due_date->format('Y-m-d') : '-' }}</td>
                                 <td>
-                                    @foreach($q->suppliers as $supplier)
+                                    @php
+                                        $respondedSuppliers = $q->responses->where('status', 'submitted')->pluck('supplier')->filter();
+                                    @endphp
+                                    @forelse($respondedSuppliers as $supplier)
                                         <span class="badge bg-info text-dark">{{ $supplier->company_name }}</span>
-                                    @endforeach
+                                    @empty
+                                        <span class="text-muted">No responses yet</span>
+                                    @endforelse
                                     </td>
-                                <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
+                                <td><a href="{{ route('quotations.show', $q->id) }}" class="btn btn-sm btn-primary">View</a></td>
                                 </tr>
                         @empty
                             <tr><td colspan="6">No supplier quotations found.</td></tr>

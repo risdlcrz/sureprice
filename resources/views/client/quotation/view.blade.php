@@ -324,6 +324,81 @@ body {
                     <hr>
                     <h3 class="mb-3 fw-bold" style="font-size:1.5rem;">Supplier Offers & Selection</h3>
                     @if($quotationRequest->status === 'pending' || $quotationRequest->status === 'reviewed')
+                    <div class="alert alert-info alert-static mb-3" id="discount-tip-alert">
+                        <strong>Tip:</strong> If you choose the <b>same supplier for all materials</b>, you may get a discount if that supplier offers one. If you choose different suppliers, <b>no discount will be applied</b>.
+                    </div>
+                    @endif
+                    @php
+                        $uniqueSuppliers = collect($selectedSuppliers)->unique()->filter();
+                        $showDiscountSummary = $uniqueSuppliers->count() === 1 && count($selectedSuppliers) > 0;
+                        $awardedSupplierId = $showDiscountSummary ? $uniqueSuppliers->first() : null;
+                        $totalQuoted = 0;
+                        $discountType = null;
+                        $discountValue = null;
+                        $finalAmount = null;
+                        $discountFound = false;
+                        if($showDiscountSummary && isset($rfqs)) {
+                            foreach($rfqs as $rfq) {
+                                $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
+                                    ->where('supplier_id', $awardedSupplierId)
+                                    ->first();
+                                if($response) {
+                                    $discountType = $response->discount_type;
+                                    $discountValue = $response->discount_percentage ? $response->discount_percentage.'%' : ($response->discount_amount ? '₱'.number_format($response->discount_amount,2) : null);
+                                    $finalAmount = $response->final_amount;
+                                    $totalQuoted = $response->total_amount;
+                                    $discountFound = $discountType && $discountType !== 'none';
+                                    break;
+                                }
+                            }
+                        }
+                    @endphp
+                    @if($showDiscountSummary)
+                        <div class="alert alert-info mt-3">
+                            <strong>Summary for Supplier:</strong> {{ \App\Models\Supplier::find($awardedSupplierId)->company_name ?? 'N/A' }}<br>
+                            {{-- DEBUG OUTPUT --}}
+                            <div style="font-size:0.95em; color:#888;">
+                                <strong>Debug:</strong> Checking RFQs: 
+                                @if(isset($rfqs))
+                                    @foreach($rfqs as $rfq)
+                                        [RFQ ID: {{ $rfq->id }}]
+                                    @endforeach
+                                @endif
+                                | Selected Supplier: {{ $awardedSupplierId }}
+                                <br>
+                                @php $foundResponse = false; @endphp
+                                @if(isset($rfqs))
+                                    @foreach($rfqs as $rfq)
+                                        @php
+                                            $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
+                                                ->where('supplier_id', $awardedSupplierId)
+                                                ->first();
+                                        @endphp
+                                        @if($response)
+                                            <span style="color:green;">Found QuotationResponse for RFQ {{ $rfq->id }} and Supplier {{ $awardedSupplierId }}</span>
+                                            @php $foundResponse = true; @endphp
+                                        @endif
+                                    @endforeach
+                                @endif
+                                @if(!$foundResponse)
+                                    <span style="color:red;">No QuotationResponse found for selected supplier and these RFQs.</span>
+                                @endif
+                            </div>
+                            {{-- END DEBUG OUTPUT --}}
+                            <strong>Total Quoted Price:</strong> ₱{{ number_format($totalQuoted, 2) }}<br>
+                            @if($discountFound)
+                                <strong>Discount:</strong> {{ ucfirst($discountType) }} ({{ $discountValue }})<br>
+                                <strong>Final Amount After Discount:</strong> ₱{{ number_format($finalAmount, 2) }}
+                            @else
+                                <span class="text-danger">This supplier does not include a discount for your selected materials.</span>
+                            @endif
+                        </div>
+                    @elseif(count($selectedSuppliers) > 0)
+                        <div class="alert alert-warning mt-3">
+                            <strong>No discount will be applied if you select different suppliers for your materials.</strong>
+                        </div>
+                    @endif
+                    @if($quotationRequest->status === 'pending' || $quotationRequest->status === 'reviewed')
                         {{-- Supplier selection and proceed UI --}}
                         <form method="POST" action="{{ route('client.quotation.finalize', ['id' => $quotationRequest->id]) }}" id="client-finalize-form-table">
                             @csrf
@@ -430,6 +505,7 @@ body {
                                                 </tbody>
                                             </table>
                                         </div>
+                                        <div id="live-supplier-summary" class="alert alert-info alert-static mt-3" style="display:none;"></div>
                                     @else
                                         <div class="alert alert-info text-center">No supplier offers available yet.</div>
                                     @endif
@@ -596,6 +672,50 @@ body {
                                 </div>
                             </div>
                         </div>
+                        @php
+                            $uniqueSuppliers = collect($selectedSuppliers)->unique()->filter();
+                        @endphp
+                        @if($uniqueSuppliers->count() === 1)
+                            @php
+                                // Calculate total, discount, and final amount for the single supplier
+                                $totalQuoted = 0;
+                                $discountType = null;
+                                $discountValue = null;
+                                $finalAmount = null;
+                                $awardedSupplierId = $uniqueSuppliers->first();
+                                $discountFound = false;
+                                // Find the QuotationResponse for this supplier
+                                if(isset($rfqs)) {
+                                    foreach($rfqs as $rfq) {
+                                        $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
+                                            ->where('supplier_id', $awardedSupplierId)
+                                            ->first();
+                                        if($response) {
+                                            $discountType = $response->discount_type;
+                                            $discountValue = $response->discount_percentage ? $response->discount_percentage.'%' : ($response->discount_amount ? '₱'.number_format($response->discount_amount,2) : null);
+                                            $finalAmount = $response->final_amount;
+                                            $totalQuoted = $response->total_amount;
+                                            $discountFound = $discountType && $discountType !== 'none';
+                                            break;
+                                        }
+                                    }
+                                }
+                            @endphp
+                            <div class="alert alert-info mt-3">
+                                <strong>Summary for Supplier:</strong> {{ \App\Models\Supplier::find($awardedSupplierId)->company_name ?? 'N/A' }}<br>
+                                <strong>Total Quoted Price:</strong> ₱{{ number_format($totalQuoted, 2) }}<br>
+                                @if($discountFound)
+                                    <strong>Discount:</strong> {{ ucfirst($discountType) }} ({{ $discountValue }})<br>
+                                    <strong>Final Amount After Discount:</strong> ₱{{ number_format($finalAmount, 2) }}
+                                @else
+                                    <span class="text-danger">No discount was offered by this supplier.</span>
+                                @endif
+                            </div>
+                        @else
+                            <div class="alert alert-warning mt-3">
+                                <strong>No discount will be applied if you select different suppliers for your materials.</strong>
+                            </div>
+                        @endif
                         @endif
                     @endif
                 </div>
@@ -608,6 +728,9 @@ body {
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+// Move hasAnyResponses to global scope
+let hasAnyResponses = false;
+
 document.addEventListener('DOMContentLoaded', function() {
     // Only initialize Select2 once for all supplier-select elements
     if (window.__supplierSelect2Initialized !== true) {
@@ -654,7 +777,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const applyRecommendBtn = document.getElementById('clientApplyRecommendBtn');
     
     // Check if there are any supplier responses
-    let hasAnyResponses = false;
+    hasAnyResponses = false;
     $('.supplier-select').each(function() {
         if ($(this).find('option').length > 1) { // More than just "Select Supplier"
             hasAnyResponses = true;
@@ -738,46 +861,117 @@ document.addEventListener('DOMContentLoaded', function() {
         var btn = $(this).find('button[type="submit"]');
         btn.prop('disabled', true);
         btn.text('Processing...');
+        // Hide the tip alert only when the client clicks 'Proceed with Quotation'
+        $('#discount-tip-alert').hide();
+        $('#live-supplier-summary').hide();
     });
 });
-// Save supplier selection via AJAX on change
-$(document).on('change', '.supplier-select', function() {
-    var materialId = $(this).data('material-id');
-    var supplierId = $(this).val();
-    $.ajax({
-        url: '{{ route('client.quotation.saveSupplierSelection') }}',
-        method: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}',
-            quotation_request_id: '{{ $quotationRequest->id }}',
-            material_id: materialId,
-            supplier_id: supplierId
-        },
-        success: function(response) {
-            // Optionally show a toast or feedback
-            // --- NEW: Check if all suppliers are selected and show the button ---
-            let allSelected = true;
-            $('.supplier-select').each(function() {
-                if (!$(this).val()) {
-                    allSelected = false;
-                }
-            });
-            if (allSelected && hasAnyResponses) {
-                if ($('.proceed-quotation-btn').length === 0) {
-                    $('.d-flex.flex-wrap.justify-content-center.gap-3.mt-4').prepend(`
-                        <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" class="d-inline proceed-quotation-btn">
-                            @csrf
-                            <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
-                        </form>
-                    `);
-                }
-            } else {
-                $('.proceed-quotation-btn').remove();
+function updateLiveSupplierSummary() {
+    // Gather all selected supplier IDs
+    var selected = [];
+    var allSelected = true;
+    var supplierId = null;
+    $('.supplier-select').each(function() {
+        var val = $(this).val();
+        if (!val) allSelected = false;
+        selected.push(val);
+    });
+    // Check if all are the same and not empty
+    var unique = [...new Set(selected.filter(Boolean))];
+    var summaryDiv = $('#live-supplier-summary');
+    if (allSelected && unique.length === 1) {
+        supplierId = unique[0];
+        // Calculate total and check for discount
+        var total = 0;
+        var discountType = null;
+        var discountValue = null;
+        var finalAmount = null;
+        var discountFound = false;
+        // Find all offers for this supplier
+        var offers = [];
+        $('.supplier-select').each(function() {
+            var matId = $(this).data('material-id');
+            var price = 0;
+            var qty = 1;
+            var offer = null;
+            // Find the offer in the materialSupplierResponses (rendered as JS object)
+            if (window.materialSupplierResponses && window.materialSupplierResponses[matId]) {
+                window.materialSupplierResponses[matId].forEach(function(o) {
+                    if (o.supplier_id == supplierId) offer = o;
+                });
             }
-            // --- END NEW ---
+            if (offer && offer.unit_price) price = parseFloat(offer.unit_price);
+            if (offer && offer.quantity) qty = parseFloat(offer.quantity);
+            total += price * qty;
+        });
+        // Find discount info from window.supplierDiscounts (rendered as JS object)
+        if (window.supplierDiscounts && window.supplierDiscounts[supplierId]) {
+            var d = window.supplierDiscounts[supplierId];
+            discountType = d.discount_type;
+            discountValue = d.discount_percentage ? d.discount_percentage+'%' : (d.discount_amount ? '₱'+parseFloat(d.discount_amount).toLocaleString(undefined, {minimumFractionDigits:2}) : null);
+            finalAmount = d.final_amount;
+            discountFound = discountType && discountType !== 'none';
+        }
+        var html = '<strong>Summary for Supplier:</strong> ' + ($('.supplier-select option[value="'+supplierId+'"]:first').text() || supplierId) + '<br>';
+        html += '<strong>Total Quoted Price:</strong> ₱' + total.toLocaleString(undefined, {minimumFractionDigits:2}) + '<br>';
+        if (discountFound) {
+            html += '<strong>Discount:</strong> ' + discountType.charAt(0).toUpperCase() + discountType.slice(1) + ' (' + discountValue + ')<br>';
+            html += '<strong>Final Amount After Discount:</strong> ₱' + parseFloat(finalAmount).toLocaleString(undefined, {minimumFractionDigits:2});
+        } else {
+            html += '<strong>Final Amount:</strong> ₱' + total.toLocaleString(undefined, {minimumFractionDigits:2}) + '<br>';
+            html += '<span class="text-danger">This supplier does not include a discount for your selected materials.</span>';
+        }
+        summaryDiv.html(html).show();
+    } else {
+        summaryDiv.hide();
+    }
+}
+// Prepare materialSupplierResponses and supplierDiscounts as JS objects
+window.materialSupplierResponses = @json($materialSupplierResponses ?? []);
+window.supplierDiscounts = {};
+@if(isset($rfqs))
+    @foreach($rfqs as $rfq)
+        @foreach($rfq->responses as $response)
+            window.supplierDiscounts['{{ $response->supplier_id }}'] = {
+                discount_type: '{{ $response->discount_type }}',
+                discount_percentage: '{{ $response->discount_percentage }}',
+                discount_amount: '{{ $response->discount_amount }}',
+                final_amount: '{{ $response->final_amount }}'
+            };
+        @endforeach
+    @endforeach
+@endif
+// Listen for changes
+$(document).on('change', '.supplier-select', function() {
+    updateLiveSupplierSummary();
+    // Recompute hasAnyResponses in case options change
+    hasAnyResponses = false;
+    $('.supplier-select').each(function() {
+        if ($(this).find('option').length > 1) {
+            hasAnyResponses = true;
         }
     });
+    // Show/hide Proceed button
+    let allSelected = true;
+    $('.supplier-select').each(function() {
+        if (!$(this).val()) {
+            allSelected = false;
+        }
+    });
+    if (allSelected && hasAnyResponses) {
+        if ($('.proceed-quotation-btn').length === 0) {
+            $('.d-flex.flex-wrap.justify-content-center.gap-3.mt-4').prepend(`
+                <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" class="d-inline proceed-quotation-btn">
+                    @csrf
+                    <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
+                </form>
+            `);
+        }
+    } else {
+        $('.proceed-quotation-btn').remove();
+    }
 });
+$(document).ready(updateLiveSupplierSummary);
 $(function () {
     $('[data-bs-toggle="tooltip"]').tooltip();
 });

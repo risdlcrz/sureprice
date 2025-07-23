@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const qrSelect = document.getElementById('quotation_request_id');
     const saveBtn = document.getElementById('save-btn');
     let lastTotalDays = 0; // Store the duration for recalculation
+    let lastAwardedDiscount = null;
 
     // Always attach the event handler on page load
     const startDateInput = document.getElementById('project_start_date');
@@ -97,7 +98,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update material cost and labor fee as input values
                 setValue('materials_total_display', '₱' + (data.total_materials_cost?.toFixed(2) || '0.00'));
                 setValue('labor_fee_display', '₱' + (data.labor_fee?.toFixed(2) || '0.00'));
-                setText('grand_total_display', '₱' + (data.grand_total?.toFixed(2) || '0.00'));
+                // Set Grand Total to awarded supplier's final amount after discount if available
+                if (data.awarded_supplier_discount && data.awarded_supplier_discount.final_amount) {
+                    setText('grand_total_display', '₱' + parseFloat(data.awarded_supplier_discount.final_amount).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}));
+                    setValue('grand_total', data.awarded_supplier_discount.final_amount);
+                } else {
+                    setText('grand_total_display', '₱' + (data.grand_total?.toFixed(2) || '0.00'));
+                    setValue('grand_total', data.grand_total || '');
+                }
+                // Show awarded supplier discount if available
+                const discountDiv = document.getElementById('awarded-discount-summary');
+                if (discountDiv) {
+                    console.log('Updating discount summary', data.awarded_supplier_discount);
+                    // Only update if the value actually changed
+                    if (JSON.stringify(data.awarded_supplier_discount) !== JSON.stringify(lastAwardedDiscount)) {
+                        lastAwardedDiscount = data.awarded_supplier_discount;
+                        if (data.awarded_supplier_discount) {
+                            const d = data.awarded_supplier_discount;
+                            let discountLabel = d.discount_type ? d.discount_type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'None';
+                            let discountValue = d.discount_percentage ? `${d.discount_percentage}%` : (d.discount_amount ? `₱${parseFloat(d.discount_amount).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}` : '₱0.00');
+                            let html = `<div class='alert alert-info mb-2'><strong>Supplier Discount:</strong> ${discountLabel}`;
+                            if (d.discount_type && d.discount_type !== 'none') {
+                                html += `<br><strong>Discount:</strong> ${discountValue}`;
+                            }
+                            if (d.final_amount) {
+                                html += `<br><strong>Final Amount After Discount:</strong> ₱${parseFloat(d.final_amount).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+                            }
+                            html += '</div>';
+                            discountDiv.innerHTML = html;
+                        } else {
+                            discountDiv.innerHTML = "<div class='alert alert-secondary mb-2'>No supplier discount applied for this contract.</div>";
+                        }
+                    }
+                }
                 // Populate hidden inputs for backend validation (BASED ON QUOTATION REQUEST)
                 setValue('client_name', client.name || '');
                 setValue('property_street', client.street || '');

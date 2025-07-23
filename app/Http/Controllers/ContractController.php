@@ -51,7 +51,31 @@ class ContractController extends Controller
             'rooms.scopes.scopeType',
         ]);
 
-        return view('admin.contracts.show', compact('contract'));
+        // Fetch awarded supplier discount if linked to a quotation request
+        $awardedSupplierDiscount = null;
+        if ($contract->quotation_request_id) {
+            $qr = \App\Models\QuotationRequest::find($contract->quotation_request_id);
+            if ($qr && $qr->awarded_supplier_id) {
+                $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #' . $qr->request_number . '%')->get();
+                foreach ($rfqs as $rfq) {
+                    $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
+                        ->where('supplier_id', $qr->awarded_supplier_id)
+                        ->first();
+                    if ($response) {
+                        $awardedSupplierDiscount = [
+                            'discount_type' => $response->discount_type,
+                            'discount_percentage' => $response->discount_percentage,
+                            'discount_amount' => $response->discount_amount,
+                            'final_amount' => $response->final_amount,
+                            'total_amount' => $response->total_amount,
+                        ];
+                        break;
+                    }
+                }
+            }
+        }
+
+        return view('admin.contracts.show', compact('contract', 'awardedSupplierDiscount'));
     }
 
     public function create()
@@ -207,9 +231,13 @@ class ContractController extends Controller
                                 $unitPrice = $material ? $material->base_price : 0;
                                 if ($supplierId) {
                                     foreach ($rfqs as $rfq) {
-                                        $pivotData = $rfq->materials()->where('material_id', $materialId)->first();
-                                        if ($pivotData && $pivotData->pivot->selected_supplier_id == $supplierId) {
-                                            $unitPrice = $pivotData->pivot->unit_price ?? $unitPrice;
+                                        $pivot = \DB::table('material_quotation')
+                                            ->where('quotation_id', $rfq->id)
+                                            ->where('material_id', $materialId)
+                                            ->where('selected_supplier_id', $supplierId)
+                                            ->first();
+                                        if ($pivot && $pivot->unit_price) {
+                                            $unitPrice = $pivot->unit_price;
                                             break;
                                         }
                                     }
@@ -238,6 +266,18 @@ class ContractController extends Controller
                             }
                         }
                     }
+                }
+            }
+            // After copying contract items, set awarded_supplier_id on the quotation request if possible
+            if ($quotationRequest) {
+                $contract->load('items');
+                $supplierIds = $contract->items->pluck('supplier_id')->unique()->filter();
+                if ($supplierIds->count() === 1) {
+                    $quotationRequest->awarded_supplier_id = $supplierIds->first();
+                    $quotationRequest->save();
+                } else {
+                    $quotationRequest->awarded_supplier_id = null;
+                    $quotationRequest->save();
                 }
             }
             DB::commit();

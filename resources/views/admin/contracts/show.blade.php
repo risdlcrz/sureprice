@@ -127,7 +127,13 @@
                 </div>
                 <div class="col-md-6">
                     <p><strong>Status:</strong> <span class="badge bg-{{ $contract->status === 'draft' ? 'warning' : 'success' }}">{{ ucfirst($contract->status) }}</span></p>
-                    <p><strong>Total Amount:</strong> ₱{{ number_format($contract->total_amount, 2) }}</p>
+                    <p><strong>Total Amount:</strong> 
+                        @if(isset($awardedSupplierDiscount['final_amount']))
+                            ₱{{ number_format($awardedSupplierDiscount['final_amount'], 2) }}
+                        @else
+                            ₱{{ number_format($contract->total_amount, 2) }}
+                        @endif
+                    </p>
                 </div>
             </div>
         </div>
@@ -358,6 +364,21 @@
             <h5 class="mb-0">Contract Items</h5>
         </div>
         <div class="card-body">
+            @if(isset($awardedSupplierDiscount))
+                <div class="alert alert-info mb-3">
+                    <strong>Supplier Discount:</strong> {{ ucfirst(str_replace('_', ' ', $awardedSupplierDiscount['discount_type'])) }}<br>
+                    @if($awardedSupplierDiscount['discount_type'] !== 'none')
+                        <strong>Discount:</strong>
+                        @if($awardedSupplierDiscount['discount_percentage'])
+                            {{ $awardedSupplierDiscount['discount_percentage'] }}%
+                        @elseif($awardedSupplierDiscount['discount_amount'])
+                            ₱{{ number_format($awardedSupplierDiscount['discount_amount'], 2) }}
+                        @endif
+                        <br>
+                    @endif
+                    <strong>Final Amount After Discount:</strong> ₱{{ number_format($awardedSupplierDiscount['final_amount'], 2) }}
+                </div>
+            @endif
             <div class="table-responsive">
                 <table id="contractItemsTable" class="table table-bordered">
                     <thead>
@@ -395,7 +416,13 @@
                         </tr>
                         <tr>
                             <td colspan="4" class="text-end"><strong>Grand Total:</strong></td>
-                            <td>₱{{ number_format($contract->total_amount, 2) }}</td>
+                            <td>
+                                @if(isset($awardedSupplierDiscount['final_amount']))
+                                    ₱{{ number_format($awardedSupplierDiscount['final_amount'], 2) }}
+                                @else
+                                    ₱{{ number_format($contract->total_amount, 2) }}
+                                @endif
+                            </td>
                         </tr>
                     </tfoot>
                 </table>
@@ -463,7 +490,13 @@
             <div class="row">
                 <div class="col-md-4">
                     <p><strong>Materials Cost:</strong></p>
-                    <h5>₱{{ number_format($contract->total_amount - $contract->labor_cost, 2) }}</h5>
+                    <h5>
+                        @if(isset($awardedSupplierDiscount['final_amount']))
+                            ₱{{ number_format($awardedSupplierDiscount['final_amount'] - $contract->labor_cost, 2) }}
+                        @else
+                            ₱{{ number_format($contract->total_amount - $contract->labor_cost, 2) }}
+                        @endif
+                    </h5>
                 </div>
                 <div class="col-md-4">
                     <p><strong>Labor Cost:</strong></p>
@@ -471,7 +504,13 @@
                 </div>
                 <div class="col-md-4">
                     <p><strong>Total Amount:</strong></p>
-                    <h5>₱{{ number_format($contract->total_amount, 2) }}</h5>
+                    <h5>
+                        @if(isset($awardedSupplierDiscount['final_amount']))
+                            ₱{{ number_format($awardedSupplierDiscount['final_amount'], 2) }}
+                        @else
+                            ₱{{ number_format($contract->total_amount, 2) }}
+                        @endif
+                    </h5>
                 </div>
             </div>
         </div>

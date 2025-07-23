@@ -214,6 +214,24 @@
                                                 <th width="30%">Total Amount:</th>
                                                 <td>₱{{ number_format($response->total_amount, 2) }}</td>
                                             </tr>
+                                            @if($response->hasDiscount())
+                                                <tr>
+                                                    <th>Discount Type:</th>
+                                                    <td>
+                                                        <span class="badge {{ $response->discount_badge_class }}">
+                                                            {{ $response->discount_type_display }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Discount:</th>
+                                                    <td>{{ $response->discount_display }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Final Amount:</th>
+                                                    <td><strong>₱{{ number_format($response->final_amount, 2) }}</strong></td>
+                                                </tr>
+                                            @endif
                                             <tr>
                                                 <th>Payment Terms:</th>
                                                 <td>{{ $response->payment_terms }}</td>
