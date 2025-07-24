@@ -354,6 +354,34 @@ class ClientQuotationController extends Controller
     // Removed proceed method, status is now set in finalizeSelection
 
     /**
+     * Handle client contract submission with signature
+     */
+    public function submitContract(Request $request, $id)
+    {
+        $request->validate([
+            'client_signature' => 'required|string',
+        ]);
+        $quotationRequest = \App\Models\QuotationRequest::findOrFail($id);
+        $signaturePath = null;
+        if ($request->has('client_signature')) {
+            $base64_image = $request->input('client_signature');
+            if (strpos($base64_image, 'data:image') === 0) {
+                list($type, $data) = explode(';', $base64_image);
+                list(, $data) = explode(',', $data);
+                $image_data = base64_decode($data);
+                $filename = 'signatures/' . uniqid('client_') . '.png';
+                if (\Storage::disk('public')->put($filename, $image_data)) {
+                    $signaturePath = $filename;
+                }
+            }
+        }
+        // Save the signature path to the quotation request (or contract if exists)
+        $quotationRequest->client_signature = $signaturePath;
+        $quotationRequest->save();
+        return redirect()->back()->with('success', 'Client signature submitted successfully.');
+    }
+
+    /**
      * Get suppliers for each material with price, metrics, and badges
      */
     private function getMaterialSuppliersWithBadges($materials, $projectFeatures = [])

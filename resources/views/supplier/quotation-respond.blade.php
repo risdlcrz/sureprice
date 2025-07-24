@@ -203,7 +203,7 @@
                                         </div>
                                         <div id="discount-description" class="alert alert-info">
                                             <h6>Discount Description</h6>
-                                            <p>Please select a discount type to see its description.</p>
+                                            <p id="discount-description-text">Please select a discount type to see its description.</p>
                                         </div>
                                         <div id="discount-eligibility" class="alert" style="display: none;">
                                             <small id="eligibility-message"></small>
@@ -282,11 +282,9 @@ const discountDescriptions = {
 
 function updateDiscountDescription() {
     const select = document.getElementById('discount-type');
-    const descDiv = document.getElementById('discount-description');
+    const descText = document.getElementById('discount-description-text');
     const value = select.value;
-    descDiv.innerHTML = discountDescriptions[value] || '';
-    // Always keep the description visible
-    descDiv.style.display = 'block';
+    descText.innerHTML = discountDescriptions[value] || 'Please select a discount type to see its description.';
 }
 document.addEventListener('DOMContentLoaded', function() {
     const select = document.getElementById('discount-type');

@@ -111,6 +111,82 @@
         box-shadow: 0 8px 32px rgba(56,189,248,0.13);
         transform: translateY(-2px) scale(1.03);
     }
+    /* Responsive improvements */
+    @media (max-width: 991.98px) {
+        .small-box {
+            min-height: 80px;
+            padding: 16px 10px 10px 10px;
+        }
+        .table th, .table td {
+            padding: 10px 8px;
+            font-size: 0.98rem;
+        }
+        .input-group, .input-group-append {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+        .input-group .form-control, .input-group .btn, .input-group-append .btn {
+            width: 100% !important;
+            margin-bottom: 8px;
+        }
+        .btn-group {
+            flex-direction: column;
+        }
+        .btn-group .btn {
+            margin-bottom: 4px;
+        }
+    }
+    @media (max-width: 575.98px) {
+        .table th, .table td {
+            font-size: 0.90rem;
+            padding: 6px 4px;
+        }
+        .small-box h3 {
+            font-size: 1.3rem;
+        }
+        .small-box p {
+            font-size: 0.95rem;
+        }
+    }
+    /* Responsive stacked table for mobile */
+    @media (max-width: 767.98px) {
+        #inventoryTable thead {
+            display: none;
+        }
+        #inventoryTable, #inventoryTable tbody, #inventoryTable tr, #inventoryTable td {
+            display: block;
+            width: 100%;
+        }
+        #inventoryTable tr {
+            margin-bottom: 1rem;
+            border: 1px solid #e3e8ee;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(56,189,248,0.06);
+            background: #fff;
+            padding: 10px 0;
+        }
+        #inventoryTable td {
+            text-align: left;
+            padding: 10px 16px;
+            position: relative;
+            border: none;
+        }
+        #inventoryTable td:before {
+            content: attr(data-label) ": ";
+            font-weight: 600;
+            color: #1a7f4e;
+            display: block;
+            margin-bottom: 2px;
+            font-size: 0.98rem;
+        }
+        .btn-group {
+            width: 100%;
+        }
+        .btn-group .btn {
+            width: 100%;
+            margin-bottom: 6px;
+        }
+    }
 </style>
 @endpush
 
@@ -202,14 +278,14 @@
                             <tbody>
                                 @foreach($materials as $material)
                                 <tr>
-                                    <td>{{ $material->name }}</td>
-                                    <td>{{ $material->category->name ?? '-' }}</td>
+                                    <td data-label="Material">{{ $material->name }}</td>
+                                    <td data-label="Category">{{ $material->category->name ?? '-' }}</td>
                                     @foreach($warehouses as $warehouse)
-                                        <td>{{ $material->warehouse_stocks[$warehouse->id] ?? 0 }}</td>
+                                        <td data-label="{{ $warehouse->name }} Stock">{{ $material->warehouse_stocks[$warehouse->id] ?? 0 }}</td>
                                     @endforeach
-                                    <td>{{ $material->total_stock }}</td>
-                                    <td>{{ $material->unit }}</td>
-                                    <td>
+                                    <td data-label="Total Quantity">{{ $material->total_stock }}</td>
+                                    <td data-label="Unit">{{ $material->unit }}</td>
+                                    <td data-label="Status">
                                         @php
                                             $threshold = $material->minimum_stock ?? 0;
                                         @endphp
@@ -221,7 +297,7 @@
                                             <span class="badge bg-success">Active</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td data-label="Actions">
                                         <div class="btn-group">
                                             <a href="{{ route('purchase-requests.create', ['material_id' => $material->id]) }}" class="btn btn-sm btn-success" title="Request Restock">
                                                 <i class="fas fa-plus"></i>

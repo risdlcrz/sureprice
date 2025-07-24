@@ -41,6 +41,9 @@
             <a href="{{ route('project-timeline.index') }}" class="btn btn-outline-info btn-lg w-100 rounded-pill"><i class="bi bi-calendar-range"></i> Project Timeline</a>
         </div>
     </div>
+    @if(auth()->user()->hasRole('admin'))
+        {{-- Place admin-only actions here. If any approval/reject/draft buttons are ever added, they will only show for admins. --}}
+    @endif
     <!-- Recent Projects -->
     @php $recentProjects = $projects->sortByDesc('created_at')->take(5); @endphp
     @if($recentProjects->count())

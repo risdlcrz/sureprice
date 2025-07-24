@@ -23,6 +23,11 @@
         </div>
         <div class="mb-3">
             <label for="client_signature" class="form-label">Client Signature</label>
+            @if($quotationRequest->client_signature)
+                <div class="mb-2">
+                    <img src="{{ asset('storage/' . $quotationRequest->client_signature) }}" alt="Client Signature" style="max-width: 300px; max-height: 120px; border: 1px solid #ccc; background: #fff; display: block;" />
+                </div>
+            @endif
             <div class="input-group">
                 <input type="text" class="form-control" id="client_signature" name="client_signature" required readonly>
                 <button type="button" class="btn btn-outline-primary" id="addClientSignatureBtn">Add Client Signature</button>

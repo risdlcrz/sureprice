@@ -32,7 +32,7 @@ class DashboardController extends Controller
         $quotationRequests = \App\Models\QuotationRequest::with('user')->latest()->get();
         // Only show quotations that have been sent to suppliers
         $supplierQuotations = \App\Models\Quotation::with(['suppliers', 'materials', 'purchaseRequest', 'responses.supplier'])
-            ->where('status', 'in_progress')
+            ->whereIn('status', ['sent', 'in_progress'])
             ->latest()
             ->get();
         $activeTab = request('tab', 'client');
