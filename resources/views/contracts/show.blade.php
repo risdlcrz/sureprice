@@ -10,10 +10,16 @@
                 <span class="badge bg-warning">Draft</span>
             @endif
             
-            <a href="{{ route('material-requests.create', ['contract_id' => $contract->id]) }}" 
-               class="btn btn-info">
-                <i class="fas fa-file-alt"></i> Create Material Request
-            </a>
+            @if($contract->status === 'approved')
+                <a href="{{ route('material-requests.create', ['contract_id' => $contract->id]) }}" 
+                   class="btn btn-info">
+                    <i class="fas fa-file-alt"></i> Create Material Request
+                </a>
+            @else
+                <button class="btn btn-info" disabled title="Contract must be approved by admin before requesting materials.">
+                    <i class="fas fa-file-alt"></i> Create Material Request
+                </button>
+            @endif
 
             @if(Auth::user()->hasRole('admin'))
             <button class="btn btn-success" onclick="approveContract()">

@@ -22,6 +22,13 @@ class MaterialRequestController extends Controller
     public function create(Request $request)
     {
         $quotation_id = $request->get('quotation_id');
+        $contract_id = $request->get('contract_id');
+        if ($contract_id) {
+            $contract = \App\Models\Contract::findOrFail($contract_id);
+            if ($contract->status !== 'approved') {
+                abort(403, 'You cannot request materials until the contract is approved by the administrator.');
+            }
+        }
         if (!$quotation_id) {
             abort(404, 'Quotation request required.');
         }

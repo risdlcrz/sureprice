@@ -50,6 +50,10 @@
                     <a href="{{ route('material-requests.create', ['contract_id' => $contract->id]) }}" class="btn btn-info" id="createMaterialRequest">
                         <i class="fas fa-boxes"></i> Create Material Request
                     </a>
+                @else
+                    <button class="btn btn-info" disabled title="Contract must be approved by admin before requesting materials.">
+                        <i class="fas fa-boxes"></i> Create Material Request
+                    </button>
                 @endif
             @endif
             <a href="{{ route('contracts.download', $contract->id) }}" class="btn btn-success">
