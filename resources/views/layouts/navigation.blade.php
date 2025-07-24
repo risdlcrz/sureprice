@@ -60,7 +60,43 @@
                     <x-slot name="trigger">
                         <button
                             class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ $user->name }}</div>
+                            <div class="flex items-center gap-2">
+                                <span>{{ $user->name }}</span>
+                                <!-- Notification Bell with Badge -->
+                                <span class="relative" x-data="{ openNotif: false }">
+                                    <button type="button" @click="openNotif = !openNotif" class="focus:outline-none">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                        </svg>
+                                        @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
+                                            <span class="absolute -top-1 -right-2 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5">{{ $globalUnreadCount }}</span>
+                                        @endif
+                                    </button>
+                                    <!-- Notification Dropdown -->
+                                    <div x-show="openNotif" @click.away="openNotif = false" class="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+                                        <div class="p-3 border-b font-semibold">Notifications</div>
+                                        <div class="max-h-80 overflow-y-auto">
+                                            @if(isset($globalNotifications) && $globalNotifications->count())
+                                                @foreach($globalNotifications->take(5) as $notif)
+                                                    <div class="px-4 py-2 border-b hover:bg-gray-50">
+                                                        <div class="font-medium text-sm">{{ $notif->data['title'] ?? ($notif->type ?? 'Notification') }}</div>
+                                                        <div class="text-xs text-gray-500">{{ $notif->created_at->diffForHumans() }}</div>
+                                                        <div class="text-sm">{{ $notif->data['message'] ?? '' }}</div>
+                                                        @if(isset($notif->data['link']))
+                                                            <a href="{{ $notif->data['link'] }}" class="text-blue-600 text-xs underline">View Details</a>
+                                                        @endif
+                                                    </div>
+                                                @endforeach
+                                            @else
+                                                <div class="px-4 py-4 text-center text-gray-500">No notifications found.</div>
+                                            @endif
+                                        </div>
+                                        <div class="p-2 text-center border-t">
+                                            <a href="{{ route('manager.notification-center') }}" class="text-blue-600 text-sm font-semibold">View All Notifications</a>
+                                        </div>
+                                    </div>
+                                </span>
+                            </div>
                             <div class="ms-1">
                                 <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
                                      viewBox="0 0 20 20">
@@ -73,6 +109,11 @@
                     </x-slot>
 
                     <x-slot name="content">
+                        @if($dashboardRoute)
+                            <x-dropdown-link :href="route($dashboardRoute)">
+                                {{ __('Dashboard') }}
+                            </x-dropdown-link>
+                        @endif
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

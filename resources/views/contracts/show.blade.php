@@ -15,12 +15,21 @@
                 <i class="fas fa-file-alt"></i> Create Material Request
             </a>
 
+            @if(Auth::user()->hasRole('admin'))
             <button class="btn btn-success" onclick="approveContract()">
                 <i class="fas fa-check"></i> Approve
             </button>
             <button class="btn btn-danger" onclick="rejectContract()">
                 <i class="fas fa-times"></i> Reject
             </button>
+            @elseif(Auth::user()->hasRole('manager') && $contract->status === 'draft')
+                <form method="POST" action="{{ route('contracts.requestApproval', $contract) }}" class="d-inline">
+                    @csrf
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Request for Admin Approval
+                    </button>
+                </form>
+            @endif
             <a href="{{ route('contracts.edit', $contract) }}" class="btn btn-primary">
                 <i class="fas fa-edit"></i> Edit Contract
             </a>
@@ -201,6 +210,7 @@
     </div>
 
     <!-- Payment Details -->
+    @if($contract->status === 'approved')
     <div class="card mb-4">
         <div class="card-header">
             <h5>Payment Details</h5>
@@ -222,6 +232,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- Scope, Materials, and Chosen Suppliers Table -->
     @if($contract->project && $contract->project->quotationRequest)

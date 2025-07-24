@@ -45,12 +45,12 @@
                         <p>Your current status: <strong>{{ ucfirst($existingResponse->status) }}</strong></p>
                         <p>Total Quoted Amount: <strong>₱{{ number_format($existingResponse->total_amount, 2) }}</strong></p>
                         @if($existingResponse->hasDiscount())
-                            <p>Discount Type: <span class="badge {{ $existingResponse->discount_badge_class }}">{{ $existingResponse->discount_type_display }}</span></p>
+                            <p>Discount Type: <span class="badge bg-info text-dark">{{ $existingResponse->discount_type_display }}</span></p>
                             <p>Discount: <strong>{{ $existingResponse->discount_display }}</strong></p>
                             <p>Final Amount: <strong>₱{{ number_format($existingResponse->final_amount, 2) }}</strong></p>
                         @endif
                         <p>Notes: {{ $existingResponse->notes ?? 'N/A' }}</p>
-                        <p>You can re-submit your response below if needed.</p>
+                        <p class="text-danger fw-bold">You cannot submit more than one response to the same quotation.</p>
                     </div>
                     @endif
 
@@ -65,7 +65,7 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('supplier.quotations.respond', $quotation) }}" method="POST" id="quotationForm">
+                    <form action="{{ route('supplier.quotations.respond', $quotation) }}" method="POST" id="quotationForm" @if($existingResponse) style="pointer-events:none;opacity:0.6;" @endif>
                         @csrf
 
                         <h5>Quoted Materials</h5>
@@ -201,8 +201,9 @@
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div id="discount-info" class="alert alert-info" style="display: none;">
-                                            <small id="discount-description"></small>
+                                        <div id="discount-description" class="alert alert-info">
+                                            <h6>Discount Description</h6>
+                                            <p>Please select a discount type to see its description.</p>
                                         </div>
                                         <div id="discount-eligibility" class="alert" style="display: none;">
                                             <small id="eligibility-message"></small>
@@ -247,7 +248,11 @@
                         </div>
 
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">Submit Quotation Response</button>
+                            @if(!$existingResponse)
+                                <button type="submit" class="btn btn-primary btn-lg">Submit Quotation Response</button>
+                            @else
+                                <button type="button" class="btn btn-secondary btn-lg" disabled>Already Submitted</button>
+                            @endif
                         </div>
                     </form>
                 </div>
@@ -262,5 +267,34 @@
 
 @push('scripts')
     @vite(['resources/js/supplier/quotation-respond.js'])
+<script>
+// Discount descriptions mapping with requirements
+const discountDescriptions = {
+    'none': 'No discount will be applied to this quotation.',
+    'bulk_order': 'Bulk Order Discount: Applies when the client orders in large quantities. <br><strong>Requirement:</strong> Minimum order quantity must be met (e.g., 100+ units).',
+    'seasonal': 'Seasonal Promotion: Special discount for a limited time or season. <br><strong>Requirement:</strong> Only available during the promotional period (e.g., summer sale, holiday promo).',
+    'loyalty': 'Loyalty Discount: For repeat or long-term clients. <br><strong>Requirement:</strong> Client must have completed at least 3 previous orders or be a registered partner.',
+    'new_customer': 'New Customer Discount: For first-time clients only. <br><strong>Requirement:</strong> Client must not have any previous orders.',
+    'early_payment': 'Early Payment Discount: Applies if the client pays before the due date. <br><strong>Requirement:</strong> Payment must be made within 7 days of invoice.',
+    'flexible_delivery': 'Flexible Delivery Discount: Discount for clients who accept flexible delivery schedules. <br><strong>Requirement:</strong> Client agrees to a delivery window instead of a fixed date.',
+    'custom': 'Custom Discount: Any other discount not listed above. <br><strong>Requirement:</strong> Please specify the reason and eligibility in the notes.'
+};
+
+function updateDiscountDescription() {
+    const select = document.getElementById('discount-type');
+    const descDiv = document.getElementById('discount-description');
+    const value = select.value;
+    descDiv.innerHTML = discountDescriptions[value] || '';
+    // Always keep the description visible
+    descDiv.style.display = 'block';
+}
+document.addEventListener('DOMContentLoaded', function() {
+    const select = document.getElementById('discount-type');
+    if (select) {
+        select.addEventListener('change', updateDiscountDescription);
+        updateDiscountDescription();
+    }
+});
+</script>
 @endpush
 @endsection 
