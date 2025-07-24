@@ -28,6 +28,29 @@
                     <div class="card-body">
                         <h5 class="card-title">View Contracts</h5>
                         <p class="card-text">Access and manage your contracts, track status.</p>
+                        @if(isset($contracts) && $contracts->count())
+                            <div class="mt-3">
+                                <h6>Project Progress</h6>
+                                @foreach($contracts as $contract)
+                                    @php
+                                        $now = \Carbon\Carbon::now();
+                                        $start = \Carbon\Carbon::parse($contract->start_date);
+                                        $end = \Carbon\Carbon::parse($contract->end_date);
+                                        $totalDays = $start->diffInDays($end) ?: 1;
+                                        $elapsedDays = $start->diffInDays(min($now, $end));
+                                        $progressPercent = min(100, round(($elapsedDays / $totalDays) * 100));
+                                    @endphp
+                                    <div class="mb-2">
+                                        <div><strong>{{ $contract->title ?? $contract->contract_number }}</strong></div>
+                                        <div class="progress" style="height: 18px;">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $progressPercent }}%" aria-valuenow="{{ $progressPercent }}" aria-valuemin="0" aria-valuemax="100">
+                                                {{ $progressPercent }}% ({{ $elapsedDays }} of {{ $totalDays }} days)
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                     <div class="card-footer">
                         <a href="{{ route('contracts.index') }}" class="btn btn-secondary w-100">View All Contracts</a>

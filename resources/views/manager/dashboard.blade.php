@@ -59,6 +59,37 @@
         </div>
     @endif
 
+    @if(isset($projects) && $projects->count())
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-semibold">Project Progress</div>
+            <div class="card-body p-2">
+                <ul class="list-group list-group-flush">
+                    @foreach($projects as $project)
+                        @php
+                            $now = \Carbon\Carbon::now();
+                            $start = \Carbon\Carbon::parse($project->start_date);
+                            $end = \Carbon\Carbon::parse($project->end_date);
+                            $totalDays = $start->diffInDays($end) ?: 1;
+                            $elapsedDays = $start->diffInDays(min($now, $end));
+                            $progressPercent = min(100, round(($elapsedDays / $totalDays) * 100));
+                        @endphp
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>{{ $project->name }}</span>
+                                <span class="ms-3">{{ $progressPercent }}% ({{ $elapsedDays }} of {{ $totalDays }} days)</span>
+                            </div>
+                            <div class="progress mt-2" style="height: 16px;">
+                                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $progressPercent }}%" aria-valuenow="{{ $progressPercent }}" aria-valuemin="0" aria-valuemax="100">
+                                    {{ $progressPercent }}%
+                                </div>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    @endif
+
     <!-- Quick Access Cards Based on Sidebar (with Images) -->
     <section class="mb-5">
         <h2 class="mb-4 fw-semibold text-success">Quick Access</h2>

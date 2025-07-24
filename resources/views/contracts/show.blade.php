@@ -240,6 +240,67 @@
     </div>
     @endif
 
+    <!-- Project Progress Bar -->
+    @if($contract->start_date && $contract->end_date)
+    @php
+        $now = \Carbon\Carbon::now();
+        $start = \Carbon\Carbon::parse($contract->start_date);
+        $end = \Carbon\Carbon::parse($contract->end_date);
+        $totalDays = $start->diffInDays($end) ?: 1;
+        $elapsedDays = $start->diffInDays(min($now, $end));
+        $progressPercent = min(100, round(($elapsedDays / $totalDays) * 100));
+    @endphp
+    <div class="mb-4">
+        <label class="fw-bold">Project Progress (by Days)</label>
+        <div class="progress" style="height: 24px;">
+            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $progressPercent }}%" aria-valuenow="{{ $progressPercent }}" aria-valuemin="0" aria-valuemax="100">
+                {{ $progressPercent }}% ({{ $elapsedDays }} of {{ $totalDays }} days)
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- Payment Schedule Table -->
+    @if($contract->payment_schedule)
+    @php $schedule = is_string($contract->payment_schedule) ? json_decode($contract->payment_schedule, true) : $contract->payment_schedule; @endphp
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Payment Schedule</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Stage</th>
+                            <th>Amount</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($schedule as $segment)
+                        @php
+                            $status = '-';
+                            if(isset($contract->payments)) {
+                                $p = $contract->payments->firstWhere('stage', $segment['stage']);
+                                $status = $p ? ucfirst($p->status) : 'Pending';
+                            }
+                        @endphp
+                        <tr>
+                            <td>{{ $segment['stage'] }}</td>
+                            <td>₱{{ number_format($segment['amount'], 2) }}</td>
+                            <td>{{ $segment['due_date'] ?? '-' }}</td>
+                            <td>{{ $status }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <!-- Scope, Materials, and Chosen Suppliers Table -->
     @if($contract->project && $contract->project->quotationRequest)
         <div class="card mb-4">
