@@ -169,4 +169,8 @@
             </div>
         </div>
     </div>
-@endsection 
+@endsection
+
+@push('styles')
+    @vite(['resources/css/procurement/project-dashboard.css'])
+@endpush 

@@ -379,9 +379,9 @@
 @endsection
 
 @push('styles')
-@vite(['resources/css/contracts-show.css'])
+    @vite(['resources/css/contracts-show.css'])
 @endpush
 
 @push('scripts')
-@vite(['resources/js/contracts-show.js'])
+    @vite(['resources/js/contracts-show.js'])
 @endpush 
