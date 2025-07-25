@@ -29,6 +29,7 @@ class Contract extends Model
         'materials_cost',
         'payment_method',
         'payment_terms',
+        'payment_plan',
         'bank_name',
         'bank_account_name',
         'bank_account_number',

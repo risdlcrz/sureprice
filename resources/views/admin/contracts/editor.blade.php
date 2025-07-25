@@ -49,7 +49,7 @@
                 <select name="quotation_request_id" id="quotation_request_id" class="form-control" required>
                     <option value="">Select Quotation Request</option>
                     @foreach($quotationRequests as $qr)
-                        <option value="{{ $qr->id }}" data-client="{{ $qr->user->name }}" data-request-number="{{ $qr->request_number }}">QR-{{ $qr->request_number }} - {{ $qr->user->name }}</option>
+                        <option value="{{ $qr->id }}" data-client="{{ $qr->user->name }}" data-request-number="{{ $qr->request_number }}" data-payment-plan="{{ $qr->payment_plan }}">QR-{{ $qr->request_number }} - {{ $qr->user->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -202,7 +202,7 @@
                     </div>
                     <div class="col-md-6">
                         <label for="payment_plan" class="form-label">Payment Plan <span class="text-danger">*</span></label>
-                        <select name="payment_plan" id="payment_plan" class="form-control mb-2">
+                        <select name="payment_plan" id="payment_plan" class="form-control mb-2" required>
                             <option value="">Select Plan</option>
                             <option value="30% down, 40% halfway, 30% on completion">30% down, 40% halfway, 30% on completion</option>
                             <option value="50/50">50% down, 50% on completion</option>
@@ -211,7 +211,6 @@
                             <option value="monthly3">Monthly for 3 months (equal payments)</option>
                             <option value="monthly6">Monthly for 6 months (equal payments)</option>
                             <option value="monthly12">Monthly for 12 months (equal payments)</option>
-                           
                         </select>
                         <input type="text" name="payment_plan_custom" id="payment_plan_custom" class="form-control mt-1" placeholder="Enter custom payment plan..." style="display:none;">
                     </div>
@@ -278,5 +277,48 @@
     window.quotationRequestApiUrl = '{{ url('api/quotation-requests') }}';
 </script>
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // When the form is submitted, set contractor_date_signed to effective_date
+    const form = document.getElementById('contractEditorForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const effectiveDate = document.getElementById('effective_date').value;
+            document.getElementById('contractor_date_signed').value = effectiveDate;
+        });
+    }
+    // Custom plan logic
+    const planSelect = document.getElementById('payment_plan');
+    const customPlan = document.getElementById('payment_plan_custom');
+    planSelect.addEventListener('change', function() {
+        if (planSelect.value === '' && customPlan) {
+            customPlan.style.display = 'block';
+        } else {
+            customPlan.style.display = 'none';
+        }
+    });
+    // On submit, if custom plan is filled, copy to select
+    const form = document.getElementById('contractEditorForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            if (planSelect.value === '' && customPlan && customPlan.value) {
+                planSelect.value = customPlan.value;
+            }
+        });
+    }
+    // If a quotation request is selected and has a payment plan, pre-fill
+    const qrSelect = document.getElementById('quotation_request_id');
+    if (qrSelect) {
+        qrSelect.addEventListener('change', function() {
+            const selected = qrSelect.options[qrSelect.selectedIndex];
+            const paymentPlan = selected.getAttribute('data-payment-plan');
+            if (paymentPlan) {
+                planSelect.value = paymentPlan;
+                customPlan.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
 @vite(['resources/js/admin-contracts-editor.js'])
 @endpush 

@@ -113,6 +113,7 @@ class ContractController extends Controller
             'materials_total' => 'required|numeric',
             'labor_fee' => 'required|numeric',
             'grand_total' => 'required|numeric',
+            'payment_plan' => 'required|string',
         ]);
 
         // Prevent duplicate contracts for the same Quotation Request
@@ -404,6 +405,7 @@ class ContractController extends Controller
                 'item_supplier_id.*' => 'nullable',
                 'item_unit' => 'required|array',
                 'item_unit.*' => 'required|string',
+                'payment_plan' => 'required|string',
             ]);
 
             DB::beginTransaction();
@@ -504,6 +506,7 @@ class ContractController extends Controller
                     'start_date' => $request->start_date ?? ($contract ? $contract->start_date : null),
                     'end_date' => $request->end_date ?? ($contract ? $contract->end_date : null),
                     'total_amount' => $request->total_amount,
+                    'payment_plan' => $request->payment_plan,
                     'labor_cost' => $request->labor_cost,
                     'materials_cost' => $request->materials_cost,
                     'payment_method' => $request->payment_method,
