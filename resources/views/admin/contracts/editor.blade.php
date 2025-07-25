@@ -184,7 +184,11 @@
                             <option value="30% down, 40% halfway, 30% on completion">30% down, 40% halfway, 30% on completion</option>
                             <option value="50/50">50% down, 50% on completion</option>
                             <option value="Full upon completion">Full upon completion</option>
-                            <option value="custom">Other (specify below)</option>
+                            <option value="milestone">Milestone-based (20% down, 20% after foundation, 30% after structure, 30% on completion)</option>
+                            <option value="monthly3">Monthly for 3 months (equal payments)</option>
+                            <option value="monthly6">Monthly for 6 months (equal payments)</option>
+                            <option value="monthly12">Monthly for 12 months (equal payments)</option>
+                           
                         </select>
                         <input type="text" name="payment_plan_custom" id="payment_plan_custom" class="form-control mt-1" placeholder="Enter custom payment plan..." style="display:none;">
                     </div>

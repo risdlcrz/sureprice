@@ -263,6 +263,12 @@ class QuotationRequestController extends Controller
                     })->values(),
                 ];
             })->values(),
+            // Add payment_plan and payment_method from contract_data if available
+            'payment_plan' => $quotation->contract_data['payment_plan'] ?? null,
+            'payment_method' => $quotation->contract_data['payment_method'] ?? null,
+            'property_address' => $quotation->contract_data['property_address'] ?? null,
+            'project_start_date' => $quotation->contract_data['project_start_date'] ?? null,
+            'project_end_date' => $quotation->contract_data['project_end_date'] ?? null,
         ]);
     }
 

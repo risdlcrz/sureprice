@@ -156,6 +156,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 setValue('materials_total', data.total_materials_cost || '');
                 setValue('labor_fee', data.labor_fee || '');
                 setValue('grand_total', data.grand_total || '');
+                // Autofill payment plan and payment method if available
+                if (data.payment_plan) {
+                    setValue('payment_plan', data.payment_plan);
+                    // Trigger change event in case there is logic attached
+                    const planSelect = document.getElementById('payment_plan');
+                    if (planSelect) {
+                        planSelect.value = data.payment_plan;
+                        planSelect.dispatchEvent(new Event('change'));
+                    }
+                }
+                if (data.payment_method) {
+                    setValue('payment_method', data.payment_method);
+                }
+                // Autofill property address and project timeline if available
+                // --- ENSURE CLIENT CHOICES TAKE PRECEDENCE ---
+                // Always set property address and project timeline from API response if available
+                if (data.property_address) {
+                    setValue('property_address', data.property_address);
+                }
+                if (data.project_start_date) {
+                    setValue('project_start_date', data.project_start_date);
+                }
+                if (data.project_end_date) {
+                    setValue('project_end_date', data.project_end_date);
+                }
                 // Fallback defaults for required fields
                 [
                   'client_name', 'property_street', 'property_city', 'property_state', 'property_postal',
@@ -167,11 +192,9 @@ document.addEventListener('DOMContentLoaded', function() {
                   if (el && !el.value) el.value = 'N/A';
                 });
                 // Input fields
-                setValue('property_address', client.address);
                 setValue('client_email', client.email);
                 setValue('client_phone', client.phone);
-                setValue('project_start_date', data.start_date);
-                setValue('project_end_date', data.end_date);
+                // DO NOT overwrite property_address, project_start_date, or project_end_date here
                 // Sync signature date after setting start date
                 const signatureDateInput = document.getElementById('contractor_signature_date');
                 const contractStartDateInput = document.getElementById('project_start_date');
