@@ -17,11 +17,13 @@ class QuotationRequest extends Model
         'status',
         'notes',
         'admin_notes',
-        'total_hours'
+        'total_hours',
+        'contract_data',
     ];
 
     protected $casts = [
         'selected_suppliers' => 'array',
+        'contract_data' => 'array',
     ];
 
     // Status constants

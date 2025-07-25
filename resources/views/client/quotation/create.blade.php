@@ -227,29 +227,44 @@ function createRoomRow(initialRoomData = {}) {
                             </div>
                             <div id="custom-collapse-${roomId}-${categoryIndex}" class="custom-accordion-body ${categoryIndex === 0 ? 'show' : ''}">
                                 <div class="row">
-                                    ${scopes.map(scope => `
-                                        <div class="col-md-6">
-                                            <div class="scope-item mb-4">
-                                                <div class="form-check">
-                                                    <input type="checkbox" class="form-check-input scope-checkbox" 
-                                                        name="rooms[${roomId}][scope][]" 
-                                                        value="${scope.id}" 
-                                                        id="scope_${scope.id}_${roomId}">
-                                                    <label class="form-check-label" for="scope_${scope.id}_${roomId}">
-                                                        <strong>${scope.name}</strong>
-                                                        <span class="badge bg-info ms-2 scope-days" data-scope-id="${scope.id}" data-room-id="${roomId}"></span>
-                                                        ${(scope.materials && scope.materials.length > 0) ? `
-                                                            <ul class="mb-0 ms-3">
-                                                                ${scope.materials.map(material => `
-                                                                    <li>${material.name} <span class='text-muted'>(₱${parseFloat(material.base_price).toFixed(2)})</span></li>
-                                                                `).join('')}
-                                                            </ul>
-                                                        ` : ''}
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `).join('')}
+                                    ${scopes.map(scope => {
+    // Calculate area and days for this scope
+    const length = parseFloat(roomContainer.querySelector('.room-dimension[name$="[length]"]')?.value) || 1;
+    const width = parseFloat(roomContainer.querySelector('.room-dimension[name$="[width]"]')?.value) || 1;
+    const height = parseFloat(roomContainer.querySelector('.room-dimension[name$="[height]"]')?.value) || 1;
+    const floorArea = length * width;
+    const wallArea = 2 * (length + width) * height;
+    const area = scope.is_wall_work ? wallArea : floorArea;
+    const laborHoursPerSqm = parseFloat(scope.labor_hours_per_sqm) || 1;
+    const totalLaborHours = area * laborHoursPerSqm;
+    let days = totalLaborHours / (DEFAULT_CREW_SIZE * DEFAULT_HOURS_PER_DAY);
+    days = Math.ceil(days * 2) / 2;
+    days = Math.max(0.5, days);
+    return `
+        <div class="col-md-6">
+            <div class="scope-item mb-4">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input scope-checkbox" 
+                        name="rooms[${roomId}][scope][]" 
+                        value="${scope.id}" 
+                        id="scope_${scope.id}_${roomId}"
+                        data-days="${days}">
+                    <label class="form-check-label" for="scope_${scope.id}_${roomId}">
+                        <strong>${scope.name}</strong>
+                        <span class="badge bg-info ms-2 scope-days" data-scope-id="${scope.id}" data-room-id="${roomId}"></span>
+                        ${(scope.materials && scope.materials.length > 0) ? `
+                            <ul class='mb-0 ms-3'>
+                                ${scope.materials.map(material => `
+                                    <li>${material.name} <span class='text-muted'>(₱${parseFloat(material.base_price).toFixed(2)})</span></li>
+                                `).join('')}
+                            </ul>
+                        ` : ''}
+                    </label>
+                </div>
+            </div>
+        </div>
+    `;
+}).join('')}
                                 </div>
                             </div>
                         </div>

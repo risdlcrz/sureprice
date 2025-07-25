@@ -512,7 +512,27 @@ class ClientQuotationController extends Controller
                 }
             }
         }
-        return view('client.quotation.view', compact('quotationRequest', 'sessionData', 'materialSupplierResponses', 'selectedSuppliers', 'rfqs'));
+        $totalEstimatedDays = 0;
+        if ($quotationRequest) {
+            $crewSize = 8;
+            $hoursPerDay = 8;
+            foreach ($quotationRequest->rooms as $room) {
+                foreach ($room->scopes as $scope) {
+                    $scopeType = $scope->scopeType;
+                    $isWallWork = $scopeType && $scopeType->is_wall_work;
+                    $area = $isWallWork
+                        ? 2 * ($room->length + $room->width) * $room->height
+                        : $room->length * $room->width;
+                    $laborHoursPerSqm = $scopeType && $scopeType->labor_hours_per_sqm ? $scopeType->labor_hours_per_sqm : 1;
+                    $totalLaborHours = $area * $laborHoursPerSqm;
+                    $days = $totalLaborHours / ($crewSize * $hoursPerDay);
+                    $days = ceil($days * 2) / 2;
+                    $days = max(0.5, $days);
+                    $totalEstimatedDays += $days;
+                }
+            }
+        }
+        return view('client.quotation.view', compact('quotationRequest', 'sessionData', 'materialSupplierResponses', 'selectedSuppliers', 'rfqs', 'totalEstimatedDays'));
     }
 
     public function finalizeSelection(Request $request, $id)
@@ -584,6 +604,12 @@ class ClientQuotationController extends Controller
         } else {
             $quotationRequest->awarded_supplier_id = null;
         }
+        // Save contract data from client form
+        $contractData = $quotationRequest->contract_data ?? [];
+        $contractData['property_address'] = $request->input('property_address');
+        $contractData['payment_plan'] = $request->input('payment_plan');
+        $contractData['project_timeline'] = $request->input('project_timeline');
+        $quotationRequest->contract_data = $contractData;
         $quotationRequest->save();
 
         // Store selected_suppliers in session for contract calculation

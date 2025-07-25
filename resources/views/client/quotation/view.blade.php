@@ -353,7 +353,149 @@ body {
                             }
                         }
                     @endphp
-                    @if($quotationRequest->status === 'pending' || $quotationRequest->status === 'reviewed')
+                    @if($quotationRequest->status === 'proceeded')
+                        <div class="alert alert-success text-center my-5">
+                            <h4>Thank you for proceeding!</h4>
+                            <p>Your quotation request has already been submitted and is being processed by our admin team.</p>
+                            <p>Request Number: <span class="badge bg-primary">{{ $quotationRequest->request_number }}</span></p>
+                            <a href="{{ route('client.quotation.index') }}" class="btn btn-primary mt-3">Back to My Quotations</a>
+                        </div>
+                        @if(isset($materialSupplierResponses) && isset($selectedSuppliers) && count($selectedSuppliers) > 0)
+                        <div class="card mt-4">
+                            <div class="card-header bg-success text-white">
+                                <h5 class="mb-0">Chosen Suppliers</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered mb-0 align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>Material</th>
+                                                <th>Chosen Supplier</th>
+                                                <th>Quoted Price</th>
+                                                <th>Badges</th>
+                                                <th>Contact</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($selectedSuppliers as $materialId => $supplierId)
+                                                @php
+                                                    $materialName = null;
+                                                    $supplierName = null;
+                                                    $price = null;
+                                                    $badges = [];
+                                                    $contact = null;
+                                                    // Try to get from offers (supplier responses)
+                                                    if(isset($materialSupplierResponses[$materialId])) {
+                                                        foreach($materialSupplierResponses[$materialId] as $offer) {
+                                                            if($offer['supplier_id'] == $supplierId) {
+                                                                $supplierName = $offer['supplier_name'] ?? 'Unknown';
+                                                                $price = isset($offer['unit_price']) ? $offer['unit_price'] : null;
+                                                                $badges = $offer['badges'] ?? [];
+                                                                $contact = $offer['supplier_contact'] ?? null;
+                                                            }
+                                                            $materialName = $offer['material_name'] ?? $materialName;
+                                                        }
+                                                    }
+                                                    // Fallback: try to get from pivot (material_quotation)
+                                                    if ($price === null && isset($rfqs)) {
+                                                        foreach ($rfqs as $rfq) {
+                                                            $mat = $rfq->materials->firstWhere('id', $materialId);
+                                                            if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id == $supplierId) {
+                                                                $price = $mat->pivot->unit_price ?? null;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    $contact = $contact ?? (isset($supplierId) ? (\App\Models\Supplier::find($supplierId)->phone ?? null) : null);
+                                                @endphp
+                                                <tr>
+                                                    <td>{{ $materialName ?? 'Material #'.$materialId }}</td>
+                                                    <td>
+                                                        @if($supplierName)
+                                                            {{ $supplierName }}
+                                                        @elseif($supplierId)
+                                                            {{ \App\Models\Supplier::find($supplierId)->company_name ?? 'N/A' }}
+                                                        @else
+                                                            N/A
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if($price && $price > 0)
+                                                            ₱{{ number_format($price, 2) }}
+                                                        @else
+                                                            <span class="text-muted">-</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if(!empty($badges))
+                                                            @foreach($badges as $badge)
+                                                                <span class="badge @if($badge=='Cheapest') badge-cheapest @elseif($badge=='Best Delivery') badge-delivery @elseif($badge=='Least Defects') badge-defects @elseif($badge=='Overall Best') badge-overall @endif" data-bs-toggle="tooltip" title="{{ $badge }}">{{ $badge }}</span>
+                                                            @endforeach
+                                                        @else
+                                                            <span class="text-muted">-</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if($contact)
+                                                            <span class="text-nowrap"><i class="fas fa-phone-alt me-1"></i>{{ $contact }}</span>
+                                                        @else
+                                                            <span class="text-muted">-</span>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        @php
+                            $uniqueSuppliers = collect($selectedSuppliers)->unique()->filter();
+                        @endphp
+                        @if($uniqueSuppliers->count() === 1)
+                            @php
+                                // Calculate total, discount, and final amount for the single supplier
+                                $totalQuoted = 0;
+                                $discountType = null;
+                                $discountValue = null;
+                                $finalAmount = null;
+                                $awardedSupplierId = $uniqueSuppliers->first();
+                                $discountFound = false;
+                                // Find the QuotationResponse for this supplier
+                                if(isset($rfqs)) {
+                                    foreach($rfqs as $rfq) {
+                                        $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
+                                            ->where('supplier_id', $awardedSupplierId)
+                                            ->first();
+                                        if($response) {
+                                            $discountType = $response->discount_type;
+                                            $discountValue = $response->discount_percentage ? $response->discount_percentage.'%' : ($response->discount_amount ? '₱'.number_format($response->discount_amount,2) : null);
+                                            $finalAmount = $response->final_amount;
+                                            $totalQuoted = $response->total_amount;
+                                            $discountFound = $discountType && $discountType !== 'none';
+                                            break;
+                                        }
+                                    }
+                                }
+                            @endphp
+                            <div class="alert alert-info mt-3">
+                                <strong>Summary for Supplier:</strong> {{ \App\Models\Supplier::find($awardedSupplierId)->company_name ?? 'N/A' }}<br>
+                                <strong>Total Quoted Price:</strong> ₱{{ number_format($totalQuoted, 2) }}<br>
+                                @if($discountFound)
+                                    <strong>Discount:</strong> {{ ucfirst($discountType) }} ({{ $discountValue }})<br>
+                                    <strong>Final Amount After Discount:</strong> ₱{{ number_format($finalAmount, 2) }}
+                                @else
+                                    <span class="text-danger">No discount was offered by this supplier.</span>
+                                @endif
+                            </div>
+                        @else
+                            <div class="alert alert-warning mt-3">
+                                <strong>No discount will be applied if you select different suppliers for your materials.</strong>
+                            </div>
+                        @endif
+                        @endif
+                    @elseif($quotationRequest->status === 'reviewed')
                         {{-- Supplier selection and proceed UI --}}
                         <form method="POST" action="{{ route('client.quotation.finalize', ['id' => $quotationRequest->id]) }}" id="client-finalize-form-table">
                             @csrf
@@ -505,173 +647,71 @@ body {
                                 }
                             }
                         @endphp
+                        <!-- Always render Proceed Button and Modal -->
                         <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
-                            @if($allSuppliersSelected && $hasAnyResponses)
-                            <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" class="d-inline proceed-quotation-btn">
-                                @csrf
-                                @foreach($selectedSuppliers as $materialId => $supplierId)
-                                    <input type="hidden" name="selected_suppliers[{{ $materialId }}]" value="{{ $supplierId }}">
-                                @endforeach
-                                <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
-                            </form>
-                            @elseif($hasAnyResponses)
-                                <div class="alert alert-info text-center">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    Please select suppliers for all materials before proceeding.
+                            <button type="button" class="btn btn-success btn-lg" id="proceedQuotationBtn" data-bs-toggle="modal" data-bs-target="#proceedQuotationModal" disabled title="Please select suppliers for all materials before proceeding.">Proceed with Quotation</button>
+                            <!-- Modal for Proceed Confirmation -->
+                            <div class="modal fade" id="proceedQuotationModal" tabindex="-1" aria-labelledby="proceedQuotationModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" id="proceedQuotationForm">
+                                            @csrf
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="proceedQuotationModalLabel">Proceed with Quotation</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="mb-3">
+                                                    <label for="property_address" class="form-label">Property Address</label>
+                                                    <input type="text" class="form-control" id="property_address" name="property_address" required>
+                                                </div>
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <label for="project_start_date" class="form-label">Start Date</label>
+                                                        <input type="date" class="form-control" id="project_start_date" name="project_start_date" required>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="project_end_date" class="form-label">End Date</label>
+                                                        <input type="date" class="form-control" id="project_end_date" name="project_end_date" required readonly>
+                                                    </div>
+                                                </div>
+                                                <div class="row mb-3">
+                                                    <div class="col-md-6">
+                                                        <label for="payment_method" class="form-label">Payment Method</label>
+                                                        <select name="payment_method" id="payment_method" class="form-select" required>
+                                                            <option value="">Select Method</option>
+                                                            <option value="bank_transfer">Bank Transfer</option>
+                                                            <option value="check">Check</option>
+                                                            <option value="cash">Cash</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label for="payment_plan" class="form-label">Payment Plan</label>
+                                                        <select name="payment_plan" id="payment_plan" class="form-select" required>
+                                                            <option value="">Select Plan</option>
+                                                            <option value="30% down, 40% halfway, 30% on completion">30% down, 40% halfway, 30% on completion</option>
+                                                            <option value="50/50">50% down, 50% on completion</option>
+                                                            <option value="Full upon completion">Full upon completion</option>
+                                                            <option value="custom">Other (specify below)</option>
+                                                        </select>
+                                                        <input type="text" name="payment_plan_custom" id="payment_plan_custom" class="form-control mt-2" placeholder="Enter custom payment plan..." style="display:none;">
+                                                    </div>
+                                                </div>
+                                                <p>Are you sure you want to proceed with this quotation? This action cannot be undone.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-success">Yes, Proceed</button>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </div>
-                            @else
-                                <div class="alert alert-warning text-center">
-                                    <i class="fas fa-clock me-2"></i>
-                                    Waiting for supplier responses. Please check back later.
-                                </div>
-                            @endif
+                            </div>
                             <form method="POST" action="{{ route('client.quotation.cancel', ['id' => $quotationRequest->id]) }}" onsubmit="return confirm('Are you sure you want to cancel this quotation?');" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-danger btn-lg">Cancel Quotation</button>
                             </form>
                         </div>
-                    @else
-                        <div class="alert alert-success text-center my-5">
-                            <h4>Thank you for proceeding!</h4>
-                            <p>Your quotation request has already been submitted and is being processed by our admin team.</p>
-                            <p>Request Number: <span class="badge bg-primary">{{ $quotationRequest->request_number }}</span></p>
-                            <a href="{{ route('client.quotation.index') }}" class="btn btn-primary mt-3">Back to My Quotations</a>
-                        </div>
-                        @if(isset($materialSupplierResponses) && isset($selectedSuppliers) && count($selectedSuppliers) > 0)
-                        <div class="card mt-4">
-                            <div class="card-header bg-success text-white">
-                                <h5 class="mb-0">Chosen Suppliers</h5>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered mb-0 align-middle">
-                                        <thead>
-                                            <tr>
-                                                <th>Material</th>
-                                                <th>Chosen Supplier</th>
-                                                <th>Quoted Price</th>
-                                                <th>Badges</th>
-                                                <th>Contact</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($selectedSuppliers as $materialId => $supplierId)
-                                                @php
-                                                    $materialName = null;
-                                                    $supplierName = null;
-                                                    $price = null;
-                                                    $badges = [];
-                                                    $contact = null;
-                                                    // Try to get from offers (supplier responses)
-                                                    if(isset($materialSupplierResponses[$materialId])) {
-                                                        foreach($materialSupplierResponses[$materialId] as $offer) {
-                                                            if($offer['supplier_id'] == $supplierId) {
-                                                                $supplierName = $offer['supplier_name'] ?? 'Unknown';
-                                                                $price = isset($offer['unit_price']) ? $offer['unit_price'] : null;
-                                                                $badges = $offer['badges'] ?? [];
-                                                                $contact = $offer['supplier_contact'] ?? null;
-                                                            }
-                                                            $materialName = $offer['material_name'] ?? $materialName;
-                                                        }
-                                                    }
-                                                    // Fallback: try to get from pivot (material_quotation)
-                                                    if ($price === null && isset($rfqs)) {
-                                                        foreach ($rfqs as $rfq) {
-                                                            $mat = $rfq->materials->firstWhere('id', $materialId);
-                                                            if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id == $supplierId) {
-                                                                $price = $mat->pivot->unit_price ?? null;
-                                                                break;
-                                                            }
-                                                        }
-                                                    }
-                                                    $contact = $contact ?? (isset($supplierId) ? (\App\Models\Supplier::find($supplierId)->phone ?? null) : null);
-                                                @endphp
-                                                <tr>
-                                                    <td>{{ $materialName ?? 'Material #'.$materialId }}</td>
-                                                    <td>
-                                                        @if($supplierName)
-                                                            {{ $supplierName }}
-                                                        @elseif($supplierId)
-                                                            {{ \App\Models\Supplier::find($supplierId)->company_name ?? 'N/A' }}
-                                                        @else
-                                                            N/A
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if($price && $price > 0)
-                                                            ₱{{ number_format($price, 2) }}
-                                                        @else
-                                                            <span class="text-muted">-</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if(!empty($badges))
-                                                            @foreach($badges as $badge)
-                                                                <span class="badge @if($badge=='Cheapest') badge-cheapest @elseif($badge=='Best Delivery') badge-delivery @elseif($badge=='Least Defects') badge-defects @elseif($badge=='Overall Best') badge-overall @endif" data-bs-toggle="tooltip" title="{{ $badge }}">{{ $badge }}</span>
-                                                            @endforeach
-                                                        @else
-                                                            <span class="text-muted">-</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if($contact)
-                                                            <span class="text-nowrap"><i class="fas fa-phone-alt me-1"></i>{{ $contact }}</span>
-                                                        @else
-                                                            <span class="text-muted">-</span>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        @php
-                            $uniqueSuppliers = collect($selectedSuppliers)->unique()->filter();
-                        @endphp
-                        @if($uniqueSuppliers->count() === 1)
-                            @php
-                                // Calculate total, discount, and final amount for the single supplier
-                                $totalQuoted = 0;
-                                $discountType = null;
-                                $discountValue = null;
-                                $finalAmount = null;
-                                $awardedSupplierId = $uniqueSuppliers->first();
-                                $discountFound = false;
-                                // Find the QuotationResponse for this supplier
-                                if(isset($rfqs)) {
-                                    foreach($rfqs as $rfq) {
-                                        $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
-                                            ->where('supplier_id', $awardedSupplierId)
-                                            ->first();
-                                        if($response) {
-                                            $discountType = $response->discount_type;
-                                            $discountValue = $response->discount_percentage ? $response->discount_percentage.'%' : ($response->discount_amount ? '₱'.number_format($response->discount_amount,2) : null);
-                                            $finalAmount = $response->final_amount;
-                                            $totalQuoted = $response->total_amount;
-                                            $discountFound = $discountType && $discountType !== 'none';
-                                            break;
-                                        }
-                                    }
-                                }
-                            @endphp
-                            <div class="alert alert-info mt-3">
-                                <strong>Summary for Supplier:</strong> {{ \App\Models\Supplier::find($awardedSupplierId)->company_name ?? 'N/A' }}<br>
-                                <strong>Total Quoted Price:</strong> ₱{{ number_format($totalQuoted, 2) }}<br>
-                                @if($discountFound)
-                                    <strong>Discount:</strong> {{ ucfirst($discountType) }} ({{ $discountValue }})<br>
-                                    <strong>Final Amount After Discount:</strong> ₱{{ number_format($finalAmount, 2) }}
-                                @else
-                                    <span class="text-danger">No discount was offered by this supplier.</span>
-                                @endif
-                            </div>
-                        @else
-                            <div class="alert alert-warning mt-3">
-                                <strong>No discount will be applied if you select different suppliers for your materials.</strong>
-                            </div>
-                        @endif
-                        @endif
                     @endif
                 </div>
             </div>
@@ -784,21 +824,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     });
                     if (allSelected && hasAnyResponses) {
-                        if ($('.proceed-quotation-btn').length === 0) {
-                            $('.d-flex.flex-wrap.justify-content-center.gap-3.mt-4').prepend(`
-                                <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" class="d-inline proceed-quotation-btn">
-                                    @csrf
-                                    <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
-                                </form>
-                            `);
-                        }
+                        // The proceed button is now directly in the HTML, no need to inject here
                     }
                 }, 500);
                 // --- END NEW ---
             });
     });
     // Disable the Proceed button after click to prevent double submission
-    $(document).on('submit', '.proceed-quotation-btn', function(e) {
+    $(document).on('submit', '#proceedQuotationForm', function(e) {
         // Remove any existing hidden inputs for selected_suppliers
         $(this).find('input[name^="selected_suppliers"]').remove();
         // For each supplier-select, add a hidden input with the current value
@@ -810,7 +843,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     type: 'hidden',
                     name: 'selected_suppliers[' + materialId + ']',
                     value: supplierId
-                }).appendTo(e.target);
+                }).appendTo('#proceedQuotationForm');
             }
         });
         var btn = $(this).find('button[type="submit"]');
@@ -914,21 +947,72 @@ $(document).on('change', '.supplier-select', function() {
         }
     });
     if (allSelected && hasAnyResponses) {
-        if ($('.proceed-quotation-btn').length === 0) {
-            $('.d-flex.flex-wrap.justify-content-center.gap-3.mt-4').prepend(`
-                <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" class="d-inline proceed-quotation-btn">
-                    @csrf
-                    <button type="submit" class="btn btn-success btn-lg">Proceed with Quotation</button>
-                </form>
-            `);
-        }
+        // The proceed button is now directly in the HTML, no need to inject here
     } else {
-        $('.proceed-quotation-btn').remove();
+        // The proceed button is now directly in the HTML, no need to remove here
     }
 });
 $(document).ready(updateLiveSupplierSummary);
 $(function () {
     $('[data-bs-toggle="tooltip"]').tooltip();
 });
+
+function updateProceedButtonState() {
+    let allSelected = true;
+    $('.supplier-select').each(function() {
+        if (!$(this).val()) {
+            allSelected = false;
+        }
+    });
+    const btn = $('#proceedQuotationBtn');
+    if (allSelected && hasAnyResponses) {
+        btn.prop('disabled', false);
+        btn.attr('title', '');
+    } else {
+        btn.prop('disabled', true);
+        btn.attr('title', 'Please select suppliers for all materials before proceeding.');
+    }
+}
+// Call on page load and whenever supplier selection changes
+$(document).ready(function() {
+    updateProceedButtonState();
+});
+$(document).on('change', '.supplier-select', function() {
+    updateProceedButtonState();
+});
+</script>
+<script>
+    var totalEstimatedDays = {{ $totalEstimatedDays ?? 1 }};
+    function updateEndDate() {
+        var start = $('#project_start_date').val();
+        if (!start) {
+            $('#project_end_date').val('');
+            return;
+        }
+        var [yyyy, mm, dd] = start.split('-');
+        var startDate = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+        if (isNaN(startDate)) {
+            $('#project_end_date').val('');
+            return;
+        }
+        var days = totalEstimatedDays;
+        var endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + days - 1);
+        var yyyyEnd = endDate.getFullYear();
+        var mmEnd = String(endDate.getMonth() + 1).padStart(2, '0');
+        var ddEnd = String(endDate.getDate()).padStart(2, '0');
+        var endDateStr = `${yyyyEnd}-${mmEnd}-${ddEnd}`;
+        $('#project_end_date').val(endDateStr);
+        $('#project_end_date').attr('min', start);
+        console.log('Start:', start, 'Days:', days, 'Calculated End:', endDateStr);
+    }
+    // Always recalculate on start date change or modal show
+    $('#project_start_date').on('change', updateEndDate);
+    $('#proceedQuotationModal').on('show.bs.modal', updateEndDate);
+    // On page load, initialize
+    $(document).ready(function() {
+        $('#project_end_date').attr('readonly', true);
+        updateEndDate();
+    });
 </script>
 @endpush 
