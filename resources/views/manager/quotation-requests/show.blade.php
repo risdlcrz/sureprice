@@ -73,6 +73,111 @@
             @if($quotationRequest->status === 'proceeded' && !$quotationRequest->materialRequest)
                 <a href="{{ route('material-requests.create', ['quotation_id' => $quotationRequest->id]) }}" class="btn btn-primary mt-3">Create Material Request</a>
             @endif
+            {{-- Manager Quotation Summary Card --}}
+            @php
+                $contract = $quotationRequest->contract_data ?? [];
+                $plan = $contract['payment_plan'] ?? null;
+                $address = $contract['property_address'] ?? null;
+                $start = $contract['project_start_date'] ?? null;
+                $end = $contract['project_end_date'] ?? null;
+                $method = $contract['payment_method'] ?? null;
+                $finalAmount = null;
+                $totalQuoted = null;
+                $discountType = null;
+                $discountValue = null;
+                $discountFound = false;
+                $uniqueSuppliers = collect($selectedSuppliers)->unique()->filter();
+                if($uniqueSuppliers->count() === 1 && isset($rfqs)) {
+                    $awardedSupplierId = $uniqueSuppliers->first();
+                    foreach($rfqs as $rfq) {
+                        $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
+                            ->where('supplier_id', $awardedSupplierId)
+                            ->first();
+                        if($response) {
+                            $discountType = $response->discount_type;
+                            $discountValue = $response->discount_percentage ? $response->discount_percentage.'%' : ($response->discount_amount ? '₱'.number_format($response->discount_amount,2) : null);
+                            $finalAmount = $response->final_amount;
+                            $totalQuoted = $response->total_amount;
+                            $discountFound = $discountType && $discountType !== 'none';
+                            break;
+                        }
+                    }
+                }
+                if(!$finalAmount) {
+                    // fallback: sum up all selected supplier prices
+                    $finalAmount = 0;
+                    if(isset($rfqs) && isset($selectedSuppliers)) {
+                        foreach($selectedSuppliers as $materialId => $supplierId) {
+                            foreach($rfqs as $rfq) {
+                                foreach($rfq->responses as $response) {
+                                    if($response->supplier_id == $supplierId) {
+                                        foreach($response->items as $item) {
+                                            if($item->material_id == $materialId && isset($item->unit_price)) {
+                                                $finalAmount += $item->unit_price * ($item->quantity ?? 1);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // Payment breakdown logic
+                $breakdownRows = [];
+                if($plan === '30% down, 40% halfway, 30% on completion') {
+                    $breakdownRows = [
+                        ['Downpayment', 30],
+                        ['Halfway Payment', 40],
+                        ['Completion Payment', 30],
+                    ];
+                } elseif($plan === '50/50') {
+                    $breakdownRows = [
+                        ['Downpayment', 50],
+                        ['Completion Payment', 50],
+                    ];
+                } elseif($plan === 'Full upon completion') {
+                    $breakdownRows = [
+                        ['Completion Payment', 100],
+                    ];
+                } elseif($plan === 'milestone') {
+                    $breakdownRows = [
+                        ['Downpayment', 20],
+                        ['After Foundation', 20],
+                        ['After Structure', 30],
+                        ['Completion Payment', 30],
+                    ];
+                } elseif($plan === 'monthly3') {
+                    for($i=1;$i<=3;$i++) $breakdownRows[] = ["Month $i Payment", 100/3];
+                } elseif($plan === 'monthly6') {
+                    for($i=1;$i<=6;$i++) $breakdownRows[] = ["Month $i Payment", 100/6];
+                } elseif($plan === 'monthly12') {
+                    for($i=1;$i<=12;$i++) $breakdownRows[] = ["Month $i Payment", 100/12];
+                }
+            @endphp
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white"><h5 class="mb-0">Client Quotation Submission Details</h5></div>
+                <div class="card-body">
+                    <p><strong>Property Address:</strong> {{ $address }}</p>
+                    <p><strong>Start Date:</strong> {{ $start }}</p>
+                    <p><strong>End Date:</strong> {{ $end }}</p>
+                    <p><strong>Payment Method:</strong> {{ ucfirst(str_replace('_',' ',$method ?? '')) }}</p>
+                    <p><strong>Payment Plan:</strong> {{ $plan }}</p>
+                    <div class="mb-3">
+                        <strong>Payment Breakdown:</strong>
+                        <table class="table table-bordered mt-2">
+                            <thead><tr><th>Stage</th><th>Percent</th><th>Amount (₱)</th></tr></thead>
+                            <tbody>
+                                @php $sum = 0; @endphp
+                                @foreach($breakdownRows as [$label, $percent])
+                                    @php $amt = round($finalAmount * $percent / 100, 2); $sum += $amt; @endphp
+                                    <tr><td>{{ $label }}</td><td>{{ rtrim(rtrim(number_format($percent,2), '0'), '.') }}%</td><td>₱{{ number_format($amt,2) }}</td></tr>
+                                @endforeach
+                                <tr class="fw-bold"><td>Total</td><td>100%</td><td>₱{{ number_format($finalAmount,2) }}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
             <div class="card mt-4">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0">Chosen Suppliers</h5>

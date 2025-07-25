@@ -611,6 +611,7 @@ class ClientQuotationController extends Controller
         $contractData['project_start_date'] = $request->input('project_start_date');
         $contractData['project_end_date'] = $request->input('project_end_date');
         $contractData['payment_method'] = $request->input('payment_method');
+        $quotationRequest->selected_suppliers = $selectedSuppliers;
         $quotationRequest->contract_data = $contractData;
         $quotationRequest->save();
 
