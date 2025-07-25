@@ -332,15 +332,32 @@ document.addEventListener('DOMContentLoaded', function() {
     // Payment plan custom input toggle
     const planSelect = document.getElementById('payment_plan');
     const planCustom = document.getElementById('payment_plan_custom');
+    const paymentTermsHidden = document.getElementById('contract_payment_terms');
+    function updatePaymentTermsFromPlan() {
+        if (planSelect.value === 'custom') {
+            paymentTermsHidden.value = planCustom.value || '';
+        } else {
+            paymentTermsHidden.value = planSelect.value || '';
+        }
+    }
     planSelect.addEventListener('change', function() {
         if (this.value === 'custom') {
             planCustom.style.display = '';
             planCustom.required = true;
+            paymentTermsHidden.value = planCustom.value || '';
         } else {
             planCustom.style.display = 'none';
             planCustom.required = false;
+            paymentTermsHidden.value = this.value || '';
         }
     });
+    planCustom.addEventListener('input', function() {
+        if (planSelect.value === 'custom') {
+            paymentTermsHidden.value = planCustom.value || '';
+        }
+    });
+    // On page load, set the hidden field to the current selection
+    updatePaymentTermsFromPlan();
 
     // Autofill property address if 'same as client address' is checked
     const propertyAddressInput = document.getElementById('property_address');

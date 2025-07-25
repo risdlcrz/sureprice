@@ -584,7 +584,10 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
-@vite(['resources/js/contracts-show.js'])
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        window.contractSignatureUrl = '{{ url('/contracts/' . ($contract->id ?? 'MISSING_ID') . '/signatures') }}';
+    </script>
+    @vite(['resources/js/contracts-show.js'])
 @endpush 

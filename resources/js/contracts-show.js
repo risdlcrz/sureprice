@@ -168,4 +168,8 @@ function saveSignature() {
             text: 'Error saving signature: ' + error.message
         });
     });
-} 
+}
+
+window.showSignatureModal = showSignatureModal;
+window.clearSignature = clearSignature;
+window.saveSignature = saveSignature; 

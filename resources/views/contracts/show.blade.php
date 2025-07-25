@@ -2,6 +2,7 @@
 
 @section('content')
 <div class="container-fluid">
+    <p style="color:red;font-weight:bold;">Contract ID: {{ $contract->id ?? 'NOT SET' }}</p>
     <!-- Header Actions -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Contract Details</h2>
@@ -230,7 +231,7 @@
                             <td>{{ $contract->payment_method }}</td>
                         </tr>
                         <tr>
-                            <th>Payment Terms:</th>
+                            <th>Payment Plan:</th>
                             <td>{{ $contract->payment_terms }}</td>
                         </tr>
                     </table>
@@ -312,6 +313,7 @@
                     <table class="table table-bordered">
                         <thead>
                             <tr>
+                                
                                 <th>Room</th>
                                 <th>Scope</th>
                                 <th>Material</th>
@@ -376,6 +378,26 @@
     <!-- Workflow Status -->
     @include('contracts.partials.workflow-status')
 </div>
+
+<!-- Signature Modal -->
+<div class="modal fade" id="signatureModal" tabindex="-1" aria-labelledby="signatureModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="signatureModalLabel">Add Signature</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6 id="signatureModalSubtitle">Add your signature below</h6>
+                <div class="signature-pad-container mb-3">
+                    <canvas id="signatureCanvas" class="signature-pad" style="border: 1px solid #dee2e6; border-radius: 4px; width: 100%; height: 200px;"></canvas>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm mb-2" onclick="clearSignature()">Clear</button>
+                <button type="button" class="btn btn-primary btn-sm mb-2" onclick="saveSignature()">Save Signature</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('styles')
@@ -383,5 +405,11 @@
 @endpush
 
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        window.contractSignatureUrl = '{{ url('/contracts/' . ($contract->id ?? 'MISSING_ID') . '/signatures') }}';
+        console.log('Signature URL:', window.contractSignatureUrl);
+    </script>
     @vite(['resources/js/contracts-show.js'])
 @endpush 

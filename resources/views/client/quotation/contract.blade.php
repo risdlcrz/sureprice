@@ -2,6 +2,9 @@
 
 @section('content')
 <div class="container py-4">
+    <script>
+        alert('Client contract view: script is running!');
+    </script>
     <h2>Contract for Quotation #{{ $quotationRequest->request_number }}</h2>
     <form method="POST" action="{{ route('client.contract.submit', ['id' => $quotationRequest->id]) }}">
         @csrf
@@ -75,11 +78,16 @@
 
 @push('scripts')
 <!-- SignaturePad CDN -->
-<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.6/dist/signature_pad.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <!-- SweetAlert2 CDN (if not already included) -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="{{ asset('js/contracts-show.js') }}"></script>
 <script>
+alert('Client signature script loaded!');
+if (typeof SignaturePad === 'undefined') {
+    alert('SignaturePad is NOT loaded!');
+} else {
+    alert('SignaturePad is loaded!');
+}
 // Setup for client signature only
 window.contractSignatureUrl = null; // Not used for client-side only
 
@@ -118,6 +126,7 @@ document.getElementById('saveSignatureBtn').addEventListener('click', function()
     const dataUrl = signaturePad.toDataURL();
     clientSignatureInput.value = dataUrl;
     signatureModal.hide();
+    alert('Signature DataURL length: ' + dataUrl.length); // DEBUG: Show signature length
     Swal.fire({
         icon: 'success',
         title: 'Signature Saved',

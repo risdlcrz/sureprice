@@ -353,51 +353,6 @@ body {
                             }
                         }
                     @endphp
-                    @if($showDiscountSummary)
-                        <div class="alert alert-info mt-3">
-                            <strong>Summary for Supplier:</strong> {{ \App\Models\Supplier::find($awardedSupplierId)->company_name ?? 'N/A' }}<br>
-                            {{-- DEBUG OUTPUT --}}
-                            <div style="font-size:0.95em; color:#888;">
-                                <strong>Debug:</strong> Checking RFQs: 
-                                @if(isset($rfqs))
-                                    @foreach($rfqs as $rfq)
-                                        [RFQ ID: {{ $rfq->id }}]
-                                    @endforeach
-                                @endif
-                                | Selected Supplier: {{ $awardedSupplierId }}
-                                <br>
-                                @php $foundResponse = false; @endphp
-                                @if(isset($rfqs))
-                                    @foreach($rfqs as $rfq)
-                                        @php
-                                            $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
-                                                ->where('supplier_id', $awardedSupplierId)
-                                                ->first();
-                                        @endphp
-                                        @if($response)
-                                            <span style="color:green;">Found QuotationResponse for RFQ {{ $rfq->id }} and Supplier {{ $awardedSupplierId }}</span>
-                                            @php $foundResponse = true; @endphp
-                                        @endif
-                                    @endforeach
-                                @endif
-                                @if(!$foundResponse)
-                                    <span style="color:red;">No QuotationResponse found for selected supplier and these RFQs.</span>
-                                @endif
-                            </div>
-                            {{-- END DEBUG OUTPUT --}}
-                            <strong>Total Quoted Price:</strong> ₱{{ number_format($totalQuoted, 2) }}<br>
-                            @if($discountFound)
-                                <strong>Discount:</strong> {{ ucfirst($discountType) }} ({{ $discountValue }})<br>
-                                <strong>Final Amount After Discount:</strong> ₱{{ number_format($finalAmount, 2) }}
-                            @else
-                                <span class="text-danger">This supplier does not include a discount for your selected materials.</span>
-                            @endif
-                        </div>
-                    @elseif(count($selectedSuppliers) > 0)
-                        <div class="alert alert-warning mt-3">
-                            <strong>No discount will be applied if you select different suppliers for your materials.</strong>
-                        </div>
-                    @endif
                     @if($quotationRequest->status === 'pending' || $quotationRequest->status === 'reviewed')
                         {{-- Supplier selection and proceed UI --}}
                         <form method="POST" action="{{ route('client.quotation.finalize', ['id' => $quotationRequest->id]) }}" id="client-finalize-form-table">
