@@ -195,7 +195,7 @@
                                             <label class="form-label">Discount Type</label>
                                             <select class="form-select" id="discount-type" name="discount_type">
                                                 @foreach($discountTypes as $type => $label)
-                                                    <option value="{{ $type }}" {{ old('discount_type', $existingResponse->discount_type ?? '') == $type ? 'selected' : '' }}>
+                                                    <option value="{{ $type }}" {{ old('discount_type', $existingResponse->discount_type ?? 'none') == $type ? 'selected' : '' }}>
                                                         {{ $label }}
                                                     </option>
                                                 @endforeach

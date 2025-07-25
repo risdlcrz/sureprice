@@ -26,23 +26,26 @@ document.addEventListener('DOMContentLoaded', function () {
         const descDiv = document.getElementById('discount-info');
         const descText = document.getElementById('discount-description');
 
+        // Add null checks to prevent errors if elements are missing
+        if (!percentDiv || !percentInput || !maxPercentSpan) return;
+
         if (discountType !== 'none') {
             percentDiv.style.display = '';
             percentInput.disabled = false;
             if (discountRules[discountType]) {
                 maxPercentSpan.textContent = discountRules[discountType].max_percentage;
-                descDiv.style.display = '';
-                descText.textContent = discountRules[discountType].description;
+                if (descDiv) descDiv.style.display = '';
+                if (descText) descText.textContent = discountRules[discountType].description;
                 percentInput.max = discountRules[discountType].max_percentage;
             } else {
                 maxPercentSpan.textContent = '0';
-                descDiv.style.display = 'none';
+                if (descDiv) descDiv.style.display = 'none';
                 percentInput.max = 100;
             }
         } else {
             percentDiv.style.display = 'none';
             percentInput.disabled = true;
-            descDiv.style.display = 'none';
+            if (descDiv) descDiv.style.display = 'none';
         }
     }
 
