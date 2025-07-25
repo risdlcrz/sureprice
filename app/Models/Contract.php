@@ -43,6 +43,10 @@ class Contract extends Model
         'purchase_order_id',
         'property_address',
         'same_as_client_address',
+        'discount_type',
+        'discount_percentage',
+        'discount_amount',
+        'final_amount',
     ];
 
     protected $casts = [

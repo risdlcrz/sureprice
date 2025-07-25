@@ -134,6 +134,26 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 }
+                // Also show discount summary below materials cost
+                const discountSummaryDiv = document.getElementById('discount-summary');
+                if (discountSummaryDiv) {
+                    if (data.awarded_supplier_discount) {
+                        const d = data.awarded_supplier_discount;
+                        let html = '';
+                        if (d.discount_type && d.discount_type !== 'none') {
+                            html += `<span class='discount-original'>₱${parseFloat(data.total_materials_cost).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>`;
+                            html += `<span class='discount-label'>Discounted Materials Cost:</span>`;
+                            html += `<span class='discount-value'>₱${parseFloat(d.final_amount).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>`;
+                            html += `<span class='discount-label'>Supplier Discount:</span>`;
+                            html += `<span class='discount-type'>${d.discount_type.replace(/_/g, ' ')}${d.discount_percentage ? ' (' + d.discount_percentage + '%)' : ''}</span>`;
+                        } else {
+                            html += `<span class='discount-value'>₱${parseFloat(data.total_materials_cost).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>`;
+                        }
+                        discountSummaryDiv.innerHTML = html;
+                    } else {
+                        discountSummaryDiv.innerHTML = '';
+                    }
+                }
                 // Populate hidden inputs for backend validation (BASED ON QUOTATION REQUEST)
                 setValue('client_name', client.name || '');
                 setValue('property_street', client.street || '');
@@ -155,7 +175,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 setValue('contract_additional_terms', 'None'); // Default value
                 setValue('materials_total', data.total_materials_cost || '');
                 setValue('labor_fee', data.labor_fee || '');
-                setValue('grand_total', data.grand_total || '');
                 // Autofill payment plan and payment method if available
                 if (data.payment_plan) {
                     setValue('payment_plan', data.payment_plan);
@@ -181,6 +200,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.project_end_date) {
                     setValue('project_end_date', data.project_end_date);
                 }
+                // Ensure Save button is enabled after autofill
+                updateTimeline();
                 // Fallback defaults for required fields
                 [
                   'client_name', 'property_street', 'property_city', 'property_state', 'property_postal',
@@ -282,6 +303,8 @@ document.addEventListener('DOMContentLoaded', function() {
                   var el = document.getElementById(id);
                   if (el && !el.value) el.value = 'N/A';
                 });
+                // Autofill payment plan and grand total
+                updatePaymentBreakdown();
             });
     });
     // --- End Quotation Request Autofill ---
@@ -549,4 +572,79 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('client_signature').value = window.clientSignaturePad.toDataURL();
         }
     });
+
+    // --- Payment Breakdown Table Logic ---
+    function renderPaymentBreakdown(plan, total) {
+        const breakdownDiv = document.getElementById('payment-breakdown');
+        if (!breakdownDiv) return;
+        let rows = [];
+        let sum = 0;
+        if (!plan || !total || isNaN(total)) {
+            breakdownDiv.innerHTML = '';
+            return;
+        }
+        plan = plan.trim();
+        if (plan === '30% down, 40% halfway, 30% on completion') {
+            rows = [
+                ['Downpayment', 30],
+                ['Halfway Payment', 40],
+                ['Completion Payment', 30],
+            ];
+        } else if (plan === '50/50') {
+            rows = [
+                ['Downpayment', 50],
+                ['Completion Payment', 50],
+            ];
+        } else if (plan === 'Full upon completion') {
+            rows = [
+                ['Completion Payment', 100],
+            ];
+        } else if (plan === 'milestone') {
+            rows = [
+                ['Downpayment', 20],
+                ['After Foundation', 20],
+                ['After Structure', 30],
+                ['Completion Payment', 30],
+            ];
+        } else if (plan === 'monthly3') {
+            for (let i = 1; i <= 3; i++) rows.push([`Month ${i} Payment`, 100/3]);
+        } else if (plan === 'monthly6') {
+            for (let i = 1; i <= 6; i++) rows.push([`Month ${i} Payment`, 100/6]);
+        } else if (plan === 'monthly12') {
+            for (let i = 1; i <= 12; i++) rows.push([`Month ${i} Payment`, 100/12]);
+        } else {
+            breakdownDiv.innerHTML = '';
+            return;
+        }
+        let html = `<table class="table table-bordered"><thead><tr><th>Stage</th><th>Percent</th><th>Amount (₱)</th></tr></thead><tbody>`;
+        rows.forEach(([label, percent]) => {
+            const amt = Math.round((total * percent / 100) * 100) / 100;
+            sum += amt;
+            html += `<tr><td>${label}</td><td>${parseFloat(percent).toFixed(2).replace(/\.00$/, '')}%</td><td>₱${amt.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td></tr>`;
+        });
+        html += `<tr class="fw-bold"><td>Total</td><td>100%</td><td>₱${total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td></tr>`;
+        html += '</tbody></table>';
+        breakdownDiv.innerHTML = html;
+    }
+
+    // Helper to get grand total as number
+    function getGrandTotal() {
+        const val = document.getElementById('grand_total');
+        if (!val) return 0;
+        return parseFloat(val.value) || 0;
+    }
+
+    // Update payment breakdown on plan or total change
+    function updatePaymentBreakdown() {
+        const plan = document.getElementById('payment_plan')?.value;
+        const total = getGrandTotal();
+        renderPaymentBreakdown(plan, total);
+    }
+
+    // Listen for changes
+    document.getElementById('payment_plan').addEventListener('change', updatePaymentBreakdown);
+    document.getElementById('grand_total').addEventListener('input', updatePaymentBreakdown);
+
+    // Initial render on page load
+    updatePaymentBreakdown();
 }); 

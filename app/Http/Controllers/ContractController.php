@@ -87,6 +87,7 @@ class ContractController extends Controller
 
     public function store(Request $request)
     {
+        \Log::info('CONTRACT STORE CALLED', $request->all());
         $contractorData = $request->input('contractor', []);
         $clientData = $request->input('client', []);
         $propertyData = $request->input('property', []);
@@ -159,6 +160,20 @@ class ContractController extends Controller
                 'city' => $propertyData['city'] ?? '',
                 'state' => $propertyData['state'] ?? '',
                 'postal' => $propertyData['postal'] ?? '',
+                'property_address' => $request->input('property_address'),
+            ]);
+            $quotationRequestId = $request->input('quotation_request_id');
+            $quotationRequest = null;
+            if ($quotationRequestId) {
+                $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType.materials'])->find($quotationRequestId);
+            }
+            $awardedSupplierDiscount = null;
+            if ($quotationRequest && isset($quotationRequest->contract_data['awarded_supplier_discount'])) {
+                $awardedSupplierDiscount = $quotationRequest->contract_data['awarded_supplier_discount'];
+            }
+            \Log::info('DEBUG awardedSupplierDiscount', [
+                'contract_data' => $quotationRequest ? $quotationRequest->contract_data : null,
+                'awarded_supplier_discount' => $awardedSupplierDiscount
             ]);
             $contract = Contract::create([
                 'quotation_request_id' => $request->input('quotation_request_id'),
@@ -175,6 +190,7 @@ class ContractController extends Controller
                 'labor_cost' => $request->input('labor_fee'),
                 'payment_terms' => $contractData['payment_terms'],
                 'payment_method' => $request->input('payment_method'),
+                'payment_plan' => $request->input('payment_plan'),
                 'bank_name' => $request->input('bank_name'),
                 'bank_account_name' => $request->input('bank_account_name'),
                 'bank_account_number' => $request->input('bank_account_number'),
@@ -187,13 +203,21 @@ class ContractController extends Controller
                 'cancellation_terms' => $contractData['cancellation_terms'],
                 'additional_terms' => $contractData['additional_terms'],
                 'status' => 'draft',
+                'property_address' => $request->input('property_address'),
+                'discount_type' => $awardedSupplierDiscount['discount_type'] ?? null,
+                'discount_percentage' => $awardedSupplierDiscount['discount_percentage'] ?? null,
+                'discount_amount' => $awardedSupplierDiscount['discount_amount'] ?? null,
+                'final_amount' => $awardedSupplierDiscount['final_amount'] ?? null,
             ]);
+            \Log::info('CONTRACT CREATED', [
+                'property_address' => $contract->property_address,
+                'discount_type' => $contract->discount_type,
+                'discount_percentage' => $contract->discount_percentage,
+                'discount_amount' => $contract->discount_amount,
+                'final_amount' => $contract->final_amount,
+            ]);
+            // REMINDER: If you update the contract later, always include 'property_address' in the update array!
             // Link to QuotationRequest if provided
-            $quotationRequestId = $request->input('quotation_request_id');
-            $quotationRequest = null;
-            if ($quotationRequestId) {
-                $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType.materials'])->find($quotationRequestId);
-            }
             // Copy rooms, scopes, and materials from QuotationRequest
             if ($quotationRequest) {
                 // Find all RFQs (Quotations) generated for this QuotationRequest

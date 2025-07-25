@@ -154,6 +154,7 @@
                     for($i=1;$i<=12;$i++) $breakdownRows[] = ["Month $i Payment", 100/12];
                 }
             @endphp
+            @if($quotationRequest->status === 'proceeded')
             <div class="card mb-4">
                 <div class="card-header bg-info text-white"><h5 class="mb-0">Client Quotation Submission Details</h5></div>
                 <div class="card-body">
@@ -178,6 +179,7 @@
                     </div>
                 </div>
             </div>
+            @endif
             <div class="card mt-4">
                 <div class="card-header bg-success text-white">
                     <h5 class="mb-0">Chosen Suppliers</h5>

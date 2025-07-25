@@ -611,6 +611,27 @@ class ClientQuotationController extends Controller
         $contractData['project_start_date'] = $request->input('project_start_date');
         $contractData['project_end_date'] = $request->input('project_end_date');
         $contractData['payment_method'] = $request->input('payment_method');
+        // Add awarded_supplier_discount to contract_data if available
+        $awardedSupplierDiscount = null;
+        if ($uniqueSuppliers->count() === 1 && isset($rfqs)) {
+            $awardedSupplierId = $uniqueSuppliers->first();
+            foreach ($rfqs as $rfq) {
+                $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
+                    ->where('supplier_id', $awardedSupplierId)
+                    ->first();
+                if ($response) {
+                    $awardedSupplierDiscount = [
+                        'discount_type' => $response->discount_type,
+                        'discount_percentage' => $response->discount_percentage,
+                        'discount_amount' => $response->discount_amount,
+                        'final_amount' => $response->final_amount,
+                        'total_amount' => $response->total_amount,
+                    ];
+                    break;
+                }
+            }
+        }
+        $contractData['awarded_supplier_discount'] = $awardedSupplierDiscount;
         $quotationRequest->selected_suppliers = $selectedSuppliers;
         $quotationRequest->contract_data = $contractData;
         $quotationRequest->save();
