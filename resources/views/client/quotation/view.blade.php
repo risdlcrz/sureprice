@@ -360,6 +360,107 @@ body {
                             <p>Request Number: <span class="badge bg-primary">{{ $quotationRequest->request_number }}</span></p>
                             <a href="{{ route('client.quotation.index') }}" class="btn btn-primary mt-3">Back to My Quotations</a>
                         </div>
+                        {{-- Confirmation Summary Card --}}
+                        @php
+                            $contract = $quotationRequest->contract_data ?? [];
+                            $plan = $contract['payment_plan'] ?? null;
+                            $address = $contract['property_address'] ?? null;
+                            $start = $contract['project_start_date'] ?? null;
+                            $end = $contract['project_end_date'] ?? null;
+                            $method = $contract['payment_method'] ?? null;
+                            $finalAmount = null;
+                            $totalQuoted = null;
+                            $discountType = null;
+                            $discountValue = null;
+                            $discountFound = false;
+                            $uniqueSuppliers = collect($selectedSuppliers)->unique()->filter();
+                            if($uniqueSuppliers->count() === 1 && isset($rfqs)) {
+                                $awardedSupplierId = $uniqueSuppliers->first();
+                                foreach($rfqs as $rfq) {
+                                    $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
+                                        ->where('supplier_id', $awardedSupplierId)
+                                        ->first();
+                                    if($response) {
+                                        $discountType = $response->discount_type;
+                                        $discountValue = $response->discount_percentage ? $response->discount_percentage.'%' : ($response->discount_amount ? '₱'.number_format($response->discount_amount,2) : null);
+                                        $finalAmount = $response->final_amount;
+                                        $totalQuoted = $response->total_amount;
+                                        $discountFound = $discountType && $discountType !== 'none';
+                                        break;
+                                    }
+                                }
+                            }
+                            if(!$finalAmount) {
+                                // fallback: sum up all selected supplier prices
+                                $finalAmount = 0;
+                                if(isset($materialSupplierResponses) && isset($selectedSuppliers)) {
+                                    foreach($selectedSuppliers as $materialId => $supplierId) {
+                                        if(isset($materialSupplierResponses[$materialId])) {
+                                            foreach($materialSupplierResponses[$materialId] as $offer) {
+                                                if($offer['supplier_id'] == $supplierId && isset($offer['unit_price'])) {
+                                                    $finalAmount += $offer['unit_price'] * ($offer['quantity'] ?? 1);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            // Payment breakdown logic
+                            $breakdownRows = [];
+                            if($plan === '30% down, 40% halfway, 30% on completion') {
+                                $breakdownRows = [
+                                    ['Downpayment', 30],
+                                    ['Halfway Payment', 40],
+                                    ['Completion Payment', 30],
+                                ];
+                            } elseif($plan === '50/50') {
+                                $breakdownRows = [
+                                    ['Downpayment', 50],
+                                    ['Completion Payment', 50],
+                                ];
+                            } elseif($plan === 'Full upon completion') {
+                                $breakdownRows = [
+                                    ['Completion Payment', 100],
+                                ];
+                            } elseif($plan === 'milestone') {
+                                $breakdownRows = [
+                                    ['Downpayment', 20],
+                                    ['After Foundation', 20],
+                                    ['After Structure', 30],
+                                    ['Completion Payment', 30],
+                                ];
+                            } elseif($plan === 'monthly3') {
+                                for($i=1;$i<=3;$i++) $breakdownRows[] = ["Month $i Payment", 100/3];
+                            } elseif($plan === 'monthly6') {
+                                for($i=1;$i<=6;$i++) $breakdownRows[] = ["Month $i Payment", 100/6];
+                            } elseif($plan === 'monthly12') {
+                                for($i=1;$i<=12;$i++) $breakdownRows[] = ["Month $i Payment", 100/12];
+                            }
+                        @endphp
+                        <div class="card mb-4">
+                            <div class="card-header bg-info text-white"><h5 class="mb-0">Your Submitted Quotation Details</h5></div>
+                            <div class="card-body">
+                                <p><strong>Property Address:</strong> {{ $address }}</p>
+                                <p><strong>Start Date:</strong> {{ $contract['project_start_date'] ?? '' }}</p>
+                                <p><strong>End Date:</strong> {{ $contract['project_end_date'] ?? '' }}</p>
+                                <p><strong>Payment Method:</strong> {{ ucfirst(str_replace('_',' ',$contract['payment_method'] ?? '')) }}</p>
+                                <p><strong>Payment Plan:</strong> {{ $plan }}</p>
+                                <div class="mb-3">
+                                    <strong>Payment Breakdown:</strong>
+                                    <table class="table table-bordered mt-2">
+                                        <thead><tr><th>Stage</th><th>Percent</th><th>Amount (₱)</th></tr></thead>
+                                        <tbody>
+                                            @php $sum = 0; @endphp
+                                            @foreach($breakdownRows as [$label, $percent])
+                                                @php $amt = round($finalAmount * $percent / 100, 2); $sum += $amt; @endphp
+                                                <tr><td>{{ $label }}</td><td>{{ rtrim(rtrim(number_format($percent,2), '0'), '.') }}%</td><td>₱{{ number_format($amt,2) }}</td></tr>
+                                            @endforeach
+                                            <tr class="fw-bold"><td>Total</td><td>100%</td><td>₱{{ number_format($finalAmount,2) }}</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
                         @if(isset($materialSupplierResponses) && isset($selectedSuppliers) && count($selectedSuppliers) > 0)
                         <div class="card mt-4">
                             <div class="card-header bg-success text-white">
@@ -479,7 +580,7 @@ body {
                                     }
                                 }
                             @endphp
-                            <div class="alert alert-info mt-3">
+                            <div class="bg-info text-dark p-3 rounded mt-3" style="font-size:1.1em;">
                                 <strong>Summary for Supplier:</strong> {{ \App\Models\Supplier::find($awardedSupplierId)->company_name ?? 'N/A' }}<br>
                                 <strong>Total Quoted Price:</strong> ₱{{ number_format($totalQuoted, 2) }}<br>
                                 @if($discountFound)
@@ -692,11 +793,15 @@ body {
                                                             <option value="30% down, 40% halfway, 30% on completion">30% down, 40% halfway, 30% on completion</option>
                                                             <option value="50/50">50% down, 50% on completion</option>
                                                             <option value="Full upon completion">Full upon completion</option>
-                                                            <option value="custom">Other (specify below)</option>
+                                                            <option value="milestone">Milestone-based (20% down, 20% after foundation, 30% after structure, 30% on completion)</option>
+                                                            <option value="monthly3">Monthly for 3 months (equal payments)</option>
+                                                            <option value="monthly6">Monthly for 6 months (equal payments)</option>
+                                                            <option value="monthly12">Monthly for 12 months (equal payments)</option>
                                                         </select>
-                                                        <input type="text" name="payment_plan_custom" id="payment_plan_custom" class="form-control mt-2" placeholder="Enter custom payment plan..." style="display:none;">
                                                     </div>
                                                 </div>
+                                                <!-- Payment Breakdown Section -->
+                                                <div id="payment-breakdown" class="mt-3"></div>
                                                 <p>Are you sure you want to proceed with this quotation? This action cannot be undone.</p>
                                             </div>
                                             <div class="modal-footer">
@@ -718,6 +823,8 @@ body {
         </div>
     </div>
 </div>
+<!-- Place this div above the modal or where you want the summary to appear -->
+<div id="quotation-confirmation-summary" style="display:none;"></div>
 @endsection 
 
 @push('scripts')
@@ -900,6 +1007,12 @@ function updateLiveSupplierSummary() {
             finalAmount = d.final_amount;
             discountFound = discountType && discountType !== 'none';
         }
+        // Set window.finalAmount to the correct value
+        if (discountFound && finalAmount) {
+            window.finalAmount = parseFloat(finalAmount);
+        } else {
+            window.finalAmount = total;
+        }
         var html = '<strong>Summary for Supplier:</strong> ' + ($('.supplier-select option[value="'+supplierId+'"]:first').text() || supplierId) + '<br>';
         html += '<strong>Total Quoted Price:</strong> ₱' + total.toLocaleString(undefined, {minimumFractionDigits:2}) + '<br>';
         if (discountFound) {
@@ -912,6 +1025,7 @@ function updateLiveSupplierSummary() {
         summaryDiv.html(html).show();
     } else {
         summaryDiv.hide();
+        window.finalAmount = 0;
     }
 }
 // Prepare materialSupplierResponses and supplierDiscounts as JS objects
@@ -1014,5 +1128,102 @@ $(document).on('change', '.supplier-select', function() {
         $('#project_end_date').attr('readonly', true);
         updateEndDate();
     });
+</script>
+</script>
+<script>
+// Payment Plan Breakdown Logic
+function getFinalAmount() {
+    // Use window.finalAmount if set
+    if (typeof window.finalAmount !== 'undefined' && window.finalAmount) {
+        return window.finalAmount;
+    }
+    // Try to get from the live summary if visible
+    let finalAmount = 0;
+    let summaryDiv = document.getElementById('live-supplier-summary');
+    if (summaryDiv && summaryDiv.style.display !== 'none') {
+        let match = summaryDiv.innerHTML.match(/Final Amount(?: After Discount)?:\s*₱([\d,\.,]+)/);
+        if (!match) {
+            match = summaryDiv.innerHTML.match(/Total Quoted Price:\s*₱([\d,\.,]+)/);
+        }
+        if (match) {
+            finalAmount = parseFloat(match[1].replace(/,/g, ''));
+        }
+    }
+    return isNaN(finalAmount) ? 0 : finalAmount;
+}
+
+function renderPaymentBreakdown() {
+    const plan = $('#payment_plan').val();
+    const breakdownDiv = $('#payment-breakdown');
+    const finalAmount = getFinalAmount();
+    breakdownDiv.empty();
+    if (!plan) {
+        breakdownDiv.html('<div class="alert alert-info">Please select a payment plan to see the breakdown.</div>');
+        return;
+    }
+    let rows = [];
+    if (plan === '30% down, 40% halfway, 30% on completion') {
+        rows = [
+            { label: 'Downpayment', percent: 30 },
+            { label: 'Halfway Payment', percent: 40 },
+            { label: 'Completion Payment', percent: 30 },
+        ];
+    } else if (plan === '50/50') {
+        rows = [
+            { label: 'Downpayment', percent: 50 },
+            { label: 'Completion Payment', percent: 50 },
+        ];
+    } else if (plan === 'Full upon completion') {
+        rows = [
+            { label: 'Completion Payment', percent: 100 },
+        ];
+    } else if (plan === 'milestone') {
+        rows = [
+            { label: 'Downpayment', percent: 20 },
+            { label: 'After Foundation', percent: 20 },
+            { label: 'After Structure', percent: 30 },
+            { label: 'Completion Payment', percent: 30 },
+        ];
+    } else if (plan === 'monthly3') {
+        let months = 3;
+        let percent = 100 / months;
+        for (let i = 1; i <= months; i++) {
+            rows.push({ label: `Month ${i} Payment`, percent: percent });
+        }
+    } else if (plan === 'monthly6') {
+        let months = 6;
+        let percent = 100 / months;
+        for (let i = 1; i <= months; i++) {
+            rows.push({ label: `Month ${i} Payment`, percent: percent });
+        }
+    } else if (plan === 'monthly12') {
+        let months = 12;
+        let percent = 100 / months;
+        for (let i = 1; i <= months; i++) {
+            rows.push({ label: `Month ${i} Payment`, percent: percent });
+        }
+    }
+    // Render table
+    let html = '<table class="table table-bordered"><thead><tr><th>Stage</th><th>Percent</th><th>Amount (₱)</th></tr></thead><tbody>';
+    let total = 0;
+    rows.forEach(row => {
+        let amt = finalAmount ? Math.round(finalAmount * row.percent) / 100 : 0;
+        total += amt;
+        html += `<tr><td>${row.label}</td><td>${row.percent}%</td><td>₱${amt.toLocaleString(undefined, {minimumFractionDigits:2})}</td></tr>`;
+    });
+    html += `<tr class="fw-bold"><td>Total</td><td>100%</td><td>₱${finalAmount ? finalAmount.toLocaleString(undefined, {minimumFractionDigits:2}) : '0.00'}</td></tr>`;
+    html += '</tbody></table>';
+    if (!finalAmount) {
+        html += '<div class="alert alert-warning mt-2">Select suppliers to see the actual payment breakdown based on the final amount.</div>';
+    }
+    breakdownDiv.html(html);
+}
+
+$(document).on('change', '#payment_plan', function() {
+    renderPaymentBreakdown();
+});
+$(document).ready(function() {
+    renderPaymentBreakdown();
+});
 </script>
 @endpush 

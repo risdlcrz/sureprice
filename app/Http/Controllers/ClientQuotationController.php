@@ -608,7 +608,9 @@ class ClientQuotationController extends Controller
         $contractData = $quotationRequest->contract_data ?? [];
         $contractData['property_address'] = $request->input('property_address');
         $contractData['payment_plan'] = $request->input('payment_plan');
-        $contractData['project_timeline'] = $request->input('project_timeline');
+        $contractData['project_start_date'] = $request->input('project_start_date');
+        $contractData['project_end_date'] = $request->input('project_end_date');
+        $contractData['payment_method'] = $request->input('payment_method');
         $quotationRequest->contract_data = $contractData;
         $quotationRequest->save();
 
