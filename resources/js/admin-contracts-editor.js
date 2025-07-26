@@ -96,17 +96,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 setText('client_address_display', client.address);
                 setText('scope_of_work_display', data.scope_of_work);
                 // Update material cost and labor fee as input values
-                // Use discounted materials cost if available
-                const discountedMaterials = data.discounted_materials_cost !== undefined ? data.discounted_materials_cost : data.total_materials_cost;
+                // Use the same calculation as the quotation (₱100 per day)
+                const materialsCost = data.total_materials_cost || 0;
+                const discountedMaterials = data.discounted_materials_cost !== undefined ? data.discounted_materials_cost : materialsCost;
+                
+                // Calculate labor fee using ₱100 per day (same as quotation)
+                const startDate = data.start_date;
+                const endDate = data.end_date;
+                let laborFee = 0;
+                if (startDate && endDate) {
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+                    const durationInDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                    laborFee = durationInDays * 100; // ₱100 per day
+                }
+                
                 const materialsTotalInput = document.getElementById('materials_total_display');
                 if (materialsTotalInput) {
                   materialsTotalInput.value = '₱' + (parseFloat(discountedMaterials).toFixed(2));
                 }
                 setValue('materials_total', discountedMaterials);
-                setValue('labor_fee_display', '₱' + (data.labor_fee?.toFixed(2) || '0.00'));
-                setValue('labor_fee', data.labor_fee || 0);
+                setValue('labor_fee_display', '₱' + laborFee.toFixed(2));
+                setValue('labor_fee', laborFee);
                 // Grand total = discounted materials + labor fee
-                const grandTotal = parseFloat(discountedMaterials) + parseFloat(data.labor_fee || 0);
+                const grandTotal = parseFloat(discountedMaterials) + laborFee;
                 setText('grand_total_display', '₱' + grandTotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}));
                 setValue('grand_total', grandTotal);
                 // Show awarded supplier discount if available

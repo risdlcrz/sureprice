@@ -318,39 +318,206 @@
 }
 
 @media print {
-    .contract-template, .contract-border { 
-        box-shadow: none !important; 
-        border-color: #000 !important; 
+    /* Reset all margins and padding for print */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
     }
-    .btn, #po-search, #po-search-results, #save-btn, #download-pdf { 
-        display: none !important; 
-    }
+    
     body { 
-        background: #fff !important; 
+        background: white !important;
+        font-size: 12pt;
+        line-height: 1.4;
+        color: black !important;
+        font-family: "Times New Roman", serif;
     }
+    
+    /* Hide all interactive elements */
+    .btn, #po-search, #po-search-results, #save-btn, #download-pdf,
+    .contract-inline-input, select, input[type="date"], input[type="text"] { 
+        display: none !important;
+    }
+    
+    /* Contract container styling for print */
+    .contract-template, .contract-border { 
+        margin: 0;
+        padding: 20pt;
+        border: none;
+        box-shadow: none;
+        max-width: none;
+        background: white;
+    }
+    
+    /* Title styling for print */
     .contract-title {
-        color: #000 !important;
-        border-bottom-color: #000 !important;
+        font-size: 24pt;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 20pt;
+        page-break-after: avoid;
+        border-bottom: 2pt solid black;
+        padding-bottom: 10pt;
+        color: black !important;
     }
+    
+    /* Section headers for print */
     .section strong {
-        color: #000 !important;
-        border-bottom-color: #000 !important;
+        font-size: 14pt;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 10pt;
+        page-break-after: avoid;
+        border-bottom: 1pt solid black;
+        padding-bottom: 5pt;
+        color: black !important;
     }
+    
     .section strong::after {
-        background: #000 !important;
+        display: none;
     }
+    
+    /* Paragraphs for print */
+    .section p {
+        font-size: 12pt;
+        line-height: 1.5;
+        margin-bottom: 10pt;
+        text-align: justify;
+        color: black !important;
+    }
+    
+    /* Contract blanks for print */
     .contract-blank {
-        color: #000 !important;
-        border-bottom-color: #000 !important;
-        background: #fff !important;
+        border-bottom: 1pt solid black;
+        background: none;
+        box-shadow: none;
+        font-weight: bold;
+        min-width: 120pt;
+        display: inline-block;
+        padding: 2pt 4pt;
+        color: black !important;
     }
-    .contract-inline-input {
-        color: #000 !important;
-        border-bottom-color: #000 !important;
-        background: #fff !important;
+    
+    /* Tables for print */
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15pt;
+        font-size: 11pt;
     }
+    
+    .table th, .table td {
+        border: 1pt solid black;
+        padding: 5pt;
+        text-align: left;
+    }
+    
+    .table th {
+        background: #f0f0f0 !important;
+        font-weight: bold;
+    }
+    
+    /* Form controls for print - show as text */
+    .form-control, .form-select {
+        border: none;
+        background: none;
+        font-weight: bold;
+        padding: 0;
+        margin: 0;
+        color: black !important;
+    }
+    
+    /* Signature section for print */
     .signature-section {
-        background: #fff !important;
-        border-color: #000 !important;
+        page-break-inside: avoid;
+        margin-top: 30pt;
+        border-top: 1pt solid black;
+        padding-top: 20pt;
+        background: white !important;
+    }
+    
+    .signature-pad {
+        border: 1pt solid black;
+        background: white;
+        height: 80pt;
+        width: 200pt;
+    }
+    
+    /* Payment breakdown for print */
+    #payment-breakdown {
+        page-break-inside: avoid;
+        margin-top: 15pt;
+    }
+    
+    /* Cost summary for print */
+    .row {
+        margin-bottom: 10pt;
+    }
+    
+    .col-md-6 {
+        display: inline-block;
+        width: 48%;
+        vertical-align: top;
+    }
+    
+    /* Page breaks */
+    .section {
+        page-break-inside: avoid;
+        margin-bottom: 20pt;
+    }
+    
+    /* Ensure proper spacing between sections */
+    .mb-3 {
+        margin-bottom: 15pt !important;
+    }
+    
+    .mb-4 {
+        margin-bottom: 20pt !important;
+    }
+    
+    /* Hide any remaining interactive elements */
+    .signature-pad, canvas {
+        border: 1pt solid black;
+        background: white;
+    }
+    
+    /* Ensure text is readable */
+    .text-muted {
+        color: black !important;
+    }
+    
+    /* Alert boxes for print */
+    .alert {
+        border: 1pt solid black;
+        background: white !important;
+        color: black !important;
+        padding: 10pt;
+        margin-bottom: 15pt;
+    }
+    
+    .alert-info {
+        background: #f8f9fa !important;
+    }
+    
+    /* Ensure proper page breaks */
+    h1, h2, h3, h4, h5, h6 {
+        page-break-after: avoid;
+    }
+    
+    /* Table of contents or lists */
+    ul, ol {
+        margin-left: 20pt;
+        margin-bottom: 10pt;
+    }
+    
+    li {
+        margin-bottom: 5pt;
+    }
+    
+    /* Additional print optimizations */
+    .contract-inline-input {
+        color: black !important;
+        border-bottom-color: black !important;
+        background: white !important;
     }
 } 
