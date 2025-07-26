@@ -22,7 +22,14 @@
                 </button>
             @endif
 
-            @if(Auth::user()->hasRole('manager') && $contract->status === 'draft')
+            @if(Auth::user()->hasRole('admin'))
+            <button class="btn btn-success" onclick="approveContract()">
+                <i class="fas fa-check"></i> Approve
+            </button>
+            <button class="btn btn-danger" onclick="rejectContract()">
+                <i class="fas fa-times"></i> Reject
+            </button>
+            @elseif(Auth::user()->hasRole('manager') && $contract->status === 'draft')
                 <form method="POST" action="{{ route('contracts.requestApproval', $contract) }}" class="d-inline">
                     @csrf
                     <button type="submit" class="btn btn-primary">
@@ -33,13 +40,10 @@
             <a href="{{ route('contracts.edit', $contract) }}" class="btn btn-primary">
                 <i class="fas fa-edit"></i> Edit Contract
             </a>
-            @php $purchaseRequest = $contract->purchaseRequests->first(); @endphp
-            @if($purchaseRequest)
-            <a href="{{ route('purchase-requests.edit', $purchaseRequest) }}" 
+            <a href="{{ route('purchase-requests.edit', $contract->purchaseRequest) }}" 
                class="btn btn-success">
                 <i class="fas fa-edit"></i> Edit Purchase Request
             </a>
-            @endif
             <form action="{{ route('contracts.destroy', $contract) }}" 
                   method="POST" 
                   class="d-inline">
@@ -111,7 +115,7 @@
                         </tr>
                         <tr>
                             <th>Total Amount:</th>
-                            <td>₱{{ number_format($contract->total_amount, 2) }}</td>
+                            <td>  {{ number_format($contract->total_amount, 2) }}</td>
                         </tr>
                     </table>
                 </div>
@@ -238,7 +242,24 @@
     @endif
 
     <!-- Project Progress Bar -->
-    {{-- Removed project progress bar as requested --}}
+    @if($contract->start_date && $contract->end_date)
+    @php
+        $now = \Carbon\Carbon::now();
+        $start = \Carbon\Carbon::parse($contract->start_date);
+        $end = \Carbon\Carbon::parse($contract->end_date);
+        $totalDays = $start->diffInDays($end) ?: 1;
+        $elapsedDays = $start->diffInDays(min($now, $end));
+        $progressPercent = min(100, round(($elapsedDays / $totalDays) * 100));
+    @endphp
+    <div class="mb-4">
+        <label class="fw-bold">Project Progress (by Days)</label>
+        <div class="progress" style="height: 24px;">
+            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ $progressPercent }}%" aria-valuenow="{{ $progressPercent }}" aria-valuemin="0" aria-valuemax="100">
+                {{ $progressPercent }}% ({{ $elapsedDays }} of {{ $totalDays }} days)
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Payment Schedule Table -->
     @if($contract->payment_schedule)
@@ -269,7 +290,7 @@
                         @endphp
                         <tr>
                             <td>{{ $segment['stage'] }}</td>
-                            <td>₱{{ number_format($segment['amount'], 2) }}</td>
+                            <td>  {{ number_format($segment['amount'], 2) }}</td>
                             <td>{{ $segment['due_date'] ?? '-' }}</td>
                             <td>{{ $status }}</td>
                         </tr>
@@ -340,8 +361,8 @@
                                                 <td>{{ $qty }}</td>
                                                 <td>{{ $mat['unit'] ?? ($material ? $material->unit : '-') }}</td>
                                                 <td>{{ $supplier ? $supplier->company_name : '-' }}</td>
-                                                <td>₱{{ number_format($unitPrice, 2) }}</td>
-                                                <td>₱{{ number_format($total, 2) }}</td>
+                                                <td>  {{ number_format($unitPrice, 2) }}</td>
+                                                <td>  {{ number_format($total, 2) }}</td>
                                             </tr>
                                         @endforeach
                                     @endif

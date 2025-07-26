@@ -388,4 +388,39 @@ class Contract extends Model
         }
         return $this->property_address;
     }
+
+    public function getWorkflowStatus()
+    {
+        // Example logic, adjust as needed for your workflow
+        if (!$this->material_request_status) {
+            return 'Pending Material Request';
+        } elseif (!$this->stock_checked_at) {
+            return 'Pending Stock Check';
+        } elseif ($this->admin_approval_status === 'pending') {
+            return 'Pending Admin Approval';
+        } elseif ($this->supplier_approval_status === 'pending') {
+            return 'Pending Supplier Approval';
+        } elseif (!$this->isPaymentValidated()) {
+            return 'Pending Payment Validation';
+        } elseif (!$this->delivery_status) {
+            return 'Pending Delivery';
+        } elseif ($this->delivery_status === 'pending_confirmation') {
+            return 'Pending Delivery Confirmation';
+        } elseif ($this->isCompleted()) {
+            return 'Completed';
+        } else {
+            return 'Unknown';
+        }
+    }
+
+    public function isFullyApproved()
+    {
+        return ($this->admin_approval_status === 'approved') && ($this->supplier_approval_status === 'approved');
+    }
+
+    public function isPaymentValidated()
+    {
+        // Adjust logic as needed for your app's payment validation
+        return ($this->admin_payment_validated_at && $this->supplier_payment_validated_at);
+    }
 } 

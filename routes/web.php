@@ -99,6 +99,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{contract}/status', [ContractController::class, 'updateStatus']);
         Route::post('/{contract}/signatures', [ContractController::class, 'updateSignatures'])->name('updateSignatures');
         Route::post('/save-signature', [ContractController::class, 'saveSignature'])->name('contracts.save.signature');
+        Route::post('/{contract}/request-approval', [ContractController::class, 'requestApproval'])->name('requestApproval');
     });
     // Supporting routes for contract form
     Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');

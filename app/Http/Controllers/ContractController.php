@@ -75,7 +75,12 @@ class ContractController extends Controller
             }
         }
 
-        return view('admin.contracts.show', compact('contract', 'awardedSupplierDiscount'));
+        // Use different views based on user role
+        if (Auth::user()->hasRole('manager')) {
+            return view('contracts.show', compact('contract', 'awardedSupplierDiscount'));
+        } else {
+            return view('admin.contracts.show', compact('contract', 'awardedSupplierDiscount'));
+        }
     }
 
     public function create()
@@ -1307,5 +1312,13 @@ class ContractController extends Controller
     {
         $colors = ['#3490dc', '#6574cd', '#9561e2', '#f66d9b', '#e3342f'];
         return $colors[$contract->id % count($colors)];
+    }
+
+    public function requestApproval(Request $request, Contract $contract)
+    {
+        // You may want to add authorization logic here
+        $contract->status = 'pending_approval';
+        $contract->save();
+        return redirect()->back()->with('success', 'Approval request sent to admin.');
     }
 } 

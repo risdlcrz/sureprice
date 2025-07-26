@@ -34,6 +34,16 @@
                 </div>
             </div>
         </div>
+
+        <!-- Card 4: Contracts -->
+        <div class="col">
+            <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('contracts.index') }}';" style="cursor:pointer;">
+                <img src="{{ asset('images/historydash4.jpg') }}" class="card-img-top flex-grow-1" alt="Contracts" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                <div class="card-body">
+                    <h5 class="card-title">Contracts</h5>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection

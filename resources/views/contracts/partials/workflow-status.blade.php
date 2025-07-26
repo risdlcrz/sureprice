@@ -91,14 +91,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <form method="POST" action="{{ route('contracts.requestApproval', $contract) }}" class="d-inline">
                                 @csrf
                                 <button type="submit" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-paper-plane"></i> Request for Admin Approval
+                                    <i class="fas fa-paper-plane"></i> Request for Approval
                                 </button>
                             </form>
                         @endif
-                        @if(Auth::user()->hasRole('admin') && !$contract->isAdminApproved())
-                            <button class="btn btn-success btn-sm" onclick="adminApprove()">Admin Approve</button>
-                            <button class="btn btn-danger btn-sm" onclick="adminReject()">Admin Reject</button>
-                        @elseif($contract->admin_approval_status === 'pending')
+                        {{-- Admin approval buttons removed for manager view --}}
+                        @if($contract->admin_approval_status === 'pending')
                             <span class="badge bg-warning">Approval Pending</span>
                         @endif
                         @if(Auth::user()->hasRole('supplier') && $contract->isAdminApproved() && !$contract->isSupplierApproved())
