@@ -96,6 +96,14 @@ body {
     line-height: 44px;
 }
 .select2-results__option .badge { margin-left: 0.5em; font-size: 0.9em; }
+/* Style for disabled payment plan options */
+#payment_plan option:disabled {
+    color: #6c757d;
+    font-style: italic;
+}
+#payment_plan option.text-muted {
+    color: #6c757d !important;
+}
 .quotation-card .btn-primary {
     background: linear-gradient(90deg, #2563eb 0%, #6366f1 100%);
     border: none;
@@ -794,9 +802,9 @@ body {
                                                             <option value="50/50">50% down, 50% on completion</option>
                                                             <option value="Full upon completion">Full upon completion</option>
                                                             <option value="milestone">Milestone-based (20% down, 20% after foundation, 30% after structure, 30% on completion)</option>
-                                                            <option value="monthly3">Monthly for 3 months (equal payments)</option>
-                                                            <option value="monthly6">Monthly for 6 months (equal payments)</option>
-                                                            <option value="monthly12">Monthly for 12 months (equal payments)</option>
+                                                            <option value="monthly3" data-months="3">Monthly for 3 months (equal payments)</option>
+                                                            <option value="monthly6" data-months="6">Monthly for 6 months (equal payments)</option>
+                                                            <option value="monthly12" data-months="12">Monthly for 12 months (equal payments)</option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -1121,12 +1129,62 @@ $(document).on('change', '.supplier-select', function() {
         console.log('Start:', start, 'Days:', days, 'Calculated End:', endDateStr);
     }
     // Always recalculate on start date change or modal show
-    $('#project_start_date').on('change', updateEndDate);
-    $('#proceedQuotationModal').on('show.bs.modal', updateEndDate);
+    $('#project_start_date').on('change', function() {
+        updateEndDate();
+        updatePaymentPlanOptions();
+    });
+    $('#proceedQuotationModal').on('show.bs.modal', function() {
+        updateEndDate();
+        updatePaymentPlanOptions();
+    });
+    
+    // Function to update payment plan options based on project duration
+    function updatePaymentPlanOptions() {
+        const startDate = $('#project_start_date').val();
+        const endDate = $('#project_end_date').val();
+        
+        if (!startDate || !endDate) {
+            return;
+        }
+        
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const durationInDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        const durationInMonths = Math.ceil(durationInDays / 30);
+        
+        console.log('Project duration:', durationInDays, 'days, approximately', durationInMonths, 'months');
+        
+        // Update monthly payment plan options
+        const monthlyOptions = $('#payment_plan option[data-months]');
+        monthlyOptions.each(function() {
+            const option = $(this);
+            const months = parseInt(option.attr('data-months'));
+            const originalText = option.text().replace(' (Not Applicable)', '');
+            
+            if (months > durationInMonths) {
+                option.text(originalText + ' (Not Applicable)');
+                option.prop('disabled', true);
+                option.addClass('text-muted');
+            } else {
+                option.text(originalText);
+                option.prop('disabled', false);
+                option.removeClass('text-muted');
+            }
+        });
+        
+        // Clear current selection if it's now disabled
+        const currentSelection = $('#payment_plan').val();
+        if (currentSelection && $('#payment_plan option:selected').prop('disabled')) {
+            $('#payment_plan').val('');
+            renderPaymentBreakdown();
+        }
+    }
+    
     // On page load, initialize
     $(document).ready(function() {
         $('#project_end_date').attr('readonly', true);
         updateEndDate();
+        updatePaymentPlanOptions();
     });
 </script>
 </script>
