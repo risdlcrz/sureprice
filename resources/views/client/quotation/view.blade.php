@@ -712,6 +712,16 @@ body {
                                             </table>
                                         </div>
                                         <div id="live-supplier-summary" class="alert alert-info alert-static mt-3" style="display:none;"></div>
+                                        
+                                        <!-- Materials Cost Breakdown Section -->
+                                        <div class="card mt-4" id="materials-cost-breakdown" style="display:none;">
+                                            <div class="card-header">
+                                                <h5 class="mb-0">Materials Cost Breakdown</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="materials-cost-table"></div>
+                                            </div>
+                                        </div>
                                     @else
                                         <div class="alert alert-info text-center">No supplier offers available yet.</div>
                                     @endif
@@ -761,7 +771,7 @@ body {
                             <button type="button" class="btn btn-success btn-lg" id="proceedQuotationBtn" data-bs-toggle="modal" data-bs-target="#proceedQuotationModal" disabled title="Please select suppliers for all materials before proceeding.">Proceed with Quotation</button>
                             <!-- Modal for Proceed Confirmation -->
                             <div class="modal fade" id="proceedQuotationModal" tabindex="-1" aria-labelledby="proceedQuotationModalLabel" aria-hidden="true">
-                                <div class="modal-dialog">
+                                <div class="modal-dialog modal-lg">
                                     <div class="modal-content">
                                         <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" id="proceedQuotationForm">
                                             @csrf
@@ -1190,35 +1200,131 @@ $(document).on('change', '.supplier-select', function() {
 </script>
 <script>
 // Payment Plan Breakdown Logic
+function calculateProjectCosts() {
+    let materialCosts = [];
+    let totalMaterialCost = 0;
+    let laborFee = 0;
+    
+    // Calculate material costs from selected suppliers
+    $('.supplier-select').each(function() {
+        const materialId = $(this).data('material-id');
+        const supplierId = $(this).val();
+        
+        if (supplierId) {
+            // Get material details from the table
+            const materialRow = $(this).closest('tr');
+            const materialName = materialRow.find('td:first strong').text();
+            
+            // Get supplier price from the option text
+            const selectedOption = $(this).find('option:selected');
+            const optionText = selectedOption.text();
+            const priceMatch = optionText.match(/₱([\d,]+\.?\d*)/);
+            
+            if (priceMatch) {
+                const unitPrice = parseFloat(priceMatch[1].replace(/,/g, ''));
+                
+                // Get quantity from the material data
+                let quantity = 1; // default
+                if (window.materialSupplierResponses && window.materialSupplierResponses[materialId]) {
+                    const materialData = window.materialSupplierResponses[materialId][0];
+                    if (materialData && materialData.quantity) {
+                        quantity = parseFloat(materialData.quantity);
+                    }
+                }
+                
+                const totalPrice = unitPrice * quantity;
+                totalMaterialCost += totalPrice;
+                
+                materialCosts.push({
+                    material: materialName,
+                    unitPrice: unitPrice,
+                    quantity: quantity,
+                    totalPrice: totalPrice
+                });
+            }
+        }
+    });
+    
+    // Calculate labor fee (₱100 per day)
+    const startDate = $('#project_start_date').val();
+    const endDate = $('#project_end_date').val();
+    if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const durationInDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        laborFee = durationInDays * 100; // ₱100 per day
+    }
+    
+    const grandTotal = totalMaterialCost + laborFee;
+    
+    return {
+        materialCosts: materialCosts,
+        totalMaterialCost: totalMaterialCost,
+        laborFee: laborFee,
+        grandTotal: grandTotal
+    };
+}
+
 function getFinalAmount() {
-    // Use window.finalAmount if set
-    if (typeof window.finalAmount !== 'undefined' && window.finalAmount) {
-        return window.finalAmount;
+    const costs = calculateProjectCosts();
+    return costs.grandTotal;
+}
+
+function renderMaterialsCostBreakdown() {
+    const costs = calculateProjectCosts();
+    const materialsBreakdownDiv = $('#materials-cost-breakdown');
+    const materialsTableDiv = $('#materials-cost-table');
+    
+    if (costs.materialCosts.length > 0) {
+        let html = '<table class="table table-bordered"><thead><tr><th>Material</th><th>Unit Price</th><th>Quantity</th><th>Total</th></tr></thead><tbody>';
+        costs.materialCosts.forEach(item => {
+            html += `<tr><td>${item.material}</td><td>₱${item.unitPrice.toLocaleString(undefined, {minimumFractionDigits:2})}</td><td>${item.quantity}</td><td>₱${item.totalPrice.toLocaleString(undefined, {minimumFractionDigits:2})}</td></tr>`;
+        });
+        html += `<tr class="fw-bold table-primary"><td colspan="3">Total Material Cost</td><td>₱${costs.totalMaterialCost.toLocaleString(undefined, {minimumFractionDigits:2})}</td></tr>`;
+        html += '</tbody></table>';
+        
+        materialsTableDiv.html(html);
+        materialsBreakdownDiv.show();
+    } else {
+        materialsBreakdownDiv.hide();
     }
-    // Try to get from the live summary if visible
-    let finalAmount = 0;
-    let summaryDiv = document.getElementById('live-supplier-summary');
-    if (summaryDiv && summaryDiv.style.display !== 'none') {
-        let match = summaryDiv.innerHTML.match(/Final Amount(?: After Discount)?:\s*₱([\d,\.,]+)/);
-        if (!match) {
-            match = summaryDiv.innerHTML.match(/Total Quoted Price:\s*₱([\d,\.,]+)/);
-        }
-        if (match) {
-            finalAmount = parseFloat(match[1].replace(/,/g, ''));
-        }
-    }
-    return isNaN(finalAmount) ? 0 : finalAmount;
 }
 
 function renderPaymentBreakdown() {
     const plan = $('#payment_plan').val();
     const breakdownDiv = $('#payment-breakdown');
-    const finalAmount = getFinalAmount();
+    const costs = calculateProjectCosts();
+    const finalAmount = costs.grandTotal;
+    
     breakdownDiv.empty();
+    
+    // Show simplified cost breakdown in modal
+    let html = '<div class="card mb-3"><div class="card-header"><h6 class="mb-0">Project Cost Summary</h6></div><div class="card-body">';
+    
+    // Material costs summary
+    html += `<div class="row mb-3"><div class="col-md-6"><strong>Total Material Cost:</strong></div><div class="col-md-6">₱${costs.totalMaterialCost.toLocaleString(undefined, {minimumFractionDigits:2})}</div></div>`;
+    
+    // Labor fee
+    const startDate = $('#project_start_date').val();
+    const endDate = $('#project_end_date').val();
+    let durationInDays = 0;
+    if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        durationInDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    }
+    
+    html += `<div class="row mb-3"><div class="col-md-6"><strong>Labor Fee:</strong></div><div class="col-md-6">₱100 × ${durationInDays} days = ₱${costs.laborFee.toLocaleString(undefined, {minimumFractionDigits:2})}</div></div>`;
+    html += `<div class="row mb-3"><div class="col-md-6"><strong>Grand Total:</strong></div><div class="col-md-6"><strong class="text-primary fs-5">₱${finalAmount.toLocaleString(undefined, {minimumFractionDigits:2})}</strong></div></div>`;
+    html += '</div></div>';
+    
+    // Payment plan breakdown
     if (!plan) {
-        breakdownDiv.html('<div class="alert alert-info">Please select a payment plan to see the breakdown.</div>');
+        html += '<div class="alert alert-info">Please select a payment plan to see the breakdown.</div>';
+        breakdownDiv.html(html);
         return;
     }
+    
     let rows = [];
     if (plan === '30% down, 40% halfway, 30% on completion') {
         rows = [
@@ -1261,8 +1367,10 @@ function renderPaymentBreakdown() {
             rows.push({ label: `Month ${i} Payment`, percent: percent });
         }
     }
-    // Render table
-    let html = '<table class="table table-bordered"><thead><tr><th>Stage</th><th>Percent</th><th>Amount (₱)</th></tr></thead><tbody>';
+    
+    // Render payment breakdown table
+    html += '<div class="card"><div class="card-header"><h6 class="mb-0">Payment Schedule</h6></div><div class="card-body">';
+    html += '<table class="table table-bordered"><thead><tr><th>Stage</th><th>Percent</th><th>Amount (₱)</th></tr></thead><tbody>';
     let total = 0;
     rows.forEach(row => {
         let amt = finalAmount ? Math.round(finalAmount * row.percent) / 100 : 0;
@@ -1270,17 +1378,32 @@ function renderPaymentBreakdown() {
         html += `<tr><td>${row.label}</td><td>${row.percent}%</td><td>₱${amt.toLocaleString(undefined, {minimumFractionDigits:2})}</td></tr>`;
     });
     html += `<tr class="fw-bold"><td>Total</td><td>100%</td><td>₱${finalAmount ? finalAmount.toLocaleString(undefined, {minimumFractionDigits:2}) : '0.00'}</td></tr>`;
-    html += '</tbody></table>';
-    if (!finalAmount) {
+    html += '</tbody></table></div></div>';
+    
+    if (finalAmount === 0) {
         html += '<div class="alert alert-warning mt-2">Select suppliers to see the actual payment breakdown based on the final amount.</div>';
     }
+    
     breakdownDiv.html(html);
 }
 
 $(document).on('change', '#payment_plan', function() {
     renderPaymentBreakdown();
 });
+
+// Update payment breakdown when suppliers are selected
+$(document).on('change', '.supplier-select', function() {
+    renderMaterialsCostBreakdown();
+    renderPaymentBreakdown();
+});
+
+// Update payment breakdown when dates change
+$(document).on('change', '#project_start_date, #project_end_date', function() {
+    renderPaymentBreakdown();
+});
+
 $(document).ready(function() {
+    renderMaterialsCostBreakdown();
     renderPaymentBreakdown();
 });
 </script>
