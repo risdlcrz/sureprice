@@ -1312,9 +1312,36 @@ class ContractController extends Controller
 
     public function requestApproval(Request $request, Contract $contract)
     {
-        // You may want to add authorization logic here
+        // Check if both signatures are present
+        if (empty($contract->contractor_signature) || empty($contract->client_signature)) {
+            return redirect()->back()->with('error', 'Both contractor and client signatures are required before requesting approval.');
+        }
+
+        // Update contract status
         $contract->status = 'pending_approval';
         $contract->save();
-        return redirect()->back()->with('success', 'Approval request sent to admin.');
+
+        // Send notifications to all admin users
+        $adminUsers = \App\Models\User::where('role', 'admin')->get();
+        
+        foreach ($adminUsers as $admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'type' => 'contract_approval_request',
+                'notifiable_type' => Contract::class,
+                'notifiable_id' => $contract->id,
+                'data' => [
+                    'title' => 'Contract Approval Requested',
+                    'message' => 'Manager ' . Auth::user()->name . ' has requested approval for Contract #' . $contract->contract_number,
+                    'contract_id' => $contract->id,
+                    'contract_number' => $contract->contract_number,
+                    'manager_name' => Auth::user()->name,
+                    'link' => route('contracts.show', $contract->id),
+                ],
+                'read_at' => null,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Approval request sent to admin. You will be notified once the contract is reviewed.');
     }
 } 
