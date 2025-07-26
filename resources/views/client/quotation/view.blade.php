@@ -622,22 +622,22 @@ body {
                                 </div>
                             @endif
                             <div class="row mt-4">
-                                <div class="col-12 col-lg-6 mb-4 mb-lg-0">
+                                <div class="col-12">
                                     {{-- Materials Table (existing) --}}
                                     @if(isset($materialSupplierResponses) && count($materialSupplierResponses) > 0)
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered table-striped w-100" style="width: 100%; min-width: 900px; table-layout: fixed;">
+                                        <div class="table-responsive" style="overflow-x: auto;">
+                                            <table class="table table-bordered table-striped" style="width: 100%; min-width: 1400px; table-layout: fixed; font-size: 14px;">
                                                 <thead class="table-light">
                                                     <tr>
-                                                        <th>Material</th>
-                                                        <th>Supplier Responses</th>
-                                                        <th>Your Selection</th>
+                                                        <th style="width: 25%; padding: 15px 10px; text-align: center; font-weight: 600;">Material</th>
+                                                        <th style="width: 15%; padding: 15px 10px; text-align: center; font-weight: 600;">Supplier Responses</th>
+                                                        <th style="width: 60%; padding: 15px 10px; text-align: center; font-weight: 600;">Your Selection</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     @foreach($materialSupplierResponses as $materialId => $offers)
                                                         <tr>
-                                                            <td>
+                                                            <td style="padding: 15px 10px; vertical-align: middle;">
                                                                 @php
                                                                     $materialName = null;
                                                                     if($quotationRequest) {
@@ -652,14 +652,14 @@ body {
                                                                         }
                                                                     }
                                                                 @endphp
-                                                                <strong>{{ $materialName ?? 'Material #'.$materialId }}</strong>
+                                                                <strong style="font-size: 16px;">{{ $materialName ?? 'Material #'.$materialId }}</strong>
                                                             </td>
-                                                            <td>
-                                                                <span class="badge bg-secondary">{{ count($offers) }}</span>
+                                                            <td style="padding: 15px 10px; text-align: center; vertical-align: middle;">
+                                                                <span class="badge bg-secondary" style="font-size: 14px; padding: 8px 12px;">{{ count($offers) }}</span>
                                                             </td>
-                                                            <td>
+                                                            <td style="padding: 15px 10px; vertical-align: middle;">
                                                                 @if(count($offers) > 0)
-                                                                    <select name="selected_suppliers[{{ $materialId }}]" class="form-select supplier-select" data-material-id="{{ $materialId }}">
+                                                                    <select name="selected_suppliers[{{ $materialId }}]" class="form-select supplier-select" data-material-id="{{ $materialId }}" style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #dee2e6; border-radius: 8px;">
                                                                         <option value="">Select Supplier</option>
                                                                         @php
                                                                             // Ensure only one supplier per badge per material
