@@ -52,19 +52,16 @@
                     <a href="{{ route('contracts.edit', $contract->id) }}" class="btn btn-primary">
                         <i class="bi bi-pencil"></i> Edit Contract
                     </a>
-                    <button type="button" class="btn btn-danger" onclick="showDeleteModal()">
-                        <i class="bi bi-trash"></i> Delete Contract
-                    </button>
                 @else
                     <span class="badge bg-success fs-6" title="Completed contracts cannot be edited or deleted">
                         <i class="bi bi-lock"></i> Contract Locked
                     </span>
                 @endif
-                @if($contract->status === 'approved')
+                @if(Auth::user()->hasRole('manager') && $contract->status === 'approved')
                     <a href="{{ route('material-requests.create', ['contract_id' => $contract->id]) }}" class="btn btn-info" id="createMaterialRequest">
                         <i class="fas fa-boxes"></i> Create Material Request
                     </a>
-                @else
+                @elseif(Auth::user()->hasRole('manager'))
                     <button class="btn btn-info" disabled title="Contract must be approved by admin before requesting materials.">
                         <i class="fas fa-boxes"></i> Create Material Request
                     </button>
