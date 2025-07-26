@@ -423,4 +423,9 @@ class Contract extends Model
         // Adjust logic as needed for your app's payment validation
         return ($this->admin_payment_validated_at && $this->supplier_payment_validated_at);
     }
+
+    public function isDeliveryConfirmed()
+    {
+        return $this->delivery_status === 'confirmed';
+    }
 } 

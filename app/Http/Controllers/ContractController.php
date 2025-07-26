@@ -75,12 +75,8 @@ class ContractController extends Controller
             }
         }
 
-        // Use different views based on user role
-        if (Auth::user()->hasRole('manager')) {
-            return view('contracts.show', compact('contract', 'awardedSupplierDiscount'));
-        } else {
-            return view('admin.contracts.show', compact('contract', 'awardedSupplierDiscount'));
-        }
+        // Use unified view for both admin and manager
+        return view('admin.contracts.show', compact('contract', 'awardedSupplierDiscount'));
     }
 
     public function create()

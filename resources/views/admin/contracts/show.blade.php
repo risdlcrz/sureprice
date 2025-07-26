@@ -15,24 +15,38 @@
         <h1>Contract Details</h1>
         <div>
             @if(!$isClient)
-                @if($contract->canBeEdited())
-                    <div class="btn-group me-2">
-                        <button type="button" 
-                                class="btn {{ $contract->status === 'draft' ? 'btn-warning' : 'btn-outline-warning' }}"
-                                onclick="updateStatus('draft')">
-                            Draft
+                @if(Auth::user()->hasRole('admin'))
+                    @if($contract->canBeEdited())
+                        <div class="btn-group me-2">
+                            <button type="button" 
+                                    class="btn {{ $contract->status === 'draft' ? 'btn-warning' : 'btn-outline-warning' }}"
+                                    onclick="updateStatus('draft')">
+                                Draft
+                            </button>
+                            <button type="button" 
+                                    class="btn {{ $contract->status === 'approved' ? 'btn-success' : 'btn-outline-success' }}"
+                                    onclick="updateStatus('approved')">
+                                Approve
+                            </button>
+                            <button type="button" 
+                                    class="btn {{ $contract->status === 'rejected' ? 'btn-danger' : 'btn-outline-danger' }}"
+                                    onclick="updateStatus('rejected')">
+                                Reject
+                            </button>
+                        </div>
+                    @endif
+                @elseif(Auth::user()->hasRole('manager') && $contract->status === 'draft')
+                    @php
+                        $hasContractorSignature = !empty($contract->contractor_signature);
+                        $hasClientSignature = !empty($contract->client_signature);
+                        $canRequestApproval = $hasContractorSignature && $hasClientSignature;
+                    @endphp
+                    <form method="POST" action="{{ route('contracts.requestApproval', $contract) }}" class="d-inline">
+                        @csrf
+                        <button type="submit" class="btn btn-primary" @if(!$canRequestApproval) disabled title="Both contractor and client signatures are required before requesting approval." @endif>
+                            <i class="fas fa-paper-plane"></i> Request for Approval
                         </button>
-                        <button type="button" 
-                                class="btn {{ $contract->status === 'approved' ? 'btn-success' : 'btn-outline-success' }}"
-                                onclick="updateStatus('approved')">
-                            Approve
-                        </button>
-                        <button type="button" 
-                                class="btn {{ $contract->status === 'rejected' ? 'btn-danger' : 'btn-outline-danger' }}"
-                                onclick="updateStatus('rejected')">
-                            Reject
-                        </button>
-                    </div>
+                    </form>
                 @endif
                 @if($contract->canBeEdited())
                     <a href="{{ route('contracts.edit', $contract->id) }}" class="btn btn-primary">
