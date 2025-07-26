@@ -201,7 +201,7 @@
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div id="discount-description" class="alert alert-info">
+                                        <div id="discount-description" class="alert alert-info alert-static">
                                             <h6>Discount Description</h6>
                                             <p id="discount-description-text">Please select a discount type to see its description.</p>
                                         </div>
@@ -267,32 +267,5 @@
 
 @push('scripts')
     @vite(['resources/js/supplier/quotation-respond.js'])
-<script>
-// Discount descriptions mapping with requirements
-const discountDescriptions = {
-    'none': 'No discount will be applied to this quotation.',
-    'bulk_order': 'Bulk Order Discount: Applies when the client orders in large quantities. <br><strong>Requirement:</strong> Minimum order quantity must be met (e.g., 100+ units).',
-    'seasonal': 'Seasonal Promotion: Special discount for a limited time or season. <br><strong>Requirement:</strong> Only available during the promotional period (e.g., summer sale, holiday promo).',
-    'loyalty': 'Loyalty Discount: For repeat or long-term clients. <br><strong>Requirement:</strong> Client must have completed at least 3 previous orders or be a registered partner.',
-    'new_customer': 'New Customer Discount: For first-time clients only. <br><strong>Requirement:</strong> Client must not have any previous orders.',
-    'early_payment': 'Early Payment Discount: Applies if the client pays before the due date. <br><strong>Requirement:</strong> Payment must be made within 7 days of invoice.',
-    'flexible_delivery': 'Flexible Delivery Discount: Discount for clients who accept flexible delivery schedules. <br><strong>Requirement:</strong> Client agrees to a delivery window instead of a fixed date.',
-    'custom': 'Custom Discount: Any other discount not listed above. <br><strong>Requirement:</strong> Please specify the reason and eligibility in the notes.'
-};
-
-function updateDiscountDescription() {
-    const select = document.getElementById('discount-type');
-    const descText = document.getElementById('discount-description-text');
-    const value = select.value;
-    descText.innerHTML = discountDescriptions[value] || 'Please select a discount type to see its description.';
-}
-document.addEventListener('DOMContentLoaded', function() {
-    const select = document.getElementById('discount-type');
-    if (select) {
-        select.addEventListener('change', updateDiscountDescription);
-        updateDiscountDescription();
-    }
-});
-</script>
 @endpush
 @endsection 
