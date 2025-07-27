@@ -34,6 +34,18 @@
         <div class="col-md-4">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <i class="fas fa-file-contract fa-3x mb-3 text-warning"></i>
+                    <h5 class="card-title">Contract Payments</h5>
+                    <p class="card-text display-6 fw-bold text-warning">
+                        {{ \App\Models\Payment::where('contract_id', '!=', null)->whereIn('status', ['pending', 'for_verification'])->count() }}
+                    </p>
+                    <a href="{{ route('finance.payments') }}" class="btn btn-warning mt-2">View Payments</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-user-check fa-3x mb-3 text-warning"></i>
                     <h5 class="card-title">Contract Payments for Verification</h5>
                     <p class="card-text display-6 fw-bold text-warning">

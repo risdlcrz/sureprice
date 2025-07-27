@@ -4,7 +4,28 @@
 let currentSignatureType = null;
 
 function updateStatus(status) {
+    console.log('updateStatus called with:', status);
+    
+    // Check if approval is being requested and signatures are missing
+    if (status === 'approved') {
+        const approveButton = document.querySelector('button[onclick="updateStatus(\'approved\')"]');
+        console.log('Approve button found:', approveButton);
+        console.log('Approve button disabled:', approveButton ? approveButton.disabled : 'Button not found');
+        
+        if (approveButton && approveButton.disabled) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Cannot Approve',
+                text: 'Both contractor and client signatures are required before approval.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+    }
+
     const token = document.querySelector('meta[name="csrf-token"]');
+    console.log('CSRF token element:', token);
+    
     if (!token) {
         console.error('CSRF token meta tag not found');
         Swal.fire({
@@ -15,6 +36,8 @@ function updateStatus(status) {
         return;
     }
     const csrfToken = token.getAttribute('content');
+    console.log('CSRF token value:', csrfToken ? 'Present' : 'Empty');
+    
     if (!csrfToken) {
         console.error('CSRF token is empty');
         Swal.fire({
@@ -24,6 +47,8 @@ function updateStatus(status) {
         });
         return;
     }
+    
+    console.log('Contract status URL:', window.contractStatusUrl);
     Swal.fire({
         title: 'Updating Status',
         text: 'Please wait...',
@@ -32,6 +57,9 @@ function updateStatus(status) {
             Swal.showLoading();
         }
     });
+    console.log('Making fetch request to:', window.contractStatusUrl);
+    console.log('Request payload:', { status: status });
+    
     fetch(window.contractStatusUrl, {
         method: 'POST',
         headers: {
@@ -43,7 +71,12 @@ function updateStatus(status) {
         credentials: 'same-origin'
     })
     .then(async response => {
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
         const data = await response.json();
+        console.log('Response data:', data);
+        
         if (!response.ok) {
             if (response.status === 419) {
                 throw new Error('CSRF token mismatch. Please refresh the page and try again.');
@@ -54,12 +87,24 @@ function updateStatus(status) {
     })
     .then(data => {
         if (data.success) {
+            let message = data.message;
+            let icon = 'success';
+            
+            // Customize message based on status
+            if (data.status && data.status.toLowerCase() === 'approved') {
+                message = 'Contract approved successfully! Material requests and purchase requests are now enabled.';
+                icon = 'success';
+            } else if (data.status && data.status.toLowerCase() === 'rejected') {
+                message = 'Contract rejected.';
+                icon = 'error';
+            }
+            
             Swal.fire({
-                icon: 'success',
+                icon: icon,
                 title: 'Success',
-                text: 'Contract status updated successfully!',
-                showConfirmButton: false,
-                timer: 1500
+                text: message,
+                showConfirmButton: true,
+                confirmButtonText: 'OK'
             }).then(() => {
                 window.location.reload();
             });
@@ -154,6 +199,8 @@ function saveSignature() {
                 showConfirmButton: false,
                 timer: 1500
             }).then(() => {
+                // Update approval button state if needed
+                updateApprovalButtonState(data.can_be_approved);
                 window.location.reload();
             });
         } else {
@@ -168,6 +215,19 @@ function saveSignature() {
             text: 'Error saving signature: ' + error.message
         });
     });
+}
+
+function updateApprovalButtonState(canBeApproved) {
+    const approveButton = document.querySelector('button[onclick="updateStatus(\'approved\')"]');
+    if (approveButton) {
+        if (canBeApproved) {
+            approveButton.disabled = false;
+            approveButton.title = '';
+        } else {
+            approveButton.disabled = true;
+            approveButton.title = 'Both contractor and client signatures are required before approval.';
+        }
+    }
 }
 
 window.showSignatureModal = showSignatureModal;

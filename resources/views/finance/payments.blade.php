@@ -2,8 +2,120 @@
 
 @section('content')
 <div class="container">
-    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Pending Purchase Order Payments</h1>
-    <table class="table table-bordered mt-4">
+    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Finance Payments Dashboard</h1>
+    
+    <!-- Contract Payments Section -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Contract Payments</h5>
+            <div>
+                <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#searchContractModal">
+                    <i class="fas fa-search"></i> Search Contract
+                </button>
+                <button class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#allContractsModal">
+                    <i class="fas fa-list"></i> View All Contracts
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            @if($contractsWithPayments->count() > 0)
+                @foreach($contractsWithPayments as $contractData)
+                    @php
+                        $contract = $contractData->contract;
+                        $nextDue = $contractData->nextDue;
+                    @endphp
+                    <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Contract #{{ $contract->contract_number ?? $contract->id }} - {{ $contract->title ?? 'Contract for ' . ($contract->client->name ?? 'Client') }}</h6>
+                            <div>
+                                @if($contractData->verificationAmount > 0)
+                                    <span class="badge bg-info">For Verification: ₱{{ number_format($contractData->verificationAmount, 2) }}</span>
+                                @endif
+                                @if($contractData->pendingAmount > 0)
+                                    <span class="badge bg-warning">Pending: ₱{{ number_format($contractData->pendingAmount, 2) }}</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>Client:</strong> {{ $contract->client->name ?? 'N/A' }}<br>
+                                    <strong>Contractor:</strong> {{ $contract->contractor->name ?? 'N/A' }}<br>
+                                    <strong>Total Contract Amount:</strong> ₱{{ number_format($contract->total_amount, 2) }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Paid Amount:</strong> ₱{{ number_format($contractData->paidAmount, 2) }}<br>
+                                    <strong>Pending Amount:</strong> ₱{{ number_format($contractData->pendingAmount, 2) }}<br>
+                                    @if($nextDue)
+                                        <strong>Next Due:</strong> ₱{{ number_format($nextDue->amount, 2) }} on {{ $nextDue->due_date->format('M d, Y') }}
+                                        @if($nextDue->due_date->isPast())
+                                            <span class="badge bg-danger">Overdue</span>
+                                        @endif
+                                    @endif
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Payment Stage</th>
+                                            <th>Amount</th>
+                                            <th>Due Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($contractData->payments as $payment)
+                                            <tr>
+                                                <td>{{ $payment->payment_type }}</td>
+                                                <td>₱{{ number_format($payment->amount, 2) }}</td>
+                                                <td>{{ $payment->due_date->format('M d, Y') }}</td>
+                                                <td>
+                                                    @if($payment->status === 'paid')
+                                                        <span class="badge bg-success">Paid</span>
+                                                    @elseif($payment->status === 'for_verification')
+                                                        <span class="badge bg-info">For Verification</span>
+                                                    @elseif($payment->status === 'pending')
+                                                        @if($payment->due_date->isPast())
+                                                            <span class="badge bg-danger">Overdue</span>
+                                                        @else
+                                                            <span class="badge bg-warning">Pending</span>
+                                                        @endif
+                                                    @else
+                                                        <span class="badge bg-secondary">{{ ucfirst($payment->status) }}</span>
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if($payment->status === 'for_verification')
+                                                        <a href="{{ route('payments.show', $payment) }}" class="btn btn-sm btn-info">Review</a>
+                                                    @elseif($payment->status === 'pending')
+                                                        <a href="{{ route('payments.show', $payment) }}" class="btn btn-sm btn-warning">Track</a>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            @else
+                <div class="alert alert-info">No contract payments requiring attention.</div>
+            @endif
+        </div>
+    </div>
+
+    <!-- Purchase Order Payments Section -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Purchase Order Payments</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
         <thead>
             <tr>
                 <th>PO Number</th>
@@ -80,12 +192,147 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" class="text-center">No pending payments.</td>
+                                <td colspan="5" class="text-center">No pending purchase order payments.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Contract Modal -->
+<div class="modal fade" id="searchContractModal" tabindex="-1" aria-labelledby="searchContractModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="searchContractModalLabel">Search Contract</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="contractSearch" class="form-label">Search by Contract Number or Client Name</label>
+                    <input type="text" class="form-control" id="contractSearch" placeholder="Enter contract number or client name...">
+                </div>
+                <div id="searchResults" class="mt-3">
+                    <!-- Search results will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- All Contracts Modal -->
+<div class="modal fade" id="allContractsModal" tabindex="-1" aria-labelledby="allContractsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="allContractsModalLabel">All Contracts with Payments</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Contract #</th>
+                                <th>Client</th>
+                                <th>Contractor</th>
+                                <th>Total Amount</th>
+                                <th>Payment Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($allContracts as $contract)
+                                @php
+                                    $payments = $contract->payments;
+                                    $totalAmount = $payments->sum('amount');
+                                    $paidAmount = $payments->where('status', 'paid')->sum('amount');
+                                    $pendingAmount = $payments->where('status', 'pending')->sum('amount');
+                                    $verificationAmount = $payments->where('status', 'for_verification')->sum('amount');
+                                @endphp
+                                <tr>
+                                    <td>{{ $contract->contract_number ?? 'Contract #' . $contract->id }}</td>
+                                    <td>{{ $contract->client->name ?? 'N/A' }}</td>
+                                    <td>{{ $contract->contractor->name ?? 'N/A' }}</td>
+                                    <td>₱{{ number_format($totalAmount, 2) }}</td>
+                                    <td>
+                                        @if($paidAmount == $totalAmount)
+                                            <span class="badge bg-success">Fully Paid</span>
+                                        @elseif($verificationAmount > 0)
+                                            <span class="badge bg-info">For Verification: ₱{{ number_format($verificationAmount, 2) }}</span>
+                                        @elseif($pendingAmount > 0)
+                                            <span class="badge bg-warning">Pending: ₱{{ number_format($pendingAmount, 2) }}</span>
+                                        @else
+                                            <span class="badge bg-secondary">No Payments</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('payments.show', $contract->payments->first()) }}" class="btn btn-sm btn-primary">View Payments</a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Search functionality
+document.getElementById('contractSearch').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const contracts = @json($allContracts);
+    const resultsDiv = document.getElementById('searchResults');
+    
+    if (searchTerm.length < 2) {
+        resultsDiv.innerHTML = '';
+        return;
+    }
+    
+    const filteredContracts = contracts.filter(contract => {
+        const contractNumber = (contract.contract_number || 'Contract #' + contract.id).toLowerCase();
+        const clientName = (contract.client?.name || '').toLowerCase();
+        return contractNumber.includes(searchTerm) || clientName.includes(searchTerm);
+    });
+    
+    if (filteredContracts.length === 0) {
+        resultsDiv.innerHTML = '<div class="alert alert-info">No contracts found matching your search.</div>';
+        return;
+    }
+    
+    let html = '<div class="list-group">';
+    filteredContracts.forEach(contract => {
+        const payments = contract.payments;
+        const totalAmount = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+        const paidAmount = payments.filter(p => p.status === 'paid').reduce((sum, p) => sum + parseFloat(p.amount), 0);
+        const pendingAmount = payments.filter(p => p.status === 'pending').reduce((sum, p) => sum + parseFloat(p.amount), 0);
+        
+        html += `
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">${contract.contract_number || 'Contract #' + contract.id}</h6>
+                        <small>Client: ${contract.client?.name || 'N/A'} | Contractor: ${contract.contractor?.name || 'N/A'}</small>
+                    </div>
+                    <div class="text-end">
+                        <div>₱${totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
+                        <small class="text-muted">Pending: ₱${pendingAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</small>
+                    </div>
+                    <a href="/payments/${contract.payments[0].id}" class="btn btn-sm btn-primary">View</a>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    resultsDiv.innerHTML = html;
+});
+</script>
 @endsection
 
 @push('styles')

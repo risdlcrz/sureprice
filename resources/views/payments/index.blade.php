@@ -7,6 +7,20 @@
 @endphp
 <div class="container">
 <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Payments</h1>
+
+@if(isset($error))
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        {{ $error }}
+    </div>
+@endif
+
+@if(isset($message))
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        {{ $message }}
+    </div>
+@endif
     @foreach($pagedContracts as $contractData)
     @php
         $contract = $contractData->contract;
@@ -103,9 +117,11 @@
     @endforeach
 
     <!-- Pagination Links -->
-    <div class="d-flex justify-content-center">
-        {{ $pagedContracts->links() }}
-    </div>
+    @if($pagedContracts instanceof \Illuminate\Pagination\LengthAwarePaginator)
+        <div class="d-flex justify-content-center">
+            {{ $pagedContracts->links() }}
+        </div>
+    @endif
 
     <div class="card mb-4 shadow-sm rounded">
         <div class="card-header bg-white fw-semibold">Purchase Order Payments</div>

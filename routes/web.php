@@ -100,6 +100,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{contract}/signatures', [ContractController::class, 'updateSignatures'])->name('updateSignatures');
         Route::post('/save-signature', [ContractController::class, 'saveSignature'])->name('contracts.save.signature');
         Route::post('/{contract}/request-approval', [ContractController::class, 'requestApproval'])->name('requestApproval');
+    
+    // Debug route for signature testing (admin only)
+    Route::get('/{contract}/signature-status', [ContractController::class, 'getSignatureStatus'])->name('signatureStatus')->middleware('admin');
     });
     // Supporting routes for contract form
     Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
@@ -247,16 +250,19 @@ Route::middleware(['auth'])->group(function () {
 // Payments routes
 Route::middleware(['auth'])->group(function () {
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
+    Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
     Route::post('/payments/{payment}/mark-as-paid', [PaymentController::class, 'markAsPaid'])->name('payments.markAsPaid');
     Route::post('/payments/{payment}/upload-proof', [PaymentController::class, 'uploadProof'])->name('payments.uploadProof');
     Route::post('/payments/{payment}/submit-client-proof', [PaymentController::class, 'submitClientProof'])->name('payments.submitClientProof');
     Route::post('/payments/{payment}/submit-admin-proof', [PaymentController::class, 'submitAdminProof'])->name('payments.submitAdminProof');
+    Route::post('/payments/{payment}/verify', [PaymentController::class, 'verifyPayment'])->name('payments.verify');
 });
 // Client Routes
 Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefix('client')->name('client.')->group(function () {
     Route::get('/dashboard', [ClientController::class, 'dashboard'])->name('dashboard');
-    Route::get('/payments', [PaymentController::class, 'index'])->name('payments');
-    Route::get('/payments/dashboard', [PaymentController::class, 'dashboard'])->name('payments.dashboard');
+    Route::get('/payments', [\App\Http\Controllers\ClientPaymentController::class, 'index'])->name('payments');
+    Route::get('/payments/dashboard', [\App\Http\Controllers\ClientPaymentController::class, 'dashboard'])->name('payments.dashboard');
+    Route::get('/payments/{payment}', [\App\Http\Controllers\ClientPaymentController::class, 'show'])->name('payments.show');
     Route::get('/project-procurement', [ClientController::class, 'projectProcurement'])->name('project.procurement');
     
     // Client Quotation Routes
@@ -491,6 +497,7 @@ Route::middleware(['auth', 'role:finance'])->group(function () {
     Route::get('/finance/dashboard', [\App\Http\Controllers\FinanceDashboardController::class, 'index'])->name('finance.dashboard');
     Route::get('/finance/payments', [\App\Http\Controllers\FinanceDashboardController::class, 'payments'])->name('finance.payments');
     Route::get('/finance/transactions', [\App\Http\Controllers\TransactionController::class, 'index'])->name('finance.transactions');
+    Route::get('/finance/all-payments', [\App\Http\Controllers\PaymentController::class, 'index'])->name('finance.all-payments');
     Route::post('/finance/payments/{purchaseOrder}/pay', [\App\Http\Controllers\FinanceDashboardController::class, 'pay'])->name('finance.pay');
 });
 

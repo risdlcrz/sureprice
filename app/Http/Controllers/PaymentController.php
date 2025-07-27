@@ -18,8 +18,29 @@ class PaymentController extends Controller
 {
     public function index()
     {
-        // Get all payments, eager load contract relationship
-        $allPayments = Payment::with(['contract', 'attachment'])->orderBy('due_date')->get();
+        // Get payments based on user role
+        if (auth()->user()->role === 'client') {
+            // For clients, only show their contract payments
+            $client = auth()->user()->party;
+            
+            // Check if client has a party record
+            if (!$client) {
+                return view('payments.index', [
+                    'pagedContracts' => collect([]),
+                    'error' => 'No client profile found. Please contact the administrator.'
+                ]);
+            }
+            
+            $allPayments = Payment::with(['contract', 'attachment'])
+                ->whereHas('contract', function($query) use ($client) {
+                    $query->where('client_id', $client->id);
+                })
+                ->orderBy('due_date')
+                ->get();
+        } else {
+            // For admin/finance, show all payments
+            $allPayments = Payment::with(['contract', 'attachment'])->orderBy('due_date')->get();
+        }
 
         // Group all payments by contract for accurate 'next due' calculation
         $groupedAllPayments = $allPayments->groupBy('contract_id');
@@ -46,6 +67,14 @@ class PaymentController extends Controller
                 'contract' => $contract,
                 'payments' => $paymentsForContract->sortBy('due_date'), // Ensure payments are sorted for display
                 'nextDue' => $nextDue,
+            ]);
+        }
+
+        // Check if there are any contracts with payments
+        if ($contractsWithPayments->isEmpty()) {
+            return view('payments.index', [
+                'pagedContracts' => collect([]),
+                'message' => 'No payments found.'
             ]);
         }
 
@@ -353,7 +382,7 @@ class PaymentController extends Controller
         }
 
         $payment->update($data);
-        $payment->markForVerification();
+        $payment->update(['status' => 'for_verification']);
 
         return redirect()->back()->with('success', 'Payment proof submitted for verification.');
     }
@@ -362,7 +391,7 @@ class PaymentController extends Controller
     {
         $request->validate([
             'admin_payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'admin_payment_method' => 'required|string|in:' . $payment->client_payment_method,
+            'admin_payment_method' => 'required|string',
             'admin_reference_number' => 'required|string',
             'admin_received_amount' => 'required|numeric',
             'admin_received_date' => 'required|date',
@@ -372,6 +401,19 @@ class PaymentController extends Controller
         try {
             DB::beginTransaction();
 
+            // Check if payment details match
+            if ($request->admin_payment_method !== $payment->client_payment_method) {
+                return redirect()->back()->with('error', 'Payment method does not match. Expected: ' . ucfirst(str_replace('_', ' ', $payment->client_payment_method)) . ', Received: ' . ucfirst(str_replace('_', ' ', $request->admin_payment_method)));
+            }
+
+            if ($request->admin_reference_number !== $payment->client_reference_number) {
+                return redirect()->back()->with('error', 'Reference number does not match. Expected: ' . $payment->client_reference_number . ', Received: ' . $request->admin_reference_number);
+            }
+
+            if (abs($request->admin_received_amount - $payment->client_paid_amount) > 0.01) {
+                return redirect()->back()->with('error', 'Amount does not match. Expected: ₱' . number_format($payment->client_paid_amount, 2) . ', Received: ₱' . number_format($request->admin_received_amount, 2));
+            }
+
             $data = $request->only([
                 'admin_payment_method',
                 'admin_reference_number',
@@ -379,9 +421,6 @@ class PaymentController extends Controller
                 'admin_received_date',
                 'admin_notes',
             ]);
-
-            // Ensure admin payment method matches client's method
-            $data['admin_payment_method'] = $payment->client_payment_method;
 
             if ($request->hasFile('admin_payment_proof')) {
                 $file = $request->file('admin_payment_proof');
@@ -391,46 +430,41 @@ class PaymentController extends Controller
 
             $payment->update($data);
 
-            // If all details match, mark as paid and create transaction
-            if ($payment->canBeMarkedPaid()) {
-                // Update payment status
-                $payment->status = 'paid';
-                $payment->paid_date = now();
-                $payment->reference_number = $payment->admin_reference_number;
-                $payment->marked_paid_by = Auth::id();
-                $payment->save();
+            // Mark as paid and create transaction
+            $payment->status = 'paid';
+            $payment->paid_date = now();
+            $payment->reference_number = $payment->admin_reference_number;
+            $payment->marked_paid_by = Auth::id();
+            $payment->approved_by = Auth::id();
+            $payment->approved_at = now();
+            $payment->save();
 
-                // Create transaction record
-                $transaction = Transaction::create([
-                    'payment_id' => $payment->id,
-                    'contract_id' => $payment->contract_id,
-                    'date' => now(),
-                    'amount' => $payment->amount,
-                    'type' => 'payment',
-                    'reference_number' => $payment->admin_reference_number,
-                    'description' => 'Payment for Contract #' . ($payment->contract ? $payment->contract->contract_number : 'N/A') . ' - ' . 
-                                   ($payment->description ?? 'Payment #' . $payment->payment_number),
-                    'status' => 'completed',
-                    'created_by' => Auth::id()
-                ]);
+            // Create transaction record
+            $transaction = Transaction::create([
+                'payment_id' => $payment->id,
+                'contract_id' => $payment->contract_id,
+                'date' => now(),
+                'amount' => $payment->amount,
+                'type' => 'contract_payment',
+                'reference_number' => $payment->admin_reference_number,
+                'description' => 'Payment for ' . $payment->payment_type . ' - Contract #' . ($payment->contract ? $payment->contract->contract_number : $payment->contract_id),
+                'status' => 'completed',
+                'created_by' => Auth::id()
+            ]);
 
-                // Check if all contract payments are paid
-                if ($payment->contract) {
-                    $unpaidPayments = $payment->contract->payments()
-                        ->where('status', '!=', 'paid')
-                        ->count();
+            // Check if all contract payments are paid
+            if ($payment->contract) {
+                $unpaidPayments = $payment->contract->payments()
+                    ->where('status', '!=', 'paid')
+                    ->count();
 
-                    if ($unpaidPayments === 0) {
-                        $payment->contract->update(['status' => 'completed']);
-                    }
+                if ($unpaidPayments === 0) {
+                    $payment->contract->update(['status' => 'completed']);
                 }
-
-                DB::commit();
-                return redirect()->back()->with('success', 'Payment validated and marked as paid.');
             }
 
             DB::commit();
-            return redirect()->back()->with('info', 'Admin proof submitted. Waiting for details to match for validation.');
+            return redirect()->back()->with('success', 'Payment verified successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to process admin proof', [

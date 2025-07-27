@@ -40,6 +40,8 @@ class Contract extends Model
         'contract_terms',
         'client_signature',
         'contractor_signature',
+        'client_date_signed',
+        'contractor_date_signed',
         'status',
         'purchase_order_id',
         'property_address',
@@ -123,6 +125,8 @@ class Contract extends Model
     {
         return $this->belongsTo(Property::class);
     }
+
+
 
     public function items(): HasMany
     {
@@ -286,7 +290,7 @@ class Contract extends Model
                     'contract_id' => $this->id,
                     'amount' => $schedule['amount'],
                     'payment_method' => $this->payment_method,
-                    'payment_type' => $this->getPaymentType($schedule['stage']),
+                    'payment_type' => $schedule['stage'],
                     'status' => 'pending',
                     'due_date' => $schedule['due_date'],
                     'created_by' => auth()->id() ?? 1
@@ -302,6 +306,124 @@ class Contract extends Model
                 ]);
             }
         }
+    }
+
+    public function generatePaymentSchedule()
+    {
+        $paymentSchedule = [];
+        
+        if ($this->payment_plan) {
+            $plan = $this->payment_plan;
+            $total = $this->total_amount;
+            
+            if ($plan === '30% down, 40% halfway, 30% on completion') {
+                $paymentSchedule[] = [
+                    'stage' => 'Downpayment',
+                    'amount' => $total * 0.30,
+                    'due_date' => $this->start_date->format('Y-m-d')
+                ];
+                
+                // Calculate halfway date (middle of project duration)
+                $projectDuration = $this->start_date->diffInDays($this->end_date);
+                $halfwayDate = $this->start_date->copy()->addDays($projectDuration / 2);
+                
+                $paymentSchedule[] = [
+                    'stage' => 'Halfway Payment',
+                    'amount' => $total * 0.40,
+                    'due_date' => $halfwayDate->format('Y-m-d')
+                ];
+                
+                $paymentSchedule[] = [
+                    'stage' => 'Completion Payment',
+                    'amount' => $total * 0.30,
+                    'due_date' => $this->end_date->format('Y-m-d')
+                ];
+            }
+            elseif ($plan === '50/50') {
+                $paymentSchedule[] = [
+                    'stage' => 'Downpayment',
+                    'amount' => $total * 0.50,
+                    'due_date' => $this->start_date->format('Y-m-d')
+                ];
+                
+                $paymentSchedule[] = [
+                    'stage' => 'Completion Payment',
+                    'amount' => $total * 0.50,
+                    'due_date' => $this->end_date->format('Y-m-d')
+                ];
+            }
+            elseif ($plan === 'Full upon completion') {
+                $paymentSchedule[] = [
+                    'stage' => 'Completion Payment',
+                    'amount' => $total,
+                    'due_date' => $this->end_date->format('Y-m-d')
+                ];
+            }
+            elseif ($plan === 'milestone') {
+                $paymentSchedule[] = [
+                    'stage' => 'Downpayment',
+                    'amount' => $total * 0.20,
+                    'due_date' => $this->start_date->format('Y-m-d')
+                ];
+                
+                // After Foundation (25% of project duration)
+                $foundationDate = $this->start_date->copy()->addDays($this->start_date->diffInDays($this->end_date) * 0.25);
+                $paymentSchedule[] = [
+                    'stage' => 'After Foundation',
+                    'amount' => $total * 0.20,
+                    'due_date' => $foundationDate->format('Y-m-d')
+                ];
+                
+                // After Structure (60% of project duration)
+                $structureDate = $this->start_date->copy()->addDays($this->start_date->diffInDays($this->end_date) * 0.60);
+                $paymentSchedule[] = [
+                    'stage' => 'After Structure',
+                    'amount' => $total * 0.30,
+                    'due_date' => $structureDate->format('Y-m-d')
+                ];
+                
+                $paymentSchedule[] = [
+                    'stage' => 'Completion Payment',
+                    'amount' => $total * 0.30,
+                    'due_date' => $this->end_date->format('Y-m-d')
+                ];
+            }
+            elseif ($plan === 'monthly3') {
+                $monthlyAmount = $total / 3;
+                for ($i = 1; $i <= 3; $i++) {
+                    $dueDate = $this->start_date->copy()->addMonths($i);
+                    $paymentSchedule[] = [
+                        'stage' => "Month {$i} Payment",
+                        'amount' => $monthlyAmount,
+                        'due_date' => $dueDate->format('Y-m-d')
+                    ];
+                }
+            }
+            elseif ($plan === 'monthly6') {
+                $monthlyAmount = $total / 6;
+                for ($i = 1; $i <= 6; $i++) {
+                    $dueDate = $this->start_date->copy()->addMonths($i);
+                    $paymentSchedule[] = [
+                        'stage' => "Month {$i} Payment",
+                        'amount' => $monthlyAmount,
+                        'due_date' => $dueDate->format('Y-m-d')
+                    ];
+                }
+            }
+            elseif ($plan === 'monthly12') {
+                $monthlyAmount = $total / 12;
+                for ($i = 1; $i <= 12; $i++) {
+                    $dueDate = $this->start_date->copy()->addMonths($i);
+                    $paymentSchedule[] = [
+                        'stage' => "Month {$i} Payment",
+                        'amount' => $monthlyAmount,
+                        'due_date' => $dueDate->format('Y-m-d')
+                    ];
+                }
+            }
+        }
+        
+        return $paymentSchedule;
     }
 
     private function getPaymentType($stage)
@@ -333,20 +455,46 @@ class Contract extends Model
             ->sum('amount');
     }
 
-    public function getNextPaymentDueAttribute()
-    {
-        return $this->payments()
-            ->where('status', 'pending')
-            ->orderBy('due_date')
-            ->first();
-    }
-
     public function getOverduePaymentsAttribute()
     {
         return $this->payments()
             ->where('status', 'pending')
             ->where('due_date', '<', now())
             ->get();
+    }
+
+    public function getPaymentStatusSummaryAttribute()
+    {
+        $payments = $this->payments;
+        $total = $payments->sum('amount');
+        $paid = $payments->where('status', 'paid')->sum('amount');
+        $pending = $payments->where('status', 'pending')->sum('amount');
+        $verification = $payments->where('status', 'for_verification')->sum('amount');
+        
+        return [
+            'total' => $total,
+            'paid' => $paid,
+            'pending' => $pending,
+            'verification' => $verification,
+            'paid_percentage' => $total > 0 ? round(($paid / $total) * 100, 2) : 0,
+            'pending_percentage' => $total > 0 ? round(($pending / $total) * 100, 2) : 0,
+            'verification_percentage' => $total > 0 ? round(($verification / $total) * 100, 2) : 0,
+        ];
+    }
+
+    public function hasOverduePayments()
+    {
+        return $this->payments()
+            ->where('status', 'pending')
+            ->where('due_date', '<', now())
+            ->exists();
+    }
+
+    public function isPaymentComplete()
+    {
+        return $this->payments()
+            ->where('status', '!=', 'paid')
+            ->count() === 0;
     }
 
     public function tasks()
@@ -427,5 +575,85 @@ class Contract extends Model
     public function isDeliveryConfirmed()
     {
         return $this->delivery_status === 'confirmed';
+    }
+
+    /**
+     * Check if contractor signature is present
+     */
+    public function hasContractorSignature()
+    {
+        if (empty($this->contractor_signature)) {
+            return false;
+        }
+        
+        // Check if it's a file path
+        if (strpos($this->contractor_signature, 'signatures/') === 0) {
+            return file_exists(storage_path('app/public/' . $this->contractor_signature));
+        }
+        
+        // Check if it's base64 data
+        if (strpos($this->contractor_signature, 'data:image') === 0) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if client signature is present
+     */
+    public function hasClientSignature()
+    {
+        if (empty($this->client_signature)) {
+            return false;
+        }
+        
+        // Check if it's a file path
+        if (strpos($this->client_signature, 'signatures/') === 0) {
+            return file_exists(storage_path('app/public/' . $this->client_signature));
+        }
+        
+        // Check if it's base64 data
+        if (strpos($this->client_signature, 'data:image') === 0) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if both signatures are present
+     */
+    public function hasBothSignatures()
+    {
+        return $this->hasContractorSignature() && $this->hasClientSignature();
+    }
+
+    /**
+     * Check if contract can be approved (has both signatures)
+     */
+    public function canBeApproved()
+    {
+        return $this->hasBothSignatures();
+    }
+
+    /**
+     * Get signature status for debugging
+     */
+    public function getSignatureStatus()
+    {
+        return [
+            'contractor_signature' => [
+                'present' => $this->hasContractorSignature(),
+                'path' => $this->contractor_signature,
+                'date_signed' => $this->contractor_date_signed,
+            ],
+            'client_signature' => [
+                'present' => $this->hasClientSignature(),
+                'path' => $this->client_signature,
+                'date_signed' => $this->client_date_signed,
+            ],
+            'can_be_approved' => $this->canBeApproved(),
+        ];
     }
 } 

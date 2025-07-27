@@ -326,6 +326,8 @@ class ContractController extends Controller
         }
         $contract->load(['contractor', 'client', 'property', 'items']);
         $contractors = Employee::where('role', 'contractor')->get();
+        $quotationRequests = \App\Models\QuotationRequest::doesntHave('contract')->with('user')->orderByDesc('created_at')->get();
+        
         // Pass contract and related data to the view
         return view('admin.contracts.create', [
             'contract' => $contract,
@@ -334,6 +336,7 @@ class ContractController extends Controller
             'property' => $contract->property,
             'items' => $contract->items,
             'contractors' => $contractors,
+            'quotationRequests' => $quotationRequests,
         ]);
     }
 
@@ -795,15 +798,15 @@ class ContractController extends Controller
         $validated = $request->validate([
             'status' => 'required|in:draft,active,approved,rejected,partially_paid,fully_paid,overdue,suspended,terminated,expired,renewed'
         ]);
+        
         $oldStatus = $contract->status;
-        $contract->status = $request->status;
-        $contract->save();
+        
         try {
             DB::beginTransaction();
 
             // Require both signatures before approval
             if ($request->status === 'approved') {
-                if (empty($contract->contractor_signature) || empty($contract->client_signature)) {
+                if (!$contract->canBeApproved()) {
                     DB::rollBack();
                     return response()->json([
                         'success' => false,
@@ -812,75 +815,184 @@ class ContractController extends Controller
                 }
             }
 
+            // Update contract status
+            $contract->status = $request->status;
+            $contract->save();
+
             // Generate payment schedule when contract is approved
             if ($request->status === 'approved') {
                 \Log::info('Generating payment schedule for contract: ' . $contract->id);
                 
-                // Generate payment schedule based on payment terms
+                // Generate payment schedule based on payment plan
                 $paymentSchedule = [];
                 
-                if (strpos($contract->payment_terms, 'Pay All In') !== false) {
-                    // Single payment at project completion
-                    $paymentSchedule[] = [
-                        'stage' => 'Full Payment',
-                        'amount' => $contract->total_amount,
-                        'due_date' => $contract->end_date->format('Y-m-d')
-                    ];
-                }
-                else if (strpos($contract->payment_terms, 'Progress Payment') !== false) {
-                    // Progress payment with advance payment and retention
-                    $advancePayment = $contract->total_amount * 0.15; // 15% advance payment
-                    $retention = $contract->total_amount * 0.10; // 10% retention
-                    $progressPayment = $contract->total_amount - $advancePayment - $retention;
+                if ($contract->payment_plan) {
+                    $plan = $contract->payment_plan;
+                    $total = $contract->total_amount;
                     
-                    // Add advance payment (due at start)
-                    $paymentSchedule[] = [
-                        'stage' => 'Advance Payment (15%)',
-                        'amount' => $advancePayment,
-                        'due_date' => $contract->start_date->format('Y-m-d')
-                    ];
-                    
-                    // Add progress payment (due at completion)
-                    $paymentSchedule[] = [
-                        'stage' => 'Progress Payment (75%)',
-                        'amount' => $progressPayment,
-                        'due_date' => $contract->end_date->format('Y-m-d')
-                    ];
-                    
-                    // Add retention (due 30 days after completion)
-                    $retentionDueDate = $contract->end_date->copy()->addDays(30);
-                    $paymentSchedule[] = [
-                        'stage' => 'Retention (10%)',
-                        'amount' => $retention,
-                        'due_date' => $retentionDueDate->format('Y-m-d')
-                    ];
-                }
-                else if (strpos($contract->payment_terms, 'Installment') !== false) {
-                    // Parse installment terms (e.g., "30% downpayment, 6 months")
-                    if (preg_match('/(\d+)% downpayment, (\d+) months/', $contract->payment_terms, $matches)) {
-                        $downpaymentPercent = intval($matches[1]);
-                        $months = intval($matches[2]);
-                        
-                        $downpayment = ($contract->total_amount * $downpaymentPercent) / 100;
-                        $remainingAmount = $contract->total_amount - $downpayment;
-                        $monthlyPayment = $remainingAmount / $months;
-                        
-                        // Add downpayment
+                    if ($plan === '30% down, 40% halfway, 30% on completion') {
                         $paymentSchedule[] = [
-                            'stage' => "Downpayment ({$downpaymentPercent}%)",
-                            'amount' => $downpayment,
+                            'stage' => 'Downpayment',
+                            'amount' => $total * 0.30,
                             'due_date' => $contract->start_date->format('Y-m-d')
                         ];
                         
-                        // Add monthly installments
-                        $installmentDate = $contract->start_date->copy();
-                        for ($i = 1; $i <= $months; $i++) {
-                            $installmentDate->addMonth();
+                        // Calculate halfway date (middle of project duration)
+                        $projectDuration = $contract->start_date->diffInDays($contract->end_date);
+                        $halfwayDate = $contract->start_date->copy()->addDays($projectDuration / 2);
+                        
+                        $paymentSchedule[] = [
+                            'stage' => 'Halfway Payment',
+                            'amount' => $total * 0.40,
+                            'due_date' => $halfwayDate->format('Y-m-d')
+                        ];
+                        
+                        $paymentSchedule[] = [
+                            'stage' => 'Completion Payment',
+                            'amount' => $total * 0.30,
+                            'due_date' => $contract->end_date->format('Y-m-d')
+                        ];
+                    }
+                    elseif ($plan === '50/50') {
+                        $paymentSchedule[] = [
+                            'stage' => 'Downpayment',
+                            'amount' => $total * 0.50,
+                            'due_date' => $contract->start_date->format('Y-m-d')
+                        ];
+                        
+                        $paymentSchedule[] = [
+                            'stage' => 'Completion Payment',
+                            'amount' => $total * 0.50,
+                            'due_date' => $contract->end_date->format('Y-m-d')
+                        ];
+                    }
+                    elseif ($plan === 'Full upon completion') {
+                        $paymentSchedule[] = [
+                            'stage' => 'Completion Payment',
+                            'amount' => $total,
+                            'due_date' => $contract->end_date->format('Y-m-d')
+                        ];
+                    }
+                    elseif ($plan === 'milestone') {
+                        $paymentSchedule[] = [
+                            'stage' => 'Downpayment',
+                            'amount' => $total * 0.20,
+                            'due_date' => $contract->start_date->format('Y-m-d')
+                        ];
+                        
+                        // After Foundation (25% of project duration)
+                        $foundationDate = $contract->start_date->copy()->addDays($contract->start_date->diffInDays($contract->end_date) * 0.25);
+                        $paymentSchedule[] = [
+                            'stage' => 'After Foundation',
+                            'amount' => $total * 0.20,
+                            'due_date' => $foundationDate->format('Y-m-d')
+                        ];
+                        
+                        // After Structure (60% of project duration)
+                        $structureDate = $contract->start_date->copy()->addDays($contract->start_date->diffInDays($contract->end_date) * 0.60);
+                        $paymentSchedule[] = [
+                            'stage' => 'After Structure',
+                            'amount' => $total * 0.30,
+                            'due_date' => $structureDate->format('Y-m-d')
+                        ];
+                        
+                        $paymentSchedule[] = [
+                            'stage' => 'Completion Payment',
+                            'amount' => $total * 0.30,
+                            'due_date' => $contract->end_date->format('Y-m-d')
+                        ];
+                    }
+                    elseif ($plan === 'monthly3') {
+                        $monthlyAmount = $total / 3;
+                        for ($i = 1; $i <= 3; $i++) {
+                            $dueDate = $contract->start_date->copy()->addMonths($i);
                             $paymentSchedule[] = [
-                                'stage' => "Installment {$i}",
-                                'amount' => $monthlyPayment,
-                                'due_date' => $installmentDate->format('Y-m-d')
+                                'stage' => "Month {$i} Payment",
+                                'amount' => $monthlyAmount,
+                                'due_date' => $dueDate->format('Y-m-d')
                             ];
+                        }
+                    }
+                    elseif ($plan === 'monthly6') {
+                        $monthlyAmount = $total / 6;
+                        for ($i = 1; $i <= 6; $i++) {
+                            $dueDate = $contract->start_date->copy()->addMonths($i);
+                            $paymentSchedule[] = [
+                                'stage' => "Month {$i} Payment",
+                                'amount' => $monthlyAmount,
+                                'due_date' => $dueDate->format('Y-m-d')
+                            ];
+                        }
+                    }
+                    elseif ($plan === 'monthly12') {
+                        $monthlyAmount = $total / 12;
+                        for ($i = 1; $i <= 12; $i++) {
+                            $dueDate = $contract->start_date->copy()->addMonths($i);
+                            $paymentSchedule[] = [
+                                'stage' => "Month {$i} Payment",
+                                'amount' => $monthlyAmount,
+                                'due_date' => $dueDate->format('Y-m-d')
+                            ];
+                        }
+                    }
+                    else {
+                        // Fallback to old payment terms logic for backward compatibility
+                        if (strpos($contract->payment_terms, 'Pay All In') !== false) {
+                            $paymentSchedule[] = [
+                                'stage' => 'Full Payment',
+                                'amount' => $total,
+                                'due_date' => $contract->end_date->format('Y-m-d')
+                            ];
+                        }
+                        elseif (strpos($contract->payment_terms, 'Progress Payment') !== false) {
+                            $advancePayment = $total * 0.15;
+                            $retention = $total * 0.10;
+                            $progressPayment = $total - $advancePayment - $retention;
+                            
+                            $paymentSchedule[] = [
+                                'stage' => 'Advance Payment (15%)',
+                                'amount' => $advancePayment,
+                                'due_date' => $contract->start_date->format('Y-m-d')
+                            ];
+                            
+                            $paymentSchedule[] = [
+                                'stage' => 'Progress Payment (75%)',
+                                'amount' => $progressPayment,
+                                'due_date' => $contract->end_date->format('Y-m-d')
+                            ];
+                            
+                            $retentionDueDate = $contract->end_date->copy()->addDays(30);
+                            $paymentSchedule[] = [
+                                'stage' => 'Retention (10%)',
+                                'amount' => $retention,
+                                'due_date' => $retentionDueDate->format('Y-m-d')
+                            ];
+                        }
+                        elseif (strpos($contract->payment_terms, 'Installment') !== false) {
+                            if (preg_match('/(\d+)% downpayment, (\d+) months/', $contract->payment_terms, $matches)) {
+                                $downpaymentPercent = intval($matches[1]);
+                                $months = intval($matches[2]);
+                                
+                                $downpayment = ($total * $downpaymentPercent) / 100;
+                                $remainingAmount = $total - $downpayment;
+                                $monthlyPayment = $remainingAmount / $months;
+                                
+                                $paymentSchedule[] = [
+                                    'stage' => "Downpayment ({$downpaymentPercent}%)",
+                                    'amount' => $downpayment,
+                                    'due_date' => $contract->start_date->format('Y-m-d')
+                                ];
+                                
+                                $installmentDate = $contract->start_date->copy();
+                                for ($i = 1; $i <= $months; $i++) {
+                                    $installmentDate->addMonth();
+                                    $paymentSchedule[] = [
+                                        'stage' => "Installment {$i}",
+                                        'amount' => $monthlyPayment,
+                                        'due_date' => $installmentDate->format('Y-m-d')
+                                    ];
+                                }
+                            }
                         }
                     }
                 }
@@ -947,10 +1059,18 @@ class ContractController extends Controller
 
             DB::commit();
 
+            // Send notifications based on status change
+            if ($request->status === 'approved') {
+                $this->sendApprovalNotifications($contract, 'approved');
+            } elseif ($request->status === 'rejected') {
+                $this->sendApprovalNotifications($contract, 'rejected');
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Contract status updated successfully',
-                'status' => ucfirst($contract->status)
+                'status' => ucfirst($contract->status),
+                'can_create_material_request' => $request->status === 'approved'
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -1275,23 +1395,36 @@ class ContractController extends Controller
                 $filename = 'signatures/' . uniqid($signatureType . '_') . '.png';
                 
                 if (Storage::disk('public')->put($filename, $image_data)) {
-                    $contract->update([
+                    $updateData = [
                         $signatureType . '_signature' => $filename,
                         $signatureType . '_date_signed' => now()
+                    ];
+                    
+                    $contract->update($updateData);
+                    
+                    // Log the signature update for debugging
+                    \Log::info("Signature updated for contract {$contract->id}", [
+                        'signature_type' => $signatureType,
+                        'filename' => $filename,
+                        'date_signed' => now(),
+                        'contract_signature_status' => $contract->fresh()->getSignatureStatus()
                     ]);
                     
                     return response()->json([
                         'success' => true, 
                         'message' => ucfirst($signatureType) . ' signature updated successfully',
-                        'signature_path' => $filename
+                        'signature_path' => $filename,
+                        'can_be_approved' => $contract->fresh()->canBeApproved()
                     ]);
+                } else {
+                    return response()->json(['success' => false, 'message' => 'Failed to save signature file']);
                 }
             }
 
             return response()->json(['success' => false, 'message' => 'Invalid signature format']);
         } catch (\Exception $e) {
             \Log::error('Error updating signature: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Error updating signature']);
+            return response()->json(['success' => false, 'message' => 'Error updating signature: ' . $e->getMessage()]);
         }
     }
 
@@ -1310,10 +1443,28 @@ class ContractController extends Controller
         return $colors[$contract->id % count($colors)];
     }
 
+    /**
+     * Get signature status for debugging (admin only)
+     */
+    public function getSignatureStatus(Contract $contract)
+    {
+        if (!Auth::user()->hasRole('admin')) {
+            abort(403, 'Unauthorized');
+        }
+
+        return response()->json([
+            'contract_id' => $contract->id,
+            'contract_number' => $contract->contract_number,
+            'signature_status' => $contract->getSignatureStatus(),
+            'can_be_approved' => $contract->canBeApproved(),
+            'current_status' => $contract->status,
+        ]);
+    }
+
     public function requestApproval(Request $request, Contract $contract)
     {
         // Check if both signatures are present
-        if (empty($contract->contractor_signature) || empty($contract->client_signature)) {
+        if (!$contract->canBeApproved()) {
             return redirect()->back()->with('error', 'Both contractor and client signatures are required before requesting approval.');
         }
 
@@ -1343,5 +1494,73 @@ class ContractController extends Controller
         }
 
         return redirect()->back()->with('success', 'Approval request sent to admin. You will be notified once the contract is reviewed.');
+    }
+
+    /**
+     * Send approval notifications to relevant users
+     */
+    private function sendApprovalNotifications(Contract $contract, $status)
+    {
+        $statusText = ucfirst($status);
+        $message = "Contract #{$contract->contract_number} has been {$status}.";
+        
+        // Notify manager
+        if ($contract->quotationRequest && $contract->quotationRequest->user) {
+            \App\Models\Notification::create([
+                'user_id' => $contract->quotationRequest->user->id,
+                'type' => 'contract_status_update',
+                'notifiable_type' => Contract::class,
+                'notifiable_id' => $contract->id,
+                'data' => [
+                    'title' => "Contract {$statusText}",
+                    'message' => $message,
+                    'contract_id' => $contract->id,
+                    'contract_number' => $contract->contract_number,
+                    'status' => $status,
+                    'link' => route('contracts.show', $contract->id),
+                ],
+                'read_at' => null,
+            ]);
+        }
+
+        // Notify procurement users if approved
+        if ($status === 'approved') {
+            $procurementUsers = \App\Models\User::whereIn('role', ['procurement', 'manager', 'warehouse'])->get();
+            foreach ($procurementUsers as $user) {
+                \App\Models\Notification::create([
+                    'user_id' => $user->id,
+                    'type' => 'contract_approved',
+                    'notifiable_type' => Contract::class,
+                    'notifiable_id' => $contract->id,
+                    'data' => [
+                        'title' => 'Contract Approved - Material Request Available',
+                        'message' => "Contract #{$contract->contract_number} has been approved. You can now create material requests.",
+                        'contract_id' => $contract->id,
+                        'contract_number' => $contract->contract_number,
+                        'link' => route('contracts.show', $contract->id),
+                    ],
+                    'read_at' => null,
+                ]);
+            }
+
+            // Notify finance users about payment schedule
+            $financeUsers = \App\Models\User::whereIn('role', ['finance', 'admin'])->get();
+            foreach ($financeUsers as $user) {
+                \App\Models\Notification::create([
+                    'user_id' => $user->id,
+                    'type' => 'payment_schedule_created',
+                    'notifiable_type' => Contract::class,
+                    'notifiable_id' => $contract->id,
+                    'data' => [
+                        'title' => 'Payment Schedule Created',
+                        'message' => "Payment schedule has been created for Contract #{$contract->contract_number}.",
+                        'contract_id' => $contract->id,
+                        'contract_number' => $contract->contract_number,
+                        'link' => route('contracts.show', $contract->id),
+                    ],
+                    'read_at' => null,
+                ]);
+            }
+        }
     }
 } 

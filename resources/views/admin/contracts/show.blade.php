@@ -8,6 +8,35 @@
         Contract status updated successfully!
     </div>
 
+    <!-- Success Messages -->
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    <!-- Contract Approval Banner -->
+    @if($contract->status === 'approved')
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <h5 class="alert-heading">
+                <i class="fas fa-check-circle"></i> Contract Approved!
+            </h5>
+            <p class="mb-0">
+                This contract has been approved. Material requests and purchase requests are now enabled for manager, procurement, and warehouse users.
+                Payment schedule has been created and is ready for finance processing.
+            </p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     @php
         $isClient = auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client';
     @endphp
@@ -25,7 +54,8 @@
                             </button>
                             <button type="button" 
                                     class="btn {{ $contract->status === 'approved' ? 'btn-success' : 'btn-outline-success' }}"
-                                    onclick="updateStatus('approved')">
+                                    onclick="updateStatus('approved')"
+                                    @if(!$contract->canBeApproved()) disabled title="Both contractor and client signatures are required before approval." @endif>
                                 Approve
                             </button>
                             <button type="button" 
@@ -36,14 +66,9 @@
                         </div>
                     @endif
                 @elseif(Auth::user()->hasRole('manager') && $contract->status === 'draft')
-                    @php
-                        $hasContractorSignature = !empty($contract->contractor_signature);
-                        $hasClientSignature = !empty($contract->client_signature);
-                        $canRequestApproval = $hasContractorSignature && $hasClientSignature;
-                    @endphp
                     <form method="POST" action="{{ route('contracts.requestApproval', $contract) }}" class="d-inline">
                         @csrf
-                        <button type="submit" class="btn btn-primary" @if(!$canRequestApproval) disabled title="Both contractor and client signatures are required before requesting approval." @endif>
+                        <button type="submit" class="btn btn-primary" @if(!$contract->canBeApproved()) disabled title="Both contractor and client signatures are required before requesting approval." @endif>
                             <i class="fas fa-paper-plane"></i> Request for Approval
                         </button>
                     </form>
@@ -61,7 +86,15 @@
                     <a href="{{ route('material-requests.create', ['contract_id' => $contract->id]) }}" class="btn btn-info" id="createMaterialRequest">
                         <i class="fas fa-boxes"></i> Create Material Request
                     </a>
-                @elseif(Auth::user()->hasRole('manager'))
+                @elseif(Auth::user()->hasRole('procurement') && $contract->status === 'approved')
+                    <a href="{{ route('material-requests.create', ['contract_id' => $contract->id]) }}" class="btn btn-info" id="createMaterialRequest">
+                        <i class="fas fa-boxes"></i> Create Material Request
+                    </a>
+                @elseif(Auth::user()->hasRole('warehouse') && $contract->status === 'approved')
+                    <a href="{{ route('material-requests.create', ['contract_id' => $contract->id]) }}" class="btn btn-info" id="createMaterialRequest">
+                        <i class="fas fa-boxes"></i> Create Material Request
+                    </a>
+                @elseif(in_array(Auth::user()->role, ['manager', 'procurement', 'warehouse']))
                     <button class="btn btn-info" disabled title="Contract must be approved by admin before requesting materials.">
                         <i class="fas fa-boxes"></i> Create Material Request
                     </button>
@@ -489,12 +522,26 @@
 
     <div class="card mb-4">
         <div class="card-header">
-            <h5 class="mb-0">Signatures</h5>
+            <h5 class="mb-0">
+                Signatures
+                @if($contract->hasBothSignatures())
+                    <span class="badge bg-success ms-2">Complete</span>
+                @else
+                    <span class="badge bg-warning ms-2">Incomplete</span>
+                @endif
+            </h5>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6 text-center">
-                    <h6>Contractor's Signature</h6>
+                    <h6>
+                        Contractor's Signature
+                        @if($contract->hasContractorSignature())
+                            <span class="badge bg-success ms-1">✓</span>
+                        @else
+                            <span class="badge bg-danger ms-1">✗</span>
+                        @endif
+                    </h6>
                     @if($contract->contractor_signature)
                         <img src="{{ asset('storage/' . $contract->contractor_signature) }}" 
                              alt="Contractor's Signature" 
@@ -515,7 +562,14 @@
                     @endif
                 </div>
                 <div class="col-md-6 text-center">
-                    <h6>Client's Signature</h6>
+                    <h6>
+                        Client's Signature
+                        @if($contract->hasClientSignature())
+                            <span class="badge bg-success ms-1">✓</span>
+                        @else
+                            <span class="badge bg-danger ms-1">✗</span>
+                        @endif
+                    </h6>
                     @if($contract->client_signature)
                         <img src="{{ asset('storage/' . $contract->client_signature) }}" 
                              alt="Client's Signature" 
@@ -538,6 +592,8 @@
             </div>
         </div>
     </div>
+
+
 
     <!-- Payment Schedule Table -->
     @if($contract->payment_schedule)
@@ -587,6 +643,212 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         window.contractSignatureUrl = '{{ url('/contracts/' . ($contract->id ?? 'MISSING_ID') . '/signatures') }}';
+        window.contractStatusUrl = '{{ route('contracts.updateStatus', $contract->id) }}';
+        
+        // Contract status update function
+        function updateStatus(status) {
+            console.log('updateStatus called with:', status);
+            
+            // Check if approval is being requested and signatures are missing
+            if (status === 'approved') {
+                const approveButton = document.querySelector('button[onclick="updateStatus(\'approved\')"]');
+                console.log('Approve button found:', approveButton);
+                console.log('Approve button disabled:', approveButton ? approveButton.disabled : 'Button not found');
+                
+                if (approveButton && approveButton.disabled) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Cannot Approve',
+                        text: 'Both contractor and client signatures are required before approval.',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
+            }
+
+            const token = document.querySelector('meta[name="csrf-token"]');
+            console.log('CSRF token element:', token);
+            
+            if (!token) {
+                console.error('CSRF token meta tag not found');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'CSRF token not found. Please refresh the page and try again.'
+                });
+                return;
+            }
+            const csrfToken = token.getAttribute('content');
+            console.log('CSRF token value:', csrfToken ? 'Present' : 'Empty');
+            
+            if (!csrfToken) {
+                console.error('CSRF token is empty');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'CSRF token is empty. Please refresh the page and try again.'
+                });
+                return;
+            }
+            
+            console.log('Contract status URL:', window.contractStatusUrl);
+            Swal.fire({
+                title: 'Updating Status',
+                text: 'Please wait...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            console.log('Making fetch request to:', window.contractStatusUrl);
+            console.log('Request payload:', { status: status });
+            
+            fetch(window.contractStatusUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ status: status }),
+                credentials: 'same-origin'
+            })
+            .then(async response => {
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (!response.ok) {
+                    if (response.status === 419) {
+                        throw new Error('CSRF token mismatch. Please refresh the page and try again.');
+                    }
+                    throw new Error(data.message || `HTTP error! status: ${response.status}`);
+                }
+                return data;
+            })
+            .then(data => {
+                if (data.success) {
+                    let message = data.message;
+                    let icon = 'success';
+                    
+                    // Customize message based on status
+                    if (data.status && data.status.toLowerCase() === 'approved') {
+                        message = 'Contract approved successfully! Material requests and purchase requests are now enabled.';
+                        icon = 'success';
+                    } else if (data.status && data.status.toLowerCase() === 'rejected') {
+                        message = 'Contract rejected.';
+                        icon = 'error';
+                    }
+                    
+                    Swal.fire({
+                        icon: icon,
+                        title: 'Success',
+                        text: message,
+                        showConfirmButton: true,
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    throw new Error(data.message || 'Unknown error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message || 'An error occurred while updating the contract status.',
+                    confirmButtonText: 'OK'
+                });
+            });
+        }
+
+        // Signature modal functions
+        let currentSignatureType = null;
+        let signaturePad = null;
+
+        function showSignatureModal(type) {
+            currentSignatureType = type;
+            const modal = new bootstrap.Modal(document.getElementById('signatureModal'));
+            modal.show();
+            
+            // Initialize signature pad
+            const canvas = document.getElementById('signatureCanvas');
+            signaturePad = new SignaturePad(canvas, {
+                backgroundColor: 'rgb(255, 255, 255)'
+            });
+        }
+
+        function clearSignature() {
+            if (signaturePad) {
+                signaturePad.clear();
+            }
+        }
+
+        function saveSignature() {
+            if (!signaturePad || signaturePad.isEmpty()) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No Signature',
+                    text: 'Please provide a signature before saving.',
+                    confirmButtonText: 'OK'
+                });
+                return;
+            }
+
+            const signatureData = signaturePad.toDataURL();
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            fetch(window.contractSignatureUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    signature_type: currentSignatureType,
+                    signature_data: signatureData
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Signature saved successfully!',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    throw new Error(data.message || 'Failed to save signature');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message || 'An error occurred while saving the signature.',
+                    confirmButtonText: 'OK'
+                });
+            });
+        }
+
+        // Delete confirmation functions
+        function showDeleteModal() {
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+
+        function submitDelete() {
+            document.getElementById('deleteForm').submit();
+        }
     </script>
-    @vite(['resources/js/contracts-show.js'])
 @endpush 
