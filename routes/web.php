@@ -584,9 +584,18 @@ Route::get('/cleanup-notifications', function () {
 
 Route::get('/api/unread-notifications-count', function () {
     $user = auth()->user();
-    $count = \App\Models\Notification::where('user_id', $user->id)
-        ->whereNull('read_at')
-        ->count();
+    if (!$user) {
+        return response()->json(['count' => 0]);
+    }
+    $count = \App\Models\Notification::where(function ($query) use ($user) {
+        $query->where('user_id', $user->id)
+              ->orWhere(function ($q) use ($user) {
+                  $q->where('notifiable_id', $user->id)
+                    ->where('notifiable_type', get_class($user));
+              });
+    })
+    ->whereNull('read_at')
+    ->count();
     return response()->json(['count' => $count]);
 })->middleware('auth');
 
