@@ -23,15 +23,46 @@ class MaterialRequestController extends Controller
     {
         $quotation_id = $request->get('quotation_id');
         $contract_id = $request->get('contract_id');
+        
         if ($contract_id) {
             $contract = \App\Models\Contract::findOrFail($contract_id);
             if ($contract->status !== 'approved') {
                 abort(403, 'You cannot request materials until the contract is approved by the administrator.');
             }
+            
+            // Handle contract-based material request
+            $materials = Material::orderBy('name')->get();
+            $items = [];
+            $anyShort = false;
+            
+            // Get materials from contract items
+            $contractItems = $contract->items;
+            foreach ($contractItems as $item) {
+                $material = $item->material;
+                $actualStock = Stock::where('material_id', $material->id)->sum('current_stock');
+                $needed = $item->quantity;
+                
+                if ($actualStock < $needed) {
+                    $anyShort = true;
+                }
+                
+                $items[] = [
+                    'material_id' => $material->id,
+                    'name' => $material->name,
+                    'unit' => $material->unit,
+                    'quantity' => $needed,
+                    'available' => $actualStock
+                ];
+            }
+            
+            return view('admin.material-requests.create', compact('materials', 'items', 'contract_id', 'anyShort'));
         }
+        
         if (!$quotation_id) {
-            abort(404, 'Quotation request required.');
+            abort(404, 'Quotation request or contract ID required.');
         }
+        
+        // Handle quotation-based material request (existing logic)
         $quotation = \App\Models\QuotationRequest::with(['rooms.scopes'])->findOrFail($quotation_id);
         $materials = Material::orderBy('name')->get();
         $items = [];
@@ -74,20 +105,27 @@ class MaterialRequestController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'quotation_request_id' => 'required|exists:quotation_requests,id',
+            'quotation_request_id' => 'nullable|exists:quotation_requests,id',
+            'contract_id' => 'nullable|exists:contracts,id',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.material_id' => 'required|exists:materials,id',
             'items.*.quantity' => 'required|numeric|min:0.01',
         ]);
 
+        // Ensure either quotation_request_id or contract_id is provided
+        if (empty($validated['quotation_request_id'] ?? null) && empty($validated['contract_id'] ?? null)) {
+            return back()->withErrors(['error' => 'Either quotation request ID or contract ID is required.']);
+        }
+
         DB::beginTransaction();
         try {
             $materialRequest = MaterialRequest::create([
-                'quotation_request_id' => $validated['quotation_request_id'],
+                'quotation_request_id' => $validated['quotation_request_id'] ?? null,
+                'contract_id' => $validated['contract_id'] ?? null,
                 'requested_by' => auth()->id(),
                 'status' => 'pending',
-                'notes' => $validated['notes'],
+                'notes' => $validated['notes'] ?? null,
             ]);
 
             $purchaseRequestItems = [];
@@ -184,8 +222,11 @@ class MaterialRequestController extends Controller
                     'request_number' => 'PR-' . str_pad(PurchaseRequest::count() + 1, 6, '0', STR_PAD_LEFT),
                     'material_request_id' => $materialRequest->id,
                     'requested_by' => auth()->id(),
-                    'status' => 'pending',
+                    'status' => 'pending_admin_approval',
                     'is_project_related' => false,
+                    'department' => 'Warehouse',
+                    'purpose' => 'Stock replenishment for material request #' . $materialRequest->id,
+                    'required_date' => now()->addDays(7),
                     'notes' => 'Auto-generated from Material Request #' . $materialRequest->id,
                 ]);
                 $totalAmount = 0;
@@ -195,6 +236,23 @@ class MaterialRequestController extends Controller
                 }
                 $purchaseRequest->total_amount = $totalAmount;
                 $purchaseRequest->save();
+                
+                // Notify admins for approval
+                $adminUsers = \App\Models\User::role('admin')->get();
+                foreach ($adminUsers as $admin) {
+                    \App\Models\Notification::create([
+                        'notifiable_id' => $admin->id,
+                        'notifiable_type' => \App\Models\User::class,
+                        'type' => 'Purchase Request Approval Needed',
+                        'data' => [
+                            'title' => 'Purchase Request Approval Required',
+                            'message' => 'A new purchase request #' . $purchaseRequest->request_number . ' requires your approval.',
+                            'link' => route('purchase-requests.show', $purchaseRequest->id),
+                            'purchase_request_id' => $purchaseRequest->id,
+                            'request_number' => $purchaseRequest->request_number
+                        ],
+                    ]);
+                }
             }
 
             $materialRequest->save();
@@ -209,7 +267,7 @@ class MaterialRequestController extends Controller
 
     public function show($id)
     {
-        $materialRequest = \App\Models\MaterialRequest::with(['items.material', 'user'])->findOrFail($id);
+        $materialRequest = \App\Models\MaterialRequest::with(['items.material', 'items.supplier', 'user'])->findOrFail($id);
         $purchaseRequest = \App\Models\PurchaseRequest::where('material_request_id', $materialRequest->id)->first();
         return view('admin.material-requests.show', compact('materialRequest', 'purchaseRequest'));
     }

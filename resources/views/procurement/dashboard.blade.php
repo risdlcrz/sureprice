@@ -31,14 +31,25 @@
     </div>
     <!-- Quick Actions -->
     <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <a href="{{ route('quotations.create') }}" class="btn btn-primary btn-lg w-100 rounded-pill"><i class="bi bi-plus-lg"></i> Create RFQ</a>
+        <div class="col-md-3">
+            <a href="{{ route('procurement.purchase-requests.create') }}" class="btn btn-primary btn-lg w-100 rounded-pill">
+                <i class="bi bi-plus-lg"></i> Create Purchase Request
+            </a>
         </div>
-        <div class="col-md-4">
-            <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline-success btn-lg w-100 rounded-pill"><i class="bi bi-folder2-open"></i> Manage Orders</a>
+        <div class="col-md-3">
+            <a href="{{ route('procurement.purchase-requests.index') }}" class="btn btn-outline-success btn-lg w-100 rounded-pill">
+                <i class="bi bi-folder2-open"></i> My Purchase Requests
+            </a>
         </div>
-        <div class="col-md-4">
-            <a href="{{ route('suppliers.index') }}" class="btn btn-outline-info btn-lg w-100 rounded-pill"><i class="bi bi-people"></i> Supplier Management</a>
+        <div class="col-md-3">
+            <a href="{{ route('purchase-orders.index') }}" class="btn btn-outline-info btn-lg w-100 rounded-pill">
+                <i class="bi bi-folder2-open"></i> Manage Orders
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ route('suppliers.index') }}" class="btn btn-outline-secondary btn-lg w-100 rounded-pill">
+                <i class="bi bi-people"></i> Supplier Management
+            </a>
         </div>
     </div>
     <!-- Recent Activity -->
@@ -52,7 +63,7 @@
                 <div class="card-body">
                     <div class="list-group">
                         @forelse($recentPurchaseRequests as $request)
-                        <a href="{{ route('purchase-requests.show', $request->id) }}" class="list-group-item list-group-item-action">
+                        <a href="{{ route('procurement.purchase-requests.show', $request->id) }}" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
                                 <div>
                                     <h6 class="mb-1">{{ $request->request_number }}</h6>
@@ -109,7 +120,7 @@
         <h2 class="mb-4 fw-semibold text-success">Quick Access</h2>
         <div class="row row-cols-1 row-cols-md-3 g-4">
             <div class="col">
-                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('procurement.project-dashboard') }}';" style="cursor:pointer;">
+                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('procurement.projects.index') }}';" style="cursor:pointer;">
                     <img src="{{ asset('images/ppimage9.jpg') }}" class="card-img-top flex-grow-1" alt="Project & Procurement" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                     <div class="card-body text-center">
                         <h5 class="card-title">Project & Procurement</h5>
@@ -117,7 +128,7 @@
                 </div>
             </div>
             <div class="col">
-                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('procurement.project-history') }}';" style="cursor:pointer;">
+                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('procurement.history') }}';" style="cursor:pointer;">
                     <img src="{{ asset('images/projectdash1.jpg') }}" class="card-img-top flex-grow-1" alt="Project History" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                     <div class="card-body text-center">
                         <h5 class="card-title">Project History</h5>
@@ -125,7 +136,7 @@
                 </div>
             </div>
             <div class="col">
-                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('procurement.inventory-dashboard') }}';" style="cursor:pointer;">
+                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('procurement.inventory.index') }}';" style="cursor:pointer;">
                     <img src="{{ asset('images/historydash3.jpg') }}" class="card-img-top flex-grow-1" alt="Inventory" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                     <div class="card-body text-center">
                         <h5 class="card-title">Inventory</h5>
@@ -133,7 +144,7 @@
                 </div>
             </div>
             <div class="col">
-                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('procurement.analytics-dashboard') }}';" style="cursor:pointer;">
+                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('procurement.analytics') }}';" style="cursor:pointer;">
                     <img src="{{ asset('images/ppimage10.png') }}" class="card-img-top flex-grow-1" alt="Analytics" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
                     <div class="card-body text-center">
                         <h5 class="card-title">Analytics</h5>

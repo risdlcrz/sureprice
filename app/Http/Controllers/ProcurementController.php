@@ -56,6 +56,7 @@ class ProcurementController extends Controller
             ->get();
 
         $recentPurchaseRequests = PurchaseRequest::with('contract')
+            ->where('requested_by', auth()->id())
             ->latest()
             ->take(5)
             ->get();

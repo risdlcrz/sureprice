@@ -307,6 +307,10 @@ Route::post('/client/quotation/{id}/contract', [\App\Http\Controllers\ClientQuot
 Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->prefix('procurement')->name('procurement.')->group(function () {
     Route::get('/dashboard', [ProcurementController::class, 'index'])->name('dashboard');
     
+    // Procurement Purchase Requests
+    Route::resource('purchase-requests', \App\Http\Controllers\Procurement\PurchaseRequestController::class);
+    Route::get('/purchase-requests/recommend-suppliers-for-material', [\App\Http\Controllers\Procurement\PurchaseRequestController::class, 'recommendSuppliersForMaterial'])->name('purchase-requests.recommend-suppliers');
+    
     // Project Management Routes
     Route::get('/projects', [ProcurementController::class, 'projectDashboard'])->name('projects.index');
     Route::get('/projects/{project}', [ProcurementController::class, 'projectShow'])->name('projects.show');
@@ -492,6 +496,12 @@ Route::get('/material-requests/recommend-suppliers-for-material', [\App\Http\Con
 
 // AJAX route for supplier recommendation in purchase requests
 Route::get('/purchase-requests/recommend-suppliers-for-material', [\App\Http\Controllers\PurchaseRequestController::class, 'recommendSuppliersForMaterial']);
+
+// Unified supplier recommendation route for purchase requests (accessible to all authenticated users)
+Route::middleware(['auth'])->get('/purchase-requests/recommend-suppliers-for-material', [
+    \App\Http\Controllers\PurchaseRequestController::class,
+    'recommendSuppliersForMaterial'
+])->name('purchase-requests.recommend-suppliers-unified');
 
 // Procurement Supplier Rankings
 Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->prefix('procurement')->name('procurement.')->group(function () {

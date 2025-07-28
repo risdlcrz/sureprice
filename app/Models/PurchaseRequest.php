@@ -26,7 +26,11 @@ class PurchaseRequest extends Model
         'admin_approved_by',
         'supplier_approved',
         'supplier_approved_at',
-        'supplier_approved_by'
+        'supplier_approved_by',
+        'total_amount',
+        'department',
+        'purpose',
+        'required_date'
     ];
 
     protected $casts = [
@@ -34,7 +38,17 @@ class PurchaseRequest extends Model
         'supplier_approved' => 'boolean',
         'admin_approved_at' => 'datetime',
         'supplier_approved_at' => 'datetime',
+        'required_date' => 'date',
+        'total_amount' => 'decimal:2'
     ];
+
+    // Status constants
+    const STATUS_PENDING = 'pending';
+    const STATUS_PENDING_ADMIN_APPROVAL = 'pending_admin_approval';
+    const STATUS_PENDING_SUPPLIER_APPROVAL = 'pending_supplier_approval';
+    const STATUS_APPROVED = 'approved';
+    const STATUS_REJECTED = 'rejected';
+    const STATUS_CANCELLED = 'cancelled';
 
     // Relationships
     public function materialRequest(): BelongsTo
@@ -99,6 +113,8 @@ class PurchaseRequest extends Model
     {
         return [
             'pending' => 'warning',
+            'pending_admin_approval' => 'info',
+            'pending_supplier_approval' => 'primary',
             'approved' => 'success',
             'rejected' => 'danger',
             'cancelled' => 'secondary'
@@ -111,13 +127,13 @@ class PurchaseRequest extends Model
         if (!$user || !$user->hasRole('admin')) {
             throw new \Exception('Only administrators can approve purchase requests.');
         }
-        if ($this->status !== 'pending_admin_approval') {
+        if ($this->status !== self::STATUS_PENDING_ADMIN_APPROVAL) {
             throw new \Exception('Purchase request is not pending admin approval.');
         }
         $this->admin_approved = true;
         $this->admin_approved_at = now();
         $this->admin_approved_by = $user->id;
-        $this->status = 'pending_supplier_approval';
+        $this->status = self::STATUS_PENDING_SUPPLIER_APPROVAL;
         $this->save();
     }
 
@@ -127,13 +143,13 @@ class PurchaseRequest extends Model
         if (!$user || !$user->hasRole('supplier')) {
             throw new \Exception('Only suppliers can approve purchase requests.');
         }
-        if ($this->status !== 'pending_supplier_approval') {
+        if ($this->status !== self::STATUS_PENDING_SUPPLIER_APPROVAL) {
             throw new \Exception('Purchase request is not pending supplier approval.');
         }
         $this->supplier_approved = true;
         $this->supplier_approved_at = now();
         $this->supplier_approved_by = $user->id;
-        $this->status = 'approved';
+        $this->status = self::STATUS_APPROVED;
         $this->save();
         $this->checkAndCreatePurchaseOrder();
     }
@@ -196,7 +212,7 @@ class PurchaseRequest extends Model
             $purchaseOrder->total_amount = $purchaseOrder->items()->sum('total_amount');
             $purchaseOrder->save();
 
-            $this->status = 'approved';
+            $this->status = self::STATUS_APPROVED;
             $this->save();
         }
     }

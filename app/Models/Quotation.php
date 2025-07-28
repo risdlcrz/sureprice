@@ -44,6 +44,11 @@ class Quotation extends Model
         return $this->belongsTo(PurchaseRequest::class);
     }
 
+    public function contract(): BelongsTo
+    {
+        return $this->belongsTo(Contract::class);
+    }
+
     public function suppliers(): BelongsToMany
     {
         return $this->belongsToMany(\App\Models\Company::class, 'quotation_supplier', 'quotation_id', 'supplier_id')

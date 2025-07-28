@@ -153,6 +153,9 @@ class PurchaseRequestController extends Controller
             'items.*.notes' => 'nullable|string',
             'items.*.preferred_brand' => 'nullable|string',
             'items.*.preferred_supplier_id' => 'nullable|exists:suppliers,id',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+            'purpose' => 'nullable|string',
+            'required_date' => 'nullable|date'
         ]);
 
         // Custom validation: preferred_supplier_id must be a supplier for the selected material
@@ -182,15 +185,19 @@ class PurchaseRequestController extends Controller
             \Log::info('Validation passed', ['validated' => $validated]);
 
             DB::beginTransaction();
-            $purchaseRequest = new PurchaseRequest([
+            $purchaseRequest = PurchaseRequest::create([
                 'request_number' => 'PR-' . str_pad(PurchaseRequest::count() + 1, 6, '0', STR_PAD_LEFT),
-                'contract_id' => $validated['is_project_related'] ? $validated['contract_id'] : null,
+                'contract_id' => $validated['contract_id'] ?? null,
+                'supplier_id' => $validated['supplier_id'] ?? null,
                 'requested_by' => auth()->id(),
-                'status' => 'pending_admin_approval',
-                'is_project_related' => $validated['is_project_related'],
-                'notes' => $validated['notes']
+                'status' => auth()->user()->hasRole('procurement') ? 'pending_admin_approval' : 'pending',
+                'notes' => $validated['notes'] ?? null,
+                'is_project_related' => $validated['is_project_related'] ?? false,
+                'total_amount' => 0,
+                'department' => auth()->user()->hasRole('procurement') ? 'Procurement' : 'Warehouse',
+                'purpose' => $validated['purpose'] ?? 'Material procurement',
+                'required_date' => $validated['required_date'] ?? now()->addDays(7)
             ]);
-            $purchaseRequest->save();
             \Log::info('PurchaseRequest instance created', ['purchaseRequest' => $purchaseRequest]);
             $totalAmount = 0;
             foreach ($validated['items'] as $item) {
@@ -227,6 +234,8 @@ class PurchaseRequestController extends Controller
                 'type' => 'Purchase Request',
                 'data' => ['message' => 'Your purchase request #' . $purchaseRequest->request_number . ' has been created.'],
             ]);
+            
+            // Notify admins for approval
             $adminUsers = \App\Models\User::role('admin')->get();
             foreach ($adminUsers as $admin) {
                 Notification::create([
@@ -643,36 +652,79 @@ class PurchaseRequestController extends Controller
     public function recommendSuppliersForMaterial(Request $request)
     {
         $materialId = $request->input('material_id');
-        $budget = $request->input('budget', 100000);
-        $mode = $request->input('mode', 'best_score');
-        $projectFeatures = [
-            'on_time_delivery_rate' => $request->input('on_time_delivery_rate', 90),
-            'average_defect_rate' => $request->input('average_defect_rate', 2),
-            'average_cost_variance' => $request->input('average_cost_variance', 0),
-        ];
+        $contractId = $request->input('contract_id');
+        $mode = $request->input('mode', 'overall_best');
+        $budget = $request->input('budget');
+        $offers = [];
 
-        $suppliers = Supplier::with(['metrics', 'materials'])->get()->map(function($supplier) {
-            return [
-                'id' => $supplier->id,
-                'name' => $supplier->company_name,
-                'material_ids' => $supplier->materials->pluck('id')->toArray(),
-                'on_time_delivery_rate' => $supplier->metrics ? $supplier->metrics->on_time_delivery_rate : 0,
-                'average_defect_rate' => $supplier->metrics->average_defect_rate ?? 0,
-                'average_cost_variance' => $supplier->metrics->average_cost_variance ?? 0,
-                'cost' => $supplier->metrics->average_cost_variance ?? 0,
-            ];
-        })->toArray();
+        // Fetch relevant RFQs/Quotations
+        if ($contractId) {
+            $contract = \App\Models\Contract::find($contractId);
+            if ($contract) {
+                $rfqs = \App\Models\Quotation::where('contract_id', $contractId)
+                    ->with(['suppliers', 'materials', 'responses.items', 'responses.supplier.metrics'])
+                    ->get();
+                foreach ($rfqs as $rfq) {
+                    foreach ($rfq->responses as $response) {
+                        foreach ($response->items as $item) {
+                            if ($item->material_id == $materialId) {
+                                $offers[] = [
+                                    'supplier_id' => $response->supplier_id,
+                                    'unit_price' => $item->unit_price,
+                                    'metrics' => $response->supplier->metrics,
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // Standalone: consider all suppliers who have quoted for this material in any RFQ
+            $rfqs = \App\Models\Quotation::whereHas('materials', function($q) use ($materialId) {
+                $q->where('materials.id', $materialId);
+            })->with(['suppliers', 'materials', 'responses.items', 'responses.supplier.metrics'])->get();
+            foreach ($rfqs as $rfq) {
+                foreach ($rfq->responses as $response) {
+                    foreach ($response->items as $item) {
+                        if ($item->material_id == $materialId) {
+                            $offers[] = [
+                                'supplier_id' => $response->supplier_id,
+                                'unit_price' => $item->unit_price,
+                                'metrics' => $response->supplier->metrics,
+                            ];
+                        }
+                    }
+                }
+            }
+        }
 
-        $service = new SupplierSelectionService();
-        $filteredSuppliers = $service->filterByMaterial($suppliers, $materialId);
-        $recommended = $service->recommend($filteredSuppliers, $projectFeatures, 5);
-        $optimal = $service->optimize($recommended, $budget);
+        // Recommendation logic (copied from ClientQuotationController)
+        if (count($offers) > 0) {
+            if ($mode === 'cheapest') {
+                usort($offers, fn($a, $b) => $a['unit_price'] <=> $b['unit_price']);
+            } elseif ($mode === 'fastest_delivery') {
+                usort($offers, fn($a, $b) => ($b['metrics']->on_time_delivery_rate ?? 0) <=> ($a['metrics']->on_time_delivery_rate ?? 0));
+            } elseif ($mode === 'least_defects') {
+                usort($offers, fn($a, $b) => ($a['metrics']->average_defect_rate ?? 0) <=> ($b['metrics']->average_defect_rate ?? 0));
+            } else { // overall_best
+                $minPrice = min(array_column($offers, 'unit_price'));
+                $maxDelivery = max(array_map(function($o) { return $o['metrics']->on_time_delivery_rate ?? 0; }, $offers));
+                $minDefect = min(array_map(function($o) { return $o['metrics']->average_defect_rate ?? 0; }, $offers));
+                $scores = [];
+                foreach ($offers as $ix => $o) {
+                    $priceScore = $minPrice / max($o['unit_price'], 1);
+                    $deliveryScore = ($o['metrics']->on_time_delivery_rate ?? 0) / max($maxDelivery, 1);
+                    $defectScore = $minDefect / max($o['metrics']->average_defect_rate ?? 1, 1);
+                    $scores[$ix] = $priceScore + $deliveryScore + $defectScore;
+                }
+                array_multisort($scores, SORT_DESC, $offers);
+            }
+        }
 
+        // Prepare response (top 5 offers)
+        $recommended = array_slice($offers, 0, 5);
         return response()->json([
-            'html' => view('admin.suppliers.partials.recommendation-tables', [
-                'recommended' => $recommended,
-                'optimal' => $optimal,
-            ])->render()
+            'recommended' => $recommended,
         ]);
     }
 

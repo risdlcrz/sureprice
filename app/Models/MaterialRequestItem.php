@@ -17,6 +17,7 @@ class MaterialRequestItem extends Model
         'warehouse_id',
         'fulfilled_quantity',
         'status',
+        'supplier_id', // Added supplier_id to allow mass assignment
     ];
 
     public function materialRequest()

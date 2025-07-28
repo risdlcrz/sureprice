@@ -15,7 +15,12 @@
                 </div>
                 <form action="{{ route('material-requests.store') }}" method="POST" id="materialRequestForm">
                     @csrf
-                    <input type="hidden" name="quotation_request_id" value="{{ $quotation_id }}">
+                    @if(isset($quotation_id))
+                        <input type="hidden" name="quotation_request_id" value="{{ $quotation_id }}">
+                    @endif
+                    @if(isset($contract_id))
+                        <input type="hidden" name="contract_id" value="{{ $contract_id }}">
+                    @endif
                     <div class="card-body">
                         @if(session('error'))
                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
