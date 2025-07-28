@@ -217,14 +217,13 @@ class MaterialRequestController extends Controller
             }
 
             // If any item was short, create a purchase request
-            if (!empty($purchaseRequestItems)) {
+            if (!empty($purchaseRequestItems) && $request->input('create_purchase_request') == '1') {
                 $purchaseRequest = PurchaseRequest::create([
                     'request_number' => 'PR-' . str_pad(PurchaseRequest::count() + 1, 6, '0', STR_PAD_LEFT),
                     'material_request_id' => $materialRequest->id,
                     'requested_by' => auth()->id(),
                     'status' => 'pending_admin_approval',
                     'is_project_related' => false,
-                    'department' => 'Warehouse',
                     'purpose' => 'Stock replenishment for material request #' . $materialRequest->id,
                     'required_date' => now()->addDays(7),
                     'notes' => 'Auto-generated from Material Request #' . $materialRequest->id,
