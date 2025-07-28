@@ -52,17 +52,16 @@
                             <!-- Payment Method Verification -->
                             <div class="mb-3">
                                 <label for="admin_payment_method_{{ $payment->id }}" class="form-label fw-bold">
-                                    <i class="fas fa-credit-card text-primary"></i> Payment Method
+                                    <i class="fas fa-credit-card text-primary"></i> Payment Method (Client Submission)
                                 </label>
-                                <select name="admin_payment_method" id="admin_payment_method_{{ $payment->id }}" class="form-select" required>
-                                    <option value="">Select Payment Method</option>
-                                    <option value="bank_transfer" {{ $payment->client_payment_method == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
-                                    <option value="check" {{ $payment->client_payment_method == 'check' ? 'selected' : '' }}>Check</option>
-                                    <option value="cash" {{ $payment->client_payment_method == 'cash' ? 'selected' : '' }}>Cash</option>
-                                    <option value="online_payment" {{ $payment->client_payment_method == 'online_payment' ? 'selected' : '' }}>Online Payment</option>
-                                    <option value="mobile_banking" {{ $payment->client_payment_method == 'mobile_banking' ? 'selected' : '' }}>Mobile Banking</option>
-                                </select>
-                                <div class="form-text">Verify the payment method matches client submission</div>
+                                <input type="text" name="admin_payment_method" id="admin_payment_method_{{ $payment->id }}" 
+                                       class="form-control bg-light" 
+                                       value="{{ ucfirst(str_replace('_', ' ', $payment->client_payment_method)) }}" 
+                                       readonly>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle text-info"></i> 
+                                    This reflects the payment method the client actually used. Cannot be changed during verification.
+                                </div>
                             </div>
 
                             <!-- Reference Number Verification -->

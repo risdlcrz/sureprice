@@ -155,13 +155,17 @@
                                         <label for="client_payment_method" class="form-label fw-bold">Payment Method *</label>
                                         <select class="form-select" id="client_payment_method" name="client_payment_method" required>
                                             <option value="">Select Payment Method</option>
-                                            <option value="bank_transfer" {{ old('client_payment_method') == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
-                                            <option value="gcash" {{ old('client_payment_method') == 'gcash' ? 'selected' : '' }}>GCash</option>
-                                            <option value="paymaya" {{ old('client_payment_method') == 'paymaya' ? 'selected' : '' }}>PayMaya</option>
-                                            <option value="cash" {{ old('client_payment_method') == 'cash' ? 'selected' : '' }}>Cash</option>
-                                            <option value="check" {{ old('client_payment_method') == 'check' ? 'selected' : '' }}>Check</option>
-                                            <option value="other" {{ old('client_payment_method') == 'other' ? 'selected' : '' }}>Other</option>
+                                            <option value="bank_transfer" {{ old('client_payment_method', $payment->contract->payment_method) == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                                            <option value="gcash" {{ old('client_payment_method', $payment->contract->payment_method) == 'gcash' ? 'selected' : '' }}>GCash</option>
+                                            <option value="paymaya" {{ old('client_payment_method', $payment->contract->payment_method) == 'paymaya' ? 'selected' : '' }}>PayMaya</option>
+                                            <option value="cash" {{ old('client_payment_method', $payment->contract->payment_method) == 'cash' ? 'selected' : '' }}>Cash</option>
+                                            <option value="check" {{ old('client_payment_method', $payment->contract->payment_method) == 'check' ? 'selected' : '' }}>Check</option>
+                                            <option value="other" {{ old('client_payment_method', $payment->contract->payment_method) == 'other' ? 'selected' : '' }}>Other</option>
                                         </select>
+                                        <div class="form-text">
+                                            <strong>Contract Payment Method:</strong> {{ ucfirst(str_replace('_', ' ', $payment->contract->payment_method)) }}
+                                            <br>You can change this if you used a different payment method.
+                                        </div>
                                         @error('client_payment_method')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror

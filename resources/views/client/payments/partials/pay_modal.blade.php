@@ -40,14 +40,18 @@
                                 </label>
                                 <select class="form-select" id="client_payment_method_{{ $payment->id }}" name="client_payment_method" required>
                                     <option value="">Select payment method</option>
-                                    <option value="bank_transfer">Bank Transfer</option>
-                                    <option value="gcash">GCash</option>
-                                    <option value="paymaya">PayMaya</option>
-                                    <option value="credit_card">Credit Card</option>
-                                    <option value="debit_card">Debit Card</option>
-                                    <option value="cash">Cash</option>
-                                    <option value="check">Check</option>
+                                    <option value="bank_transfer" {{ $payment->contract->payment_method == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                                    <option value="gcash" {{ $payment->contract->payment_method == 'gcash' ? 'selected' : '' }}>GCash</option>
+                                    <option value="paymaya" {{ $payment->contract->payment_method == 'paymaya' ? 'selected' : '' }}>PayMaya</option>
+                                    <option value="credit_card" {{ $payment->contract->payment_method == 'credit_card' ? 'selected' : '' }}>Credit Card</option>
+                                    <option value="debit_card" {{ $payment->contract->payment_method == 'debit_card' ? 'selected' : '' }}>Debit Card</option>
+                                    <option value="cash" {{ $payment->contract->payment_method == 'cash' ? 'selected' : '' }}>Cash</option>
+                                    <option value="check" {{ $payment->contract->payment_method == 'check' ? 'selected' : '' }}>Check</option>
                                 </select>
+                                <div class="form-text">
+                                    <strong>Contract Payment Method:</strong> {{ ucfirst(str_replace('_', ' ', $payment->contract->payment_method)) }}
+                                    <br>You can change this if you used a different payment method.
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">

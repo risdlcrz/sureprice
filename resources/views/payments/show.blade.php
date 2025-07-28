@@ -120,18 +120,20 @@
                             </div>
                         </div>
 
-                        <form action="{{ route('payments.submit-admin-proof', $payment) }}" method="POST" enctype="multipart/form-data">
+                        <form action="{{ route('payments.submitAdminProof', $payment) }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="admin_payment_method" class="form-label">Payment Method Received</label>
-                                        <select name="admin_payment_method" id="admin_payment_method" class="form-control" required>
-                                            <option value="">Select Payment Method</option>
-                                            <option value="bank_transfer">Bank Transfer</option>
-                                            <option value="check">Check</option>
-                                            <option value="cash">Cash</option>
-                                        </select>
+                                        <label for="admin_payment_method" class="form-label">Payment Method (Client Submission)</label>
+                                        <input type="text" name="admin_payment_method" id="admin_payment_method" 
+                                               class="form-control bg-light" 
+                                               value="{{ ucfirst(str_replace('_', ' ', $payment->client_payment_method)) }}" 
+                                               readonly>
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle text-info"></i> 
+                                            This reflects the payment method the client actually used. Cannot be changed during verification.
+                                        </small>
                                     </div>
                                     <div class="mb-3">
                                         <label for="admin_reference_number" class="form-label">Reference Number</label>

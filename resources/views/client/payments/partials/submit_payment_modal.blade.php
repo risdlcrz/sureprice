@@ -36,13 +36,16 @@
                         </label>
                         <select name="client_payment_method" id="client_payment_method_{{ $payment->id }}" class="form-select" required>
                             <option value="">Select Payment Method</option>
-                            <option value="bank_transfer">Bank Transfer</option>
-                            <option value="check">Check</option>
-                            <option value="cash">Cash</option>
-                            <option value="online_payment">Online Payment</option>
-                            <option value="mobile_banking">Mobile Banking</option>
+                            <option value="bank_transfer" {{ $payment->contract->payment_method == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                            <option value="check" {{ $payment->contract->payment_method == 'check' ? 'selected' : '' }}>Check</option>
+                            <option value="cash" {{ $payment->contract->payment_method == 'cash' ? 'selected' : '' }}>Cash</option>
+                            <option value="online_payment" {{ $payment->contract->payment_method == 'online_payment' ? 'selected' : '' }}>Online Payment</option>
+                            <option value="mobile_banking" {{ $payment->contract->payment_method == 'mobile_banking' ? 'selected' : '' }}>Mobile Banking</option>
                         </select>
-                        <div class="form-text">Please select the method you used to make the payment.</div>
+                        <div class="form-text">
+                            <strong>Contract Payment Method:</strong> {{ ucfirst(str_replace('_', ' ', $payment->contract->payment_method)) }}
+                            <br>You can change this if you used a different payment method.
+                        </div>
                     </div>
 
                     <!-- Reference Number -->
@@ -143,6 +146,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set default values once when modal loads
     if (paymentDateInput && !paymentDateInput.value) {
         paymentDateInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    // Set the payment method to match the contract's payment method
+    const paymentMethodSelect = document.getElementById('client_payment_method_{{ $payment->id }}');
+    if (paymentMethodSelect) {
+        const contractPaymentMethod = '{{ $payment->contract->payment_method }}';
+        if (contractPaymentMethod) {
+            paymentMethodSelect.value = contractPaymentMethod;
+        }
     }
 
     // Simple amount validation without real-time updates

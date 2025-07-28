@@ -417,7 +417,6 @@ class PaymentController extends Controller
     {
         $request->validate([
             'admin_payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'admin_payment_method' => 'required|string',
             'admin_reference_number' => 'required|string',
             'admin_received_amount' => 'required|numeric',
             'admin_received_date' => 'required|date',
@@ -427,10 +426,8 @@ class PaymentController extends Controller
         try {
             DB::beginTransaction();
 
-            // Check if payment details match
-            if ($request->admin_payment_method !== $payment->client_payment_method) {
-                return redirect()->back()->with('error', 'Payment method does not match. Expected: ' . ucfirst(str_replace('_', ' ', $payment->client_payment_method)) . ', Received: ' . ucfirst(str_replace('_', ' ', $request->admin_payment_method)));
-            }
+            // Use client's payment method automatically
+            $adminPaymentMethod = $payment->client_payment_method;
 
             if ($request->admin_reference_number !== $payment->client_reference_number) {
                 return redirect()->back()->with('error', 'Reference number does not match. Expected: ' . $payment->client_reference_number . ', Received: ' . $request->admin_reference_number);
@@ -440,13 +437,13 @@ class PaymentController extends Controller
                 return redirect()->back()->with('error', 'Amount does not match. Expected: ₱' . number_format($payment->client_paid_amount, 2) . ', Received: ₱' . number_format($request->admin_received_amount, 2));
             }
 
-            $data = $request->only([
-                'admin_payment_method',
-                'admin_reference_number',
-                'admin_received_amount',
-                'admin_received_date',
-                'admin_notes',
-            ]);
+            $data = [
+                'admin_payment_method' => $adminPaymentMethod,
+                'admin_reference_number' => $request->admin_reference_number,
+                'admin_received_amount' => $request->admin_received_amount,
+                'admin_received_date' => $request->admin_received_date,
+                'admin_notes' => $request->admin_notes,
+            ];
 
             if ($request->hasFile('admin_payment_proof')) {
                 $file = $request->file('admin_payment_proof');
@@ -505,7 +502,6 @@ class PaymentController extends Controller
     public function verify(Request $request, Payment $payment)
     {
         $request->validate([
-            'admin_payment_method' => 'required|string',
             'admin_reference_number' => 'required|string',
             'admin_received_amount' => 'required|numeric',
             'admin_received_date' => 'required|date',
@@ -516,11 +512,10 @@ class PaymentController extends Controller
         try {
             DB::beginTransaction();
 
-            // Check if payment details match client submission
-            if ($request->admin_payment_method !== $payment->client_payment_method) {
-                return redirect()->back()->with('error', 'Payment method does not match client submission.');
-            }
+            // Use client's payment method automatically
+            $adminPaymentMethod = $payment->client_payment_method;
 
+            // Check if payment details match client submission
             if ($request->admin_reference_number !== $payment->client_reference_number) {
                 return redirect()->back()->with('error', 'Reference number does not match client submission.');
             }
@@ -529,13 +524,13 @@ class PaymentController extends Controller
                 return redirect()->back()->with('error', 'Amount does not match client submission.');
             }
 
-            $data = $request->only([
-                'admin_payment_method',
-                'admin_reference_number',
-                'admin_received_amount',
-                'admin_received_date',
-                'admin_notes',
-            ]);
+            $data = [
+                'admin_payment_method' => $adminPaymentMethod,
+                'admin_reference_number' => $request->admin_reference_number,
+                'admin_received_amount' => $request->admin_received_amount,
+                'admin_received_date' => $request->admin_received_date,
+                'admin_notes' => $request->admin_notes,
+            ];
 
             if ($request->hasFile('admin_payment_proof')) {
                 $file = $request->file('admin_payment_proof');
