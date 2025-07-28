@@ -52,7 +52,7 @@
                         <h5 class="mb-0">Submit Payment Proof</h5>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('payments.submit-client-proof', $payment) }}" method="POST" enctype="multipart/form-data">
+                        <form action="{{ route('client.payments.submit-client-proof', $payment) }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             <div class="row">
                                 <div class="col-md-6">

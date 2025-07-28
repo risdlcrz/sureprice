@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Notifications\PaymentStatusNotification;
 
 class PaymentController extends Controller
 {
@@ -359,32 +360,57 @@ class PaymentController extends Controller
     public function submitClientProof(Request $request, Payment $payment)
     {
         $request->validate([
-            'client_payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'client_payment_method' => 'required|string',
-            'client_reference_number' => 'required|string',
-            'client_paid_amount' => 'required|numeric',
+            'client_payment_method' => 'required|string|max:255',
+            'client_reference_number' => 'required|string|max:255',
+            'client_paid_amount' => 'required|numeric|min:0',
             'client_paid_date' => 'required|date',
-            'client_notes' => 'nullable|string',
+            'client_payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'client_notes' => 'nullable|string|max:1000',
         ]);
 
-        $data = $request->only([
-            'client_payment_method',
-            'client_reference_number',
-            'client_paid_amount',
-            'client_paid_date',
-            'client_notes',
-        ]);
+        try {
+            DB::beginTransaction();
 
-        if ($request->hasFile('client_payment_proof')) {
-            $file = $request->file('client_payment_proof');
-            $path = $file->store('payment_proofs', 'public');
-            $data['client_payment_proof'] = $path;
+            // Update payment with client submission data
+            $payment->update([
+                'client_payment_method' => $request->client_payment_method,
+                'client_reference_number' => $request->client_reference_number,
+                'client_paid_amount' => $request->client_paid_amount,
+                'client_paid_date' => $request->client_paid_date,
+                'client_notes' => $request->client_notes,
+                'status' => 'for_verification',
+            ]);
+
+            // Handle file upload
+            if ($request->hasFile('client_payment_proof')) {
+                $file = $request->file('client_payment_proof');
+                $path = $file->store('payment_proofs', 'public');
+                
+                // Create or update attachment
+                $payment->attachment()->updateOrCreate(
+                    ['attachable_id' => $payment->id, 'attachable_type' => Payment::class],
+                    [
+                        'path' => $path,
+                        'original_name' => $file->getClientOriginalName(),
+                        'mime_type' => $file->getMimeType(),
+                        'size' => $file->getSize(),
+                    ]
+                );
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Payment proof submitted successfully! Your payment is now under verification.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to submit client proof', [
+                'payment_id' => $payment->id,
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'Failed to submit payment proof: ' . $e->getMessage());
         }
-
-        $payment->update($data);
-        $payment->update(['status' => 'for_verification']);
-
-        return redirect()->back()->with('success', 'Payment proof submitted for verification.');
     }
 
     public function submitAdminProof(Request $request, Payment $payment)
@@ -473,6 +499,220 @@ class PaymentController extends Controller
                 'error_trace' => $e->getTraceAsString()
             ]);
             return redirect()->back()->with('error', 'Failed to process admin proof: ' . $e->getMessage());
+        }
+    }
+
+    public function verify(Request $request, Payment $payment)
+    {
+        $request->validate([
+            'admin_payment_method' => 'required|string',
+            'admin_reference_number' => 'required|string',
+            'admin_received_amount' => 'required|numeric',
+            'admin_received_date' => 'required|date',
+            'admin_notes' => 'nullable|string',
+            'admin_payment_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Check if payment details match client submission
+            if ($request->admin_payment_method !== $payment->client_payment_method) {
+                return redirect()->back()->with('error', 'Payment method does not match client submission.');
+            }
+
+            if ($request->admin_reference_number !== $payment->client_reference_number) {
+                return redirect()->back()->with('error', 'Reference number does not match client submission.');
+            }
+
+            if (abs($request->admin_received_amount - $payment->client_paid_amount) > 0.01) {
+                return redirect()->back()->with('error', 'Amount does not match client submission.');
+            }
+
+            $data = $request->only([
+                'admin_payment_method',
+                'admin_reference_number',
+                'admin_received_amount',
+                'admin_received_date',
+                'admin_notes',
+            ]);
+
+            if ($request->hasFile('admin_payment_proof')) {
+                $file = $request->file('admin_payment_proof');
+                $path = $file->store('payment_proofs', 'public');
+                $data['admin_payment_proof'] = $path;
+            }
+
+            $payment->update($data);
+
+            // Mark as paid and create transaction
+            $payment->status = 'paid';
+            $payment->paid_date = now();
+            $payment->reference_number = $payment->admin_reference_number;
+            $payment->marked_paid_by = Auth::id();
+            $payment->approved_by = Auth::id();
+            $payment->approved_at = now();
+            $payment->save();
+
+            // Create transaction record
+            $transaction = Transaction::create([
+                'payment_id' => $payment->id,
+                'contract_id' => $payment->contract_id,
+                'date' => now(),
+                'amount' => $payment->amount,
+                'type' => 'contract_payment',
+                'reference_number' => $payment->admin_reference_number,
+                'description' => 'Payment for ' . $payment->payment_type . ' - Contract #' . ($payment->contract ? $payment->contract->contract_number : $payment->contract_id),
+                'status' => 'completed',
+                'created_by' => Auth::id()
+            ]);
+
+            // Check if all contract payments are paid
+            if ($payment->contract) {
+                $unpaidPayments = $payment->contract->payments()
+                    ->where('status', '!=', 'paid')
+                    ->count();
+
+                if ($unpaidPayments === 0) {
+                    $payment->contract->update(['status' => 'completed']);
+                }
+            }
+
+            // Send notification to client
+            if ($payment->contract && $payment->contract->client) {
+                $client = $payment->contract->client;
+                if ($client->user) {
+                    $client->user->notify(new PaymentStatusNotification(
+                        $payment, 
+                        'verified', 
+                        'Your payment has been verified successfully. Thank you for your payment.'
+                    ));
+                }
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Payment verified successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to verify payment', [
+                'payment_id' => $payment->id,
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'Failed to verify payment: ' . $e->getMessage());
+        }
+    }
+
+    public function rejectPayment(Request $request, Payment $payment)
+    {
+        $request->validate([
+            'rejection_reason' => 'required|string',
+            'rejection_details' => 'required|string',
+            'action_required' => 'required|string',
+            'finance_notes' => 'nullable|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Update payment status back to pending
+            $payment->update([
+                'status' => 'pending',
+                'rejection_reason' => $request->rejection_reason,
+                'rejection_details' => $request->rejection_details,
+                'action_required' => $request->action_required,
+                'finance_notes' => $request->finance_notes,
+                'rejected_by' => Auth::id(),
+                'rejected_at' => now(),
+            ]);
+
+            // Clear client submission data
+            $payment->update([
+                'client_payment_proof' => null,
+                'client_payment_method' => null,
+                'client_reference_number' => null,
+                'client_paid_amount' => null,
+                'client_paid_date' => null,
+                'client_notes' => null,
+            ]);
+
+            // Send notification to client
+            if ($payment->contract && $payment->contract->client) {
+                $client = $payment->contract->client;
+                if ($client->user) {
+                    $message = "Your payment was rejected. Reason: " . $request->rejection_details . 
+                              "\nAction Required: " . $request->action_required;
+                    $client->user->notify(new PaymentStatusNotification(
+                        $payment, 
+                        'rejected', 
+                        $message
+                    ));
+                }
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Payment rejected. Client will be notified to resubmit.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to reject payment', [
+                'payment_id' => $payment->id,
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'Failed to reject payment: ' . $e->getMessage());
+        }
+    }
+
+    public function requestMoreInfo(Request $request, Payment $payment)
+    {
+        $request->validate([
+            'info_request_type' => 'required|string',
+            'specific_request' => 'required|string',
+            'response_deadline' => 'required|date',
+            'priority_level' => 'required|string',
+            'finance_notes' => 'nullable|string',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Update payment with information request
+            $payment->update([
+                'info_request_type' => $request->info_request_type,
+                'specific_request' => $request->specific_request,
+                'response_deadline' => $request->response_deadline,
+                'priority_level' => $request->priority_level,
+                'finance_notes' => $request->finance_notes,
+                'info_requested_by' => Auth::id(),
+                'info_requested_at' => now(),
+            ]);
+
+            // Send notification to client
+            if ($payment->contract && $payment->contract->client) {
+                $client = $payment->contract->client;
+                if ($client->user) {
+                    $message = "We need additional information about your payment.\n\n" .
+                              "Request: " . $request->specific_request . "\n" .
+                              "Deadline: " . $request->response_deadline . "\n" .
+                              "Priority: " . ucfirst($request->priority_level);
+                    $client->user->notify(new PaymentStatusNotification(
+                        $payment, 
+                        'info_requested', 
+                        $message
+                    ));
+                }
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Information request sent to client.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to request more info', [
+                'payment_id' => $payment->id,
+                'error_message' => $e->getMessage(),
+                'error_trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'Failed to request more information: ' . $e->getMessage());
         }
     }
 } 

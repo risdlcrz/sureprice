@@ -40,6 +40,18 @@ class Payment extends Model
         'admin_received_amount',
         'admin_received_date',
         'admin_notes',
+        // New verification fields
+        'rejection_reason',
+        'rejection_details',
+        'action_required',
+        'rejected_by',
+        'rejected_at',
+        'info_request_type',
+        'specific_request',
+        'response_deadline',
+        'priority_level',
+        'info_requested_by',
+        'info_requested_at',
     ];
 
     protected $casts = [
@@ -51,6 +63,9 @@ class Payment extends Model
         'client_paid_date' => 'date',
         'admin_received_amount' => 'decimal:2',
         'admin_received_date' => 'date',
+        'rejected_at' => 'datetime',
+        'response_deadline' => 'date',
+        'info_requested_at' => 'datetime',
     ];
 
     // Relationships

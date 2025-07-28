@@ -378,7 +378,7 @@
                         <p class="mb-0">{{ $contract->contractor->name }}</p>
                         <small class="text-muted">Contractor</small>
                         @if($contract->contractor_date_signed)
-                            <br><small class="text-muted">Signed: {{ $contract->contractor_date_signed->format('M d, Y') }}</small>
+                            <br><small class="text-muted">Signed: {{ $contract->contractor_date_signed instanceof \Carbon\Carbon ? $contract->contractor_date_signed->format('M d, Y') : \Carbon\Carbon::parse($contract->contractor_date_signed)->format('M d, Y') }}</small>
                         @endif
                     @else
                         <p class="text-muted">No signature provided</p>
@@ -394,7 +394,7 @@
                         <p class="mb-0">{{ $contract->client->name }}</p>
                         <small class="text-muted">Client</small>
                         @if($contract->client_date_signed)
-                            <br><small class="text-muted">Signed: {{ $contract->client_date_signed->format('M d, Y') }}</small>
+                            <br><small class="text-muted">Signed: {{ $contract->client_date_signed instanceof \Carbon\Carbon ? $contract->client_date_signed->format('M d, Y') : \Carbon\Carbon::parse($contract->client_date_signed)->format('M d, Y') }}</small>
                         @endif
                     @else
                         <p class="text-muted">No signature provided</p>

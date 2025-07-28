@@ -550,7 +550,7 @@
                         <p class="mb-0">{{ $contract->contractor->name }}</p>
                         <small class="text-muted">Contractor</small>
                         @if($contract->contractor_date_signed)
-                            <br><small class="text-muted">Signed: {{ $contract->contractor_date_signed->format('M d, Y') }}</small>
+                            <br><small class="text-muted">Signed: {{ $contract->contractor_date_signed instanceof \Carbon\Carbon ? $contract->contractor_date_signed->format('M d, Y') : \Carbon\Carbon::parse($contract->contractor_date_signed)->format('M d, Y') }}</small>
                         @endif
                     @else
                         <p class="text-muted">No signature provided</p>
@@ -578,7 +578,7 @@
                         <p class="mb-0">{{ $contract->client->name }}</p>
                         <small class="text-muted">Client</small>
                         @if($contract->client_date_signed)
-                            <br><small class="text-muted">Signed: {{ $contract->client_date_signed->format('M d, Y') }}</small>
+                            <br><small class="text-muted">Signed: {{ $contract->client_date_signed instanceof \Carbon\Carbon ? $contract->client_date_signed->format('M d, Y') : \Carbon\Carbon::parse($contract->client_date_signed)->format('M d, Y') }}</small>
                         @endif
                     @else
                         <p class="text-muted">No signature provided</p>
@@ -802,6 +802,19 @@
             const signatureData = signaturePad.toDataURL();
             const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+            // Create the request body with the correct field name
+            const requestBody = {
+                signature_type: currentSignatureType,
+                [currentSignatureType + '_signature']: signatureData
+            };
+
+            console.log('Sending signature request:', {
+                url: window.contractSignatureUrl,
+                signatureType: currentSignatureType,
+                dataLength: signatureData.length,
+                requestBody: requestBody
+            });
+
             fetch(window.contractSignatureUrl, {
                 method: 'POST',
                 headers: {
@@ -809,13 +822,14 @@
                     'X-CSRF-TOKEN': token,
                     'Accept': 'application/json'
                 },
-                body: JSON.stringify({
-                    signature_type: currentSignatureType,
-                    signature_data: signatureData
-                })
+                body: JSON.stringify(requestBody)
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('Response data:', data);
                 if (data.success) {
                     Swal.fire({
                         icon: 'success',

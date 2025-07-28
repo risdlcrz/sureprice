@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::table('contracts', function (Blueprint $table) {
             // Add signature date fields if they don't exist
             if (!Schema::hasColumn('contracts', 'contractor_date_signed')) {
-                $table->timestamp('contractor_date_signed')->nullable()->after('contractor_signature');
+                $table->timestamp('contractor_date_signed')->nullable();
             }
             if (!Schema::hasColumn('contracts', 'client_date_signed')) {
-                $table->timestamp('client_date_signed')->nullable()->after('client_signature');
+                $table->timestamp('client_date_signed')->nullable();
             }
         });
     }

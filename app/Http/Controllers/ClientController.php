@@ -111,14 +111,20 @@ class ClientController extends Controller
             return redirect()->route('login.form')->with('error', 'No company associated with this account.');
         }
 
-        // Get only the client's own contracts
-        $contracts = Contract::whereHas('client', function($query) use ($company) {
-            $query->where('company_name', $company->company_name)
-                  ->orWhere('name', $company->contact_person);
-        })
-        ->with(['items'])
-        ->latest()
-        ->get();
+        // Find the client party record for this user
+        $clientParty = \App\Models\Party::where('user_id', $user->id)
+            ->where('entity_type', 'client')
+            ->first();
+
+        if (!$clientParty) {
+            return redirect()->route('login.form')->with('error', 'No client profile found. Please contact the administrator.');
+        }
+
+        // Get only the client's own contracts using the party relationship
+        $contracts = Contract::where('client_id', $clientParty->id)
+            ->with(['items'])
+            ->latest()
+            ->get();
 
         return view('client.dashboard', compact('user', 'company', 'contracts'));
     }
@@ -133,11 +139,17 @@ class ClientController extends Controller
         if (!$company) {
             return redirect()->route('client.dashboard')->with('error', 'No company associated with this account.');
         }
-        $contracts = 
-            \App\Models\Contract::whereHas('client', function($query) use ($company) {
-                $query->where('company_name', $company->company_name)
-                      ->orWhere('name', $company->contact_person);
-            })
+
+        // Find the client party record for this user
+        $clientParty = \App\Models\Party::where('user_id', $user->id)
+            ->where('entity_type', 'client')
+            ->first();
+
+        if (!$clientParty) {
+            return redirect()->route('client.dashboard')->with('error', 'No client profile found. Please contact the administrator.');
+        }
+
+        $contracts = Contract::where('client_id', $clientParty->id)
             ->with(['items'])
             ->latest()
             ->get();

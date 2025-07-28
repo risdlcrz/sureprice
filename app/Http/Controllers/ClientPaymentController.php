@@ -12,19 +12,32 @@ class ClientPaymentController extends Controller
 {
     public function index()
     {
-        $client = Auth::user()->party;
+        $user = Auth::user();
+        $company = $user->company;
         
-        if (!$client) {
+        if (!$company) {
+            return view('client.payments.index', [
+                'pagedContracts' => collect([]),
+                'error' => 'No company associated with this account. Please contact the administrator.'
+            ]);
+        }
+
+        // Find the client party record for this user
+        $clientParty = \App\Models\Party::where('user_id', $user->id)
+            ->where('entity_type', 'client')
+            ->first();
+
+        if (!$clientParty) {
             return view('client.payments.index', [
                 'pagedContracts' => collect([]),
                 'error' => 'No client profile found. Please contact the administrator.'
             ]);
         }
 
-        // Get all payments for this client's contracts
+        // Get all payments for this client's contracts using the party relationship
         $allPayments = Payment::with(['contract', 'attachment'])
-            ->whereHas('contract', function($query) use ($client) {
-                $query->where('client_id', $client->id);
+            ->whereHas('contract', function($query) use ($clientParty) {
+                $query->where('client_id', $clientParty->id);
             })
             ->orderBy('due_date')
             ->get();
@@ -74,17 +87,29 @@ class ClientPaymentController extends Controller
 
     public function dashboard()
     {
-        $client = Auth::user()->party;
+        $user = Auth::user();
+        $company = $user->company;
         
-        if (!$client) {
+        if (!$company) {
+            return view('client.payments.dashboard', [
+                'error' => 'No company associated with this account. Please contact the administrator.'
+            ]);
+        }
+
+        // Find the client party record for this user
+        $clientParty = \App\Models\Party::where('user_id', $user->id)
+            ->where('entity_type', 'client')
+            ->first();
+
+        if (!$clientParty) {
             return view('client.payments.dashboard', [
                 'error' => 'No client profile found. Please contact the administrator.'
             ]);
         }
         
-        // Get client's payments
-        $payments = Payment::whereHas('contract', function ($query) use ($client) {
-            $query->where('client_id', $client->id);
+        // Get client's payments using the party relationship
+        $payments = Payment::whereHas('contract', function ($query) use ($clientParty) {
+            $query->where('client_id', $clientParty->id);
         })
         ->with(['contract'])
         ->latest()
@@ -99,7 +124,7 @@ class ClientPaymentController extends Controller
         $pendingAmount = $payments->where('status', 'pending')->sum('amount');
 
         return view('client.payments.dashboard', compact(
-            'client',
+            'company',
             'payments',
             'totalPayments',
             'pendingPayments',
@@ -112,10 +137,24 @@ class ClientPaymentController extends Controller
 
     public function show(Payment $payment)
     {
-        $client = Auth::user()->party;
+        $user = Auth::user();
+        $company = $user->company;
         
-        // Check if this payment belongs to the client
-        if (!$payment->contract || $payment->contract->client_id !== $client->id) {
+        if (!$company) {
+            abort(403, 'No company associated with this account.');
+        }
+
+        // Find the client party record for this user
+        $clientParty = \App\Models\Party::where('user_id', $user->id)
+            ->where('entity_type', 'client')
+            ->first();
+
+        if (!$clientParty) {
+            abort(403, 'No client profile found.');
+        }
+        
+        // Check if this payment belongs to the client using the party relationship
+        if (!$payment->contract || $payment->contract->client_id !== $clientParty->id) {
             abort(403, 'You are not authorized to view this payment.');
         }
 

@@ -156,6 +156,9 @@ class ContractController extends Controller
                     'email' => $clientData['email'],
                 ]
             );
+            
+            // Ensure client party is linked to the correct user/company
+            $this->ensureClientPartyLink($client, $clientData['email']);
             $property = Property::create([
                 'street' => $propertyData['street'] ?? '',
                 'barangay' => $propertyData['barangay'] ?? '',
@@ -1380,6 +1383,15 @@ class ContractController extends Controller
     public function updateSignatures(Request $request, Contract $contract)
     {
         try {
+            // Log the incoming request for debugging
+            \Log::info('Signature update request received', [
+                'contract_id' => $contract->id,
+                'request_data' => $request->all(),
+                'signature_type' => $request->input('signature_type'),
+                'has_client_signature' => $request->has('client_signature'),
+                'has_contractor_signature' => $request->has('contractor_signature')
+            ]);
+
             $request->validate([
                 'contractor_signature' => 'nullable|string',
                 'client_signature' => 'nullable|string',
@@ -1388,6 +1400,12 @@ class ContractController extends Controller
 
             $signatureType = $request->input('signature_type');
             $signatureData = $request->input($signatureType . '_signature');
+
+            \Log::info('Processing signature', [
+                'signature_type' => $signatureType,
+                'signature_data_length' => $signatureData ? strlen($signatureData) : 0,
+                'signature_data_starts_with' => $signatureData ? substr($signatureData, 0, 50) : 'null'
+            ]);
 
             if ($signatureData && strpos($signatureData, 'data:image') === 0) {
                 list(, $data) = explode(',', $signatureData);
@@ -1417,13 +1435,29 @@ class ContractController extends Controller
                         'can_be_approved' => $contract->fresh()->canBeApproved()
                     ]);
                 } else {
+                    \Log::error('Failed to save signature file', [
+                        'contract_id' => $contract->id,
+                        'signature_type' => $signatureType,
+                        'filename' => $filename
+                    ]);
                     return response()->json(['success' => false, 'message' => 'Failed to save signature file']);
                 }
             }
 
+            \Log::error('Invalid signature format', [
+                'contract_id' => $contract->id,
+                'signature_type' => $signatureType,
+                'signature_data_present' => !empty($signatureData),
+                'signature_data_starts_with' => $signatureData ? substr($signatureData, 0, 50) : 'null'
+            ]);
+
             return response()->json(['success' => false, 'message' => 'Invalid signature format']);
         } catch (\Exception $e) {
-            \Log::error('Error updating signature: ' . $e->getMessage());
+            \Log::error('Error updating signature: ' . $e->getMessage(), [
+                'contract_id' => $contract->id,
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json(['success' => false, 'message' => 'Error updating signature: ' . $e->getMessage()]);
         }
     }
@@ -1561,6 +1595,26 @@ class ContractController extends Controller
                     'read_at' => null,
                 ]);
             }
+        }
+    }
+
+    /**
+     * Ensure client party is linked to the correct user/company
+     */
+    private function ensureClientPartyLink(Party $clientParty, string $clientEmail)
+    {
+        // Try to find a matching company for this client
+        $matchingCompany = \App\Models\Company::where('designation', 'client')
+            ->where(function($query) use ($clientEmail, $clientParty) {
+                $query->where('email', $clientEmail)
+                      ->orWhere('company_name', $clientParty->company_name)
+                      ->orWhere('contact_person', $clientParty->name);
+            })->first();
+
+        if ($matchingCompany && !$clientParty->user_id) {
+            // Link the party to the company's user
+            $clientParty->update(['user_id' => $matchingCompany->user_id]);
+            \Log::info("Linked client party {$clientParty->id} to user {$matchingCompany->user_id} for company {$matchingCompany->company_name}");
         }
     }
 } 

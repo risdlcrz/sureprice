@@ -46,6 +46,7 @@ use App\Http\Controllers\Admin\MaterialController as AdminMaterialController;
 use App\Http\Controllers\MaterialRequestController;
 use App\Http\Controllers\Warehouse\MaterialRequestApprovalController;
 use App\Http\Controllers\ProjectTaskController;
+use App\Http\Controllers\FinanceController;
 // Home route redirect to login
 Route::get('/', function () {
     return view('landing.catalogue');
@@ -256,6 +257,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/payments/{payment}/submit-client-proof', [PaymentController::class, 'submitClientProof'])->name('payments.submitClientProof');
     Route::post('/payments/{payment}/submit-admin-proof', [PaymentController::class, 'submitAdminProof'])->name('payments.submitAdminProof');
     Route::post('/payments/{payment}/verify', [PaymentController::class, 'verifyPayment'])->name('payments.verify');
+    Route::post('/payments/{payment}/reject', [PaymentController::class, 'rejectPayment'])->name('payments.reject');
+    Route::post('/payments/{payment}/request-more-info', [PaymentController::class, 'requestMoreInfo'])->name('payments.request-more-info');
 });
 // Client Routes
 Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefix('client')->name('client.')->group(function () {
@@ -263,7 +266,22 @@ Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefi
     Route::get('/payments', [\App\Http\Controllers\ClientPaymentController::class, 'index'])->name('payments');
     Route::get('/payments/dashboard', [\App\Http\Controllers\ClientPaymentController::class, 'dashboard'])->name('payments.dashboard');
     Route::get('/payments/{payment}', [\App\Http\Controllers\ClientPaymentController::class, 'show'])->name('payments.show');
+    Route::post('/payments/{payment}/submit-proof', [\App\Http\Controllers\PaymentController::class, 'submitClientProof'])->name('payments.submit-client-proof');
     Route::get('/project-procurement', [ClientController::class, 'projectProcurement'])->name('project.procurement');
+    
+    // Notification routes
+    Route::get('/notifications', function() {
+        return view('client.notifications');
+    })->name('notifications');
+    Route::post('/notifications/{notification}/mark-read', function($notificationId) {
+        $notification = auth()->user()->notifications()->findOrFail($notificationId);
+        $notification->markAsRead();
+        return redirect()->back()->with('success', 'Notification marked as read.');
+    })->name('notifications.mark-read');
+    Route::post('/notifications/mark-all-read', function() {
+        auth()->user()->unreadNotifications->markAsRead();
+        return redirect()->back()->with('success', 'All notifications marked as read.');
+    })->name('notifications.mark-all-read');
     
     // Client Quotation Routes
     Route::prefix('quotation')->name('quotation.')->group(function () {

@@ -40,6 +40,14 @@
         <a href="{{ route('client.payments') }}" class="btn">
             <i class="fas fa-money-check-alt"></i>My Payments
         </a>
+        <a href="{{ route('client.notifications') }}" class="btn position-relative">
+            <i class="fas fa-bell position-relative">
+                @if(auth()->user()->unreadNotifications->count() > 0)
+                    <span class="position-absolute badge rounded-pill bg-danger" style="font-size:0.8em; top: -6px; right: -6px;">{{ auth()->user()->unreadNotifications->count() }}</span>
+                @endif
+            </i>
+            Notifications
+        </a>
         <a href="{{ route('messages.index') }}" class="btn position-relative">
             <i class="fas fa-comments position-relative">
                 @if(isset($unreadMessagesCount) && $unreadMessagesCount > 0)

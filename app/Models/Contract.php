@@ -56,6 +56,8 @@ class Contract extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'check_date' => 'date',
+        'client_date_signed' => 'datetime',
+        'contractor_date_signed' => 'datetime',
         'total_amount' => 'decimal:2',
         'base_labor_rate' => 'decimal:2',
         'labor_cost' => 'decimal:2',

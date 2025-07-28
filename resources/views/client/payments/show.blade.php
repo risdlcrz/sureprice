@@ -3,227 +3,256 @@
 @section('content')
 <div class="container">
     <div class="row">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">Payment Details</h4>
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Payment Details</h1>
+                <a href="{{ route('client.payments') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Payments
+                </a>
+            </div>
+
+            @if(session('success'))
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i>
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            <!-- Payment Information Card -->
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold">Payment Information</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6>Payment Information</h6>
-                            <p><strong>Payment Number:</strong> {{ $payment->payment_number }}</p>
-                            <p><strong>Amount:</strong> ₱{{ number_format($payment->amount, 2) }}</p>
-                            <p><strong>Payment Type:</strong> {{ $payment->payment_type }}</p>
-                            <p><strong>Due Date:</strong> {{ $payment->due_date->format('M d, Y') }}</p>
-                            <p><strong>Status:</strong> 
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">Payment Number:</td>
+                                    <td>{{ $payment->payment_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Contract:</td>
+                                    <td>{{ $payment->contract->contract_number ?? 'Contract #' . $payment->contract_id }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Payment Type:</td>
+                                    <td>{{ $payment->payment_type }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Amount:</td>
+                                    <td class="fw-bold text-primary">₱{{ number_format($payment->amount, 2) }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">Due Date:</td>
+                                    <td>{{ $payment->due_date ? $payment->due_date->format('M d, Y') : 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Status:</td>
+                                    <td>
                                 @if($payment->status === 'paid')
                                     <span class="badge bg-success">Paid</span>
                                 @elseif($payment->status === 'for_verification')
                                     <span class="badge bg-info">For Verification</span>
-                                @elseif($payment->status === 'pending')
-                                    @if($payment->due_date->isPast())
+                                        @elseif($payment->isOverdue())
                                         <span class="badge bg-danger">Overdue</span>
                                     @else
                                         <span class="badge bg-warning">Pending</span>
                                     @endif
-                                @else
-                                    <span class="badge bg-secondary">{{ ucfirst($payment->status) }}</span>
-                                @endif
-                            </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Payment Method:</td>
+                                    <td>{{ $payment->payment_method ?? 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Reference Number:</td>
+                                    <td>{{ $payment->reference_number ?? 'N/A' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contract Information Card -->
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0 fw-bold">Contract Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">Contract Title:</td>
+                                    <td>{{ $payment->contract->title ?? 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Contractor:</td>
+                                    <td>{{ $payment->contract->contractor->name ?? 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Total Contract Amount:</td>
+                                    <td class="fw-bold">₱{{ number_format($payment->contract->total_amount ?? 0, 2) }}</td>
+                                </tr>
+                            </table>
                         </div>
                         <div class="col-md-6">
-                            <h6>Contract Information</h6>
-                            <p><strong>Contract:</strong> {{ $payment->contract->title ?? 'Contract #' . $payment->contract->id }}</p>
-                            <p><strong>Contractor:</strong> {{ $payment->contract->contractor->name ?? 'N/A' }}</p>
-                            <p><strong>Payment Method:</strong> {{ ucfirst(str_replace('_', ' ', $payment->contract->payment_method)) }}</p>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">Start Date:</td>
+                                    <td>{{ $payment->contract->start_date ? $payment->contract->start_date->format('M d, Y') : 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">End Date:</td>
+                                    <td>{{ $payment->contract->end_date ? $payment->contract->end_date->format('M d, Y') : 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Contract Status:</td>
+                                    <td>
+                                        <span class="badge bg-{{ $payment->contract->getStatusColorAttribute() }}">
+                                            {{ ucfirst($payment->contract->status ?? 'N/A') }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Payment Submission Section -->
-            @if($payment->status === 'pending')
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Submit Payment Proof</h5>
+            @if($payment->status === 'pending' || $payment->status === 'for_verification')
+                <div class="card mb-4 border-0 shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0 fw-bold">Submit Payment Proof</h5>
                     </div>
                     <div class="card-body">
-                        <form action="{{ route('payments.submit-client-proof', $payment) }}" method="POST" enctype="multipart/form-data">
+                        @if($payment->status === 'for_verification')
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                Your payment proof has been submitted and is currently under verification. You will be notified once the verification is complete.
+                            </div>
+                        @endif
+
+                        <form action="{{ route('client.payments.submit-client-proof', $payment) }}" method="POST" enctype="multipart/form-data">
                             @csrf
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="client_payment_method" class="form-label">Payment Method</label>
-                                        <select name="client_payment_method" id="client_payment_method" class="form-control" required>
+                                        <label for="client_payment_method" class="form-label fw-bold">Payment Method *</label>
+                                        <select class="form-select" id="client_payment_method" name="client_payment_method" required>
                                             <option value="">Select Payment Method</option>
-                                            <option value="bank_transfer">Bank Transfer</option>
-                                            <option value="check">Check</option>
-                                            <option value="cash">Cash</option>
+                                            <option value="bank_transfer" {{ old('client_payment_method') == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
+                                            <option value="gcash" {{ old('client_payment_method') == 'gcash' ? 'selected' : '' }}>GCash</option>
+                                            <option value="paymaya" {{ old('client_payment_method') == 'paymaya' ? 'selected' : '' }}>PayMaya</option>
+                                            <option value="cash" {{ old('client_payment_method') == 'cash' ? 'selected' : '' }}>Cash</option>
+                                            <option value="check" {{ old('client_payment_method') == 'check' ? 'selected' : '' }}>Check</option>
+                                            <option value="other" {{ old('client_payment_method') == 'other' ? 'selected' : '' }}>Other</option>
                                         </select>
+                                        @error('client_payment_method')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
                                     </div>
+
                                     <div class="mb-3">
-                                        <label for="client_reference_number" class="form-label">Reference Number</label>
-                                        <input type="text" name="client_reference_number" id="client_reference_number" class="form-control" required>
+                                        <label for="client_reference_number" class="form-label fw-bold">Reference Number *</label>
+                                        <input type="text" class="form-control" id="client_reference_number" name="client_reference_number" 
+                                               value="{{ old('client_reference_number') }}" required 
+                                               placeholder="Enter transaction/reference number">
+                                        @error('client_reference_number')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
                                     </div>
+
                                     <div class="mb-3">
-                                        <label for="client_paid_amount" class="form-label">Amount Paid</label>
-                                        <input type="number" name="client_paid_amount" id="client_paid_amount" class="form-control" value="{{ $payment->amount }}" step="0.01" required>
+                                        <label for="client_paid_amount" class="form-label fw-bold">Amount Paid *</label>
+                                        <input type="number" class="form-control" id="client_paid_amount" name="client_paid_amount" 
+                                               value="{{ old('client_paid_amount', $payment->amount) }}" required 
+                                               step="0.01" min="0">
+                                        @error('client_paid_amount')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
                                     </div>
+
                                     <div class="mb-3">
-                                        <label for="client_paid_date" class="form-label">Payment Date</label>
-                                        <input type="date" name="client_paid_date" id="client_paid_date" class="form-control" value="{{ now()->toDateString() }}" required>
+                                        <label for="client_paid_date" class="form-label fw-bold">Payment Date *</label>
+                                        <input type="date" class="form-control" id="client_paid_date" name="client_paid_date" 
+                                               value="{{ old('client_paid_date', date('Y-m-d')) }}" required>
+                                        @error('client_paid_date')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
                                     </div>
                                 </div>
+
                                 <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label for="client_payment_proof" class="form-label">Proof of Payment</label>
-                                        <input type="file" name="client_payment_proof" id="client_payment_proof" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
-                                        <small class="form-text text-muted">Upload receipt, screenshot, or proof of payment</small>
+                                        <label for="client_payment_proof" class="form-label fw-bold">Payment Proof *</label>
+                                        <input type="file" class="form-control" id="client_payment_proof" name="client_payment_proof" 
+                                               accept="image/*,.pdf" required>
+                                        <div class="form-text">Upload screenshot, photo, or PDF of your payment receipt/proof (Max: 5MB)</div>
+                                        @error('client_payment_proof')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
                                     </div>
+
                                     <div class="mb-3">
-                                        <label for="client_notes" class="form-label">Notes (Optional)</label>
-                                        <textarea name="client_notes" id="client_notes" class="form-control" rows="3"></textarea>
+                                        <label for="client_notes" class="form-label fw-bold">Additional Notes</label>
+                                        <textarea class="form-control" id="client_notes" name="client_notes" rows="4" 
+                                                  placeholder="Any additional information about your payment...">{{ old('client_notes') }}</textarea>
+                                        @error('client_notes')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-upload"></i> Submit Payment Proof
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary">Submit Payment Proof</button>
                         </form>
                     </div>
                 </div>
             @endif
 
-            <!-- Payment Status Display -->
-            @if($payment->status === 'paid')
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Payment Verified</h5>
+            <!-- Payment History -->
+            @if($payment->attachment)
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0 fw-bold">Payment Proof</h5>
                     </div>
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
-                                <h6>Your Payment</h6>
-                                <p><strong>Method:</strong> {{ ucfirst(str_replace('_', ' ', $payment->client_payment_method)) }}</p>
-                                <p><strong>Reference:</strong> {{ $payment->client_reference_number }}</p>
-                                <p><strong>Amount:</strong> ₱{{ number_format($payment->client_paid_amount, 2) }}</p>
-                                <p><strong>Date:</strong> {{ $payment->client_paid_date ? $payment->client_paid_date->format('M d, Y') : 'N/A' }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <h6>Admin Verification</h6>
-                                <p><strong>Method:</strong> {{ ucfirst(str_replace('_', ' ', $payment->admin_payment_method)) }}</p>
-                                <p><strong>Reference:</strong> {{ $payment->admin_reference_number }}</p>
-                                <p><strong>Amount:</strong> ₱{{ number_format($payment->admin_received_amount, 2) }}</p>
-                                <p><strong>Date:</strong> {{ $payment->admin_received_date ? $payment->admin_received_date->format('M d, Y') : 'N/A' }}</p>
+                                <p><strong>Submitted:</strong> {{ $payment->updated_at->format('M d, Y g:i A') }}</p>
+                                <p><strong>File:</strong> {{ $payment->attachment->original_name }}</p>
+                                <a href="{{ Storage::url($payment->attachment->path) }}" target="_blank" class="btn btn-outline-primary">
+                                    <i class="fas fa-download"></i> View Payment Proof
+                                </a>
                             </div>
                         </div>
-                        @if($payment->client_payment_proof)
-                            <p><strong>Your Proof:</strong> <a href="{{ asset('storage/' . $payment->client_payment_proof) }}" target="_blank" class="btn btn-sm btn-info">View</a></p>
-                        @endif
-                        @if($payment->admin_payment_proof)
-                            <p><strong>Admin Proof:</strong> <a href="{{ asset('storage/' . $payment->admin_payment_proof) }}" target="_blank" class="btn btn-sm btn-info">View</a></p>
-                        @endif
                     </div>
                 </div>
             @endif
-        </div>
-
-        <div class="col-md-4">
-            <!-- Payment Timeline -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Payment Timeline</h5>
-                </div>
-                <div class="card-body">
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-primary"></div>
-                            <div class="timeline-content">
-                                <h6>Payment Created</h6>
-                                <p class="text-muted">{{ $payment->created_at->format('M d, Y H:i') }}</p>
-                            </div>
-                        </div>
-                        @if($payment->client_paid_date)
-                            <div class="timeline-item">
-                                <div class="timeline-marker bg-info"></div>
-                                <div class="timeline-content">
-                                    <h6>Payment Submitted</h6>
-                                    <p class="text-muted">{{ $payment->client_paid_date->format('M d, Y') }}</p>
-                                </div>
-                            </div>
-                        @endif
-                        @if($payment->admin_received_date)
-                            <div class="timeline-item">
-                                <div class="timeline-marker bg-success"></div>
-                                <div class="timeline-content">
-                                    <h6>Payment Verified</h6>
-                                    <p class="text-muted">{{ $payment->admin_received_date->format('M d, Y') }}</p>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h5 class="mb-0">Quick Actions</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('client.payments') }}" class="btn btn-outline-primary">
-                            <i class="fas fa-arrow-left"></i> Back to Payments
-                        </a>
-                        <a href="{{ route('client.payments.dashboard') }}" class="btn btn-outline-info">
-                            <i class="fas fa-chart-bar"></i> Payment Dashboard
-                        </a>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
 
 <style>
-.timeline {
-    position: relative;
-    padding-left: 30px;
-}
-
-.timeline-item {
-    position: relative;
-    margin-bottom: 20px;
-}
-
-.timeline-marker {
-    position: absolute;
-    left: -35px;
-    top: 5px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-}
-
-.timeline-item:not(:last-child)::before {
-    content: '';
-    position: absolute;
-    left: -29px;
-    top: 17px;
-    width: 2px;
-    height: calc(100% + 10px);
-    background-color: #dee2e6;
-}
-
-.timeline-content h6 {
-    margin-bottom: 5px;
-    font-weight: 600;
-}
-
-.timeline-content p {
-    margin-bottom: 0;
-    font-size: 0.875rem;
-}
-
 .card {
     border-radius: 1rem;
     box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
@@ -238,9 +267,29 @@
     padding: 1.5rem 2rem 1rem 2rem;
 }
 
+.table {
+    margin-bottom: 0;
+    font-size: 0.9rem;
+}
+
 .badge {
     font-size: 0.75rem;
     padding: 0.5em 0.75em;
+}
+
+.form-control, .form-select {
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+.btn {
+    border-radius: 0.5rem;
+    font-weight: 500;
 }
 </style>
 @endsection 
