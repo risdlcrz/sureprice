@@ -161,14 +161,13 @@
             <i class="fas fa-folder-open"></i>Information Management
         </a>
         <a href="{{ route('admin.notification') }}" class="btn position-relative d-flex align-items-center">
-                <span class="icon-badge-wrapper position-relative" style="display: inline-block; width: 28px;">
-                    <i class="fas fa-bell"></i>
-                    <span class="notification-badge position-absolute badge rounded-pill bg-danger" style="font-size:0.8em; top: -6px; right: -6px; display: none;">0</span>
-                </span>
-                <span class="ms-2">Notification Center</span>
-            @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
-                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8em;">{{ $globalUnreadCount }}</span>
-            @endif
+            <span class="icon-badge-wrapper position-relative" style="display: inline-block; width: 28px;">
+                <i class="fas fa-bell"></i>
+                @if(isset($globalUnreadCount) && $globalUnreadCount > 0)
+                    <span class="notification-badge position-absolute badge rounded-pill bg-danger" style="font-size:0.8em; top: -6px; right: -6px;">{{ $globalUnreadCount }}</span>
+                @endif
+            </span>
+            <span class="ms-2">Notification Center</span>
         </a>
         <a href="{{ route('admin.analytics') }}" class="btn">
             <i class="fas fa-chart-bar"></i>Analytics
@@ -204,15 +203,19 @@ function updateNotificationBadge() {
     fetch('/api/unread-notifications-count')
         .then(response => response.json())
         .then(data => {
-            document.querySelectorAll('.notification-badge').forEach(badge => {
+            // Update all notification badges
+            document.querySelectorAll('.notification-badge, .badge.bg-danger').forEach(badge => {
                 if (data.count > 0) {
                     badge.textContent = data.count;
                     badge.style.display = '';
+                    badge.style.visibility = 'visible';
                 } else {
-                    badge.textContent = '0';
                     badge.style.display = 'none';
                 }
             });
+        })
+        .catch(error => {
+            console.error('Error updating notification badge:', error);
         });
 }
 function updateMessagesBadge() {
@@ -223,11 +226,14 @@ function updateMessagesBadge() {
                 if (data.count > 0) {
                     badge.textContent = data.count;
                     badge.style.display = '';
+                    badge.style.visibility = 'visible';
                 } else {
-                    badge.textContent = '0';
                     badge.style.display = 'none';
                 }
             });
+        })
+        .catch(error => {
+            console.error('Error updating messages badge:', error);
         });
 }
 setInterval(updateNotificationBadge, 10000); // Poll every 10 seconds

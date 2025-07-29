@@ -41,15 +41,19 @@ function updateNotificationBadge() {
     fetch('/api/unread-notifications-count')
         .then(response => response.json())
         .then(data => {
-            const badge = document.querySelector('.notification-badge');
-            if (badge) {
+            // Update all notification badges
+            document.querySelectorAll('.notification-badge, .badge.bg-danger').forEach(badge => {
                 if (data.count > 0) {
                     badge.textContent = data.count;
                     badge.style.display = '';
+                    badge.style.visibility = 'visible';
                 } else {
                     badge.style.display = 'none';
                 }
-            }
+            });
+        })
+        .catch(error => {
+            console.error('Error updating notification badge:', error);
         });
 }
 setInterval(updateNotificationBadge, 10000); // Poll every 10 seconds

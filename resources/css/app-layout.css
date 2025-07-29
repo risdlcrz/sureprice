@@ -167,4 +167,37 @@ body {
     justify-content: center !important;
     border-radius: 9px !important;
     z-index: 10 !important;
+}
+
+/* Specific notification badge styles for sidebar */
+.nav-buttons .btn .badge.bg-danger {
+    position: absolute !important;
+    top: -6px !important;
+    right: -6px !important;
+    font-size: 0.8em !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 9px !important;
+    z-index: 10 !important;
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+
+.icon-badge-wrapper .badge {
+    position: absolute !important;
+    top: -6px !important;
+    right: -6px !important;
+    font-size: 0.8em !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 9px !important;
+    z-index: 10 !important;
+    background-color: #dc3545 !important;
+    color: white !important;
 } 

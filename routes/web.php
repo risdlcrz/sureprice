@@ -614,10 +614,22 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 Route::get('/test-notifications', function () {
     $service = new \App\Services\NotificationService();
     $count = $service::getUnreadCount();
+    $user = auth()->user();
+    
+    // Also test the API route logic
+    $apiCount = \App\Models\Notification::where(function($query) use ($user) {
+            $query->where('notifiable_id', $user->id)
+                  ->orWhere('user_id', $user->id);
+        })
+        ->whereNull('read_at')
+        ->count();
+    
     return response()->json([
         'unread_count' => $count,
-        'user_id' => auth()->id(),
-        'user_name' => auth()->user()->name ?? 'Unknown'
+        'api_count' => $apiCount,
+        'user_id' => $user->id,
+        'user_name' => $user->name ?? 'Unknown',
+        'global_unread_count' => $globalUnreadCount ?? 'not set'
     ]);
 })->middleware('auth');
 
@@ -644,6 +656,33 @@ Route::get('/test-purchase-request-notification', function () {
     return response()->json(['success' => true, 'message' => 'Test notification created']);
 })->middleware('auth');
 
+Route::get('/test-notification-badge', function () {
+    if (!auth()->user()->hasRole('admin')) {
+        return response()->json(['error' => 'Admin access required'], 403);
+    }
+    
+    // Create a test notification for the current user
+    $notification = \App\Models\Notification::create([
+        'notifiable_id' => auth()->id(),
+        'notifiable_type' => \App\Models\User::class,
+        'type' => 'Test Notification',
+        'data' => [
+            'title' => 'Test Notification Badge',
+            'message' => 'This is a test notification to check if the badge appears.',
+        ],
+    ]);
+    
+    // Get the current count
+    $count = \App\Services\NotificationService::getUnreadCount();
+    
+    return response()->json([
+        'success' => true, 
+        'message' => 'Test notification created',
+        'notification_id' => $notification->id,
+        'current_count' => $count
+    ]);
+})->middleware('auth');
+
 // Clean up invalid notifications (remove in production)
 Route::get('/cleanup-notifications', function () {
     if (!auth()->user()->hasRole('admin')) {
@@ -664,9 +703,31 @@ Route::get('/cleanup-notifications', function () {
 
 Route::get('/api/unread-notifications-count', function () {
     $user = auth()->user();
-    $count = \App\Models\Notification::where('user_id', $user->id)
+    $count = \App\Models\Notification::where(function($query) use ($user) {
+            $query->where('notifiable_id', $user->id)
+                  ->orWhere('user_id', $user->id);
+        })
         ->whereNull('read_at')
         ->count();
+    return response()->json(['count' => $count]);
+})->middleware('auth');
+
+Route::get('/api/unread-messages-count', function () {
+    $user = auth()->user();
+    $count = \App\Models\Message::whereHas('conversation', function($q) use ($user) {
+        if ($user->role === 'manager' || $user->user_type === 'admin') {
+            $q->where('admin_id', $user->id);
+        } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
+            $q->where('client_id', $user->id);
+        } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
+            $q->where('supplier_id', $user->company->id);
+        } else {
+            $q->where('id', 0); // No conversations
+        }
+    })
+    ->where('is_read', false)
+    ->where('sender_id', '!=', $user->id)
+    ->count();
     return response()->json(['count' => $count]);
 })->middleware('auth');
 
