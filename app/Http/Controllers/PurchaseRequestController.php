@@ -194,9 +194,6 @@ class PurchaseRequestController extends Controller
                 'notes' => $validated['notes'] ?? null,
                 'is_project_related' => $validated['is_project_related'] ?? false,
                 'total_amount' => 0,
-                'department' => auth()->user()->hasRole('procurement') ? 'Procurement' : 'Warehouse',
-                'purpose' => $validated['purpose'] ?? 'Material procurement',
-                'required_date' => $validated['required_date'] ?? now()->addDays(7)
             ]);
             \Log::info('PurchaseRequest instance created', ['purchaseRequest' => $purchaseRequest]);
             $totalAmount = 0;

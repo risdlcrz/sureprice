@@ -27,10 +27,7 @@ class PurchaseRequest extends Model
         'supplier_approved',
         'supplier_approved_at',
         'supplier_approved_by',
-        'total_amount',
-        'department',
-        'purpose',
-        'required_date'
+        'total_amount'
     ];
 
     protected $casts = [
@@ -38,7 +35,6 @@ class PurchaseRequest extends Model
         'supplier_approved' => 'boolean',
         'admin_approved_at' => 'datetime',
         'supplier_approved_at' => 'datetime',
-        'required_date' => 'date',
         'total_amount' => 'decimal:2'
     ];
 

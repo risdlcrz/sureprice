@@ -557,12 +557,9 @@ class ContractController extends Controller
                     
                     $purchaseRequest = \App\Models\PurchaseRequest::create([
                         'contract_id' => $contract->id,
-                        'pr_number' => $prNumber,
+                        'request_number' => $prNumber,
                         'status' => 'pending',
-                        'requester_id' => auth()->id(),
-                        'department' => 'Procurement',
-                        'required_date' => $request->start_date,
-                        'purpose' => 'Materials procurement for Contract ' . $contract->id,
+                        'requested_by' => auth()->id(),
                         'notes' => 'Automatically generated from contract ' . $contract->id,
                         'total_amount' => $request->materials_cost
                     ]);

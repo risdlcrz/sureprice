@@ -61,11 +61,8 @@ class MaterialRequestService
                 'contract_id' => $materialRequest->contract_id,
                 'request_number' => 'PR-' . date('YmdHis'),
                 'requested_by' => Auth::id(),
-                'department' => 'Warehouse',
-                'required_date' => now()->addDays(7),
-                'purpose' => 'Stock replenishment for material request #' . $materialRequest->id,
                 'status' => 'pending_admin_approval',
-                'notes' => 'Automatically generated due to insufficient stock'
+                'notes' => 'Automatically generated due to insufficient stock for material request #' . $materialRequest->id
             ]);
 
             foreach ($insufficientMaterials as $item) {

@@ -11,7 +11,7 @@
 
         <div class="card">
             <div class="card-body">
-                <form action="{{ isset($purchaseRequest) ? route('purchase-requests.update', $purchaseRequest) : route('purchase-requests.store') }}" 
+                <form action="{{ isset($materialRequest) ? route('material-requests.update', $materialRequest) : route('material-requests.store') }}" 
                       method="POST" enctype="multipart/form-data">
                     @csrf
                     @if(isset($purchaseRequest))

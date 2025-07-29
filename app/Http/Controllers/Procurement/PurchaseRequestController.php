@@ -114,9 +114,6 @@ class PurchaseRequestController extends Controller
                 'notes' => $validated['notes'] ?? null,
                 'is_project_related' => !empty($validated['contract_id']),
                 'total_amount' => 0,
-                'department' => 'Procurement',
-                'purpose' => $validated['purpose'] ?? 'Material procurement',
-                'required_date' => $validated['required_date'] ?? now()->addDays(7)
             ]);
 
             $totalAmount = 0;

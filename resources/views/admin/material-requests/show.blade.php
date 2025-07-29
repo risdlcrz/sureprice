@@ -74,6 +74,22 @@
         </div>
                     </div>
                     <div class="card-body">
+                    @if(session('success'))
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {{ session('success') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+                    
+                    @if($purchaseRequest)
+                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Purchase Request Created:</strong> A purchase request has been automatically created for items that exceeded available stock.
+                            <a href="{{ route('purchase-requests.show', $purchaseRequest->id) }}" class="alert-link">View Purchase Request #{{ $purchaseRequest->request_number }}</a>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+                    
                     <!-- Request Information -->
                     <div class="row mb-4">
                         <div class="col-md-6">
@@ -162,20 +178,32 @@
                                                     @php
                                                         $supplierName = null;
                                                         $quotationRequest = $materialRequest->quotationRequest;
-                                                        $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'.$quotationRequest->request_number.'%')->with(['materials', 'suppliers'])->get();
-                                                        foreach ($rfqs as $rfq) {
-                                                            $mat = $rfq->materials->firstWhere('id', $item->material_id);
-                                                            if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id) {
-                                                                $supplier = $rfq->suppliers->firstWhere('id', $mat->pivot->selected_supplier_id);
-                                                                if ($supplier) {
-                                                                    $supplierName = $supplier->company_name;
-                                                                    break;
+                                                        $selectedSuppliers = $quotationRequest->selected_suppliers ?? [];
+                                                        $selectedSupplierId = $selectedSuppliers[$item->material_id] ?? null;
+                                                        
+                                                        if ($selectedSupplierId) {
+                                                            $supplier = \App\Models\Supplier::find($selectedSupplierId);
+                                                            $supplierName = $supplier ? $supplier->company_name : null;
+                                                        }
+                                                        
+                                                        // Fallback to material_quotation pivot if not found in selected_suppliers
+                                                        if (!$supplierName) {
+                                                            $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'.$quotationRequest->request_number.'%')->with(['materials', 'suppliers'])->get();
+                                                            foreach ($rfqs as $rfq) {
+                                                                $mat = $rfq->materials->firstWhere('id', $item->material_id);
+                                                                if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id) {
+                                                                    $supplier = $rfq->suppliers->firstWhere('id', $mat->pivot->selected_supplier_id);
+                                                                    if ($supplier) {
+                                                                        $supplierName = $supplier->company_name;
+                                                                        break;
+                                                                    }
                                                                 }
                                                             }
                                                         }
                                                     @endphp
                                                     @if($supplierName)
-                                                        {{ $supplierName }}
+                                                        <span class="text-success font-weight-bold">{{ $supplierName }}</span>
+                                                        <small class="text-muted d-block">(Client's choice)</small>
                                                     @else
                                                         <span class="text-danger">No Supplier</span>
                                                     @endif

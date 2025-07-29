@@ -35,13 +35,21 @@
                         <div class="row mb-4">
                             <div class="col-12">
                                 <h4>Request Items</h4>
+                                @if(isset($selectedSuppliers) && count($selectedSuppliers) > 0)
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Note:</strong> Suppliers have been pre-selected by the client during the quotation process. 
+                                        You can modify these selections if needed, but the client's choices are recommended.
+                                    </div>
+                                @endif
                                 <div class="table-responsive">
                                     <table class="table table-bordered" id="itemsTable">
                                         <thead>
                                             <tr>
                                                 <th>Material</th>
                                                 <th>Unit</th>
-                                                <th>Quantity</th>
+                                                <th>Available Stock</th>
+                                                <th>Requested Quantity</th>
                                                 <th>Supplier</th>
                                                 <th>Actions</th>
                                             </tr>
@@ -56,9 +64,34 @@
                                                         </td>
                                                         <td class="unit">{{ $item['unit'] }}</td>
                                                         <td>
+                                                            <span class="badge bg-{{ $item['available'] > 0 ? 'success' : 'danger' }}">
+                                                                {{ number_format($item['available'], 2) }}
+                                                            </span>
+                                                        </td>
+                                                        <td>
                                                             <input type="number" name="items[{{ $index }}][quantity]" class="form-control quantity" step="0.01" value="{{ $item['quantity'] }}" required>
                                                         </td>
-                                                        <td>{{ $item['available'] ?? 0 }}</td>
+                                                        <td>
+                                                            @if(isset($item['selected_supplier_id']) && $item['selected_supplier_id'])
+                                                                @php
+                                                                    $selectedSupplier = \App\Models\Supplier::find($item['selected_supplier_id']);
+                                                                @endphp
+                                                                <input type="hidden" name="items[{{ $index }}][preferred_supplier_id]" value="{{ $item['selected_supplier_id'] }}">
+                                                                <span class="text-success font-weight-bold">{{ $selectedSupplier ? $selectedSupplier->company_name : 'Client Selected Supplier' }}</span>
+                                                                <small class="text-muted d-block">(Client's choice)</small>
+                                                            @else
+                                                                <select name="items[{{ $index }}][preferred_supplier_id]" class="form-control supplier-select">
+                                                                    <option value="">Select Supplier</option>
+                                                                    @php
+                                                                        $material = \App\Models\Material::find($item['material_id']);
+                                                                        $suppliers = $material ? $material->suppliers : collect();
+                                                                    @endphp
+                                                                    @foreach($suppliers as $supplier)
+                                                                        <option value="{{ $supplier->id }}">{{ $supplier->company_name }}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                            @endif
+                                                        </td>
                                                         <td>
                                                             <button type="button" class="btn btn-danger btn-sm remove-row" title="Remove">
                                                                 <i class="fas fa-trash"></i>
@@ -185,10 +218,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         </select>
                     </td>
                     <td>
+                        <span class="badge bg-secondary stock-display">0.00</span>
+                    </td>
+                    <td>
                         <input type="number" name="items[${itemIndex}][quantity]" class="form-control quantity" step="0.01" required>
                     </td>
                     <td>
-                        <input type="text" name="items[${itemIndex}][supplier]" class="form-control supplier-input" placeholder="Select or enter supplier">
+                        <select name="items[${itemIndex}][preferred_supplier_id]" class="form-control supplier-select">
+                            <option value="">Select Supplier</option>
+                        </select>
                     </td>
                     <td>
                         <button type="button" class="btn btn-info btn-sm recommend-supplier-btn" data-material-id="" data-material-name="">\
@@ -248,14 +286,65 @@ document.addEventListener('DOMContentLoaded', function() {
         const btn = e.target.closest('.select-supplier-btn');
         if (btn && currentSupplierRow) {
             const supplierName = btn.getAttribute('data-supplier-name');
-            const supplierInput = currentSupplierRow.querySelector('.supplier-input');
-            if (supplierInput) {
-                supplierInput.value = supplierName;
+            const supplierId = btn.getAttribute('data-supplier-id');
+            const supplierSelect = currentSupplierRow.querySelector('.supplier-select');
+            if (supplierSelect) {
+                supplierSelect.value = supplierId;
             }
             // Close modal
             const modalEl = document.getElementById('supplierRecommendationModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
             if (modal) modal.hide();
+        }
+    });
+
+    // Handle material selection to populate supplier dropdown and update stock
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('.material-select')) {
+            const row = e.target.closest('.item-row');
+            const materialId = e.target.value;
+            const supplierSelect = row.querySelector('.supplier-select');
+            const stockDisplay = row.querySelector('.stock-display');
+            
+            if (materialId) {
+                // Update stock display
+                if (stockDisplay) {
+                    // Fetch stock information for this material
+                    fetch(`/admin/materials/${materialId}/stock`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const totalStock = data.total_stock || 0;
+                            stockDisplay.textContent = totalStock.toFixed(2);
+                            stockDisplay.className = `badge bg-${totalStock > 0 ? 'success' : 'danger'} stock-display`;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching stock:', error);
+                            stockDisplay.textContent = '0.00';
+                            stockDisplay.className = 'badge bg-secondary stock-display';
+                        });
+                }
+                
+                // Update supplier dropdown
+                if (supplierSelect) {
+                    // Clear existing options
+                    supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
+                    
+                    // Fetch suppliers for this material
+                    fetch(`/admin/materials/${materialId}/suppliers`)
+                        .then(response => response.json())
+                        .then(data => {
+                            data.suppliers.forEach(supplier => {
+                                const option = document.createElement('option');
+                                option.value = supplier.id;
+                                option.textContent = supplier.company_name;
+                                supplierSelect.appendChild(option);
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error fetching suppliers:', error);
+                        });
+                }
+            }
         }
     });
 });

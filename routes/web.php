@@ -462,6 +462,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 });
 
 Route::resource('material-requests', \App\Http\Controllers\MaterialRequestController::class);
+Route::get('/admin/materials/{material}/suppliers', [\App\Http\Controllers\MaterialRequestController::class, 'getMaterialSuppliers'])->name('materials.suppliers');
+Route::get('/admin/materials/{material}/stock', [\App\Http\Controllers\MaterialRequestController::class, 'getMaterialStock'])->name('materials.stock');
 Route::resource('purchase-orders', \App\Http\Controllers\PurchaseOrderController::class);
 
 Route::post('purchase-requests/{purchaseRequest}/reject', [PurchaseRequestController::class, 'reject'])->name('purchase-requests.reject');
