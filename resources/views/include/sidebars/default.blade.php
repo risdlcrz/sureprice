@@ -40,6 +40,9 @@
         <a href="{{ route('client.payments') }}" class="btn">
             <i class="fas fa-money-check-alt"></i>My Payments
         </a>
+        <a href="{{ route('client.feedback.index') }}" class="btn">
+            <i class="fas fa-star"></i>My Feedback
+        </a>
         <a href="{{ route('client.notifications') }}" class="btn position-relative">
             <i class="fas fa-bell position-relative">
                 @if(auth()->user()->unreadNotifications->count() > 0)
@@ -125,6 +128,9 @@
             <a href="{{ route('history.dashboard') }}" class="btn">
                 <i class="fas fa-history"></i>Project History
             </a>
+            <a href="{{ route('admin.feedback.analytics') }}" class="btn">
+                <i class="fas fa-chart-line"></i>Feedback Analytics
+            </a>
             <a href="{{ route('messages.index') }}" class="btn position-relative d-flex align-items-center">
                 <span class="icon-badge-wrapper position-relative" style="display: inline-block; width: 28px;">
                     <i class="fas fa-comments"></i>
@@ -166,6 +172,9 @@
         </a>
         <a href="{{ route('admin.analytics') }}" class="btn">
             <i class="fas fa-chart-bar"></i>Analytics
+        </a>
+        <a href="{{ route('admin.feedback.index') }}" class="btn">
+            <i class="fas fa-star"></i>Client Feedback
         </a>
         <a href="{{ route('history.dashboard') }}" class="btn">
             <i class="fas fa-history"></i>Project History

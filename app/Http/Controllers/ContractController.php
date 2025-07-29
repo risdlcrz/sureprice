@@ -1614,4 +1614,37 @@ class ContractController extends Controller
             \Log::info("Linked client party {$clientParty->id} to user {$matchingCompany->user_id} for company {$matchingCompany->company_name}");
         }
     }
+
+    public function generatePayments(Contract $contract)
+    {
+        try {
+            if ($contract->status !== 'approved') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only approved contracts can have payments generated.'
+                ], 400);
+            }
+
+            if ($contract->payments()->count() > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payments already exist for this contract.'
+                ], 400);
+            }
+
+            $contract->generatePayments();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Payments generated successfully!',
+                'payments_count' => $contract->payments()->count()
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error generating payments for contract: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error generating payments: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 } 

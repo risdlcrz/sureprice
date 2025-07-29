@@ -624,6 +624,46 @@ input:hover, select:hover, textarea:hover, button:hover {
                                     </tbody>
                                 </table>
                             </div>
+                            
+                            <!-- Feedback Section for Completed Contracts -->
+                            @if($allPaid)
+                                <div class="mt-3 p-3 bg-light rounded">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <h6 class="mb-1 text-success">
+                                                <i class="fas fa-check-circle me-2"></i>
+                                                Contract Completed Successfully!
+                                            </h6>
+                                            <p class="mb-0 text-muted small">
+                                                Thank you for choosing GDC! We'd love to hear about your experience.
+                                            </p>
+                                        </div>
+                                        <div class="col-md-4 text-end">
+                                            @php
+                                                $existingFeedback = \App\Models\ClientFeedback::where('contract_id', $contract->id)
+                                                    ->where('user_id', auth()->id())
+                                                    ->first();
+                                            @endphp
+                                            
+                                            @if($existingFeedback)
+                                                @if($existingFeedback->submitted_at)
+                                                    <a href="{{ route('client.feedback.show', $existingFeedback) }}" class="btn btn-success btn-sm">
+                                                        <i class="fas fa-eye me-1"></i>View Feedback
+                                                    </a>
+                                                @else
+                                                    <a href="{{ route('client.feedback.edit', $existingFeedback) }}" class="btn btn-warning btn-sm">
+                                                        <i class="fas fa-edit me-1"></i>Continue Feedback
+                                                    </a>
+                                                @endif
+                                            @else
+                                                <a href="{{ route('client.feedback.create', $contract) }}" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-star me-1"></i>Provide Feedback
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 @endforeach

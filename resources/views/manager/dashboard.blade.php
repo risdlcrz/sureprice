@@ -151,6 +151,15 @@
                     </div>
                 </div>
             </div>
+            <!-- Client Feedback Analytics Card -->
+            <div class="col">
+                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('admin.feedback.analytics') }}';" style="cursor:pointer;">
+                    <img src="{{ asset('images/aimage6.jpg') }}" class="card-img-top flex-grow-1" alt="Client Feedback Analytics" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Client Feedback Analytics</h5>
+                    </div>
+                </div>
+            </div>
         </div>
     </section>
 </div>

@@ -98,12 +98,47 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/{contract}/pdf', [ContractController::class, 'download'])->name('pdf');
         Route::patch('/{contract}/status', [ContractController::class, 'updateStatus'])->name('updateStatus');
         Route::post('/{contract}/status', [ContractController::class, 'updateStatus']);
+        Route::post('/{contract}/generate-payments', [ContractController::class, 'generatePayments'])->name('generatePayments');
         Route::post('/{contract}/signatures', [ContractController::class, 'updateSignatures'])->name('updateSignatures');
         Route::post('/save-signature', [ContractController::class, 'saveSignature'])->name('contracts.save.signature');
         Route::post('/{contract}/request-approval', [ContractController::class, 'requestApproval'])->name('requestApproval');
     
     // Debug route for signature testing (admin only)
     Route::get('/{contract}/signature-status', [ContractController::class, 'getSignatureStatus'])->name('signatureStatus')->middleware('admin');
+    
+    // Debug route for client party testing
+    Route::get('/debug/client-party', function() {
+        $user = auth()->user();
+        $parties = \App\Models\Party::where('entity_type', 'client')->get();
+        $contracts = \App\Models\Contract::with('client')->get();
+        
+        return response()->json([
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+                'company' => $user->company ? $user->company->company_name : null
+            ],
+            'parties' => $parties->map(function($party) {
+                return [
+                    'id' => $party->id,
+                    'name' => $party->name,
+                    'email' => $party->email,
+                    'company_name' => $party->company_name,
+                    'user_id' => $party->user_id,
+                    'entity_type' => $party->entity_type
+                ];
+            }),
+            'contracts' => $contracts->map(function($contract) {
+                return [
+                    'id' => $contract->id,
+                    'contract_number' => $contract->contract_number,
+                    'client_id' => $contract->client_id,
+                    'client_name' => $contract->client ? $contract->client->name : null,
+                    'client_email' => $contract->client ? $contract->client->email : null
+                ];
+            })
+        ]);
+    });
     });
     // Supporting routes for contract form
     Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
@@ -267,6 +302,15 @@ Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefi
     Route::get('/payments/dashboard', [\App\Http\Controllers\ClientPaymentController::class, 'dashboard'])->name('payments.dashboard');
     Route::get('/payments/{payment}', [\App\Http\Controllers\ClientPaymentController::class, 'show'])->name('payments.show');
     Route::post('/payments/{payment}/submit-proof', [\App\Http\Controllers\PaymentController::class, 'submitClientProof'])->name('payments.submit-client-proof');
+    
+    // Client Feedback Routes
+    Route::get('/feedback', [\App\Http\Controllers\ClientFeedbackController::class, 'index'])->name('feedback.index');
+    Route::get('/feedback/{contract}/create', [\App\Http\Controllers\ClientFeedbackController::class, 'create'])->name('feedback.create');
+    Route::post('/feedback/{contract}/store', [\App\Http\Controllers\ClientFeedbackController::class, 'store'])->name('feedback.store');
+    Route::get('/feedback/{feedback}/edit', [\App\Http\Controllers\ClientFeedbackController::class, 'edit'])->name('feedback.edit');
+    Route::put('/feedback/{feedback}/update', [\App\Http\Controllers\ClientFeedbackController::class, 'update'])->name('feedback.update');
+    Route::get('/feedback/{feedback}/show', [\App\Http\Controllers\ClientFeedbackController::class, 'show'])->name('feedback.show');
+    Route::post('/feedback/{feedback}/submit', [\App\Http\Controllers\ClientFeedbackController::class, 'submit'])->name('feedback.submit');
     Route::get('/project-procurement', [ClientController::class, 'projectProcurement'])->name('project.procurement');
     
     // Notification routes
@@ -362,6 +406,12 @@ Route::middleware(['auth', 'role:admin,manager'])->group(function () {
     Route::post('/admin/quotation-requests/{id}/send-rfq', [App\Http\Controllers\AdminController::class, 'sendRfqToSuppliers'])->name('admin.quotation.send-rfq');
     Route::post('/admin/quotation-requests/{id}/finalize', [App\Http\Controllers\AdminController::class, 'finalizeQuotationSelection'])->name('admin.quotation.finalize');
     Route::get('/admin/quotation-requests/{id}/recommend-suppliers', [App\Http\Controllers\AdminController::class, 'recommendSuppliers'])->name('admin.quotation.recommend-suppliers');
+    
+    // Admin Feedback Routes
+    Route::get('/admin/feedback', [App\Http\Controllers\Admin\FeedbackController::class, 'index'])->name('admin.feedback.index');
+    Route::get('/admin/feedback/analytics', [App\Http\Controllers\Admin\FeedbackController::class, 'analytics'])->name('admin.feedback.analytics');
+    Route::get('/admin/feedback/{feedback}', [App\Http\Controllers\Admin\FeedbackController::class, 'show'])->name('admin.feedback.show');
+    Route::get('/admin/feedback/export', [App\Http\Controllers\Admin\FeedbackController::class, 'export'])->name('admin.feedback.export');
     Route::get('/admin/quotation-requests/{id}/json', [App\Http\Controllers\AdminController::class, 'quotationRequestJson'])->name('admin.quotation-request.json');
 });
 // Admin approval/oversight routes

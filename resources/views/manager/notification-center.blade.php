@@ -37,7 +37,41 @@
                                 </div>
                                 <div class="mb-1 small text-muted">{{ $notification->created_at->diffForHumans() }}</div>
                                 <div class="mb-2">{{ $notification->data['message'] ?? '' }}</div>
-                                @if(isset($notification->data['link']))
+                                
+                                @if($notification->type === 'App\Notifications\ClientFeedbackSubmittedNotification')
+                                    <div class="mb-2">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-1 small">
+                                                    <span class="fw-bold text-primary">Client:</span> {{ $notification->data['client_name'] ?? 'N/A' }}
+                                                    @if($notification->data['is_anonymous'] ?? false)
+                                                        <span class="badge bg-info ms-1">Anonymous</span>
+                                                    @endif
+                                                </div>
+                                                <div class="mb-1 small">
+                                                    <span class="fw-bold text-primary">Contract:</span> {{ $notification->data['contract_number'] ?? 'N/A' }}
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-1 small">
+                                                    <span class="fw-bold text-warning">Rating:</span> 
+                                                    @for($i = 1; $i <= 5; $i++)
+                                                        <i class="fas fa-star{{ $i <= ($notification->data['overall_rating'] ?? 0) ? '' : '-o' }}" style="color: #ffc107; font-size: 0.8em;"></i>
+                                                    @endfor
+                                                    <span class="badge bg-primary ms-1">{{ $notification->data['overall_rating'] ?? 0 }}/5</span>
+                                                </div>
+                                                @if(($notification->data['priority'] ?? 'low') === 'high')
+                                                    <div class="mb-1">
+                                                        <span class="badge bg-danger">High Priority</span>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="{{ $notification->data['action_url'] ?? route('admin.feedback.index') }}" class="badge bg-warning text-dark">
+                                        <i class="fas fa-star me-1"></i>View Feedback
+                                    </a>
+                                @elseif(isset($notification->data['link']))
                                     <a href="{{ $notification->data['link'] }}" class="badge bg-primary text-white">View Details</a>
                                 @endif
                             </div>

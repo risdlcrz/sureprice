@@ -37,6 +37,13 @@
                                         $purchaseRequestId = $data['purchase_request_id'] ?? null;
                                         $requestNumber = $data['request_number'] ?? null;
                                         
+                                        // Handle feedback notifications
+                                        if ($notification->type === 'App\Notifications\ClientFeedbackSubmittedNotification') {
+                                            $link = $data['action_url'] ?? route('admin.feedback.index');
+                                            $title = $data['title'] ?? 'New Client Feedback';
+                                            $message = $data['message'] ?? 'Client feedback submitted';
+                                        }
+                                        
                                         if ($notification->type === 'ClientProceededQuotation' && $quotationId) {
                                             $link = route('material-requests.create') . '?quotation_id=' . $quotationId;
                                             $title = 'Material Request Needed';
@@ -82,12 +89,56 @@
                                     @if(isset($data['supplier_name']))
                                         <div class="mb-1"><span class="fw-bold text-primary">Supplier:</span> {{ $data['supplier_name'] }}</div>
                                     @endif
+                                    
+                                    @if($notification->type === 'App\Notifications\ClientFeedbackSubmittedNotification')
+                                        <div class="mb-2">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-1">
+                                                        <span class="fw-bold text-primary">Client:</span> {{ $data['client_name'] ?? 'N/A' }}
+                                                        @if($data['is_anonymous'] ?? false)
+                                                            <span class="badge bg-info ms-1">Anonymous</span>
+                                                        @endif
+                                                    </div>
+                                                    <div class="mb-1">
+                                                        <span class="fw-bold text-primary">Contract:</span> {{ $data['contract_number'] ?? 'N/A' }}
+                                                    </div>
+                                                    <div class="mb-1">
+                                                        <span class="fw-bold text-primary">Contractor:</span> {{ $data['contractor_name'] ?? 'N/A' }}
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-1">
+                                                        <span class="fw-bold text-warning">Rating:</span> 
+                                                        @for($i = 1; $i <= 5; $i++)
+                                                            <i class="fas fa-star{{ $i <= ($data['overall_rating'] ?? 0) ? '' : '-o' }}" style="color: #ffc107;"></i>
+                                                        @endfor
+                                                        <span class="badge bg-primary ms-1">{{ $data['overall_rating'] ?? 0 }}/5</span>
+                                                    </div>
+                                                    <div class="mb-1">
+                                                        <span class="fw-bold text-success">Recommendation:</span> 
+                                                        <span class="badge bg-success">{{ $data['recommendation_likelihood'] ?? 0 }}/10</span>
+                                                    </div>
+                                                    @if(($data['priority'] ?? 'low') === 'high')
+                                                        <div class="mb-1">
+                                                            <span class="badge bg-danger">High Priority</span>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                    
                                     <p class="mb-1" style="font-size:1.08em; color:#495057;">
                                         {{ $message }}
                                     </p>
                                     @if($link)
                                         @if($notification->type === 'ClientProceededQuotation')
                                             <span class="btn btn-primary btn-sm">Create Material Request</span>
+                                        @elseif($notification->type === 'App\Notifications\ClientFeedbackSubmittedNotification')
+                                            <span class="btn btn-warning btn-sm">
+                                                <i class="fas fa-star me-1"></i>View Feedback
+                                            </span>
                                         @elseif(in_array($notification->type, [
                                             'Purchase Request Approval Needed',
                                             'Purchase Request Approved',

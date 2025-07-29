@@ -73,6 +73,19 @@
                 </div>
             </a>
         </div>
+
+        <!-- Client Feedback Analytics Card -->
+        <div class="col-md-6 col-lg-3 mb-4">
+            <a href="{{ route('admin.feedback.analytics') }}" class="text-decoration-none">
+                <div class="card h-100">
+                    <img src="{{ asset('images/aimage6.jpg') }}" class="card-img-top" alt="Client Feedback" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <div class="card-body">
+                        <h5 class="card-title">Client Feedback Analytics</h5>
+                        <p class="card-text">Analyze client satisfaction and identify improvement areas.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
     </div>
 
     <!-- Additional Analytics Content -->

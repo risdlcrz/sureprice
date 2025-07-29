@@ -277,10 +277,22 @@ class Contract extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function feedback()
+    {
+        return $this->hasMany(ClientFeedback::class);
+    }
+
     public function generatePayments()
     {
         \Log::info('Generating payments for contract: ' . $this->id);
         \Log::info('Payment schedule: ' . $this->payment_schedule);
+        
+        // If no payment schedule exists, generate one first
+        if (!$this->payment_schedule) {
+            \Log::info('No payment schedule found, generating one first');
+            $this->generatePaymentSchedule();
+            $this->save();
+        }
         
         $paymentSchedule = json_decode($this->payment_schedule, true);
         if (!$paymentSchedule) {

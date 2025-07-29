@@ -6,6 +6,7 @@ use App\Models\Payment;
 use App\Models\Contract;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class ClientPaymentController extends Controller
@@ -27,12 +28,59 @@ class ClientPaymentController extends Controller
             ->where('entity_type', 'client')
             ->first();
 
+        // If no client party found, try to find by email with user_id set (prioritize linked parties)
+        if (!$clientParty) {
+            $clientParty = \App\Models\Party::where('email', $user->email)
+                ->where('user_id', $user->id)
+                ->first();
+        }
+
+        // If still no client party found, try to find by email with entity_type client
+        if (!$clientParty) {
+            $clientParty = \App\Models\Party::where('email', $user->email)
+                ->where('entity_type', 'client')
+                ->first();
+        }
+
+        // If still no client party found, try to find by company
+        if (!$clientParty && $company) {
+            $clientParty = \App\Models\Party::where('company_name', $company->company_name)
+                ->where('entity_type', 'client')
+                ->first();
+        }
+
+        // If still no client party found, try to find any party with the same email
+        if (!$clientParty) {
+            $clientParty = \App\Models\Party::where('email', $user->email)->first();
+        }
+
         if (!$clientParty) {
             return view('client.payments.index', [
                 'pagedContracts' => collect([]),
                 'error' => 'No client profile found. Please contact the administrator.'
             ]);
         }
+
+        // Get all contracts for this client
+        $contracts = Contract::where('client_id', $clientParty->id)
+            ->where('status', 'approved')
+            ->with(['payments', 'client', 'contractor'])
+            ->get();
+
+        // Check and generate payments for contracts that have payment schedules but no payment records
+        foreach ($contracts as $contract) {
+            if ($contract->payment_schedule && $contract->payments()->count() === 0) {
+                try {
+                    $contract->generatePayments();
+                    Log::info("Generated payments for contract: " . $contract->id);
+                } catch (\Exception $e) {
+                    Log::error("Error generating payments for contract: " . $contract->id . " - " . $e->getMessage());
+                }
+            }
+        }
+
+        // Refresh contracts to get the newly generated payments
+        $contracts->load(['payments', 'client', 'contractor']);
 
         // Get all payments for this client's contracts using the party relationship
         $allPayments = Payment::with(['contract', 'attachment'])
@@ -101,11 +149,58 @@ class ClientPaymentController extends Controller
             ->where('entity_type', 'client')
             ->first();
 
+        // If no client party found, try to find by email with user_id set (prioritize linked parties)
+        if (!$clientParty) {
+            $clientParty = \App\Models\Party::where('email', $user->email)
+                ->where('user_id', $user->id)
+                ->first();
+        }
+
+        // If still no client party found, try to find by email with entity_type client
+        if (!$clientParty) {
+            $clientParty = \App\Models\Party::where('email', $user->email)
+                ->where('entity_type', 'client')
+                ->first();
+        }
+
+        // If still no client party found, try to find by company
+        if (!$clientParty && $company) {
+            $clientParty = \App\Models\Party::where('company_name', $company->company_name)
+                ->where('entity_type', 'client')
+                ->first();
+        }
+
+        // If still no client party found, try to find any party with the same email
+        if (!$clientParty) {
+            $clientParty = \App\Models\Party::where('email', $user->email)->first();
+        }
+
         if (!$clientParty) {
             return view('client.payments.dashboard', [
                 'error' => 'No client profile found. Please contact the administrator.'
             ]);
         }
+
+        // Get all contracts for this client and ensure payments are generated
+        $contracts = Contract::where('client_id', $clientParty->id)
+            ->where('status', 'approved')
+            ->with(['payments', 'client', 'contractor'])
+            ->get();
+
+        // Check and generate payments for contracts that have payment schedules but no payment records
+        foreach ($contracts as $contract) {
+            if ($contract->payment_schedule && $contract->payments()->count() === 0) {
+                try {
+                    $contract->generatePayments();
+                    Log::info("Generated payments for contract: " . $contract->id);
+                } catch (\Exception $e) {
+                    Log::error("Error generating payments for contract: " . $contract->id . " - " . $e->getMessage());
+                }
+            }
+        }
+
+        // Refresh contracts to get the newly generated payments
+        $contracts->load(['payments', 'client', 'contractor']);
         
         // Get client's payments using the party relationship
         $payments = Payment::whereHas('contract', function ($query) use ($clientParty) {
@@ -148,6 +243,18 @@ class ClientPaymentController extends Controller
         $clientParty = \App\Models\Party::where('user_id', $user->id)
             ->where('entity_type', 'client')
             ->first();
+
+        // If no client party found, try to find by email
+        if (!$clientParty) {
+            $clientParty = \App\Models\Party::where('email', $user->email)
+                ->where('entity_type', 'client')
+                ->first();
+        }
+
+        // If still no client party found, try to find any party with the same email
+        if (!$clientParty) {
+            $clientParty = \App\Models\Party::where('email', $user->email)->first();
+        }
 
         if (!$clientParty) {
             abort(403, 'No client profile found.');

@@ -99,6 +99,12 @@
                         <i class="fas fa-boxes"></i> Create Material Request
                     </button>
                 @endif
+                
+                @if($contract->status === 'approved' && $contract->payments()->count() == 0)
+                    <button type="button" class="btn btn-warning" onclick="generatePayments()" id="generatePaymentsBtn">
+                        <i class="fas fa-money-bill"></i> Generate Payments
+                    </button>
+                @endif
             @endif
             <a href="{{ route('contracts.download', $contract->id) }}" class="btn btn-success">
                 <i class="bi bi-download"></i> Download PDF
@@ -863,6 +869,60 @@
 
         function submitDelete() {
             document.getElementById('deleteForm').submit();
+        }
+
+        // Generate payments function
+        function generatePayments() {
+            const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const contractId = {{ $contract->id }};
+            
+            Swal.fire({
+                title: 'Generating Payments',
+                text: 'Please wait...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            fetch(`/contracts/${contractId}/generate-payments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message,
+                        showConfirmButton: false,
+                        timer: 2000
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to generate payments.',
+                        confirmButtonText: 'OK'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while generating payments.',
+                    confirmButtonText: 'OK'
+                });
+            });
         }
     </script>
 @endpush 
