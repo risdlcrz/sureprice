@@ -6,6 +6,7 @@ use App\Models\Party;
 use App\Models\Contract;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 
 class ClientController extends Controller
 {
@@ -104,10 +105,24 @@ class ClientController extends Controller
      */
     public function dashboard()
     {
+        Log::info('Client dashboard accessed', [
+            'user_id' => auth()->id(),
+            'authenticated' => auth()->check()
+        ]);
+        
         $user = auth()->user();
         $company = $user->company;
         
+        Log::info('Client dashboard - user and company info', [
+            'user_id' => $user->id,
+            'user_type' => $user->user_type,
+            'company_exists' => $company ? true : false,
+            'company_designation' => $company ? $company->designation : null,
+            'company_status' => $company ? $company->status : null
+        ]);
+        
         if (!$company) {
+            Log::info('No company associated with user, redirecting to login');
             return redirect()->route('login.form')->with('error', 'No company associated with this account.');
         }
 
@@ -116,7 +131,14 @@ class ClientController extends Controller
             ->where('entity_type', 'client')
             ->first();
 
+        Log::info('Client party lookup', [
+            'user_id' => $user->id,
+            'client_party_exists' => $clientParty ? true : false,
+            'client_party_id' => $clientParty ? $clientParty->id : null
+        ]);
+
         if (!$clientParty) {
+            Log::info('No client profile found, redirecting to login');
             return redirect()->route('login.form')->with('error', 'No client profile found. Please contact the administrator.');
         }
 
@@ -125,6 +147,10 @@ class ClientController extends Controller
             ->with(['items'])
             ->latest()
             ->get();
+
+        Log::info('Client dashboard rendering', [
+            'contracts_count' => $contracts->count()
+        ]);
 
         return view('client.dashboard', compact('user', 'company', 'contracts'));
     }
