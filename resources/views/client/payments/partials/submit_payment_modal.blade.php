@@ -6,8 +6,7 @@
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title" id="submitPaymentModalLabel{{ $payment->id }}">
-                        <i class="fas fa-credit-card text-success"></i> 
-                        Submit Payment Proof - {{ $payment->payment_type }}
+                        Submit Payment Proof - {{ ucfirst($payment->payment_type) }}
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -23,7 +22,7 @@
                         </div>
                         <div class="col-md-6">
                             <h6 class="fw-bold text-primary">Contract Information</h6>
-                            <p><strong>Contractor:</strong> {{ $payment->contract->contractor->name ?? 'N/A' }}</p>
+                            <p><strong>Contractor:</strong> {{ $payment->contract->contractor->name ?? 'N/A' }} - {{ $payment->contract->contractor->company_name ?? 'N/A' }}</p>
                             <p><strong>Client:</strong> {{ $payment->contract->client->name ?? 'N/A' }}</p>
                             <p><strong>Payment Type:</strong> {{ ucfirst($payment->payment_type) }}</p>
                         </div>
@@ -32,7 +31,7 @@
                     <!-- Payment Method Selection -->
                     <div class="mb-3">
                         <label for="client_payment_method_{{ $payment->id }}" class="form-label fw-bold">
-                            <i class="fas fa-credit-card text-primary"></i> Payment Method
+                            Payment Method
                         </label>
                         <select name="client_payment_method" id="client_payment_method_{{ $payment->id }}" class="form-select" required>
                             <option value="">Select Payment Method</option>
@@ -51,7 +50,7 @@
                     <!-- Reference Number -->
                     <div class="mb-3">
                         <label for="client_reference_number_{{ $payment->id }}" class="form-label fw-bold">
-                            <i class="fas fa-hashtag text-primary"></i> Reference Number
+                            # Reference Number
                         </label>
                         <input type="text" name="client_reference_number" id="client_reference_number_{{ $payment->id }}" 
                                class="form-control" placeholder="Enter transaction/reference number" required>
@@ -61,7 +60,7 @@
                     <!-- Amount Paid -->
                     <div class="mb-3">
                         <label for="client_paid_amount_{{ $payment->id }}" class="form-label fw-bold">
-                            <i class="fas fa-money-bill-wave text-primary"></i> Amount Paid
+                            Amount Paid
                         </label>
                         <div class="input-group">
                             <span class="input-group-text">₱</span>
@@ -74,7 +73,7 @@
                     <!-- Payment Date -->
                     <div class="mb-3">
                         <label for="client_paid_date_{{ $payment->id }}" class="form-label fw-bold">
-                            <i class="fas fa-calendar text-primary"></i> Payment Date
+                            Payment Date
                         </label>
                         <input type="date" name="client_paid_date" id="client_paid_date_{{ $payment->id }}" 
                                class="form-control" value="{{ date('Y-m-d') }}" required>
@@ -84,7 +83,7 @@
                     <!-- Payment Proof Upload -->
                     <div class="mb-3">
                         <label for="client_payment_proof_{{ $payment->id }}" class="form-label fw-bold">
-                            <i class="fas fa-upload text-primary"></i> Upload Payment Proof
+                            Upload Payment Proof
                         </label>
                         <input type="file" name="client_payment_proof" id="client_payment_proof_{{ $payment->id }}" 
                                class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
@@ -97,7 +96,7 @@
                     <!-- Additional Notes -->
                     <div class="mb-3">
                         <label for="client_notes_{{ $payment->id }}" class="form-label fw-bold">
-                            <i class="fas fa-sticky-note text-primary"></i> Additional Notes (Optional)
+                            Additional Notes (Optional)
                         </label>
                         <textarea name="client_notes" id="client_notes_{{ $payment->id }}" 
                                   class="form-control" rows="3" 
@@ -115,10 +114,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times"></i> Cancel
+                        Cancel
                     </button>
                     <button type="submit" class="btn btn-success">
-                        <i class="fas fa-paper-plane"></i> Submit Payment Proof
+                        Submit Payment Proof
                     </button>
                 </div>
             </form>

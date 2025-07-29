@@ -1,7 +1,299 @@
 @extends('layouts.app')
 
 @section('content')
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+/* Modern Dashboard Styling */
+body {
+    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header Styling */
+h1.h3 {
+    font-family: 'Inter', Arial, sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: #198754;
+    font-size: 2.2rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+/* Summary Cards */
+.card {
+    border-radius: 1.25rem;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    border: none;
+    margin-bottom: 2rem;
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.card-body {
+    padding: 2rem;
+    text-align: center;
+}
+
+.card-title {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+/* Summary Card Icons and Numbers */
+.fa-3x {
+    margin-bottom: 1rem;
+}
+
+.text-primary { color: #0d6efd !important; }
+.text-warning { color: #ffc107 !important; }
+.text-success { color: #198754 !important; }
+.text-info { color: #0dcaf0 !important; }
+
+/* Contract Payments Section */
+.card-header {
+    background: #fff;
+    border-radius: 1.25rem 1.25rem 0 0;
+    border-bottom: none;
+    padding: 1.5rem 2rem 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h5 {
+    font-weight: 700;
+    color: #495057;
+    margin: 0;
+}
+
+/* Table Styling */
+.table-responsive {
+    border-radius: 1.1rem;
+    overflow-x: auto;
+    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
+    background: #fff;
+    max-width: 100%;
+}
+
+.table {
+    margin-bottom: 0;
+    border-radius: 1.1rem;
+    overflow: hidden;
+}
+
+.table th {
+    font-weight: 600;
+    color: #495057;
+    background: #f8fafc;
+    border-top: none;
+    text-align: center;
+    padding: 1rem 0.5rem;
+}
+
+.table td {
+    vertical-align: middle;
+    text-align: center;
+    padding: 1rem 0.5rem;
+    border: none;
+    background: #fff;
+}
+
+.table-hover tbody tr:hover {
+    background: #f4faff;
+    transition: background 0.2s;
+}
+
+/* Button Styling */
+.btn {
+    border-radius: 2rem;
+    font-weight: 600;
+    padding: 0.5em 1.5em;
+    font-size: 1.08em;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(90deg, #0d6efd 0%, #0b5ed7 100%) !important;
+    color: #fff !important;
+    border: none;
+    box-shadow: 0 2px 8px #0d6efd22;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(90deg, #0b5ed7 0%, #0d6efd 100%) !important;
+    color: #fff;
+    box-shadow: 0 4px 16px #0d6efd44;
+    transform: translateY(-1px);
+}
+
+.btn-success {
+    background: linear-gradient(90deg, #198754 0%, #157347 100%) !important;
+    color: #fff !important;
+    border: none;
+    box-shadow: 0 2px 8px #19875422;
+}
+
+.btn-success:hover {
+    background: linear-gradient(90deg, #157347 0%, #198754 100%) !important;
+    color: #fff;
+    box-shadow: 0 4px 16px #19875444;
+    transform: translateY(-1px);
+}
+
+/* Badge Styling */
+.badge {
+    font-size: 0.95em;
+    padding: 0.5em 1em;
+    border-radius: 0.7em;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.bg-success { background-color: #198754 !important; }
+.bg-warning { background-color: #ffc107 !important; color: #000 !important; }
+.bg-info { background-color: #0dcaf0 !important; }
+.bg-danger { background-color: #dc3545 !important; }
+
+/* Alert Styling */
+.alert {
+    border-radius: 1rem;
+    border: none;
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    color: #856404;
+    border-left: 4px solid #ffc107;
+}
+
+/* Empty State */
+.text-center.py-5 {
+    padding: 4rem 2rem;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+/* Modal Styling */
+.modal-content {
+    border-radius: 1.25rem;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.5rem 2rem;
+}
+
+.modal-header h5 {
+    font-weight: 700;
+    color: #495057;
+    margin: 0;
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.modal-body h6 {
+    font-weight: 700;
+    color: #0d6efd;
+    margin-bottom: 1rem;
+}
+
+.modal-body p {
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+.modal-body strong {
+    font-weight: 600;
+}
+
+.modal-footer {
+    border-top: 1px solid #e9ecef;
+    padding: 1.5rem 2rem;
+}
+
+/* Form styling for modals */
+.modal .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.modal .form-control,
+.modal .form-select {
+    border-radius: 1rem;
+    border: 1.5px solid #ced4da;
+    padding: 0.7rem 1.2rem;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.modal .form-control:focus,
+.modal .form-select:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+.modal .form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.modal .input-group-text {
+    background-color: #f8f9fa;
+    border: 1.5px solid #ced4da;
+    border-right: none;
+    border-radius: 1rem 0 0 1rem;
+}
+
+/* Form Styling */
+.form-control, .form-select {
+    border-radius: 1rem;
+    border: 1.5px solid #ced4da;
+    padding: 0.7rem 1.2rem;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+    
+    .btn {
+        padding: 0.4em 1.2em;
+        font-size: 1rem;
+    }
+}
 /* Comprehensive fix for modal glitching */
 .modal {
     z-index: 1055 !important;
@@ -169,7 +461,7 @@ input:hover, select:hover, textarea:hover, button:hover {
     @endif
 
     <!-- Payment Statistics Cards -->
-    <div class="row mb-4">
+    <div class="row g-4 mb-4">
         <div class="col-md-3">
             <div class="card text-center border-0 shadow-sm">
                 <div class="card-body">
@@ -235,8 +527,7 @@ input:hover, select:hover, textarea:hover, button:hover {
                                 <div class="col-md-6">
                                     <h6 class="mb-0 fw-bold">{{ $contract->contract_number ?? 'Contract #' . $contract->id }}</h6>
                                     <small class="text-muted">
-                                        Contractor: {{ $contract->contractor->name ?? 'N/A' }} | 
-                                        Total: ₱{{ number_format($contractData->totalAmount, 2) }}
+                                        Contractor: {{ $contract->contractor->name ?? 'N/A' }} - {{ $contract->contractor->company_name ?? 'N/A' }}
                                     </small>
                                 </div>
                                 <div class="col-md-6 text-end">
@@ -254,7 +545,7 @@ input:hover, select:hover, textarea:hover, button:hover {
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <strong>Client:</strong> {{ $contract->client->name ?? 'N/A' }}<br>
-                                    <strong>Contractor:</strong> {{ $contract->contractor->name ?? 'N/A' }}<br>
+                                    <strong>Contractor:</strong> {{ $contract->contractor->name ?? 'N/A' }} - {{ $contract->contractor->company_name ?? 'N/A' }}<br>
                                     <strong>Total Contract Amount:</strong> ₱{{ number_format($contractData->totalAmount, 2) }}
                                 </div>
                                 <div class="col-md-6">

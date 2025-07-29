@@ -128,6 +128,11 @@ class Contract extends Model
         return $this->belongsTo(Property::class);
     }
 
+    public function quotationRequest(): BelongsTo
+    {
+        return $this->belongsTo(QuotationRequest::class);
+    }
+
 
 
     public function items(): HasMany

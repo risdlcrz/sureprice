@@ -36,10 +36,10 @@
                             <div class="col-12">
                                 <h4>Request Items</h4>
                                 @if(isset($selectedSuppliers) && count($selectedSuppliers) > 0)
-                                    <div class="alert alert-info">
-                                        <i class="fas fa-info-circle"></i>
-                                        <strong>Note:</strong> Suppliers have been pre-selected by the client during the quotation process. 
-                                        You can modify these selections if needed, but the client's choices are recommended.
+                                    <div class="alert alert-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        <strong>Client Supplier Selection:</strong> The client has already selected suppliers for these materials during the quotation process. 
+                                        The selected suppliers will be automatically used for procurement.
                                     </div>
                                 @endif
                                 <div class="table-responsive">
@@ -77,8 +77,13 @@
                                                                     $selectedSupplier = \App\Models\Supplier::find($item['selected_supplier_id']);
                                                                 @endphp
                                                                 <input type="hidden" name="items[{{ $index }}][preferred_supplier_id]" value="{{ $item['selected_supplier_id'] }}">
-                                                                <span class="text-success font-weight-bold">{{ $selectedSupplier ? $selectedSupplier->company_name : 'Client Selected Supplier' }}</span>
-                                                                <small class="text-muted d-block">(Client's choice)</small>
+                                                                <div class="d-flex align-items-center">
+                                                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                                                    <div>
+                                                                        <span class="text-success font-weight-bold">{{ $selectedSupplier ? $selectedSupplier->company_name : 'Client Selected Supplier' }}</span>
+                                                                        <small class="text-muted d-block">(Client's choice)</small>
+                                                                    </div>
+                                                                </div>
                                                             @else
                                                                 <select name="items[{{ $index }}][preferred_supplier_id]" class="form-control supplier-select">
                                                                     <option value="">Select Supplier</option>

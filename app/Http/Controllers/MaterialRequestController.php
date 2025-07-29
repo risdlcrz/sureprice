@@ -35,6 +35,19 @@ class MaterialRequestController extends Controller
             $items = [];
             $anyShort = false;
             
+            // Get selected suppliers from the original quotation request
+            $selectedSuppliers = [];
+            if ($contract->quotationRequest) {
+                $selectedSuppliers = $contract->quotationRequest->selected_suppliers ?? [];
+            }
+            
+            \Log::info('Contract-based Material Request Creation - Selected Suppliers', [
+                'contract_id' => $contract->id,
+                'quotation_request_id' => $contract->quotationRequest?->id,
+                'selected_suppliers' => $selectedSuppliers,
+                'selected_suppliers_keys' => array_keys($selectedSuppliers ?? [])
+            ]);
+            
             // Get materials from contract items
             $contractItems = $contract->items;
             foreach ($contractItems as $item) {
@@ -46,16 +59,27 @@ class MaterialRequestController extends Controller
                     $anyShort = true;
                 }
                 
+                // Get the client's selected supplier for this material
+                $selectedSupplierId = $selectedSuppliers[$material->id] ?? $selectedSuppliers[(string)$material->id] ?? null;
+                
+                \Log::info('Processing contract material for material request', [
+                    'material_id' => $material->id,
+                    'material_name' => $material->name,
+                    'selected_supplier_id' => $selectedSupplierId,
+                    'selected_suppliers_keys' => array_keys($selectedSuppliers ?? [])
+                ]);
+                
                 $items[] = [
                     'material_id' => $material->id,
                     'name' => $material->name,
                     'unit' => $material->unit,
                     'quantity' => $needed,
-                    'available' => $actualStock
+                    'available' => $actualStock,
+                    'selected_supplier_id' => $selectedSupplierId
                 ];
             }
             
-            return view('admin.material-requests.create', compact('materials', 'items', 'contract_id', 'anyShort'));
+            return view('admin.material-requests.create', compact('materials', 'items', 'contract_id', 'anyShort', 'selectedSuppliers'));
         }
         
         if (!$quotation_id) {
@@ -70,6 +94,14 @@ class MaterialRequestController extends Controller
 
         // Get client's selected suppliers from the quotation request
         $selectedSuppliers = $quotation->selected_suppliers ?? [];
+        
+        \Log::info('Material Request Creation - Selected Suppliers', [
+            'quotation_id' => $quotation->id,
+            'selected_suppliers' => $selectedSuppliers,
+            'quotation_selected_suppliers' => $quotation->selected_suppliers,
+            'selected_suppliers_keys' => array_keys($selectedSuppliers ?? []),
+            'selected_suppliers_types' => array_map(function($key) { return gettype($key); }, array_keys($selectedSuppliers ?? []))
+        ]);
 
         // Gather all materials and quantities from the quotation
         $materialQuantities = [];
@@ -96,7 +128,31 @@ class MaterialRequestController extends Controller
             }
             
             // Get the client's selected supplier for this material
-            $selectedSupplierId = $selectedSuppliers[$id] ?? null;
+            // Try both string and integer keys since JSON might store keys as strings
+            $selectedSupplierId = $selectedSuppliers[$id] ?? $selectedSuppliers[(string)$id] ?? null;
+            
+            // If not found in selected_suppliers, try to get from material_quotation pivot
+            if (!$selectedSupplierId) {
+                $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotation->request_number .'%')->with(['materials'])->get();
+                foreach ($rfqs as $rfq) {
+                    $matPivot = $rfq->materials->firstWhere('id', $id);
+                    if ($matPivot && $matPivot->pivot && $matPivot->pivot->selected_supplier_id) {
+                        $selectedSupplierId = $matPivot->pivot->selected_supplier_id;
+                        break;
+                    }
+                }
+            }
+            
+            \Log::info('Processing material for material request', [
+                'material_id' => $id,
+                'material_id_type' => gettype($id),
+                'material_name' => $mat->name,
+                'selected_supplier_id' => $selectedSupplierId,
+                'selected_suppliers_keys' => array_keys($selectedSuppliers ?? []),
+                'trying_key_int' => $id,
+                'trying_key_string' => (string)$id,
+                'available_suppliers' => $mat->suppliers->pluck('id')->toArray()
+            ]);
             
             $items[] = [
                 'material_id' => $id,
@@ -107,6 +163,12 @@ class MaterialRequestController extends Controller
                 'selected_supplier_id' => $selectedSupplierId
             ];
         }
+        
+        \Log::info('MaterialRequestController@create - Final items for view', [
+            'items' => $items,
+            'selectedSuppliers' => $selectedSuppliers,
+        ]);
+        
         return view('admin.material-requests.create', compact('materials', 'items', 'quotation_id', 'anyShort', 'selectedSuppliers'));
     }
 

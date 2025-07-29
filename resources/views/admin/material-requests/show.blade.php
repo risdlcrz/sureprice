@@ -172,14 +172,18 @@
                                         <tr>
                                             <td class="material-indent"></td>
                                             <td>
-                                                @if($item->supplier)
-                                                    {{ $item->supplier->company_name }}
-                                                @elseif($materialRequest->quotationRequest)
-                                                    @php
-                                                        $supplierName = null;
+                                                @php
+                                                    $supplierName = null;
+                                                    
+                                                    // Check if item has direct supplier
+                                                    if ($item->supplier) {
+                                                        $supplierName = $item->supplier->company_name;
+                                                    }
+                                                    // Check quotation request selected suppliers
+                                                    elseif ($materialRequest->quotationRequest) {
                                                         $quotationRequest = $materialRequest->quotationRequest;
                                                         $selectedSuppliers = $quotationRequest->selected_suppliers ?? [];
-                                                        $selectedSupplierId = $selectedSuppliers[$item->material_id] ?? null;
+                                                        $selectedSupplierId = $selectedSuppliers[$item->material_id] ?? $selectedSuppliers[(string)$item->material_id] ?? null;
                                                         
                                                         if ($selectedSupplierId) {
                                                             $supplier = \App\Models\Supplier::find($selectedSupplierId);
@@ -200,13 +204,22 @@
                                                                 }
                                                             }
                                                         }
-                                                    @endphp
-                                                    @if($supplierName)
-                                                        <span class="text-success font-weight-bold">{{ $supplierName }}</span>
-                                                        <small class="text-muted d-block">(Client's choice)</small>
-                                                    @else
-                                                        <span class="text-danger">No Supplier</span>
-                                                    @endif
+                                                    }
+                                                    // Check contract selected suppliers
+                                                    elseif ($materialRequest->contract && $materialRequest->contract->quotationRequest) {
+                                                        $quotationRequest = $materialRequest->contract->quotationRequest;
+                                                        $selectedSuppliers = $quotationRequest->selected_suppliers ?? [];
+                                                        $selectedSupplierId = $selectedSuppliers[$item->material_id] ?? $selectedSuppliers[(string)$item->material_id] ?? null;
+                                                        
+                                                        if ($selectedSupplierId) {
+                                                            $supplier = \App\Models\Supplier::find($selectedSupplierId);
+                                                            $supplierName = $supplier ? $supplier->company_name : null;
+                                                        }
+                                                    }
+                                                @endphp
+                                                @if($supplierName)
+                                                    <span class="text-success font-weight-bold">{{ $supplierName }}</span>
+                                                    <small class="text-muted d-block">(Client's choice)</small>
                                                 @else
                                                     <span class="text-danger">No Supplier</span>
                                                 @endif
