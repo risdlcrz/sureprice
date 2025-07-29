@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('content')
+@php $payment = $purchaseOrder->payments->first(); @endphp
 <div class="container">
     <h1>Purchase Order: {{ $purchaseOrder->po_number }}</h1>
     <div class="mb-3">
@@ -49,7 +50,6 @@
         </tbody>
     </table>
     <h4>Payment</h4>
-    @php $payment = $purchaseOrder->payments->first(); @endphp
     @if($payment)
         <div class="mb-3">
             <strong>Status:</strong> <span class="badge bg-{{ $payment->status === 'verified' ? 'success' : ($payment->status === 'for_verification' ? 'info' : ($payment->status === 'rejected' ? 'danger' : 'secondary')) }}">{{ ucfirst($payment->status) }}</span><br>
