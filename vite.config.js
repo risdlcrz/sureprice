@@ -48,7 +48,7 @@ export default defineConfig({
                 'resources/js/projects-create.js',
                 'resources/css/admin-contracts-editor.css',
                 'resources/js/admin-contracts-editor.js',
-                'resources/css/landing-catalogue.css',
+                'resources/css/landing/catalogue.css',
                 'resources/js/landing-catalogue.js',
                 'resources/css/components-search-select.css',
                 'resources/js/components-search-select.js',
@@ -82,5 +82,14 @@ export default defineConfig({
     build: {
         outDir: 'public/build', // Explicit output path
         emptyOutDir: true, 
-        },    // Clears the directory on rebuild
+        rollupOptions: {
+            external: ['jquery', 'select2'],
+            output: {
+                globals: {
+                    jquery: '$',
+                    select2: 'select2'
+                }
+            }
+        }
+    },    // Clears the directory on rebuild
 });
