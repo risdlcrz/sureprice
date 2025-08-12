@@ -69,6 +69,7 @@ export default defineConfig({
                 'resources/css/procurement/analytics/price-analysis.css',
                 'resources/js/procurement/analytics/price-analysis.js',
                 'resources/css/project-timeline/show.css',
+                'resources/css/manager-dashboard.css',
                 //'resources/js/project-timeline/show.js',
                 //'resources/css/supplier/quotation-respond.css',
                 //'resources/js/supplier/quotation-respond.js',
