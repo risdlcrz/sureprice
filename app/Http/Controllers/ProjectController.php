@@ -267,30 +267,48 @@ class ProjectController extends Controller
     {
         $materials = \App\Models\Material::orderBy('name')->get();
         $selectedMaterialId = $request->input('material_id', $materials->first()->id ?? null);
-
-        $projectFeatures = [
-            'on_time_delivery_rate' => $request->input('on_time_delivery_rate', 90),
-            'average_defect_rate' => $request->input('average_defect_rate', 2),
-            'average_cost_variance' => $request->input('average_cost_variance', 0),
-        ];
-        $budget = $request->input('budget', 100000); // Default or user input
-
-        $suppliers = Supplier::with(['metrics', 'materials'])->get()->map(function($supplier) {
+        
+        // Get all suppliers with their evaluations and metrics
+        $suppliers = \App\Models\Supplier::with(['evaluations', 'metrics', 'materials'])->get();
+        
+        // Use the ranking service to get sorted suppliers by score
+        $rankingService = app(\App\Services\SupplierRankingService::class);
+        $rankings = $rankingService->calculateRankings($suppliers);
+        
+        // Filter by material if specified
+        if ($selectedMaterialId) {
+            $rankings = $rankings->filter(function ($ranking) use ($selectedMaterialId) {
+                return $ranking['supplier']->materials->contains('id', $selectedMaterialId);
+            });
+        }
+        
+        // Format for recommendation display
+        $recommended = $rankings->take(5)->map(function ($ranking) {
+            $metrics = $ranking['supplier']->metrics;
             return [
-                'id' => $supplier->id,
-                'name' => $supplier->company_name,
-                'material_ids' => $supplier->materials->pluck('id')->toArray(),
-                'on_time_delivery_rate' => $supplier->metrics ? $supplier->metrics->on_time_delivery_rate : 0,
-                'average_defect_rate' => $supplier->metrics->average_defect_rate ?? 0,
-                'average_cost_variance' => $supplier->metrics->average_cost_variance ?? 0,
-                'cost' => $supplier->metrics->average_cost_variance ?? 0,
+                'supplier' => [
+                    'name' => $ranking['supplier']->company_name,
+                    'on_time_delivery_rate' => $metrics ? $metrics->on_time_delivery_rate : 0,
+                    'average_defect_rate' => $metrics ? $metrics->average_defect_rate : 0,
+                    'average_cost_variance' => $metrics ? $metrics->average_cost_variance : 0,
+                ],
+                'distance' => 5 - $ranking['score'], // Convert score to distance (lower is better)
+                'score' => $ranking['score']
             ];
-        })->toArray();
+        });
 
-        $service = new \App\Services\SupplierSelectionService();
-        $filteredSuppliers = $service->filterByMaterial($suppliers, $selectedMaterialId);
-        $recommended = $service->recommend($filteredSuppliers, $projectFeatures, 5);
-        $optimal = $service->optimize($recommended, $budget);
+        $budget = $request->input('budget', 100000);
+        
+        // Use the top recommended suppliers as optimal within budget
+        $optimal = $recommended->take(3)->map(function ($item) {
+            return [
+                'name' => $item['supplier']['name'],
+                'on_time_delivery_rate' => $item['supplier']['on_time_delivery_rate'],
+                'average_defect_rate' => $item['supplier']['average_defect_rate'],
+                'average_cost_variance' => $item['supplier']['average_cost_variance'],
+                'score' => $item['score']
+            ];
+        });
 
         if ($request->ajax()) {
             return response()->json([
@@ -306,7 +324,6 @@ class ProjectController extends Controller
             'selectedMaterialId' => $selectedMaterialId,
             'recommended' => $recommended,
             'optimal' => $optimal,
-            'projectFeatures' => $projectFeatures,
             'budget' => $budget,
         ]);
     }

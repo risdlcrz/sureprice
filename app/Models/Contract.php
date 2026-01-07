@@ -523,26 +523,31 @@ class Contract extends Model
 
     public function generateTasks()
     {
+        // Find the project associated with this contract
+        $project = Project::where('contract_id', $this->id)->first();
+        
         // Generate tasks based on rooms and scope types
         foreach ($this->rooms as $room) {
             foreach ($room->scopeTypes as $scopeType) {
                 // Calculate task duration based on scope type complexity
                 $duration = $scopeType->estimated_days ?? 7; // Default to 7 days if not specified
-                $startDate = $this->start_date;
-                $endDate = $startDate->copy()->addDays($duration);
+                $startDate = \Carbon\Carbon::parse($this->start_date);
+                $endDate = $startDate->addDays($duration);
 
                 ProjectTask::create([
                     'contract_id' => $this->id,
+                    'project_id' => $project ? $project->id : null,
                     'room_id' => $room->id,
                     'scope_type_id' => $scopeType->id,
-                    'title' => "{$scopeType->name} in {$room->name}",
+                    'name' => "{$scopeType->name} in {$room->name}",
                     'description' => "Complete {$scopeType->name} work in {$room->name}",
                     'start_date' => $startDate,
-                    'end_date' => $endDate,
+                    'due_date' => $endDate,
                     'status' => 'pending',
                     'progress' => 0,
                     'priority' => 'medium',
-                    'created_by' => auth()->id()
+                    'assigned_to' => null,  // Will be assigned later
+                    'created_by' => Auth::id()
                 ]);
             }
         }

@@ -48,7 +48,7 @@ export default defineConfig({
                 'resources/js/projects-create.js',
                 'resources/css/admin-contracts-editor.css',
                 'resources/js/admin-contracts-editor.js',
-                'resources/css/landing-catalogue.css',
+                'resources/css/landing/catalogue.css',
                 'resources/js/landing-catalogue.js',
                 'resources/css/components-search-select.css',
                 'resources/js/components-search-select.js',
@@ -63,12 +63,15 @@ export default defineConfig({
                 'resources/js/admin/suppliers/general-recommendation.js',
                 'resources/css/procurement/suppliers-rankings.css',
                 'resources/js/procurement/suppliers-rankings.js',
+                'resources/css/admin/suppliers/rankings.css',
+                'resources/js/admin/suppliers/rankings.js',
                 'resources/css/client/quotation/create.css',
                 'resources/css/messages/show.css',
                 //'resources/js/messages/show.js',
                 'resources/css/procurement/analytics/price-analysis.css',
                 'resources/js/procurement/analytics/price-analysis.js',
                 'resources/css/project-timeline/show.css',
+                'resources/css/manager-dashboard.css',
                 //'resources/js/project-timeline/show.js',
                 //'resources/css/supplier/quotation-respond.css',
                 //'resources/js/supplier/quotation-respond.js',
@@ -82,5 +85,14 @@ export default defineConfig({
     build: {
         outDir: 'public/build', // Explicit output path
         emptyOutDir: true, 
-        },    // Clears the directory on rebuild
+        rollupOptions: {
+            external: ['jquery', 'select2'],
+            output: {
+                globals: {
+                    jquery: '$',
+                    select2: 'select2'
+                }
+            }
+        }
+    },    // Clears the directory on rebuild
 });

@@ -333,4 +333,16 @@
     </div>
 </div>
 
-@endsection 
+@endsection
+
+@push('styles')
+    @vite(['resources/css/admin/suppliers/rankings.css'])
+@endpush
+
+@push('scripts')
+    @vite(['resources/js/admin/suppliers/rankings.js'])
+    <script>
+        // Pass rankings data to JavaScript
+        window.rankingsData = @json($rankings);
+    </script>
+@endpush 

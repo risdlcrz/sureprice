@@ -11,7 +11,10 @@ class ProjectTask extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'contract_id',
         'project_id',
+        'room_id',
+        'scope_type_id',
         'name',
         'description',
         'start_date',
@@ -20,7 +23,8 @@ class ProjectTask extends Model
         'priority',
         'assigned_to',
         'progress',
-        'notes'
+        'notes',
+        'created_by'
     ];
 
     protected $casts = [

@@ -1,0 +1,136 @@
+/* Supplier Rankings Admin Styles */
+.score-input {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.score-input input[type="number"] {
+    padding-right: 40px;
+    text-align: center;
+}
+
+.score-controls {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.btn-increment {
+    background: transparent;
+    border: none;
+    padding: 2px 4px;
+    font-size: 10px;
+    color: #6c757d;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 12px;
+}
+
+.btn-increment:hover {
+    color: #198754;
+    background-color: #f8f9fa;
+    border-radius: 2px;
+}
+
+.btn-increment:active {
+    color: #155724;
+    background-color: #e2e6ea;
+}
+
+.btn-increment:disabled {
+    color: #dee2e6;
+    cursor: not-allowed;
+}
+
+.btn-increment:disabled:hover {
+    background-color: transparent;
+}
+
+/* Modal Styles */
+.metrics-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.metrics-title {
+    color: #198754;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.metric-value {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #495057;
+    text-align: center;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    text-align: center;
+    margin-top: 0.25rem;
+}
+
+/* Chart and Legend Styles */
+.top-suppliers-legend {
+    padding: 1rem;
+    border-left: 1px solid #dee2e6;
+    height: 100%;
+}
+
+@media (max-width: 768px) {
+    .top-suppliers-legend {
+        border-left: none;
+        border-top: 1px solid #dee2e6;
+        margin-top: 1rem;
+        padding-top: 1rem;
+    }
+    
+    .score-controls {
+        right: 8px;
+    }
+    
+    .btn-increment {
+        width: 24px;
+        height: 14px;
+        font-size: 12px;
+    }
+}
+
+/* Form validation styles */
+.score-input.is-invalid input {
+    border-color: #dc3545;
+}
+
+.score-input.is-valid input {
+    border-color: #28a745;
+}
+
+/* Loading state */
+.btn-increment.loading {
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* Focus states for accessibility */
+.score-input input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+    border-color: #198754;
+}
+
+.btn-increment:focus {
+    outline: 2px solid #198754;
+    outline-offset: 1px;
+}

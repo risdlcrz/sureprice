@@ -875,7 +875,48 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            document.getElementById('supplier-recommendation-results').innerHTML = data.html;
+            const resultsDiv = document.getElementById('supplier-recommendation-results');
+            if (!data.recommended || data.recommended.length === 0) {
+                resultsDiv.innerHTML = '<div class="alert alert-warning">No supplier recommendations found.</div>';
+                return;
+            }
+
+            let html = `
+                <div class="table-responsive mt-3">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Supplier Name</th>
+                                <th>On-Time Delivery Rate</th>
+                                <th>Avg. Defect Rate</th>
+                                <th>Score</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            data.recommended.forEach(rec => {
+                html += `
+                    <tr>
+                        <td>${rec.supplier.name}</td>
+                        <td>${parseFloat(rec.supplier.on_time_delivery_rate).toFixed(2)}%</td>
+                        <td>${parseFloat(rec.supplier.average_defect_rate).toFixed(2)}%</td>
+                        <td>${parseFloat(rec.score).toFixed(2)}</td>
+                        <td>
+                            <button type="button" 
+                                class="btn btn-primary btn-sm select-supplier-btn"
+                                data-supplier-id="${rec.supplier.id}"
+                                data-supplier-name="${rec.supplier.name}">
+                                Select
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table></div>';
+            resultsDiv.innerHTML = html;
         });
     });
 

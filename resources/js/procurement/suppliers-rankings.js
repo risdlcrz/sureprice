@@ -11,10 +11,15 @@ if (ctx && topSuppliers.length > 0) {
             labels: topSuppliers.map(s => s.supplier.company_name),
             datasets: [{
                 label: 'Overall Score',
-                data: topSuppliers.map(s => s.score),
-                backgroundColor: ['#FFD700', '#C0C0C0', '#CD7F32'],
+                data: topSuppliers.map(s => {
+                    // Set a minimum visible value for bars
+                    return s.score === 0 ? 0.1 : s.score;
+                }),
+                backgroundColor: ['rgba(255, 215, 0, 0.8)', 'rgba(192, 192, 192, 0.8)', 'rgba(205, 127, 50, 0.8)'],
                 borderColor: ['#FFD700', '#C0C0C0', '#CD7F32'],
-                borderWidth: 1
+                borderWidth: 2,
+                barThickness: 60,  // Increased bar width
+                minBarLength: 10    // Minimum bar length in pixels
             }]
         },
         options: {
@@ -23,7 +28,27 @@ if (ctx && topSuppliers.length > 0) {
             scales: {
                 y: {
                     beginAtZero: true,
-                    max: 5
+                    max: 5,
+                    ticks: {
+                        stepSize: 1,
+                        font: {
+                            size: 12
+                        }
+                    },
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        }
+                    }
                 }
             },
             plugins: {

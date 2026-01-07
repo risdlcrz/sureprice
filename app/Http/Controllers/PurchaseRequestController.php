@@ -7,12 +7,20 @@ use App\Models\Material;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Services\SupplierSelectionService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use App\Services\SupplierRankingService;
 use App\Models\Activity;
 use App\Models\Notification;
 
 class PurchaseRequestController extends Controller
 {
+    protected $rankingService;
+
+    public function __construct(SupplierRankingService $rankingService)
+    {
+        $this->rankingService = $rankingService;
+    }
     public function index()
     {
         $purchaseRequests = PurchaseRequest::with(['contract', 'project', 'requestedBy', 'items.material', 'items.supplier'])
@@ -128,7 +136,7 @@ class PurchaseRequestController extends Controller
 
     public function store(Request $request)
     {
-        \Log::info('PurchaseRequestController@store called', ['request' => $request->all()]);
+        Log::info('PurchaseRequestController@store called', ['request' => $request->all()]);
         // Normalize empty preferred_supplier_id to null before validation
         if ($request->has('items')) {
             $items = collect($request->input('items'))->map(function ($item) {
@@ -182,15 +190,15 @@ class PurchaseRequestController extends Controller
         }
 
         try {
-            \Log::info('Validation passed', ['validated' => $validated]);
+            Log::info('Validation passed', ['validated' => $validated]);
 
             DB::beginTransaction();
             $purchaseRequest = PurchaseRequest::create([
                 'request_number' => 'PR-' . str_pad(PurchaseRequest::count() + 1, 6, '0', STR_PAD_LEFT),
                 'contract_id' => $validated['contract_id'] ?? null,
                 'supplier_id' => $validated['supplier_id'] ?? null,
-                'requested_by' => auth()->id(),
-                'status' => auth()->user()->hasRole('procurement') ? 'pending_admin_approval' : 'pending',
+                'requested_by' => Auth::id(),
+                'status' => Auth::user()->hasRole('procurement') ? 'pending_admin_approval' : 'pending',
                 'notes' => $validated['notes'] ?? null,
                 'is_project_related' => $validated['is_project_related'] ?? false,
                 'total_amount' => 0,
@@ -218,7 +226,7 @@ class PurchaseRequestController extends Controller
             \Log::info('PurchaseRequest saved and committed', ['purchaseRequest' => $purchaseRequest]);
             // Log activity
             Activity::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'action' => 'created',
                 'description' => 'Created Purchase Request #' . $purchaseRequest->request_number,
                 'model_type' => PurchaseRequest::class,
@@ -226,7 +234,7 @@ class PurchaseRequestController extends Controller
             ]);
             // Create notification
             Notification::create([
-                'notifiable_id' => auth()->id(),
+                'notifiable_id' => Auth::id(),
                 'notifiable_type' => \App\Models\User::class,
                 'type' => 'Purchase Request',
                 'data' => ['message' => 'Your purchase request #' . $purchaseRequest->request_number . ' has been created.'],
@@ -252,7 +260,7 @@ class PurchaseRequestController extends Controller
                 ->with('success', 'Purchase request created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error creating purchase request', ['exception' => $e, 'request' => $request->all()]);
+            Log::error('Error creating purchase request', ['exception' => $e, 'request' => $request->all()]);
             return back()->with('error', 'Error creating purchase request: ' . $e->getMessage());
         }
     }
@@ -277,7 +285,7 @@ class PurchaseRequestController extends Controller
         $suppliers = Supplier::orderBy('company_name')->get();
         $contracts = \App\Models\Contract::with('client')->orderBy('created_at', 'desc')->get();
         $projects = \App\Models\Project::orderBy('created_at', 'desc')->get();
-        \Log::info('Projects variable in PurchaseRequestController@edit:', ['projects' => $projects]);
+        Log::info('Projects variable in PurchaseRequestController@edit:', ['projects' => $projects]);
 
         return view('admin.purchase-requests.edit', compact('purchaseRequest', 'materials', 'suppliers', 'contracts', 'projects'));
     }
@@ -346,7 +354,7 @@ class PurchaseRequestController extends Controller
             DB::commit();
             // Log activity
             Activity::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'action' => 'updated',
                 'description' => 'Updated Purchase Request #' . $purchaseRequest->request_number,
                 'model_type' => PurchaseRequest::class,
@@ -374,7 +382,7 @@ class PurchaseRequestController extends Controller
             DB::commit();
             // Log activity
             Activity::create([
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'action' => 'deleted',
                 'description' => 'Deleted Purchase Request #' . $requestNumber,
                 'model_type' => PurchaseRequest::class,
@@ -390,7 +398,7 @@ class PurchaseRequestController extends Controller
     public function approve(PurchaseRequest $purchaseRequest)
     {
         // Ensure only admin can approve/reject
-        if (!auth()->user()->hasRole('admin')) {
+        if (!Auth::user()->hasRole('admin')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -452,7 +460,7 @@ class PurchaseRequestController extends Controller
     public function reject(PurchaseRequest $purchaseRequest)
     {
         // Ensure only admin can approve/reject
-        if (!auth()->user()->hasRole('admin')) {
+        if (!Auth::user()->hasRole('admin')) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -468,7 +476,7 @@ class PurchaseRequestController extends Controller
 
     public function supplierApprove(Request $request, PurchaseRequest $purchaseRequest)
     {
-        $supplierId = auth()->user()->supplier?->id;
+        $supplierId = Auth::user()->supplier?->id;
         $isAssigned = $purchaseRequest->items()->where('preferred_supplier_id', $supplierId)->exists();
         if (!$isAssigned) {
             abort(403, 'You are not authorized to approve this request.');
@@ -540,7 +548,7 @@ class PurchaseRequestController extends Controller
                 'items.*.totalCost' => 'required|numeric|min:0'
             ]);
 
-            \Log::info('Items received in generateFromContract:', ['items' => $validated['items']]);
+            Log::info('Items received in generateFromContract:', ['items' => $validated['items']]);
 
             // Find the contract
             $contract = \App\Models\Contract::findOrFail($validated['contract_id']);
@@ -567,7 +575,7 @@ class PurchaseRequestController extends Controller
                 $purchaseRequest = PurchaseRequest::create([
                     'request_number' => $prNumber,
                     'contract_id' => $contract->id,
-                    'requested_by' => auth()->id(),
+                    'requested_by' => Auth::id(),
                     'status' => 'pending',
                     'is_project_related' => true,
                     'notes' => 'Automatically generated from contract ' . $contract->contract_number,
@@ -629,7 +637,7 @@ class PurchaseRequestController extends Controller
             \Log::error('Error generating purchase request: ' . $e->getMessage(), [
                 'contract_id' => $request->input('contract_id'),
                 'items_count' => count($request->input('items', [])),
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'trace' => $e->getTraceAsString()
             ]);
 
@@ -649,79 +657,47 @@ class PurchaseRequestController extends Controller
     public function recommendSuppliersForMaterial(Request $request)
     {
         $materialId = $request->input('material_id');
-        $contractId = $request->input('contract_id');
-        $mode = $request->input('mode', 'overall_best');
-        $budget = $request->input('budget');
-        $offers = [];
-
-        // Fetch relevant RFQs/Quotations
-        if ($contractId) {
-            $contract = \App\Models\Contract::find($contractId);
-            if ($contract) {
-                $rfqs = \App\Models\Quotation::where('contract_id', $contractId)
-                    ->with(['suppliers', 'materials', 'responses.items', 'responses.supplier.metrics'])
-                    ->get();
-                foreach ($rfqs as $rfq) {
-                    foreach ($rfq->responses as $response) {
-                        foreach ($response->items as $item) {
-                            if ($item->material_id == $materialId) {
-                                $offers[] = [
-                                    'supplier_id' => $response->supplier_id,
-                                    'unit_price' => $item->unit_price,
-                                    'metrics' => $response->supplier->metrics,
-                                ];
-                            }
-                        }
-                    }
-                }
-            }
-        } else {
-            // Standalone: consider all suppliers who have quoted for this material in any RFQ
-            $rfqs = \App\Models\Quotation::whereHas('materials', function($q) use ($materialId) {
-                $q->where('materials.id', $materialId);
-            })->with(['suppliers', 'materials', 'responses.items', 'responses.supplier.metrics'])->get();
-            foreach ($rfqs as $rfq) {
-                foreach ($rfq->responses as $response) {
-                    foreach ($response->items as $item) {
-                        if ($item->material_id == $materialId) {
-                            $offers[] = [
-                                'supplier_id' => $response->supplier_id,
-                                'unit_price' => $item->unit_price,
-                                'metrics' => $response->supplier->metrics,
-                            ];
-                        }
-                    }
-                }
-            }
+        if (!$materialId) {
+            return response()->json(['error' => 'Material ID is required'], 400);
         }
 
-        // Recommendation logic (copied from ClientQuotationController)
-        if (count($offers) > 0) {
-            if ($mode === 'cheapest') {
-                usort($offers, fn($a, $b) => $a['unit_price'] <=> $b['unit_price']);
-            } elseif ($mode === 'fastest_delivery') {
-                usort($offers, fn($a, $b) => ($b['metrics']->on_time_delivery_rate ?? 0) <=> ($a['metrics']->on_time_delivery_rate ?? 0));
-            } elseif ($mode === 'least_defects') {
-                usort($offers, fn($a, $b) => ($a['metrics']->average_defect_rate ?? 0) <=> ($b['metrics']->average_defect_rate ?? 0));
-            } else { // overall_best
-                $minPrice = min(array_column($offers, 'unit_price'));
-                $maxDelivery = max(array_map(function($o) { return $o['metrics']->on_time_delivery_rate ?? 0; }, $offers));
-                $minDefect = min(array_map(function($o) { return $o['metrics']->average_defect_rate ?? 0; }, $offers));
-                $scores = [];
-                foreach ($offers as $ix => $o) {
-                    $priceScore = $minPrice / max($o['unit_price'], 1);
-                    $deliveryScore = ($o['metrics']->on_time_delivery_rate ?? 0) / max($maxDelivery, 1);
-                    $defectScore = $minDefect / max($o['metrics']->average_defect_rate ?? 1, 1);
-                    $scores[$ix] = $priceScore + $deliveryScore + $defectScore;
-                }
-                array_multisort($scores, SORT_DESC, $offers);
-            }
-        }
+        // Get all suppliers with their evaluations and metrics
+        $suppliers = Supplier::with(['evaluations', 'metrics', 'materials'])
+            ->whereHas('materials', function($query) use ($materialId) {
+                $query->where('materials.id', $materialId);
+            })->get();
 
-        // Prepare response (top 5 offers)
-        $recommended = array_slice($offers, 0, 5);
+        // Calculate rankings using our consistent ranking service
+        $rankings = $this->rankingService->calculateRankings($suppliers);
+
+        // Format for recommendation display
+        $recommended = $rankings->sortByDesc('score')->take(5)->map(function ($ranking) {
+            $supplier = $ranking['supplier'];
+            $metrics = $supplier->metrics;
+            
+            // Calculate delivery rate
+            $onTimeDeliveryRate = $metrics && $metrics->total_deliveries > 0
+                ? number_format(($metrics->ontime_deliveries / $metrics->total_deliveries) * 100, 2)
+                : '0.00';
+
+            // Calculate defect rate
+            $defectRate = $metrics && $metrics->total_units > 0
+                ? number_format(($metrics->defective_units / $metrics->total_units) * 100, 2)
+                : '0.00';
+
+            return [
+                'supplier' => [
+                    'name' => $supplier->company_name,
+                    'on_time_delivery_rate' => $onTimeDeliveryRate,
+                    'average_defect_rate' => $defectRate,
+                ],
+                'score' => number_format($ranking['score'], 2),
+                'rank' => $ranking['rank']
+            ];
+        })->values();
+
         return response()->json([
-            'recommended' => $recommended,
+            'recommended' => $recommended->toArray(),
         ]);
     }
 
@@ -736,7 +712,7 @@ class PurchaseRequestController extends Controller
         $purchaseRequest = \App\Models\PurchaseRequest::findOrFail($request->purchase_request_id);
         // Create notification for admin
         \App\Models\Notification::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'type' => 'approval_request',
             'notifiable_type' => PurchaseRequest::class,
             'notifiable_id' => $purchaseRequest->id,

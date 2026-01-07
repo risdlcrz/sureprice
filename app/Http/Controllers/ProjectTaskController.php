@@ -37,8 +37,10 @@ class ProjectTaskController extends Controller
         try {
             $task = $project->tasks()->create([
                 ...$validated,
+                'contract_id' => $project->contract_id,
                 'status' => 'pending',
-                'progress' => 0
+                'progress' => 0,
+                'created_by' => Auth::id()
             ]);
 
             return redirect()->route('projects.tasks.show', [$project, $task])

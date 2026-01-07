@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Response;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class SupplierRankingController extends Controller
 {
@@ -42,34 +43,52 @@ class SupplierRankingController extends Controller
     public function storeEvaluation(Request $request, Supplier $supplier)
     {
         $request->validate([
-            'ratings' => 'required|array',
-            'ratings.*' => 'required|numeric|min:0.5|max:5|multiple_of:0.5',
-            'comments' => 'nullable|string|max:1000'
+            'delivery_speed_score' => 'required|numeric|min:0|max:5',
+            'quality_score' => 'required|numeric|min:0|max:5',
+            'cost_variance_score' => 'required|numeric|min:0|max:5',
+            'performance_score' => 'required|numeric|min:0|max:5',
+            'engagement_score' => 'required|numeric|min:0|max:5',
+            'sustainability_score' => 'required|numeric|min:0|max:5',
+            'delivery_ontime_ratio' => 'required|numeric|min:0|max:1',
+            'defect_ratio' => 'required|numeric|min:0|max:1',
+            'cost_variance_ratio' => 'required|numeric|min:0',
+            'final_score' => 'required|numeric|min:0|max:5'
         ]);
 
         try {
             DB::beginTransaction();
 
-            $evaluation = $supplier->evaluations()->create([
-                'evaluator_id' => auth()->id(),
-                'evaluation_date' => now(),
-                'ratings' => $request->ratings,
-                'comments' => $request->comments,
-                'average_rating' => collect($request->ratings)->avg()
-            ]);
+            // Delete existing evaluation for this supplier if any (keep only latest)
+            $supplier->evaluations()->delete();
 
-            // Update supplier's average rating
-            $supplier->update([
-                'average_rating' => $supplier->evaluations()->avg('average_rating')
+            $evaluation = $supplier->evaluations()->create([
+                'delivery_speed_score' => $request->delivery_speed_score,
+                'delivery_ontime_ratio' => $request->delivery_ontime_ratio,
+                'quality_score' => $request->quality_score,
+                'defect_ratio' => $request->defect_ratio,
+                'cost_variance_score' => $request->cost_variance_score,
+                'cost_variance_ratio' => $request->cost_variance_ratio,
+                'performance_score' => $request->performance_score,
+                'engagement_score' => $request->engagement_score,
+                'sustainability_score' => $request->sustainability_score,
+                'final_score' => $request->final_score,
+                'evaluation_date' => now()
             ]);
 
             DB::commit();
 
-            return back()->with('success', 'Evaluation submitted successfully.');
+            return response()->json([
+                'success' => true,
+                'message' => 'Evaluation submitted successfully.',
+                'evaluation' => $evaluation
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error storing supplier evaluation: ' . $e->getMessage());
-            return back()->with('error', 'Failed to submit evaluation. Please try again.');
+            Log::error('Error storing supplier evaluation: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to submit evaluation. Please try again.'
+            ], 500);
         }
     }
 
