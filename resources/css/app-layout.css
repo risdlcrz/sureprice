@@ -1,7 +1,22 @@
+/* --- Design tokens (uniform, minimalist) --- */
+:root {
+    --sp-bg: #f5f6f8;
+    --sp-card-bg: #fff;
+    --sp-border: #e8eaed;
+    --sp-text: #1f2937;
+    --sp-text-muted: #6b7280;
+    --sp-primary: #1b5e20;
+    --sp-primary-hover: #2e7d32;
+    --sp-radius: 12px;
+    --sp-radius-sm: 8px;
+    --sp-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    --sp-shadow-card: 0 2px 8px rgba(0,0,0,0.04);
+}
+
 body {
-    font-family: 'Inter', Arial, sans-serif;
-    background: #f7f9fb;
-    color: #222;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--sp-bg);
+    color: var(--sp-text);
 }
 .app-container {
     min-height: 100vh;
@@ -9,74 +24,235 @@ body {
     flex-direction: row;
 }
 .left-header {
-    background: #1b5e20;
-    min-width: 220px;
-    max-width: 260px;
-    padding: 2rem 1rem 2rem 1rem;
-    border-radius: 0 2rem 2rem 0;
-    box-shadow: 2px 0 16px 0 rgba(0,0,0,0.04);
+    background: var(--sp-primary);
+    min-width: 200px;
+    max-width: 240px;
+    padding: 1.5rem 0.75rem;
+    border-radius: 0 var(--sp-radius) var(--sp-radius) 0;
+    box-shadow: var(--sp-shadow);
 }
-.left-header .nav-link, .left-header button, .left-header a {
-    color: #fff;
-    font-size: 1.1rem;
-    border-radius: 0.75rem;
-    margin-bottom: 0.5rem;
-    padding: 0.75rem 1rem;
-    transition: background 0.2s;
+.left-header .nav-link, .left-header button, .left-header a.btn {
+    color: rgba(255,255,255,0.95);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    border-radius: var(--sp-radius-sm);
+    margin-bottom: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    transition: background 0.15s, color 0.15s;
+    border: none;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
-.left-header .nav-link.active, .left-header .nav-link:hover, .left-header button:hover, .left-header a:hover {
-    background: #388e3c;
+.left-header .nav-link.active, .left-header .nav-link:hover, .left-header button:hover, .left-header a.btn:hover {
+    background: rgba(255,255,255,0.12);
     color: #fff;
+}
+.left-header .profile-container .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.85;
+}
+.left-header .profile-container .username {
+    font-weight: 600;
+    font-size: 0.9375rem;
+}
+.left-header .profile-container .role {
+    font-size: 0.8125rem;
+    opacity: 0.9;
 }
 .content {
     flex: 1;
-    padding: 2.5rem 2rem 2rem 2rem;
-    background: #f7f9fb;
-    border-radius: 2rem 0 0 2rem;
+    padding: 1.75rem 1.5rem;
+    background: var(--sp-bg);
+    border-radius: var(--sp-radius) 0 0 var(--sp-radius);
     min-height: 100vh;
 }
 .navbar, .mobile-topbar {
-    background: #fff;
-    border-bottom: 1px solid #e0e0e0;
-    box-shadow: 0 2px 8px 0 rgba(0,0,0,0.03);
-    border-radius: 0 0 1rem 1rem;
-    padding: 1rem 2rem;
-    margin-bottom: 2rem;
+    background: var(--sp-card-bg);
+    border-bottom: 1px solid var(--sp-border);
+    box-shadow: var(--sp-shadow);
+    border-radius: 0 0 var(--sp-radius-sm) var(--sp-radius-sm);
+    padding: 0.75rem 1.5rem;
+    margin-bottom: 1.5rem;
 }
 .navbar .logo, .mobile-topbar .logo {
     font-weight: 600;
-    font-size: 1.5rem;
-    color: #1b5e20;
+    font-size: 1.25rem;
+    color: var(--sp-primary);
 }
 .btn, .btn-primary, .btn-secondary {
-    border-radius: 2rem !important;
+    border-radius: var(--sp-radius-sm) !important;
     font-weight: 500;
-    font-size: 1rem;
-    padding: 0.5rem 1.5rem;
+    font-size: 0.9375rem;
+    padding: 0.5rem 1.25rem;
+}
+.btn-primary {
+    background: var(--sp-primary);
+    border-color: var(--sp-primary);
+}
+.btn-primary:hover {
+    background: var(--sp-primary-hover);
+    border-color: var(--sp-primary-hover);
 }
 .card, .modal-content {
-    border-radius: 1.5rem;
-    box-shadow: 0 2px 16px 0 rgba(0,0,0,0.06);
-    border: none;
+    border-radius: var(--sp-radius);
+    box-shadow: var(--sp-shadow-card);
+    border: 1px solid var(--sp-border);
+    background: var(--sp-card-bg);
+}
+.card-header {
+    background: var(--sp-card-bg);
+    border-bottom: 1px solid var(--sp-border);
+    padding: 1rem 1.25rem;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--sp-text);
+}
+.card-body {
+    padding: 1.25rem;
+}
+.card-footer {
+    background: var(--sp-card-bg);
+    border-top: 1px solid var(--sp-border);
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9375rem;
 }
 .modal-header, .modal-footer {
     border: none;
-    background: #f7f9fb;
-    border-radius: 1.5rem 1.5rem 0 0;
+    background: var(--sp-bg);
+    border-radius: var(--sp-radius) var(--sp-radius) 0 0;
 }
 .form-label {
     font-weight: 500;
-    color: #1b5e20;
+    color: var(--sp-text);
+    font-size: 0.9375rem;
 }
 .form-control, .form-select {
-    border-radius: 0.75rem;
-    border: 1px solid #cfd8dc;
-    font-size: 1rem;
-    padding: 0.75rem 1rem;
+    border-radius: var(--sp-radius-sm);
+    border: 1px solid var(--sp-border);
+    font-size: 0.9375rem;
+    padding: 0.5rem 0.75rem;
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--sp-primary);
+    box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.12);
 }
 .alert {
-    border-radius: 1rem;
-    font-size: 1rem;
+    border-radius: var(--sp-radius-sm);
+    font-size: 0.9375rem;
+}
+
+/* --- Global tables (neat and consistent) --- */
+.content .table,
+.content-wrapper .table {
+    margin-bottom: 0;
+    font-size: 0.9375rem;
+    border-collapse: collapse;
+    background: var(--sp-card-bg);
+    border-radius: var(--sp-radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--sp-border);
+}
+.content .table thead th,
+.content-wrapper .table thead th {
+    background: var(--sp-bg);
+    color: var(--sp-text);
+    font-weight: 600;
+    font-size: 0.8125rem;
+    text-transform: none;
+    letter-spacing: 0.01em;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--sp-border);
+}
+.content .table tbody td,
+.content-wrapper .table tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--sp-border);
+    color: var(--sp-text);
+    vertical-align: middle;
+}
+.content .table tbody tr:last-child td,
+.content-wrapper .table tbody tr:last-child td {
+    border-bottom: none;
+}
+.content .table tbody tr:hover,
+.content-wrapper .table tbody tr:hover {
+    background: rgba(27, 94, 32, 0.03);
+}
+.content .table tfoot td,
+.content-wrapper .table tfoot td {
+    padding: 0.75rem 1rem;
+    background: var(--sp-bg);
+    border-top: 2px solid var(--sp-border);
+    font-weight: 600;
+    color: var(--sp-text);
+}
+.content .table.table-bordered thead th,
+.content .table.table-bordered tbody td,
+.content .table.table-bordered tfoot td,
+.content-wrapper .table.table-bordered thead th,
+.content-wrapper .table.table-bordered tbody td,
+.content-wrapper .table.table-bordered tfoot td {
+    border: 1px solid var(--sp-border);
+}
+.content .table thead.table-light th,
+.content-wrapper .table thead.table-light th {
+    background: var(--sp-bg) !important;
+}
+.content .table tfoot.table-light td,
+.content-wrapper .table tfoot.table-light td {
+    background: var(--sp-bg) !important;
+}
+.content .table-responsive,
+.content-wrapper .table-responsive {
+    border-radius: var(--sp-radius-sm);
+    border: 1px solid var(--sp-border);
+}
+
+/* --- Page titles and empty states (uniform across client, supplier, etc.) --- */
+/* Client page title: same as My Payments Dashboard (centered, bold, green) */
+.client-page-title {
+    font-weight: 700;
+    color: #198754;
+    letter-spacing: 0.01em;
+}
+.content .container h1,
+.content .container-fluid h1,
+.content-wrapper h1 {
+    font-size: 1.375rem;
+    font-weight: 600;
+    color: var(--sp-text);
+    margin-bottom: 0.25rem;
+}
+.content .container h1.client-page-title,
+.content .container-fluid h1.client-page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #198754;
+    margin-bottom: 1rem;
+}
+.content .container .text-muted.mb-0,
+.content .container .text-muted:first-of-type,
+.content .container p.text-muted {
+    font-size: 0.9375rem;
+    color: var(--sp-text-muted);
+}
+.content .card .card-header.bg-white {
+    background: var(--sp-card-bg) !important;
+}
+.content .card .text-center.text-muted.py-4,
+.content .card .text-center.text-muted {
+    padding: 2rem 1rem !important;
+    font-size: 0.9375rem;
+    color: var(--sp-text-muted);
+}
+.content .btn-sm {
+    border-radius: var(--sp-radius-sm);
+    font-size: 0.8125rem;
+    padding: 0.35rem 0.75rem;
 }
 @media (max-width: 900px) {
     .app-container { flex-direction: column; }

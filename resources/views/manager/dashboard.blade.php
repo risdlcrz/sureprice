@@ -93,71 +93,58 @@
         </div>
     @endif
 
-    <!-- Quick Access Cards Based on Sidebar (with Images) -->
+    <!-- Quick Access - full-width, well positioned -->
     <section class="mb-5">
-        <h2 class="mb-4 fw-semibold text-success">Quick Access</h2>
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-            <!-- Project & Procurement Card -->
-            <div class="col">
-                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('admin.project') }}';" style="cursor:pointer;">
-                    <img src="{{ asset('images/ppimage9.jpg') }}" class="card-img-top flex-grow-1" alt="Project & Procurement" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Project & Procurement</h5>
-                    </div>
-                </div>
-            </div>
-            <!-- Project History Card -->
-            <div class="col">
-                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('history.dashboard') }}';" style="cursor:pointer;">
-                    <img src="{{ asset('images/projectdash1.jpg') }}" class="card-img-top flex-grow-1" alt="Project History" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Project History</h5>
-                    </div>
-                </div>
-            </div>
-            <!-- Inventory Card -->
-            <div class="col">
-                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('inventory.index') }}';" style="cursor:pointer;">
-                    <img src="{{ asset('images/historydash3.jpg') }}" class="card-img-top flex-grow-1" alt="Inventory" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Inventory</h5>
-                    </div>
-                </div>
-            </div>
-            <!-- Transactions Card -->
-            <div class="col">
-                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('admin.transactions') }}';" style="cursor:pointer;">
-                    <img src="{{ asset('images/ppimage10.png') }}" class="card-img-top flex-grow-1" alt="Transactions" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Transactions</h5>
-                    </div>
-                </div>
-            </div>
-            <!-- Payments Card -->
-            <div class="col">
-                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('payments.index') }}';" style="cursor:pointer;">
-                    <img src="{{ asset('images/ppimage1.jpg') }}" class="card-img-top flex-grow-1" alt="Payments" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Payments</h5>
-                    </div>
-                </div>
-            </div>
-            <!-- Messages Card -->
-            <div class="col">
-                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('messages.index') }}';" style="cursor:pointer;">
-                    <img src="{{ asset('images/messages.avif') }}" class="card-img-top flex-grow-1" alt="Messages" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Messages</h5>
-                    </div>
-                </div>
-            </div>
-            <!-- Client Feedback Analytics Card -->
-            <div class="col">
-                <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('admin.feedback.analytics') }}';" style="cursor:pointer;">
-                    <img src="{{ asset('images/aimage6.jpg') }}" class="card-img-top flex-grow-1" alt="Client Feedback Analytics" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
-                    <div class="card-body text-center">
-                        <h5 class="card-title">Client Feedback Analytics</h5>
-                    </div>
+        <h2 class="mb-3 fw-semibold" style="color:#198754;font-size:1.25rem;">Quick Access</h2>
+        <div class="card manager-quick-access-card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 manager-quick-access-table w-100">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;"></th>
+                                <th>Module</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr onclick="window.location.href='{{ route('admin.project') }}';" style="cursor:pointer;">
+                                <td><i class="fas fa-tasks text-primary"></i></td>
+                                <td>Project & Procurement</td>
+                                <td class="text-end"><i class="fas fa-chevron-right text-muted small"></i></td>
+                            </tr>
+                            <tr onclick="window.location.href='{{ route('history.dashboard') }}';" style="cursor:pointer;">
+                                <td><i class="fas fa-history text-success"></i></td>
+                                <td>Project History</td>
+                                <td class="text-end"><i class="fas fa-chevron-right text-muted small"></i></td>
+                            </tr>
+                            <tr onclick="window.location.href='{{ route('inventory.index') }}';" style="cursor:pointer;">
+                                <td><i class="fas fa-boxes text-info"></i></td>
+                                <td>Inventory</td>
+                                <td class="text-end"><i class="fas fa-chevron-right text-muted small"></i></td>
+                            </tr>
+                            <tr onclick="window.location.href='{{ route('admin.transactions') }}';" style="cursor:pointer;">
+                                <td><i class="fas fa-exchange-alt text-primary"></i></td>
+                                <td>Transactions</td>
+                                <td class="text-end"><i class="fas fa-chevron-right text-muted small"></i></td>
+                            </tr>
+                            <tr onclick="window.location.href='{{ route('payments.index') }}';" style="cursor:pointer;">
+                                <td><i class="fas fa-money-check-alt text-success"></i></td>
+                                <td>Payments</td>
+                                <td class="text-end"><i class="fas fa-chevron-right text-muted small"></i></td>
+                            </tr>
+                            <tr onclick="window.location.href='{{ route('messages.index') }}';" style="cursor:pointer;">
+                                <td><i class="fas fa-comments text-info"></i></td>
+                                <td>Messages</td>
+                                <td class="text-end"><i class="fas fa-chevron-right text-muted small"></i></td>
+                            </tr>
+                            <tr onclick="window.location.href='{{ route('admin.feedback.analytics') }}';" style="cursor:pointer;">
+                                <td><i class="fas fa-chart-line text-primary"></i></td>
+                                <td>Client Feedback Analytics</td>
+                                <td class="text-end"><i class="fas fa-chevron-right text-muted small"></i></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

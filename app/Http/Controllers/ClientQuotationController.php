@@ -52,8 +52,10 @@ class ClientQuotationController extends Controller
             return [$scope->id => $scopeArr];
         })->toArray();
         
-        // Get session data if any
+        // Get session data if any (for authenticated flow)
         $sessionData = session('client_quotation_data', []);
+        // Guest form data restored after login
+        $guestQuotationData = session('guest_quotation_data', []);
         
         // Get all unique materials for this category
         $allMaterials = $scopeTypes->flatMap->materials->unique('id');
@@ -61,7 +63,7 @@ class ClientQuotationController extends Controller
         // Get supplier/badge data for each material
         $materialSuppliers = $this->getMaterialSuppliersWithBadges($allMaterials);
         
-        return view('client.quotation.create', compact('scopeTypesByCode', 'sessionData', 'category', 'materialSuppliers'));
+        return view('client.quotation.create', compact('scopeTypesByCode', 'sessionData', 'category', 'materialSuppliers', 'guestQuotationData'));
     }
     
     public function store(Request $request)
@@ -74,6 +76,23 @@ class ClientQuotationController extends Controller
             'rooms.*.height' => 'required|numeric|min:0.01',
             'rooms.*.scope' => 'required|array|min:1',
         ]);
+
+        // Guest: require login/account before submitting (saves DB and ties request to a client)
+        if (!auth()->check()) {
+            Session::put('guest_quotation_data', $request->all());
+            Session::put('redirect_after_login', route('client.quotation.create'));
+            return redirect()->route('login.form')
+                ->with('success', 'Please log in or create an account to submit your quotation request. Your form has been saved.');
+        }
+
+        // Ensure user is a client (e.g. company with designation client)
+        $user = auth()->user();
+        if ($user->user_type !== 'company' || !$user->company || $user->company->designation !== 'client') {
+            Session::put('guest_quotation_data', $request->all());
+            Session::put('redirect_after_login', route('client.quotation.create'));
+            return redirect()->route('login.form')
+                ->with('success', 'Please log in with a client account to submit your quotation request. Your form has been saved.');
+        }
 
         // Debug: Log the validated data
         \Log::info('Validated Quotation Request:', $validated);
@@ -182,6 +201,8 @@ class ClientQuotationController extends Controller
 
         Session::put('client_quotation_data', $validated);
         Session::put('quotation_request_id', $quotationRequest->id);
+        Session::forget('guest_quotation_data');
+        Session::forget('redirect_after_login');
         return redirect()->route('client.quotation.view', ['id' => $quotationRequest->id]);
     }
     

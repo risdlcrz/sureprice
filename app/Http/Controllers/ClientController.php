@@ -126,7 +126,8 @@ class ClientController extends Controller
             return redirect()->route('login.form')->with('error', 'No company associated with this account.');
         }
 
-        // Find the client party record for this user
+        // Find the client party record for this user (middleware already confirmed client designation)
+        $user->loadMissing('company');
         $clientParty = \App\Models\Party::where('user_id', $user->id)
             ->where('entity_type', 'client')
             ->first();
@@ -138,8 +139,8 @@ class ClientController extends Controller
         ]);
 
         if (!$clientParty) {
-            Log::info('No client profile found, redirecting to login');
-            return redirect()->route('login.form')->with('error', 'No client profile found. Please contact the administrator.');
+            Log::info('No client profile found, showing message without redirecting to login');
+            return redirect()->route('landing.catalogue')->with('error', 'No client profile found. Please contact the administrator.');
         }
 
         // Get only the client's own contracts using the party relationship
@@ -161,6 +162,7 @@ class ClientController extends Controller
     public function projectProcurement()
     {
         $user = auth()->user();
+        $user->loadMissing('company');
         $company = $user->company;
         if (!$company) {
             return redirect()->route('client.dashboard')->with('error', 'No company associated with this account.');

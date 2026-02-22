@@ -24,14 +24,27 @@
 
 <!-- Navigation Links -->
 <div class="nav-buttons">
-    @if(auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client')
+    @if(!auth()->check())
+        <a href="{{ url('/') }}" class="btn" style="display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-home"></i> <span>Home</span>
+        </a>
+        <a href="{{ route('client.quotation.create') }}" class="btn" style="display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-file-alt"></i> <span>Request Quotation</span>
+        </a>
+        <a href="{{ route('login.form') }}" class="btn" style="display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-sign-in-alt"></i> <span>Login</span>
+        </a>
+        <a href="{{ route('register') }}" class="btn" style="display: flex; align-items: center; gap: 8px;">
+            <i class="fas fa-user-plus"></i> <span>Sign up</span>
+        </a>
+    @elseif(auth()->check() && auth()->user()->user_type === 'company' && (optional(auth()->user()->company)->designation === 'client' || auth()->user()->role === 'client'))
         <a href="{{ url('/') }}" class="btn" style="display: flex; align-items: center; gap: 8px;">
             <i class="fas fa-building"></i> <span>Home</span>
         </a>
-        <a href="{{ route('client.dashboard') }}" class="btn">
+        <a href="{{ route('client.quotation.index') }}" class="btn">
             <i class="fas fa-tachometer-alt"></i>Dashboard
         </a>
-        <a href="{{ route('client.project.procurement') }}" class="btn">
+        <a href="{{ route('client.quotation.create') }}" class="btn">
             <i class="fas fa-tasks"></i>Project & Procurement
         </a>
         <a href="{{ route('client.quotation.index') }}" class="btn">

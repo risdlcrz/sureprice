@@ -112,7 +112,7 @@
 
                     <!-- Material Requests Table -->
                     <div class="table-responsive mb-4">
-                        <table class="table table-bordered table-hover table-striped" id="materialRequestsTable">
+                        <table class="table table-hover" id="materialRequestsTable">
                             <thead>
                                 <tr>
                                     <th>Request #</th>
@@ -166,183 +166,116 @@
 
 @push('styles')
 <style>
-body {
-    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
-}
+body { background: #f5f6f8 !important; }
 .card {
-    border-radius: 1.25rem;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    border: none;
-    margin-bottom: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border: 1px solid #e8eaed;
+    margin-bottom: 1.5rem;
 }
 .card-header {
     background: #fff;
-    border-radius: 1.25rem 1.25rem 0 0;
-    border-bottom: none;
-    padding: 1.5rem 2rem 1rem 2rem;
+    border-bottom: 1px solid #e8eaed;
+    padding: 1rem 1.25rem;
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    gap: 1rem;
 }
 .btn-primary {
-    border-radius: 2rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
+    background: #198754 !important;
+    background-image: none !important;
     border: none;
-    box-shadow: 0 2px 8px #38b6ff33;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    border-radius: 8px;
+    font-weight: 600;
 }
-.btn-primary:hover {
-    filter: brightness(1.08);
-    box-shadow: 0 4px 16px #38b6ff33;
-}
+.btn-primary:hover { background: #157347 !important; }
 .small-box {
-    border-radius: 1.1rem;
-    box-shadow: 0 2px 12px rgba(44,62,80,0.06);
+    border-radius: 10px;
     color: #fff;
-    padding: 1.2rem 1.5rem 1.2rem 1.5rem;
+    padding: 1rem 1.25rem;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 110px;
+    min-height: 100px;
     position: relative;
     overflow: hidden;
-    margin-bottom: 0.5rem;
+    border: 1px solid rgba(0,0,0,0.06);
 }
 .small-box.bg-info {
-    background: linear-gradient(90deg, #38b6ff 0%, #00c6fb 100%);
+    background: #0dcaf0 !important;
 }
 .small-box.bg-success {
-    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
+    background: #198754 !important;
 }
 .small-box.bg-warning {
-    background: linear-gradient(90deg, #ffc107 0%, #ffecb3 100%);
-    color: #222;
+    background: #ffc107 !important;
+    color: #1f2937;
 }
 .small-box.bg-primary {
-    background: linear-gradient(90deg, #2563eb 0%, #38b6ff 100%);
+    background: #0d6efd !important;
 }
-.small-box .inner h3 {
-    font-size: 2.1rem;
-    font-weight: 700;
-    margin-bottom: 0.2rem;
-}
-.small-box .inner p {
-    font-size: 1.08rem;
-    margin-bottom: 0;
-    font-weight: 500;
-}
+.small-box .inner h3 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.2rem; }
+.small-box .inner p { font-size: 0.9375rem; margin-bottom: 0; font-weight: 500; }
 .small-box .icon {
     position: absolute;
-    right: 1.2rem;
-    bottom: 1.2rem;
-    font-size: 2.2rem;
-    opacity: 0.18;
+    right: 1rem;
+    bottom: 1rem;
+    font-size: 1.75rem;
+    opacity: 0.25;
 }
 .input-group .form-control {
-    border-radius: 1.2rem 0 0 1.2rem;
-    border: 1px solid #d1d5db;
-    background: #f8fafc;
-    font-size: 1.08rem;
-    padding: 0.85rem 1.1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    border-radius: 8px 0 0 8px;
+    border: 1px solid #e8eaed;
+    font-size: 0.9375rem;
 }
 .input-group .form-control:focus {
-    border-color: #38b6ff;
-    box-shadow: 0 0 0 2px #38b6ff33;
-    background: #fff;
+    border-color: #198754;
+    box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.15);
 }
 .input-group-append .btn {
-    border-radius: 0 1.2rem 1.2rem 0;
-    background: #38b6ff;
+    border-radius: 0 8px 8px 0;
+    background: #198754 !important;
     color: #fff;
-    font-size: 1.2rem;
     border: none;
-    box-shadow: 0 2px 8px #38b6ff33;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 }
-.input-group-append .btn:hover {
-    background: #2563eb;
-    color: #fff;
-}
-.btn-group .btn {
-    border-radius: 2rem !important;
-    font-weight: 600;
-    font-size: 1.08rem;
-    border: none;
-    box-shadow: 0 2px 8px #38b6ff33;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-}
+.input-group-append .btn:hover { background: #157347 !important; }
 .btn-default {
-    background: #e9ecef;
-    color: #495057;
+    background: #f5f6f8;
+    color: #1f2937;
+    border: 1px solid #e8eaed;
+    border-radius: 8px;
 }
-.btn-default:hover {
-    background: #d1d5db;
-    color: #222;
-}
+.btn-default:hover { background: #e8eaed; }
 .table-responsive {
-    border-radius: 1.1rem;
-    overflow-x: auto;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    background: #fff;
-    max-width: 100%;
-}
-.table {
-    margin-bottom: 0;
-    background: #fff;
-    border-radius: 1.1rem;
+    border-radius: 8px;
     overflow: hidden;
-    font-size: 0.97rem;
+    border: 1px solid #e8eaed;
 }
-.table th, .table td {
-    vertical-align: middle;
-    padding: 0.7rem 0.5rem;
-    border: none;
-    background: #f8fafc;
-    text-align: center;
-}
-.table thead th {
-    background: #f1f5f9;
-    font-weight: 700;
-    color: #198754;
-    border-bottom: 2px solid #e3e3e3;
-    text-align: center;
-}
-.table-hover tbody tr:hover {
-    background: #e3f2fd44;
-}
-.badge {
-    font-size: 0.95em;
+#materialRequestsTable thead th {
+    background: #f5f6f8;
+    color: #1f2937;
     font-weight: 600;
-    letter-spacing: 0.01em;
-    box-shadow: 0 1px 4px #ffc10722;
-    border-radius: 0.7em;
-    padding: 0.5em 1em;
+    font-size: 0.8125rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e8eaed;
 }
-.badge-warning {
-    background-color: #ffc107;
-    color: #212529;
+#materialRequestsTable tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e8eaed;
+    font-size: 0.9375rem;
+    background: #fff;
 }
-.badge-success {
-    background-color: #28a745;
-    color: #fff;
-}
-.badge-secondary {
-    background-color: #6c757d;
-    color: #fff;
-}
+#materialRequestsTable tbody tr:last-child td { border-bottom: none; }
+#materialRequestsTable tbody tr:hover { background: rgba(25, 135, 84, 0.04); }
+.badge { border-radius: 6px; font-weight: 500; }
 .btn-info {
-    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
+    background: #198754 !important;
+    background-image: none !important;
     color: #fff;
     border: none;
+    border-radius: 6px;
 }
-.btn-info:hover {
-    filter: brightness(1.08);
-    color: #fff;
-}
+.btn-info:hover { background: #157347 !important; color: #fff; }
 @media (max-width: 991.98px) {
     .card-header {
         padding: 1rem 0.5rem 0.5rem 0.5rem;

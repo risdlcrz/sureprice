@@ -7,20 +7,24 @@
 @section('content')
 <div class="content-wrapper">
     <div class="container-fluid">
+        <h1 class="h3 mb-4 text-center client-page-title">
+            Request a Quotation
+            @if(is_array($category))
+                - {{ implode(', ', $category) }}
+            @elseif(!empty($category))
+                - {{ $category }}
+            @endif
+        </h1>
         <div class="row">
             <div class="col-12">
                 <div class="card mb-4">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="mb-0">
-                            Request a Quotation - 
-                            @if(is_array($category))
-                                {{ implode(', ', $category) }}
-                            @else
-                                {{ $category ?? '' }}
-                            @endif
-                        </h5>
-                    </div>
                     <div class="card-body">
+                        @if(!empty($guestQuotationData) && !empty($guestQuotationData['rooms']))
+                            <div class="alert alert-info mb-3" role="alert">
+                                <i class="fas fa-info-circle me-2"></i>
+                                You’re logged in. Your quotation form has been restored. Click <strong>Submit Quotation Request</strong> below to submit.
+                            </div>
+                        @endif
                         <form method="POST" action="{{ route('client.quotation.store') }}" id="quotationForm" novalidate>
                             @csrf
                             <!-- Room/Area Details (step2 logic) -->
@@ -58,6 +62,12 @@
                                         <tbody>
                                             <!-- Dynamically filled by JS (step2 logic) -->
                                         </tbody>
+                                        <tfoot class="table-light">
+                                            <tr>
+                                                <td colspan="7" class="text-end fw-bold">Overall Total</td>
+                                                <td class="fw-bold" id="overallTotalCell">₱0.00</td>
+                                            </tr>
+                                        </tfoot>
                                     </table>
                                 </div>
                             </div>
@@ -111,6 +121,7 @@ const DEFAULT_CREW_SIZE = 8; // 8 workers
 const DEFAULT_HOURS_PER_DAY = 8; // 8 hours per day
 const scopeTypesByCode = @json($scopeTypesByCode);
 const materialSuppliers = @json($materialSuppliers);
+const guestQuotationData = @json($guestQuotationData ?? []);
 const badgeColors = {
     'Overall Best': 'success',
     'Cheapest': 'primary',
@@ -298,6 +309,7 @@ function updateBreakdownTable() {
     const tbody = document.querySelector('#breakdownTable tbody');
     tbody.innerHTML = '';
     let rowIdx = 0;
+    let overallTotal = 0;
     document.querySelectorAll('.room-row').forEach(room => {
         updateScopeDays(room);
         const roomName = room.querySelector('input[name$="[name]"]').value || `Room ${room.dataset.roomId}`;
@@ -339,6 +351,7 @@ function updateBreakdownTable() {
                     coverageInfo = ` (1 ${material.unit} covers 1 sqm)`;
                 }
                 const baseTotal = material.base_price * quantity;
+                overallTotal += baseTotal;
                 tr.innerHTML = `
                     <td>${roomName}</td>
                     <td>${scope.name}</td>
@@ -356,6 +369,39 @@ function updateBreakdownTable() {
             });
         });
     });
+    // Update Overall Total (sum of Base Total Cost)
+    const overallCell = document.getElementById('overallTotalCell');
+    if (overallCell) overallCell.textContent = '₱' + overallTotal.toFixed(2);
+}
+
+// Restore form from guest data (after login)
+function restoreGuestQuotationData() {
+    if (!guestQuotationData || !guestQuotationData.rooms || typeof guestQuotationData.rooms !== 'object') return;
+    const rooms = guestQuotationData.rooms;
+    document.getElementById('roomDetails').innerHTML = '';
+    Object.keys(rooms).forEach(roomId => {
+        const r = rooms[roomId];
+        const roomData = {
+            id: roomId,
+            name: r.name || '',
+            length: r.length != null ? r.length : '',
+            width: r.width != null ? r.width : '',
+            height: r.height != null ? r.height : '',
+            floor_area: r.floor_area != null ? r.floor_area : '0.00',
+            wall_area: r.wall_area != null ? r.wall_area : '0.00'
+        };
+        createRoomRow(roomData);
+        const scopeIds = Array.isArray(r.scope) ? r.scope : [];
+        const roomRow = document.querySelector(`.room-row[data-room-id="${roomId}"]`);
+        if (roomRow) {
+            scopeIds.forEach(scopeId => {
+                const cb = roomRow.querySelector(`.scope-checkbox[value="${scopeId}"]`);
+                if (cb) cb.checked = true;
+            });
+            updateScopeDays(roomRow);
+        }
+    });
+    updateBreakdownTable();
 }
 
 // --- Event Listeners ---
@@ -363,7 +409,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('addRoomBtn').addEventListener('click', function() {
         createRoomRow();
     });
-    updateBreakdownTable();
+    if (guestQuotationData && guestQuotationData.rooms && Object.keys(guestQuotationData.rooms).length > 0) {
+        restoreGuestQuotationData();
+    } else {
+        updateBreakdownTable();
+    }
     // Only add recommendAllBtn event listener if the button exists
     const recommendAllBtn = document.getElementById('recommendAllBtn');
     if (recommendAllBtn) {

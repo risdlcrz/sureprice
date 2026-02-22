@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('content')
 <div class="container mt-4">
+    <h1 class="h3 mb-4 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Quotations Management</h1>
     <div class="card">
         <div class="card-header pb-0">
             <ul class="nav nav-tabs card-header-tabs">
@@ -86,7 +87,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 body, .container {
-    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
+    background: #f5f6f8 !important;
     font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
 }
 .card {
@@ -122,19 +123,19 @@ body, .container {
     transition: background 0.2s, color 0.2s;
 }
 .nav-link.active {
-    background: linear-gradient(90deg, #2196f3 0%, #21cbf3 100%);
+    background: #198754 !important;
     color: #fff !important;
-    box-shadow: 0 2px 8px #2196f322;
 }
 .table th {
     font-weight: 600;
-    color: #495057;
-    background: #f8fafc;
-    border-top: none;
+    color: #1f2937;
+    background: #f5f6f8;
+    border-bottom: 1px solid #e8eaed;
+    padding: 0.75rem 1rem;
 }
+.table td { padding: 0.75rem 1rem; border-bottom: 1px solid #e8eaed; }
 .table-hover tbody tr:hover {
-    background: #f4faff;
-    transition: background 0.2s;
+    background: rgba(25, 135, 84, 0.04);
 }
 .table td, .table th {
     vertical-align: middle;
@@ -148,21 +149,17 @@ body, .container {
     box-shadow: 0 1px 4px #38b6ff22;
 }
 .btn-primary {
-    background: linear-gradient(90deg, #2196f3 0%, #21cbf3 100%) !important;
+    background: #198754 !important;
+    background-image: none !important;
     color: #fff !important;
     border: none;
     font-weight: 600;
-    border-radius: 2rem;
-    padding: 0.5em 1.5em;
-    font-size: 1.08em;
-    letter-spacing: 0.01em;
-    box-shadow: 0 2px 8px #2196f322;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    border-radius: 8px;
+    padding: 0.5em 1.25em;
 }
 .btn-primary:hover {
-    background: linear-gradient(90deg, #21cbf3 0%, #2196f3 100%) !important;
+    background: #157347 !important;
     color: #fff;
-    box-shadow: 0 4px 16px #2196f344;
 }
 </style>
 @endpush 

@@ -67,6 +67,10 @@ Route::get('/register', [RegisteredUserController::class, 'create'])->name('regi
 Route::post('/register/company', [RegisteredUserController::class, 'store'])->name('register.company');
 Route::get('/pending-approval', [RegisteredUserController::class, 'pendingApproval'])->name('pending.approval');
 
+// ================== Guest Quotation (Ask Quotation - no login required) ==================
+Route::get('/client/quotation/create', [\App\Http\Controllers\ClientQuotationController::class, 'create'])->name('client.quotation.create');
+Route::post('/client/quotation/store', [\App\Http\Controllers\ClientQuotationController::class, 'store'])->name('client.quotation.store');
+
 // ================== Legal Pages ==================
 Route::get('/terms-conditions', function () {
     return view('legal.terms-conditions');
@@ -327,18 +331,14 @@ Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefi
         return redirect()->back()->with('success', 'All notifications marked as read.');
     })->name('notifications.mark-all-read');
     
-    // Client Quotation Routes
+    // Client Quotation Routes (create/store are public above; these require auth)
     Route::prefix('quotation')->name('quotation.')->group(function () {
-        Route::get('/create', [\App\Http\Controllers\ClientQuotationController::class, 'create'])->name('create');
-        Route::post('/store', [\App\Http\Controllers\ClientQuotationController::class, 'store'])->name('store');
         Route::get('/suppliers', [\App\Http\Controllers\ClientQuotationController::class, 'suppliers'])->name('suppliers');
         Route::get('/recommend-suppliers', [\App\Http\Controllers\ClientQuotationController::class, 'recommendSuppliers'])->name('recommend-suppliers');
         Route::post('/submit', [\App\Http\Controllers\ClientQuotationController::class, 'submit'])->name('submit');
         Route::post('/save-supplier-selection', [\App\Http\Controllers\ClientQuotationController::class, 'saveSupplierSelection'])->name('saveSupplierSelection');
     });
     Route::get('/quotation', [\App\Http\Controllers\ClientQuotationController::class, 'index'])->name('quotation.index');
-    Route::get('/quotation/create', [\App\Http\Controllers\ClientQuotationController::class, 'create'])->name('quotation.create');
-    Route::post('/quotation', [\App\Http\Controllers\ClientQuotationController::class, 'store'])->name('quotation.store');
     Route::get('/quotation/view', [\App\Http\Controllers\ClientQuotationController::class, 'view'])->name('quotation.view');
     Route::post('/quotation/{id}/finalize', [\App\Http\Controllers\ClientQuotationController::class, 'finalizeSelection'])->name('quotation.finalize');
 });

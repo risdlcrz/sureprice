@@ -94,6 +94,11 @@ class AuthenticatedSessionController extends Controller
                 
                 // If approved, redirect based on designation
                 if ($company->designation === 'client') {
+                    // If they had a saved quotation form (guest), send them back to complete it
+                    if ($request->session()->has('redirect_after_login') && $request->session()->has('guest_quotation_data')) {
+                        Log::info('Client approved, redirecting to quotation create to complete guest submission');
+                        return redirect()->route('client.quotation.create');
+                    }
                     Log::info('Client approved, redirecting to landing page');
                     return redirect()->route('landing.catalogue');
                 } elseif ($company->designation === 'supplier') {

@@ -1,6 +1,7 @@
 @extends('layouts.app')
 @section('content')
 <div class="container mt-4">
+    <h1 class="h3 mb-4 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Quotations Management</h1>
     <div class="card">
         <div class="card-header pb-0">
             <ul class="nav nav-tabs card-header-tabs">
@@ -14,8 +15,9 @@
         </div>
         <div class="card-body">
             @if($activeTab === 'client')
-                <h5>All Client Quotation Requests</h5>
-                <table class="table table-bordered table-hover">
+                <h5 class="text-muted mb-3" style="font-size:0.9375rem;">All Client Quotation Requests</h5>
+                <div class="table-responsive">
+                <table class="table table-hover manager-quotations-table">
                     <thead>
                         <tr>
                             <th>Request #</th>
@@ -39,9 +41,11 @@
                         @endforelse
                     </tbody>
                 </table>
+                </div>
             @else
-                <h5>All Supplier Quotations Sent</h5>
-                <table class="table table-bordered table-hover">
+                <h5 class="text-muted mb-3" style="font-size:0.9375rem;">All Supplier Quotations Sent</h5>
+                <div class="table-responsive">
+                <table class="table table-hover manager-quotations-table">
                     <thead>
                         <tr>
                             <th>RFQ #</th>
@@ -76,8 +80,51 @@
                         @endforelse
                     </tbody>
                 </table>
+                </div>
             @endif
         </div>
     </div>
 </div>
+@push('styles')
+<style>
+body { background: #f5f6f8 !important; }
+.card {
+    border: 1px solid #e8eaed;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.nav-link.active {
+    background: #198754 !important;
+    color: #fff !important;
+    border-radius: 8px;
+}
+.nav-link:not(.active) {
+    background: #f5f6f8;
+    color: #1f2937;
+    border-radius: 8px;
+}
+.manager-quotations-table thead th {
+    background: #f5f6f8;
+    color: #1f2937;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e8eaed;
+}
+.manager-quotations-table tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e8eaed;
+    font-size: 0.9375rem;
+}
+.manager-quotations-table tbody tr:hover { background: rgba(25, 135, 84, 0.04); }
+.manager-quotations-table .btn-primary {
+    background: #198754 !important;
+    background-image: none !important;
+    border: none;
+    border-radius: 6px;
+}
+.manager-quotations-table .btn-primary:hover { background: #157347 !important; }
+.table-responsive { border: 1px solid #e8eaed; border-radius: 8px; overflow: hidden; }
+</style>
+@endpush
 @endsection 

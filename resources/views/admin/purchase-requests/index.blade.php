@@ -94,7 +94,7 @@
 
                     <!-- Purchase Requests Table -->
                     <div class="table-responsive mb-4">
-                        <table class="table table-bordered table-hover table-striped" id="purchaseRequestsTable">
+                        <table class="table table-hover" id="purchaseRequestsTable">
                             <thead>
                                 <tr>
                                     <th>Request #</th>
@@ -202,184 +202,106 @@ document.addEventListener('DOMContentLoaded', function() {
 
 @push('styles')
 <style>
-body {
-    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
-}
+body { background: #f5f6f8 !important; }
 .card {
-    border-radius: 1.25rem;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    border: none;
-    margin-bottom: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border: 1px solid #e8eaed;
+    margin-bottom: 1.5rem;
 }
 .card-header {
     background: #fff;
-    border-radius: 1.25rem 1.25rem 0 0;
-    border-bottom: none;
-    padding: 1.5rem 2rem 1rem 2rem;
+    border-bottom: 1px solid #e8eaed;
+    padding: 1rem 1.25rem;
 }
 .card-tools .btn-primary {
-    border-radius: 2rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
+    background: #198754 !important;
+    background-image: none !important;
     border: none;
-    box-shadow: 0 2px 8px #38b6ff33;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    border-radius: 8px;
+    font-weight: 600;
 }
 .card-tools .btn-primary:hover {
-    filter: brightness(1.08);
-    box-shadow: 0 4px 16px #38b6ff33;
+    background: #157347 !important;
 }
 .stats-row {
     display: flex;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
     flex-wrap: wrap;
-    justify-content: space-between;
 }
 .stats-card {
-    flex: 1 1 220px;
-    background: linear-gradient(120deg, #e0f7fa 0%, #b2ebf2 100%);
-    border-radius: 1.2rem;
-    box-shadow: 0 2px 12px #38b6ff22;
-    padding: 1.5rem 1.2rem 1.2rem 1.5rem;
+    flex: 1 1 180px;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    min-width: 220px;
-    margin-bottom: 0.5rem;
-    position: relative;
-    transition: box-shadow 0.18s, transform 0.18s;
+    min-width: 160px;
+    border: 1px solid rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s;
 }
-.stats-card:hover {
-    box-shadow: 0 6px 24px #38b6ff33;
-    transform: translateY(-2px) scale(1.03);
-}
+.stats-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 .stats-card.bg-info {
-    background: linear-gradient(120deg, #38b6ff 0%, #b2ebf2 100%);
+    background: #0dcaf0 !important;
     color: #fff;
 }
 .stats-card.bg-success {
-    background: linear-gradient(120deg, #22c55e 0%, #bbf7d0 100%);
+    background: #198754 !important;
     color: #fff;
 }
 .stats-card.bg-warning {
-    background: linear-gradient(120deg, #facc15 0%, #fef9c3 100%);
-    color: #7c4700;
+    background: #ffc107 !important;
+    color: #1f2937;
 }
 .stats-card.bg-primary {
-    background: linear-gradient(120deg, #2563eb 0%, #a5b4fc 100%);
+    background: #0d6efd !important;
     color: #fff;
 }
-.stats-card .icon {
-    position: static;
-    font-size: 2.2rem;
-    opacity: 0.25;
-    margin-left: 0.5rem;
-}
-.stats-card .fs-2 {
-    font-size: 2.5rem !important;
-    font-weight: 700;
-    line-height: 1;
-}
-.stats-card .fw-semibold {
-    font-size: 1.15rem;
-    font-weight: 600;
-    margin-top: 0.2rem;
-}
-.search-bar-container {
-    box-shadow: 0 2px 12px rgba(56,189,248,0.10);
-    background: #fff;
-    border-radius: 32px;
-    margin-bottom: 24px;
-    align-items: center;
-    padding: 0.25rem 0.5rem;
-    max-width: 600px;
-}
-#searchInput.form-control {
-    border: none;
-    box-shadow: none;
-    background: #fff;
-    font-size: 1.15rem;
-    border-radius: 32px 0 0 32px;
-}
-#searchInput.form-control:focus {
-    box-shadow: none;
-    background: #f7fafc;
-}
+.stats-card .icon { font-size: 1.75rem; opacity: 0.3; margin-left: 0.5rem; }
+.stats-card .fs-2 { font-size: 2rem !important; font-weight: 700; }
+.stats-card .fw-semibold { font-size: 0.9375rem; font-weight: 600; }
 .input-group-append .btn {
-    border-radius: 0 32px 32px 0;
-    background: #38b6ff;
+    background: #198754 !important;
     color: #fff;
-    font-size: 1.2rem;
     border: none;
-    transition: background 0.2s;
+    border-radius: 0 8px 8px 0;
 }
-.input-group-append .btn:hover {
-    background: #2563eb;
+.input-group-append .btn:hover { background: #157347 !important; }
+.btn-default {
+    background: #f5f6f8;
+    color: #1f2937;
+    border: 1px solid #e8eaed;
+    border-radius: 8px;
 }
-.btn-default, .btn-default:focus {
-    border-radius: 2rem;
-    background: #f1f5f9;
-    color: #2563eb;
-    border: none;
-    font-weight: 500;
-    transition: background 0.2s, color 0.2s;
-}
-.btn-default:hover {
-    background: #e0f2fe;
-    color: #198754;
-}
+.btn-default:hover { background: #e8eaed; }
 .table-responsive {
-    border-radius: 1.1rem;
+    border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    background: #fff;
+    border: 1px solid #e8eaed;
 }
-.table {
-    margin-bottom: 0;
-}
-.table th, .table td {
-    vertical-align: middle;
-    padding: 1rem 0.75rem;
-    border: none;
-}
-.table thead th {
-    background: #f1f5f9;
-    font-weight: 700;
-    color: #198754;
-    border-bottom: 2px solid #e3e3e3;
-}
-.table-hover tbody tr:hover {
-    background: #e3f2fd44;
-}
-.badge {
-    font-size: 0.95em;
+#purchaseRequestsTable thead th {
+    background: #f5f6f8;
+    color: #1f2937;
     font-weight: 600;
-    letter-spacing: 0.01em;
-    box-shadow: 0 1px 4px #ffc10722;
-    border-radius: 0.7em;
-    padding: 0.5em 1em;
+    font-size: 0.8125rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e8eaed;
 }
-.btn-group .btn {
-    border-radius: 1.2rem;
-    font-weight: 500;
-    font-size: 1rem;
-    margin-right: 4px;
-    transition: background 0.18s, color 0.18s;
+#purchaseRequestsTable tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e8eaed;
+    font-size: 0.9375rem;
 }
-.btn-group .btn:last-child {
-    margin-right: 0;
-}
+#purchaseRequestsTable tbody tr:last-child td { border-bottom: none; }
+#purchaseRequestsTable tbody tr:hover { background: rgba(25, 135, 84, 0.04); }
+#purchaseRequestsTable.table-striped tbody tr:nth-of-type(odd) { background: #fff; }
+#purchaseRequestsTable.table-striped tbody tr:hover { background: rgba(25, 135, 84, 0.04); }
+.badge { border-radius: 6px; font-weight: 500; }
+.btn-group .btn { border-radius: 6px; }
 @media (max-width: 1100px) {
-    .stats-row {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    .stats-card {
-        min-width: 0;
-        width: 100%;
-    }
+    .stats-row { flex-direction: column; }
+    .stats-card { min-width: 0; width: 100%; }
 }
 </style>
 @endpush 

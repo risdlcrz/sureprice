@@ -27,7 +27,7 @@
     @if(!$supplier)
         <div class="alert alert-danger">Supplier information not found. Please contact support.</div>
     @else
-        <form method="POST" action="{{ route('supplier.profile.update') }}" enctype="multipart/form-data" class="p-4 rounded shadow bg-white" style="max-width: 800px; margin: 0 auto;">
+        <form method="POST" action="{{ route('supplier.profile.update') }}" enctype="multipart/form-data" class="card p-4" style="max-width: 800px; margin: 0 auto;">
             @csrf
             @method('PUT')
             <h2 class="mb-4">Edit My Information</h2>

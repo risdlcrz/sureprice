@@ -9,89 +9,85 @@
 </head>
 <body>
 
-  <div class="top-bar">
-    <img src="{{ asset('Images/gdc_logo.png') }}" alt="Logo">
-    <span class="top-title">Admin Center</span>
-  </div>
+  <header class="login-header">
+    <img src="{{ asset('Images/gdc_logo.png') }}" alt="Logo" class="login-header__logo">
+    <span class="login-header__title">Admin Center</span>
+  </header>
 
-  <div class="main-container">
-    <div class="login-box">
-      <div class="login-left"></div> <!-- Background image handled in CSS -->
+  <main class="login-main">
+    <div class="login-card">
+      <div class="login-card__illustration" aria-hidden="true"></div>
 
-      <div class="login-right">
-        <h2 class="login-title">Login</h2>
-        @if (session('success'))
-        <div class="success-banner" id="successBanner" style="margin-bottom: 1rem; background: #e8f5e9; color: #256029; border: 1px solid #4caf50; border-radius: 6px; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; position: relative;">
-          <i class="fas fa-check-circle" style="font-size: 1.2rem; color: #388e3c;"></i>
-          <span style="flex:1">{{ session('success') }}</span>
-          <button type="button" aria-label="Dismiss success" onclick="document.getElementById('successBanner').style.display='none'" style="background: none; border: none; color: #256029; font-size: 1.2rem; cursor: pointer; position: absolute; top: 8px; right: 12px; line-height: 1;">&times;</button>
-        </div>
-        @endif
-        <div class="approval-warning" id="approvalNotice" style="margin: 0 0 1.5rem 0; background: #e8f5e9; color: #256029; border: 1px solid #b2dfdb; border-radius: 6px; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; position: relative;">
-          <i class="fas fa-info-circle" style="font-size: 1.2rem;"></i>
-          <span style="flex:1"><strong>Notice:</strong> All client and supplier accounts must be reviewed and approved by an administrator before you can access the system. You will receive an email once your account is approved.</span>
-          <button type="button" aria-label="Dismiss notice" onclick="document.getElementById('approvalNotice').style.display='none'" style="background: none; border: none; color: #256029; font-size: 1.2rem; cursor: pointer; position: absolute; top: 8px; right: 12px; line-height: 1;">&times;</button>
-        </div>
-        
-        @if (Route::has('register'))
-          <div class="signup-link-inside">
-            Don't have an account yet? <a href="{{ route('register') }}">Sign up</a>
+      <div class="login-card__form-wrap">
+        <h1 class="login-card__title">Login</h1>
+
+        <div class="login-alerts">
+          @if (session('success'))
+            <div class="alert alert--success" id="successBanner" role="alert">
+              <i class="fas fa-check-circle alert__icon" aria-hidden="true"></i>
+              <span class="alert__text">{{ session('success') }}</span>
+              <button type="button" class="alert__dismiss" aria-label="Dismiss" onclick="this.closest('.alert').style.display='none'">&times;</button>
+            </div>
+          @endif
+          @if (session('status'))
+            <div class="alert alert--info" role="alert">
+              <i class="fas fa-info-circle alert__icon" aria-hidden="true"></i>
+              <span class="alert__text">{{ session('status') }}</span>
+            </div>
+          @endif
+          @if ($errors->any())
+            <div class="alert alert--error" role="alert">
+              <i class="fas fa-exclamation-circle alert__icon" aria-hidden="true"></i>
+              <ul class="alert__list">
+                @foreach ($errors->all() as $error)
+                  <li>{{ $error }}</li>
+                @endforeach
+              </ul>
+            </div>
+          @endif
+          <div class="alert alert--notice" id="approvalNotice">
+            <i class="fas fa-info-circle alert__icon" aria-hidden="true"></i>
+            <span class="alert__text"><strong>Notice:</strong> Client and supplier accounts require administrator approval. You will receive an email once approved.</span>
+            <button type="button" class="alert__dismiss" aria-label="Dismiss" onclick="this.closest('.alert').style.display='none'">&times;</button>
           </div>
+        </div>
+
+        @if (Route::has('register'))
+          <p class="login-card__signup">
+            Don't have an account? <a href="{{ route('register') }}" class="login-card__link">Sign up</a>
+          </p>
         @endif
 
-   @if (session('status'))
-    <div class="mb-4 session-status">
-        {{ session('status') }}
-    </div>
-@endif
-
-@if ($errors->any())
-    <div class="mb-4 validation-errors">
-        <ul>
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
-
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('login') }}" class="login-form">
           @csrf
 
-          <!-- Email Address -->
-          <div class="input-group">
-           <input type="text" name="login" placeholder="Email or Username" required 
-       value="{{ old('login') }}" autofocus autocomplete="username">
-
+          <div class="login-form__field">
+            <label for="login" class="login-form__label visually-hidden">Email or username</label>
+            <input id="login" type="text" name="login" class="login-form__input" placeholder="Email or username" required
+                   value="{{ old('login') }}" autofocus autocomplete="username">
           </div>
 
-          <!-- Password -->
-          <div class="input-group password-wrapper">
-            <input type="password" name="password" placeholder="Password" required
+          <div class="login-form__field">
+            <label for="password" class="login-form__label visually-hidden">Password</label>
+            <input id="password" type="password" name="password" class="login-form__input" placeholder="Password" required
                    autocomplete="current-password">
           </div>
 
-          <!-- Remember Me -->
-          <div class="remember-forgot">
-    <label for="remember_me" class="remember-me">
-        <input id="remember_me" type="checkbox" name="remember">
-        <span>Remember me</span>
-    </label>
-    
-    @if (Route::has('password.request'))
-        <a href="{{ route('password.request') }}" class="forgot-password">
-            Forgot password?
-        </a>
-    @endif
-</div>
+          <div class="login-form__row">
+            <label for="remember_me" class="login-form__checkbox-label">
+              <input id="remember_me" type="checkbox" name="remember" class="login-form__checkbox">
+              <span>Remember me</span>
+            </label>
+            @if (Route::has('password.request'))
+              <a href="{{ route('password.request') }}" class="login-form__link">Forgot password?</a>
+            @endif
+          </div>
 
-             <input type="submit" value="Login">
-        
-         
+          <button type="submit" class="login-form__submit">Login</button>
         </form>
       </div>
     </div>
-  </div>
+  </main>
 
 </body>
 </html>

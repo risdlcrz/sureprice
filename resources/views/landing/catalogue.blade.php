@@ -41,10 +41,10 @@
 <!-- Welcome Text Section -->
 <div class="welcome-section">
     <div class="container text-center py-5">
-        <h1 class="display-4 fw-bold mb-3">Welcome to SurePrice</h1>
-        <p class="lead mb-0">Your all-in-one platform for Construction Project & Procurement Management</p>
+        <h1 class="welcome-title">Welcome to SurePrice</h1>
+        <p class="welcome-subtitle">Your all-in-one platform for Construction Project & Procurement Management</p>
         @if(auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client')
-            <a href="{{ route('client.dashboard') }}" class="btn btn-light btn-lg mt-4">Go to Dashboard</a>
+            <a href="{{ route('client.quotation.index') }}" class="btn btn-primary btn-lg mt-4 welcome-cta">Go to Dashboard</a>
         @endif
     </div>
 </div>
@@ -160,15 +160,7 @@ $altColors = ['#f9fafb', '#e8f5e9'];
                                 </li>
                             @endforeach
                         </ul>
-                        <a href="
-                            @if(!auth()->check())
-                                {{ route('login.form') }}
-                            @elseif(auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client')
-                                {{ route('client.quotation.create', ['category' => $cat['name']]) }}
-                            @else
-                                {{ route('client.dashboard') }}
-                            @endif
-                        " class="btn btn-success btn-lg px-5 py-2 fw-bold ask-quote-btn">
+                        <a href="{{ route('client.quotation.create', ['category' => $cat['name']]) }}" class="btn btn-success btn-lg px-5 py-2 fw-bold ask-quote-btn">
                             Ask for Quotation
                         </a>
                     </div>
@@ -227,7 +219,7 @@ $altColors = ['#f9fafb', '#e8f5e9'];
             @if(!auth()->check())
                 {{ route('register') }}
             @elseif((auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client') || auth()->user()->role === 'client')
-                {{ route('client.dashboard') }}
+                {{ route('client.quotation.index') }}
             @else
                 {{ route('contracts.index') }}
             @endif
@@ -289,39 +281,36 @@ body {
     position: absolute;
     top: 25%;
     left: 37%;
-    max-width: 480px;
-    background: rgba(255,255,255,0.82);
-    border-radius: 18px;
-    padding: 1.7rem 2rem 1.5rem 2rem;
+    max-width: 440px;
+    background: rgba(255,255,255,0.92);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
     color: #1b5e20;
-    box-shadow: 0 4px 24px 0 rgba(31, 38, 135, 0.10);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(0,0,0,0.06);
     z-index: 2;
     text-align: left;
-    animation: fadeInDown 1s;
-    transition: box-shadow 0.3s, transform 0.3s;
+    animation: fadeInDown 0.8s;
+    transition: box-shadow 0.2s;
 }
 .carousel-caption-custom:hover {
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
-    transform: scale(1.03) translateY(-6px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 .carousel-caption-custom h1 {
-    font-family: 'Poppins', 'Inter', Arial, sans-serif;
-    font-size: 2.3rem;
-    font-weight: 800;
-    margin-bottom: 0.7rem;
-    letter-spacing: 1px;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
     color: #1b5e20;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.07);
 }
 .carousel-caption-custom p {
-    font-size: 1.15rem;
+    font-size: 0.9375rem;
     font-weight: 400;
-    color: #333;
+    color: #374151;
     margin-bottom: 0;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    line-height: 1.5;
 }
 .ask-quote-btn {
     background: #219150;
@@ -374,41 +363,50 @@ body {
 }
 
 .category-card {
-    background: rgba(255,255,255,0.92);
-    border-radius: 1.5rem;
-    box-shadow: 0 2px 8px 0 rgba(31, 38, 135, 0.06);
-    margin-bottom: 2.5rem;
-    transition: box-shadow 0.3s, transform 0.3s;
-    animation: fadeInUp 1.2s;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border: 1px solid #e8eaed;
+    margin-bottom: 1.5rem;
+    transition: box-shadow 0.2s;
+    animation: fadeInUp 0.8s;
 }
 .category-card:hover {
-    box-shadow: 0 8px 32px 0 #1b5e2055;
-    transform: scale(1.02) translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 .category-img {
-    border-radius: 1.2rem;
-    box-shadow: 0 2px 8px 0 #1b5e2044;
-    transition: box-shadow 0.3s, transform 0.3s;
-}
-.category-img:hover {
-    box-shadow: 0 8px 32px 0 #1b5e2055;
-    transform: scale(1.04);
+    border-radius: 10px;
 }
 .catalogue-heading {
-    font-family: 'Poppins', 'Inter', Arial, sans-serif;
-    font-size: 2.3rem;
-    font-weight: 700;
+    font-size: 1.5rem;
+    font-weight: 600;
     color: #1b5e20;
-    margin-bottom: 2.5rem;
-    letter-spacing: 1px;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
     text-align: center;
-    text-shadow: 0 2px 8px #e0e0e055;
-    animation: fadeInDown 1.2s;
+    animation: fadeInDown 0.8s;
 }
 .welcome-section {
-    margin-top: 2.5rem;
-    margin-bottom: 2.5rem;
-    animation: fadeIn 1.2s;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    animation: fadeIn 1s;
+}
+.welcome-title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+}
+.welcome-subtitle {
+    font-size: 1rem;
+    color: #6b7280;
+    margin-bottom: 0;
+}
+.welcome-cta {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 0.6rem 1.5rem;
 }
 .join-section {
     margin-top: 3.5rem;

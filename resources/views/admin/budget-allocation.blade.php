@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="content">
-    <div class="container-fluid ps-0">
+<div class="container-fluid">
+    <div class="admin-budget-allocation mx-auto">
         <!-- Standalone Page Header -->
         <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Project Cost Management</h1>
         <!-- Page Actions -->
@@ -72,9 +72,9 @@
                                     {{ ucfirst($selectedContract->status) }}
                                 </span>
                             </div>
-                            <div class="row">
+                            <div class="row g-3">
                                 <div class="col-md-4">
-                                    <div class="border-start border-4 border-primary ps-3">
+                                    <div class="admin-budget-block">
                                         <p class="text-muted mb-1">Contract ID</p>
                                         <h5 class="mb-3">{{ $selectedContract->contract_number }}</h5>
                                         <p class="text-muted mb-1">Client</p>
@@ -82,7 +82,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="border-start border-4 border-success ps-3">
+                                    <div class="admin-budget-block">
                                         <p class="text-muted mb-1">Duration</p>
                                         <h5 class="mb-3">
                                             {{ $selectedContract->start_date->format('M d, Y') }} - 
@@ -96,7 +96,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="border-start border-4 border-info ps-3">
+                                    <div class="admin-budget-block">
                                         <p class="text-muted mb-1">Total Contract Value</p>
                                         <h5 class="mb-3">₱{{ number_format($selectedContract->total_amount, 2) }}</h5>
                                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -158,7 +158,7 @@
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-hover">
+                                <table class="table table-hover admin-budget-table">
                                     <thead class="table-light">
                                         <tr>
                                             <th>Material</th>
@@ -259,19 +259,19 @@
 
                             <div class="row g-3 mb-4">
                                 <div class="col-6">
-                                    <div class="border-start border-4 border-primary ps-3">
+                                    <div class="admin-budget-block">
                                         <small class="text-muted">Contract Value</small>
                                         <h5 class="mb-0">₱{{ number_format($totalContractValue, 2) }}</h5>
                                     </div>
                                 </div>
                                 <div class="col-6">
-                                    <div class="border-start border-4 border-success ps-3">
+                                    <div class="admin-budget-block">
                                         <small class="text-muted">Total Spent</small>
                                         <h5 class="mb-0">₱{{ number_format($totalSpent, 2) }}</h5>
                                     </div>
                                 </div>
                                 <div class="col-12">
-                                    <div class="border-start border-4 border-info ps-3">
+                                    <div class="admin-budget-block">
                                         <small class="text-muted">Remaining</small>
                                         <h5 class="mb-0">₱{{ number_format($totalContractValue - $totalSpent, 2) }}</h5>
                                     </div>
@@ -455,7 +455,19 @@
 </div>
 
 @push('styles')
-    @vite(['resources/css/admin/budget-allocation.css'])
+<style>
+.admin-budget-allocation { max-width: 1200px; }
+.admin-budget-block {
+    padding: 0.75rem 0;
+    border: none;
+    border-radius: 0;
+}
+.admin-budget-allocation .table.admin-budget-table { font-size: 0.9375rem; border-collapse: collapse; background: #fff; border: 1px solid #e8eaed; border-radius: 8px; overflow: hidden; }
+.admin-budget-allocation .table.admin-budget-table thead th { background: #f5f6f8; color: #1f2937; font-weight: 600; padding: 0.75rem 1rem; border-bottom: 1px solid #e8eaed; }
+.admin-budget-allocation .table.admin-budget-table tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid #e8eaed; vertical-align: middle; }
+.admin-budget-allocation .table.admin-budget-table tbody tr:last-child td { border-bottom: none; }
+.admin-budget-allocation .table.admin-budget-table tbody tr:hover { background: rgba(25, 135, 84, 0.04); }
+</style>
 @endpush
 
 @push('scripts')

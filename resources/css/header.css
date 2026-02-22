@@ -115,33 +115,39 @@ body {
 
 .nav-buttons .btn {
     width: 100%;
-    padding: 10.45px 18.05px;
+    padding: 10px 16px;
     margin: 4px 0;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 10px;
-    background-color: rgba(255, 255, 255, 0.9);
-    color: #02912d;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #fff;
     font-weight: 600;
-    font-size: 13.54px;
+    font-size: 14px;
+    letter-spacing: 0.02em;
     display: flex;
     align-items: center;
-    gap: 10.83px;
+    gap: 10px;
     cursor: pointer;
     text-decoration: none;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .nav-buttons .btn:hover {
-    background-color: #017a25;
+    background-color: rgba(255, 255, 255, 0.25);
     color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .nav-buttons .btn i {
-    width: 18.05px;
-    font-size: 0.993em;
+    width: 18px;
+    font-size: 1em;
+    opacity: 0.95;
+}
+
+.nav-buttons .btn span {
+    color: inherit;
 }
 
 .btn-back {
@@ -158,11 +164,16 @@ body {
 }
 
 .nav-buttons .btn.active {
-    background-color: white !important;
-    color: #02912d !important;
-    font-weight: bold;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    color: #1b5e20 !important;
+    font-weight: 700;
+    border-color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.nav-buttons .btn.active i,
+.nav-buttons .btn.active span {
+    color: #1b5e20 !important;
 }
 
 .logout-container {
@@ -172,29 +183,52 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+.sidebar-bottom .btn {
+    width: 100%;
+    padding: 10px 16px;
+    margin: 4px 0;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.sidebar-bottom .btn:hover {
+    background-color: rgba(255, 255, 255, 0.35);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
 .logout-container .btn {
     width: 100%;
     padding: 12px 20px;
     margin: 8px 0;
-    border: none;
-    border-radius: 15px;
-    background-color: rgba(255, 255, 255, 0.9);
-    color: #02912d;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #fff;
     font-weight: 600;
-    font-size: 15px;
+    font-size: 14px;
     display: flex;
     align-items: center;
     gap: 12px;
     cursor: pointer;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .logout-container .btn:hover {
-    background-color: #017a25;
+    background-color: rgba(255, 255, 255, 0.35);
     color: #fff;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
 .info-management-btn {

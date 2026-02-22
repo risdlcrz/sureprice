@@ -2,9 +2,7 @@
 
 @push('styles')
 <style>
-body {
-    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
-}
+body { background: #f5f6f8 !important; }
 /* Prevent content overlap with sidebar and fit content to screen */
 .container-fluid {
     margin-left: 250px;
@@ -31,9 +29,9 @@ body {
     }
 }
 .card {
-    border-radius: 1.25rem;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    border: 1px solid #e8eaed;
     margin-bottom: 2rem;
     margin-top: 1rem;
     max-width: 100%;
@@ -58,15 +56,16 @@ body {
     transition: background 0.2s, color 0.2s, box-shadow 0.2s;
 }
 .btn-primary {
-    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
+    background: #198754 !important;
+    background-image: none !important;
 }
 .btn-info {
-    background: linear-gradient(90deg, #00c6fb 0%, #005bea 100%);
+    background: #0d6efd !important;
+    background-image: none !important;
     color: #fff;
 }
 .btn-primary:hover, .btn-info:hover {
-    filter: brightness(1.08);
-    box-shadow: 0 4px 16px #38b6ff33;
+    filter: brightness(1.05);
 }
 .btn-secondary {
     border-radius: 2rem;
@@ -123,16 +122,16 @@ body {
     text-overflow: ellipsis;
 }
 .table thead th {
-    background: #f1f5f9;
-    font-weight: 700;
-    color: #198754;
-    border-bottom: 2px solid #e3e3e3;
+    background: #f5f6f8;
+    font-weight: 600;
+    color: #1f2937;
+    border-bottom: 1px solid #e8eaed;
     text-align: center;
     font-size: 0.93rem;
     padding: 0.32rem 0.15rem;
 }
 .table-hover tbody tr:hover {
-    background: #e3f2fd44;
+    background: rgba(25, 135, 84, 0.04);
 }
 .table th, .table td {
     min-width: 60px;
@@ -232,8 +231,8 @@ input.form-control, select.form-control {
     transition: border-color 0.2s, box-shadow 0.2s;
 }
 input.form-control:focus, select.form-control:focus {
-    border-color: #38b6ff;
-    box-shadow: 0 0 0 2px #38b6ff33;
+    border-color: #198754;
+    box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.15);
     background: #fff;
 }
 ::-webkit-input-placeholder { color: #b0b3b8; }
@@ -244,10 +243,9 @@ input.form-control:focus, select.form-control:focus {
     transition: box-shadow 0.2s, transform 0.2s;
 }
 .material-row-animate:hover {
-    box-shadow: 0 4px 16px #38b6ff33;
-    transform: scale(1.012) translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     z-index: 2;
-    background: #e3f2fd44 !important;
+    background: rgba(25, 135, 84, 0.04) !important;
 }
 .fade-in-up {
     opacity: 0;
@@ -298,7 +296,7 @@ input.form-control:focus, select.form-control:focus {
 }
 
 #supplierPricesModal .modal-header {
-    background: linear-gradient(135deg, #38b6ff 0%, #2563eb 100%);
+    background: #198754;
     color: white;
     border-radius: 1rem 1rem 0 0;
     border-bottom: none;
@@ -444,7 +442,7 @@ input.form-control:focus, select.form-control:focus {
 }
 
 #bulkSrpModal .modal-header {
-    background: linear-gradient(135deg, #38b6ff 0%, #2563eb 100%);
+    background: #198754;
     color: white;
     border-radius: 1rem 1rem 0 0;
     border-bottom: none;

@@ -39,7 +39,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center">No purchase requests found.</td>
+                                        <td colspan="5" class="text-center text-muted py-4">No purchase requests found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

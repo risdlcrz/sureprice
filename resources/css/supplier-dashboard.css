@@ -1,13 +1,49 @@
-.table-hover tbody tr:hover {
-    background-color: #f8f9fa;
+/* Supplier Dashboard - uniform with app design tokens */
+.content .container .display-5 {
+    font-size: 1.375rem;
+    font-weight: 600;
+    color: var(--sp-text, #1f2937);
 }
-.btn-outline-primary.btn-sm {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.9rem;
-    border-radius: 0.25rem;
+.content .container .card .card-body .card-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--sp-text-muted, #6b7280);
+    margin-bottom: 0.5rem;
 }
-.badge {
-    font-size: 0.95em;
-    padding: 0.4em 0.7em;
-    border-radius: 0.5em;
-} 
+.content .container .card .card-body .display-6 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--sp-primary, #1b5e20);
+}
+.content .container .card .card-body .text-success.display-6 {
+    color: var(--sp-primary);
+}
+.content .container .card .card-body .text-info.display-6 {
+    color: var(--sp-text, #1f2937);
+}
+.content .container .card .card-body .text-primary.display-6 {
+    color: var(--sp-primary);
+}
+/* Sales performance list - minimal */
+.content .container .card .card-body .d-flex.justify-content-between {
+    font-size: 0.9375rem;
+}
+.content .container .card .card-body .progress {
+    border-radius: var(--sp-radius-sm, 8px);
+    background: var(--sp-border, #e8eaed);
+}
+/* Quick Actions cards - same as other cards */
+.content .container .mb-4 .card .card-title.h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--sp-text);
+}
+.content .container .mb-4 .card .card-text.text-muted {
+    font-size: 0.875rem;
+    color: var(--sp-text-muted);
+}
+/* Empty state */
+.content .container .card .text-center.text-muted .display-4 {
+    font-size: 2.5rem;
+    opacity: 0.4;
+}

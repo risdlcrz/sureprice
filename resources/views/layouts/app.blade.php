@@ -94,6 +94,9 @@
                 </div>
 
                 <div class="w-100 d-flex flex-column align-items-center mt-2 mobile-nav-buttons">
+                    @if(auth()->check() && auth()->user()->user_type === 'company')
+                        @php auth()->user()->loadMissing('company'); @endphp
+                    @endif
                     @if(request()->is('admin/project*'))
                         @include('include.sidebars.project')
                     @elseif(request()->is('admin/analytics*'))
@@ -110,6 +113,9 @@
 
             <!-- Desktop Sidebar -->
             <div class="left-header d-none d-md-flex">
+                @if(auth()->check() && auth()->user()->user_type === 'company')
+                    @php auth()->user()->loadMissing('company'); @endphp
+                @endif
                 @if(request()->is('admin/project*'))
                     @include('include.sidebars.project')
                 @elseif(request()->is('admin/analytics*'))

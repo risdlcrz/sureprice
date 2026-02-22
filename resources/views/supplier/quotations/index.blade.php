@@ -46,8 +46,8 @@
             </form>
         </div>
     </div>
-    <div class="card shadow">
-        <div class="card-header bg-white py-3">
+    <div class="card">
+        <div class="card-header">
             <h5 class="mb-0">All Quotation Requests</h5>
         </div>
         <div class="table-responsive">

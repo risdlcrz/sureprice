@@ -2,8 +2,8 @@
 
 @section('content')
 <div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>My Quotation Requests</h2>
+    <h1 class="h3 mb-4 text-center client-page-title">My Quotation Requests</h1>
+    <div class="d-flex justify-content-end mb-4">
         <a href="{{ route('client.quotation.create') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> New Quotation Request
         </a>
