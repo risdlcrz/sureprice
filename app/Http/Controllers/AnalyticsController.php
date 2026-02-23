@@ -6,6 +6,7 @@ use App\Models\Supplier;
 use App\Services\SupplierRankingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Transaction;
 use App\Models\Contract;
 use App\Models\PurchaseOrderItem;
@@ -22,23 +23,32 @@ class AnalyticsController extends Controller
 
     public function index()
     {
-        $suppliers = Supplier::with(['evaluations', 'metrics'])->get();
-        $topSuppliers = $this->rankingService->calculateRankings($suppliers)->take(3);
+        $topSuppliers = Cache::remember('supplier.top', now()->addMinutes(30), function () {
+            $suppliers = Supplier::with(['evaluations', 'metrics'])->get();
+            return $this->rankingService->calculateRankings($suppliers)->take(3);
+        });
         return view('admin.analytics-dashboard', compact('topSuppliers'));
     }
 
     public function supplierRankings()
     {
-        $suppliers = Supplier::with(['evaluations', 'metrics'])->get();
-        $rankings = $this->rankingService->calculateRankings($suppliers);
-        
+        // cache rankings for 30 minutes, invalidate on model events
+        $rankings = Cache::remember('supplier.rankings', now()->addMinutes(30), function () {
+            $suppliers = Supplier::with(['evaluations', 'metrics'])->get();
+            return $this->rankingService->calculateRankings($suppliers);
+        });
+
         return view('admin.suppliers.rankings', compact('rankings'));
     }
 
     public function getTopSuppliers(): JsonResponse
     {
-        $suppliers = Supplier::with(['evaluations', 'metrics'])->get();
-        $topSuppliers = $this->rankingService->calculateRankings($suppliers)
+        $rankings = Cache::remember('supplier.rankings', now()->addMinutes(30), function () {
+            $suppliers = Supplier::with(['evaluations', 'metrics'])->get();
+            return $this->rankingService->calculateRankings($suppliers);
+        });
+
+        $topSuppliers = $rankings
             ->take(3)
             ->map(function ($ranking) {
                 return [

@@ -19,7 +19,20 @@ class InventoryController extends Controller
 
         $warehouses = Warehouse::all();
 
-        $materials = \App\Models\Material::with('category', 'stocks')
+        // backfill any materials that somehow missed an inventory record
+        \App\Models\Material::doesntHave('inventory')->get()->each(function ($m) {
+            \App\Models\Inventory::create([
+                'material_id' => $m->id,
+                'quantity' => 0,
+                'unit' => $m->unit,
+                'location' => null,
+                'status' => 'active',
+                'minimum_threshold' => 0,
+            ]);
+        });
+
+        // also load inventory relation so we can link to the correct record
+        $materials = \App\Models\Material::with(['category', 'stocks', 'inventory'])
             ->get()
             ->map(function ($material) use ($warehouses) {
                 $totalStock = $material->stocks->sum('current_stock');
@@ -29,6 +42,8 @@ class InventoryController extends Controller
                     $stock = $material->stocks->where('warehouse_id', $warehouse->id)->sum('current_stock');
                     return [$warehouse->id => $stock];
                 });
+                // easier access to primary inventory record (first)
+                $material->primary_inventory = $material->inventory->first();
                 return $material;
             });
 
@@ -105,8 +120,16 @@ class InventoryController extends Controller
             ->with('success', 'Inventory item created successfully.');
     }
 
-    public function edit(Inventory $inventory)
+    public function edit($id)
     {
+        // manually resolve so we can handle missing records gracefully
+        $inventory = Inventory::find($id);
+        if (! $inventory) {
+            // inventory entry doesn't exist; redirect to create page instead of throwing 404
+            return redirect()->route('inventory.create')
+                ->with('warning', 'Inventory record not found. Please create it.');
+        }
+
         $materials = Material::with('category')->get();
         return view('inventory.edit', compact('inventory', 'materials'));
     }

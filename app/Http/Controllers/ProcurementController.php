@@ -189,9 +189,14 @@ class ProcurementController extends Controller
             ->with('success', 'Inventory item added successfully.');
     }
 
-    public function inventoryEdit(Inventory $inventory)
+    public function inventoryEdit($id)
     {
         $this->logPageView('Viewed Inventory Edit Page');
+        $inventory = Inventory::find($id);
+        if (! $inventory) {
+            return redirect()->route('procurement.inventory.create')
+                ->with('warning', 'Inventory record not found. Please add it first.');
+        }
         return view('procurement.inventory-edit', compact('inventory'));
     }
 

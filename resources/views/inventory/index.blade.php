@@ -302,9 +302,16 @@
                                             <a href="{{ route('purchase-requests.create', ['material_id' => $material->id]) }}" class="btn btn-sm btn-success" title="Request Restock">
                                                 <i class="fas fa-plus"></i>
                                             </a>
-                                            <a href="{{ route('inventory.edit', $material) }}" class="btn btn-sm btn-primary">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
+                                            @if($material->primary_inventory)
+                                                <a href="{{ route('inventory.edit', $material->primary_inventory) }}" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            @else
+                                                {{-- fallback in case inventory record is missing --}}
+                                                <a href="{{ route('inventory.create') }}" class="btn btn-sm btn-primary" title="Create inventory record">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            @endif
                                             <form action="{{ route('inventory.destroy', $material) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')

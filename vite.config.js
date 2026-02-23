@@ -75,8 +75,7 @@ export default defineConfig({
                 //'resources/js/project-timeline/show.js',
                 //'resources/css/supplier/quotation-respond.css',
                 //'resources/js/supplier/quotation-respond.js',
-                'resources/css/admin/budget-allocation.css',
-                'resources/js/admin/budget-allocation.js',
+                
             ],
             refresh: true,
         }),
