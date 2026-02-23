@@ -9,12 +9,34 @@ use Illuminate\Support\Facades\DB;
 
 class FeedbackController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->input('search');
+
         $feedbacks = ClientFeedback::with(['contract', 'contract.contractor', 'contract.client', 'user'])
             ->whereNotNull('submitted_at')
+            ->when($search, function($query) use ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('comments', 'like', "%{$search}%")
+                      ->orWhereHas('contract', function($q2) use ($search) {
+                          $q2->where('contract_number', 'like', "%{$search}%")
+                              ->orWhereHas('client', function($q3) use ($search) {
+                                  $q3->where('name', 'like', "%{$search}%");
+                              })
+                              ->orWhereHas('contractor', function($q3) use ($search) {
+                                  $q3->where('name', 'like', "%{$search}%");
+                              });
+                      });
+                });
+            })
             ->orderBy('submitted_at', 'desc')
-            ->paginate(20);
+            ->paginate(20)
+            ->appends(['search' => $search]);
+
+        if ($search && $feedbacks->total() === 0) {
+            // no matches found
+            session()->flash('search_error', "No feedback found matching '{$search}'.");
+        }
 
         // Calculate statistics
         $stats = [
@@ -95,13 +117,89 @@ class FeedbackController extends Controller
         ));
     }
 
-    public function export()
+    public function export(Request $request)
     {
         $feedbacks = ClientFeedback::with(['contract', 'contract.contractor', 'contract.client', 'user'])
             ->whereNotNull('submitted_at')
             ->orderBy('submitted_at', 'desc')
             ->get();
 
+        // compute summary stats for inclusion in export
+        $stats = [
+            'Total Feedback' => $feedbacks->count(),
+            'Average Rating' => round($feedbacks->avg('overall_rating'), 2),
+            'Anonymous %' => $feedbacks->count() ? round(($feedbacks->where('is_anonymous', true)->count() / $feedbacks->count()) * 100, 1) . '%': '0%',
+            'Recommendation Avg' => round($feedbacks->avg('recommendation_likelihood'), 2),
+        ];
+
+        $format = $request->query('format', 'csv');
+
+        if ($format === 'xlsx') {
+            // use PhpSpreadsheet to build an Excel file with styling
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Feedback Data');
+
+            // write summary rows at top
+            $row = 1;
+            foreach ($stats as $key => $value) {
+                $sheet->setCellValue("A{$row}", $key);
+                $sheet->setCellValue("B{$row}", $value);
+                $row++;
+            }
+            $row++; // blank row
+
+            $headers = [
+                'ID', 'Contract Number', 'Client', 'Contractor', 'Overall Rating',
+                'Communication', 'Quality', 'Timeliness', 'Professionalism', 'Value',
+                'Recommendation Likelihood', 'Comments', 'Anonymous', 'Submitted Date'
+            ];
+            $sheet->fromArray($headers, null, "A{$row}");
+
+            // style header row
+            $headerRange = "A{$row}:" . \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($headers)) . "{$row}";
+            $sheet->getStyle($headerRange)->getFont()->setBold(true);
+            $sheet->getStyle($headerRange)->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
+                  ->getStartColor()->setARGB('FFEFEFEF');
+
+            $row++;
+            foreach ($feedbacks as $feedback) {
+                $sheet->fromArray([
+                    $feedback->id,
+                    $feedback->contract->contract_number ?? 'N/A',
+                    $feedback->contract->client->name ?? 'N/A',
+                    $feedback->contract->contractor->name ?? 'N/A',
+                    $feedback->overall_rating,
+                    $feedback->communication_rating,
+                    $feedback->quality_rating,
+                    $feedback->timeliness_rating,
+                    $feedback->professionalism_rating,
+                    $feedback->value_rating,
+                    $feedback->recommendation_likelihood,
+                    $feedback->comments,
+                    $feedback->is_anonymous ? 'Yes' : 'No',
+                    $feedback->submitted_at->format('Y-m-d H:i:s')
+                ], null, "A{$row}");
+                $row++;
+            }
+
+            // auto-size columns
+            foreach (range(1, count($headers)) as $colIndex) {
+                $sheet->getColumnDimension(\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex))
+                      ->setAutoSize(true);
+            }
+
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $filename = 'client_feedback_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+            return response()->streamDownload(function() use ($writer) {
+                $writer->save('php://output');
+            }, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ]);
+        }
+
+        // default to CSV
         $filename = 'client_feedback_' . date('Y-m-d_H-i-s') . '.csv';
         
         $headers = [
@@ -109,9 +207,15 @@ class FeedbackController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($feedbacks) {
+        $callback = function() use ($feedbacks, $stats) {
             $file = fopen('php://output', 'w');
             
+            // write summary stats at top
+            foreach ($stats as $key => $value) {
+                fputcsv($file, [$key, $value]);
+            }
+            fputcsv($file, []); // blank line
+
             // CSV headers
             fputcsv($file, [
                 'ID', 'Contract Number', 'Client', 'Contractor', 'Overall Rating',

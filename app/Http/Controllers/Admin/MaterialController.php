@@ -111,7 +111,20 @@ class MaterialController extends Controller
             $material->price_history_for_analysis = $history;
             $material->forecasted_price = $this->forecastPriceFromArray($history->all());
         }
-        return view('admin.price-analysis', ['materials' => $materials]);
+        // prepare JSON-friendly data for chart script to avoid inline blade logic
+        $materialsData = $materials->map(function($m) {
+            return [
+                'id' => $m->id,
+                'name' => $m->name,
+                'price_history_for_analysis' => $m->price_history_for_analysis ?? (object)[],
+                'forecasted_price' => $m->forecasted_price ?? null,
+            ];
+        });
+
+        return view('admin.price-analysis', [
+            'materials' => $materials,
+            'materialsData' => $materialsData,
+        ]);
     }
 
     /**

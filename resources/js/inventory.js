@@ -35,13 +35,6 @@ function saveChartData() {
     const productBatchNumberEl = document.getElementById('productBatchNumber');
     const productExpiryDateEl = document.getElementById('productExpiryDate');
     
-    console.log('Technical elements found:', {
-        productModelNumber: productModelNumberEl ? 'YES' : 'NO',
-        productCertification: productCertificationEl ? 'YES' : 'NO',
-        productBatchNumber: productBatchNumberEl ? 'YES' : 'NO',
-        productExpiryDate: productExpiryDateEl ? 'YES' : 'NO'
-    });
-    
     if (productModelNumberEl) productModelNumberEl.textContent = data.model;
     if (productCertificationEl) productCertificationEl.textContent = data.certification;
     if (productBatchNumberEl) productBatchNumberEl.textContent = data.batch;
@@ -81,7 +74,6 @@ function initChart() {
         inventoryChart.destroy();
     }
 
-    console.log('Initializing chart...');
     
     // Initialize with empty data
     inventoryChart = new Chart(ctx, {
@@ -536,7 +528,6 @@ function getProductDataFromLink(link) {
 
 // Add this function to update the modal content
 function updateProductDetailsModal(data) {
-    console.log('Updating modal with data:', data);
     
     // Basic Information
     const productNameEl = document.getElementById('productName');
@@ -546,7 +537,6 @@ function updateProductDetailsModal(data) {
     const productPriceEl = document.getElementById('productPrice');
     const productThresholdEl = document.getElementById('productThreshold');
     
-    console.log('Basic elements found:', {
         productName: productNameEl ? 'YES' : 'NO',
         productCategory: productCategoryEl ? 'YES' : 'NO',
         productStock: productStockEl ? 'YES' : 'NO',
@@ -569,7 +559,6 @@ function updateProductDetailsModal(data) {
     const productQualityGradeEl = document.getElementById('productQualityGrade');
     const productOriginEl = document.getElementById('productOrigin');
     
-    console.log('Detail elements found:', {
         productBrand: productBrandEl ? 'YES' : 'NO',
         productManufacturer: productManufacturerEl ? 'YES' : 'NO',
         productDimensions: productDimensionsEl ? 'YES' : 'NO',
@@ -605,7 +594,6 @@ function updateProductDetailsModal(data) {
     const productSpecificationsEl = document.getElementById('productSpecifications');
     const productWarrantyEl = document.getElementById('productWarranty');
     
-    console.log('Additional elements found:', {
         productSpecifications: productSpecificationsEl ? 'YES' : 'NO',
         productWarranty: productWarrantyEl ? 'YES' : 'NO'
     });
@@ -648,36 +636,27 @@ function updateProductDetailsModal(data) {
 
 // Add event listener for product links
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM Content Loaded - Setting up event listeners');
     
     const table = document.getElementById('inventoryTable');
-    console.log('Table found:', table ? 'YES' : 'NO');
     
     if (table) {
         table.addEventListener('click', function(e) {
-            console.log('Table clicked, target:', e.target);
-            console.log('Target classes:', e.target.classList);
             
             const target = e.target;
             if (target.classList.contains('product-link')) {
                 e.preventDefault();
-                console.log('Product link clicked - preventDefault called');
                 
                 // Log all data attributes
-                console.log('All target attributes:');
                 for (let attr of target.attributes) {
-                    console.log(`${attr.name}: ${attr.value}`);
                 }
                 
                 const productData = getProductDataFromLink(target);
-                console.log('Product data extracted:', productData);
                 
                 updateProductDetailsModal(productData);
                 
                 const modal = new bootstrap.Modal(document.getElementById('productDetailsModal'));
                 modal.show();
             } else {
-                console.log('Clicked element is not a product-link');
             }
         });
     } else {

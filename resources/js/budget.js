@@ -1,3 +1,5 @@
+import Chart from 'chart.js/auto';
+
 const spendingChart = new Chart(document.getElementById('spendingChart').getContext('2d'), {
         type: 'line',
         data: {
@@ -47,3 +49,28 @@ const spendingChart = new Chart(document.getElementById('spendingChart').getCont
             maintainAspectRatio: false
         }
     });
+
+// helper toggles -------------------------------------------------------------
+function toggleChartView(period) {
+    // In real application this would fetch new data; here we simply update label
+    if (period === 'weekly') {
+        spendingChart.data.labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        spendingChart.data.datasets[0].data = [1200,1300,1250,1400,1350,1500,1600];
+    } else {
+        spendingChart.data.labels = ['Jan','Feb','Mar','Apr','May','Jun'];
+        spendingChart.data.datasets[0].data = [5000,8200,12700,15450,21450,27500];
+    }
+    spendingChart.update();
+}
+
+function toggleBreakdownView(type) {
+    // placeholder: swap data set by supplier/category
+    if (type === 'supplier') {
+        costBreakdownChart.data.labels = ['Supplier A','Supplier B','Supplier C'];
+        costBreakdownChart.data.datasets[0].data = [50,30,20];
+    } else {
+        costBreakdownChart.data.labels = ['Office Supplies','Transportation','Utilities','Miscellaneous'];
+        costBreakdownChart.data.datasets[0].data = [40,25,20,15];
+    }
+    costBreakdownChart.update();
+}

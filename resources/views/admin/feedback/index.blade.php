@@ -5,52 +5,60 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Client Feedback Management</h1>
-                <div>
-                    <a href="{{ route('admin.feedback.analytics') }}" class="btn btn-info me-2">
-                        <i class="fas fa-chart-bar me-2"></i>Analytics
+                <h1 class="h3 mb-0 text-success" style="font-weight:700;letter-spacing:0.01em;">
+                    <i class="fas fa-comments me-2"></i>Client Feedback Management
+                </h1>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('admin.feedback.analytics') }}" class="btn btn-outline-info">
+                        <i class="fas fa-chart-bar me-1"></i>Analytics
                     </a>
-                    <a href="{{ route('admin.feedback.export') }}" class="btn btn-success">
-                        <i class="fas fa-download me-2"></i>Export CSV
-                    </a>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ route('admin.feedback.export', ['format'=>'csv']) }}">Download CSV</a></li>
+                            <li><a class="dropdown-item" href="{{ route('admin.feedback.export', ['format'=>'xlsx']) }}">Download Excel</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
             <!-- Statistics Cards -->
-            <div class="row mb-4">
+            <div class="row mb-4 justify-content-center">
                 <div class="col-md-3">
-                    <div class="card text-center">
+                    <div class="card text-center stats-card text-primary">
                         <div class="card-body">
-                            <i class="fas fa-comments fa-3x text-primary mb-3"></i>
+                            <i class="fas fa-comments fa-3x mb-3"></i>
                             <h5 class="card-title">Total Feedback</h5>
-                            <h2 class="text-primary">{{ $stats['total_feedback'] }}</h2>
+                            <h2>{{ $stats['total_feedback'] }}</h2>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card text-center">
+                    <div class="card text-center stats-card text-warning">
                         <div class="card-body">
-                            <i class="fas fa-star fa-3x text-warning mb-3"></i>
+                            <i class="fas fa-star fa-3x mb-3"></i>
                             <h5 class="card-title">Average Rating</h5>
-                            <h2 class="text-warning">{{ number_format($stats['average_rating'], 1) }}/5</h2>
+                            <h2>{{ number_format($stats['average_rating'], 1) }}/5</h2>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card text-center">
+                    <div class="card text-center stats-card text-info">
                         <div class="card-body">
-                            <i class="fas fa-user-secret fa-3x text-info mb-3"></i>
+                            <i class="fas fa-user-secret fa-3x mb-3"></i>
                             <h5 class="card-title">Anonymous</h5>
-                            <h2 class="text-info">{{ $stats['anonymous_count'] }}</h2>
+                            <h2>{{ $stats['anonymous_count'] }}</h2>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card text-center">
+                    <div class="card text-center stats-card text-success">
                         <div class="card-body">
-                            <i class="fas fa-thumbs-up fa-3x text-success mb-3"></i>
+                            <i class="fas fa-thumbs-up fa-3x mb-3"></i>
                             <h5 class="card-title">Recommendation</h5>
-                            <h2 class="text-success">{{ number_format($stats['recommendation_avg'], 1) }}/10</h2>
+                            <h2>{{ number_format($stats['recommendation_avg'], 1) }}/10</h2>
                         </div>
                     </div>
                 </div>
@@ -90,7 +98,18 @@
             </div>
 
             <!-- Feedback List -->
-            <div class="card">
+            @if(session('search_error'))
+                <div id="searchFlash" class="alert alert-warning alert-dismissible fade show" role="alert" style="font-size:1.1rem;">
+                    {{ session('search_error') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+            <form id="searchForm" action="" method="GET" class="mb-3 d-flex justify-content-end position-relative" style="gap:.5rem;">
+                <input type="text" name="search" id="searchInput" value="{{ request('search') }}" class="form-control form-control-sm w-25" placeholder="Search feedback...">
+                <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+                <div id="searchError" class="position-absolute text-danger" style="top:100%; right:0; display:none; font-size:0.8rem;">Please enter a search term</div>
+            </form>
+            <div class="card shadow-sm">
                 <div class="card-header">
                     <h5 class="mb-0">All Submitted Feedback</h5>
                 </div>
@@ -98,17 +117,17 @@
                     @if($feedbacks->count() > 0)
                         <div class="table-responsive">
                             <table class="table table-hover">
-                                <thead>
+                                <thead class="table-dark">
                                     <tr>
                                         <th>ID</th>
                                         <th>Contract</th>
                                         <th>Client</th>
                                         <th>Contractor</th>
-                                        <th>Overall Rating</th>
-                                        <th>Recommendation</th>
-                                        <th>Anonymous</th>
+                                        <th class="text-center">Rating</th>
+                                        <th class="text-center">Rec.</th>
+                                        <th class="text-center">Anon.</th>
                                         <th>Submitted</th>
-                                        <th>Action</th>
+                                        <th></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -193,10 +212,11 @@
 }
 
 .card-header {
-    background: #fff;
+    background: #f8f9fa;
     border-radius: 1rem 1rem 0 0;
     border-bottom: 1px solid #e9ecef;
-    padding: 1.5rem 2rem 1rem 2rem;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
 }
 
 .table {
@@ -228,5 +248,55 @@
 .progress {
     border-radius: 0.5rem;
 }
+
+    .stats-card {
+        position: relative;
+    }
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background-color: currentColor;
+        border-top-left-radius: 1rem;
+        border-top-right-radius: 1rem;
+    }
+
+    .table-hover tbody tr:hover { background-color: #e9f7ef; }
+    .table-striped tbody tr:nth-of-type(odd) { background-color: #fafafa; }
+    .table thead.table-dark th { background-color: #198754; color: #fff; }
+    .table td, .table th { vertical-align: middle; }
+
+    form[disabled] input, form[disabled] button { opacity: 0.6; }
+
+
+
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('searchForm');
+        const input = document.getElementById('searchInput');
+        const errDiv = document.getElementById('searchError');
+        form.addEventListener('submit', function(e) {
+            if (!input.value.trim()) {
+                e.preventDefault();
+                errDiv.style.display = 'block';
+                input.focus();
+            }
+        });
+        // auto-dismiss flash message after 5 seconds
+        const flash = document.getElementById('searchFlash');
+        if (flash) {
+            setTimeout(() => {
+                // use Bootstrap dismiss
+                const bsAlert = new bootstrap.Alert(flash);
+                bsAlert.close();
+            }, 5000);
+        }
+    });
+</script>
+
 @endsection 

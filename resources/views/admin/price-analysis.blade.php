@@ -15,6 +15,11 @@
                         </select>
                     </div>
                     <h5 class="mb-3 fw-bold text-primary">Price Trend (PHP)</h5>
+                    {{-- expose materials to JS for chart rendering --}}
+                    <script>
+                        // JSON prepared in controller avoids bracket mismatches in Blade
+                        window.materialsData = @json($materialsData);
+                    </script>
                     <canvas id="priceTrendChart" height="120"></canvas>
                 </div>
             </div>

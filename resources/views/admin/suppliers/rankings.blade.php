@@ -6,7 +6,7 @@
         <div class="col-12">
             <nav aria-label="breadcrumb">
 
-                    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Supplier Rankings</a></h1>
+                    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Supplier Rankings</h1>
 
             </nav>
         </div>

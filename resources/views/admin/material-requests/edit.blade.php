@@ -128,7 +128,7 @@
                                                             <option value="">Select Supplier</option>
                                                             <!-- Options will be dynamically populated based on selected material -->
                                                         </select>
-                                                        <script>console.log('Blade Debug: Item Index {{ $index }}, Preferred Supplier ID: {{ $item->preferred_supplier_id }}');</script>
+                                                        
                                                     </td>
                                                     <td>
                                                         <input type="text" name="items[{{ $index }}][notes]" class="form-control" value="{{ $item->notes }}">
@@ -262,17 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Set the previously selected supplier from the data attribute on the select itself
         var previouslySelectedSupplierId = $supplierSelect.data('selected-supplier');
         
-        console.log('--- Material Change Debug ---');
-        console.log('Material ID:', materialId);
-        console.log('Available Suppliers (from data-suppliers):', suppliers);
-        console.log('Previously Selected Supplier ID (from data-selected-supplier):', previouslySelectedSupplierId);
 
-        if (previouslySelectedSupplierId) {
-            $supplierSelect.val(previouslySelectedSupplierId);
-            console.log('Attempted to set supplier value to:', previouslySelectedSupplierId);
-        }
-        console.log('Final Supplier Select Value:', $supplierSelect.val());
-        console.log('----------------------------');
 
         $supplierSelect.prop('required', true);
     });

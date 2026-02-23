@@ -81,8 +81,19 @@ class ContractController extends Controller
 
     public function create()
     {
-        $contractors = Employee::where('role', 'contractor')->get();
-        $quotationRequests = \App\Models\QuotationRequest::doesntHave('contract')->with('user')->orderByDesc('created_at')->get();
+        // Cache lists for a short duration to avoid hitting the database on every
+        // page load. These are inexpensive to clear when related records change.
+        $contractors = \Illuminate\Support\Facades\Cache::remember('contractors_list', 60, function () {
+            return Employee::where('role', 'contractor')->get();
+        });
+
+        $quotationRequests = \Illuminate\Support\Facades\Cache::remember('quotation_requests_without_contract', 60, function () {
+            return \App\Models\QuotationRequest::doesntHave('contract')
+                ->with('user')
+                ->orderByDesc('created_at')
+                ->get();
+        });
+
         return view('admin.contracts.create', compact('contractors', 'quotationRequests'));
     }
 

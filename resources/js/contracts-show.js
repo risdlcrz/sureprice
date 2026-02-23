@@ -4,12 +4,10 @@
 let currentSignatureType = null;
 
 function updateStatus(status) {
-    console.log('updateStatus called with:', status);
     
     // Check if approval is being requested and signatures are missing
     if (status === 'approved') {
         const approveButton = document.querySelector('button[onclick="updateStatus(\'approved\')"]');
-        console.log('Approve button found:', approveButton);
         console.log('Approve button disabled:', approveButton ? approveButton.disabled : 'Button not found');
         
         if (approveButton && approveButton.disabled) {

@@ -224,9 +224,15 @@
                             <a href="{{ route('admin.feedback.analytics') }}" class="btn btn-info me-2">
                                 <i class="fas fa-chart-bar me-2"></i>View Analytics
                             </a>
-                            <a href="{{ route('admin.feedback.export') }}" class="btn btn-success">
-                                <i class="fas fa-download me-2"></i>Export Data
-                            </a>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-download me-2"></i>Export Data
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ route('admin.feedback.export', ['format'=>'csv']) }}">CSV</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('admin.feedback.export', ['format'=>'xlsx']) }}">Excel</a></li>
+                                </ul>
+                            </div>
                         </div>
                     </div>
                 </div>

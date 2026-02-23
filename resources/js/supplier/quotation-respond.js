@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const descText = document.getElementById('discount-description-text');
         
         if (!descDiv || !descText) {
-            console.log('Description elements not found, retrying...');
+
             return false;
         }
 
@@ -46,17 +46,17 @@ document.addEventListener('DOMContentLoaded', function () {
         if (discountRules[discountType]) {
             descText.innerHTML = discountRules[discountType].description;
             currentDiscountType = discountType;
-            console.log('Description set for:', discountType);
+
             return true;
         } else if (discountType === 'none') {
             descText.innerHTML = 'No discount will be applied to this quotation.';
             currentDiscountType = 'none';
-            console.log('Description set for: none');
+
             return true;
         } else {
             descText.innerHTML = 'Discount information for this type is not available. Please contact support for details.';
             currentDiscountType = discountType;
-            console.log('Unknown discount type:', discountType);
+
             return true;
         }
     }
@@ -74,19 +74,19 @@ document.addEventListener('DOMContentLoaded', function () {
             
             // Check if description div is hidden
             if (descDiv && (descDiv.style.display === 'none' || descDiv.style.visibility === 'hidden' || descDiv.style.opacity === '0')) {
-                console.log('Description was hidden, restoring...');
+
                 forceSetDiscountDescription();
             }
             
             // Check if description text is empty or wrong
             if (descText && (descText.innerHTML === '' || descText.innerHTML === 'Please select a discount type to see its description.')) {
-                console.log('Description text was cleared, restoring...');
+
                 forceSetDiscountDescription();
             }
             
             // Check if discount type changed
             if (discountType !== currentDiscountType) {
-                console.log('Discount type changed from', currentDiscountType, 'to', discountType);
+
                 forceSetDiscountDescription();
             }
         }, 500); // Check every 500ms
@@ -186,12 +186,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
                     const style = descDiv.style;
                     if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
-                        console.log('Mutation observer detected description was hidden, restoring...');
+
                         forceSetDiscountDescription();
                     }
                 }
                 if (mutation.type === 'childList') {
-                    console.log('Mutation observer detected content change, checking description...');
+
                     setTimeout(forceSetDiscountDescription, 50);
                 }
             });
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const originalSetAttribute = Element.prototype.setAttribute;
     Element.prototype.setAttribute = function(name, value) {
         if (this.id === 'discount-description' && name === 'style' && value.includes('display: none')) {
-            console.log('Prevented attempt to hide discount description');
+
             return;
         }
         return originalSetAttribute.call(this, name, value);

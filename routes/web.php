@@ -107,42 +107,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/save-signature', [ContractController::class, 'saveSignature'])->name('contracts.save.signature');
         Route::post('/{contract}/request-approval', [ContractController::class, 'requestApproval'])->name('requestApproval');
     
-    // Debug route for signature testing (admin only)
-    Route::get('/{contract}/signature-status', [ContractController::class, 'getSignatureStatus'])->name('signatureStatus')->middleware('admin');
-    
-    // Debug route for client party testing
-    Route::get('/debug/client-party', function() {
-        $user = auth()->user();
-        $parties = \App\Models\Party::where('entity_type', 'client')->get();
-        $contracts = \App\Models\Contract::with('client')->get();
-        
-        return response()->json([
-            'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
-                'company' => $user->company ? $user->company->company_name : null
-            ],
-            'parties' => $parties->map(function($party) {
-                return [
-                    'id' => $party->id,
-                    'name' => $party->name,
-                    'email' => $party->email,
-                    'company_name' => $party->company_name,
-                    'user_id' => $party->user_id,
-                    'entity_type' => $party->entity_type
-                ];
-            }),
-            'contracts' => $contracts->map(function($contract) {
-                return [
-                    'id' => $contract->id,
-                    'contract_number' => $contract->contract_number,
-                    'client_id' => $contract->client_id,
-                    'client_name' => $contract->client ? $contract->client->name : null,
-                    'client_email' => $contract->client ? $contract->client->email : null
-                ];
-            })
-        ]);
-    });
+    // Debug routes have been removed for production to reduce overhead and avoid exposing
+    // internal diagnostic endpoints. These were only needed during development.
     });
     // Supporting routes for contract form
     Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
@@ -410,8 +376,12 @@ Route::middleware(['auth', 'role:admin,manager'])->group(function () {
     // Admin Feedback Routes
     Route::get('/admin/feedback', [App\Http\Controllers\Admin\FeedbackController::class, 'index'])->name('admin.feedback.index');
     Route::get('/admin/feedback/analytics', [App\Http\Controllers\Admin\FeedbackController::class, 'analytics'])->name('admin.feedback.analytics');
-    Route::get('/admin/feedback/{feedback}', [App\Http\Controllers\Admin\FeedbackController::class, 'show'])->name('admin.feedback.show');
+    // export must come before the {feedback} wildcard or it will be captured and 404
     Route::get('/admin/feedback/export', [App\Http\Controllers\Admin\FeedbackController::class, 'export'])->name('admin.feedback.export');
+    // catch individual feedback (numeric id) after all fixed endpoints
+    Route::get('/admin/feedback/{feedback}', [App\Http\Controllers\Admin\FeedbackController::class, 'show'])
+        ->where('feedback','[0-9]+')
+        ->name('admin.feedback.show');
     Route::get('/admin/quotation-requests/{id}/json', [App\Http\Controllers\AdminController::class, 'quotationRequestJson'])->name('admin.quotation-request.json');
 });
 // Admin approval/oversight routes
@@ -750,85 +720,4 @@ Route::middleware(['auth', 'verified', App\Http\Middleware\SupplierMiddleware::c
     Route::post('notifications/clear-read', [App\Http\Controllers\Supplier\SupplierDashboardController::class, 'clearReadNotifications'])->name('notifications.clearRead');
 });
 
-// Debug route for authentication testing
-Route::get('/debug/auth', function() {
-    $user = auth()->user();
-    $session = session()->all();
-    
-    return response()->json([
-        'authenticated' => auth()->check(),
-        'user' => $user ? [
-            'id' => $user->id,
-            'email' => $user->email,
-            'user_type' => $user->user_type,
-            'role' => $user->role,
-            'company' => $user->company ? [
-                'id' => $user->company->id,
-                'company_name' => $user->company->company_name,
-                'designation' => $user->company->designation,
-                'status' => $user->company->status
-            ] : null
-        ] : null,
-        'session_id' => session()->getId(),
-        'session_data' => $session
-    ]);
-})->name('debug.auth');
-
-// Debug route for party records
-Route::get('/debug/parties', function() {
-    $user = \App\Models\User::find(66);
-    $parties = \App\Models\Party::where('user_id', 66)->get();
-    $clientParties = \App\Models\Party::where('entity_type', 'client')->get();
-    $allParties = \App\Models\Party::all();
-    
-    return response()->json([
-        'user' => [
-            'id' => $user->id,
-            'email' => $user->email,
-            'user_type' => $user->user_type,
-            'role' => $user->role,
-            'has_party_relationship' => $user->party ? true : false,
-            'party_id' => $user->party ? $user->party->id : null
-        ],
-        'parties_for_user_66' => $parties->map(function($party) {
-            return [
-                'id' => $party->id,
-                'entity_type' => $party->entity_type,
-                'name' => $party->name,
-                'company_name' => $party->company_name,
-                'email' => $party->email,
-                'user_id' => $party->user_id
-            ];
-        }),
-        'all_client_parties' => $clientParties->map(function($party) {
-            return [
-                'id' => $party->id,
-                'name' => $party->name,
-                'company_name' => $party->company_name,
-                'email' => $party->email,
-                'user_id' => $party->user_id
-            ];
-        }),
-        'total_parties' => $allParties->count(),
-        'total_client_parties' => $clientParties->count()
-    ]);
-})->name('debug.parties');
-
-// Debug route to fix party entity_type
-Route::get('/debug/fix-party', function() {
-    $party = \App\Models\Party::find(27);
-    if ($party) {
-        $party->update(['entity_type' => 'client']);
-        return response()->json([
-            'success' => true,
-            'message' => 'Party 27 updated to client',
-            'party' => [
-                'id' => $party->id,
-                'entity_type' => $party->entity_type,
-                'name' => $party->name,
-                'user_id' => $party->user_id
-            ]
-        ]);
-    }
-    return response()->json(['success' => false, 'message' => 'Party 27 not found']);
-})->name('debug.fix-party');
+// Removed development-only diagnostic endpoints (auth and party debug routes) to keep production routing lean and faster.

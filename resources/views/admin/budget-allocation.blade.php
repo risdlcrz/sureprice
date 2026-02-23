@@ -6,7 +6,7 @@
         <!-- Standalone Page Header -->
         <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Project Cost Management</h1>
         <!-- Page Actions -->
-        <div class="d-flex justify-content-end align-items-center mb-4">
+        <div class="d-flex justify-content-end align-items-center mb-4 no-print">
             <div class="d-flex gap-2">
                 <button class="btn btn-outline-primary" onclick="window.print()">
                     <i class="fas fa-print me-2"></i>Print Report
@@ -119,6 +119,7 @@
                 </div>
             </div>
 
+            <div class="page-break"></div>
             <!-- Main Content Row -->
             <div class="row">
                 <!-- Left Column: Charts and Tables -->
@@ -445,6 +446,7 @@
                     </div>
                 </div>
             </div>
+            <div class="page-break"></div>
         @else
             <div class="alert alert-info">
                 <i class="fas fa-info-circle me-2"></i>
@@ -467,11 +469,42 @@
 .admin-budget-allocation .table.admin-budget-table tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid #e8eaed; vertical-align: middle; }
 .admin-budget-allocation .table.admin-budget-table tbody tr:last-child td { border-bottom: none; }
 .admin-budget-allocation .table.admin-budget-table tbody tr:hover { background: rgba(25, 135, 84, 0.04); }
+
+/* print styles */
+.page-break {
+    display: block;
+    width: 100%;
+    height: 1px;
+    background: #ccc;
+    margin: 2rem 0;
+}
+@media print {
+    body { -webkit-print-color-adjust: exact; }
+    /* hide navigation UI and controls only */
+    .no-print,
+    .navbar,
+    .landing-navbar,
+    .sidebar-toggle-btn,
+    .mobile-topbar,
+    .mobile-menu,
+    .left-header,
+    .sidebar,
+    .dropdown-toggle,
+    .btn:not(.btn-link),
+    .form-select { display: none !important; }
+    /* allow container and main content to show full width */
+    main, .container-fluid, .admin-budget-allocation { width: 100%; margin: 0; padding: 0; }
+    .page-break { page-break-after: always; height: 0; background: none; }
+    .card { page-break-inside: avoid; }
+}
 </style>
 @endpush
 
 @push('scripts')
-    @vite(['resources/js/admin/budget-allocation.js'])
+    @vite([
+        'resources/js/admin/budget-allocation.js',
+        'resources/js/budget.js' // analytics scripts for spending and cost charts
+    ])
 @endpush
 @endsection
 

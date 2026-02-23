@@ -49,7 +49,7 @@ class MessengerApp {
             this.lastMessageId = parseInt(lastMessage.getAttribute('data-message-id'));
         }
         
-        console.log('Initialized message tracking. Processed IDs:', Array.from(this.processedMessageIds));
+
     }
 
     setupEventListeners() {
@@ -238,14 +238,13 @@ class MessengerApp {
         
         // Check if message already exists in processed IDs
         if (this.processedMessageIds.has(messageId)) {
-            console.log('Message already processed, skipping duplicate:', messageId);
+
             return;
         }
 
         // Double-check if message exists in DOM
         const existingMessage = this.messagesArea.querySelector(`[data-message-id="${messageId}"]`);
         if (existingMessage) {
-            console.log('Message already exists in DOM, skipping duplicate:', messageId);
             this.processedMessageIds.add(messageId); // Add to processed set anyway
             return;
         }
@@ -258,7 +257,7 @@ class MessengerApp {
         this.messagesArea.insertAdjacentHTML('beforeend', messageHtml);
         this.scrollToBottom();
         
-        console.log('Added new message:', messageId);
+
     }
 
     createMessageHTML(message) {
@@ -351,7 +350,7 @@ class MessengerApp {
         
         // Prevent updates more frequent than 2 seconds
         if (now - this.lastSidebarUpdate < 2000) {
-            console.log('Sidebar update skipped - too frequent');
+            // too frequent, skip
             return;
         }
         
@@ -368,7 +367,6 @@ class MessengerApp {
                     const conversations = await response.json();
                     this.updateConversationList(conversations);
                     this.lastSidebarUpdate = Date.now();
-                    console.log('Sidebar updated successfully');
                 }
             } catch (error) {
                 console.error('Error updating sidebar:', error);
