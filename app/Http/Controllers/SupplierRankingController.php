@@ -22,12 +22,24 @@ class SupplierRankingController extends Controller
         $this->rankingService = $rankingService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $suppliers = Supplier::with(['evaluations', 'metrics'])->get();
+        $search = trim($request->input('search', ''));
+
+        $query = Supplier::with(['evaluations', 'metrics']);
+
+        if ($search !== '') {
+            $query->where('company_name', 'like', "%{$search}%");
+        }
+
+        $suppliers = $query->get();
         $rankings = $this->rankingService->calculateRankings($suppliers);
-        
-        return view('admin.suppliers.rankings', compact('rankings'));
+
+        if ($search !== '' && count($rankings) === 0) {
+            session()->flash('search_error', "No suppliers found matching '{$search}'.");
+        }
+
+        return view('admin.suppliers.rankings', compact('rankings'))->with('search', $search);
     }
 
     public function downloadTemplate()

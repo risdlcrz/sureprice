@@ -51,6 +51,18 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    @if(session('search_error'))
+                        <div id="searchFlash" class="alert alert-warning alert-dismissible fade show" role="alert" style="font-size:1.1rem;">
+                            {{ session('search_error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+                    <form id="searchForm" action="" method="GET" class="mb-3 d-flex justify-content-end position-relative" style="gap:.5rem;">
+                        <input type="text" name="search" id="searchInput" value="{{ request('search') }}" class="form-control form-control-sm w-25" placeholder="Search suppliers...">
+                        <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+                        <div id="searchError" class="position-absolute text-danger" style="top:100%; right:0; display:none; font-size:0.8rem;">Please enter a search term</div>
+                    </form>
+
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>

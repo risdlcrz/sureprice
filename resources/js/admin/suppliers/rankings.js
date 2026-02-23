@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize form submission
     initializeFormSubmission();
+
+    // Initialize search validation (if search form present)
+    initializeSearch();
 });
 
 // Chart initialization
@@ -251,6 +254,25 @@ function loadSupplierData(supplierId) {
     document.getElementById('total_units').value = metrics.total_units;
     document.getElementById('actual_cost').value = metrics.actual_cost;
     document.getElementById('estimated_cost').value = metrics.estimated_cost;
+}
+
+// Search form validation
+function initializeSearch() {
+    const form = document.getElementById('searchForm');
+    const input = document.getElementById('searchInput');
+    const errorDiv = document.getElementById('searchError');
+
+    if (!form || !input) return;
+
+    form.addEventListener('submit', function(e) {
+        if (input.value.trim() === '') {
+            e.preventDefault();
+            if (errorDiv) {
+                errorDiv.style.display = 'block';
+                setTimeout(() => { errorDiv.style.display = 'none'; }, 3000);
+            }
+        }
+    });
 }
 
 // Form submission functionality
