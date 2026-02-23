@@ -148,6 +148,7 @@
                     <div class="alert alert-success d-none" id="successMessage">
                         Evaluation saved successfully!
                     </div>
+                    <div class="alert alert-danger d-none" id="errorMessage"></div>
                     <input type="hidden" name="supplier_id" id="supplier_id">
                     
                     <!-- Rating Fields -->
@@ -344,5 +345,7 @@
     <script>
         // Pass rankings data to JavaScript
         window.rankingsData = @json($rankings);
+        // expose base url for AJAX requests
+        window.appBaseUrl = '{{ url('') }}';
     </script>
 @endpush 

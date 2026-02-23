@@ -313,8 +313,9 @@ function initializeFormSubmission() {
             _token: formData.get('_token')
         };
         
-        // Submit to server
-        fetch(`/admin/suppliers/${supplierId}/evaluations`, {
+        // Submit to server (use Laravel url() to respect subdirectory base)
+        const postUrl = `${window.appBaseUrl || ''}/admin/suppliers/${supplierId}/evaluations`;
+        fetch(postUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -323,11 +324,24 @@ function initializeFormSubmission() {
             },
             body: JSON.stringify(evaluationData)
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
+        .then(async response => {
+            if (response.ok) {
+                return response.json();
             }
-            return response.json();
+            // try to parse JSON error message(s)
+            let errorText = '';
+            try {
+                const errorData = await response.json();
+                if (errorData.errors) {
+                    errorText = Object.values(errorData.errors).flat().join(' ');
+                } else if (errorData.message) {
+                    errorText = errorData.message;
+                }
+            } catch (e) {
+                // not JSON
+                errorText = await response.text();
+            }
+            throw new Error(errorText || 'Network response was not ok');
         })
         .then(data => {
             // Show success message
@@ -345,7 +359,16 @@ function initializeFormSubmission() {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while saving the evaluation. Please try again.');
+            const errorMsgElem = document.getElementById('errorMessage');
+            if (errorMsgElem) {
+                errorMsgElem.textContent = error.message || 'An unexpected error occurred.';
+                errorMsgElem.classList.remove('d-none');
+                setTimeout(() => {
+                    errorMsgElem.classList.add('d-none');
+                }, 5000);
+            } else {
+                alert('An error occurred while saving the evaluation. Please try again.');
+            }
         })
         .finally(() => {
             // Hide loading state

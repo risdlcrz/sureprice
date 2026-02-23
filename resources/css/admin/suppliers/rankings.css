@@ -56,6 +56,16 @@
     background-color: transparent;
 }
 
+/* remove browser default arrows on number inputs */
+.score-input input[type=number] {
+    -moz-appearance: textfield;
+}
+.score-input input[type=number]::-webkit-outer-spin-button,
+.score-input input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
 /* Modal Styles */
 .metrics-section {
     margin-top: 2rem;
