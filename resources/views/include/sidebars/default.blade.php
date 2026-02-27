@@ -47,6 +47,9 @@
         <a href="{{ route('client.quotation.create') }}" class="btn">
             <i class="fas fa-tasks"></i>Project & Procurement
         </a>
+        <a href="{{ route('contracts.index') }}" class="btn">
+            <i class="fas fa-file-contract"></i>My Contract
+        </a>
         <a href="{{ route('client.quotation.index') }}" class="btn">
             <i class="fas fa-file-alt"></i>My Quotations
         </a>

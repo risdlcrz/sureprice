@@ -26,10 +26,34 @@ class ContractController extends Controller
 
     public function index()
     {
-        $contracts = Contract::with(['contractor', 'client', 'property'])
-            ->when(request('status'), function($query, $status) {
+        $user = Auth::user();
+
+        $contractsQuery = Contract::with(['contractor', 'client', 'property'])
+            ->when(request('status'), function ($query, $status) {
                 return $query->where('status', $status);
-            })
+            });
+
+        // If the logged-in user is a client company, only show their own contracts
+        if ($user &&
+            $user->user_type === 'company' &&
+            (optional($user->company)->designation === 'client' || $user->role === 'client')) {
+
+            $company = $user->company;
+            $contractsQuery->whereHas('client', function ($q) use ($user, $company) {
+                $q->where('email', $user->email);
+
+                if ($company) {
+                    $q->orWhere('email', $company->email)
+                      ->orWhere('company_name', $company->company_name)
+                      ->orWhere('name', $company->company_name);
+                }
+
+                // Also match explicit user linkage if present
+                $q->orWhere('user_id', $user->id);
+            });
+        }
+
+        $contracts = $contractsQuery
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
