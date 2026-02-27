@@ -47,10 +47,16 @@ use App\Http\Controllers\MaterialRequestController;
 use App\Http\Controllers\Warehouse\MaterialRequestApprovalController;
 use App\Http\Controllers\ProjectTaskController;
 use App\Http\Controllers\FinanceController;
-// Home route redirect to login
+// Landing page for public users
 Route::get('/', function () {
     return view('landing.catalogue');
 })->name('landing.catalogue');
+
+// Generic authenticated "home" route used by fallback redirects
+Route::middleware(['auth'])->get('/home', function () {
+    // Adjust this target if you want a different default dashboard
+    return redirect()->route('contracts.index');
+})->name('home');
 // ================== Authentication Routes ==================
 Route::middleware('web')->group(function () {
     require __DIR__.'/auth.php';
