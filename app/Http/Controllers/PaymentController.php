@@ -334,6 +334,34 @@ class PaymentController extends Controller
         ));
     }
 
+    /**
+     * Serve payment proof file (client or admin proof) for viewing/download.
+     */
+    public function showProof(Request $request, Payment $payment)
+    {
+        $proofPath = $payment->client_payment_proof
+            ?? ($payment->attachment ? $payment->attachment->path : null)
+            ?? $payment->admin_payment_proof;
+
+        if (!$proofPath) {
+            abort(404, 'Payment proof not found.');
+        }
+
+        if (!Storage::disk('public')->exists($proofPath)) {
+            abort(404, 'Payment proof file not found.');
+        }
+
+        $path = Storage::disk('public')->path($proofPath);
+        $mime = Storage::disk('public')->mimeType($proofPath);
+        $name = basename($proofPath);
+        $disposition = $request->boolean('download') ? 'attachment' : 'inline';
+
+        return response()->file($path, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => $disposition . '; filename="' . $name . '"',
+        ]);
+    }
+
     public function uploadProof(Request $request, Payment $payment)
     {
         $request->validate([

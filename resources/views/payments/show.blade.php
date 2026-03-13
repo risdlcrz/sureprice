@@ -112,7 +112,11 @@
                                 <p><strong>Amount Paid:</strong> ₱{{ number_format($payment->client_paid_amount, 2) }}</p>
                                 <p><strong>Payment Date:</strong> {{ $payment->client_paid_date ? $payment->client_paid_date->format('M d, Y') : 'N/A' }}</p>
                                 @if($payment->client_payment_proof)
-                                    <p><strong>Proof:</strong> <a href="{{ asset('storage/' . $payment->client_payment_proof) }}" target="_blank" class="btn btn-sm btn-info">View Proof</a></p>
+                                    <p class="mb-0"><strong>Proof:</strong>
+                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#proofModal{{ $payment->id }}"><i class="fas fa-eye"></i> View</button>
+                                        <a href="{{ route('payments.proof', $payment) }}" target="_blank" class="btn btn-sm btn-outline-primary">Open in new tab</a>
+                                        <a href="{{ route('payments.proof', $payment) }}?download=1" class="btn btn-sm btn-outline-success"><i class="fas fa-download"></i> Download</a>
+                                    </p>
                                 @endif
                                 @if($payment->client_notes)
                                     <p><strong>Client Notes:</strong> {{ $payment->client_notes }}</p>
@@ -189,11 +193,12 @@
                                 <p><strong>Date:</strong> {{ $payment->admin_received_date ? $payment->admin_received_date->format('M d, Y') : 'N/A' }}</p>
                             </div>
                         </div>
-                        @if($payment->client_payment_proof)
-                            <p><strong>Client Proof:</strong> <a href="{{ asset('storage/' . $payment->client_payment_proof) }}" target="_blank" class="btn btn-sm btn-info">View</a></p>
-                        @endif
-                        @if($payment->admin_payment_proof)
-                            <p><strong>Admin Proof:</strong> <a href="{{ asset('storage/' . $payment->admin_payment_proof) }}" target="_blank" class="btn btn-sm btn-info">View</a></p>
+                        @if($payment->client_payment_proof || $payment->admin_payment_proof)
+                            <p class="mb-0"><strong>Proof:</strong>
+                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#proofModal{{ $payment->id }}"><i class="fas fa-eye"></i> View</button>
+                                <a href="{{ route('payments.proof', $payment) }}" target="_blank" class="btn btn-sm btn-outline-primary">Open in new tab</a>
+                                <a href="{{ route('payments.proof', $payment) }}?download=1" class="btn btn-sm btn-outline-success"><i class="fas fa-download"></i> Download</a>
+                            </p>
                         @endif
                     </div>
                 </div>
@@ -239,6 +244,10 @@
         </div>
     </div>
 </div>
+
+@if($payment->client_payment_proof || optional($payment->attachment)->path || $payment->admin_payment_proof)
+    @include('payments.partials.proof_viewer_modal', ['payment' => $payment])
+@endif
 
 <style>
 .timeline {

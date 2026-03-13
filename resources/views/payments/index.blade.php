@@ -89,12 +89,13 @@
                         <td>{{ $payment->client_reference_number ?? $payment->reference_number ?? '-' }}</td>
                         <td>
                             @php 
-                                $proof_path = $payment->client_payment_proof ?? ($payment->attachment ? $payment->attachment->path : null);
+                                $has_proof = $payment->client_payment_proof ?? ($payment->attachment ? $payment->attachment->path : null) ?? $payment->admin_payment_proof;
                             @endphp
-                            @if($proof_path)
-                                <a href="{{ asset('storage/' . $proof_path) }}" target="_blank">
-                                    <img src="{{ asset('storage/' . $proof_path) }}" alt="Proof" width="100">
-                                </a>
+                            @if($has_proof)
+                                <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#proofModal{{ $payment->id }}" title="View proof">
+                                    <i class="fas fa-file-invoice"></i> Proof
+                                </button>
+                                @include('payments.partials.proof_viewer_modal', ['payment' => $payment])
                             @else
                                 -
                             @endif

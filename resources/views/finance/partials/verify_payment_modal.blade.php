@@ -40,7 +40,7 @@
                             @endif
                             @if($payment->client_payment_proof)
                                 <p><strong>Proof:</strong> 
-                                    <a href="{{ asset('storage/' . $payment->client_payment_proof) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <a href="{{ route('payments.proof', $payment) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i> View
                                     </a>
                                 </p>

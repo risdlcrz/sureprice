@@ -597,10 +597,10 @@ input:hover, select:hover, textarea:hover, button:hover {
                                             <td>{{ $payment->client_reference_number ?? $payment->reference_number ?? '-' }}</td>
                                             <td>
                                                 @php 
-                                                    $proof_path = $payment->client_payment_proof ?? ($payment->attachment ? $payment->attachment->path : null);
+                                                    $has_proof = $payment->client_payment_proof ?? ($payment->attachment ? $payment->attachment->path : null) ?? $payment->admin_payment_proof;
                                                 @endphp
-                                                @if($proof_path)
-                                                    <a href="{{ asset('storage/' . $proof_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                @if($has_proof)
+                                                    <a href="{{ route('payments.proof', $payment) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                                         <i class="fas fa-eye"></i> View
                                                     </a>
                                                 @else

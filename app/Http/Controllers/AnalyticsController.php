@@ -23,30 +23,63 @@ class AnalyticsController extends Controller
 
     public function index()
     {
-        $topSuppliers = Cache::remember('supplier.top', now()->addMinutes(30), function () {
-            $suppliers = Supplier::with(['evaluations', 'metrics'])->get();
-            return $this->rankingService->calculateRankings($suppliers)->take(3);
-        });
+        $rankings = $this->getSupplierRankings();
+        $topSuppliers = $rankings->take(3);
         return view('admin.analytics-dashboard', compact('topSuppliers'));
+    }
+
+    /**
+     * Get supplier rankings, caching only lightweight data (ids, scores, ranks)
+     * to avoid exceeding MySQL max_allowed_packet when using database cache.
+     *
+     * @return \Illuminate\Support\Collection<int, array{supplier: \App\Models\Supplier, score: float, rank: int|null}>
+     */
+    protected function getSupplierRankings()
+    {
+        $lightKey = 'supplier.rankings.light';
+
+        $cached = Cache::get($lightKey);
+        if ($cached !== null) {
+            $ids = collect($cached)->pluck('supplier_id')->all();
+            $suppliers = Supplier::with(['evaluations', 'metrics'])->whereIn('id', $ids)->get()->keyBy('id');
+            return collect($cached)->map(function ($row) use ($suppliers) {
+                $supplier = $suppliers->get($row['supplier_id']);
+                return [
+                    'supplier' => $supplier,
+                    'score' => $row['score'],
+                    'rank' => $row['rank'],
+                ];
+            })->filter(fn ($row) => $row['supplier'] !== null)->values();
+        }
+
+        // Remove legacy cache entry that stored full Eloquent models (exceeded max_allowed_packet)
+        Cache::forget('supplier.rankings');
+
+        $suppliers = Supplier::with(['evaluations', 'metrics'])->get();
+        $rankings = $this->rankingService->calculateRankings($suppliers);
+
+        $light = $rankings->map(fn ($r) => [
+            'supplier_id' => $r['supplier']->id,
+            'score' => $r['score'],
+            'rank' => $r['rank'],
+        ])->all();
+
+        Cache::put($lightKey, $light, now()->addMinutes(30));
+
+        return $rankings;
     }
 
     public function supplierRankings()
     {
-        // cache rankings for 30 minutes, invalidate on model events
-        $rankings = Cache::remember('supplier.rankings', now()->addMinutes(30), function () {
-            $suppliers = Supplier::with(['evaluations', 'metrics'])->get();
-            return $this->rankingService->calculateRankings($suppliers);
-        });
+        // Cache only lightweight data (supplier_id, score, rank) to avoid exceeding MySQL max_allowed_packet
+        $rankings = $this->getSupplierRankings();
 
         return view('admin.suppliers.rankings', compact('rankings'));
     }
 
     public function getTopSuppliers(): JsonResponse
     {
-        $rankings = Cache::remember('supplier.rankings', now()->addMinutes(30), function () {
-            $suppliers = Supplier::with(['evaluations', 'metrics'])->get();
-            return $this->rankingService->calculateRankings($suppliers);
-        });
+        $rankings = $this->getSupplierRankings();
 
         $topSuppliers = $rankings
             ->take(3)

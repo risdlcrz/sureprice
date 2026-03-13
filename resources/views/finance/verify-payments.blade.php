@@ -96,7 +96,7 @@
                                     @if($payment->client_payment_proof)
                                         <div class="mt-3">
                                             <h6 class="fw-bold text-primary">Payment Proof</h6>
-                                            <a href="{{ asset('storage/' . $payment->client_payment_proof) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <a href="{{ route('payments.proof', $payment) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-eye"></i> View Proof
                                             </a>
                                         </div>

@@ -12,7 +12,7 @@
           <div class="mb-2">
             <label class="form-label">Proof of Payment:</label>
             @if($payment->client_payment_proof)
-              <a href="{{ asset('storage/' . $payment->client_payment_proof) }}" target="_blank" class="btn btn-link btn-sm">View</a>
+              <a href="{{ route('payments.proof', $payment) }}" target="_blank" class="btn btn-link btn-sm">View</a>
             @else
               <span class="text-muted">No file</span>
             @endif
