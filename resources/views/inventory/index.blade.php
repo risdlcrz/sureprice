@@ -306,19 +306,19 @@
                                                 <a href="{{ route('inventory.edit', $material->primary_inventory) }}" class="btn btn-sm btn-primary">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
+                                                <form action="{{ route('inventory.destroy', $material->primary_inventory) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this item?')">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
                                             @else
                                                 {{-- fallback in case inventory record is missing --}}
                                                 <a href="{{ route('inventory.create') }}" class="btn btn-sm btn-primary" title="Create inventory record">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                             @endif
-                                            <form action="{{ route('inventory.destroy', $material) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this item?')">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
                                         </div>
                                     </td>
                                 </tr>

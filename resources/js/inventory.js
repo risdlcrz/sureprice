@@ -537,6 +537,7 @@ function updateProductDetailsModal(data) {
     const productPriceEl = document.getElementById('productPrice');
     const productThresholdEl = document.getElementById('productThreshold');
     
+    console.log('Basic elements found:', {
         productName: productNameEl ? 'YES' : 'NO',
         productCategory: productCategoryEl ? 'YES' : 'NO',
         productStock: productStockEl ? 'YES' : 'NO',
@@ -559,6 +560,7 @@ function updateProductDetailsModal(data) {
     const productQualityGradeEl = document.getElementById('productQualityGrade');
     const productOriginEl = document.getElementById('productOrigin');
     
+    console.log('Product details elements found:', {
         productBrand: productBrandEl ? 'YES' : 'NO',
         productManufacturer: productManufacturerEl ? 'YES' : 'NO',
         productDimensions: productDimensionsEl ? 'YES' : 'NO',
@@ -594,6 +596,7 @@ function updateProductDetailsModal(data) {
     const productSpecificationsEl = document.getElementById('productSpecifications');
     const productWarrantyEl = document.getElementById('productWarranty');
     
+    console.log('Additional elements found:', {
         productSpecifications: productSpecificationsEl ? 'YES' : 'NO',
         productWarranty: productWarrantyEl ? 'YES' : 'NO'
     });

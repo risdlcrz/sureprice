@@ -19,20 +19,9 @@ class InventoryController extends Controller
 
         $warehouses = Warehouse::all();
 
-        // backfill any materials that somehow missed an inventory record
-        \App\Models\Material::doesntHave('inventory')->get()->each(function ($m) {
-            \App\Models\Inventory::create([
-                'material_id' => $m->id,
-                'quantity' => 0,
-                'unit' => $m->unit,
-                'location' => null,
-                'status' => 'active',
-                'minimum_threshold' => 0,
-            ]);
-        });
-
-        // also load inventory relation so we can link to the correct record
+        // Only list materials that have inventory (deleted items stay removed; add new items via "Add New Item")
         $materials = \App\Models\Material::with(['category', 'stocks', 'inventory'])
+            ->has('inventory')
             ->get()
             ->map(function ($material) use ($warehouses) {
                 $totalStock = $material->stocks->sum('current_stock');
@@ -179,12 +168,10 @@ class InventoryController extends Controller
     public function destroy(Inventory $inventory)
     {
         DB::transaction(function () use ($inventory) {
-            // Update material's current stock
             $material = $inventory->material;
+            $inventory->delete();
             $material->current_stock = 0;
             $material->save();
-            
-            $inventory->delete();
         });
 
         return redirect()->route('inventory.index')
