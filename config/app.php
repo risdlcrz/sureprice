@@ -15,6 +15,9 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    // Where account-appeal and support e-mails go (auth/account-rejected).
+    'support_email' => env('SUPPORT_EMAIL', 'jerry.nares30@gmail.com'),
+
     // Contact address shown on auth/status pages.
     'support_email' => env('SUPPORT_EMAIL', 'support@gdcadmin.com'),
 

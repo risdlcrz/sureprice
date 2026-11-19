@@ -6,7 +6,7 @@
         . '- Company Name: ' . ($company->company_name ?? 'N/A') . "\n- Contact Person: {$user->name}\n- Email: {$user->email}\n"
         . ($reason ? "\nRejection Reason: {$reason}\n" : '')
         . "\nI would like to appeal this decision or get more information about the rejection.\n\nThank you,\n{$user->name}";
-    $mailto = 'mailto:jerry.nares30@gmail.com?subject=' . rawurlencode('Company Registration Rejection Appeal - ' . ($company->company_name ?? 'Unknown Company')) . '&body=' . rawurlencode($body);
+    $mailto = 'mailto:' . config('app.support_email') . '?subject=' . rawurlencode('Company Registration Rejection Appeal - ' . ($company->company_name ?? 'Unknown Company')) . '&body=' . rawurlencode($body);
 @endphp
 <x-auth-card title="Account Not Approved" icon="times" tone="danger" :help="false">
     <div class="status-message status-error">
