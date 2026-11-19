@@ -65,10 +65,15 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    server: {
+        watch: {
+            ignored: ['**/.vs/**'],
+        },
+    },
     base: '/build/',
     build: {
         outDir: 'public/build', // Explicit output path
-        emptyOutDir: true, 
+        emptyOutDir: true, // Clears the directory on rebuild
         rollupOptions: {
             external: ['jquery', 'select2'],
             output: {
@@ -78,5 +83,5 @@ export default defineConfig({
                 }
             }
         }
-    },    // Clears the directory on rebuild
+    },
 });
