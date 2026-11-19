@@ -10,6 +10,9 @@ class Project extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /** Allowed values of projects.status (DB enum). */
+    public const STATUSES = ['pending', 'active', 'on_hold', 'completed', 'cancelled'];
+
     protected $fillable = [
         'project_number',
         'contract_id',
@@ -100,4 +103,9 @@ class Project extends Model
         
         return sprintf('%s%s%s%04d', $prefix, $year, $month, $sequence);
     }
-} 
+
+    public function recalculateProgress(): void
+    {
+        $this->update(['progress' => (int) round($this->tasks()->avg('progress') ?? 0)]);
+    }
+}

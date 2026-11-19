@@ -65,32 +65,12 @@ class InformationManagementController extends Controller
 
     public function create()
     {
-        return view('admin.employees.create');
+        return view('admin.employees.form');
     }
 
     public function store(Request $request)
     {
-        $rules = [
-            'username' => ['required', 'string', 'max:255', 'unique:users'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'in:procurement,warehousing,contractor,finance'],
-        ];
-        // Contractor-specific validation
-        if ($request->role === 'contractor') {
-            $rules = array_merge($rules, [
-                'company_name' => ['nullable', 'string', 'max:255'],
-                'phone' => ['required', 'string', 'max:255'],
-                'street' => ['required', 'string', 'max:255'],
-                'barangay' => ['required', 'string', 'max:255'],
-                'city' => ['required', 'string', 'max:255'],
-                'state' => ['required', 'string', 'max:255'],
-                'postal' => ['required', 'string', 'max:255'],
-        ]);
-        }
-        $request->validate($rules);
+        $request->validate($this->employeeRules($request));
         DB::beginTransaction();
         try {
             $user = User::create([
@@ -133,31 +113,13 @@ class InformationManagementController extends Controller
     public function edit($id)
     {
         $employee = Employee::with('user')->findOrFail($id);
-        return view('admin.employees.edit', compact('employee'));
+        return view('admin.employees.form', compact('employee'));
     }
 
     public function update(Request $request, $id)
     {
         $employee = Employee::findOrFail($id);
-        $rules = [
-            'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $employee->user_id],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $employee->user_id],
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'in:procurement,warehousing,contractor,finance'],
-        ];
-        if ($request->role === 'contractor') {
-            $rules = array_merge($rules, [
-                'company_name' => ['nullable', 'string', 'max:255'],
-                'phone' => ['required', 'string', 'max:255'],
-                'street' => ['required', 'string', 'max:255'],
-                'barangay' => ['required', 'string', 'max:255'],
-                'city' => ['required', 'string', 'max:255'],
-                'state' => ['required', 'string', 'max:255'],
-                'postal' => ['required', 'string', 'max:255'],
-        ]);
-        }
-        $request->validate($rules);
+        $request->validate($this->employeeRules($request, $employee));
         DB::beginTransaction();
         try {
             $employee->user->update([
@@ -389,4 +351,26 @@ class InformationManagementController extends Controller
             ->header('Content-Type', 'text/csv')
             ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
     }
-} 
+
+    /** Validation for creating ($employee null) or updating an employee account. */
+    private function employeeRules(Request $request, ?Employee $employee = null): array
+    {
+        $userId = $employee?->user_id;
+        $rules = [
+            'username' => ['required', 'string', 'max:255', 'unique:users,username' . ($userId ? ",$userId" : '')],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email' . ($userId ? ",$userId" : '')],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'role' => ['required', 'in:procurement,warehousing,contractor,finance'],
+        ];
+        if (!$employee) {
+            $rules['password'] = ['required', 'confirmed', Rules\Password::defaults()];
+        }
+        if ($request->role === 'contractor') {
+            $rules += ['company_name' => ['nullable', 'string', 'max:255']]
+                + array_fill_keys(['phone', 'street', 'barangay', 'city', 'state', 'postal'], ['required', 'string', 'max:255']);
+        }
+
+        return $rules;
+    }
+}

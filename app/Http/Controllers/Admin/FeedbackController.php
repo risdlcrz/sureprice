@@ -60,7 +60,7 @@ class FeedbackController extends Controller
     {
         $feedback->load(['contract', 'contract.contractor', 'contract.client', 'user']);
         
-        return view('admin.feedback.show', compact('feedback'));
+        return view('feedback.show', ['feedback' => $feedback, 'admin' => true]);
     }
 
     public function analytics()

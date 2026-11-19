@@ -1,0 +1,5 @@
+/* Feedback details page (resources/views/feedback/show.blade.php), loads after app-layout.css */
+
+.fs-6 {
+    font-size: 1rem !important;
+}

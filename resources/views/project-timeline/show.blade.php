@@ -16,7 +16,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-8">
-                            <h4>{{ $task->title }}</h4>
+                            <h4>{{ $task->name }}</h4>
                             <p class="text-muted">
                                 Contract: {{ $task->contract->contract_number }} - {{ $task->contract->title }}
                             </p>
@@ -53,7 +53,7 @@
                                         </tr>
                                         <tr>
                                             <th>End Date</th>
-                                            <td>{{ $task->end_date->format('M d, Y') }}</td>
+                                            <td>{{ $task->due_date?->format('M d, Y') ?? '-' }}</td>
                                         </tr>
                                         <tr>
                                             <th>Duration</th>

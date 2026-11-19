@@ -10,6 +10,36 @@ class ProjectTask extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const STATUSES = ['pending', 'in_progress', 'on_hold', 'delayed', 'completed'];
+    public const PRIORITIES = ['low', 'medium', 'high', 'urgent'];
+
+    /** Validation shared by the project task pages and the project timeline. */
+    public static function rules(bool $updating): array
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'start_date' => 'required|date',
+            'due_date' => 'required|date|after_or_equal:start_date',
+            'priority' => 'required|in:' . implode(',', self::PRIORITIES),
+            'assigned_to' => 'nullable|exists:users,id',
+            'room_id' => 'nullable|exists:rooms,id',
+            'scope_type_id' => 'nullable|exists:scope_types,id',
+            'notes' => 'nullable|string',
+        ] + ($updating ? [
+            'status' => 'required|in:' . implode(',', self::STATUSES),
+            'progress' => 'required|integer|min:0|max:100',
+        ] : []);
+    }
+
+    protected static function booted(): void
+    {
+        // the project's progress is the average of its tasks', whichever page changed them
+        $sync = fn (self $task) => $task->project?->recalculateProgress();
+        static::saved($sync);
+        static::deleted($sync);
+    }
+
     protected $fillable = [
         'contract_id',
         'project_id',
@@ -41,6 +71,26 @@ class ProjectTask extends Model
     public function assignee()
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function contract()
+    {
+        return $this->belongsTo(Contract::class);
+    }
+
+    public function room()
+    {
+        return $this->belongsTo(Room::class);
+    }
+
+    public function scopeType()
+    {
+        return $this->belongsTo(ScopeType::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function attachments()

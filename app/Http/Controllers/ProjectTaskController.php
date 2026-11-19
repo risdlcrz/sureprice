@@ -18,36 +18,19 @@ class ProjectTaskController extends Controller
 
     public function create(Project $project)
     {
-        $users = User::all();
-        return view('projects.tasks.create', compact('project', 'users'));
+        return view('projects.tasks.form', ['project' => $project, 'users' => User::orderBy('name')->get()]);
     }
 
     public function store(Request $request, Project $project)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'start_date' => 'required|date',
-            'due_date' => 'required|date|after:start_date',
-            'priority' => 'required|in:low,medium,high,urgent',
-            'assigned_to' => 'required|exists:users,id',
-            'notes' => 'nullable|string'
+        $task = $project->tasks()->create($request->validate(ProjectTask::rules(false)) + [
+            'contract_id' => $project->contract_id,
+            'status' => 'pending',
+            'progress' => 0,
+            'created_by' => Auth::id(),
         ]);
 
-        try {
-            $task = $project->tasks()->create([
-                ...$validated,
-                'contract_id' => $project->contract_id,
-                'status' => 'pending',
-                'progress' => 0,
-                'created_by' => Auth::id()
-            ]);
-
-            return redirect()->route('projects.tasks.show', [$project, $task])
-                ->with('success', 'Task created successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to create task: ' . $e->getMessage());
-        }
+        return redirect()->route('projects.tasks.show', [$project, $task])->with('success', 'Task created successfully.');
     }
 
     public function show(Project $project, ProjectTask $task)
@@ -58,36 +41,20 @@ class ProjectTaskController extends Controller
 
     public function edit(Project $project, ProjectTask $task)
     {
-        $users = User::all();
-        return view('projects.tasks.edit', compact('project', 'task', 'users'));
+        return view('projects.tasks.form', [
+            'project' => $project,
+            'task' => $task,
+            'users' => User::orderBy('name')->get(),
+            'rooms' => $task->contract?->rooms()->with('scopeTypes')->get() ?? collect(),
+        ]);
     }
 
     public function update(Request $request, Project $project, ProjectTask $task)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'start_date' => 'required|date',
-            'due_date' => 'required|date|after:start_date',
-            'status' => 'required|in:pending,in_progress,completed,on_hold',
-            'priority' => 'required|in:low,medium,high,urgent',
-            'assigned_to' => 'required|exists:users,id',
-            'progress' => 'required|integer|min:0|max:100',
-            'notes' => 'nullable|string'
-        ]);
+        // project progress is recalculated by ProjectTask's saved event
+        $task->update($request->validate(ProjectTask::rules(true)));
 
-        try {
-            $task->update($validated);
-
-            // Update project progress based on tasks
-            $averageProgress = $project->tasks()->avg('progress') ?? 0;
-            $project->update(['progress' => round($averageProgress)]);
-
-            return redirect()->route('projects.tasks.show', [$project, $task])
-                ->with('success', 'Task updated successfully.');
-        } catch (\Exception $e) {
-            return back()->with('error', 'Failed to update task: ' . $e->getMessage());
-        }
+        return redirect()->route('projects.tasks.show', [$project, $task])->with('success', 'Task updated successfully.');
     }
 
     public function destroy(Project $project, ProjectTask $task)

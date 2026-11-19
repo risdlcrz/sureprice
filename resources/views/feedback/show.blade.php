@@ -1,16 +1,18 @@
+{{-- Feedback details for admins (analytics/export, priority) and the client who wrote it (edit while draft). Params: $feedback, $admin --}}
 @extends('layouts.app')
+
+@php $back = route($admin ? 'admin.feedback.index' : 'client.feedback.index'); @endphp
+@section('title', 'Feedback Details')
 
 @section('content')
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-10">
             <x-page-header title="Feedback Details">
-                <a href="{{ route('admin.feedback.index') }}" class="btn btn-outline-secondary me-2">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Feedback
-                    </a>
-                    <a href="{{ route('admin.feedback.analytics') }}" class="btn btn-info">
-                        <i class="fas fa-chart-bar me-2"></i>Analytics
-                    </a>
+                <a href="{{ $back }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Back to Feedback</a>
+                @if($admin)
+                    <a href="{{ route('admin.feedback.analytics') }}" class="btn btn-info btn-sm"><i class="fas fa-chart-bar me-1"></i>Analytics</a>
+                @endif
             </x-page-header>
 
             <div class="card">
@@ -31,15 +33,11 @@
                         </div>
                         <div class="col-md-6">
                             <h6 class="text-primary">Feedback Information</h6>
-                            <p><strong>Client:</strong> 
-                                @if($feedback->is_anonymous)
-                                    <span class="text-muted">Anonymous</span>
-                                    <span class="badge bg-info ms-1">Anonymous</span>
-                                @else
-                                    {{ $feedback->contract->client->name ?? 'N/A' }}
-                                @endif
-                            </p>
-                            <p><strong>Submitted:</strong> {{ $feedback->submitted_at->format('M d, Y H:i') }}</p>
+                            @if($admin)
+                                <p><strong>Client:</strong> {{ $feedback->is_anonymous ? 'Anonymous' : ($feedback->contract->client->name ?? 'N/A') }}</p>
+                            @endif
+                            <p><strong>Anonymous:</strong> <span class="badge bg-{{ $feedback->is_anonymous ? 'info' : 'secondary' }}">{{ $feedback->is_anonymous ? 'Yes' : 'No' }}</span></p>
+                            <p><strong>Submitted:</strong> {{ $feedback->submitted_at?->format('M d, Y H:i') ?? 'Not submitted' }}</p>
                             <p><strong>Status:</strong> 
                                 @if($feedback->submitted_at)
                                     <span class="badge bg-success">Submitted</span>
@@ -54,7 +52,7 @@
 
                     <!-- Ratings -->
                     <div class="mb-4">
-                        <h5 class="text-primary mb-3">Client Ratings</h5>
+                        <h5 class="text-primary mb-3">{{ $admin ? 'Client Ratings' : 'Your Ratings' }}</h5>
                         
                         <div class="row">
                             <div class="col-md-6">
@@ -186,6 +184,7 @@
                         </div>
                     @endif
 
+                    @if($admin)
                     <!-- Priority Level -->
                     <div class="mb-4">
                         <h5 class="text-primary mb-3">Priority Assessment</h5>
@@ -212,11 +211,17 @@
                         </div>
                     </div>
 
+                    @endif
+
                     <!-- Action Buttons -->
                     <div class="d-flex justify-content-between">
-                        <a href="{{ route('admin.feedback.index') }}" class="btn btn-secondary">
+                        <a href="{{ $back }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-2"></i>Back to Feedback
                         </a>
+                        @if(!$admin && !$feedback->submitted_at)
+                            <a href="{{ route('client.feedback.edit', $feedback) }}" class="btn btn-warning"><i class="fas fa-edit me-2"></i>Edit Feedback</a>
+                        @endif
+                        @if($admin)
                         <div>
                             <a href="{{ route('admin.feedback.analytics') }}" class="btn btn-info me-2">
                                 <i class="fas fa-chart-bar me-2"></i>View Analytics
@@ -231,6 +236,7 @@
                                 </ul>
                             </div>
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -238,5 +244,5 @@
     </div>
 </div>
 
-@vite('resources/css/pages/admin-feedback-show.css')
+@vite('resources/css/pages/feedback-show.css')
 @endsection 

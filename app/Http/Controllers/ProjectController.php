@@ -44,10 +44,7 @@ class ProjectController extends Controller
 
     public function create()
     {
-        $contracts = Contract::where('status', 'active')->get();
-        $users = User::all();
-        
-        return view('projects.create', compact('contracts', 'users'));
+        return view('projects.form', $this->formData());
     }
 
     public function store(Request $request)
@@ -70,7 +67,7 @@ class ProjectController extends Controller
             $project = Project::create([
                 'project_number' => Project::generateProjectNumber(),
                 ...$validated,
-                'status' => 'proposed'
+                'status' => 'pending',
             ]);
 
             DB::commit();
@@ -92,10 +89,18 @@ class ProjectController extends Controller
 
     public function edit(Project $project)
     {
-        $contracts = Contract::where('status', 'active')->get();
-        $users = User::all();
-        
-        return view('projects.edit', compact('project', 'contracts', 'users'));
+        return view('projects.form', $this->formData() + compact('project'));
+    }
+
+    private function formData(): array
+    {
+        return [
+            // a project is created from an approved (or active) contract that doesn't have one yet
+            'contracts' => Contract::whereIn('status', ['approved', 'active'])
+                ->whereNotIn('id', Project::withTrashed()->whereNotNull('contract_id')->pluck('contract_id'))
+                ->orderByDesc('created_at')->get(),
+            'users' => User::orderBy('name')->get(),
+        ];
     }
 
     public function update(Request $request, Project $project)
@@ -105,7 +110,7 @@ class ProjectController extends Controller
             'description' => 'nullable|string',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
-            'status' => 'required|in:proposed,planning,approved,in_progress,on_hold,completed,closed,cancelled',
+            'status' => 'required|in:' . implode(',', Project::STATUSES),
             'project_manager_id' => 'required|exists:users,id',
             'client_representative_id' => 'required|exists:users,id',
             'budget' => 'required|numeric|min:0',

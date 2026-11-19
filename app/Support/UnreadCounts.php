@@ -10,8 +10,6 @@ use Illuminate\Support\Facades\Auth;
 /** Unread notification/message counts for the signed-in user, computed at most once per request per user. */
 class UnreadCounts
 {
-    private static array $cache = [];
-
     public static function notifications(): int
     {
         return self::remember('notifications', fn (User $u) => Notification::forUser($u)->unread()->count());
@@ -32,12 +30,20 @@ class UnreadCounts
     /** Drop cached counts (e.g. after marking notifications read). */
     public static function flush(): void
     {
-        self::$cache = [];
+        foreach (array_keys(request()->attributes->all()) as $k) {
+            if (str_starts_with($k, 'unread-counts.')) request()->attributes->remove($k);
+        }
     }
 
+    // Cached on the current request, so nothing leaks between requests in long-running processes or tests.
     private static function remember(string $key, callable $count): int
     {
         $user = Auth::user();
-        return $user ? self::$cache[$key . ':' . $user->id] ??= $count($user) : 0;
+        if (!$user) return 0;
+        $bag = request()->attributes;
+        $k = "unread-counts.$key.{$user->id}";
+        if (!$bag->has($k)) $bag->set($k, $count($user));
+
+        return $bag->get($k);
     }
 }

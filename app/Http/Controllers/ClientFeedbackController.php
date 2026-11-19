@@ -195,7 +195,7 @@ class ClientFeedbackController extends Controller
             abort(403, 'You are not authorized to view this feedback.');
         }
 
-        return view('client.feedback.show', compact('feedback'));
+        return view('feedback.show', ['feedback' => $feedback, 'admin' => false]);
     }
 
     public function submit(ClientFeedback $feedback)

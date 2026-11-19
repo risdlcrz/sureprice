@@ -44,7 +44,7 @@ class ProjectTimelineController extends Controller
         if ($request->has('start_date') && $request->has('end_date')) {
             $query->where(function($q) use ($request) {
                 $q->whereBetween('start_date', [$request->start_date, $request->end_date])
-                  ->orWhereBetween('end_date', [$request->start_date, $request->end_date]);
+                  ->orWhereBetween('due_date', [$request->start_date, $request->end_date]);
             });
         }
 
@@ -67,9 +67,9 @@ class ProjectTimelineController extends Controller
         $tasks = $query->get()->map(function($task) {
             return [
                 'id' => 'task-' . $task->id,
-                'title' => $task->title,
+                'title' => $task->name,
                 'start' => $task->start_date->format('Y-m-d'),
-                'end' => $task->end_date->format('Y-m-d'),
+                'end' => ($task->due_date ?? $task->start_date)->format('Y-m-d'),
                 'extendedProps' => [
                     'type' => 'task',
                     'status' => $task->status,
@@ -224,37 +224,26 @@ class ProjectTimelineController extends Controller
 
     public function create()
     {
-        $contracts = Contract::with(['rooms', 'rooms.scopeTypes'])
-            ->orderBy('contract_number')
-            ->get();
-        $users = User::orderBy('name')->get();
-
-        return view('project-timeline.create', compact('contracts', 'users'));
+        return view('projects.tasks.form', [
+            'timeline' => true,
+            'projects' => \App\Models\Project::with('contract')->orderBy('name')->get(),
+            'users' => User::orderBy('name')->get(),
+        ]);
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'contract_id' => 'required|exists:contracts,id',
-            'room_id' => 'nullable|exists:rooms,id',
-            'scope_type_id' => 'nullable|exists:scope_types,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'priority' => 'required|in:low,medium,high',
-            'assigned_to' => 'nullable|exists:users,id',
-            'notes' => 'nullable|string'
+        $validated = $request->validate(ProjectTask::rules(false) + ['project_id' => 'required|exists:projects,id']);
+        $project = \App\Models\Project::findOrFail($validated['project_id']);
+
+        ProjectTask::create($validated + [
+            'contract_id' => $project->contract_id,
+            'status' => 'pending',
+            'progress' => 0,
+            'created_by' => auth()->id(),
         ]);
 
-        $validated['created_by'] = auth()->id();
-        $validated['status'] = 'pending';
-        $validated['progress'] = 0;
-
-        $task = ProjectTask::create($validated);
-
-        return redirect()->route('project-timeline.index')
-            ->with('success', 'Task created successfully.');
+        return redirect()->route('project-timeline.index')->with('success', 'Task created successfully.');
     }
 
     public function show(ProjectTask $task)
@@ -265,34 +254,19 @@ class ProjectTimelineController extends Controller
 
     public function edit(ProjectTask $task)
     {
-        $contracts = Contract::with(['rooms', 'rooms.scopeTypes'])
-            ->orderBy('contract_number')
-            ->get();
-        $users = User::orderBy('name')->get();
-
-        return view('project-timeline.edit', compact('task', 'contracts', 'users'));
+        return view('projects.tasks.form', [
+            'timeline' => true,
+            'task' => $task,
+            'users' => User::orderBy('name')->get(),
+            'rooms' => $task->contract?->rooms()->with('scopeTypes')->get() ?? collect(),
+        ]);
     }
 
     public function update(Request $request, ProjectTask $task)
     {
-        $validated = $request->validate([
-            'room_id' => 'nullable|exists:rooms,id',
-            'scope_type_id' => 'nullable|exists:scope_types,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'status' => 'required|in:pending,in_progress,completed,delayed',
-            'progress' => 'required|integer|min:0|max:100',
-            'priority' => 'required|in:low,medium,high',
-            'assigned_to' => 'nullable|exists:users,id',
-            'notes' => 'nullable|string'
-        ]);
+        $task->update($request->validate(ProjectTask::rules(true)));
 
-        $task->update($validated);
-
-        return redirect()->route('project-timeline.index')
-            ->with('success', 'Task updated successfully.');
+        return redirect()->route('project-timeline.index')->with('success', 'Task updated successfully.');
     }
 
     public function destroy(ProjectTask $task)
@@ -339,7 +313,7 @@ class ProjectTimelineController extends Controller
             $tasksQuery = \App\Models\ProjectTask::query();
 
             if ($searchTerm) {
-                $tasksQuery->where('title', 'like', '%' . $searchTerm . '%');
+                $tasksQuery->where('name', 'like', '%' . $searchTerm . '%');
             }
             if ($statusFilter && $statusFilter !== 'all') {
                 $tasksQuery->where('status', $statusFilter);
@@ -348,15 +322,15 @@ class ProjectTimelineController extends Controller
                 $tasksQuery->where('start_date', '>=', $startDateFilter);
             }
             if ($endDateFilter) {
-                $tasksQuery->where('end_date', '<=', $endDateFilter);
+                $tasksQuery->where('due_date', '<=', $endDateFilter);
             }
 
             $tasks = $tasksQuery->get()->map(function($task) {
                 return [
                     'id' => 'task-' . $task->id,
-                    'title' => $task->title,
+                    'title' => $task->name,
                     'start' => $task->start_date->format('Y-m-d'),
-                    'end' => $task->end_date->format('Y-m-d'),
+                    'end' => ($task->due_date ?? $task->start_date)->format('Y-m-d'),
                     'extendedProps' => [
                         'type' => 'task',
                         'status' => $task->status,
