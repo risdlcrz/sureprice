@@ -198,35 +198,7 @@
     </div>
 </div>
 
-<style>
-
-.text-warning .fas {
-    color: #ffc107 !important;
-}
-
-.progress {
-    border-radius: 0.5rem;
-}
-
-    .stats-card {
-        position: relative;
-    }
-    .stats-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background-color: currentColor;
-        border-top-left-radius: 1rem;
-        border-top-right-radius: 1rem;
-    }
-    .table-striped tbody tr:nth-of-type(odd) { background-color: #fafafa; }
-    .table thead.table-dark th { background-color: #198754; color: #fff; }
-
-    form[disabled] input, form[disabled] button { opacity: 0.6; }
-</style>
+@vite('resources/css/pages/admin-feedback-index.css')
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

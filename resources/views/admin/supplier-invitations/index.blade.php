@@ -103,39 +103,5 @@
 @endsection
 
 @push('styles')
-<style>
-.btn-group .btn {
-    margin-right: 4px;
-    border-radius: 1.5rem !important;
-    font-size: 0.95rem;
-    min-width: 28px;
-    padding: 0.25rem 0.45rem;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.btn-group .btn:last-child {
-    margin-right: 0;
-}
-.text-center.py-4 {
-    background: #f8fafc;
-    border-radius: 1.1rem;
-    box-shadow: 0 2px 12px rgba(44,62,80,0.06);
-    margin: 2rem 0;
-    padding: 2.5rem 1rem;
-}
-@media (max-width: 991.98px) {
-    .card-header {
-        padding: 1rem 0.5rem 0.5rem 0.5rem;
-    }
-    .card {
-        padding: 0.5rem;
-    }
-    .table th, .table td {
-        padding: 0.4rem 0.2rem;
-        font-size: 0.93rem;
-    }
-}
-</style>
+@vite('resources/css/pages/admin-supplier-invitations-index.css')
 @endpush 

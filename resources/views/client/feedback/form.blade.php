@@ -109,12 +109,7 @@
 @endsection
 
 @push('styles')
-<style>
-.rating-group { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: .25rem; }
-.rating-input { display: none; }
-.rating-label { cursor: pointer; font-size: 1.5rem; color: #dee2e6; transition: color .2s; }
-.rating-label:hover, .rating-label:hover ~ .rating-label, .rating-input:checked ~ .rating-label { color: #ffc107; }
-</style>
+@vite('resources/css/pages/client-feedback-form.css')
 @endpush
 
 @push('scripts')

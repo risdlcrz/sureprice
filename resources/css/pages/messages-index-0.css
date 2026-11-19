@@ -1,0 +1,45 @@
+/* Extracted from resources/views/messages/index.blade.php */
+.attachment-preview {
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.attachment-preview:hover {
+    transform: scale(1.02);
+}
+
+.attachment-preview:hover .attachment-overlay {
+    opacity: 1 !important;
+}
+
+#attachmentViewerModal .modal-body {
+    max-height: 80vh;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+}
+
+#attachmentViewerContent {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+#attachmentViewerContent img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+    cursor: zoom-in;
+}
+
+#attachmentViewerContent img:hover {
+    cursor: zoom-out;
+}

@@ -3,24 +3,7 @@
 @section('content')
 @push('styles')
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-.animated-empty {
-    animation: fadeIn 1s ease-in;
-    font-size: 1.1rem;
-    letter-spacing: 0.01em;
-    opacity: 0.7;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 0.7; transform: translateY(0); }
-}
-.card-header.bg-white {
-    background: rgba(255,255,255,0.85) !important;
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
-    border-bottom: none;
-}
-</style>
+@vite('resources/css/pages/warehouse-reports-index.css')
 @endpush
 <div class="container py-4">
         <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Warehouse Reports</h1>

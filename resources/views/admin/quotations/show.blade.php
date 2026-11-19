@@ -378,13 +378,7 @@
 </div>
 
 @push('styles')
-<style>
-.section-title {
-    border-bottom: 2px solid #eee;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
-}
-</style>
+@vite('resources/css/pages/admin-quotations-show.css')
 @endpush
 
 @push('scripts')

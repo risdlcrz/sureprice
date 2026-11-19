@@ -167,11 +167,5 @@
     </div>
 </div>
 
-<style>
-
-.progress {
-    height: 0.5rem;
-    border-radius: 0.25rem;
-}
-</style>
+@vite('resources/css/pages/client-payments-dashboard.css')
 @endsection 

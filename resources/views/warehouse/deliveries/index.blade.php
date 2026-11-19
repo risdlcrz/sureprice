@@ -2,25 +2,7 @@
 
 @push('styles')
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-.card .card-body, .card-footer {
-    border-radius: 24px;
-}
-.animated-empty {
-    animation: fadeIn 1s ease-in;
-    font-size: 1.1rem;
-    letter-spacing: 0.01em;
-    opacity: 0.7;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 0.7; transform: translateY(0); }
-}
-label.form-label {
-    font-weight: 600;
-    color: #198754;
-}
-</style>
+@vite('resources/css/pages/warehouse-deliveries-index.css')
 @endpush
 
 @section('content')

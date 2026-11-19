@@ -1,0 +1,94 @@
+/* Extracted from resources/views/admin/contracts/index.blade.php */
+.contracts-table-container {
+        border-radius: 20px;
+        overflow: hidden;
+        border: 1px solid #e3e8ee;
+        background: #fff;
+        box-shadow: 0 4px 24px rgba(56,189,248,0.07), 0 1.5px 6px rgba(0,0,0,0.03);
+        transition: box-shadow 0.25s;
+        padding: 8px 0;
+        margin-bottom: 32px;
+    }
+    .contracts-table {
+        border-radius: 20px;
+        overflow: hidden;
+        background: #fff;
+    }
+    .contracts-table th, .contracts-table td {
+        vertical-align: middle;
+        padding: 18px 24px;
+        font-size: 1.08rem;
+        border: none;
+        transition: background 0.22s, color 0.18s;
+    }
+    .contracts-table th {
+        background: #f7fafc;
+        font-weight: 700;
+        color: #1a7f4e;
+        border-bottom: 2px solid #e3e8ee;
+        letter-spacing: 0.01em;
+    }
+    .contracts-table tbody tr:nth-child(even) {
+        background: #f4f7fa;
+    }
+    .contracts-table tbody tr:hover {
+        background: #e0f2fe;
+        box-shadow: 0 2px 8px rgba(56,189,248,0.10);
+        z-index: 1;
+        position: relative;
+    }
+    .contracts-table .btn-group .btn {
+        padding: 0.25rem 0.6rem;
+        font-size: 1rem;
+        border-radius: 8px;
+        margin-right: 4px;
+        transition: background 0.18s, color 0.18s;
+    }
+    .contracts-table .btn-group .btn:last-child {
+        margin-right: 0;
+    }
+    .contracts-table .btn-outline-primary {
+        border: 1px solid #38bdf8;
+        color: #38bdf8;
+        background: #e0f2fe;
+    }
+    .contracts-table .btn-outline-primary:hover {
+        background: #38bdf8;
+        color: #fff;
+    }
+    .contracts-table .btn-outline-secondary {
+        border: 1px solid #a0aec0;
+        color: #4a5568;
+        background: #f7fafc;
+    }
+    .contracts-table .btn-outline-secondary:hover {
+        background: #a0aec0;
+        color: #fff;
+    }
+    .contracts-table .btn-outline-danger {
+        border: 1px solid #ef4444;
+        color: #ef4444;
+        background: #fee2e2;
+    }
+    .contracts-table .btn-outline-danger:hover {
+        background: #ef4444;
+        color: #fff;
+    }
+    .contracts-table .badge {
+        font-size: 0.95rem;
+        border-radius: 8px;
+        padding: 0.4em 0.8em;
+    }
+    .contracts-table .progress {
+        border-radius: 8px;
+        height: 14px;
+    }
+    .contracts-table .progress-bar {
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .contracts-table .text-center {
+        color: #a0aec0;
+        font-size: 1.1rem;
+        padding: 32px 0;
+    }

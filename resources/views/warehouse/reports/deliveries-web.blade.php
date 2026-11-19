@@ -2,18 +2,7 @@
 
 @push('styles')
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-.animated-empty {
-    animation: fadeIn 1s ease-in;
-    font-size: 1.1rem;
-    letter-spacing: 0.01em;
-    opacity: 0.7;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 0.7; transform: translateY(0); }
-}
-</style>
+@vite('resources/css/pages/warehouse-reports-deliveries-web.css')
 @endpush
 
 @section('content')

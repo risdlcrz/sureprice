@@ -185,35 +185,7 @@
         </div>
     </div>
 
-    <style>
-        .timeline {
-            position: relative;
-            padding-left: 1.5rem;
-        }
-        .timeline::before {
-            content: '';
-            position: absolute;
-            left: 0.75rem;
-            top: 0;
-            bottom: 0;
-            width: 2px;
-            background: #e9ecef;
-        }
-        .timeline-item {
-            position: relative;
-            padding-bottom: 1.5rem;
-        }
-        .timeline-marker {
-            position: absolute;
-            left: -1.5rem;
-            width: 1rem;
-            height: 1rem;
-            border-radius: 50%;
-        }
-        .timeline-content {
-            padding-left: 0.5rem;
-        }
-    </style>
+    @vite('resources/css/pages/admin-purchase-orders-show.css')
 
     <!-- Complete Purchase Order Modal -->
     <div class="modal fade" id="completePurchaseOrderModal" tabindex="-1" aria-labelledby="completePurchaseOrderModalLabel" aria-hidden="true">

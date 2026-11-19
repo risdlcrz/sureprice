@@ -181,66 +181,6 @@
 
 @push('styles')
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-body, .container-fluid, .card {
-    font-family: 'Inter', Arial, sans-serif;
-    background: linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%);
-}
-.table-responsive {
-    width: 100%;
-    overflow-x: unset !important;
-    margin-bottom: 0;
-}
-.table {
-    width: 100%;
-    table-layout: fixed;
-    background: #fff;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    margin-bottom: 0;
-}
-.table-striped > tbody > tr:nth-of-type(odd) {
-    background-color: #f3f6fa;
-}
-.form-control, .form-control-plaintext {
-    border-radius: 8px;
-    border: 1.5px solid #cbd5e1;
-    font-size: 0.95rem;
-    min-height: 32px;
-    background: #f8fafc;
-}
-.form-control-plaintext[readonly] {
-    background: #f1f5f9;
-    color: #6b7280;
-    border: none;
-    font-style: italic;
-}
-input[type="number"].form-control {
-    text-align: right;
-}
-#addRow {
-    margin-top: 8px;
-    font-size: 1.01rem;
-    font-weight: 600;
-    border-radius: 18px;
-    background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
-    color: #fff;
-    border: none;
-    box-shadow: 0 2px 8px rgba(34,197,94,0.08);
-}
-#addRow:hover {
-    background: linear-gradient(90deg, #16a34a 0%, #22c55e 100%);
-}
-@media (max-width: 991.98px) {
-    .card {
-        padding: 0 2px;
-    }
-    .table th, .table td {
-        font-size: 0.93rem;
-        padding: 4px 1px;
-    }
-}
-</style>
+@vite('resources/css/pages/admin-material-requests-create.css')
 @endpush
 @endsection

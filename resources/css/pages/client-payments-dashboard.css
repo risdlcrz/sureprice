@@ -1,0 +1,4 @@
+/* Extracted from resources/views/client/payments/dashboard.blade.php (inline in the page body; loads after app-layout.css) */
+.progress {
+    height: 0.5rem;
+}

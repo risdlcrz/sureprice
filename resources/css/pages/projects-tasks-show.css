@@ -1,0 +1,6 @@
+/* Extracted from resources/views/projects/tasks/show.blade.php (inline in the page body; loads after app-layout.css) */
+.avatar-md {
+    width: 40px;
+    height: 40px;
+    font-size: 14px;
+}

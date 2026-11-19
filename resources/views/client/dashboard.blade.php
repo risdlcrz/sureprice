@@ -64,11 +64,5 @@
         </div>
     </div>
 </div>
-<style>
-.hover-shadow:hover {
-    box-shadow: 0 8px 32px 0 rgba(56, 142, 60, 0.15) !important;
-    transform: translateY(-4px) scale(1.02);
-    transition: box-shadow 0.2s, transform 0.2s;
-}
-</style>
+@vite('resources/css/pages/client-dashboard.css')
 @endsection 

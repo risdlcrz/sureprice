@@ -1,13 +1,7 @@
 @extends('layouts.app')
 
 @push('styles')
-<style>
-    .badge {
-        position: static !important;
-        display: inline-block;
-        margin-left: 10px;
-    }
-</style>
+@vite('resources/css/pages/admin-companies-show.css')
 @endpush
 
 @section('content')

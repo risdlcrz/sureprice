@@ -199,18 +199,5 @@
     </div>
 </div>
 
-<style>
-
-.text-warning .fas {
-    color: #ffc107 !important;
-}
-
-.progress {
-    border-radius: 0.5rem;
-}
-
-.fs-6 {
-    font-size: 1rem !important;
-}
-</style>
+@vite('resources/css/pages/client-feedback-show.css')
 @endsection 

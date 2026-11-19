@@ -205,12 +205,6 @@ document.addEventListener('DOMContentLoaded', function() {
 @endpush
 
 @push('styles')
-<style>
-    .fas {
-        width: 16px;
-        text-align: center;
-        margin-right: 5px;
-    }
-</style>
+@vite('resources/css/pages/admin-suppliers-index.css')
 @endpush
 @endsection 

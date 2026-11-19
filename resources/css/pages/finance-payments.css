@@ -1,0 +1,18 @@
+/* Extracted from resources/views/finance/payments.blade.php */
+/* Ensure modals are properly hidden and don't interfere with table */
+.modal {
+    display: none;
+}
+.modal.show {
+    display: block;
+}
+/* Ensure table content is properly displayed */
+.table td {
+    position: relative;
+    z-index: 1;
+}
+/* Prevent modal content from leaking into table */
+.modal-content {
+    position: relative;
+    z-index: 1050;
+}

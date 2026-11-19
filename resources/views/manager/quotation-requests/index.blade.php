@@ -86,38 +86,6 @@
     </div>
 </div>
 @push('styles')
-<style>
-.nav-link.active {
-    background: #198754 !important;
-    color: #fff !important;
-    border-radius: 8px;
-}
-.nav-link:not(.active) {
-    background: #f5f6f8;
-    color: #1f2937;
-    border-radius: 8px;
-}
-.manager-quotations-table thead th {
-    background: #f5f6f8;
-    color: #1f2937;
-    font-weight: 600;
-    font-size: 0.8125rem;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #e8eaed;
-}
-.manager-quotations-table tbody td {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #e8eaed;
-    font-size: 0.9375rem;
-}
-.manager-quotations-table tbody tr:hover { background: rgba(25, 135, 84, 0.04); }
-.manager-quotations-table .btn-primary {
-    background: #198754 !important;
-    background-image: none !important;
-    border: none;
-    border-radius: 6px;
-}
-.manager-quotations-table .btn-primary:hover { background: #157347 !important; }
-</style>
+@vite('resources/css/pages/manager-quotation-requests-index.css')
 @endpush
 @endsection 

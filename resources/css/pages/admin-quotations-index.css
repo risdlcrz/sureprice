@@ -1,0 +1,14 @@
+/* Extracted from resources/views/admin/quotations/index.blade.php */
+.nav-tabs {
+    border-bottom: none;
+    gap: 1rem;
+}
+.nav-link {
+    border: none;
+    padding: 0.7em 2em;
+    margin-bottom: -2px;
+}
+.nav-link.active {
+    background: #198754 !important;
+    color: #fff !important;
+}

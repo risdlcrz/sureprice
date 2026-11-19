@@ -142,10 +142,5 @@
     </div>
 </div>
 
-<style>
-
-.text-warning .fas {
-    color: #ffc107 !important;
-}
-</style>
+@vite('resources/css/pages/client-feedback-index.css')
 @endsection 

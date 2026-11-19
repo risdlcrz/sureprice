@@ -276,14 +276,5 @@
     </div>
 </div>
 
-<style>
-
-.text-warning .fas {
-    color: #ffc107 !important;
-}
-
-.progress {
-    border-radius: 0.5rem;
-}
-</style>
+@vite('resources/css/pages/admin-feedback-analytics.css')
 @endsection 

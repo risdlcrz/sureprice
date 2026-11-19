@@ -127,11 +127,5 @@
     </div>
 </div>
 
-<style>
-.avatar-sm {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
-}
-</style>
+@vite('resources/css/pages/projects-tasks-index.css')
 @endsection

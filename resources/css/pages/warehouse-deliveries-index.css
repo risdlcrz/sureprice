@@ -1,0 +1,8 @@
+/* Extracted from resources/views/warehouse/deliveries/index.blade.php */
+.card .card-body, .card-footer {
+    border-radius: 24px;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 0.7; transform: translateY(0); }
+}

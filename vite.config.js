@@ -2,10 +2,12 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import fs from 'node:fs';
 
-// Page scripts extracted from Blade views (resources/js/pages/*.js) are picked up automatically.
-const pageScripts = fs.existsSync('resources/js/pages')
-    ? fs.readdirSync('resources/js/pages').filter((f) => f.endsWith('.js')).map((f) => `resources/js/pages/${f}`)
-    : [];
+// Per-page assets extracted from Blade views are picked up automatically:
+// resources/js/pages/*.js and resources/css/pages/*.css
+const pageAssets = (dir, ext) => (fs.existsSync(dir)
+    ? fs.readdirSync(dir).filter((f) => f.endsWith(ext)).map((f) => `${dir}/${f}`)
+    : []);
+const pageScripts = [...pageAssets('resources/js/pages', '.js'), ...pageAssets('resources/css/pages', '.css')];
 
 export default defineConfig({
     plugins: [

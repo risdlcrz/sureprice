@@ -453,47 +453,7 @@
 </div>
 
 @push('styles')
-<style>
-.admin-budget-allocation { max-width: 1200px; }
-.admin-budget-block {
-    padding: 0.75rem 0;
-    border: none;
-    border-radius: 0;
-}
-.admin-budget-allocation .table.admin-budget-table { font-size: 0.9375rem; border-collapse: collapse; background: #fff; border: 1px solid #e8eaed; border-radius: 8px; overflow: hidden; }
-.admin-budget-allocation .table.admin-budget-table thead th { background: #f5f6f8; color: #1f2937; font-weight: 600; padding: 0.75rem 1rem; border-bottom: 1px solid #e8eaed; }
-.admin-budget-allocation .table.admin-budget-table tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid #e8eaed; vertical-align: middle; }
-.admin-budget-allocation .table.admin-budget-table tbody tr:last-child td { border-bottom: none; }
-.admin-budget-allocation .table.admin-budget-table tbody tr:hover { background: rgba(25, 135, 84, 0.04); }
-
-/* print styles */
-.page-break {
-    display: block;
-    width: 100%;
-    height: 1px;
-    background: #ccc;
-    margin: 2rem 0;
-}
-@media print {
-    body { -webkit-print-color-adjust: exact; }
-    /* hide navigation UI and controls only */
-    .no-print,
-    .navbar,
-    .landing-navbar,
-    .sidebar-toggle-btn,
-    .mobile-topbar,
-    .mobile-menu,
-    .left-header,
-    .sidebar,
-    .dropdown-toggle,
-    .btn:not(.btn-link),
-    .form-select { display: none !important; }
-    /* allow container and main content to show full width */
-    main, .container-fluid, .admin-budget-allocation { width: 100%; margin: 0; padding: 0; }
-    .page-break { page-break-after: always; height: 0; background: none; }
-    .card { page-break-inside: avoid; }
-}
-</style>
+@vite('resources/css/pages/admin-budget-allocation.css')
 @endpush
 
 @push('scripts')

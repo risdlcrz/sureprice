@@ -249,44 +249,5 @@
     @include('payments.partials.proof_viewer_modal', ['payment' => $payment])
 @endif
 
-<style>
-.timeline {
-    position: relative;
-    padding-left: 30px;
-}
-
-.timeline-item {
-    position: relative;
-    margin-bottom: 20px;
-}
-
-.timeline-marker {
-    position: absolute;
-    left: -35px;
-    top: 5px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-}
-
-.timeline-item:not(:last-child)::before {
-    content: '';
-    position: absolute;
-    left: -29px;
-    top: 17px;
-    width: 2px;
-    height: calc(100% + 10px);
-    background-color: #dee2e6;
-}
-
-.timeline-content h6 {
-    margin-bottom: 5px;
-    font-weight: 600;
-}
-
-.timeline-content p {
-    margin-bottom: 0;
-    font-size: 0.875rem;
-}
-</style>
+@vite('resources/css/pages/payments-show.css')
 @endsection 

@@ -1,0 +1,51 @@
+/* Extracted from resources/views/admin/purchase-requests/create.blade.php */
+.card-tools .btn-default {
+    border-radius: 2rem;
+    font-weight: 500;
+    font-size: 1.05rem;
+    background: #f1f5f9;
+    color: #2563eb;
+    border: none;
+    transition: background 0.2s, color 0.2s;
+}
+.card-tools .btn-default:hover {
+    background: #e0f2fe;
+    color: #198754;
+}
+.form-label, label {
+    font-weight: 600;
+    color: #198754;
+    font-size: 1.08rem;
+    margin-bottom: 0.4rem;
+}
+.form-control, .form-select {
+    height: 44px;
+    box-sizing: border-box;
+    text-align: center;
+}
+.custom-control-label {
+    margin-left: 0.5rem;
+    font-weight: 500;
+    color: #495057;
+}
+#addRow {
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+}
+/* Add spacing between action buttons in the request items table */
+#itemsTable td:last-child, .item-row td:last-child {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 180px;
+}
+#itemsTable .btn, .item-row .btn {
+    margin-right: 0 !important;
+}
+@media (max-width: 900px) {
+    #itemsTable td:last-child, .item-row td:last-child {
+        flex-direction: column;
+        gap: 0.3rem;
+        min-width: 120px;
+    }
+}

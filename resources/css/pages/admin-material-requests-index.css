@@ -1,0 +1,100 @@
+/* Extracted from resources/views/admin/material-requests/index.blade.php */
+.card-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+.small-box {
+    border-radius: 10px;
+    color: #fff;
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 100px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+.small-box.bg-info {
+    background: #0dcaf0 !important;
+}
+.small-box.bg-success {
+    background: #198754 !important;
+}
+.small-box.bg-warning {
+    background: #ffc107 !important;
+    color: #1f2937;
+}
+.small-box.bg-primary {
+    background: #0d6efd !important;
+}
+.small-box .inner h3 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.2rem; }
+.small-box .inner p { font-size: 0.9375rem; margin-bottom: 0; font-weight: 500; }
+.small-box .icon {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    font-size: 1.75rem;
+    opacity: 0.25;
+}
+.input-group .form-control {
+    border-radius: 8px 0 0 8px;
+    border: 1px solid #e8eaed;
+    font-size: 0.9375rem;
+}
+.input-group .form-control:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.15);
+}
+.input-group-append .btn {
+    border-radius: 0 8px 8px 0;
+    background: #198754 !important;
+    color: #fff;
+    border: none;
+}
+.input-group-append .btn:hover { background: #157347 !important; }
+.btn-default {
+    background: #f5f6f8;
+    color: #1f2937;
+    border: 1px solid #e8eaed;
+    border-radius: 8px;
+}
+.btn-default:hover { background: #e8eaed; }
+#materialRequestsTable thead th {
+    background: #f5f6f8;
+    color: #1f2937;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e8eaed;
+}
+#materialRequestsTable tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e8eaed;
+    font-size: 0.9375rem;
+    background: #fff;
+}
+#materialRequestsTable tbody tr:last-child td { border-bottom: none; }
+#materialRequestsTable tbody tr:hover { background: rgba(25, 135, 84, 0.04); }
+@media (max-width: 991.98px) {
+    .card-header {
+        padding: 1rem 0.5rem 0.5rem 0.5rem;
+    }
+    .card {
+        padding: 0.5rem;
+    }
+    .table th, .table td {
+        padding: 0.4rem 0.2rem;
+        font-size: 0.93rem;
+    }
+    .small-box {
+        padding: 0.7rem 0.7rem 0.7rem 0.7rem;
+        min-height: 80px;
+    }
+    .small-box .icon {
+        font-size: 1.5rem;
+        right: 0.7rem;
+        bottom: 0.7rem;
+    }
+}

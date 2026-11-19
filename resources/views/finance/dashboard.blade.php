@@ -91,17 +91,6 @@
     </div>
 </div>
 @push('styles')
-<style>
-.card-header {
-    background: #fff;
-    border-radius: 1.25rem 1.25rem 0 0;
-    border-bottom: none;
-    padding: 1.5rem 2rem 1rem 2rem;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 1rem;
-}
-</style>
+@vite('resources/css/pages/finance-dashboard.css')
 @endpush
 @endsection 

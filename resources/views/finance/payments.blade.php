@@ -292,23 +292,5 @@
 
 @push('styles')
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-/* Ensure modals are properly hidden and don't interfere with table */
-.modal {
-    display: none;
-}
-.modal.show {
-    display: block;
-}
-/* Ensure table content is properly displayed */
-.table td {
-    position: relative;
-    z-index: 1;
-}
-/* Prevent modal content from leaking into table */
-.modal-content {
-    position: relative;
-    z-index: 1050;
-}
-</style>
+@vite('resources/css/pages/finance-payments.css')
 @endpush 

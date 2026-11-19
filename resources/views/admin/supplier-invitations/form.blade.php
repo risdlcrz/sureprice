@@ -184,34 +184,5 @@ document.addEventListener('DOMContentLoaded', function() {
 @endpush
 
 @push('styles')
-<style>
-.form-check-input[type="checkbox"] {
-    border-radius: 0.5em;
-    border: 1.5px solid #38b6ff;
-    width: 1.1em;
-    height: 1.1em;
-    margin-top: 0.2em;
-    margin-right: 0.5em;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.form-check-input:checked {
-    background-color: #38b6ff;
-    border-color: #2563eb;
-}
-.form-check-label {
-    font-size: 1.01rem;
-    color: #222;
-}
-textarea.form-control {
-    min-height: 120px;
-}
-@media (max-width: 991.98px) {
-    .card-header {
-        padding: 1rem 0.5rem 0.5rem 0.5rem;
-    }
-    .card {
-        padding: 0.5rem;
-    }
-}
-</style>
+@vite('resources/css/pages/admin-supplier-invitations-form.css')
 @endpush 

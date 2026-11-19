@@ -1,0 +1,436 @@
+/* Extracted from resources/views/admin/materials/index.blade.php */
+.btn-group .btn {
+    margin-right: 6px;
+    font-size: 0.85rem;
+    min-width: 28px;
+    padding: 0.25rem 0.45rem;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-group .btn:last-child {
+    margin-right: 0;
+}
+.table {
+    margin-bottom: 0;
+    overflow: hidden;
+    font-size: 0.89rem;
+    table-layout: fixed;
+}
+.table th, .table td {
+    min-width: 60px;
+    max-width: 110px;
+}
+.table th:nth-child(2), .table td:nth-child(2) {
+    min-width: 90px;
+    max-width: 120px;
+}
+.table th:nth-child(3), .table td:nth-child(3) {
+    min-width: 80px;
+    max-width: 100px;
+}
+.table th:nth-child(5), .table td:nth-child(5),
+.table th:nth-child(6), .table td:nth-child(6) {
+    min-width: 80px;
+    max-width: 100px;
+}
+.table th:nth-child(1), .table td:nth-child(1) {
+    min-width: 80px;
+    max-width: 90px;
+}
+/* Responsive column hiding */
+@media (max-width: 1400px) {
+    .table {
+        font-size: 0.85rem;
+    }
+    .table th, .table td {
+        padding: 0.25rem 0.08rem;
+        font-size: 0.85rem;
+        min-width: 50px;
+        max-width: 90px;
+    }
+    .table th:nth-child(2), .table td:nth-child(2) {
+        min-width: 70px;
+        max-width: 90px;
+    }
+    .table th:nth-child(3), .table td:nth-child(3) {
+        min-width: 60px;
+        max-width: 80px;
+    }
+    /* Hide Warranty and Suppliers columns */
+}
+@media (max-width: 1200px) {
+    .table {
+        font-size: 0.81rem;
+    }
+    .table th, .table td {
+        padding: 0.18rem 0.05rem;
+        font-size: 0.81rem;
+        min-width: 40px;
+        max-width: 70px;
+    }
+    .table th:nth-child(2), .table td:nth-child(2) {
+        min-width: 50px;
+        max-width: 70px;
+    }
+    .table th:nth-child(3), .table td:nth-child(3) {
+        min-width: 40px;
+        max-width: 60px;
+    }
+    /* Hide Base Price and SRP columns */
+}
+input.form-control, select.form-control {
+    border-radius: 1.2rem;
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    font-size: 1.08rem;
+    padding: 0.85rem 1.1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+input.form-control:focus, select.form-control:focus {
+    border-color: #198754;
+    box-shadow: 0 0 0 2px rgba(25, 135, 84, 0.15);
+    background: #fff;
+}
+::-webkit-input-placeholder { color: #b0b3b8; }
+::-moz-placeholder { color: #b0b3b8; }
+:-ms-input-placeholder { color: #b0b3b8; }
+::placeholder { color: #b0b3b8; }
+.material-row-animate {
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.material-row-animate:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    z-index: 2;
+    background: rgba(25, 135, 84, 0.04) !important;
+}
+.fade-in-up {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeInUp 0.4s forwards;
+}
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+.fade-out {
+    opacity: 1;
+    transition: opacity 0.4s;
+}
+.fade-out.fade-out-active {
+    opacity: 0;
+}
+
+/* Modal Responsive Styling */
+.modal-dialog {
+    max-width: 90vw;
+    margin: 1.75rem auto;
+}
+
+.modal-dialog.modal-lg {
+    max-width: 95vw;
+}
+
+@media (min-width: 992px) {
+    .modal-dialog.modal-lg {
+        max-width: 80vw;
+    }
+}
+
+@media (min-width: 1200px) {
+    .modal-dialog.modal-lg {
+        max-width: 70vw;
+    }
+}
+
+/* Supplier Prices Modal Specific Styling */
+#supplierPricesModal .modal-content {
+    border-radius: 1rem;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+#supplierPricesModal .modal-header {
+    background: #198754;
+    color: white;
+    border-radius: 1rem 1rem 0 0;
+    border-bottom: none;
+    padding: 1.5rem 2rem;
+}
+
+#supplierPricesModal .modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+#supplierPricesModal .modal-body {
+    padding: 2rem;
+}
+
+#supplierPricesModal .table-responsive {
+    border-radius: 0.75rem;
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+}
+
+#supplierPricesModal .table {
+    margin-bottom: 0;
+    font-size: 0.95rem;
+}
+
+#supplierPricesModal .table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    padding: 1rem 0.75rem;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+#supplierPricesModal .table td {
+    padding: 1rem 0.75rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Ensure supplier names are fully visible */
+#supplierPricesModal .table td:first-child {
+    min-width: 200px;
+    max-width: 300px;
+    white-space: normal;
+    word-wrap: break-word;
+    text-align: left;
+}
+
+#supplierPricesModal .table th:first-child {
+    min-width: 200px;
+    max-width: 300px;
+    text-align: left;
+}
+
+/* Price column */
+#supplierPricesModal .table th:nth-child(2),
+#supplierPricesModal .table td:nth-child(2) {
+    min-width: 120px;
+    text-align: center;
+}
+
+/* Lead Time column */
+#supplierPricesModal .table th:nth-child(3),
+#supplierPricesModal .table td:nth-child(3) {
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Last Updated column */
+#supplierPricesModal .table th:nth-child(4),
+#supplierPricesModal .table td:nth-child(4) {
+    min-width: 120px;
+    text-align: center;
+}
+
+/* Variance column */
+#supplierPricesModal .table th:nth-child(5),
+#supplierPricesModal .table td:nth-child(5) {
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .modal-dialog {
+        max-width: 95vw;
+        margin: 0.5rem auto;
+    }
+    
+    #supplierPricesModal .modal-body {
+        padding: 1rem;
+    }
+    
+    #supplierPricesModal .table {
+        font-size: 0.85rem;
+    }
+    
+    #supplierPricesModal .table th,
+    #supplierPricesModal .table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    #supplierPricesModal .table td:first-child {
+        min-width: 150px;
+        max-width: 200px;
+    }
+    
+    #supplierPricesModal .table th:first-child {
+        min-width: 150px;
+        max-width: 200px;
+    }
+}
+
+@media (max-width: 576px) {
+    #supplierPricesModal .table-responsive {
+        font-size: 0.8rem;
+    }
+    
+    #supplierPricesModal .table th,
+    #supplierPricesModal .table td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    #supplierPricesModal .table td:first-child {
+        min-width: 120px;
+        max-width: 150px;
+    }
+    
+    #supplierPricesModal .table th:first-child {
+        min-width: 120px;
+        max-width: 150px;
+    }
+}
+
+/* Bulk SRP Modal Specific Styling */
+#bulkSrpModal .modal-content {
+    border-radius: 1rem;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+#bulkSrpModal .modal-header {
+    background: #198754;
+    color: white;
+    border-radius: 1rem 1rem 0 0;
+    border-bottom: none;
+    padding: 1.5rem 2rem;
+}
+
+#bulkSrpModal .modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+#bulkSrpModal .modal-body {
+    padding: 2rem;
+}
+
+#bulkSrpModal .table-responsive {
+    border-radius: 0.75rem;
+    border: 1px solid #e9ecef;
+    overflow: hidden;
+}
+
+#bulkSrpModal .table {
+    margin-bottom: 0;
+    font-size: 0.9rem;
+}
+
+#bulkSrpModal .table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    padding: 0.75rem 0.5rem;
+    white-space: nowrap;
+    vertical-align: middle;
+    text-align: center;
+}
+
+#bulkSrpModal .table td {
+    padding: 0.75rem 0.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+    text-align: center;
+}
+
+/* Ensure material names are fully visible */
+#bulkSrpModal .table td:nth-child(2) {
+    min-width: 150px;
+    max-width: 200px;
+    white-space: normal;
+    word-wrap: break-word;
+    text-align: left;
+}
+
+#bulkSrpModal .table th:nth-child(2) {
+    min-width: 150px;
+    max-width: 200px;
+    text-align: left;
+}
+
+/* Code column */
+#bulkSrpModal .table th:nth-child(1),
+#bulkSrpModal .table td:nth-child(1) {
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Category column */
+#bulkSrpModal .table th:nth-child(3),
+#bulkSrpModal .table td:nth-child(3) {
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Unit column */
+#bulkSrpModal .table th:nth-child(4),
+#bulkSrpModal .table td:nth-child(4) {
+    min-width: 80px;
+    text-align: center;
+}
+
+/* Base Price column */
+#bulkSrpModal .table th:nth-child(5),
+#bulkSrpModal .table td:nth-child(5) {
+    min-width: 100px;
+    text-align: center;
+}
+
+/* SRP Price column */
+#bulkSrpModal .table th:nth-child(6),
+#bulkSrpModal .table td:nth-child(6) {
+    min-width: 120px;
+    text-align: center;
+}
+
+/* Previous SRP column */
+#bulkSrpModal .table th:nth-child(7),
+#bulkSrpModal .table td:nth-child(7) {
+    min-width: 120px;
+    text-align: center;
+}
+
+/* Markup % column */
+#bulkSrpModal .table th:nth-child(8),
+#bulkSrpModal .table td:nth-child(8) {
+    min-width: 100px;
+    text-align: center;
+}
+
+/* Responsive adjustments for bulk SRP modal */
+@media (max-width: 768px) {
+    #bulkSrpModal .modal-body {
+        padding: 1rem;
+    }
+    
+    #bulkSrpModal .table {
+        font-size: 0.8rem;
+    }
+    
+    #bulkSrpModal .table th,
+    #bulkSrpModal .table td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    #bulkSrpModal .table td:nth-child(2) {
+        min-width: 120px;
+        max-width: 150px;
+    }
+    
+    #bulkSrpModal .table th:nth-child(2) {
+        min-width: 120px;
+        max-width: 150px;
+    }
+}

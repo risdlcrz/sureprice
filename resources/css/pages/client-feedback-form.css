@@ -1,0 +1,5 @@
+/* Extracted from resources/views/client/feedback/form.blade.php */
+.rating-group { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: .25rem; }
+.rating-input { display: none; }
+.rating-label { cursor: pointer; font-size: 1.5rem; color: #dee2e6; transition: color .2s; }
+.rating-label:hover, .rating-label:hover ~ .rating-label, .rating-input:checked ~ .rating-label { color: #ffc107; }

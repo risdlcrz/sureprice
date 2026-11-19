@@ -141,18 +141,5 @@
 @endsection
 
 @push('styles')
-<style>
-        .document-preview {
-            max-width: 200px;
-            max-height: 200px;
-            object-fit: contain;
-            margin: 10px 0;
-        }
-        .document-card {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-        }
-</style>
+@vite('resources/css/pages/admin-companies-pending.css')
 @endpush

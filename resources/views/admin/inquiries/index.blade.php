@@ -183,21 +183,7 @@
 </div>
 
 @push('styles')
-<style>
-.filter-input, .form-control, .form-select {
-    border-radius: 1.2rem;
-    border: 1px solid #d1d5db;
-    background: #f8fafc;
-    font-size: 1.08rem;
-    padding: 0.85rem 1.1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.filter-input:focus, .form-control:focus, .form-select:focus {
-    border-color: #38b6ff;
-    box-shadow: 0 0 0 2px #38b6ff33;
-    background: #fff;
-}
-</style>
+@vite('resources/css/pages/admin-inquiries-index.css')
 @endpush
 
 @push('scripts')

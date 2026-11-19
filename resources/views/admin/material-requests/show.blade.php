@@ -1,34 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<style>
-    .grouped-items-table tr.table-primary td {
-        background: #e0e7ef !important;
-        font-weight: bold;
-        font-size: 1.08em;
-    }
-    .grouped-items-table tr.subtotal-row td {
-        background: #dbeafe !important;
-        font-weight: bold;
-        border-top: 2px solid #60a5fa;
-    }
-    .grouped-items-table tbody tr:nth-child(even):not(.table-primary):not(.subtotal-row) td {
-        background: #f8fafc;
-    }
-    .legend {
-        font-size: 0.95em;
-        color: #555;
-    }
-    .material-indent {
-        padding-left: 2em;
-        border: none;
-        background: transparent !important;
-    }
-    .text-danger {
-        color: #dc2626 !important;
-        font-weight: 500;
-    }
-</style>
+@vite('resources/css/pages/admin-material-requests-show.css')
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">

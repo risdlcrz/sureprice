@@ -2,28 +2,7 @@
 
 @push('styles')
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-.btn-success, .btn-primary, .btn-outline-primary, .btn-outline-info {
-    font-weight: 600;
-    border-radius: 2rem;
-    padding: 0.5em 1.5em;
-    font-size: 1.08em;
-    letter-spacing: 0.01em;
-    box-shadow: 0 2px 8px #2196f322;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-}
-.btn-outline-info {
-    border: 2px solid #21cbf3;
-    color: #21cbf3;
-    background: #fff;
-}
-.btn-outline-info:hover {
-    background: linear-gradient(90deg, #2196f3 0%, #21cbf3 100%) !important;
-    color: #fff !important;
-    border: none;
-    box-shadow: 0 4px 16px #2196f344;
-}
-</style>
+@vite('resources/css/pages/warehouse-inventory-index.css')
 @endpush
 
 @section('content')

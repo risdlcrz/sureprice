@@ -1,0 +1,7 @@
+/* Extracted from resources/views/payments/index.blade.php */
+.card-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 1rem;
+}

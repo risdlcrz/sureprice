@@ -145,29 +145,7 @@
                         <label class="form-label">Total Materials Cost:</label>
                         <input type="text" class="form-control" id="materials_total_display" readonly>
                         <div id="discount-summary" class="mt-2"></div>
-                        <style>
-                        #discount-summary {
-                            font-size: 1rem;
-                        }
-                        #discount-summary .discount-original {
-                            text-decoration: line-through;
-                            color: #888;
-                        }
-                        #discount-summary .discount-label {
-                            font-weight: bold;
-                            margin-top: 0.5em;
-                            display: block;
-                        }
-                        #discount-summary .discount-value {
-                            font-size: 1.1em;
-                            color: #1a7f37;
-                            font-weight: bold;
-                        }
-                        #discount-summary .discount-type {
-                            color: #0d6efd;
-                            font-weight: 500;
-                        }
-                        </style>
+                        @vite('resources/css/pages/admin-contracts-editor.css')
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Labor Fee:</label>

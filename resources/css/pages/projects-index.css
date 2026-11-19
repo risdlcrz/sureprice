@@ -1,0 +1,17 @@
+/* Extracted from resources/views/projects/index.blade.php */
+    .card-header {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 1rem;
+    }
+    .btn-group .btn:last-child {
+        margin-right: 0;
+    }
+    .progress {
+        height: 12px;
+        box-shadow: none;
+    }
+    .progress-bar {
+        font-size: 0.85em;
+    }

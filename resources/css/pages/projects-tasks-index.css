@@ -1,0 +1,6 @@
+/* Extracted from resources/views/projects/tasks/index.blade.php (inline in the page body; loads after app-layout.css) */
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+}

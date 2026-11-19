@@ -1,0 +1,6 @@
+/* Extracted from resources/views/admin/companies/show.blade.php */
+.badge {
+        position: static !important;
+        display: inline-block;
+        margin-left: 10px;
+    }

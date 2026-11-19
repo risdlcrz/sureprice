@@ -85,24 +85,5 @@
 @endsection
 @push('styles')
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-.nav-tabs {
-    border-bottom: none;
-    gap: 1rem;
-}
-.nav-link {
-    font-weight: 600;
-    color: #198754;
-    border: none;
-    border-radius: 2rem 2rem 0 0;
-    background: #f8fafc;
-    padding: 0.7em 2em;
-    margin-bottom: -2px;
-    transition: background 0.2s, color 0.2s;
-}
-.nav-link.active {
-    background: #198754 !important;
-    color: #fff !important;
-}
-</style>
+@vite('resources/css/pages/admin-quotations-index.css')
 @endpush 

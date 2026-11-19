@@ -195,11 +195,5 @@
     </div>
 </div>
 
-<style>
-.avatar-md {
-    width: 40px;
-    height: 40px;
-    font-size: 14px;
-}
-</style>
+@vite('resources/css/pages/projects-tasks-show.css')
 @endsection
