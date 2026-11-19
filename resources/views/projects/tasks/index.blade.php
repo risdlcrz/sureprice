@@ -76,19 +76,8 @@
                                             {{ ucfirst($task->priority) }}
                                         </span>
                                     </td>
-                                    <td>
-                                        @php
-                                            $statusColors = [
-                                                'pending' => 'warning',
-                                                'in_progress' => 'primary',
-                                                'completed' => 'success',
-                                                'on_hold' => 'secondary',
-                                                'delayed' => 'danger'
-                                            ];
-                                        @endphp
-                                        <span class="badge bg-{{ $statusColors[$task->status] ?? 'secondary' }}">
-                                            {{ ucwords(str_replace('_', ' ', $task->status)) }}
-                                        </span>
+                                    <td>
+                                        <x-status-badge :status="$task->status" />
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center">

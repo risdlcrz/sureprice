@@ -38,12 +38,7 @@ class SupplierInvitation extends Model
     // Accessors
     public function getStatusColorAttribute()
     {
-        return [
-            'pending' => 'warning',
-            'approved' => 'success',
-            'rejected' => 'danger',
-            'expired' => 'secondary'
-        ][$this->status] ?? 'secondary';
+        return \App\Support\Status::color($this->status);
     }
 
     public function getBusinessTypeTextAttribute()

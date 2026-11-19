@@ -71,12 +71,10 @@
                                 @endif
                             </td>
                             <td>₱{{ number_format($po->total_amount, 2) }}</td>
-                            <td><span class="badge bg-{{ $po->status_color }}">{{ ucfirst($po->status) }}</span></td>
+                            <td><x-status-badge :status="$po->status" /></td>
                             <td>
                                 @if($payment)
-                                    <span class="badge bg-{{ $payment->status === 'verified' ? 'success' : ($payment->status === 'for_verification' ? 'info' : ($payment->status === 'rejected' ? 'danger' : 'secondary')) }}">
-                                        {{ ucfirst($payment->status) }}
-                                    </span>
+                                    <x-status-badge :status="$payment->status" />
                                 @else
                                     <span class="badge bg-secondary">Unpaid</span>
                                 @endif

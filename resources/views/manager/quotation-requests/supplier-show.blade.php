@@ -4,7 +4,7 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Supplier Quotation: {{ $quotation->rfq_number }}</h5>
-            <span class="badge bg-{{ $quotation->status_color ?? 'secondary' }}">{{ ucfirst($quotation->status) }}</span>
+            <x-status-badge :status="$quotation->status" />
             <a href="{{ route('manager.quotations', ['tab' => 'supplier']) }}" class="btn btn-secondary">Back to List</a>
         </div>
         <div class="card-body">

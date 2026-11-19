@@ -48,11 +48,7 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="badge bg-{{ $task->status === 'completed' ? 'success' : 
-                                    ($task->status === 'in_progress' ? 'primary' : 
-                                    ($task->status === 'on_hold' ? 'warning' : 'secondary')) }}">
-                                    {{ ucfirst($task->status) }}
-                                </span>
+                                <x-status-badge :status="$task->status" />
                             </td>
                             <td>
                                 <div class="progress">

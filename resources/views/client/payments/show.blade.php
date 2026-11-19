@@ -11,19 +11,7 @@
                 </a>
             </div>
 
-            @if(session('success'))
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i>
-                    {{ session('success') }}
-                </div>
-            @endif
 
-            @if(session('error'))
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    {{ session('error') }}
-                </div>
-            @endif
 
             <!-- Payment Information Card -->
             <div class="card mb-4 border-0 shadow-sm">
@@ -122,9 +110,7 @@
                                 <tr>
                                     <td class="fw-bold">Contract Status:</td>
                                     <td>
-                                        <span class="badge bg-{{ $payment->contract->getStatusColorAttribute() }}">
-                                            {{ ucfirst($payment->contract->status ?? 'N/A') }}
-                                        </span>
+                                        <x-status-badge :status="$payment->contract->status" />
                                     </td>
                                 </tr>
                             </table>

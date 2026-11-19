@@ -206,7 +206,7 @@ body {
                             <h1 class="fw-bold mb-2" style="font-size:2rem; color:#2563eb;">Quotation Request Details</h1>
                             <div class="d-flex align-items-center gap-3">
                                 <span class="fs-6 fw-semibold">Request Number: <span class="badge bg-primary fs-6">{{ $quotationRequest->request_number }}</span></span>
-                                <span class="fs-6 fw-semibold">Status: <span class="badge bg-{{ $quotationRequest->status_color }} fs-6">{{ $quotationRequest->status_label }}</span></span>
+                                <span class="fs-6 fw-semibold">Status: <x-status-badge :status="$quotationRequest->status" class="fs-6" /></span>
                             </div>
                         </div>
                         <div class="d-flex flex-wrap gap-2 justify-content-end">
@@ -215,9 +215,6 @@ body {
                             <a href="{{ url('/') }}" class="btn btn-secondary btn-sm">Back to Home</a>
                         </div>
                     </div>
-                    @if(session('success'))
-                        <div class="alert alert-success">{{ session('success') }}</div>
-                    @endif
                     <hr>
                     <h3 class="mb-3 fw-bold" style="font-size:1.5rem;">Quotation Request Details</h3>
                     

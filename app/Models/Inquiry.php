@@ -44,13 +44,7 @@ class Inquiry extends Model
     // Accessors
     public function getStatusColorAttribute()
     {
-        return [
-            'pending' => 'warning',
-            'approved' => 'success',
-            'rejected' => 'danger',
-            'in_progress' => 'info',
-            'completed' => 'primary'
-        ][$this->status] ?? 'secondary';
+        return \App\Support\Status::color($this->status);
     }
 
     public function getPriorityColorAttribute()

@@ -57,9 +57,7 @@
                                     <td>{{ $po->supplier->company_name }}</td>
                                     <td>₱{{ number_format($po->total_amount, 2) }}</td>
                                     <td>
-                                        <span class="badge bg-{{ $po->status_color }}">
-                                            {{ ucfirst($po->status) }}
-                                        </span>
+                                        <x-status-badge :status="$po->status" />
                                     </td>
                                     <td>{{ $po->created_at->format('M d, Y') }}</td>
                                     <td>

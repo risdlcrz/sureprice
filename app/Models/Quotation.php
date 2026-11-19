@@ -76,13 +76,7 @@ class Quotation extends Model
     // Accessors
     public function getStatusColorAttribute()
     {
-        return [
-            'draft' => 'secondary',
-            'sent' => 'info',
-            'responded' => 'warning',
-            'approved' => 'success',
-            'rejected' => 'danger'
-        ][$this->status] ?? 'secondary';
+        return \App\Support\Status::color($this->status);
     }
 
     // Helper methods

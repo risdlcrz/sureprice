@@ -86,9 +86,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="badge bg-{{ $supplier->status === 'approved' ? 'success' : ($supplier->status === 'pending' ? 'warning' : 'danger') }}">
-                                            {{ ucfirst($supplier->status) }}
-                                        </span>
+                                        <x-status-badge :status="$supplier->status" />
                                     </td>
                                     <td>
                                         <div class="btn-group">

@@ -25,9 +25,7 @@
                                     <tr>
                                         <td>{{ $pr->request_number }}</td>
                                         <td>
-                                            <span class="badge badge-{{ $pr->status === 'pending' ? 'warning' : ($pr->status === 'approved' ? 'success' : 'danger') }}">
-                                                {{ ucfirst($pr->status) }}
-                                            </span>
+                                            <x-status-badge :status="$pr->status" />
                                         </td>
                                         <td>{{ $pr->requestedBy?->name ?? 'N/A' }}</td>
                                         <td>{{ $pr->created_at->format('M d, Y H:i') }}</td>

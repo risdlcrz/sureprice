@@ -13,7 +13,7 @@
             <h5 class="card-title">Request Details</h5>
             <p><strong>Contract:</strong> {{ $materialRequest->contract->contract_number ?? '-' }}</p>
             <p><strong>Requested By:</strong> {{ $materialRequest->user->name ?? '-' }}</p>
-            <p><strong>Status:</strong> <span class="badge bg-{{ $materialRequest->status === 'approved' ? 'success' : ($materialRequest->status === 'pending' ? 'warning' : 'secondary') }}">{{ ucfirst($materialRequest->status) }}</span></p>
+            <p><strong>Status:</strong> <x-status-badge :status="$materialRequest->status" /></p>
             <p><strong>Requested At:</strong> {{ $materialRequest->created_at->format('M d, Y H:i') }}</p>
             <p><strong>Notes:</strong> {{ $materialRequest->notes ?? '-' }}</p>
         </div>

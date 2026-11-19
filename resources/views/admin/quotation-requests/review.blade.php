@@ -8,7 +8,7 @@
                 <div class="card-header bg-white d-flex justify-content-between align-items-center">
                     <div>
                         <h4 class="mb-0">Client Quotation Request #{{ $quotationRequest->request_number }}</h4>
-                        <span class="badge bg-{{ $quotationRequest->status_color }}">{{ $quotationRequest->status_label }}</span>
+                        <x-status-badge :status="$quotationRequest->status" />
                     </div>
                     <a href="{{ route('admin.notification') }}" class="btn btn-secondary">Back to Notifications</a>
                 </div>

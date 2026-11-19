@@ -3,9 +3,6 @@
 @section('content')
 <div class="container py-4">
     <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Supplier Profile Updates Pending Approval</h1>
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
     <div class="table-responsive">
         <table class="table table-bordered modern-table align-middle">
             <thead class="table-light">

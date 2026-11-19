@@ -25,9 +25,7 @@
                 <div class="col-md-3">
                     <h6 class="text-muted mb-1">Status</h6>
                     <p class="mb-0">
-                        <span class="badge bg-{{ $delivery->status_color }}">
-                            {{ ucfirst($delivery->status) }}
-                        </span>
+                        <x-status-badge :status="$delivery->status" />
                     </p>
                 </div>
                 <div class="col-md-3">

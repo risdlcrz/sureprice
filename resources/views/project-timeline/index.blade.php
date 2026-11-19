@@ -27,9 +27,7 @@
                                                 <div class="mb-2"><strong>Contract Number:</strong> {{ $contract->contract_number ?? 'N/A' }}</div>
                                                 <div class="mb-2">
                                                     <strong>Status:</strong>
-                                                    <span class="badge bg-{{ $contract->status === 'APPROVED' ? 'success' : ($contract->status === 'DRAFT' ? 'secondary' : 'info') }}">
-                                                        {{ strtoupper($contract->status ?? 'N/A') }}
-                                                    </span>
+                                                    <x-status-badge :status="$contract->status" :label="strtoupper($contract->status ?? 'N/A')" />
                                                 </div>
                                                 <div class="mb-2">
                                                     <strong>Start:</strong> {{ $contract->start_date ? \Carbon\Carbon::parse($contract->start_date)->format('M d, Y') : 'N/A' }}

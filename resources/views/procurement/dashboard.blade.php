@@ -67,7 +67,7 @@
                             <div class="d-flex w-100 justify-content-between">
                                 <div>
                                     <h6 class="mb-1">{{ $request->request_number }}</h6>
-                                    <p class="mb-0">Status: <span class="badge bg-{{ $request->status_color }}">{{ ucfirst($request->status) }}</span></p>
+                                    <p class="mb-0">Status: <x-status-badge :status="$request->status" /></p>
                                     <p class="mb-0">Total: ₱{{ number_format($request->total_amount, 2) }}</p>
                                 </div>
                                 <div class="text-end">
@@ -98,7 +98,7 @@
                                 <div>
                                     <h6 class="mb-1">{{ $order->po_number }}</h6>
                                     <p class="mb-0">Supplier: {{ $order->supplier->name }}</p>
-                                    <p class="mb-0">Status: <span class="badge bg-{{ $order->status_color }}">{{ ucfirst($order->status) }}</span></p>
+                                    <p class="mb-0">Status: <x-status-badge :status="$order->status" /></p>
                                 </div>
                                 <div class="text-end">
                                     <div class="text-muted"><small>{{ $order->created_at->diffForHumans() }}</small></div>

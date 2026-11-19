@@ -20,10 +20,10 @@
                     <i class="fas fa-{{ $company->designation === 'client' ? 'user-tie' : 'truck' }} me-1"></i>
                     {{ ucfirst($company->designation) }}
                 </span>
-                <span class="badge bg-{{ $company->status === 'approved' ? 'success' : ($company->status === 'pending' ? 'warning' : 'danger') }}" style="font-size: 1rem;">
+                <x-status-badge :status="$company->status" style="font-size: 1rem;">
                     <i class="fas fa-{{ $company->status === 'approved' ? 'check-circle' : ($company->status === 'pending' ? 'clock' : 'times-circle') }} me-1"></i>
                     {{ ucfirst($company->status) }}
-                </span>
+                </x-status-badge>
                 @if($company->designation === 'client')
                     @if($company->banned)
                         <span class="badge bg-danger ms-2">BANNED</span>
@@ -91,9 +91,7 @@
                         </div>
                         <div class="col-md-6">
                             <p><strong>Status:</strong> 
-                                <span class="badge bg-{{ $company->status === 'approved' ? 'success' : ($company->status === 'pending' ? 'warning' : 'danger') }}">
-                                    {{ ucfirst($company->status) }}
-                                </span>
+                                <x-status-badge :status="$company->status" />
                             </p>
                             <p><strong>Type:</strong> {{ $company->supplier_type }}</p>
                             <p><strong>Designation:</strong> {{ ucfirst($company->designation) }}</p>

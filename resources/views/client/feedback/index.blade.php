@@ -13,19 +13,7 @@
                 </div>
             @endif
 
-            @if(session('success'))
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i>
-                    {{ session('success') }}
-                </div>
-            @endif
 
-            @if(session('info'))
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    {{ session('info') }}
-                </div>
-            @endif
 
             <!-- Feedback Statistics Cards -->
             <div class="row mb-4">

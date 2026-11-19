@@ -52,9 +52,7 @@
                                             </td>
                                             <td>{{ $invitation->due_date->format('M d, Y') }}</td>
                                             <td>
-                                                <span class="badge bg-{{ $invitation->status_color }}">
-                                                    {{ ucfirst($invitation->status) }}
-                                                </span>
+                                                <x-status-badge :status="$invitation->status" />
                                             </td>
                                             <td>
                                                 <div class="btn-group">

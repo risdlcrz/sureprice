@@ -32,7 +32,7 @@
                             <tr>
                                 <td>{{ $qr->request_number }}</td>
                                 <td>{{ $qr->user->name ?? 'N/A' }}</td>
-                                <td><span class="badge bg-{{ $qr->status_color }}">{{ $qr->status_label }}</span></td>
+                                <td><x-status-badge :status="$qr->status" /></td>
                                 <td>{{ $qr->created_at->format('Y-m-d H:i') }}</td>
                                 <td><a href="{{ route('manager.quotation-requests.view', $qr->id) }}" class="btn btn-sm btn-primary">View</a></td>
                             </tr>
@@ -61,7 +61,7 @@
                             <tr>
                                 <td>{{ $q->rfq_number }}</td>
                                 <td>{{ $q->purchaseRequest->pr_number ?? '-' }}</td>
-                                <td><span class="badge bg-{{ $q->status_color }}">{{ ucfirst($q->status) }}</span></td>
+                                <td><x-status-badge :status="$q->status" /></td>
                                 <td>{{ $q->due_date ? $q->due_date->format('Y-m-d') : '-' }}</td>
                                 <td>
                                     @php

@@ -49,9 +49,7 @@
                             </div>
                             <div class="col-md-6">
                                 <p><strong>Status:</strong> 
-                                    <span class="badge bg-{{ $purchaseOrder->status_color }}">
-                                        {{ ucfirst($purchaseOrder->status) }}
-                                    </span>
+                                    <x-status-badge :status="$purchaseOrder->status" />
                                 </p>
                                 <p><strong>Delivery Date:</strong> {{ $purchaseOrder->delivery_date->format('M d, Y') }}</p>
                                 <p><strong>Payment Terms:</strong> {{ $purchaseOrder->payment_terms }}</p>
@@ -459,7 +457,7 @@
         @endif
         @if($payment)
             <div class="mt-2">
-                <strong>Payment Status:</strong> <span class="badge bg-{{ $payment->status === 'verified' ? 'success' : ($payment->status === 'for_verification' ? 'info' : ($payment->status === 'rejected' ? 'danger' : 'secondary')) }}">{{ ucfirst($payment->status) }}</span>
+                <strong>Payment Status:</strong> <x-status-badge :status="$payment->status" />
                 <br>
                 <strong>Amount:</strong> ₱{{ number_format($payment->amount, 2) }}<br>
                 <strong>Method:</strong> {{ ucfirst($payment->payment_method) }}<br>

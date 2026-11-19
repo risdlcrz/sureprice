@@ -28,18 +28,7 @@
                         <div class="col-md-6">
                             <h6 class="text-muted">Status & Progress</h6>
                             <div class="mb-3">
-                                @php
-                                    $statusColors = [
-                                        'pending' => 'warning',
-                                        'in_progress' => 'primary',
-                                        'completed' => 'success',
-                                        'on_hold' => 'secondary',
-                                        'delayed' => 'danger'
-                                    ];
-                                @endphp
-                                <span class="badge bg-{{ $statusColors[$task->status] ?? 'secondary' }} fs-6">
-                                    {{ ucwords(str_replace('_', ' ', $task->status)) }}
-                                </span>
+                                <x-status-badge :status="$task->status" class="fs-6" />
                             </div>
                             
                             <div class="mb-3">
@@ -160,9 +149,7 @@
                     </div>
                     <div class="mb-2">
                         <strong>Status:</strong> 
-                        <span class="badge bg-{{ $project->status == 'active' ? 'success' : ($project->status == 'pending' ? 'warning' : 'secondary') }}">
-                            {{ ucfirst($project->status) }}
-                        </span>
+                        <x-status-badge :status="$project->status" />
                     </div>
                     <div class="mb-2">
                         <strong>Overall Progress:</strong> {{ $project->progress }}%

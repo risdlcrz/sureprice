@@ -155,18 +155,8 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-2">
-                        <strong>Current Status:</strong>
-                        @php
-                            $statusColors = [
-                                'pending' => 'warning',
-                                'in_progress' => 'primary',
-                                'completed' => 'success',
-                                'on_hold' => 'secondary'
-                            ];
-                        @endphp
-                        <span class="badge bg-{{ $statusColors[$task->status] ?? 'secondary' }}">
-                            {{ ucwords(str_replace('_', ' ', $task->status)) }}
-                        </span>
+                        <strong>Current Status:</strong>
+                        <x-status-badge :status="$task->status" />
                     </div>
                     <div class="mb-2">
                         <strong>Current Progress:</strong> {{ $task->progress }}%
@@ -193,9 +183,7 @@
                     </div>
                     <div class="mb-2">
                         <strong>Status:</strong> 
-                        <span class="badge bg-{{ $project->status == 'active' ? 'success' : ($project->status == 'pending' ? 'warning' : 'secondary') }}">
-                            {{ ucfirst($project->status) }}
-                        </span>
+                        <x-status-badge :status="$project->status" />
                     </div>
                     <div class="mb-2">
                         <strong>Overall Progress:</strong> {{ $project->progress }}%

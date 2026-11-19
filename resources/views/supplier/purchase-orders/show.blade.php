@@ -4,7 +4,7 @@
 <div class="container">
     <h1>Purchase Order: {{ $purchaseOrder->po_number }}</h1>
     <div class="mb-3">
-        <strong>Status:</strong> <span class="badge bg-{{ $purchaseOrder->status_color }}">{{ ucfirst($purchaseOrder->status) }}</span><br>
+        <strong>Status:</strong> <x-status-badge :status="$purchaseOrder->status" /><br>
         <strong>Shipping Status:</strong> <span class="badge bg-info">{{ $purchaseOrder->shipping_status ?? 'Not shipped' }}</span><br>
         <strong>Tracking Number:</strong> <span>{{ $purchaseOrder->tracking_number ?? '-' }}</span><br>
         <strong>Total Amount:</strong> ₱{{ number_format($purchaseOrder->total_amount, 2) }}<br>
@@ -52,7 +52,7 @@
     <h4>Payment</h4>
     @if($payment)
         <div class="mb-3">
-            <strong>Status:</strong> <span class="badge bg-{{ $payment->status === 'verified' ? 'success' : ($payment->status === 'for_verification' ? 'info' : ($payment->status === 'rejected' ? 'danger' : 'secondary')) }}">{{ ucfirst($payment->status) }}</span><br>
+            <strong>Status:</strong> <x-status-badge :status="$payment->status" /><br>
             <strong>Amount:</strong> ₱{{ number_format($payment->amount, 2) }}<br>
             <strong>Method:</strong> {{ ucfirst($payment->payment_method) }}<br>
             <strong>Reference #:</strong> {{ $payment->admin_reference_number }}<br>

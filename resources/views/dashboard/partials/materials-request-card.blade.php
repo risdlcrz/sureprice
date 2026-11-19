@@ -28,9 +28,7 @@
                             </small>
                         </div>
                         <div>
-                            <span class="badge bg-{{ $request->status_color }}">
-                                {{ ucfirst($request->status) }}
-                            </span>
+                            <x-status-badge :status="$request->status" />
                         </div>
                     </div>
                     @if($request->contract)

@@ -12,7 +12,7 @@
                     @if(isset($quotationRequest) && $quotationRequest)
                         <div class="alert alert-secondary mb-4">
                             <h5 class="mb-1">Client Quotation Request #{{ $quotationRequest->request_number }}</h5>
-                            <span class="badge bg-{{ $quotationRequest->status_color ?? 'secondary' }}">{{ $quotationRequest->status_label ?? ucfirst($quotationRequest->status) }}</span>
+                            <x-status-badge :status="$quotationRequest->status" />
                             <ul class="mb-1 mt-2">
                                 <li><strong>Submitted At:</strong> {{ $quotationRequest->created_at->format('M d, Y H:i') }}</li>
                                 <li><strong>Requested By (User ID):</strong> {{ $quotationRequest->user_id }}</li>

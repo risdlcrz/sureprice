@@ -485,9 +485,7 @@
                                             <tr>
                                                 <th>Status</th>
                                                 <td>
-                                                    <span class="badge bg-{{ $company->status === 'approved' ? 'success' : ($company->status === 'pending' ? 'warning' : 'danger') }}">
-                                                        {{ ucfirst($company->status) }}
-                                                    </span>
+                                                    <x-status-badge :status="$company->status" />
                                                 </td>
                                             </tr>
                                         </table>

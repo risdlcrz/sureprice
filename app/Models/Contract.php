@@ -172,18 +172,7 @@ class Contract extends Model
 
     public function getStatusColorAttribute()
     {
-        return [
-            'draft' => 'secondary',
-            'active' => 'primary',
-            'partially_paid' => 'info',
-            'fully_paid' => 'success',
-            'overdue' => 'danger',
-            'suspended' => 'warning',
-            'terminated' => 'dark',
-            'expired' => 'secondary',
-            'renewed' => 'success',
-            'completed' => 'success',
-        ][$this->status] ?? 'secondary';
+        return \App\Support\Status::color($this->status);
     }
 
     public function isCompleted()

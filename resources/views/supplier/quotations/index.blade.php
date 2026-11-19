@@ -79,9 +79,7 @@
                         </td>
                         <td>{{ $quotation->due_date->format('M d, Y') }}</td>
                         <td>
-                            <span class="badge badge-{{ $quotation->status_color }}">
-                                {{ ucfirst($quotation->status) }}
-                            </span>
+                            <x-status-badge :status="$quotation->status" />
                         </td>
                         <td>{{ $quotation->materials->count() }}</td>
                         <td>

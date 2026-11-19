@@ -127,16 +127,7 @@ class PurchaseOrder extends Model
 
     public function getStatusColorAttribute()
     {
-        return [
-            'draft' => 'secondary',
-            'pending' => 'warning',
-            'approved' => 'success',
-            'rejected' => 'danger',
-            'cancelled' => 'secondary',
-            'in_progress' => 'info',
-            'completed' => 'success',
-            'partially_delivered' => 'warning'
-        ][$this->status] ?? 'secondary';
+        return \App\Support\Status::color($this->status);
     }
 
     public function calculateEstimatedCost()

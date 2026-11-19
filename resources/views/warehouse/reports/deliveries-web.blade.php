@@ -112,7 +112,7 @@ body {
                     <tr>
                         <td>{{ $delivery->delivery_number }}</td>
                         <td>{{ $delivery->delivery_date ? $delivery->delivery_date->format('M d, Y') : '-' }}</td>
-                        <td><span class="badge bg-{{ $delivery->status === 'completed' ? 'success' : ($delivery->status === 'pending' ? 'warning' : 'secondary') }}">{{ ucfirst($delivery->status) }}</span></td>
+                        <td><x-status-badge :status="$delivery->status" /></td>
                         <td>{{ $delivery->items->count() }}</td>
                         <td>{{ $delivery->notes }}</td>
                     </tr>

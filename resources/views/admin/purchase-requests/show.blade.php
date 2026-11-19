@@ -87,9 +87,7 @@
                                             ];
                                             $statusColor = $statusColors[$purchaseRequest->status] ?? 'secondary';
                                         @endphp
-                                        <span class="badge badge-{{ $statusColor }}">
-                                            {{ ucfirst(str_replace('_', ' ', $purchaseRequest->status)) }}
-                                        </span>
+                                        <x-status-badge :status="$purchaseRequest->status" />
                                     </td>
                                 </tr>
                                 <tr>
@@ -367,15 +365,11 @@
                                                     <td>{{ $po->supplier->company_name }}</td>
                                                     <td class="text-right">{{ $po->total_amount ? number_format($po->total_amount, 2) : 'N/A' }}</td>
                                                     <td>
-                                                        <span class="badge bg-{{ $po->status_color }}">
-                                                            {{ ucfirst($po->status) }}
-                                                        </span>
+                                                        <x-status-badge :status="$po->status" />
                                                     </td>
                                                     <td>
                                                         @if($poPayment)
-                                                            <span class="badge bg-{{ $poPayment->status === 'verified' ? 'success' : ($poPayment->status === 'for_verification' ? 'info' : ($poPayment->status === 'rejected' ? 'danger' : 'secondary')) }}">
-                                                                {{ ucfirst($poPayment->status) }}
-                                                            </span>
+                                                            <x-status-badge :status="$poPayment->status" />
                                                         @else
                                                             <span class="badge bg-secondary">Unpaid</span>
                                                         @endif

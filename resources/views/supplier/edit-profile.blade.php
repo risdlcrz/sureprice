@@ -7,9 +7,7 @@
         <div class="card border-{{ $supplier->status === 'approved' ? 'success' : ($supplier->status === 'pending' ? 'warning' : 'danger') }}">
             <div class="card-body">
                 <h5 class="card-title mb-2">Account Status:
-                    <span class="badge bg-{{ $supplier->status === 'approved' ? 'success' : ($supplier->status === 'pending' ? 'warning' : 'danger') }}">
-                        {{ ucfirst($supplier->status) }}
-                    </span>
+                    <x-status-badge :status="$supplier->status" />
                 </h5>
                 @if($supplier->status === 'approved' && $supplier->approved_at)
                     <p class="mb-1"><strong>Approved on:</strong> {{ $supplier->approved_at->format('M d, Y') }}</p>

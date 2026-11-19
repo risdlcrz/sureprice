@@ -50,11 +50,11 @@
                                     </td>
                                     <td>
                                         @if($data['alert'])
-                                            <span class="badge badge-{{ $data['alert']['type'] }}">
+                                            <span class="badge bg-{{ $data['alert']['type'] }}">
                                                 {{ $data['alert']['message'] }}
                                             </span>
                                         @else
-                                            <span class="badge badge-success">On Track</span>
+                                            <span class="badge bg-success">On Track</span>
                                         @endif
                                     </td>
                                     <td>
@@ -88,7 +88,7 @@
                 const row = $(`tr:contains('${alert.contract}')`);
                 const statusCell = row.find('td:eq(6)');
                 statusCell.html(`
-                    <span class="badge badge-${alert.alert.type}">
+                    <span class="badge bg-${alert.alert.type}">
                         ${alert.alert.message}
                     </span>
                 `);

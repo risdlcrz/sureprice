@@ -93,12 +93,6 @@ class Delivery extends Model
 
     public function getStatusColorAttribute()
     {
-        return [
-            'pending' => 'warning',
-            'in_progress' => 'info',
-            'completed' => 'success',
-            'rejected' => 'danger',
-            'cancelled' => 'secondary'
-        ][$this->status] ?? 'secondary';
+        return \App\Support\Status::color($this->status);
     }
 } 

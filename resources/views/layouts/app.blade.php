@@ -94,68 +94,18 @@
                 </div>
 
                 <div class="w-100 d-flex flex-column align-items-center mt-2 mobile-nav-buttons">
-                    @if(auth()->check() && auth()->user()->user_type === 'company')
-                        @php auth()->user()->loadMissing('company'); @endphp
-                    @endif
-                    @if(request()->is('admin/project*'))
-                        @include('include.sidebars.project')
-                    @elseif(request()->is('admin/analytics*'))
-                        @include('include.sidebars.analytics')
-                    @elseif(auth()->check() && auth()->user()->role === 'warehousing')
-                        @include('include.sidebars.warehousing')
-                    @elseif(auth()->check() && auth()->user()->user_type === 'employee' && auth()->user()->role === 'procurement')
-                        @include('include.sidebars.procurement')
-                    @else
-                        @include('include.sidebars.default')
-                    @endif
+                    @include('include.sidebars._resolve')
                 </div>
             </div>
 
             <!-- Desktop Sidebar -->
             <div class="left-header d-none d-md-flex">
-                @if(auth()->check() && auth()->user()->user_type === 'company')
-                    @php auth()->user()->loadMissing('company'); @endphp
-                @endif
-                @if(request()->is('admin/project*'))
-                    @include('include.sidebars.project')
-                @elseif(request()->is('admin/analytics*'))
-                    @include('include.sidebars.analytics')
-                @elseif(auth()->check() && auth()->user()->role === 'warehousing')
-                    @include('include.sidebars.warehousing')
-                @elseif(auth()->check() && auth()->user()->user_type === 'employee' && auth()->user()->role === 'procurement')
-                    @include('include.sidebars.procurement')
-                @else
-                    @include('include.sidebars.default')
-                @endif
+                @include('include.sidebars._resolve')
             </div>
 
             <!-- Main Content -->
             <div class="content">
-                <!-- Flash Messages -->
-                @if(session('success'))
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        {{ session('success') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
-
-                @if(session('error'))
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        {{ session('error') }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
-
-                @if($errors->any())
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <ul class="mb-0">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                @endif
+                <x-flash />
 
                 @yield('content')
             </div>
@@ -172,11 +122,5 @@
     @stack('scripts')
     {{-- @vite(['resources/js/contracts-show.js']) --}}
     @vite(['resources/js/app-layout.js'])
-
-    @auth
-        @if(Auth::user()->user_type === 'admin')
-            {{-- Removed Transactions link from navbar --}}
-        @endif
-    @endauth
 </body>
 </html>

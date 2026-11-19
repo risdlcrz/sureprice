@@ -31,12 +31,7 @@
                     <div class="mb-3">
                         <label class="fw-bold">Status</label>
                         <div>
-                            <span class="badge bg-{{ $project->status === 'completed' ? 'success' : 
-                                ($project->status === 'active' ? 'primary' : 
-                                ($project->status === 'on_hold' ? 'warning' : 
-                                ($project->status === 'cancelled' ? 'danger' : 'secondary'))) }}">
-                                {{ ucfirst($project->status) }}
-                            </span>
+                            <x-status-badge :status="$project->status" />
                         </div>
                     </div>
                     <div class="mb-3">
@@ -97,10 +92,7 @@
                                     <td>{{ $po->po_number }}</td>
                                     <td>{{ $po->created_at->format('M d, Y') }}</td>
                                     <td>
-                                        <span class="badge bg-{{ $po->status === 'completed' ? 'success' : 
-                                            ($po->status === 'approved' ? 'primary' : 'secondary') }}">
-                                            {{ ucfirst($po->status) }}
-                                        </span>
+                                        <x-status-badge :status="$po->status" />
                                     </td>
                                     <td>₱{{ number_format($po->total_amount, 2) }}</td>
                                 </tr>
@@ -149,11 +141,7 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge bg-{{ $task->status === 'completed' ? 'success' : 
-                                            ($task->status === 'in_progress' ? 'primary' : 
-                                            ($task->status === 'on_hold' ? 'warning' : 'secondary')) }}">
-                                            {{ ucfirst($task->status) }}
-                                        </span>
+                                        <x-status-badge :status="$task->status" />
                                     </td>
                                     <td>
                                         <div class="progress">

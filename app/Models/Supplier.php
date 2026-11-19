@@ -59,11 +59,7 @@ class Supplier extends Model
 
     public function getStatusColorAttribute()
     {
-        return [
-            'active' => 'success',
-            'inactive' => 'danger',
-            'pending' => 'warning'
-        ][$this->status] ?? 'secondary';
+        return \App\Support\Status::color($this->status);
     }
 
     public function evaluations()

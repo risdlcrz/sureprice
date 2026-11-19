@@ -28,15 +28,13 @@
                                         <tr>
                                             <th style="width: 200px;">Status</th>
                                             <td>
-                                                <span class="badge badge-{{ $task->status === 'completed' ? 'success' : ($task->status === 'in_progress' ? 'info' : ($task->status === 'delayed' ? 'danger' : 'secondary')) }}">
-                                                    {{ ucfirst($task->status) }}
-                                                </span>
+                                                <x-status-badge :status="$task->status" />
                                             </td>
                                         </tr>
                                         <tr>
                                             <th>Priority</th>
                                             <td>
-                                                <span class="badge badge-{{ $task->priority === 'high' ? 'danger' : ($task->priority === 'medium' ? 'warning' : 'success') }}">
+                                                <span class="badge bg-{{ $task->priority === 'high' ? 'danger' : ($task->priority === 'medium' ? 'warning' : 'success') }}">
                                                     {{ ucfirst($task->priority) }}
                                                 </span>
                                             </td>

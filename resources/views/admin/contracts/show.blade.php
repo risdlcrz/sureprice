@@ -9,19 +9,7 @@
     </div>
 
     <!-- Success Messages -->
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
 
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
 
     <!-- Contract Approval Banner -->
     @if($contract->status === 'approved')
@@ -180,7 +168,7 @@
                     <p><strong>End Date:</strong> {{ $contract->end_date->format('F d, Y') }}</p>
                 </div>
                 <div class="col-md-6">
-                    <p><strong>Status:</strong> <span class="badge bg-{{ $contract->status === 'draft' ? 'warning' : 'success' }}">{{ ucfirst($contract->status) }}</span></p>
+                    <p><strong>Status:</strong> <x-status-badge :status="$contract->status" /></p>
                     <p><strong>Total Amount:</strong> 
                         ₱{{ number_format($contract->materials_cost + $contract->labor_cost, 2) }}
                     </p>

@@ -68,9 +68,7 @@
                                     <i class="fas fa-file-contract me-2"></i>
                                     Contract Information
                                 </h4>
-                                <span class="badge bg-{{ $selectedContract->status === 'draft' ? 'warning' : ($selectedContract->status === 'approved' ? 'success' : 'danger') }} p-2">
-                                    {{ ucfirst($selectedContract->status) }}
-                                </span>
+                                <x-status-badge :status="$selectedContract->status" class="p-2" />
                             </div>
                             <div class="row g-3">
                                 <div class="col-md-4">

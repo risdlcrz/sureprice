@@ -32,9 +32,7 @@
                                             ];
                                             $statusColor = $statusColors[$purchaseRequest->status] ?? 'secondary';
                                         @endphp
-                                        <span class="badge badge-{{ $statusColor }}">
-                                            {{ ucfirst(str_replace('_', ' ', $purchaseRequest->status)) }}
-                                        </span>
+                                        <x-status-badge :status="$purchaseRequest->status" />
                                     </td>
                                 </tr>
                                 <tr>

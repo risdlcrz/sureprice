@@ -37,9 +37,7 @@
                                     <p class="mb-1"><strong>Invitation Code:</strong> {{ $invitation->invitation_code }}</p>
                                     <p class="mb-1">
                                         <strong>Status:</strong>
-                                        <span class="badge bg-{{ $invitation->status_color }}">
-                                            {{ ucfirst($invitation->status) }}
-                                        </span>
+                                        <x-status-badge :status="$invitation->status" />
                                     </p>
                                     <p class="mb-0"><strong>Due Date:</strong> {{ $invitation->due_date->format('M d, Y') }}</p>
                                 </div>

@@ -3,9 +3,6 @@
 @section('content')
 <div class="container">
     <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Transactions</h1>
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
     <div class="mb-3">
         <a href="{{ route('transactions.create') }}" class="btn btn-primary">Add Transaction</a>
     </div>

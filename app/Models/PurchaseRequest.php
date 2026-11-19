@@ -107,14 +107,7 @@ class PurchaseRequest extends Model
     // Accessors
     public function getStatusColorAttribute()
     {
-        return [
-            'pending' => 'warning',
-            'pending_admin_approval' => 'info',
-            'pending_supplier_approval' => 'primary',
-            'approved' => 'success',
-            'rejected' => 'danger',
-            'cancelled' => 'secondary'
-        ][$this->status] ?? 'secondary';
+        return \App\Support\Status::color($this->status);
     }
 
     public function approveByAdmin()

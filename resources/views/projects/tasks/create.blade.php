@@ -133,9 +133,7 @@
                     </div>
                     <div class="mb-2">
                         <strong>Status:</strong> 
-                        <span class="badge bg-{{ $project->status == 'active' ? 'success' : ($project->status == 'pending' ? 'warning' : 'secondary') }}">
-                            {{ ucfirst($project->status) }}
-                        </span>
+                        <x-status-badge :status="$project->status" />
                     </div>
                     <div class="mb-2">
                         <strong>Progress:</strong> {{ $project->progress }}%

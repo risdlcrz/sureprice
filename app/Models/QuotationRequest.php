@@ -51,17 +51,11 @@ class QuotationRequest extends Model
     // Helper methods
     public function getStatusColorAttribute()
     {
-        return match($this->status) {
-            self::STATUS_PENDING => 'warning',
-            self::STATUS_REVIEWED => 'info',
-            self::STATUS_APPROVED => 'success',
-            self::STATUS_REJECTED => 'danger',
-            default => 'secondary'
-        };
+        return \App\Support\Status::color($this->status);
     }
 
     public function getStatusLabelAttribute()
     {
-        return ucfirst($this->status);
+        return \App\Support\Status::label($this->status);
     }
 }

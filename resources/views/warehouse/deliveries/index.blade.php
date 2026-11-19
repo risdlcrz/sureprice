@@ -165,18 +165,7 @@ label.form-label {
                         </td>
                         <td>{{ $delivery->delivery_date ? $delivery->delivery_date->format('M d, Y') : 'N/A' }}</td>
                         <td>
-                            @php
-                                $statusColors = [
-                                    'pending' => 'secondary',
-                                    'processing' => 'primary',
-                                    'shipped' => 'info',
-                                    'completed' => 'success',
-                                    'cancelled' => 'danger',
-                                    'received' => 'success',
-                                ];
-                                $color = $statusColors[$delivery->status] ?? 'dark';
-                            @endphp
-                            <span class="badge bg-{{ $color }}">{{ ucfirst($delivery->status) }}</span>
+                            <x-status-badge :status="$delivery->status" />
                         </td>
                         <td>{{ $delivery->items_count }} {{ Str::plural('item', $delivery->items_count) }}</td>
                         <td>{{ $delivery->warehouse->name ?? 'N/A' }}</td>

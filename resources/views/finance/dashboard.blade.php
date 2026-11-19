@@ -78,7 +78,7 @@
                                 <td>{{ $poPayment->purchaseOrder->po_number ?? '-' }}</td>
                                 <td>{{ $poPayment->purchaseOrder->supplier->company_name ?? '-' }}</td>
                                 <td>₱{{ number_format($poPayment->amount, 2) }}</td>
-                                <td><span class="badge bg-{{ $poPayment->status === 'verified' ? 'success' : ($poPayment->status === 'for_verification' ? 'info' : ($poPayment->status === 'rejected' ? 'danger' : 'secondary')) }}">{{ ucfirst($poPayment->status) }}</span></td>
+                                <td><x-status-badge :status="$poPayment->status" /></td>
                                 <td>{{ $poPayment->admin_paid_date }}</td>
                             </tr>
                         @empty

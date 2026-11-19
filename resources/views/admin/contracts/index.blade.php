@@ -41,11 +41,6 @@
         </div>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-    @endif
 
     <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
@@ -135,9 +130,7 @@
                                 <td>₱{{ number_format($contract->labor_cost, 2) }}</td>
                                 <td>₱{{ number_format($contract->total_amount, 2) }}</td>
                                 <td>
-                                    <span class="badge bg-{{ $contract->status_color }}">
-                                        {{ ucwords(str_replace('_', ' ', $contract->status)) }}
-                                    </span>
+                                    <x-status-badge :status="$contract->status" />
                                     @if($contract->payments && $contract->payments->count())
                                         @php
                                             $total = $contract->total_amount;

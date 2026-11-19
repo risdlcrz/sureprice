@@ -87,9 +87,7 @@
                                         <td>{{ $warrantyRequest->product_name }}</td>
                                         <td>{{ $warrantyRequest->serial_number }}</td>
                                         <td>
-                                            <span class="badge bg-{{ $warrantyRequest->status === 'approved' ? 'success' : ($warrantyRequest->status === 'pending' ? 'warning' : ($warrantyRequest->status === 'in_review' ? 'info' : 'danger')) }}">
-                                                {{ ucfirst($warrantyRequest->status) }}
-                                            </span>
+                                            <x-status-badge :status="$warrantyRequest->status" />
                                         </td>
                                         <td>{{ $warrantyRequest->created_at->format('M d, Y') }}</td>
                                         <td>

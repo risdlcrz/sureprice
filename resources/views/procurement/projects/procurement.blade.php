@@ -39,10 +39,7 @@
                                     <td>{{ $pr->request_number }}</td>
                                     <td>{{ $pr->created_at->format('M d, Y') }}</td>
                                     <td>
-                                        <span class="badge bg-{{ $pr->status === 'approved' ? 'success' : 
-                                            ($pr->status === 'pending' ? 'warning' : 'secondary') }}">
-                                            {{ ucfirst($pr->status) }}
-                                        </span>
+                                        <x-status-badge :status="$pr->status" />
                                     </td>
                                     <td>₱{{ number_format($pr->total_amount, 2) }}</td>
                                     <td>
@@ -91,10 +88,7 @@
                                     <td>{{ $po->po_number }}</td>
                                     <td>{{ $po->created_at->format('M d, Y') }}</td>
                                     <td>
-                                        <span class="badge bg-{{ $po->status === 'completed' ? 'success' : 
-                                            ($po->status === 'approved' ? 'primary' : 'secondary') }}">
-                                            {{ ucfirst($po->status) }}
-                                        </span>
+                                        <x-status-badge :status="$po->status" />
                                     </td>
                                     <td>₱{{ number_format($po->total_amount, 2) }}</td>
                                     <td>
@@ -164,10 +158,7 @@
                             <td>{{ number_format($data['quantity'], 2) }}</td>
                             <td>₱{{ number_format($data['amount'], 2) }}</td>
                             <td>
-                                <span class="badge bg-{{ $data['status'] === 'completed' ? 'success' : 
-                                    ($data['status'] === 'approved' ? 'primary' : 'secondary') }}">
-                                    {{ ucfirst($data['status']) }}
-                                </span>
+                                <x-status-badge :status="$data['status']" />
                             </td>
                         </tr>
                         @empty

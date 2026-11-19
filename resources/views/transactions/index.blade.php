@@ -3,9 +3,6 @@
 @section('content')
 <div class="container py-4">
     <h1 class="h3 mb-4 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Transactions</h1>
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
     @if(isset($warning))
         <div class="alert alert-warning">{{ $warning }}</div>
     @endif
@@ -32,9 +29,7 @@
                     <td>₱{{ number_format($transaction->amount, 2) }}</td>
                     <td>{{ $transaction->reference_number }}</td>
                     <td>
-                        <span class="badge bg-{{ $transaction->status === 'completed' ? 'success' : 'warning' }}">
-                            {{ ucfirst($transaction->status) }}
-                        </span>
+                        <x-status-badge :status="$transaction->status" />
                     </td>
                 </tr>
             @empty

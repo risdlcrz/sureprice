@@ -8,9 +8,7 @@
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h4 class="card-title mb-0">{{ $quotation->rfq_number }}</h4>
-                        <span class="badge badge-{{ $quotation->status_color }}">
-                            {{ ucfirst($quotation->status) }}
-                        </span>
+                        <x-status-badge :status="$quotation->status" />
                     </div>
                     <div class="btn-group">
                         @if(in_array($quotation->status, ['draft', 'sent']))
@@ -47,9 +45,7 @@
                                     <tr>
                                         <th>Status:</th>
                                         <td>
-                                            <span class="badge badge-{{ $quotation->status_color }}">
-                                                {{ ucfirst($quotation->status) }}
-                                            </span>
+                                            <x-status-badge :status="$quotation->status" />
                                         </td>
                                     </tr>
                                 </table>
@@ -180,9 +176,9 @@
                                         <td>{{ $supplier->pivot->notes }}</td>
                                         <td>
                                             @if($response)
-                                                <span class="badge badge-success">Responded</span>
+                                                <span class="badge bg-success">Responded</span>
                                             @else
-                                                <span class="badge badge-warning">Pending</span>
+                                                <span class="badge bg-warning">Pending</span>
                                             @endif
                                         </td>
                                     </tr>
@@ -201,9 +197,7 @@
                             <div class="card-header bg-light">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <h6 class="mb-0">{{ $response->supplier->company_name }}</h6>
-                                    <span class="badge badge-{{ $response->status_color }}">
-                                        {{ ucfirst($response->status) }}
-                                    </span>
+                                    <x-status-badge :status="$response->status" />
                                 </div>
                             </div>
                             <div class="card-body">

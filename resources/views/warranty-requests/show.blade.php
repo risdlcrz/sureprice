@@ -87,9 +87,7 @@
                                 <div class="card-body">
                                     <div class="mb-4">
                                         <p class="mb-1"><strong>Current Status:</strong></p>
-                                        <span class="badge bg-{{ $warrantyRequest->status === 'approved' ? 'success' : ($warrantyRequest->status === 'rejected' ? 'danger' : ($warrantyRequest->status === 'in_review' ? 'warning' : 'secondary')) }} fs-6">
-                                            {{ ucfirst($warrantyRequest->status) }}
-                                        </span>
+                                        <x-status-badge :status="$warrantyRequest->status" class="fs-6" />
                                     </div>
 
                                     @if($warrantyRequest->admin_notes)

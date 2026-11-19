@@ -74,12 +74,6 @@
         </div>
                     </div>
                     <div class="card-body">
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            {{ session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
                     
                     @if($purchaseRequest)
                         <div class="alert alert-info alert-dismissible fade show" role="alert">
@@ -102,9 +96,7 @@
                                 <tr>
                                     <th>Status</th>
                                     <td>
-                                        <span class="badge badge-{{ $materialRequest->status === 'pending' ? 'warning' : ($materialRequest->status === 'completed' ? 'success' : 'secondary') }}">
-                                            {{ ucfirst($materialRequest->status) }}
-                                        </span>
+                                        <x-status-badge :status="$materialRequest->status" />
                                     </td>
                                 </tr>
                                 <tr>

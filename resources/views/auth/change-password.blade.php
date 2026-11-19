@@ -8,11 +8,6 @@
                 <div class="card-header">{{ __('Change Password') }}</div>
 
                 <div class="card-body">
-                    @if(session('warning'))
-                        <div class="alert alert-warning">
-                            {{ session('warning') }}
-                        </div>
-                    @endif
 
                     <form method="POST" action="{{ route('change.password.update') }}">
                         @csrf
