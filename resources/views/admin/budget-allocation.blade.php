@@ -204,9 +204,7 @@
                                                 </td>
                                             </tr>
                                         @empty
-                                            <tr>
-                                                <td colspan="6" class="text-center">No items added to this contract</td>
-                                            </tr>
+                                            <x-empty-row cols="6">No items added to this contract</x-empty-row>
                                         @endforelse
                                     </tbody>
                                 </table>

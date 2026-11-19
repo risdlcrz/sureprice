@@ -36,9 +36,7 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">No purchase requests found.</td>
-                                    </tr>
+                                    <x-empty-row cols="5">No purchase requests found.</x-empty-row>
                                 @endforelse
                             </tbody>
                         </table>

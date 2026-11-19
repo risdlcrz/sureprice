@@ -125,9 +125,7 @@
                                         </td>
                                     </tr>
                                     @empty
-                                    <tr>
-                                        <td colspan="7" class="text-center text-muted">No materials requested for this quotation.</td>
-                                    </tr>
+                                    <x-empty-row cols="7">No materials requested for this quotation.</x-empty-row>
                                     @endforelse
                                 </tbody>
                             </table>

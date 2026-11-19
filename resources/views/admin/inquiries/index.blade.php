@@ -75,15 +75,11 @@
                                     </td>
                                     <td>{{ $inquiry->department }}</td>
                                     <td>
-                                        <span class="badge badge-priority">
-                                            {{ ucfirst($inquiry->priority) }}
-                                        </span>
+                                        <x-status-badge kind="priority" :status="$inquiry->priority" />
                                     </td>
                                     <td>{{ $inquiry->required_date->format('M d, Y') }}</td>
                                     <td>
-                                        <span class="badge badge-status">
-                                            {{ ucfirst($inquiry->status) }}
-                                        </span>
+                                        <x-status-badge :status="$inquiry->status" />
                                     </td>
                                     <td class="text-nowrap">
                                         <a href="{{ route('inquiries.show', $inquiry->id) }}" class="btn btn-info btn-sm" title="View Inquiry" data-bs-toggle="tooltip">
@@ -275,10 +271,6 @@ body {
     box-shadow: 0 1px 4px #ffc10722;
     border-radius: 0.7em;
     padding: 0.5em 1em;
-}
-.badge-priority, .badge-status {
-    background: #6c757d !important;
-    color: #fff !important;
 }
 </style>
 @endpush

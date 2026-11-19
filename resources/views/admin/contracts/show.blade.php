@@ -28,10 +28,8 @@
     @php
         $isClient = auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client';
     @endphp
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Contract Details</h1>
-        <div>
-            @if(!$isClient)
+    <x-page-header title="Contract Details">
+        @if(!$isClient)
                 @if(Auth::user()->hasRole('admin'))
                     @if($contract->canBeEdited())
                         <div class="btn-group me-2">
@@ -100,8 +98,7 @@
             <a href="{{ route('contracts.index') }}" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Back to List
             </a>
-        </div>
-    </div>
+    </x-page-header>
 
     <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
@@ -469,9 +466,7 @@
                                 <td data-item-total-cost>₱{{ number_format($item->total, 2) }}</td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="5" class="text-center">No items found.</td>
-                            </tr>
+                            <x-empty-row cols="5">No items found.</x-empty-row>
                         @endforelse
                     </tbody>
                     <tfoot>

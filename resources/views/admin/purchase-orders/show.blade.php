@@ -5,10 +5,8 @@
         $payment = $purchaseOrder->payments->last();
     @endphp
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Purchase Order Details</h1>
-            <div>
-                @if(in_array($purchaseOrder->status, ['draft', 'pending']))
+        <x-page-header title="Purchase Order Details">
+            @if(in_array($purchaseOrder->status, ['draft', 'pending']))
                     <a href="{{ route('purchase-orders.edit', $purchaseOrder) }}" class="btn btn-primary">
                         <i class="fas fa-edit"></i> Edit
                     </a>
@@ -24,8 +22,7 @@
                 <a href="{{ route('purchase-orders.index') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Back to List
                 </a>
-            </div>
-        </div>
+        </x-page-header>
 
         <div class="row">
             <div class="col-md-8">

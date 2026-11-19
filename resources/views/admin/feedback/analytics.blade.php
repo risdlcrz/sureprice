@@ -4,10 +4,8 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Feedback Analytics Dashboard</h1>
-                <div>
-                    <a href="{{ route('admin.feedback.index') }}" class="btn btn-outline-primary me-2">
+            <x-page-header title="Feedback Analytics Dashboard">
+                <a href="{{ route('admin.feedback.index') }}" class="btn btn-outline-primary me-2">
                         <i class="fas fa-list me-2"></i>All Feedback
                     </a>
                     <div class="btn-group">
@@ -19,8 +17,7 @@
                             <li><a class="dropdown-item" href="{{ route('admin.feedback.export', ['format'=>'xlsx']) }}">Excel</a></li>
                         </ul>
                     </div>
-                </div>
-            </div>
+            </x-page-header>
 
             <!-- Overall Statistics -->
             <div class="row mb-4">

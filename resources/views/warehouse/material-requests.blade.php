@@ -124,9 +124,7 @@ body {
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="6" class="text-center text-muted animated-empty">No material requests found.</td>
-                        </tr>
+                        <x-empty-row cols="6">No material requests found.</x-empty-row>
                     @endforelse
                 </tbody>
             </table>

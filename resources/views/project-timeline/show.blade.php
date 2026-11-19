@@ -34,9 +34,7 @@
                                         <tr>
                                             <th>Priority</th>
                                             <td>
-                                                <span class="badge bg-{{ $task->priority === 'high' ? 'danger' : ($task->priority === 'medium' ? 'warning' : 'success') }}">
-                                                    {{ ucfirst($task->priority) }}
-                                                </span>
+                                                <x-status-badge kind="priority" :status="$task->priority" />
                                             </td>
                                         </tr>
                                         <tr>

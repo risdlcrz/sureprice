@@ -41,17 +41,13 @@
                                 <tr>
                                     <th>Priority</th>
                                     <td>
-                                        <span class="badge badge-priority">
-                                            {{ ucfirst($inquiry->priority) }}
-                                        </span>
+                                        <x-status-badge kind="priority" :status="$inquiry->priority" />
                                     </td>
                                 </tr>
                                 <tr>
                                     <th>Status</th>
                                     <td>
-                                        <span class="badge badge-status">
-                                            {{ ucfirst($inquiry->status) }}
-                                        </span>
+                                        <x-status-badge :status="$inquiry->status" />
                                     </td>
                                 </tr>
                                 <tr>
@@ -97,9 +93,7 @@
                                             <td>{{ $material->pivot->notes ?? 'N/A' }}</td>
                                         </tr>
                                         @empty
-                                        <tr>
-                                            <td colspan="6" class="text-center">No materials requested</td>
-                                        </tr>
+                                        <x-empty-row cols="6">No materials requested</x-empty-row>
                                         @endforelse
                                     </tbody>
                                 </table>
@@ -156,10 +150,6 @@
         color: #fff !important;
         padding: 0.5em 0.75em;
         border-radius: 0.5em;
-    }
-    .badge-priority, .badge-status {
-        background-color: #6c757d !important;
-        color: #fff !important;
     }
     .table tbody tr {
         background-color: #f6f6f6;

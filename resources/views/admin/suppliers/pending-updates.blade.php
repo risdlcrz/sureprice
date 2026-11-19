@@ -26,9 +26,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
-                        <td colspan="5" class="text-center text-muted">No pending updates.</td>
-                    </tr>
+                    <x-empty-row cols="5">No pending updates.</x-empty-row>
                 @endforelse
             </tbody>
         </table>

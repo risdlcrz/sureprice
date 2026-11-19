@@ -187,14 +187,10 @@ label.form-label {
                         </tr>
                         @endforeach
                         @empty
-                        <tr>
-                            <td colspan="6" class="text-center text-muted animated-empty">No inventory data found for the selected warehouse.</td>
-                        </tr>
+                        <x-empty-row cols="6">No inventory data found for the selected warehouse.</x-empty-row>
                         @endforelse
                     @else
-                    <tr>
-                        <td colspan="6" class="text-center text-muted animated-empty">No inventory data available.</td>
-                    </tr>
+                    <x-empty-row cols="6">No inventory data available.</x-empty-row>
                     @endif
                 </tbody>
             </table>

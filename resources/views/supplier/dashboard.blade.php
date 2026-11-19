@@ -191,9 +191,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr>
-                        <td colspan="5" class="text-center text-muted">No materials found</td>
-                    </tr>
+                    <x-empty-row cols="5">No materials found</x-empty-row>
                     @endforelse
                 </tbody>
             </table>
@@ -235,9 +233,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr>
-                        <td colspan="4" class="text-center text-muted">No quotations found</td>
-                    </tr>
+                    <x-empty-row cols="4">No quotations found</x-empty-row>
                     @endforelse
                 </tbody>
             </table>

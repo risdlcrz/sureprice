@@ -64,19 +64,9 @@
                                         </div>
                                     </td>
                                     <td>
-                                        @php
-                                            $priorityColors = [
-                                                'low' => 'success',
-                                                'medium' => 'warning',
-                                                'high' => 'danger',
-                                                'urgent' => 'dark'
-                                            ];
-                                        @endphp
-                                        <span class="badge bg-{{ $priorityColors[$task->priority] ?? 'secondary' }}">
-                                            {{ ucfirst($task->priority) }}
-                                        </span>
+                                        <x-status-badge kind="priority" :status="$task->priority" />
                                     </td>
-                                    <td>
+                                    <td>
                                         <x-status-badge :status="$task->status" />
                                     </td>
                                     <td>

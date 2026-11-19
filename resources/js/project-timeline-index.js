@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // --- Progress Bar ---
-    const overallProgress = window.overallProjectProgress || 0;
+    const overallProgress = (window.overallProjectProgress || 0);
     const progressBar = document.getElementById('projectProgressBar').querySelector('.progress-bar');
     progressBar.style.width = overallProgress + '%';
     progressBar.setAttribute('aria-valuenow', overallProgress);
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
             center: 'title',
             right: 'dayGridMonth,dayGridWeek,dayGridDay'
         },
-        events: window.calendarEvents || [],
+        events: (window.calendarEvents || []),
         eventContent: function(arg) {
             const props = arg.event.extendedProps || {};
             const contractNumber = props.contract_number;
@@ -241,4 +241,8 @@ function submitAdditionalWorkRequest() {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
     });
-} 
+}
+
+// Called from inline onclick handlers; modules are not global by default.
+window.submitWarrantyRequest = submitWarrantyRequest;
+window.submitAdditionalWorkRequest = submitAdditionalWorkRequest;

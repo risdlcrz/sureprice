@@ -4,12 +4,11 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-10">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Feedback Details</h1>
+            <x-page-header title="Feedback Details">
                 <a href="{{ route('client.feedback.index') }}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left me-2"></i>Back to Feedback
                 </a>
-            </div>
+            </x-page-header>
 
             <div class="card">
                 <div class="card-header">

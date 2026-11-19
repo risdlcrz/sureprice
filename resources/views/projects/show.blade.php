@@ -166,9 +166,7 @@
                                     </td>
                                 </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="6" class="text-center">No tasks found.</td>
-                                </tr>
+                                <x-empty-row cols="6">No tasks found.</x-empty-row>
                                 @endforelse
                             </tbody>
                         </table>

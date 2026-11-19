@@ -53,9 +53,7 @@
                                     </td>
                                 </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="4" class="text-center">No purchase requests found.</td>
-                                </tr>
+                                <x-empty-row cols="4">No purchase requests found.</x-empty-row>
                                 @endforelse
                             </tbody>
                         </table>
@@ -102,9 +100,7 @@
                                     </td>
                                 </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="4" class="text-center">No purchase orders found.</td>
-                                </tr>
+                                <x-empty-row cols="4">No purchase orders found.</x-empty-row>
                                 @endforelse
                             </tbody>
                         </table>
@@ -162,9 +158,7 @@
                             </td>
                         </tr>
                         @empty
-                        <tr>
-                            <td colspan="4" class="text-center">No materials found.</td>
-                        </tr>
+                        <x-empty-row cols="4">No materials found.</x-empty-row>
                         @endforelse
                     </tbody>
                 </table>

@@ -2,12 +2,11 @@
 
 @section('content')
 <div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Create Purchase Request</h1>
+    <x-page-header title="Create Purchase Request">
         <a href="{{ route('procurement.purchase-requests.index') }}" class="btn btn-outline-secondary">
             <i class="fas fa-arrow-left"></i> Back to List
         </a>
-    </div>
+    </x-page-header>
 
     <div class="card shadow-sm">
         <div class="card-header">

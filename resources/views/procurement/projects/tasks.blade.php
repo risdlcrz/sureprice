@@ -42,10 +42,7 @@
                                 @endif
                             </td>
                             <td>
-                                <span class="badge bg-{{ $task->priority === 'high' ? 'danger' : 
-                                    ($task->priority === 'medium' ? 'warning' : 'success') }}">
-                                    {{ ucfirst($task->priority) }}
-                                </span>
+                                <x-status-badge kind="priority" :status="$task->priority" />
                             </td>
                             <td>
                                 <x-status-badge :status="$task->status" />
@@ -65,9 +62,7 @@
                             <td>{{ $task->notes }}</td>
                         </tr>
                         @empty
-                        <tr>
-                            <td colspan="7" class="text-center">No tasks found.</td>
-                        </tr>
+                        <x-empty-row cols="7">No tasks found.</x-empty-row>
                         @endforelse
                     </tbody>
                 </table>

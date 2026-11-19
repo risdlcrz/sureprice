@@ -41,9 +41,7 @@
                             <td>{{ $evaluation->comments }}</td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="3" class="text-center">No evaluations yet.</td>
-                        </tr>
+                        <x-empty-row cols="3">No evaluations yet.</x-empty-row>
                     @endforelse
                 </tbody>
             </table>

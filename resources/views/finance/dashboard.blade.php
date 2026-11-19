@@ -82,9 +82,7 @@
                                 <td>{{ $poPayment->admin_paid_date }}</td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="5" class="text-center py-4 text-muted">No recent PO payments found.</td>
-                            </tr>
+                            <x-empty-row cols="5">No recent PO payments found.</x-empty-row>
                         @endforelse
                     </tbody>
                 </table>

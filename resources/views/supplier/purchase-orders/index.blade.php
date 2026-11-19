@@ -1,9 +1,7 @@
 @extends('layouts.app')
 @section('content')
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">My Purchase Orders</h1>
-    </div>
+    <x-page-header title="My Purchase Orders" />
     <!-- Filters -->
     <div class="card mb-4">
         <div class="card-body">
@@ -85,7 +83,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="text-center text-muted py-4">No purchase orders found.</td></tr>
+                        <x-empty-row cols="7">No purchase orders found.</x-empty-row>
                     @endforelse
                 </tbody>
             </table>

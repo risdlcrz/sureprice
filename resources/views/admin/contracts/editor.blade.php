@@ -132,7 +132,7 @@
                                 </tr>
                             </thead>
                             <tbody id="scope-summary-table-body">
-                                <tr><td colspan="8" class="text-center text-muted">No data yet.</td></tr>
+                                <x-empty-row cols="8">No data yet.</x-empty-row>
                             </tbody>
                         </table>
                     </div>

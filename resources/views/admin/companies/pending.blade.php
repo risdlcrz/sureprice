@@ -160,9 +160,7 @@
                                 </div>
                             </div>
                         @empty
-                            <tr>
-                                <td colspan="6" class="text-center">No pending companies found.</td>
-                            </tr>
+                            <x-empty-row cols="6">No pending companies found.</x-empty-row>
                         @endforelse
                     </tbody>
                 </table>

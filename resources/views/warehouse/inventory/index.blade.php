@@ -230,9 +230,7 @@ h1, .h3 {
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="9" class="text-center py-4 text-muted">No materials found in this warehouse.</td>
-                        </tr>
+                        <x-empty-row cols="9">No materials found in this warehouse.</x-empty-row>
                     @endforelse
                 </tbody>
             </table>

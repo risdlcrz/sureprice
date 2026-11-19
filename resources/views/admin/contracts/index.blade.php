@@ -204,9 +204,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="11" class="text-center">No contracts found.</td>
-                            </tr>
+                            <x-empty-row cols="11">No contracts found.</x-empty-row>
                         @endforelse
                     </tbody>
                 </table>

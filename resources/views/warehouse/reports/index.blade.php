@@ -190,9 +190,7 @@ body {
                         </td>
                     </tr>
                     @empty
-                    <tr>
-                        <td colspan="4" class="text-center text-muted animated-empty">No recent reports found</td>
-                    </tr>
+                    <x-empty-row cols="4">No recent reports found</x-empty-row>
                     @endforelse
                 </tbody>
             </table>

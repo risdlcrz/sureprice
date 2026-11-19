@@ -97,9 +97,7 @@
                                     <td>₱{{ number_format($po->total_amount, 2) }}</td>
                                 </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="5" class="text-center">No recent procurement activities.</td>
-                                </tr>
+                                <x-empty-row cols="5">No recent procurement activities.</x-empty-row>
                                 @endforelse
                             </tbody>
                         </table>
@@ -157,9 +155,7 @@
                                     </td>
                                 </tr>
                                 @empty
-                                <tr>
-                                    <td colspan="5" class="text-center">No recent tasks.</td>
-                                </tr>
+                                <x-empty-row cols="5">No recent tasks.</x-empty-row>
                                 @endforelse
                             </tbody>
                         </table>

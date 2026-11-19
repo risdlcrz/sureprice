@@ -78,9 +78,7 @@
                         <td>{{ $movement->notes }}</td>
                     </tr>
                     @empty
-                    <tr>
-                        <td colspan="7" class="text-center text-muted">No movement history found</td>
-                    </tr>
+                    <x-empty-row cols="7">No movement history found</x-empty-row>
                     @endforelse
                 </tbody>
             </table>

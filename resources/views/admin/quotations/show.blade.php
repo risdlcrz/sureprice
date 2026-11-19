@@ -129,9 +129,7 @@
                                         @endforeach
                                     @endif
                                     @if(($quotation->purchase_request_id && $quotation->purchaseRequest->items->isEmpty()) || (!$quotation->purchase_request_id && $quotation->materials->isEmpty()))
-                                    <tr>
-                                        <td colspan="4" class="text-center text-muted">No materials attached to this quotation.</td>
-                                    </tr>
+                                    <x-empty-row cols="4">No materials attached to this quotation.</x-empty-row>
                                     @endif
                                 </tbody>
                             </table>

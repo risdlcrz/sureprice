@@ -4,12 +4,11 @@
 <div class="container">
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Payment Details</h1>
+            <x-page-header title="Payment Details">
                 <a href="{{ route('client.payments') }}" class="btn btn-outline-secondary">
                     <i class="fas fa-arrow-left"></i> Back to Payments
                 </a>
-            </div>
+            </x-page-header>
 
 
 

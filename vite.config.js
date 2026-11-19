@@ -45,6 +45,8 @@ export default defineConfig({
                 'resources/js/supprankings.js',
                 'resources/css/auth-register.css',
                 'resources/css/projects-create.css',
+                'resources/css/procurement/analytics-dashboard.css',
+                'resources/js/procurement/inventory-dashboard.js',
                 'resources/js/projects-create.js',
                 'resources/css/admin-contracts-editor.css',
                 'resources/js/admin-contracts-editor.js',

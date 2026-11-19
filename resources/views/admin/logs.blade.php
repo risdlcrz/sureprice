@@ -48,9 +48,7 @@
                             <td>{{ $activity->created_at->format('Y-m-d H:i') }}</td>
                         </tr>
                         @empty
-                        <tr>
-                            <td colspan="5" class="text-center text-muted py-4">No administrator activities found.</td>
-                        </tr>
+                        <x-empty-row cols="5">No administrator activities found.</x-empty-row>
                         @endforelse
                     </tbody>
                 </table>

@@ -4,12 +4,8 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0 text-success" style="font-weight:700;letter-spacing:0.01em;">
-                    <i class="fas fa-comments me-2"></i>Client Feedback Management
-                </h1>
-                <div class="d-flex gap-2">
-                    <a href="{{ route('admin.feedback.analytics') }}" class="btn btn-outline-info">
+            <x-page-header title="Client Feedback Management" icon="comments">
+                <a href="{{ route('admin.feedback.analytics') }}" class="btn btn-outline-info">
                         <i class="fas fa-chart-bar me-1"></i>Analytics
                     </a>
                     <div class="btn-group">
@@ -21,8 +17,7 @@
                             <li><a class="dropdown-item" href="{{ route('admin.feedback.export', ['format'=>'xlsx']) }}">Download Excel</a></li>
                         </ul>
                     </div>
-                </div>
-            </div>
+            </x-page-header>
 
             <!-- Statistics Cards -->
             <div class="row mb-4 justify-content-center">

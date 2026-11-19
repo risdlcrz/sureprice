@@ -96,9 +96,7 @@ body {
                         <td>{{ $stat['net_change'] }}</td>
                     </tr>
                     @empty
-                    <tr>
-                        <td colspan="4" class="text-center text-muted animated-empty">No material usage data found.</td>
-                    </tr>
+                    <x-empty-row cols="4">No material usage data found.</x-empty-row>
                     @endforelse
                 </tbody>
             </table>

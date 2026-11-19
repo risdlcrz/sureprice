@@ -49,11 +49,6 @@ class Inquiry extends Model
 
     public function getPriorityColorAttribute()
     {
-        return [
-            'low' => 'success',
-            'medium' => 'warning',
-            'high' => 'orange',
-            'urgent' => 'danger'
-        ][$this->priority] ?? 'secondary';
+        return \App\Support\Status::color($this->priority, 'priority');
     }
 } 

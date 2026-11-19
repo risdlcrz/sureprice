@@ -6,8 +6,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h1 class="h3 mb-0">Warranty Requests</h1>
+                    <x-page-header title="Warranty Requests">
                         <div class="btn-group">
                             <button type="button" class="btn btn-outline-primary" id="filterBtn">
                                 <i class="bi bi-funnel"></i> Filter
@@ -22,7 +21,7 @@
                                 <i class="bi bi-plus-circle"></i> Add Request
                             </button>
                         </div>
-                    </div>
+                    </x-page-header>
 
                     <!-- Additional Work Request Button -->
                     <div class="mb-4">

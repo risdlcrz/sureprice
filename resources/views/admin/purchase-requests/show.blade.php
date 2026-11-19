@@ -225,9 +225,7 @@
                                             </tr>
                                         @endforeach
                                     @else
-                                        <tr>
-                                            <td colspan="9" class="text-center">No items found</td>
-                                        </tr>
+                                        <x-empty-row cols="9">No items found</x-empty-row>
                                     @endif
                                 </tbody>
                                     <tfoot>

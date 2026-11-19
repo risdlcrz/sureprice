@@ -2,9 +2,7 @@
 
 @section('content')
 <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0">My Performance & Ranking</h1>
-    </div>
+    <x-page-header title="My Performance & Ranking" />
 
     <!-- Overall Performance Card -->
     <div class="card shadow mb-4">
@@ -155,9 +153,7 @@
                         <td>{{ Str::limit($evaluation->comments, 50) }}</td>
                     </tr>
                     @empty
-                    <tr>
-                        <td colspan="4" class="text-center text-muted">No recent evaluations found</td>
-                    </tr>
+                    <x-empty-row cols="4">No recent evaluations found</x-empty-row>
                     @endforelse
                 </tbody>
             </table>

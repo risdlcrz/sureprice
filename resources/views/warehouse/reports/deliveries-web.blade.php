@@ -117,9 +117,7 @@ body {
                         <td>{{ $delivery->notes }}</td>
                     </tr>
                     @empty
-                    <tr>
-                        <td colspan="5" class="text-center text-muted animated-empty">No deliveries found.</td>
-                    </tr>
+                    <x-empty-row cols="5">No deliveries found.</x-empty-row>
                     @endforelse
                 </tbody>
             </table>

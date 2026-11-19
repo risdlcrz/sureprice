@@ -50,17 +50,7 @@
                         <div class="col-md-6">
                             <h6 class="text-muted">Priority & Assignment</h6>
                             <div class="mb-3">
-                                @php
-                                    $priorityColors = [
-                                        'low' => 'success',
-                                        'medium' => 'warning',
-                                        'high' => 'danger',
-                                        'urgent' => 'dark'
-                                    ];
-                                @endphp
-                                <span class="badge bg-{{ $priorityColors[$task->priority] ?? 'secondary' }} fs-6">
-                                    {{ ucfirst($task->priority) }} Priority
-                                </span>
+                                <x-status-badge kind="priority" :status="$task->priority" class="fs-6">{{ ucfirst($task->priority) }} Priority</x-status-badge>
                             </div>
                             
                             <div class="mb-3">

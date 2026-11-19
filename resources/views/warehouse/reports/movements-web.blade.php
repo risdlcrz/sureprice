@@ -117,9 +117,7 @@ body {
                         <td>{{ $movement->notes }}</td>
                     </tr>
                     @empty
-                    <tr>
-                        <td colspan="9" class="text-center text-muted animated-empty">No stock movements found.</td>
-                    </tr>
+                    <x-empty-row cols="9">No stock movements found.</x-empty-row>
                     @endforelse
                 </tbody>
             </table>

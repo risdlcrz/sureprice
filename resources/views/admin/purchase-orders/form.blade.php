@@ -2,12 +2,11 @@
 
 @section('content')
     <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>{{ isset($purchaseOrder) ? 'Edit Purchase Order' : 'Create Purchase Order' }}</h1>
+        <x-page-header :title="isset($purchaseOrder) ? 'Edit Purchase Order' : 'Create Purchase Order'">
             <a href="{{ route('purchase-orders.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Back to List
             </a>
-        </div>
+        </x-page-header>
 
         <div class="card">
             <div class="card-body">

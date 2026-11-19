@@ -39,9 +39,7 @@
                             <td>{{ $item->fulfilled_quantity ?? 0 }}</td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="4" class="text-center text-muted">No items found.</td>
-                        </tr>
+                        <x-empty-row cols="4">No items found.</x-empty-row>
                     @endforelse
                 </tbody>
             </table>

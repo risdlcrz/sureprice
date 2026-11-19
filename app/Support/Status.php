@@ -30,14 +30,16 @@ class Status
         'failed' => 'danger', 'terminated' => 'dark',
     ];
 
+    public const PRIORITY = ['low' => 'success', 'medium' => 'warning', 'high' => 'danger', 'urgent' => 'dark'];
+
     public static function key(?string $status): string
     {
         return strtolower(str_replace([' ', '-'], '_', trim((string) $status)));
     }
 
-    public static function color(?string $status): string
+    public static function color(?string $status, string $kind = 'status'): string
     {
-        return self::COLORS[self::key($status)] ?? 'secondary';
+        return ($kind === 'priority' ? self::PRIORITY : self::COLORS)[self::key($status)] ?? 'secondary';
     }
 
     public static function label(?string $status): string

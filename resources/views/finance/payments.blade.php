@@ -141,9 +141,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr>
-                                <td colspan="5" class="text-center">No pending purchase order payments.</td>
-                            </tr>
+                            <x-empty-row cols="5">No pending purchase order payments.</x-empty-row>
                         @endforelse
                     </tbody>
                 </table>
