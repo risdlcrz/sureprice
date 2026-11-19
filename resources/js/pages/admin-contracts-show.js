@@ -1,13 +1,16 @@
-// Custom JS extracted from admin/contracts/show.blade.php
-// (CDN includes for SweetAlert2 and SignaturePad should remain in the Blade file or be managed by npm)
+// Extracted from resources/views/admin/contracts/show.blade.php
+const __page = window.__page || {};
+window.contractSignatureUrl = __page.show0_0;
+window.contractStatusUrl = __page.show0_1;
 
-let currentSignatureType = null;
-
+// Contract status update function
 function updateStatus(status) {
+    console.log('updateStatus called with:', status);
     
     // Check if approval is being requested and signatures are missing
     if (status === 'approved') {
         const approveButton = document.querySelector('button[onclick="updateStatus(\'approved\')"]');
+        console.log('Approve button found:', approveButton);
         console.log('Approve button disabled:', approveButton ? approveButton.disabled : 'Button not found');
         
         if (approveButton && approveButton.disabled) {
@@ -111,98 +114,92 @@ function updateStatus(status) {
         }
     })
     .catch(error => {
-    console.error('Error:', error);
+        console.error('Error:', error);
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: error.message
+            text: error.message || 'An error occurred while updating the contract status.',
+            confirmButtonText: 'OK'
         });
     });
 }
 
-function showDeleteModal() {
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    deleteModal.show();
-}
-
-function submitDelete() {
-    document.getElementById('delete-form').submit();
-}
+// Signature modal functions
+let currentSignatureType = null;
+let signaturePad = null;
 
 function showSignatureModal(type) {
     currentSignatureType = type;
-    const signatureModal = new bootstrap.Modal(document.getElementById('signatureModal'));
-    const subtitle = document.getElementById('signatureModalSubtitle');
-    subtitle.textContent = `Add ${type === 'contractor' ? 'Contractor' : 'Client'} signature below`;
-    signatureModal.show();
+    const modal = new bootstrap.Modal(document.getElementById('signatureModal'));
+    modal.show();
+    
+    // Initialize signature pad
     const canvas = document.getElementById('signatureCanvas');
-    if (window.signaturePad) {
-        window.signaturePad.clear();
-    } else {
-        window.signaturePad = new SignaturePad(canvas, {
-            backgroundColor: 'rgb(255, 255, 255)',
-            penColor: 'rgb(0, 0, 0)'
-        });
-    }
+    signaturePad = new SignaturePad(canvas, {
+        backgroundColor: 'rgb(255, 255, 255)'
+    });
 }
 
 function clearSignature() {
-    if (window.signaturePad) {
-        window.signaturePad.clear();
+    if (signaturePad) {
+        signaturePad.clear();
     }
 }
 
 function saveSignature() {
-    if (!window.signaturePad || window.signaturePad.isEmpty()) {
+    if (!signaturePad || signaturePad.isEmpty()) {
         Swal.fire({
             icon: 'warning',
             title: 'No Signature',
-            text: 'Please provide a signature before saving.'
+            text: 'Please provide a signature before saving.',
+            confirmButtonText: 'OK'
         });
         return;
     }
-    const signatureData = window.signaturePad.toDataURL();
-    Swal.fire({
-        title: 'Saving Signature',
-        text: 'Please wait...',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
+
+    const signatureData = signaturePad.toDataURL();
+    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    // Create the request body with the correct field name
+    const requestBody = {
+        signature_type: currentSignatureType,
+        [currentSignatureType + '_signature']: signatureData
+    };
+
+    console.log('Sending signature request:', {
+        url: window.contractSignatureUrl,
+        signatureType: currentSignatureType,
+        dataLength: signatureData.length,
+        requestBody: requestBody
     });
+
     fetch(window.contractSignatureUrl, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'X-CSRF-TOKEN': token,
             'Accept': 'application/json'
         },
-        body: JSON.stringify({
-            signature_type: currentSignatureType,
-            [currentSignatureType + '_signature']: signatureData
-        })
+        body: JSON.stringify(requestBody)
     })
     .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        console.log('Response status:', response.status);
         return response.json();
     })
     .then(data => {
+        console.log('Response data:', data);
         if (data.success) {
             Swal.fire({
                 icon: 'success',
                 title: 'Success',
-                text: data.message,
+                text: 'Signature saved successfully!',
                 showConfirmButton: false,
                 timer: 1500
             }).then(() => {
-                // Update approval button state if needed
-                updateApprovalButtonState(data.can_be_approved);
                 window.location.reload();
             });
         } else {
-            throw new Error(data.message || 'Unknown error');
+            throw new Error(data.message || 'Failed to save signature');
         }
     })
     .catch(error => {
@@ -210,24 +207,75 @@ function saveSignature() {
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Error saving signature: ' + error.message
+            text: error.message || 'An error occurred while saving the signature.',
+            confirmButtonText: 'OK'
         });
     });
 }
 
-function updateApprovalButtonState(canBeApproved) {
-    const approveButton = document.querySelector('button[onclick="updateStatus(\'approved\')"]');
-    if (approveButton) {
-        if (canBeApproved) {
-            approveButton.disabled = false;
-            approveButton.title = '';
-        } else {
-            approveButton.disabled = true;
-            approveButton.title = 'Both contractor and client signatures are required before approval.';
-        }
-    }
+// Delete confirmation functions
+function showDeleteModal() {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
 }
 
-window.showSignatureModal = showSignatureModal;
-window.clearSignature = clearSignature;
-window.saveSignature = saveSignature; 
+function submitDelete() {
+    document.getElementById('deleteForm').submit();
+}
+
+// Generate payments function
+function generatePayments() {
+    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const contractId = __page.show0_2;
+    
+    Swal.fire({
+        title: 'Generating Payments',
+        text: 'Please wait...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    fetch(`${__page.show0_3}/${contractId}/generate-payments`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': token,
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message,
+                showConfirmButton: false,
+                timer: 2000
+            }).then(() => {
+                window.location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'Failed to generate payments.',
+                confirmButtonText: 'OK'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while generating payments.',
+            confirmButtonText: 'OK'
+        });
+    });
+}
+
+// used by inline handlers / other scripts in the view
+Object.assign(window, { updateStatus, showSignatureModal, clearSignature, saveSignature, submitDelete, generatePayments });

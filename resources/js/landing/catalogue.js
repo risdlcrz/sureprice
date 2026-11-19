@@ -1,1 +1,0 @@
-// (Paste all <script> block content from catalogue.blade.php here) 

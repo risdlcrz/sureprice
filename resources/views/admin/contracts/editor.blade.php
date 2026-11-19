@@ -279,33 +279,23 @@
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // When the form is submitted, set contractor_date_signed to effective_date
     const form = document.getElementById('contractEditorForm');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            const effectiveDate = document.getElementById('effective_date').value;
-            document.getElementById('contractor_date_signed').value = effectiveDate;
-        });
-    }
-    // Custom plan logic
     const planSelect = document.getElementById('payment_plan');
     const customPlan = document.getElementById('payment_plan_custom');
-    planSelect.addEventListener('change', function() {
-        if (planSelect.value === '' && customPlan) {
-            customPlan.style.display = 'block';
-        } else {
-            customPlan.style.display = 'none';
-        }
+
+    // Custom plan: show the free-text field when "custom" (empty value) is chosen
+    planSelect?.addEventListener('change', function() {
+        if (customPlan) customPlan.style.display = planSelect.value === '' ? 'block' : 'none';
     });
-    // On submit, if custom plan is filled, copy to select
-    const form = document.getElementById('contractEditorForm');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            if (planSelect.value === '' && customPlan && customPlan.value) {
-                planSelect.value = customPlan.value;
-            }
-        });
-    }
+
+    form?.addEventListener('submit', function() {
+        // contractor_date_signed follows the effective date
+        const effective = document.getElementById('effective_date');
+        const signed = document.getElementById('contractor_date_signed');
+        if (effective && signed) signed.value = effective.value;
+        // a filled custom plan replaces the empty select value
+        if (planSelect && planSelect.value === '' && customPlan?.value) planSelect.value = customPlan.value;
+    });
     // If a quotation request is selected and has a payment plan, pre-fill
     const qrSelect = document.getElementById('quotation_request_id');
     if (qrSelect) {

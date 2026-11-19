@@ -1,32 +1,27 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
+import fs from 'node:fs';
+
+// Page scripts extracted from Blade views (resources/js/pages/*.js) are picked up automatically.
+const pageScripts = fs.existsSync('resources/js/pages')
+    ? fs.readdirSync('resources/js/pages').filter((f) => f.endsWith('.js')).map((f) => `resources/js/pages/${f}`)
+    : [];
 
 export default defineConfig({
     plugins: [
         laravel({
             input: [
                 'resources/css/app.css',
-                'resources/css/budget.css',
                 'resources/css/dbadmin.css',
-                'resources/css/forgot.css',
                 'resources/css/header.css',
-                'resources/css/infoman.css',
-                'resources/css/inventory.css',
                 'resources/css/login.css',
                 'resources/css/auth-card.css',
                 'resources/css/legal.css',
                 'resources/css/messages.css',
-                'resources/css/price.css',
-                'resources/css/projectapp.css',
-                'resources/css/projectreq.css',
                 'resources/css/signup.css',
-                'resources/css/supprankings.css',
                 'resources/css/app-layout.css',
                 'resources/js/app-layout.js',
-                'resources/css/messages-index.css',
                 'resources/js/messages-index.js',
-                'resources/css/contracts-show.css',
-                'resources/js/contracts-show.js',
                 'resources/css/project-timeline-index.css',
                 'resources/js/project-timeline-index.js',
                 'resources/css/warehouse-dashboard.css',
@@ -36,15 +31,8 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/js/bootstrap.js',
                 'resources/js/budget.js',
-                'resources/js/header.js',
-                'resources/js/import-alerts.js',
-                'resources/js/info-man.js',
-                'resources/js/inventory.js',
                 'resources/js/login.js',
-                'resources/js/price.js',
-                'resources/js/projectreq.js',
                 'resources/js/signup-alert.js',
-                'resources/js/supprankings.js',
                 'resources/css/auth-register.css',
                 'resources/css/projects-create.css',
                 'resources/css/procurement/analytics-dashboard.css',
@@ -79,7 +67,7 @@ export default defineConfig({
                 //'resources/js/project-timeline/show.js',
                 //'resources/css/supplier/quotation-respond.css',
                 //'resources/js/supplier/quotation-respond.js',
-                
+                ...pageScripts,
             ],
             refresh: true,
         }),

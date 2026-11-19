@@ -108,66 +108,20 @@
                             <h5 class="mb-0">Items</h5>
                         </div>
                         <div class="card-body">
+                            @php
+                                $rows = old('items') ?? (isset($purchaseOrder) ? $purchaseOrder->items->map(fn ($i) => [
+                                    'material_id' => $i->material_id, 'quantity' => $i->quantity, 'unit_price' => $i->unit_price,
+                                    'unit' => $i->unit ?? $i->material?->unit, 'specifications' => $i->notes,
+                                ])->all() : []);
+                            @endphp
                             <div id="items-container">
-                                @if(isset($purchaseOrder))
-                                    @foreach($purchaseOrder->items as $index => $item)
-                                        <div class="item-row mb-4">
-                                            <div class="row">
-                                                <div class="col-md-4">
-                                                    <div class="form-group">
-                                                        <label>Material</label>
-                                                        <select class="form-select" name="items[{{ $index }}][material_id]" required>
-                                                            <option value="">Select Material</option>
-                                                            @foreach($materials ?? [] as $material)
-                                                                <option value="{{ $material->id }}" 
-                                                                    {{ $item->material_id == $material->id ? 'selected' : '' }}>
-                                                                    {{ $material->name }}
-                                                                </option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <div class="form-group">
-                                                        <label>Quantity</label>
-                                                        <input type="number" class="form-control quantity" 
-                                                               name="items[{{ $index }}][quantity]" 
-                                                               value="{{ $item->quantity }}" min="0.01" step="0.01" required>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <div class="form-group">
-                                                        <label>Unit Price</label>
-                                                        <input type="number" class="form-control unit-price" 
-                                                               name="items[{{ $index }}][unit_price]" 
-                                                               value="{{ $item->unit_price }}" min="0.01" step="0.01" required>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-2">
-                                                    <div class="form-group">
-                                                        <label>Unit</label>
-                                                        <input type="text" class="form-control unit" name="items[{{ $index }}][unit]" value="{{ $item->unit ?? ($item->material->unit ?? '') }}" required>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-3">
-                                                    <div class="form-group">
-                                                        <label>Specifications</label>
-                                                        <input type="text" class="form-control" 
-                                                               name="items[{{ $index }}][specifications]" 
-                                                               value="{{ $item->specifications }}">
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-1">
-                                                    <label class="d-block">&nbsp;</label>
-                                                    <button type="button" class="btn btn-danger remove-item">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    @endforeach
-                                @endif
+                                @foreach(array_values($rows) as $index => $row)
+                                    @include('admin.purchase-orders.partials.item-row', ['index' => $index, 'row' => $row, 'materials' => $materials ?? []])
+                                @endforeach
                             </div>
+                            <template id="item-row-template">
+                                @include('admin.purchase-orders.partials.item-row', ['index' => '__INDEX__', 'row' => [], 'materials' => $materials ?? []])
+                            </template>
                             <button type="button" class="btn btn-secondary" id="add-item">
                                 <i class="fas fa-plus"></i> Add Item
                             </button>
@@ -195,86 +149,5 @@
 @endsection
 
 @push('scripts')
-<script>
-    let itemIndex = {{ isset($purchaseOrder) ? $purchaseOrder->items->count() : 0 }};
-
-    function createItemRow() {
-        const template = `
-            <div class="item-row mb-4">
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="form-group">
-                            <label>Material</label>
-                            <select class="form-select" name="items[\${itemIndex}][material_id]" required>
-                                <option value="">Select Material</option>
-                                @foreach($materials ?? [] as $material)
-                                    <option value="{{ $material->id }}">{{ $material->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label>Quantity</label>
-                            <input type="number" class="form-control quantity" 
-                                   name="items[\${itemIndex}][quantity]" min="0.01" step="0.01" required>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label>Unit Price</label>
-                            <input type="number" class="form-control unit-price" 
-                                   name="items[\${itemIndex}][unit_price]" min="0.01" step="0.01" required>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="form-group">
-                            <label>Unit</label>
-                            <input type="text" class="form-control unit" name="items[\${itemIndex}][unit]" required>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="form-group">
-                            <label>Specifications</label>
-                            <input type="text" class="form-control" 
-                                   name="items[\${itemIndex}][specifications]">
-                        </div>
-                    </div>
-                    <div class="col-md-1">
-                        <label class="d-block">&nbsp;</label>
-                        <button type="button" class="btn btn-danger remove-item">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        itemIndex++;
-        return template;
-    }
-
-    document.getElementById('add-item').addEventListener('click', function() {
-        const container = document.getElementById('items-container');
-        container.insertAdjacentHTML('beforeend', createItemRow());
-    });
-
-    document.getElementById('items-container').addEventListener('click', function(e) {
-        if (e.target.classList.contains('remove-item') || e.target.closest('.remove-item')) {
-            const row = e.target.closest('.item-row');
-            row.remove();
-        }
-    });
-
-    // Add at least one item row if there are none
-    if (document.querySelectorAll('.item-row').length === 0) {
-        document.getElementById('add-item').click();
-    }
-
-    // Handle purchase request selection
-    document.getElementById('purchase_request_id').addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        const contractId = selectedOption.dataset.contractId;
-        // You can add logic here to load materials based on the selected purchase request
-    });
-</script>
+@vite('resources/js/pages/admin-purchase-orders-form.js')
 @endpush 
