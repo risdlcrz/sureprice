@@ -6,10 +6,10 @@ use App\Models\SupplierInvitation;
 use App\Models\Contract;
 use App\Models\Material;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SupplierInvitationMail;
-use App\Models\Category;
 
 class SupplierInvitationController extends Controller
 {
@@ -35,28 +35,11 @@ class SupplierInvitationController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'contract_id' => 'nullable|exists:contracts,id',
-            'company_name' => 'required|string|max:255',
-            'contact_name' => 'required|string|max:255',
-            'email' => 'required|email',
-            'phone' => 'required|string|max:20',
-            'materials' => 'required|array|min:1',
-            'materials.*' => 'exists:materials,id',
-            'message' => 'nullable|string',
-            'due_date' => 'required|date|after:today'
-        ]);
+        $validated = $this->validateInvitation($request);
 
-        $invitation = SupplierInvitation::create([
-            'contract_id' => $validated['contract_id'],
-            'invitation_code' => 'INV-' . Str::random(8),
-            'company_name' => $validated['company_name'],
-            'contact_name' => $validated['contact_name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
-            'message' => $validated['message'],
-            'due_date' => $validated['due_date'],
-            'status' => 'pending'
+        $invitation = SupplierInvitation::create(Arr::except($validated, 'materials') + [
+            'invitation_code' => 'INV-' . Str::upper(Str::random(12)),
+            'status' => 'pending',
         ]);
 
         $invitation->materials()->attach($validated['materials']);
@@ -96,27 +79,9 @@ class SupplierInvitationController extends Controller
                 ->with('error', 'This invitation cannot be updated.');
         }
 
-        $validated = $request->validate([
-            'contract_id' => 'nullable|exists:contracts,id',
-            'company_name' => 'required|string|max:255',
-            'contact_name' => 'required|string|max:255',
-            'email' => 'required|email',
-            'phone' => 'required|string|max:20',
-            'materials' => 'required|array|min:1',
-            'materials.*' => 'exists:materials,id',
-            'message' => 'nullable|string',
-            'due_date' => 'required|date|after:today'
-        ]);
+        $validated = $this->validateInvitation($request);
 
-        $invitation->update([
-            'contract_id' => $validated['contract_id'],
-            'company_name' => $validated['company_name'],
-            'contact_name' => $validated['contact_name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
-            'message' => $validated['message'],
-            'due_date' => $validated['due_date']
-        ]);
+        $invitation->update(Arr::except($validated, 'materials'));
 
         $invitation->materials()->sync($validated['materials']);
 
@@ -152,20 +117,24 @@ class SupplierInvitationController extends Controller
             ->with('success', 'Invitation resent successfully.');
     }
 
-    public function showResponse($code)
+    /** Public page the invitation email links to (no login needed; the code is the credential). */
+    public function showResponse(string $code)
     {
-        $invitation = SupplierInvitation::where('invitation_code', $code)
-            ->where('status', 'pending')
+        $invitation = SupplierInvitation::with(['contract', 'materials'])
+            ->where('invitation_code', $code)
             ->firstOrFail();
 
         return view('supplier.respond', compact('invitation'));
     }
 
-    public function processResponse(Request $request, $code)
+    public function processResponse(Request $request, string $code)
     {
-        $invitation = SupplierInvitation::where('invitation_code', $code)
-            ->where('status', 'pending')
-            ->firstOrFail();
+        $invitation = SupplierInvitation::where('invitation_code', $code)->firstOrFail();
+
+        if (!$invitation->isPending()) {
+            return redirect()->route('supplier.respond', $code)
+                ->with('info', 'You have already responded to this invitation.');
+        }
 
         $validated = $request->validate([
             'response' => 'required|in:accept,reject',
@@ -200,4 +169,19 @@ class SupplierInvitationController extends Controller
             
         return response()->json($invitations);
     }
-} 
+
+    private function validateInvitation(Request $request): array
+    {
+        return $request->validate([
+            'contract_id' => 'nullable|exists:contracts,id',
+            'company_name' => 'required|string|max:255',
+            'contact_name' => 'required|string|max:255',
+            'email' => 'required|email',
+            'phone' => 'required|string|max:20',
+            'materials' => 'required|array|min:1',
+            'materials.*' => 'exists:materials,id',
+            'message' => 'nullable|string',
+            'due_date' => 'required|date|after:today',
+        ]) + ['contract_id' => null, 'message' => null];
+    }
+}

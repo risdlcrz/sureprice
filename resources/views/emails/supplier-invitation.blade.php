@@ -3,10 +3,13 @@
 
 Dear {{ $invitation->contact_name }},
 
-You have been invited to supply materials for the contract **{{ $invitation->contract->contract_id }}** by {{ config('app.name') }}.
+You have been invited by {{ config('app.name') }} to supply materials{{ $invitation->contract ? ' for contract ' . $invitation->contract->contract_number : '' }}.
 
 ## Contract Details
-- **Contract**: {{ $invitation->contract->contract_id }}
+@if($invitation->contract)
+- **Contract**: {{ $invitation->contract->contract_number }} - {{ $invitation->contract->title }}
+@endif
+- **Invitation Code**: {{ $invitation->invitation_code }}
 - **Due Date**: {{ $invitation->due_date->format('M d, Y') }}
 
 ## Required Materials

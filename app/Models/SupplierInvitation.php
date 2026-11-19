@@ -10,44 +10,47 @@ class SupplierInvitation extends Model
     use HasFactory;
 
     protected $fillable = [
+        'project_id',
+        'contract_id',
+        'invitation_code',
         'company_name',
-        'business_type',
-        'contact_person',
-        'position',
+        'contact_name',
         'email',
         'phone',
-        'address',
-        'tax_number',
-        'registration_number',
+        'message',
+        'due_date',
         'status',
-        'notes'
+        'response_notes',
+        'responded_at',
     ];
 
-    // Relationships
-    public function categories()
+    protected $casts = [
+        'due_date' => 'date',
+        'responded_at' => 'datetime',
+    ];
+
+    public function contract()
     {
-        return $this->belongsToMany(Category::class)
-            ->withTimestamps();
+        return $this->belongsTo(Contract::class);
     }
 
-    public function attachments()
+    public function project()
     {
-        return $this->morphMany(Attachment::class, 'attachable');
+        return $this->belongsTo(Project::class);
     }
 
-    // Accessors
+    public function materials()
+    {
+        return $this->belongsToMany(Material::class, 'supplier_invitation_materials')->withTimestamps();
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === 'pending';
+    }
+
     public function getStatusColorAttribute()
     {
         return \App\Support\Status::color($this->status);
     }
-
-    public function getBusinessTypeTextAttribute()
-    {
-        return [
-            'corporation' => 'Corporation',
-            'partnership' => 'Partnership',
-            'sole_proprietorship' => 'Sole Proprietorship',
-            'other' => 'Other'
-        ][$this->business_type] ?? 'Unknown';
-    }
-} 
+}

@@ -23,7 +23,7 @@
                                 <thead>
                                     <tr>
                                         <th>Code</th>
-                                        <th>Project</th>
+                                        <th>Contract</th>
                                         <th>Company</th>
                                         <th>Contact</th>
                                         <th>Materials</th>
@@ -36,7 +36,7 @@
                                     @foreach($invitations as $invitation)
                                         <tr>
                                             <td>{{ $invitation->invitation_code }}</td>
-                                            <td>{{ $invitation->project->name }}</td>
+                                            <td>{{ $invitation->contract->contract_number ?? '—' }}</td>
                                             <td>{{ $invitation->company_name }}</td>
                                             <td>
                                                 {{ $invitation->contact_name }}<br>

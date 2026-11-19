@@ -21,6 +21,6 @@ class SupplierInvitationMail extends Mailable
     public function build()
     {
         return $this->markdown('emails.supplier-invitation')
-                    ->subject('Invitation to Supply Materials - ' . $this->invitation->project->name);
+                    ->subject('Invitation to Supply Materials - ' . ($this->invitation->contract->contract_number ?? config('app.name')));
     }
 } 

@@ -1,4 +1,7 @@
-@extends('layouts.guest')
+@extends('layouts.app')
+
+@section('title', 'Supplier Invitation')
+@section('is_landing', true)
 
 @section('content')
 <div class="container py-4">
@@ -9,10 +12,11 @@
                     <h4 class="card-title mb-0">Supplier Invitation Response</h4>
                 </div>
                 <div class="card-body">
-                    @if($invitation->status !== 'pending')
+                    <x-flash />
+                    @if(!$invitation->isPending())
                         <div class="alert alert-info">
                             <h5>You have already responded to this invitation.</h5>
-                            <p>Your response: <strong>{{ ucfirst($invitation->status) }}</strong></p>
+                            <p>Your response: <x-status-badge :status="$invitation->status" /></p>
                             @if($invitation->response_notes)
                                 <p>Your notes: {{ $invitation->response_notes }}</p>
                             @endif
@@ -20,7 +24,9 @@
                     @else
                         <div class="mb-4">
                             <h5>Contract Details</h5>
-                            <p><strong>Contract:</strong> {{ $invitation->contract->contract_id }}</p>
+                            @if($invitation->contract)
+                                <p><strong>Contract:</strong> {{ $invitation->contract->contract_number }} - {{ $invitation->contract->title }}</p>
+                            @endif
                             <p><strong>Due Date:</strong> {{ $invitation->due_date->format('M d, Y') }}</p>
                         </div>
 

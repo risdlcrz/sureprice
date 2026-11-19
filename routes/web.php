@@ -77,6 +77,11 @@ Route::get('/pending-approval', [RegisteredUserController::class, 'pendingApprov
 Route::get('/client/quotation/create', [\App\Http\Controllers\ClientQuotationController::class, 'create'])->name('client.quotation.create');
 Route::post('/client/quotation/store', [\App\Http\Controllers\ClientQuotationController::class, 'store'])->name('client.quotation.store');
 
+// ================== Supplier Invitation Response (link from the invitation email - no login required) ==================
+Route::get('/invitations/{code}', [SupplierInvitationController::class, 'showResponse'])->name('supplier.respond');
+Route::post('/invitations/{code}', [SupplierInvitationController::class, 'processResponse'])
+    ->middleware('throttle:10,1')->name('supplier.respond.submit');
+
 // ================== Legal Pages ==================
 Route::get('/terms-conditions', function () {
     return view('legal.terms-conditions');
@@ -155,9 +160,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/quotations/attachment/{attachment}/download', [QuotationController::class, 'downloadAttachment'])->name('quotations.attachment.download');
     Route::get('/quotations/response/attachment/{attachment}/download', [QuotationController::class, 'downloadResponseAttachment'])->name('quotations.response.attachment.download');
     // Invitation Routes
-    Route::resource('supplier-invitations', SupplierInvitationController::class);
+    // Controller methods take `SupplierInvitation $invitation`, so the route parameter must be named to match.
+    Route::resource('supplier-invitations', SupplierInvitationController::class)->parameters(['supplier-invitations' => 'invitation']);
     Route::post('/api/supplier-invitations/{invitation}/resend', [SupplierInvitationController::class, 'resend'])->name('supplier-invitations.resend');
-    Route::post('/api/supplier-invitations/remove-attachment', [SupplierInvitationController::class, 'removeAttachment']);
     Route::get('/api/supplier-invitations/search', [SupplierInvitationController::class, 'search'])->name('supplier-invitations.search');
     // Supplier Routes
     Route::resource('suppliers', SupplierController::class);
