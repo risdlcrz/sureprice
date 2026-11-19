@@ -72,43 +72,15 @@ class RegisteredUserController extends Controller
 
             DB::commit();
 
-            // Log successful registration
-            Log::info('Registration successful', [
-                'type' => $type,
-                'user_id' => $user->id,
-                'username' => $user->username,
-                'email' => $user->email,
-                'designation' => $type === 'company' ? $company->designation : null
-            ]);
-
-            // Debug: Log the redirect attempt
-            Log::info('About to redirect after successful registration', [
-                'type' => $type,
-                'route' => 'pending.approval',
-                'has_success_message' => true,
-                'company_designation' => $type === 'company' ? $company->designation : 'N/A',
-                'company_id' => $type === 'company' ? $company->id : 'N/A'
-            ]);
-
             // Redirect to pending approval page for both client and supplier
             if ($type === 'company' && in_array($company->designation, ['client', 'supplier'])) {
-                Log::info('Redirecting company registration to pending approval', [
-                    'designation' => $company->designation,
-                    'company_id' => $company->id,
-                    'user_id' => $user->id
-                ]);
                 return redirect()->route('pending.approval');
             }
             if ($type === 'employee') {
-                Log::info('Redirecting employee registration to pending approval');
                 return redirect()->route('pending.approval');
             }
 
             // fallback redirect
-            Log::info('Using fallback redirect to pending approval', [
-                'type' => $type,
-                'company_designation' => $type === 'company' ? $company->designation : 'N/A'
-            ]);
             return redirect()->route('pending.approval');
 
         } catch (\Exception $e) {
@@ -139,16 +111,6 @@ class RegisteredUserController extends Controller
 
     protected function validateCompany(Request $request)
     {
-        // Debug: Log the incoming request data
-        \Log::info('Registration request data:', [
-            'designation' => $request->designation,
-            'client_type' => $request->client_type,
-            'supplier_type' => $request->supplier_type,
-            'primary_products_services' => $request->primary_products_services ?? 'NOT_SET',
-            'primary_products_services_type' => gettype($request->primary_products_services ?? null),
-            'primary_products_services_empty' => empty($request->primary_products_services ?? null),
-            'all_data' => $request->except(['password', 'password_confirmation'])
-        ]);
 
         $rules = [
             'username' => 'required|string|max:50|unique:users',
@@ -185,13 +147,11 @@ class RegisteredUserController extends Controller
 
         // Set file upload rules based on designation
         if ($request->designation === 'supplier') {
-            \Log::info('Setting supplier rules');
             $rules['company_name'] = 'required|string|max:100';
             $rules['dti_sec_registration'] = 'required|file|mimes:pdf,jpg,png|max:10240';
             $rules['business_permit_mayor_permit'] = 'required|file|mimes:pdf,jpg,png|max:10240';
             $rules['valid_id_owner_rep'] = 'required|file|mimes:pdf,jpg,png|max:10240';
         } else if ($request->designation === 'client') {
-            \Log::info('Setting client rules');
             $rules['client_type'] = 'required|in:individual,company';
             
             if ($request->client_type === 'company') {
@@ -212,15 +172,6 @@ class RegisteredUserController extends Controller
         if ($request->supplier_type === 'Other') {
             $rules['other_supplier_type'] = 'required|string|max:100';
         }
-
-        // Debug: Log the final rules being applied
-        \Log::info('Final validation rules:', [
-            'designation' => $request->designation,
-            'client_type' => $request->client_type,
-            'business_permit_rule' => $rules['business_permit_mayor_permit'] ?? 'not set',
-            'valid_id_rule' => $rules['valid_id_owner_rep'] ?? 'not set',
-            'dti_rule' => $rules['dti_sec_registration'] ?? 'not set',
-        ]);
 
         return $request->validate($rules);
     }
@@ -272,14 +223,6 @@ class RegisteredUserController extends Controller
 
     protected function createCompanyRecord(int $userId, array $data)
     {
-        // Debug: Log the primary_products_services field specifically
-        \Log::info('Creating company record with primary_products_services:', [
-            'primary_products_services' => $data['primary_products_services'] ?? 'NOT_SET',
-            'primary_products_services_type' => gettype($data['primary_products_services'] ?? null),
-            'all_data_keys' => array_keys($data),
-            'has_primary_products_services' => isset($data['primary_products_services']),
-            'primary_products_services_empty' => empty($data['primary_products_services'] ?? null),
-        ]);
 
         $company = Company::create([
             'user_id' => $userId,
@@ -309,13 +252,6 @@ class RegisteredUserController extends Controller
             'bank_account_name' => $data['bank_account_name'] ?? null,
             'bank_account_number' => $data['bank_account_number'] ?? null,
             'status' => 'pending',
-        ]);
-
-        // Debug: Log the created company record
-        \Log::info('Company record created:', [
-            'company_id' => $company->id,
-            'primary_products_services_saved' => $company->primary_products_services,
-            'primary_products_services_saved_type' => gettype($company->primary_products_services),
         ]);
 
         return $company;

@@ -59,12 +59,9 @@ class SupplierQuotationController extends Controller
             $quotationRequest = \App\Models\QuotationRequest::where('request_number', $requestNumber)
                 ->with(['rooms.scopes'])
                 ->first();
-            \Log::info('QuotationRequest:', ['id' => $quotationRequest?->id, 'rooms_count' => $quotationRequest?->rooms?->count()]);
             if ($quotationRequest) {
                 foreach ($quotationRequest->rooms as $room) {
-                    \Log::info('Room:', ['id' => $room->id, 'scopes_count' => $room->scopes?->count()]);
                     foreach ($room->scopes as $scope) {
-                        \Log::info('Scope selected_materials:', ['scope_id' => $scope->id, 'selected_materials' => $scope->selected_materials]);
                         $selectedMaterials = $scope->selected_materials;
                         if (is_string($selectedMaterials)) {
                             $selectedMaterials = json_decode($selectedMaterials, true);
@@ -81,8 +78,6 @@ class SupplierQuotationController extends Controller
                 }
             }
         }
-        \Log::info('Material Quantities Map:', $materialQuantities);
-        \Log::info('Quotation Materials:', $quotation->materials->pluck('id')->toArray());
         $materialsInQuotation = $quotation->materials->map(function($material) use ($materialQuantities, $supplier) {
             $material->requested_quantity = $materialQuantities[$material->id] ?? 1;
             // Fetch the supplier's price from the pivot table

@@ -110,13 +110,6 @@ class ClientFeedbackController extends Controller
             'status' => 'submitted',
         ]);
 
-        Log::info("Client feedback submitted", [
-            'feedback_id' => $feedback->id,
-            'contract_id' => $contract->id,
-            'user_id' => $user->id,
-            'overall_rating' => $feedback->overall_rating
-        ]);
-
         // Send notifications to admins and managers
         $this->sendFeedbackNotifications($feedback);
 
@@ -215,12 +208,6 @@ class ClientFeedbackController extends Controller
         // Submit feedback
         $feedback->submit();
 
-        Log::info("Client feedback submitted", [
-            'feedback_id' => $feedback->id,
-            'contract_id' => $feedback->contract_id,
-            'user_id' => $user->id
-        ]);
-
         return redirect()->route('client.feedback.index')
             ->with('success', 'Thank you for your feedback! Your response has been submitted successfully.');
     }
@@ -258,16 +245,12 @@ class ClientFeedbackController extends Controller
     {
         try {
             // Get all admin and manager users
-            $adminUsers = User::whereIn('role', ['admin', 'manager'])->get();
+            $adminUsers = User::role('admin', 'manager')->get();
             
             foreach ($adminUsers as $adminUser) {
                 $adminUser->notify(new ClientFeedbackSubmittedNotification($feedback));
             }
 
-            Log::info("Feedback notifications sent", [
-                'feedback_id' => $feedback->id,
-                'recipients_count' => $adminUsers->count()
-            ]);
         } catch (\Exception $e) {
             Log::error("Error sending feedback notifications", [
                 'feedback_id' => $feedback->id,

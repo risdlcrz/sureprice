@@ -279,7 +279,6 @@ function updateEndDate() {
     var endDateStr = `${yyyyEnd}-${mmEnd}-${ddEnd}`;
     $('#project_end_date').val(endDateStr);
     $('#project_end_date').attr('min', start);
-    console.log('Start:', start, 'Days:', days, 'Calculated End:', endDateStr);
 }
 // Always recalculate on start date change or modal show
 $('#project_start_date').on('change', function() {
@@ -305,7 +304,6 @@ function updatePaymentPlanOptions() {
     const durationInDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
     const durationInMonths = Math.ceil(durationInDays / 30);
     
-    console.log('Project duration:', durationInDays, 'days, approximately', durationInMonths, 'months');
     
     // Update monthly payment plan options
     const monthlyOptions = $('#payment_plan option[data-months]');

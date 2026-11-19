@@ -47,82 +47,17 @@ class ClientController extends Controller
     }
 
     /**
-     * Get all clients for dropdown or list
-     *
-     * @return JsonResponse
-     */
-    public function index(): JsonResponse
-    {
-        $clients = Party::clients()
-            ->select('id', 'name', 'company_name', 'email', 'phone')
-            ->orderBy('name')
-            ->get()
-            ->map(function ($client) {
-                return [
-                    'id' => $client->id,
-                    'text' => $client->name . ($client->company_name ? ' (' . $client->company_name . ')' : ''),
-                    'name' => $client->name,
-                    'company_name' => $client->company_name,
-                    'email' => $client->email,
-                    'phone' => $client->phone
-                ];
-            });
-
-        return response()->json($clients);
-    }
-
-    /**
-     * Show a specific client
-     *
-     * @param Party $client
-     * @return JsonResponse
-     */
-    public function show(Party $client): JsonResponse
-    {
-        // Ensure the party is actually a client
-        if ($client->entity_type !== 'client') {
-            return response()->json(['error' => 'Party is not a client'], 404);
-        }
-
-        return response()->json([
-            'id' => $client->id,
-            'name' => $client->name,
-            'company_name' => $client->company_name,
-            'email' => $client->email,
-            'phone' => $client->phone,
-            'street' => $client->street,
-            'barangay' => $client->barangay,
-            'city' => $client->city,
-            'state' => $client->state,
-            'postal' => $client->postal
-        ]);
-    }
-
-    /**
      * Show the client dashboard
      *
      * @return \Illuminate\View\View
      */
     public function dashboard()
     {
-        Log::info('Client dashboard accessed', [
-            'user_id' => auth()->id(),
-            'authenticated' => auth()->check()
-        ]);
         
         $user = auth()->user();
         $company = $user->company;
-        
-        Log::info('Client dashboard - user and company info', [
-            'user_id' => $user->id,
-            'user_type' => $user->user_type,
-            'company_exists' => $company ? true : false,
-            'company_designation' => $company ? $company->designation : null,
-            'company_status' => $company ? $company->status : null
-        ]);
-        
+
         if (!$company) {
-            Log::info('No company associated with user, redirecting to login');
             return redirect()->route('login.form')->with('error', 'No company associated with this account.');
         }
 
@@ -132,14 +67,7 @@ class ClientController extends Controller
             ->where('entity_type', 'client')
             ->first();
 
-        Log::info('Client party lookup', [
-            'user_id' => $user->id,
-            'client_party_exists' => $clientParty ? true : false,
-            'client_party_id' => $clientParty ? $clientParty->id : null
-        ]);
-
         if (!$clientParty) {
-            Log::info('No client profile found, showing message without redirecting to login');
             return redirect()->route('landing.catalogue')->with('error', 'No client profile found. Please contact the administrator.');
         }
 
@@ -148,10 +76,6 @@ class ClientController extends Controller
             ->with(['items'])
             ->latest()
             ->get();
-
-        Log::info('Client dashboard rendering', [
-            'contracts_count' => $contracts->count()
-        ]);
 
         return view('client.dashboard', compact('user', 'company', 'contracts'));
     }

@@ -61,16 +61,16 @@ Route::middleware(['auth'])->get('/home', function () {
 Route::middleware('web')->group(function () {
     require __DIR__.'/auth.php';
 });
-// Show Login Form
-Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login.form');
-// Handle Login Submission
-Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login');
+// Login and registration pages are for guests; signed-in users are sent to their home page (bootstrap/app.php).
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login.form');
+    Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login');
+    Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+    Route::post('/register/company', [RegisteredUserController::class, 'store'])->name('register.company');
+});
 // Handle Logout
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 // ================== Registration Routes ==================
-Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
-// Removed employee registration route
-Route::post('/register/company', [RegisteredUserController::class, 'store'])->name('register.company');
 Route::get('/pending-approval', [RegisteredUserController::class, 'pendingApproval'])->name('pending.approval');
 
 // ================== Guest Quotation (Ask Quotation - no login required) ==================

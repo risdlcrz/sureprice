@@ -33,7 +33,7 @@ class FixClientPartyRelationships extends Command
         if ($userId) {
             $users = User::where('id', $userId)->where('role', 'client')->get();
         } else {
-            $users = User::where('role', 'client')->get();
+            $users = User::role('client')->get();
         }
 
         if ($users->isEmpty()) {

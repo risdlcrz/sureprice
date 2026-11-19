@@ -40,13 +40,6 @@ class AuthenticatedSessionController extends Controller
             $user->last_login_at = now();
             $user->save();
 
-            Log::info('User authenticated', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'user_type' => $user->user_type,
-                'role' => $user->role
-            ]);
-
             // A client who started a quotation as a guest goes back to finish it.
             if ($user->isClientCompany() && $user->company->status === 'approved'
                 && $request->session()->has('redirect_after_login') && $request->session()->has('guest_quotation_data')) {

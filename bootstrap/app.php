@@ -11,7 +11,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Signed-in users who open a guest page (login, register) go to their own home page.
+        $middleware->redirectUsersTo(fn (\Illuminate\Http\Request $request) => route($request->user()->homeRoute()));
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

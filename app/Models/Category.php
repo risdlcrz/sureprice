@@ -13,28 +13,13 @@ class Category extends Model
         'name',
         'slug',
         'description',
-        'parent_id'
     ];
 
-    // Relationships
-    public function parent()
-    {
-        return $this->belongsTo(Category::class, 'parent_id');
-    }
 
-    public function children()
-    {
-        return $this->hasMany(Category::class, 'parent_id');
-    }
 
     public function materials()
     {
         return $this->hasMany(Material::class);
     }
 
-    public function supplierInvitations()
-    {
-        return $this->belongsToMany(SupplierInvitation::class)
-            ->withTimestamps();
-    }
 } 

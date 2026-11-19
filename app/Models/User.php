@@ -71,9 +71,10 @@ class User extends Authenticatable // implements MustVerifyEmail
     }
 
     // Scope for filtering by role
-    public function scopeRole($query, $role)
+    /** User::role('admin') or User::role('admin', 'manager') */
+    public function scopeRole($query, string ...$roles)
     {
-        return $query->where('role', $role);
+        return count($roles) === 1 ? $query->where('role', $roles[0]) : $query->whereIn('role', $roles);
     }
 
     // Check if user has a specific role

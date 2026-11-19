@@ -24,7 +24,6 @@ class Contract extends Model
         'start_date',
         'end_date',
         'total_amount',
-        'base_labor_rate',
         'labor_cost',
         'materials_cost',
         'payment_method',
@@ -59,7 +58,6 @@ class Contract extends Model
         'client_date_signed' => 'datetime',
         'contractor_date_signed' => 'datetime',
         'total_amount' => 'decimal:2',
-        'base_labor_rate' => 'decimal:2',
         'labor_cost' => 'decimal:2',
         'materials_cost' => 'decimal:2'
     ];
@@ -118,9 +116,10 @@ class Contract extends Model
         return $this->belongsTo(Party::class, 'client_id');
     }
 
-    public function project(): BelongsTo
+    /** Projects reference their contract (projects.contract_id). */
+    public function project(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->belongsTo(Project::class);
+        return $this->hasOne(Project::class);
     }
 
     public function property(): BelongsTo
@@ -132,8 +131,6 @@ class Contract extends Model
     {
         return $this->belongsTo(QuotationRequest::class);
     }
-
-
 
     public function items(): HasMany
     {
@@ -163,11 +160,6 @@ class Contract extends Model
     public function purchaseRequests(): HasMany
     {
         return $this->hasMany(PurchaseRequest::class);
-    }
-
-    public function scopeTypes(): BelongsToMany
-    {
-        return $this->belongsToMany(ScopeType::class, 'contract_scope_type');
     }
 
     public function getStatusColorAttribute()
@@ -273,12 +265,9 @@ class Contract extends Model
 
     public function generatePayments()
     {
-        \Log::info('Generating payments for contract: ' . $this->id);
-        \Log::info('Payment schedule: ' . $this->payment_schedule);
         
         // If no payment schedule exists, generate one first
         if (!$this->payment_schedule) {
-            \Log::info('No payment schedule found, generating one first');
             $this->payment_schedule = json_encode($this->generatePaymentSchedule());
             $this->save();
         }
@@ -302,10 +291,6 @@ class Contract extends Model
                     'status' => 'pending',
                     'due_date' => $schedule['due_date'],
                     'created_by' => auth()->id() ?? 1
-                ]);
-                \Log::info('Created payment for contract: ' . $this->id, [
-                    'amount' => $schedule['amount'],
-                    'due_date' => $schedule['due_date']
                 ]);
             } catch (\Exception $e) {
                 \Log::error('Error creating payment for contract: ' . $this->id, [

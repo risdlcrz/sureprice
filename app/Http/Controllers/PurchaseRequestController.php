@@ -136,7 +136,6 @@ class PurchaseRequestController extends Controller
 
     public function store(Request $request)
     {
-        Log::info('PurchaseRequestController@store called', ['request' => $request->all()]);
         // Normalize empty preferred_supplier_id to null before validation
         if ($request->has('items')) {
             $items = collect($request->input('items'))->map(function ($item) {
@@ -190,7 +189,6 @@ class PurchaseRequestController extends Controller
         }
 
         try {
-            Log::info('Validation passed', ['validated' => $validated]);
 
             DB::beginTransaction();
             $purchaseRequest = PurchaseRequest::create([
@@ -203,7 +201,6 @@ class PurchaseRequestController extends Controller
                 'is_project_related' => $validated['is_project_related'] ?? false,
                 'total_amount' => 0,
             ]);
-            \Log::info('PurchaseRequest instance created', ['purchaseRequest' => $purchaseRequest]);
             $totalAmount = 0;
             foreach ($validated['items'] as $item) {
                 $purchaseRequest->items()->create([
@@ -223,7 +220,6 @@ class PurchaseRequestController extends Controller
             $purchaseRequest->total_amount = $totalAmount;
             $purchaseRequest->save();
             DB::commit();
-            \Log::info('PurchaseRequest saved and committed', ['purchaseRequest' => $purchaseRequest]);
             // Log activity
             Activity::create([
                 'user_id' => Auth::id(),
@@ -285,7 +281,6 @@ class PurchaseRequestController extends Controller
         $suppliers = Supplier::orderBy('company_name')->get();
         $contracts = \App\Models\Contract::with('client')->orderBy('created_at', 'desc')->get();
         $projects = \App\Models\Project::orderBy('created_at', 'desc')->get();
-        Log::info('Projects variable in PurchaseRequestController@edit:', ['projects' => $projects]);
 
         return view('admin.purchase-requests.edit', compact('purchaseRequest', 'materials', 'suppliers', 'contracts', 'projects'));
     }
@@ -547,8 +542,6 @@ class PurchaseRequestController extends Controller
                 'items.*.quantity' => 'required|numeric|min:0',
                 'items.*.totalCost' => 'required|numeric|min:0'
             ]);
-
-            Log::info('Items received in generateFromContract:', ['items' => $validated['items']]);
 
             // Find the contract
             $contract = \App\Models\Contract::findOrFail($validated['contract_id']);

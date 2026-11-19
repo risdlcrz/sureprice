@@ -173,10 +173,6 @@ class MaterialController extends Controller
 
     public function update(Request $request, Material $material)
     {
-        // Debug: log all request data
-        \Log::debug('Material update request data:', $request->all());
-        \Log::debug('Submitted supplier IDs:', $request->input('suppliers', []));
-        \Log::debug('Supplier IDs in DB:', \App\Models\Supplier::pluck('id')->toArray());
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -198,9 +194,6 @@ class MaterialController extends Controller
             'minimum_quantity' => 'nullable|integer|min:0|required_if:is_per_area,0',
             'warranty_period' => 'nullable|integer|min:0',
         ]);
-
-        // Debug: log validated data
-        \Log::debug('Validated supplier IDs:', $validated['suppliers'] ?? []);
 
         try {
             DB::beginTransaction();

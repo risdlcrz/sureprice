@@ -40,14 +40,7 @@ class MaterialRequestController extends Controller
             if ($contract->quotationRequest) {
                 $selectedSuppliers = $contract->quotationRequest->selected_suppliers ?? [];
             }
-            
-            \Log::info('Contract-based Material Request Creation - Selected Suppliers', [
-                'contract_id' => $contract->id,
-                'quotation_request_id' => $contract->quotationRequest?->id,
-                'selected_suppliers' => $selectedSuppliers,
-                'selected_suppliers_keys' => array_keys($selectedSuppliers ?? [])
-            ]);
-            
+
             // Get materials from contract items
             $contractItems = $contract->items;
             foreach ($contractItems as $item) {
@@ -61,14 +54,7 @@ class MaterialRequestController extends Controller
                 
                 // Get the client's selected supplier for this material
                 $selectedSupplierId = $selectedSuppliers[$material->id] ?? $selectedSuppliers[(string)$material->id] ?? null;
-                
-                \Log::info('Processing contract material for material request', [
-                    'material_id' => $material->id,
-                    'material_name' => $material->name,
-                    'selected_supplier_id' => $selectedSupplierId,
-                    'selected_suppliers_keys' => array_keys($selectedSuppliers ?? [])
-                ]);
-                
+
                 $items[] = [
                     'material_id' => $material->id,
                     'name' => $material->name,
@@ -94,14 +80,6 @@ class MaterialRequestController extends Controller
 
         // Get client's selected suppliers from the quotation request
         $selectedSuppliers = $quotation->selected_suppliers ?? [];
-        
-        \Log::info('Material Request Creation - Selected Suppliers', [
-            'quotation_id' => $quotation->id,
-            'selected_suppliers' => $selectedSuppliers,
-            'quotation_selected_suppliers' => $quotation->selected_suppliers,
-            'selected_suppliers_keys' => array_keys($selectedSuppliers ?? []),
-            'selected_suppliers_types' => array_map(function($key) { return gettype($key); }, array_keys($selectedSuppliers ?? []))
-        ]);
 
         // Gather all materials and quantities from the quotation
         $materialQuantities = [];
@@ -142,18 +120,7 @@ class MaterialRequestController extends Controller
                     }
                 }
             }
-            
-            \Log::info('Processing material for material request', [
-                'material_id' => $id,
-                'material_id_type' => gettype($id),
-                'material_name' => $mat->name,
-                'selected_supplier_id' => $selectedSupplierId,
-                'selected_suppliers_keys' => array_keys($selectedSuppliers ?? []),
-                'trying_key_int' => $id,
-                'trying_key_string' => (string)$id,
-                'available_suppliers' => $mat->suppliers->pluck('id')->toArray()
-            ]);
-            
+
             $items[] = [
                 'material_id' => $id,
                 'name' => $mat->name,
@@ -163,12 +130,7 @@ class MaterialRequestController extends Controller
                 'selected_supplier_id' => $selectedSupplierId
             ];
         }
-        
-        \Log::info('MaterialRequestController@create - Final items for view', [
-            'items' => $items,
-            'selectedSuppliers' => $selectedSuppliers,
-        ]);
-        
+
         return view('admin.material-requests.create', compact('materials', 'items', 'quotation_id', 'anyShort', 'selectedSuppliers'));
     }
 
@@ -192,10 +154,6 @@ class MaterialRequestController extends Controller
 
         DB::beginTransaction();
         try {
-            \Log::info('Creating material request', [
-                'validated' => $validated,
-                'user_id' => auth()->id()
-            ]);
             $materialRequest = MaterialRequest::create([
                 'quotation_request_id' => $validated['quotation_request_id'] ?? null,
                 'contract_id' => $validated['contract_id'] ?? null,
@@ -205,10 +163,6 @@ class MaterialRequestController extends Controller
             ]);
 
             $purchaseRequestItems = [];
-            \Log::info('Starting material request item processing', [
-                'items_count' => count($validated['items']),
-                'items' => $validated['items']
-            ]);
             
             foreach ($validated['items'] as $itemData) {
                 $material = Material::find($itemData['material_id']);
@@ -221,13 +175,6 @@ class MaterialRequestController extends Controller
 
                 // Deduct from stock across all warehouses
                 $totalStock = Stock::where('material_id', $material->id)->sum('current_stock');
-                \Log::info('Stock availability check', [
-                    'material_id' => $material->id,
-                    'material_name' => $material->name,
-                    'total_stock' => $totalStock,
-                    'requested_quantity' => $remainingQty,
-                    'stock_sufficient' => $totalStock >= $remainingQty
-                ]);
                 
                 if ($totalStock >= $remainingQty) {
                     // Stock is sufficient, create a single item for the total requested quantity
@@ -254,13 +201,6 @@ class MaterialRequestController extends Controller
                         }
                     }
                 } else {
-                    \Log::info('Insufficient stock detected', [
-                        'material_id' => $material->id,
-                        'material_name' => $material->name,
-                        'total_stock' => $totalStock,
-                        'requested_quantity' => $requestedQty,
-                        'remaining_quantity' => $remainingQty
-                    ]);
                     
                     // Fulfill as much as possible from stock, rest goes to purchase request
                     $fulfilledFromStock = 0;
@@ -285,13 +225,6 @@ class MaterialRequestController extends Controller
                         'fulfilled_quantity' => $fulfilledFromStock,
                     ]);
                     // Add shortfall to purchase request
-                    \Log::info('Stock calculation for material', [
-                        'material_id' => $material->id,
-                        'material_name' => $material->name,
-                        'requested_quantity' => $itemData['quantity'],
-                        'remaining_quantity' => $remainingQty,
-                        'will_create_purchase_request' => $remainingQty > 0
-                    ]);
                     
                     if ($remainingQty > 0) {
                         // Get supplier from form submission or from quotation request
@@ -339,31 +272,14 @@ class MaterialRequestController extends Controller
                         
                         $purchaseRequestItems[] = $purchaseRequestItem;
                         
-                        \Log::info('Added item to purchase request', [
-                            'material_id' => $material->id,
-                            'material_name' => $material->name,
-                            'quantity' => $remainingQty,
-                            'supplier_id' => $preferredSupplierId,
-                            'purchase_request_items_count' => count($purchaseRequestItems),
-                            'purchase_request_item' => $purchaseRequestItem
-                        ]);
                     }
                 }
             }
 
             // If any item was short, create a purchase request
             $purchaseRequestCreated = false;
-            \Log::info('Purchase request items check', [
-                'purchase_request_items_count' => count($purchaseRequestItems),
-                'purchase_request_items' => $purchaseRequestItems,
-                'material_request_id' => $materialRequest->id
-            ]);
             
             if (!empty($purchaseRequestItems)) {
-                \Log::info('Creating purchase request for insufficient stock', [
-                    'purchase_request_items' => $purchaseRequestItems,
-                    'material_request_id' => $materialRequest->id
-                ]);
                 
                 // Always create purchase request if there are items that need purchasing
                 // regardless of the checkbox value, since stock is insufficient
@@ -381,21 +297,13 @@ class MaterialRequestController extends Controller
                         'notes' => 'Auto-generated from Material Request #' . $materialRequest->id . ' - Stock replenishment needed',
                         'total_amount' => 0,
                     ];
-                    
-                    \Log::info('Attempting to create purchase request with data', [
-                        'purchase_request_data' => $purchaseRequestData,
-                        'user_id' => auth()->id(),
-                        'material_request_id' => $materialRequest->id
-                    ]);
-                    
+
                     // Create the purchase request
                     $purchaseRequest = PurchaseRequest::create($purchaseRequestData);
-                    \Log::info('Purchase request created successfully', ['purchase_request_id' => $purchaseRequest->id]);
                     
                     // Create purchase request items
                     $totalAmount = 0;
                     foreach ($purchaseRequestItems as $prItem) {
-                        \Log::info('Creating purchase request item', ['item' => $prItem]);
                         $purchaseRequest->items()->create($prItem);
                         $totalAmount += $prItem['total_amount'];
                     }
@@ -404,13 +312,7 @@ class MaterialRequestController extends Controller
                     $purchaseRequest->total_amount = $totalAmount;
                     $purchaseRequest->save();
                     $purchaseRequestCreated = true;
-                    
-                    \Log::info('Purchase request completed successfully', [
-                        'purchase_request_id' => $purchaseRequest->id,
-                        'total_amount' => $totalAmount,
-                        'items_count' => count($purchaseRequestItems)
-                    ]);
-                    
+
                     // Notify admins for approval
                     $adminUsers = \App\Models\User::role('admin')->get();
                     foreach ($adminUsers as $admin) {

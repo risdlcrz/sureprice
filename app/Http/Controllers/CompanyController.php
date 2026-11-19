@@ -7,10 +7,6 @@ use App\Models\Company;
 
 class CompanyController extends Controller
 {
-    public function dashboard()
-    {
-        return view('auth.register'); // make sure this view exists or change accordingly
-    }
 
     public function searchForChat(Request $request)
     {

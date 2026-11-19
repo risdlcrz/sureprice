@@ -17,6 +17,9 @@ class SupplierDashboardController extends Controller
     public function ranking()
     {
         $supplier = Auth::user()->supplier;
+        if (!$supplier) {
+            return redirect()->route('landing.catalogue')->with('error', 'Your account is not linked to a supplier profile.');
+        }
 
         // Get supplier ranking
         $ranking = SupplierRanking::with('supplier')

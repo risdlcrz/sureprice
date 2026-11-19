@@ -19,12 +19,6 @@ use App\Services\SupplierSelectionService;
 class AdminController extends Controller
 {
 
-public function dashboard()
-{
-    $this->logPageView('Viewed Admin Dashboard');
-    return view('admin.dbadmin'); // Make sure this view exists
-}
-
 public function pending()
 {
     $this->logPageView('Viewed Pending Companies');
@@ -105,7 +99,6 @@ public function show(Company $company)
     return view('admin.companies.show', compact('company'));
 }
 
-
 public function updateStatus(Request $request, Company $company)
 {
     $request->validate([
@@ -124,18 +117,6 @@ public function updateStatus(Request $request, Company $company)
     }
     $company->save();
     return back()->with('success', 'Company status updated to ' . $request->status . '.');
-}
-
-public function informationManagement()
-{
-    $this->logPageView('Viewed Information Management');
-    // ... existing code ...
-}
-
-public function historyDashboard()
-{
-    $this->logPageView('Viewed History Dashboard');
-    // ... existing code ...
 }
 
 public function administratorLogs(Request $request)
@@ -311,7 +292,6 @@ public function sendRfqToSuppliers($id)
         }
         $quotation->materials()->sync($materialSyncData);
         // Notify supplier's user
-        \Log::info('Attempting to notify supplier', ['supplier_id' => $supplier->id, 'user_id' => $supplier->user_id, 'user_exists' => $supplier->user ? true : false]);
         if ($supplier->user) {
             $notification = \App\Models\Notification::create([
                 'user_id' => $supplier->user->id,
@@ -325,7 +305,6 @@ public function sendRfqToSuppliers($id)
                 ],
                 'for_role' => 'supplier',
             ]);
-            \Log::info('Notification created', ['notification_id' => $notification->id, 'user_id' => $supplier->user->id]);
         } else {
             \Log::warning('Supplier has no user, notification not sent', ['supplier_id' => $supplier->id]);
         }
@@ -429,8 +408,6 @@ public function recommendSuppliers(Request $request, $id)
 
     return response()->json(['recommendations' => $recommendations]);
 }
-
-
 
     /**
      * Return a finalized quotation request and its related data as JSON for contract autofill.

@@ -25,26 +25,13 @@ class PurchaseOrder extends Model
         'purchase_request_id',
         'contract_id',
         'supplier_id',
-        'ordered_by',
-        'approved_by',
         'status',
-        'order_date',
         'total_amount',
         'payment_terms',
-        'delivery_terms',
         'delivery_date',
         'shipping_terms',
         'notes',
-        'client_payment_validated',
-        'client_payment_validated_at',
-        'client_payment_validated_by',
-        'supplier_payment_validated',
         'supplier_payment_validated_at',
-        'supplier_payment_validated_by',
-        'delivery_confirmed',
-        'delivery_confirmed_at',
-        'delivery_confirmed_by',
-        'warehouse_id',
         'due_date',
         'penalty_rate',
         'penalty_type',
@@ -58,15 +45,9 @@ class PurchaseOrder extends Model
     ];
 
     protected $casts = [
-        'order_date' => 'date',
         'delivery_date' => 'date',
         'total_amount' => 'decimal:2',
-        'client_payment_validated' => 'boolean',
-        'supplier_payment_validated' => 'boolean',
-        'delivery_confirmed' => 'boolean',
-        'client_payment_validated_at' => 'datetime',
         'supplier_payment_validated_at' => 'datetime',
-        'delivery_confirmed_at' => 'datetime',
         'due_date' => 'date',
         'penalty_rate' => 'decimal:2',
         'penalty_accrued' => 'decimal:2',
@@ -95,35 +76,19 @@ class PurchaseOrder extends Model
         return $this->hasMany(Delivery::class);
     }
 
-    public function orderedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'ordered_by');
-    }
 
-    public function approvedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'approved_by');
-    }
 
     public function contract()
     {
         return $this->belongsTo(Contract::class, 'contract_id');
     }
 
-    public function transactions(): HasMany
-    {
-        return $this->hasMany(Transaction::class);
-    }
 
     public function payments()
     {
         return $this->hasMany(\App\Models\PurchaseOrderPayment::class);
     }
 
-    public function warehouse(): BelongsTo
-    {
-        return $this->belongsTo(Warehouse::class);
-    }
 
     public function getStatusColorAttribute()
     {
@@ -146,90 +111,10 @@ class PurchaseOrder extends Model
         });
     }
 
-    public function validateClientPayment()
-    {
-        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasRole('finance')) {
-            throw new \Exception('Only administrators or finance can validate client payments.');
-        }
 
-        $this->client_payment_validated = true;
-        $this->client_payment_validated_at = now();
-        $this->client_payment_validated_by = auth()->id();
-        $this->save();
 
-        $this->checkPaymentValidation();
-    }
 
-    public function validateSupplierPayment()
-    {
-        if (!auth()->user()->hasRole('supplier')) {
-            throw new \Exception('Only suppliers can validate payments.');
-        }
 
-        $this->supplier_payment_validated = true;
-        $this->supplier_payment_validated_at = now();
-        $this->supplier_payment_validated_by = auth()->id();
-        $this->save();
-
-        $this->checkPaymentValidation();
-    }
-
-    protected function checkPaymentValidation()
-    {
-        if ($this->client_payment_validated && $this->supplier_payment_validated) {
-            $this->status = 'payment_validated';
-            $this->save();
-        }
-    }
-
-    public function confirmDelivery()
-    {
-        if (!$this->client_payment_validated || !$this->supplier_payment_validated) {
-            throw new \Exception('Cannot confirm delivery until payment is validated by both parties.');
-        }
-
-        DB::beginTransaction();
-        try {
-            $this->delivery_confirmed = true;
-            $this->delivery_confirmed_at = now();
-            $this->delivery_confirmed_by = auth()->id();
-            $this->status = 'completed';
-            $this->save();
-
-            // Update warehouse stock
-            foreach ($this->items as $item) {
-                $warehouseStock = WarehouseStock::firstOrCreate(
-                    [
-                        'warehouse_id' => $this->warehouse_id,
-                        'material_id' => $item->material_id
-                    ],
-                    ['quantity' => 0]
-                );
-
-                $warehouseStock->increment('quantity', $item->quantity);
-
-                // Log stock movement
-                StockMovement::create([
-                    'warehouse_id' => $this->warehouse_id,
-                    'material_id' => $item->material_id,
-                    'quantity' => $item->quantity,
-                    'type' => 'in',
-                    'reference_type' => 'purchase_order',
-                    'reference_id' => $this->id
-                ]);
-            }
-
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
-    }
-
-    public function isPaymentValidated(): bool
-    {
-        return $this->client_payment_validated && $this->supplier_payment_validated;
-    }
 
     /**
      * Calculate and update penalty if overdue.

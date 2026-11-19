@@ -14,7 +14,6 @@ class MaterialRequest extends Model
         'requested_by',
         'notes',
         'quotation_request_id',
-        'user_id',
         'status',
     ];
 
@@ -23,9 +22,10 @@ class MaterialRequest extends Model
         return $this->belongsTo(QuotationRequest::class);
     }
 
+    /** Same as requestedBy(); material_requests has no user_id column. */
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'requested_by');
     }
 
     public function requestedBy()

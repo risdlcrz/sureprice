@@ -94,9 +94,6 @@ class ClientQuotationController extends Controller
                 ->with('success', 'Please log in with a client account to submit your quotation request. Your form has been saved.');
         }
 
-        // Debug: Log the validated data
-        \Log::info('Validated Quotation Request:', $validated);
-
         // Generate request number
         $lastRequest = \App\Models\QuotationRequest::orderByDesc('id')->first();
         if ($lastRequest && preg_match('/QR-(\\d+)/i', $lastRequest->request_number, $matches)) {
@@ -364,11 +361,6 @@ class ClientQuotationController extends Controller
         $timelineStartDate = now()->format('Y-m-d');
         $timelineEndDate = now()->copy()->addDays(ceil($totalEstimatedDays))->format('Y-m-d');
         $timelineEstimatedDays = $totalEstimatedDays;
-        \Log::info('Timeline', [
-            'start' => $timelineStartDate,
-            'end' => $timelineEndDate,
-            'days' => $timelineEstimatedDays
-        ]);
         return view('client.quotation.contract', compact('quotationRequest', 'timelineStartDate', 'timelineEndDate', 'timelineEstimatedDays'));
     }
 
@@ -561,7 +553,6 @@ class ClientQuotationController extends Controller
 
     public function finalizeSelection(Request $request, $id)
     {
-        \Log::info('finalizeSelection called', ['id' => $id, 'request' => $request->all()]);
         $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType.materials'])->where('id', $id)->where('user_id', auth()->id())->firstOrFail();
         $selectedSuppliers = $request->input('selected_suppliers', []);
 
@@ -702,29 +693,4 @@ class ClientQuotationController extends Controller
         return response()->json(['success' => true]);
     }
 
-    /**
-     * API: Get Quotation Request details for contract editor
-     */
-    public function apiShow($id)
-    {
-        $quotation = \App\Models\QuotationRequest::with(['user.company', 'rooms.scopes.scopeType.materials'])->findOrFail($id);
-        $company = $quotation->user->company;
-        $clientAddress = $company
-            ? trim("{$company->street}, {$company->barangay}, {$company->city}, {$company->state}, {$company->postal}", ', ')
-            : '';
-        return response()->json([
-            'client' => [
-                'name' => $company->company_name ?? $quotation->user->name,
-                'street' => $company->street ?? '',
-                'barangay' => $company->barangay ?? '',
-                'city' => $company->city ?? '',
-                'state' => $company->state ?? '',
-                'postal' => $company->postal ?? '',
-                'address' => $clientAddress,
-                'email' => $quotation->user->email,
-                'phone' => $company->mobile_number ?? '',
-            ],
-            // Add more fields as needed for your contract editor (property, items, etc.)
-        ]);
-    }
 } 

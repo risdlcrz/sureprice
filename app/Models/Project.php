@@ -56,20 +56,12 @@ class Project extends Model
         return $this->hasMany(ProjectTask::class);
     }
 
-    public function milestones()
-    {
-        return $this->hasMany(ProjectMilestone::class);
-    }
 
     public function documents()
     {
         return $this->morphMany(Attachment::class, 'attachable');
     }
 
-    public function updates()
-    {
-        return $this->hasMany(ProjectUpdate::class);
-    }
 
     // Status helper methods
     public function isActive()

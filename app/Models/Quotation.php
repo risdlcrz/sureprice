@@ -22,8 +22,6 @@ class Quotation extends Model
         'payment_terms',
         'delivery_terms',
         'validity_period',
-        'awarded_supplier_id',
-        'awarded_amount',
     ];
 
     protected $casts = [
@@ -44,9 +42,10 @@ class Quotation extends Model
         return $this->belongsTo(PurchaseRequest::class);
     }
 
-    public function contract(): BelongsTo
+    /** An RFQ belongs to a contract through its purchase request (quotations has no contract_id). */
+    public function contract(): \Illuminate\Database\Eloquent\Relations\HasOneThrough
     {
-        return $this->belongsTo(Contract::class);
+        return $this->hasOneThrough(Contract::class, PurchaseRequest::class, 'id', 'id', 'purchase_request_id', 'contract_id');
     }
 
     public function suppliers(): BelongsToMany

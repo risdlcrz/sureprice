@@ -98,7 +98,6 @@ class ContractController extends Controller
 
     public function store(Request $request)
     {
-        \Log::info('CONTRACT STORE CALLED', $request->all());
         $contractorData = $request->input('contractor', []);
         $clientData = $request->input('client', []);
         $propertyData = $request->input('property', []);
@@ -186,10 +185,6 @@ class ContractController extends Controller
             if ($quotationRequest && isset($quotationRequest->contract_data['awarded_supplier_discount'])) {
                 $awardedSupplierDiscount = $quotationRequest->contract_data['awarded_supplier_discount'];
             }
-            \Log::info('DEBUG awardedSupplierDiscount', [
-                'contract_data' => $quotationRequest ? $quotationRequest->contract_data : null,
-                'awarded_supplier_discount' => $awardedSupplierDiscount
-            ]);
             $contract = Contract::create([
                 'quotation_request_id' => $request->input('quotation_request_id'),
                 'contractor_id' => $contractor->id,
@@ -223,13 +218,6 @@ class ContractController extends Controller
                 'discount_percentage' => $awardedSupplierDiscount['discount_percentage'] ?? null,
                 'discount_amount' => $awardedSupplierDiscount['discount_amount'] ?? null,
                 'final_amount' => $awardedSupplierDiscount['final_amount'] ?? null,
-            ]);
-            \Log::info('CONTRACT CREATED', [
-                'property_address' => $contract->property_address,
-                'discount_type' => $contract->discount_type,
-                'discount_percentage' => $contract->discount_percentage,
-                'discount_amount' => $contract->discount_amount,
-                'final_amount' => $contract->final_amount,
             ]);
             // REMINDER: If you update the contract later, always include 'property_address' in the update array!
             // Link to QuotationRequest if provided
@@ -282,14 +270,6 @@ class ContractController extends Controller
                                     }
                                 }
 
-                                \Log::info('Creating contract item', [
-                                    'room_id' => $newRoom->id ?? null,
-                                    'scope_id' => $newScope->id ?? null,
-                                    'material' => $materialId,
-                                    'room_name' => $newRoom->name ?? null,
-                                    'scope_name' => $newScope->scope_name ?? null,
-                                    'quotation_request_id' => $quotationRequestId,
-                                ]);
                                 $contract->items()->create([
                                     'material_id' => $materialId,
                                     'material_name' => $material ? $material->name : ($mat['name'] ?? 'Material'),
@@ -375,7 +355,6 @@ class ContractController extends Controller
 
     protected function saveContract(Request $request, Contract $contract = null)
     {
-        \Log::info('ContractController@saveContract called', ['request' => $request->all()]);
         try {
             // Validate the request with basic required fields
             $validated = $request->validate([
@@ -540,8 +519,6 @@ class ContractController extends Controller
                     'status' => 'draft',
                     'purchase_order_id' => $request->purchase_order_id
                 ];
-
-                \Log::info('Creating contract in saveContract', $contractData);
 
                 if ($contract) {
                     $contract->update($contractData);
@@ -831,30 +808,17 @@ class ContractController extends Controller
 
             // Generate payment schedule when contract is approved
             if ($request->status === 'approved') {
-                \Log::info('Generating payment schedule for contract: ' . $contract->id);
                 
                 $paymentSchedule = $contract->generatePaymentSchedule();
 
-                
-                \Log::info('Generated payment schedule:', $paymentSchedule);
-                
                 // Set the payment schedule
                 $contract->payment_schedule = json_encode($paymentSchedule);
             }
 
             $contract->save();
 
-            \Log::info('Contract status updated', [
-                'contract_id' => $contract->id,
-                'old_status' => $oldStatus,
-                'new_status' => $request->status,
-                'payment_terms' => $contract->payment_terms,
-                'total_amount' => $contract->total_amount
-            ]);
-
             // Generate payments when contract is approved
             if ($request->status === 'approved') {
-                \Log::info('Attempting to generate payments');
                 $contract->generatePayments();
 
                 // Auto-create project if not exists
@@ -919,142 +883,6 @@ class ContractController extends Controller
                 'message' => 'Error updating contract status: ' . $e->getMessage()
             ], 500);
         }
-    }
-
-    public function timeline(Request $request)
-    {
-        try {
-            $query = Contract::with(['client', 'contractor']);
-
-            // Apply search filter
-            if ($request->has('term')) {
-                $searchTerm = $request->term;
-                $query->where(function($q) use ($searchTerm) {
-                    $q->where('contract_id', 'like', '%' . $searchTerm . '%')
-                      ->orWhereHas('client', function($q_client) use ($searchTerm) {
-                          $q_client->where('name', 'like', '%' . $searchTerm . '%');
-                      });
-                });
-            }
-
-            // Apply status filter
-            if ($request->has('status') && $request->status !== 'all') {
-                $statuses = explode(',', $request->status);
-                $query->whereIn('status', $statuses);
-            }
-
-            // Apply date range filter
-            if ($request->has('startDate')) {
-                $query->where('start_date', '>=', $request->startDate);
-            }
-            if ($request->has('endDate')) {
-                $query->where('end_date', '<=', $request->endDate);
-            }
-
-            // Apply budget range filter
-            if ($request->has('minBudget')) {
-                $query->where('total_amount', '>=', $request->minBudget);
-            }
-            if ($request->has('maxBudget')) {
-                $query->where('total_amount', '<=', $request->maxBudget);
-            }
-
-            $contracts = $query->get()->map(function($contract) {
-                $safeStatus = $contract->status ?: 'default';
-
-                // Prepare data for FullCalendar
-                $calendarEvent = [
-                    'id' => 'contract-' . $contract->id,
-                    'title' => $contract->client->name ?? 'Unknown Client',
-                    'start' => $contract->start_date->format('Y-m-d'),
-                    'end' => $contract->end_date->addDay()->format('Y-m-d'),
-                    'className' => 'status-' . $safeStatus,
-                    'color' => $this->getContractColor($contract),
-                    'extendedProps' => [
-                        'type' => 'contract',
-                        'contract_id' => $contract->contract_id,
-                        'client' => $contract->client->name ?? 'Unknown Client',
-                        'contractor' => $contract->contractor->name ?? 'N/A',
-                        'status' => $safeStatus,
-                        'budget' => $contract->total_amount,
-                        'scope' => $contract->scope_of_work,
-                    ]
-                ];
-
-                // Prepare data for Gantt chart
-                $ganttTask = [
-                    'id' => 'contract-' . $contract->id,
-                    'name' => $contract->client->name ?? 'Unknown Client',
-                    'start' => $contract->start_date->format('Y-m-d'),
-                    'end' => $contract->end_date->format('Y-m-d'),
-                    'progress' => match($safeStatus) {
-                        'approved' => 100,
-                        'draft' => 50,
-                        'rejected' => 0,
-                        default => 0
-                    },
-                    'dependencies' => '',
-                    'bar_color' => $this->getContractColor($contract)
-                ];
-
-                return [
-                    'calendar' => $calendarEvent,
-                    'gantt' => $ganttTask
-                ];
-            });
-
-            return response()->json([
-                'calendar' => $contracts->pluck('calendar'),
-                'gantt' => $contracts->pluck('gantt')
-            ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Error in ContractController timeline: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'An error occurred while fetching timeline data: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function search(Request $request)
-    {
-        $term = $request->get('term');
-        
-        if (empty($term) || strlen($term) < 2) {
-            return response()->json([]);
-        }
-
-        $contracts = Contract::with(['client', 'contractor'])
-            ->where(function ($query) use ($term) {
-                $query->where('contract_id', 'like', "%{$term}%")
-                    ->orWhere('scope_of_work', 'like', "%{$term}%")
-                    ->orWhereHas('client', function ($q) use ($term) {
-                        $q->where(DB::raw("CONCAT(name, ' ', COALESCE(company_name, ''))"), 'like', "%{$term}%");
-                    })
-                    ->orWhereHas('contractor', function ($q) use ($term) {
-                        $q->where(DB::raw("CONCAT(name, ' ', COALESCE(company_name, ''))"), 'like', "%{$term}%");
-                    });
-            })
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get()
-            ->map(function ($contract) {
-                return [
-                    'id' => $contract->id,
-                    'contract_id' => $contract->contract_id,
-                    'client_name' => $contract->client->name,
-                    'client_company' => $contract->client->company_name,
-                    'contractor_name' => $contract->contractor->name,
-                    'contractor_company' => $contract->contractor->company_name,
-                    'start_date' => $contract->start_date,
-                    'end_date' => $contract->end_date,
-                    'status' => $contract->status,
-                    'budget_allocation' => $contract->budget_allocation,
-                    'scope_of_work' => $contract->scope_of_work
-                ];
-            });
-
-        return response()->json($contracts);
     }
 
     protected function determineMaterialCategory($materialName)
@@ -1147,14 +975,6 @@ class ContractController extends Controller
     public function updateSignatures(Request $request, Contract $contract)
     {
         try {
-            // Log the incoming request for debugging
-            \Log::info('Signature update request received', [
-                'contract_id' => $contract->id,
-                'request_data' => $request->all(),
-                'signature_type' => $request->input('signature_type'),
-                'has_client_signature' => $request->has('client_signature'),
-                'has_contractor_signature' => $request->has('contractor_signature')
-            ]);
 
             $request->validate([
                 'contractor_signature' => 'nullable|string',
@@ -1164,12 +984,6 @@ class ContractController extends Controller
 
             $signatureType = $request->input('signature_type');
             $signatureData = $request->input($signatureType . '_signature');
-
-            \Log::info('Processing signature', [
-                'signature_type' => $signatureType,
-                'signature_data_length' => $signatureData ? strlen($signatureData) : 0,
-                'signature_data_starts_with' => $signatureData ? substr($signatureData, 0, 50) : 'null'
-            ]);
 
             if ($signatureData && strpos($signatureData, 'data:image') === 0) {
                 list(, $data) = explode(',', $signatureData);
@@ -1183,15 +997,7 @@ class ContractController extends Controller
                     ];
                     
                     $contract->update($updateData);
-                    
-                    // Log the signature update for debugging
-                    \Log::info("Signature updated for contract {$contract->id}", [
-                        'signature_type' => $signatureType,
-                        'filename' => $filename,
-                        'date_signed' => now(),
-                        'contract_signature_status' => $contract->fresh()->getSignatureStatus()
-                    ]);
-                    
+
                     return response()->json([
                         'success' => true, 
                         'message' => ucfirst($signatureType) . ' signature updated successfully',
@@ -1271,7 +1077,7 @@ class ContractController extends Controller
         $contract->save();
 
         // Send notifications to all admin users
-        $adminUsers = \App\Models\User::where('role', 'admin')->get();
+        $adminUsers = \App\Models\User::role('admin')->get();
         
         foreach ($adminUsers as $admin) {
             \App\Models\Notification::create([
@@ -1323,7 +1129,7 @@ class ContractController extends Controller
 
         // Notify procurement users if approved
         if ($status === 'approved') {
-            $procurementUsers = \App\Models\User::whereIn('role', ['procurement', 'manager', 'warehouse'])->get();
+            $procurementUsers = \App\Models\User::role('procurement', 'manager', 'warehousing')->get();
             foreach ($procurementUsers as $user) {
                 \App\Models\Notification::create([
                     'user_id' => $user->id,
@@ -1342,7 +1148,7 @@ class ContractController extends Controller
             }
 
             // Notify finance users about payment schedule
-            $financeUsers = \App\Models\User::whereIn('role', ['finance', 'admin'])->get();
+            $financeUsers = \App\Models\User::role('finance', 'admin')->get();
             foreach ($financeUsers as $user) {
                 \App\Models\Notification::create([
                     'user_id' => $user->id,
@@ -1378,7 +1184,6 @@ class ContractController extends Controller
         if ($matchingCompany && !$clientParty->user_id) {
             // Link the party to the company's user
             $clientParty->update(['user_id' => $matchingCompany->user_id]);
-            \Log::info("Linked client party {$clientParty->id} to user {$matchingCompany->user_id} for company {$matchingCompany->company_name}");
         }
     }
 

@@ -488,7 +488,6 @@ class MessengerApp {
             
             img.onload = function() {
                 this.style.opacity = '1';
-                console.log('Image loaded successfully:', url);
             };
             
             img.onerror = function() {

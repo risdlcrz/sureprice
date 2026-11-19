@@ -74,11 +74,6 @@ class PurchaseRequest extends Model
             ->withTimestamps();
     }
 
-    public function attachments(): HasMany
-    {
-        return $this->hasMany(PurchaseRequestAttachment::class);
-    }
-
     public function purchaseOrder(): HasMany
     {
         return $this->hasMany(PurchaseOrder::class);
@@ -94,9 +89,10 @@ class PurchaseRequest extends Model
         return $this->belongsTo(User::class, 'supplier_approved_by');
     }
 
+    /** The project of this request's contract (purchase_requests has no project_id). */
     public function project()
     {
-        return $this->belongsTo(\App\Models\Project::class, 'project_id');
+        return $this->hasOne(\App\Models\Project::class, 'contract_id', 'contract_id');
     }
 
     public function requestedBy()

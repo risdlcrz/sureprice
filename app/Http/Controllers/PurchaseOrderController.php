@@ -228,7 +228,7 @@ class PurchaseOrderController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        $this->notifyUsers(User::whereIn('role', ['admin', 'manager', 'finance', 'warehousing'])->get(), $purchaseOrder, 'Purchase Order Shipped',
+        $this->notifyUsers(User::role('admin', 'manager', 'finance', 'warehousing')->get(), $purchaseOrder, 'Purchase Order Shipped',
             "Purchase Order #{$purchaseOrder->po_number} has been shipped by the supplier. Tracking #: {$purchaseOrder->tracking_number}");
 
         return back()->with('success', 'Purchase Order marked as shipped out.');
@@ -245,7 +245,7 @@ class PurchaseOrderController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        $recipients = User::where('role', 'admin')->get()->push($purchaseOrder->supplier?->user)->filter();
+        $recipients = User::role('admin')->get()->push($purchaseOrder->supplier?->user)->filter();
         $this->notifyUsers($recipients, $purchaseOrder, 'Purchase Order Delivered', "Purchase Order #{$purchaseOrder->po_number} has been received by the warehouse.");
 
         return back()->with('success', 'Purchase Order marked as received.');
@@ -260,7 +260,7 @@ class PurchaseOrderController extends Controller
             $purchaseOrder->update(['status' => 'pending']);
         }
 
-        $this->notifyUsers(User::where('role', 'admin')->orWhere('user_type', 'admin')->get(), $purchaseOrder, 'Approval Requested for Purchase Order',
+        $this->notifyUsers(User::role('admin')->orWhere('user_type', 'admin')->get(), $purchaseOrder, 'Approval Requested for Purchase Order',
             Auth::user()->name . " requested approval for Purchase Order #{$purchaseOrder->po_number}.", 'approval_request');
 
         return back()->with('success', 'Approval request sent to admin.');

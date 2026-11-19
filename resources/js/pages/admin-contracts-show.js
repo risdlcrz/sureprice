@@ -5,13 +5,10 @@ window.contractStatusUrl = __page.show0_1;
 
 // Contract status update function
 function updateStatus(status) {
-    console.log('updateStatus called with:', status);
     
     // Check if approval is being requested and signatures are missing
     if (status === 'approved') {
         const approveButton = document.querySelector('button[onclick="updateStatus(\'approved\')"]');
-        console.log('Approve button found:', approveButton);
-        console.log('Approve button disabled:', approveButton ? approveButton.disabled : 'Button not found');
         
         if (approveButton && approveButton.disabled) {
             Swal.fire({
@@ -25,7 +22,6 @@ function updateStatus(status) {
     }
 
     const token = document.querySelector('meta[name="csrf-token"]');
-    console.log('CSRF token element:', token);
     
     if (!token) {
         console.error('CSRF token meta tag not found');
@@ -37,7 +33,6 @@ function updateStatus(status) {
         return;
     }
     const csrfToken = token.getAttribute('content');
-    console.log('CSRF token value:', csrfToken ? 'Present' : 'Empty');
     
     if (!csrfToken) {
         console.error('CSRF token is empty');
@@ -49,7 +44,6 @@ function updateStatus(status) {
         return;
     }
     
-    console.log('Contract status URL:', window.contractStatusUrl);
     Swal.fire({
         title: 'Updating Status',
         text: 'Please wait...',
@@ -58,8 +52,6 @@ function updateStatus(status) {
             Swal.showLoading();
         }
     });
-    console.log('Making fetch request to:', window.contractStatusUrl);
-    console.log('Request payload:', { status: status });
     
     fetch(window.contractStatusUrl, {
         method: 'POST',
@@ -72,11 +64,8 @@ function updateStatus(status) {
         credentials: 'same-origin'
     })
     .then(async response => {
-        console.log('Response status:', response.status);
-        console.log('Response ok:', response.ok);
         
         const data = await response.json();
-        console.log('Response data:', data);
         
         if (!response.ok) {
             if (response.status === 419) {
@@ -166,12 +155,6 @@ function saveSignature() {
         [currentSignatureType + '_signature']: signatureData
     };
 
-    console.log('Sending signature request:', {
-        url: window.contractSignatureUrl,
-        signatureType: currentSignatureType,
-        dataLength: signatureData.length,
-        requestBody: requestBody
-    });
 
     fetch(window.contractSignatureUrl, {
         method: 'POST',
@@ -183,11 +166,9 @@ function saveSignature() {
         body: JSON.stringify(requestBody)
     })
     .then(response => {
-        console.log('Response status:', response.status);
         return response.json();
     })
     .then(data => {
-        console.log('Response data:', data);
         if (data.success) {
             Swal.fire({
                 icon: 'success',

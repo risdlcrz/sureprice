@@ -43,7 +43,6 @@ class ClientPaymentController extends Controller
             if ($contract->payment_schedule && $contract->payments()->count() === 0) {
                 try {
                     $contract->generatePayments();
-                    Log::info("Generated payments for contract: " . $contract->id);
                 } catch (\Exception $e) {
                     Log::error("Error generating payments for contract: " . $contract->id . " - " . $e->getMessage());
                 }
@@ -134,7 +133,6 @@ class ClientPaymentController extends Controller
             if ($contract->payment_schedule && $contract->payments()->count() === 0) {
                 try {
                     $contract->generatePayments();
-                    Log::info("Generated payments for contract: " . $contract->id);
                 } catch (\Exception $e) {
                     Log::error("Error generating payments for contract: " . $contract->id . " - " . $e->getMessage());
                 }

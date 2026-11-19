@@ -32,10 +32,6 @@ class QuotationRequestController extends Controller
                 if (is_array($scope->selected_materials)) {
                     foreach ($scope->selected_materials as $mat) {
                         $materialId = $mat['material_id'] ?? $mat['id'] ?? null;
-                        \Log::info('Contract showJson processing material', [
-                            'material_id' => $materialId,
-                            'selected_suppliers' => $selectedSuppliers,
-                        ]);
                         $qty = $mat['quantity'] ?? 1;
                         $unitPrice = 0;
                         // Try to get the selected supplier's quoted price from the pivot
@@ -51,15 +47,8 @@ class QuotationRequestController extends Controller
                                 if ($pivot) break;
                             }
                         }
-                        \Log::info('Pivot row found', ['pivot' => $pivot]);
                         if ($pivot && $pivot->unit_price) {
                             $unitPrice = $pivot->unit_price;
-                            \Log::info('Contract showJson material (DB direct)', [
-                                'material_id' => $materialId,
-                                'selected_supplier_id' => $finalizedSupplierId,
-                                'unit_price' => $unitPrice,
-                                'rfq_id' => $pivot->quotation_id ?? null,
-                            ]);
                         }
                         // Fallback to base price if no supplier price found
                         if (!$unitPrice && $materialId) {
@@ -67,12 +56,6 @@ class QuotationRequestController extends Controller
                             $unitPrice = $material ? $material->base_price : 0;
                         }
                         $amount = $unitPrice * $qty;
-                        \Log::info('Contract material calculation', [
-                            'material_id' => $materialId,
-                            'qty' => $qty,
-                            'unit_price' => $unitPrice,
-                            'amount' => $amount,
-                        ]);
                         $totalMaterialsCost += $amount;
                         $laborFee += 0.15 * $amount; // 15% labor fee
                     }
@@ -110,13 +93,6 @@ class QuotationRequestController extends Controller
                 $days = $totalLaborHours / ($DEFAULT_CREW_SIZE * $DEFAULT_HOURS_PER_DAY);
                 $days = ceil($days * 2) / 2; // round up to nearest half day
                 $days = max(0.5, $days); // minimum 0.5 days
-                \Log::info('Scope dynamic days', [
-                    'scope_name' => $scopeType->name,
-                    'area' => $area,
-                    'labor_hours_per_sqm' => $laborHoursPerSqm,
-                    'total_labor_hours' => $totalLaborHours,
-                    'days' => $days,
-                ]);
                 $totalDays += $days;
             }
         }
@@ -124,17 +100,6 @@ class QuotationRequestController extends Controller
         $endDate = $totalDays > 0
             ? \Carbon\Carbon::parse($startDate)->addDays(ceil($totalDays) - 1)->format('Y-m-d')
             : $startDate;
-        \Log::info('Quotation timeline calculation', [
-            'quotation_id' => $quotation->id,
-            'total_days' => $totalDays,
-            'rooms' => $quotation->rooms ? $quotation->rooms->toArray() : null,
-        ]);
-        // Debug log for duration calculation
-        \Log::info('Contract duration debug', [
-            'start_date' => $startDate,
-            'total_days' => $totalDays,
-            'end_date' => $endDate,
-        ]);
         return response()->json([
             'client' => [
                 'name' => $company->company_name ?? $quotation->user->name,
@@ -208,12 +173,6 @@ class QuotationRequestController extends Controller
                                 $mat['discount_percentage'] = $discountPercentage;
                                 $mat['discount_amount'] = $discountAmount;
                                 $mat['final_amount'] = $finalAmount;
-                                // --- DEBUG LOGGING ---
-                                \Log::info('Supplier lookup debug', [
-                                    'material_id' => $materialId,
-                                    'material_name' => $mat['name'] ?? null,
-                                    'quotation_id' => $quotation->id,
-                                ]);
                                 // --- Improved supplier lookup ---
                                 $pivot = null;
                                 $finalizedSupplierId = $quotation->selected_suppliers[$materialId] ?? null;
@@ -227,7 +186,6 @@ class QuotationRequestController extends Controller
                                         if ($pivot) break;
                                     }
                                 }
-                                \Log::info('Pivot row found', ['pivot' => $pivot]);
                                 $selectedSupplierId = null;
                                 $supplierName = 'none selected';
                                 if ($pivot && $pivot->selected_supplier_id) {

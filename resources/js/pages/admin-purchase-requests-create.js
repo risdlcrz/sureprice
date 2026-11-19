@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function loadContractMaterials(contractId) {
-        fetch(`${baseUrl}/api/contracts/${contractId}/items`)
+        fetch(`${baseUrl}/contracts/${contractId}/items`)
             .then(response => response.json())
             .then(data => {
                 const itemsContainer = document.getElementById('items-container');

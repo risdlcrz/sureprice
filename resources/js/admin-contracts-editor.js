@@ -64,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const mmEnd = String(end.getMonth() + 1).padStart(2, '0');
             const ddEnd = String(end.getDate()).padStart(2, '0');
             document.getElementById('project_end_date').value = `${yyyyEnd}-${mmEnd}-${ddEnd}`;
-            console.log('Start:', start, 'Start.getDate():', start.getDate(), 'Duration:', lastTotalDays, 'End (raw):', end, 'End:', `${yyyyEnd}-${mmEnd}-${ddEnd}`);
             // Sync signature date with contract start date
             const signatureDateInput = document.getElementById('contractor_signature_date');
             if (signatureDateInput) {
@@ -86,7 +85,6 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 const client = data.client || {};
                 // Debug log for duration
-                console.log('QR Start:', data.start_date, 'End:', data.end_date, 'Total Days:', data.total_days);
                 // Use only the backend's total_days for duration
                 lastTotalDays = data.total_days || 0;
                 // Display fields
@@ -125,7 +123,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Show awarded supplier discount if available
                 const discountDiv = document.getElementById('awarded-discount-summary');
                 if (discountDiv) {
-                    console.log('Updating discount summary', data.awarded_supplier_discount);
                     // Only update if the value actually changed
                     if (JSON.stringify(data.awarded_supplier_discount) !== JSON.stringify(lastAwardedDiscount)) {
                         lastAwardedDiscount = data.awarded_supplier_discount;
@@ -232,11 +229,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Sync signature date after setting start date
                 const signatureDateInput = document.getElementById('contractor_signature_date');
                 const contractStartDateInput = document.getElementById('project_start_date');
-                console.log('Signature date input(s):', document.querySelectorAll('#contractor_signature_date'));
                 if (signatureDateInput && contractStartDateInput) {
                     // Ensure value is set in YYYY-MM-DD format
                     signatureDateInput.value = contractStartDateInput.value;
-                    console.log('Setting signature date to:', contractStartDateInput.value);
                 }
                 // Display selected scopes
                 const scopesDiv = document.getElementById('selected-scopes');
@@ -369,13 +364,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const contractorSignatureDateInput = document.getElementById('contractor_signature_date');
             if (contractorSignatureDateInput && contractStartDateInput) {
                 contractorSignatureDateInput.value = contractStartDateInput.value;
-                console.log('Setting signature date after contractor selection to:', contractStartDateInput.value);
             }
             // Sync signature date to contract start date (for span)
             const contractorSignatureDateSpan = document.getElementById('contractor_date_signed_display');
             if (contractorSignatureDateSpan && contractStartDateInput) {
                 contractorSignatureDateSpan.innerText = contractStartDateInput.value;
-                console.log('Setting signature date after contractor selection to:', contractStartDateInput.value);
             }
             // Fill hidden fields
             document.getElementById('contractor_name').value = fullName;

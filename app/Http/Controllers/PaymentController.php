@@ -167,33 +167,13 @@ class PaymentController extends Controller
             // Generate reference number if not provided
             $referenceNumber = $payment->reference_number ?? 'REF-' . date('Ymd') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT);
 
-            // Log the payment details before update
-            Log::info('Attempting to mark payment as paid', [
-                'payment_id' => $payment->id,
-                'payment_number' => $payment->payment_number,
-                'current_status' => $payment->status,
-                'reference_number' => $referenceNumber,
-                'user_id' => Auth::id()
-            ]);
-
             // Update payment status
             $payment->status = 'paid';
             $payment->paid_date = now();
             $payment->reference_number = $referenceNumber;
             $payment->marked_paid_by = Auth::id();
 
-            // Log before saving payment
-            Log::info('About to save payment', [
-                'payment_data' => $payment->getDirty()
-            ]);
-
             $payment->save();
-
-            // Log after saving payment
-            Log::info('Payment saved successfully', [
-                'payment_id' => $payment->id,
-                'new_status' => $payment->status
-            ]);
 
             try {
                 // Create transaction record
@@ -210,13 +190,6 @@ class PaymentController extends Controller
                     'created_by' => Auth::id()
                 ]);
 
-                // Log transaction creation
-                Log::info('Transaction created successfully', [
-                    'transaction_id' => $transaction->id,
-                    'payment_id' => $payment->id,
-                    'transaction_data' => $transaction->toArray()
-                ]);
-
                 // Check if all contract payments are paid
                 if ($payment->contract) {
                     $unpaidPayments = $payment->contract->payments()
@@ -225,9 +198,6 @@ class PaymentController extends Controller
 
                     if ($unpaidPayments === 0) {
                         $payment->contract->update(['status' => 'completed']);
-                        Log::info('Contract marked as completed', [
-                            'contract_id' => $payment->contract_id
-                        ]);
                     }
                 }
 
@@ -273,65 +243,6 @@ class PaymentController extends Controller
             DB::rollBack();
             return redirect()->back()->with('error', 'Failed to reject payment.');
         }
-    }
-
-    public function duePayments()
-    {
-        $duePayments = Payment::with(['contract', 'purchaseOrder', 'creator'])
-            ->where('status', 'pending')
-            ->where('due_date', '<=', now()->addDays(7))
-            ->orderBy('due_date')
-            ->paginate(10);
-
-        return view('payments.due', compact('duePayments'));
-    }
-
-    public function overduePayments()
-    {
-        $overduePayments = Payment::with(['contract', 'purchaseOrder', 'creator'])
-            ->where('status', 'pending')
-            ->where('due_date', '<', now())
-            ->orderBy('due_date')
-            ->paginate(10);
-
-        return view('payments.overdue', compact('overduePayments'));
-    }
-
-    /**
-     * Show the client payment dashboard
-     *
-     * @return \Illuminate\View\View
-     */
-    public function dashboard()
-    {
-        $client = Auth::user()->party;
-        
-        // Get client's payments
-        $payments = Payment::whereHas('contract', function ($query) use ($client) {
-            $query->where('client_id', $client->id);
-        })
-        ->with(['contract', 'status'])
-        ->latest()
-        ->get();
-
-        // Calculate payment statistics
-        $totalPayments = $payments->count();
-        $pendingPayments = $payments->where('status', 'pending')->count();
-        $paidPayments = $payments->where('status', 'paid')->count();
-        $totalAmount = $payments->sum('amount');
-        $paidAmount = $payments->where('status', 'paid')->sum('amount');
-        $pendingAmount = $payments->where('status', 'pending')->sum('amount');
-
-        return view('payments.client-dashboard', compact(
-            'client',
-            'payments',
-            'totalPayments',
-            'pendingPayments',
-            'paidPayments',
-            'totalAmount',
-            'paidAmount',
-            'pendingAmount'
-        ));
     }
 
     /**

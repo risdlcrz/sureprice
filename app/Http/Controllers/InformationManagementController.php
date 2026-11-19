@@ -242,7 +242,6 @@ class InformationManagementController extends Controller
                 // Check if user already exists by email or username
                 $existingUser = User::where('email', $email)->orWhere('username', $username)->first();
                 if ($existingUser) {
-                    \Log::info('Skipping existing user during import:', ['email' => $email, 'username' => $username]);
                     continue;
                 }
 
