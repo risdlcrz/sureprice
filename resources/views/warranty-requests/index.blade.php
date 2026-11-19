@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const originalText = submitBtn.innerHTML;
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
-        fetch('/api/warranty-requests', {
+        fetch('{{ url('api/warranty-requests') }}', {
             method: 'POST',
             body: formData,
             headers: {
@@ -592,7 +592,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            fetch(`/api/materials/search?query=${query}`)
+            fetch(`{{ url('api/materials/search') }}?query=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(materials => {
                     searchResultsDiv.innerHTML = '';

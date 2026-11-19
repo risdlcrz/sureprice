@@ -61,7 +61,7 @@ class ClientFeedbackController extends Controller
                 ->with('info', 'You have already started providing feedback for this contract.');
         }
 
-        return view('client.feedback.create', compact('contract'));
+        return view('client.feedback.form', compact('contract'));
     }
 
     public function store(Request $request, Contract $contract)
@@ -139,7 +139,7 @@ class ClientFeedbackController extends Controller
                 ->with('info', 'This feedback has already been submitted and cannot be edited.');
         }
 
-        return view('client.feedback.edit', compact('feedback'));
+        return view('client.feedback.form', compact('feedback'));
     }
 
     public function update(Request $request, ClientFeedback $feedback)

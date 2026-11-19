@@ -12,7 +12,6 @@ class OrderEvaluation extends Model
     protected $fillable = [
         'order_id',
         'quality_rating',
-        'has_complaints',
         // Add other evaluation fields as needed
     ];
 

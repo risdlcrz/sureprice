@@ -42,7 +42,7 @@ $(document).ready(function() {
     // Image removal function
     window.removeImage = function(imagePath) {
         if (confirm('Are you sure you want to remove this image?')) {
-            fetch(`/api/materials/remove-image`, {
+            fetch(appUrl(`api/materials/remove-image`), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

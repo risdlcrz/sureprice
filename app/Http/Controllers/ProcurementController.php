@@ -124,7 +124,7 @@ class ProcurementController extends Controller
     {
         $this->logPageView('Viewed Inventory Create Page');
         // Return a view for creating a new inventory item
-        return view('procurement.inventory-create');
+        return view('procurement.inventory-form');
     }
 
     public function inventoryStore(Request $request)
@@ -177,7 +177,7 @@ class ProcurementController extends Controller
             return redirect()->route('procurement.inventory.create')
                 ->with('warning', 'Inventory record not found. Please add it first.');
         }
-        return view('procurement.inventory-edit', compact('inventory'));
+        return view('procurement.inventory-form', compact('inventory'));
     }
 
     public function inventoryUpdate(Request $request, Inventory $inventory)
@@ -295,7 +295,7 @@ class ProcurementController extends Controller
             ->lowStock()
             ->orderBy('quantity', 'asc')
             ->paginate(10);
-        return view('procurement.inventory-low-stock', compact('inventories'));
+        return view('inventory.alerts', ['inventories' => $inventories, 'mode' => 'low-stock', 'backRoute' => 'procurement.inventory.index']);
     }
 
     public function inventoryExpiring()
@@ -305,7 +305,7 @@ class ProcurementController extends Controller
             ->expiring()
             ->orderBy('expiry_date', 'asc')
             ->paginate(10);
-        return view('procurement.inventory-expiring', compact('inventories'));
+        return view('inventory.alerts', ['inventories' => $inventories, 'mode' => 'expiring', 'backRoute' => 'procurement.inventory.index']);
     }
 
     public function projectShow(Project $project)
@@ -464,10 +464,10 @@ class ProcurementController extends Controller
             \App\Models\PurchaseRequest::class,
             \App\Models\Quotation::class,
         ];
-        $activities = \App\Models\Activity::whereIn('model_type', $procurementModels)
+        $activities = \App\Models\Activity::with('user')->whereIn('model_type', $procurementModels)
             ->latest()
             ->take(50)
             ->get();
-        return view('procurement.logs', compact('activities'));
+        return view('logs.index', ['title' => 'Procurement Logs', 'activities' => $activities]);
     }
 } 

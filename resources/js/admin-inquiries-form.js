@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Attachment removal function
     window.removeAttachment = function(attachmentId) {
         if (confirm('Are you sure you want to remove this attachment?')) {
-            fetch(`/api/inquiries/remove-attachment`, {
+            fetch(appUrl(`api/inquiries/${window.inquiryId}/remove-attachment`), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

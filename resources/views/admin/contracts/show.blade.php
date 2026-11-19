@@ -868,7 +868,7 @@
                 }
             });
 
-            fetch(`/contracts/${contractId}/generate-payments`, {
+            fetch(`{{ url('contracts') }}/${contractId}/generate-payments`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

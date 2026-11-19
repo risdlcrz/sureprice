@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const form = e.target;
         const params = new URLSearchParams(new FormData(form)).toString();
-        fetch('{{ url("material-requests/recommend-suppliers-for-material") }}?' + params, {
+        fetch('{{ route("purchase-requests.recommend-suppliers") }}?' + params, {
             method: 'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update stock display
                 if (stockDisplay) {
                     // Fetch stock information for this material
-                    fetch(`/admin/materials/${materialId}/stock`)
+                    fetch(`{{ url('admin/materials') }}/${materialId}/stock`)
                         .then(response => response.json())
                         .then(data => {
                             const totalStock = data.total_stock || 0;
@@ -327,7 +327,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     supplierSelect.innerHTML = '<option value="">Select Supplier</option>';
                     
                     // Fetch suppliers for this material
-                    fetch(`/admin/materials/${materialId}/suppliers`)
+                    fetch(`{{ url('admin/materials') }}/${materialId}/suppliers`)
                         .then(response => response.json())
                         .then(data => {
                             data.suppliers.forEach(supplier => {

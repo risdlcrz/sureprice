@@ -464,6 +464,9 @@ class ClientQuotationController extends Controller
         } else {
             $quotationRequest = null;
         }
+        if (!$quotationRequest) {
+            return redirect()->route('client.quotation.index')->with('warning', 'Quotation request not found.');
+        }
         $sessionData = session('client_quotation_data');
 
         // Fetch all RFQs (Quotations) generated for this QuotationRequest

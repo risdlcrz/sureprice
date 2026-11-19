@@ -64,7 +64,7 @@ class InventoryController extends Controller
     public function create()
     {
         $materials = Material::with('category')->get();
-        return view('inventory.create', compact('materials'));
+        return view('inventory.form', compact('materials'));
     }
 
     public function store(Request $request)
@@ -120,7 +120,7 @@ class InventoryController extends Controller
         }
 
         $materials = Material::with('category')->get();
-        return view('inventory.edit', compact('inventory', 'materials'));
+        return view('inventory.form', compact('inventory', 'materials'));
     }
 
     public function update(Request $request, Inventory $inventory)
@@ -215,7 +215,7 @@ class InventoryController extends Controller
             ->orderBy('quantity', 'asc')
             ->paginate(10);
 
-        return view('inventory.low-stock', compact('inventories'));
+        return view('inventory.alerts', ['inventories' => $inventories, 'mode' => 'low-stock', 'backRoute' => 'inventory.index']);
     }
 
     public function expiring()
@@ -225,6 +225,6 @@ class InventoryController extends Controller
             ->orderBy('expiry_date', 'asc')
             ->paginate(10);
 
-        return view('inventory.expiring', compact('inventories'));
+        return view('inventory.alerts', ['inventories' => $inventories, 'mode' => 'expiring', 'backRoute' => 'inventory.index']);
     }
 } 

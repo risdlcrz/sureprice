@@ -334,7 +334,7 @@ document.querySelectorAll('.status-btn').forEach(button => {
 function updateStatus(contractId, status) {
     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     
-    fetch(`/sureprice/public/contracts/${contractId}/status`, {
+    fetch(`{{ url('contracts') }}/${contractId}/status`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

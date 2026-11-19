@@ -6,6 +6,7 @@
     <title>@yield('title', 'SurePrice')</title>
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script>window.appUrl = p => @json(rtrim(url('/'), '/')) + '/' + String(p).replace(/^\/+/, '');</script>
     @auth<meta name="unread-counts-url" content="{{ route('api.unread-counts') }}">@endauth
 
     

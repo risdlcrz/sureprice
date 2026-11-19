@@ -115,7 +115,7 @@ $(document).ready(function() {
             materialSearchResults.style.display = 'block';
             materialSearchResults.innerHTML = '<a href="#" class="list-group-item list-group-item-action disabled">Searching...</a>';
             try {
-                const response = await fetch(`/api/materials/search-by-supplier?query=${query}&suppliers=${selectedSupplierIds.join(',')}`);
+                const response = await fetch(appUrl(`api/materials/search-by-supplier?query=${query}&suppliers=${selectedSupplierIds.join(",")}`));
                 const materials = await response.json();
                 if (materials.length > 0) {
                     materialSearchResults.innerHTML = '';

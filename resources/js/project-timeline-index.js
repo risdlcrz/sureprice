@@ -135,7 +135,7 @@ function submitWarrantyRequest(contractId) {
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
 
     // Submit the form data
-    fetch('/api/warranty-requests', {
+    fetch(appUrl('api/warranty-requests'), {
         method: 'POST',
         body: formData,
         headers: {
@@ -197,7 +197,7 @@ function submitAdditionalWorkRequest() {
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
 
     // Submit the form data
-    fetch('/api/additional-work-requests', {
+    fetch(appUrl('warranty-requests/additional-work'), {
         method: 'POST',
         body: formData,
         headers: {

@@ -119,7 +119,7 @@ class WarehouseDashboardController extends Controller
     public function warehouseLogs()
     {
         $this->logPageView('Viewed Warehouse Logs');
-        $activities = Activity::latest()->take(50)->get();
-        return view('warehouse.logs', compact('activities'));
+        $activities = Activity::with('user')->latest()->take(50)->get();
+        return view('logs.index', ['title' => 'Warehouse Logs', 'activities' => $activities]);
     }
 } 

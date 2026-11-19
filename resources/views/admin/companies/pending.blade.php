@@ -1,42 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Pending Companies - Admin Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{{ asset('resources/css/dbadmin.css') }}">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <!-- Add Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .document-preview {
-            max-width: 200px;
-            max-height: 200px;
-            object-fit: contain;
-            margin: 10px 0;
-        }
-        .document-card {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-        }
-    </style>
-</head>
-<body>
-    <div class="sidebar">
-        @include('include.header')
-    </div>
+@extends('layouts.app')
 
-    <div class="content">
-        <div class="container mt-4">
-            <h2 class="mb-4">Pending Company Approvals</h2>
+@section('title', 'Pending Companies')
 
-            @if(session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
+@section('content')
+<div class="container-fluid">
+    <x-page-header title="Pending Company Approvals" icon="building" />
 
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -169,10 +137,22 @@
             <div class="d-flex justify-content-center mt-4">
                 {{ $companies->links() }}
             </div>
-        </div>
-    </div>
+</div>
+@endsection
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+@push('styles')
+<style>
+        .document-preview {
+            max-width: 200px;
+            max-height: 200px;
+            object-fit: contain;
+            margin: 10px 0;
+        }
+        .document-card {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+</style>
+@endpush

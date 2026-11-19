@@ -350,7 +350,7 @@ document.getElementById('contractSearch').addEventListener('input', function() {
                         <div>₱${totalAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</div>
                         <small class="text-muted">Pending: ₱${pendingAmount.toLocaleString('en-US', {minimumFractionDigits: 2})}</small>
                     </div>
-                    <a href="/payments/${contract.payments[0].id}" class="btn btn-sm btn-primary">View</a>
+                    <a href="{{ url('payments') }}/${contract.payments[0].id}" class="btn btn-sm btn-primary">View</a>
                 </div>
             </div>
         `;

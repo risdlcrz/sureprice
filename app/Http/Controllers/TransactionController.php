@@ -88,7 +88,7 @@ class TransactionController extends Controller
     public function pastTransactions(Request $request)
     {
         // Fetch all purchase request items (could also include purchase orders, etc.)
-        $items = \App\Models\PurchaseRequestItem::with(['material', 'supplier'])
+        $items = \App\Models\PurchaseRequestItem::with(['material.category', 'supplier'])
             ->orderByDesc('created_at')
             ->get();
 
@@ -110,6 +110,12 @@ class TransactionController extends Controller
             ];
         })->sortBy('month')->values();
 
-        return view('transactions.past', compact('items', 'frequency', 'monthly'));
+        $topSuppliers = $items->whereNotNull('supplier_id')->groupBy('supplier_id')
+            ->map(fn ($g) => ['supplier' => $g->first()->supplier->company_name ?? 'Unknown', 'count' => $g->count()])
+            ->sortByDesc('count')->take(5)->values();
+        $categoryDist = $items->groupBy(fn ($i) => $i->material->category->name ?? 'Uncategorized')
+            ->map(fn ($g, $category) => ['category' => $category, 'count' => $g->count()])->values();
+
+        return view('transactions.past', compact('items', 'frequency', 'monthly', 'topSuppliers', 'categoryDist'));
     }
 } 

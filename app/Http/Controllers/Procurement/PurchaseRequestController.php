@@ -13,15 +13,22 @@ use App\Models\Notification;
 
 class PurchaseRequestController extends Controller
 {
+    // Listing, viewing and editing use the shared purchase-request pages (role-gated there).
     public function index()
     {
-        $purchaseRequests = PurchaseRequest::with(['contract', 'project', 'requestedBy', 'items.material', 'items.supplier'])
-            ->where('requested_by', auth()->id())
-            ->latest()
-            ->paginate(10);
-
-        return view('procurement.purchase-requests.index', compact('purchaseRequests'));
+        return redirect()->route("purchase-requests.index");
     }
+
+    public function show(PurchaseRequest $purchaseRequest)
+    {
+        return redirect()->route("purchase-requests.show", $purchaseRequest);
+    }
+
+    public function edit(PurchaseRequest $purchaseRequest)
+    {
+        return redirect()->route("purchase-requests.edit", $purchaseRequest);
+    }
+
 
     public function create(Request $request)
     {
@@ -180,39 +187,7 @@ class PurchaseRequestController extends Controller
         }
     }
 
-    public function show(PurchaseRequest $purchaseRequest)
-    {
-        // Ensure procurement user can only view their own requests
-        if ($purchaseRequest->requested_by !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
-        }
-        
-        $purchaseRequest->load(['contract', 'requestedBy', 'items.material', 'items.supplier', 'items.preferredSupplier']);
-        return view('procurement.purchase-requests.show', compact('purchaseRequest'));
-    }
 
-    public function edit(PurchaseRequest $purchaseRequest)
-    {
-        // Ensure procurement user can only edit their own pending requests
-        if ($purchaseRequest->requested_by !== auth()->id()) {
-            abort(403, 'Unauthorized access.');
-        }
-        
-        if ($purchaseRequest->status !== 'pending_admin_approval') {
-            return back()->with('error', 'Cannot edit a purchase request that is not pending admin approval.');
-        }
-
-        $purchaseRequest->load(['items.material', 'items.supplier']);
-        $materials = Material::with(['suppliers' => function($query) {
-            $query->orderBy('price');
-        }])->get();
-        
-        $suppliers = Supplier::orderBy('company_name')->get();
-        $contracts = \App\Models\Contract::with('client')->orderBy('created_at', 'desc')->get();
-        $projects = \App\Models\Project::orderBy('created_at', 'desc')->get();
-
-        return view('procurement.purchase-requests.edit', compact('purchaseRequest', 'materials', 'suppliers', 'contracts', 'projects'));
-    }
 
     public function update(Request $request, PurchaseRequest $purchaseRequest)
     {

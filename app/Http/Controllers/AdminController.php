@@ -181,7 +181,8 @@ public function administratorLogs(Request $request)
         'warehousing' => 'Warehousing',
     ];
 
-    return view('admin.logs', compact('activities', 'userTypes', 'filter'));
+    return view('logs.index', ['title' => 'Administrator Logs', 'activities' => $activities, 'filter' => $filter]
+        + ($user->user_type === 'admin' ? compact('userTypes') : []));
 }
 
 public function review($id)
@@ -364,7 +365,7 @@ public function finalizeQuotationSelection(Request $request, $id)
             'data' => [
                 'title' => 'Quotation Finalized',
                 'message' => 'Your quotation request has been finalized. You can now view supplier offers and selected suppliers.',
-                'link' => route('client.quotation.view', $quotationRequest->id),
+                'link' => route('client.quotation.view', ['id' => $quotationRequest->id]),
             ],
             'for_role' => 'client',
         ]);

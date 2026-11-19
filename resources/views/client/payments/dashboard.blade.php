@@ -11,7 +11,7 @@
                     <i class="fas fa-exclamation-triangle"></i>
                     {{ $error }}
                 </div>
-            @endif
+            @else
 
             <!-- Payment Statistics Cards -->
             <div class="row mb-4">
@@ -162,6 +162,7 @@
                     @endif
                 </div>
             </div>
+            @endif
         </div>
     </div>
 </div>

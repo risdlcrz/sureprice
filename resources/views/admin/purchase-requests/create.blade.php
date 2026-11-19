@@ -861,7 +861,7 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         const form = e.target;
         const params = new URLSearchParams(new FormData(form)).toString();
-        fetch('{{ url("purchase-requests/recommend-suppliers-for-material") }}?' + params, {
+        fetch('{{ route("purchase-requests.recommend-suppliers") }}?' + params, {
             method: 'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })

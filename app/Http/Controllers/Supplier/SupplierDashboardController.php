@@ -63,7 +63,7 @@ class SupplierDashboardController extends Controller
 
         $qualityComplaints = OrderEvaluation::whereHas('order', function($query) use ($supplier) {
             $query->where('supplier_id', $supplier->id);
-        })->where('has_complaints', true)->count();
+        })->where('defective_units', '>', 0)->count(); // evaluations that recorded defective units
 
         // Get recent evaluations
         $recentEvaluations = OrderEvaluation::whereHas('order', function($query) use ($supplier) {

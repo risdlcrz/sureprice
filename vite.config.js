@@ -14,6 +14,7 @@ export default defineConfig({
                 'resources/css/inventory.css',
                 'resources/css/login.css',
                 'resources/css/auth-card.css',
+                'resources/css/legal.css',
                 'resources/css/messages.css',
                 'resources/css/price.css',
                 'resources/css/projectapp.css',

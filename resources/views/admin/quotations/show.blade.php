@@ -403,7 +403,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     confirmSend.addEventListener('click', function() {
-        fetch(`/api/quotations/${quotationId}/send`, {
+        fetch(`{{ url('api/quotations') }}/${quotationId}/send`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

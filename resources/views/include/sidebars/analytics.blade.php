@@ -22,7 +22,7 @@
     <a href="{{ route('admin.analytics') }}" class="btn {{ request()->routeIs('admin.analytics') ? 'active' : '' }}">
         <i class="fas fa-home"></i>Analytics Dashboard
     </a>
-    <a href="{{ route('admin.purchase-order') }}" class="btn {{ request()->routeIs('admin.purchase-order') ? 'active' : '' }}">
+    <a href="{{ route('purchase-orders.index') }}" class="btn {{ request()->routeIs('purchase-orders.*') ? 'active' : '' }}">
         <i class="fas fa-file-invoice-dollar"></i>Active Purchase Order
     </a>
     <a href="{{ route('admin.budget-allocation') }}" class="btn {{ request()->routeIs('admin.budget-allocation') ? 'active' : '' }}">
