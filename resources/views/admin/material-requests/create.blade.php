@@ -355,21 +355,6 @@ body, .container-fluid, .card {
     font-family: 'Inter', Arial, sans-serif;
     background: linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%);
 }
-.card {
-    border-radius: 18px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
-    border: 1px solid #e5e7eb;
-    margin-bottom: 0.5rem;
-}
-.card-header, .card-footer {
-    background: #f1f5f9;
-    border-radius: 18px 18px 0 0;
-    border-bottom: 1px solid #e5e7eb;
-}
-.card-footer {
-    border-radius: 0 0 18px 18px;
-    border-top: 1px solid #e5e7eb;
-}
 .table-responsive {
     width: 100%;
     overflow-x: unset !important;
@@ -383,23 +368,6 @@ body, .container-fluid, .card {
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     margin-bottom: 0;
-}
-.table th, .table td {
-    padding: 6px 2px;
-    font-size: 0.95rem;
-    word-break: break-word;
-    white-space: normal;
-    vertical-align: middle;
-    text-align: center;
-    background: #f8fafc;
-    border-bottom: 1px solid #e5e7eb;
-}
-.table th {
-    background: #e0e7ef;
-    font-weight: 600;
-    color: #2563eb;
-    letter-spacing: 0.5px;
-    font-size: 0.97rem;
 }
 .table-striped > tbody > tr:nth-of-type(odd) {
     background-color: #f3f6fa;
@@ -419,12 +387,6 @@ body, .container-fluid, .card {
 }
 input[type="number"].form-control {
     text-align: right;
-}
-.btn-success, .btn-primary {
-    border-radius: 24px;
-    padding: 0.4em 1.1em;
-    font-weight: 600;
-    font-size: 1.01rem;
 }
 #addRow {
     margin-top: 8px;

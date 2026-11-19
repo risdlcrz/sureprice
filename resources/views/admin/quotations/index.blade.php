@@ -86,28 +86,6 @@
 @push('styles')
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-body, .container {
-    background: #f5f6f8 !important;
-    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-}
-.card {
-    border: none;
-    border-radius: 1.25rem;
-    box-shadow: 0 8px 32px 0 rgba(44,62,80,0.10), 0 1.5px 6px rgba(44,62,80,0.04);
-    margin-bottom: 2rem;
-    background: rgba(255,255,255,0.92);
-    backdrop-filter: blur(8px);
-    transition: box-shadow 0.2s, background 0.2s;
-}
-.card:hover {
-    box-shadow: 0 16px 48px 0 rgba(44,62,80,0.16), 0 2px 8px rgba(44,62,80,0.08);
-    background: rgba(255,255,255,0.97);
-}
-.card-header {
-    background: transparent;
-    border-bottom: none;
-    padding-bottom: 0.5rem;
-}
 .nav-tabs {
     border-bottom: none;
     gap: 1rem;
@@ -125,41 +103,6 @@ body, .container {
 .nav-link.active {
     background: #198754 !important;
     color: #fff !important;
-}
-.table th {
-    font-weight: 600;
-    color: #1f2937;
-    background: #f5f6f8;
-    border-bottom: 1px solid #e8eaed;
-    padding: 0.75rem 1rem;
-}
-.table td { padding: 0.75rem 1rem; border-bottom: 1px solid #e8eaed; }
-.table-hover tbody tr:hover {
-    background: rgba(25, 135, 84, 0.04);
-}
-.table td, .table th {
-    vertical-align: middle;
-}
-.badge {
-    font-size: 0.95em;
-    padding: 0.5em 1em;
-    border-radius: 0.7em;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    box-shadow: 0 1px 4px #38b6ff22;
-}
-.btn-primary {
-    background: #198754 !important;
-    background-image: none !important;
-    color: #fff !important;
-    border: none;
-    font-weight: 600;
-    border-radius: 8px;
-    padding: 0.5em 1.25em;
-}
-.btn-primary:hover {
-    background: #157347 !important;
-    color: #fff;
 }
 </style>
 @endpush 

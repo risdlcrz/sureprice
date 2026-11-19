@@ -2,38 +2,6 @@
 
 @section('content')
 <style>
-    .card, .table {
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-    .card-header {
-        background: #f8fafc;
-        border-bottom: 1px solid #e2e8f0;
-        border-radius: 12px 12px 0 0;
-    }
-    .table th, .table td {
-        vertical-align: middle;
-        font-size: 1rem;
-    }
-    .table th {
-        background: #f1f5f9;
-        color: #222;
-    }
-    .badge {
-        font-size: 1em;
-        padding: 0.5em 1em;
-        border-radius: 8px;
-    }
-    .btn-primary {
-        background: #1d4ed8;
-        border: none;
-        border-radius: 8px;
-        padding: 0.5em 1.5em;
-        font-weight: 600;
-    }
-    .btn-primary:hover {
-        background: #2563eb;
-    }
     .grouped-items-table tr.table-primary td {
         background: #e0e7ef !important;
         font-weight: bold;

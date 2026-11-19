@@ -239,18 +239,6 @@
 </div>
 
 <style>
-.card {
-    border-radius: 1rem;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    border: none;
-}
-
-.card-header {
-    background: #fff;
-    border-radius: 1rem 1rem 0 0;
-    border-bottom: 1px solid #e9ecef;
-    padding: 1.5rem 2rem 1rem 2rem;
-}
 
 .text-warning .fas {
     color: #ffc107 !important;
@@ -260,18 +248,8 @@
     border-radius: 0.5rem;
 }
 
-.badge {
-    font-size: 0.875rem;
-    padding: 0.5em 0.75em;
-}
-
 .fs-6 {
     font-size: 1rem !important;
-}
-
-.alert {
-    border-radius: 0.5rem;
-    border: none;
 }
 </style>
 @endsection 

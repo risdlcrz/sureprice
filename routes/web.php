@@ -296,19 +296,6 @@ Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefi
     Route::post('/feedback/{feedback}/submit', [\App\Http\Controllers\ClientFeedbackController::class, 'submit'])->name('feedback.submit');
     Route::get('/project-procurement', [ClientController::class, 'projectProcurement'])->name('project.procurement');
     
-    // Notification routes
-    Route::get('/notifications', function() {
-        return view('client.notifications');
-    })->name('notifications');
-    Route::post('/notifications/{notification}/mark-read', function($notificationId) {
-        $notification = auth()->user()->notifications()->findOrFail($notificationId);
-        $notification->markAsRead();
-        return redirect()->back()->with('success', 'Notification marked as read.');
-    })->name('notifications.mark-read');
-    Route::post('/notifications/mark-all-read', function() {
-        auth()->user()->unreadNotifications->markAsRead();
-        return redirect()->back()->with('success', 'All notifications marked as read.');
-    })->name('notifications.mark-all-read');
     
     // Client Quotation Routes (create/store are public above; these require auth)
     Route::prefix('quotation')->name('quotation.')->group(function () {
@@ -360,7 +347,6 @@ Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->
     
     // History and Notifications
     Route::get('/history', [ProcurementController::class, 'projectHistory'])->name('history');
-    Route::get('/notifications', [ProcurementController::class, 'notificationHub'])->name('notification');
 });
 // ================== Email Verification Routes ==================
 // **Removed duplicate route /email/verify here**
@@ -415,8 +401,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('purchase-orders/{purchaseOrder}/status', [PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
     Route::post('purchase-orders/{purchaseOrder}/complete', [PurchaseOrderController::class, 'complete'])->name('purchase-orders.complete');
     // Other admin routes
-    Route::get('/notification-center', [\App\Http\Controllers\AdminController::class, 'notificationCenter'])->name('admin.notification');
-    Route::post('/notifications/{id}/mark-read', [\App\Http\Controllers\AdminController::class, 'markNotificationAsRead'])->name('admin.notifications.mark-read');
     Route::get('/admin/logs', [App\Http\Controllers\AdminController::class, 'administratorLogs'])->name('admin.logs');
 });
 // Supplier Evaluation Routes
@@ -478,7 +462,6 @@ Route::prefix('supplier')->name('supplier.')->middleware(['auth', 'verified', \A
     Route::get('purchase-orders', [\App\Http\Controllers\Supplier\PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
     Route::get('purchase-orders/{purchaseOrder}', [\App\Http\Controllers\Supplier\PurchaseOrderController::class, 'show'])->name('purchase-orders.show');
 
-    Route::get('notification-center', [\App\Http\Controllers\Supplier\SupplierDashboardController::class, 'notificationCenter'])->name('notification');
 });
 // Admin Supplier Profile Update Review Routes
 Route::middleware(['auth', 'admin'])->prefix('admin/suppliers')->name('admin.suppliers.')->group(function () {
@@ -571,13 +554,9 @@ Route::get('/api/quotation-requests', [\App\Http\Controllers\QuotationRequestCon
 // Manager dashboard and routes
 Route::middleware(['auth', 'role:manager'])->prefix('manager')->name('manager.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\Manager\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/notification-center', [\App\Http\Controllers\Manager\DashboardController::class, 'notificationCenter'])->name('notification');
     Route::get('/quotations', [\App\Http\Controllers\Manager\DashboardController::class, 'quotationsPage'])->name('quotations');
     Route::get('/quotation-requests/{id}/view', [\App\Http\Controllers\Manager\DashboardController::class, 'showClientQuotationRequest'])->name('quotation-requests.view');
     Route::post('/quotation-requests/{id}/send-to-suppliers', [\App\Http\Controllers\Manager\DashboardController::class, 'sendQuotationRequestToSuppliers'])->name('quotation-requests.send-to-suppliers');
-    Route::post('/notifications/mark-all-as-read', [\App\Http\Controllers\Manager\DashboardController::class, 'markAllNotificationsAsRead'])->name('notifications.markAllAsRead');
-    Route::post('/notifications/clear-read', [\App\Http\Controllers\Manager\DashboardController::class, 'clearReadNotifications'])->name('notifications.clearRead');
-    Route::post('/notifications/{id}/mark-as-read', [\App\Http\Controllers\Manager\DashboardController::class, 'markNotificationAsRead'])->name('notifications.markAsRead');
     // Add more manager routes here
 });
 
@@ -593,36 +572,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     })->name('dbadmin');
 });
 
-Route::get('/api/unread-notifications-count', function () {
-    $user = auth()->user();
-    $count = \App\Models\Notification::where(function($query) use ($user) {
-            $query->where('notifiable_id', $user->id)
-                  ->orWhere('user_id', $user->id);
-        })
-        ->whereNull('read_at')
-        ->count();
-    return response()->json(['count' => $count]);
-})->middleware('auth');
-
-Route::get('/api/unread-messages-count', function () {
-    $user = auth()->user();
-    $count = \App\Models\Message::whereHas('conversation', function($q) use ($user) {
-        if ($user->role === 'manager' || $user->user_type === 'admin') {
-            $q->where('admin_id', $user->id);
-        } elseif ($user->isClientCompany()) {
-            $q->where('client_id', $user->id);
-        } elseif ($user->isSupplierCompany()) {
-            $q->where('supplier_id', $user->company->id);
-        } else {
-            $q->where('id', 0); // No conversations
-        }
-    })
-    ->where('is_read', false)
-    ->where('sender_id', '!=', $user->id)
-    ->count();
-    return response()->json(['count' => $count]);
-})->middleware('auth');
-
 Route::middleware(['auth'])->prefix('warehouse')->name('warehouse.')->group(function () {
     Route::resource('deliveries', \App\Http\Controllers\Warehouse\WarehouseDeliveryController::class);
     Route::get('deliveries/{delivery}/feedback', [\App\Http\Controllers\Warehouse\WarehouseDeliveryController::class, 'feedbackForm'])->name('deliveries.feedback');
@@ -631,15 +580,15 @@ Route::middleware(['auth'])->prefix('warehouse')->name('warehouse.')->group(func
 
 Route::post('/purchase-order-payments/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderPaymentController::class, 'store'])->name('purchase-order-payments.store');
 
-// Admin notification center actions
-Route::middleware(['auth', 'admin'])->group(function () {
-    Route::post('/admin/notifications/mark-all-as-read', [App\Http\Controllers\AdminController::class, 'markAllNotificationsAsRead'])->name('admin.notifications.markAllAsRead');
-    Route::post('/admin/notifications/clear-read', [App\Http\Controllers\AdminController::class, 'clearReadNotifications'])->name('admin.notifications.clearRead');
-});
-// Supplier notification center actions
-Route::middleware(['auth', 'verified', App\Http\Middleware\SupplierMiddleware::class])->prefix('supplier')->name('supplier.')->group(function () {
-    Route::post('notifications/mark-all-as-read', [App\Http\Controllers\Supplier\SupplierDashboardController::class, 'markAllNotificationsAsRead'])->name('notifications.markAllAsRead');
-    Route::post('notifications/clear-read', [App\Http\Controllers\Supplier\SupplierDashboardController::class, 'clearReadNotifications'])->name('notifications.clearRead');
-});
 
 // Removed development-only diagnostic endpoints (auth and party debug routes) to keep production routing lean and faster.
+
+// Notifications: one inbox for every role.
+Route::middleware('auth')->controller(\App\Http\Controllers\NotificationController::class)->group(function () {
+    Route::get('/notifications', 'index')->name('notifications.index');
+    Route::get('/notifications/{id}/open', 'open')->whereNumber('id')->name('notifications.open');
+    Route::post('/notifications/{id}/read', 'markRead')->whereNumber('id')->name('notifications.read');
+    Route::post('/notifications/mark-all-read', 'markAllRead')->name('notifications.mark-all-read');
+    Route::post('/notifications/clear-read', 'clearRead')->name('notifications.clear-read');
+    Route::get('/api/unread-counts', 'unreadCounts')->name('api.unread-counts');
+});

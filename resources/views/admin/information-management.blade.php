@@ -180,12 +180,12 @@
                                 <td>{{ $item->email }}</td>
                                 <td class="actions">
                                     <div class="d-flex justify-content-end gap-2">
-                                        <a href="#" class="btn btn-sm btn-info" 
+                                        <button type="button" class="btn btn-sm btn-info" 
                                            data-bs-toggle="modal" 
                                            data-bs-target="#viewModal{{ $item->id }}"
                                            title="View">
                                             <i class="fas fa-eye"></i>
-                                        </a>
+                                        </button>
                                         <a href="{{ route('information-management.edit', $item->id) }}" 
                                            class="btn btn-sm btn-primary" title="Edit">
                                             <i class="fas fa-edit"></i>
@@ -523,9 +523,6 @@
 
 @push('styles')
 <style>
-body {
-    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
-}
 .content {
     margin-left: 120px;
     padding: 32px 16px 32px 16px;
@@ -546,60 +543,6 @@ body {
     background: #fff;
     padding: 2rem 2.5rem;
 }
-.table-responsive {
-    border-radius: 1.1rem;
-    overflow-x: auto;
-    background: #fff;
-    box-shadow: 0 2px 12px rgba(44,62,80,0.06);
-}
-.table {
-    margin-bottom: 0;
-    background: #fff;
-    border-radius: 1.1rem;
-    overflow: hidden;
-    font-size: 0.97rem;
-}
-.table th, .table td {
-    vertical-align: middle;
-    padding: 0.7rem 0.5rem;
-    border: none;
-    background: #f8fafc;
-    text-align: center;
-}
-.table thead th {
-    background: #f1f5f9;
-    font-weight: 700;
-    color: #198754;
-    border-bottom: 2px solid #e3e3e3;
-    text-align: center;
-}
-.table-hover tbody tr:hover {
-    background: #e3f2fd44;
-}
-.btn, .btn-group .btn {
-    border-radius: 2rem !important;
-    font-weight: 600;
-    font-size: 1.08rem;
-    border: none;
-    box-shadow: 0 2px 8px #38b6ff33;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-}
-.btn-primary {
-    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
-    color: #fff;
-}
-.btn-primary:hover {
-    filter: brightness(1.08);
-    box-shadow: 0 4px 16px #38b6ff33;
-}
-.btn-success {
-    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
-    color: #fff;
-}
-.btn-success:hover {
-    filter: brightness(1.08);
-    box-shadow: 0 4px 16px #43e97b33;
-}
 .btn-outline-secondary, .btn-outline-success {
     border: 1.5px solid #b0b3b8 !important;
     background: #fff !important;
@@ -609,19 +552,6 @@ body {
 .btn-outline-secondary:hover, .btn-outline-success:hover {
     background: #e9ecef !important;
     color: #198754 !important;
-}
-.form-control, .form-select {
-    border-radius: 1.2rem;
-    border: 1px solid #d1d5db;
-    background: #f8fafc;
-    font-size: 1.08rem;
-    padding: 0.85rem 1.1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.form-control:focus, .form-select:focus {
-    border-color: #38b6ff;
-    box-shadow: 0 0 0 2px #38b6ff33;
-    background: #fff;
 }
 .role-badge {
     padding: 0.25em 0.5em;

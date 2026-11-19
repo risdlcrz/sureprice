@@ -62,11 +62,7 @@
                         <tr>
                             <td>{{ $po->po_number }}</td>
                             <td>
-                                @if($po->contract)
-                                    <a href="#">{{ $po->contract->contract_number ?? '[No Contract Number]' }} - {{ $po->contract->name ?? $po->contract->title ?? '[No Contract Name]' }}</a>
-                                @else
-                                    N/A
-                                @endif
+                                {{ $po->contract?->contract_number ?? 'N/A' }}
                             </td>
                             <td>₱{{ number_format($po->total_amount, 2) }}</td>
                             <td><x-status-badge :status="$po->status" /></td>

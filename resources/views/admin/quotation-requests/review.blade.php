@@ -10,7 +10,7 @@
                         <h4 class="mb-0">Client Quotation Request #{{ $quotationRequest->request_number }}</h4>
                         <x-status-badge :status="$quotationRequest->status" />
                     </div>
-                    <a href="{{ route('admin.notification') }}" class="btn btn-secondary">Back to Notifications</a>
+                    <a href="{{ route('notifications.index') }}" class="btn btn-secondary">Back to Notifications</a>
                 </div>
                 <div class="card-body">
                     <h5>Client Information</h5>

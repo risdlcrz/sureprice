@@ -185,67 +185,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 @push('styles')
 <style>
-body {
-    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
-}
-.card {
-    border-radius: 1.25rem;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    border: none;
-    margin-bottom: 2rem;
-}
-.card-header {
-    background: #fff;
-    border-radius: 1.25rem 1.25rem 0 0;
-    border-bottom: none;
-    padding: 1.5rem 2rem 1rem 2rem;
-}
-.form-label {
-    color: #198754;
-    font-weight: 600;
-    font-size: 1.05rem;
-    margin-bottom: 0.4rem;
-}
-.form-control, .form-select {
-    border-radius: 1.2rem;
-    border: 1px solid #d1d5db;
-    background: #f8fafc;
-    font-size: 1.08rem;
-    padding: 0.85rem 1.1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-.form-control:focus, .form-select:focus {
-    border-color: #38b6ff;
-    box-shadow: 0 0 0 2px #38b6ff33;
-    background: #fff;
-}
-.btn-primary {
-    border-radius: 2rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-    background: linear-gradient(90deg, #38b6ff 0%, #2563eb 100%);
-    border: none;
-    box-shadow: 0 2px 8px #38b6ff33;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-}
-.btn-primary:hover {
-    filter: brightness(1.08);
-    box-shadow: 0 4px 16px #38b6ff33;
-}
-.btn-secondary {
-    border-radius: 2rem;
-    font-weight: 600;
-    font-size: 1.1rem;
-    background: #e9ecef;
-    color: #495057;
-    border: none;
-    margin-left: 0.5rem;
-    transition: background 0.2s, color 0.2s;
-}
-.btn-secondary:hover {
-    background: #d1d5db;
-    color: #222;
-}
 .form-check-input[type="checkbox"] {
     border-radius: 0.5em;
     border: 1.5px solid #38b6ff;

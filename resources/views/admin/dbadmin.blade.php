@@ -15,7 +15,7 @@
     </div>
     <!-- Notification Hub -->
     <div class="col">
-        <div class="card" onclick="window.location.href='{{ route('admin.notification') }}';" style="cursor:pointer;">
+        <div class="card" onclick="window.location.href='{{ route('notifications.index') }}';" style="cursor:pointer;">
             <img src="{{ asset('images/imagecard2.jpg') }}" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';" alt="Notification Hub" class="card-img-top">
             <div class="card-body">
                 <h5 class="card-title">Centralized Notification Hub</h5>

@@ -148,13 +148,6 @@
 
 @push('styles')
 <style>
-body { background: #f5f6f8 !important; }
-.card {
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    border: 1px solid #e8eaed;
-    margin-bottom: 1.5rem;
-}
 .card-header {
     background: #fff;
     border-bottom: 1px solid #e8eaed;
@@ -163,14 +156,6 @@ body { background: #f5f6f8 !important; }
     justify-content: flex-start;
     align-items: center;
 }
-.btn-primary {
-    background: #198754 !important;
-    background-image: none !important;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-}
-.btn-primary:hover { background: #157347 !important; }
 .small-box {
     border-radius: 10px;
     color: #fff;
@@ -228,11 +213,6 @@ body { background: #f5f6f8 !important; }
     border-radius: 8px;
 }
 .btn-default:hover { background: #e8eaed; }
-.table-responsive {
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #e8eaed;
-}
 #materialRequestsTable thead th {
     background: #f5f6f8;
     color: #1f2937;
@@ -249,15 +229,6 @@ body { background: #f5f6f8 !important; }
 }
 #materialRequestsTable tbody tr:last-child td { border-bottom: none; }
 #materialRequestsTable tbody tr:hover { background: rgba(25, 135, 84, 0.04); }
-.badge { border-radius: 6px; font-weight: 500; }
-.btn-info {
-    background: #198754 !important;
-    background-image: none !important;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-}
-.btn-info:hover { background: #157347 !important; color: #fff; }
 @media (max-width: 991.98px) {
     .card-header {
         padding: 1rem 0.5rem 0.5rem 0.5rem;

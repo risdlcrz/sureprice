@@ -36,9 +36,6 @@
 
 @push('styles')
 <style>
-body {
-    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
-}
 .modern-table {
     border-radius: 1.1rem;
     overflow: hidden;

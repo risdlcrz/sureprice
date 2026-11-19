@@ -167,45 +167,10 @@
 </div>
 
 <style>
-.card {
-    border-radius: 1rem;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    border: none;
-    margin-bottom: 2rem;
-}
-
-.card-header {
-    background: #fff;
-    border-radius: 1rem 1rem 0 0;
-    border-bottom: 1px solid #e9ecef;
-    padding: 1.5rem 2rem 1rem 2rem;
-}
 
 .progress {
     height: 0.5rem;
     border-radius: 0.25rem;
-}
-
-.table {
-    margin-bottom: 0;
-    font-size: 0.9rem;
-}
-
-.table th {
-    background: #f8f9fa;
-    font-weight: 600;
-    color: #495057;
-    border-bottom: 2px solid #dee2e6;
-}
-
-.badge {
-    font-size: 0.75rem;
-    padding: 0.5em 0.75em;
-}
-
-.btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
 }
 </style>
 @endsection 

@@ -1,0 +1,91 @@
+/* Shared styles for standalone auth/status pages (<x-auth-card>). */
+:root {
+    --brand: #02912d;
+    --brand-dark: #154406;
+    --muted: #666;
+    --border: #e9ecef;
+    --surface: #f8f9fa;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--brand) 0%, var(--brand-dark) 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+body.tone-danger { background: #fee2e2; }
+
+.auth-card {
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, .1);
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    animation: slideUp .6s ease-out;
+}
+@keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
+
+.auth-card__logo { height: 60px; margin-bottom: 15px; }
+.auth-card__title { color: var(--brand-dark); font-size: 28px; font-weight: 700; margin-bottom: 25px; }
+.tone-danger .auth-card__title { color: #dc2626; }
+
+.auth-card__icon {
+    width: 80px; height: 80px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 25px; font-size: 32px; color: #fff;
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+}
+.tone-danger .auth-card__icon { background: #dc2626; }
+.tone-warning .auth-card__icon { background: #fff3e0; color: #ff9800; animation: pulse 2s infinite; }
+@keyframes pulse { 50% { transform: scale(1.05); } }
+
+.auth-card__subtitle { color: var(--muted); font-size: 16px; line-height: 1.6; margin-bottom: 30px; }
+
+.status-message { padding: 15px; border-radius: 8px; margin-bottom: 25px; font-weight: 500; text-align: left; }
+.status-success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+.status-error   { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+
+.info-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin: 25px 0; text-align: left; }
+.info-box h4 { color: var(--brand-dark); margin-bottom: 10px; font-size: 18px; }
+.info-box ol, .info-box ul { margin: 10px 0 0 20px; }
+.info-box li { margin-bottom: 8px; color: var(--muted); line-height: 1.6; }
+
+.form-group { margin-bottom: 20px; text-align: left; }
+.form-label { display: block; color: var(--brand-dark); font-weight: 600; margin-bottom: 8px; font-size: 14px; }
+.form-input {
+    width: 100%; padding: 14px; font-size: 16px;
+    border: 2px solid var(--border); border-radius: 8px; background: var(--surface);
+    transition: all .3s ease;
+}
+.form-input:focus { outline: none; border-color: var(--brand); background: #fff; box-shadow: 0 0 0 3px rgba(2, 145, 45, .1); }
+.form-input.error { border-color: #dc3545; }
+.error-message { color: #dc3545; font-size: 14px; margin-top: 5px; display: block; }
+
+.action-buttons { display: flex; flex-direction: column; gap: 15px; margin-top: 30px; }
+.action-buttons form { margin: 0; }
+.btn {
+    width: 100%; padding: 14px 24px; border: none; border-radius: 8px;
+    font-size: 16px; font-weight: 600; cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all .3s ease;
+}
+.btn-primary { background: linear-gradient(135deg, var(--brand), var(--brand-dark)); color: #fff; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(2, 145, 45, .3); }
+.btn-secondary { background: var(--surface); color: #6c757d; border: 1px solid #dee2e6; }
+.btn-secondary:hover { background: var(--border); color: #495057; }
+
+.contact-info { margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
+.contact-info a { color: var(--brand); text-decoration: none; font-weight: 500; }
+.contact-info a:hover { text-decoration: underline; }
+
+@media (max-width: 480px) {
+    .auth-card { padding: 30px 20px; }
+    .auth-card__title { font-size: 24px; }
+}

@@ -384,12 +384,6 @@
     padding-bottom: 0.5rem;
     margin-bottom: 1rem;
 }
-.badge {
-    font-size: 0.9em;
-}
-.table th {
-    background-color: #f8f9fa;
-}
 </style>
 @endpush
 

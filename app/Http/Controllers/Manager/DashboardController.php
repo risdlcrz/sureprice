@@ -13,19 +13,6 @@ class DashboardController extends Controller
         return view('manager.dashboard', compact('projects'));
     }
 
-    public function notificationCenter()
-    {
-        $user = auth()->user();
-        $notifications = \App\Models\Notification::where('user_id', $user->id)
-            ->latest()
-            ->take(50)
-            ->get();
-        $unreadCount = \App\Models\Notification::where('user_id', $user->id)
-            ->whereNull('read_at')
-            ->count();
-        $globalUnreadCount = $unreadCount;
-        return view('manager.notification-center', compact('notifications', 'unreadCount', 'globalUnreadCount'));
-    }
 
     public function quotationsPage()
     {
@@ -131,40 +118,6 @@ class DashboardController extends Controller
         return redirect()->back()->with('success', 'RFQs have been created for all relevant suppliers.');
     }
 
-    public function markAllNotificationsAsRead()
-    {
-        $user = auth()->user();
-        \App\Models\Notification::where('user_id', $user->id)
-            ->whereNull('read_at')
-            ->update(['read_at' => now()]);
-        if (request()->wantsJson()) {
-            return response()->json(['success' => true]);
-        }
-        return back()->with('success', 'All notifications marked as read.');
-    }
 
-    public function clearReadNotifications()
-    {
-        $user = auth()->user();
-        \App\Models\Notification::where('user_id', $user->id)
-            ->whereNotNull('read_at')
-            ->delete();
-        if (request()->wantsJson()) {
-            return response()->json(['success' => true]);
-        }
-        return back()->with('success', 'Read notifications cleared.');
-    }
 
-    public function markNotificationAsRead($id)
-    {
-        $user = auth()->user();
-        $notification = \App\Models\Notification::where('user_id', $user->id)
-            ->where('id', $id)
-            ->first();
-        if ($notification && is_null($notification->read_at)) {
-            $notification->read_at = now();
-            $notification->save();
-        }
-        return response()->json(['success' => true]);
-    }
 } 

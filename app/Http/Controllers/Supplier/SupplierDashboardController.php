@@ -251,37 +251,6 @@ class SupplierDashboardController extends Controller
         return redirect()->route('supplier.dashboard')->with('success', 'Profile updated successfully.');
     }
 
-    public function notificationCenter()
-    {
-        $user = Auth::user();
-        $notifications = Notification::where('user_id', $user->id)
-            ->latest()
-            ->take(50)
-            ->get();
-        return view('supplier.notification-center', compact('notifications'));
-    }
 
-    public function markAllNotificationsAsRead()
-    {
-        $user = auth()->user();
-        \App\Models\Notification::where('user_id', $user->id)
-            ->whereNull('read_at')
-            ->update(['read_at' => now()]);
-        if (request()->wantsJson()) {
-            return response()->json(['success' => true]);
-        }
-        return back()->with('success', 'All notifications marked as read.');
-    }
 
-    public function clearReadNotifications()
-    {
-        $user = auth()->user();
-        \App\Models\Notification::where('user_id', $user->id)
-            ->whereNotNull('read_at')
-            ->delete();
-        if (request()->wantsJson()) {
-            return response()->json(['success' => true]);
-        }
-        return back()->with('success', 'Read notifications cleared.');
-    }
 }

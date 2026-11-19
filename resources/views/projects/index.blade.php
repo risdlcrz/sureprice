@@ -153,12 +153,6 @@ function confirmDelete(projectId) {
         font-size: 0.95em;
         font-weight: 600;
     }
-    .card {
-        border-radius: 1.25rem;
-        box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-        border: none;
-        margin-bottom: 2rem;
-    }
     .card-header {
         background: #fff;
         border-radius: 1.25rem 1.25rem 0 0;
@@ -168,16 +162,6 @@ function confirmDelete(projectId) {
         justify-content: flex-start;
         align-items: center;
         gap: 1rem;
-    }
-    .badge {
-        font-size: 0.85em;
-        padding: 0.4em 0.9em;
-        border-radius: 1em;
-        font-weight: 600;
-        letter-spacing: 0.01em;
-    }
-    .btn-group .btn {
-        margin-right: 0.25rem;
     }
     .btn-group .btn:last-child {
         margin-right: 0;

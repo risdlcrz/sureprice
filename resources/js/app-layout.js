@@ -37,29 +37,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-function updateNotificationBadge() {
-    fetch('/api/unread-notifications-count')
-        .then(response => response.json())
-        .then(data => {
-            // Update all notification badges
-            document.querySelectorAll('.notification-badge, .badge.bg-danger').forEach(badge => {
-                if (data.count > 0) {
-                    badge.textContent = data.count;
-                    badge.style.display = '';
-                    badge.style.visibility = 'visible';
-                } else {
-                    badge.style.display = 'none';
-                }
+// Live unread counters for sidebar badges (<x-nav-count>): one request, every 30s, only while the tab is visible.
+const unreadUrl = document.querySelector('meta[name="unread-counts-url"]')?.content;
+function updateUnreadBadges() {
+    if (!unreadUrl || document.hidden) return;
+    fetch(unreadUrl, { headers: { Accept: 'application/json' } })
+        .then(r => (r.ok ? r.json() : null))
+        .then(counts => {
+            if (!counts) return;
+            document.querySelectorAll('[data-unread]').forEach(badge => {
+                const n = counts[badge.dataset.unread] ?? 0;
+                badge.textContent = n;
+                badge.style.display = n > 0 ? '' : 'none';
             });
         })
-        .catch(error => {
-            console.error('Error updating notification badge:', error);
-        });
+        .catch(() => {});
 }
-setInterval(updateNotificationBadge, 10000); // Poll every 10 seconds
-// Also update on page load
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', updateNotificationBadge);
-} else {
-    updateNotificationBadge();
-} 
+if (unreadUrl) {
+    setInterval(updateUnreadBadges, 30000);
+    document.addEventListener('visibilitychange', updateUnreadBadges);
+}

@@ -212,18 +212,6 @@
 </div>
 
 <style>
-.card {
-    border-radius: 1rem;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    border: none;
-}
-
-.card-header {
-    background: #fff;
-    border-radius: 1rem 1rem 0 0;
-    border-bottom: 1px solid #e9ecef;
-    padding: 1.5rem 2rem 1rem 2rem;
-}
 
 .rating-group {
     display: flex;
@@ -246,25 +234,6 @@
 .rating-label:hover ~ .rating-label,
 .rating-input:checked ~ .rating-label {
     color: #ffc107;
-}
-
-.form-control, .form-select {
-    border-radius: 0.5rem;
-    border: 1.5px solid #ced4da;
-    padding: 0.75rem 1rem;
-    transition: all 0.2s ease;
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: #198754;
-    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
-}
-
-.btn {
-    border-radius: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
 }
 </style>
 

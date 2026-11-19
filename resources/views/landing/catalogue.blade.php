@@ -246,11 +246,6 @@ $altColors = ['#f9fafb', '#e8f5e9'];
 @endpush 
 
 <style>
-body {
-    background: #f7fafc;
-    font-family: 'Poppins', 'Inter', Arial, sans-serif;
-    color: #222;
-}
 #landingCarousel {
     width: 100vw;
     max-width: 100vw;

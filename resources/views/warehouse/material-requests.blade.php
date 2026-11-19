@@ -3,68 +3,6 @@
 @push('styles')
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-body {
-    background: linear-gradient(135deg, #e8f0ef 0%, #f8fafc 100%);
-    font-family: 'Inter', sans-serif;
-}
-.card {
-    background: rgba(255,255,255,0.85);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10);
-    border-radius: 24px;
-    border: 1px solid rgba(255,255,255,0.18);
-    backdrop-filter: blur(6px);
-}
-.table {
-    border-radius: 16px;
-    overflow: hidden;
-    background: transparent;
-}
-.table thead th {
-    background: rgba(25,135,84,0.08);
-    color: #198754;
-    font-weight: 600;
-    border: none;
-}
-.table-hover tbody tr:hover {
-    background: #e6f4ea;
-    transition: background 0.2s;
-}
-.badge.bg-success {
-    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
-    color: #fff;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(67,233,123,0.08);
-}
-.badge.bg-warning {
-    background: linear-gradient(90deg, #f7971e 0%, #ffd200 100%);
-    color: #fff;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(247,151,30,0.08);
-}
-.badge.bg-secondary {
-    background: linear-gradient(90deg, #bdc3c7 0%, #2c3e50 100%);
-    color: #fff;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(44,62,80,0.08);
-}
-.btn-info.btn-sm {
-    background: linear-gradient(90deg, #56ccf2 0%, #2f80ed 100%);
-    color: #fff;
-    border: none;
-    font-weight: 600;
-    border-radius: 8px;
-    margin-right: 4px;
-}
-.btn-success.btn-sm {
-    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
-    color: #fff;
-    border: none;
-    font-weight: 600;
-    border-radius: 8px;
-}
-.btn-info.btn-sm:hover, .btn-success.btn-sm:hover {
-    filter: brightness(0.95);
-}
 .text-success {
     font-weight: 600;
 }

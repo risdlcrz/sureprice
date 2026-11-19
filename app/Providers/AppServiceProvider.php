@@ -12,7 +12,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Our notifications table has an auto-increment id; see the channel for details.
+        $this->app->bind(\Illuminate\Notifications\Channels\DatabaseChannel::class, \App\Notifications\Channels\DatabaseChannel::class);
     }
 
     /**

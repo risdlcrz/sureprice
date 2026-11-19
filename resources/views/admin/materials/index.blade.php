@@ -2,7 +2,6 @@
 
 @push('styles')
 <style>
-body { background: #f5f6f8 !important; }
 /* Prevent content overlap with sidebar and fit content to screen */
 .container-fluid {
     margin-left: 250px;
@@ -28,59 +27,6 @@ body { background: #f5f6f8 !important; }
         padding-right: 1rem;
     }
 }
-.card {
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    border: 1px solid #e8eaed;
-    margin-bottom: 2rem;
-    margin-top: 1rem;
-    max-width: 100%;
-    overflow-x: auto;
-}
-.card-header {
-    background: #fff;
-    border-radius: 1.25rem 1.25rem 0 0;
-    border-bottom: none;
-    padding: 1.5rem 2rem 1rem 2rem;
-}
-
-.card-body {
-    padding: 2rem;
-}
-.btn-primary, .btn-info {
-    border-radius: 2rem;
-    font-weight: 600;
-    font-size: 1.08rem;
-    border: none;
-    box-shadow: 0 2px 8px #38b6ff33;
-    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-}
-.btn-primary {
-    background: #198754 !important;
-    background-image: none !important;
-}
-.btn-info {
-    background: #0d6efd !important;
-    background-image: none !important;
-    color: #fff;
-}
-.btn-primary:hover, .btn-info:hover {
-    filter: brightness(1.05);
-}
-.btn-secondary {
-    border-radius: 2rem;
-    font-weight: 600;
-    font-size: 1.08rem;
-    background: #e9ecef;
-    color: #495057;
-    border: none;
-    margin-left: 0.5rem;
-    transition: background 0.2s, color 0.2s;
-}
-.btn-secondary:hover {
-    background: #d1d5db;
-    color: #222;
-}
 .btn-group .btn {
     margin-right: 6px;
     border-radius: 1.5rem !important;
@@ -95,13 +41,6 @@ body { background: #f5f6f8 !important; }
 .btn-group .btn:last-child {
     margin-right: 0;
 }
-.table-responsive {
-    border-radius: 1.1rem;
-    overflow-x: auto;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    background: #fff;
-    max-width: 100%;
-}
 .table {
     margin-bottom: 0;
     background: #fff;
@@ -109,29 +48,6 @@ body { background: #f5f6f8 !important; }
     overflow: hidden;
     font-size: 0.89rem;
     table-layout: fixed;
-}
-.table th, .table td {
-    vertical-align: middle;
-    padding: 0.32rem 0.15rem;
-    border: none;
-    background: #f8fafc;
-    text-align: center;
-    word-break: break-word;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.table thead th {
-    background: #f5f6f8;
-    font-weight: 600;
-    color: #1f2937;
-    border-bottom: 1px solid #e8eaed;
-    text-align: center;
-    font-size: 0.93rem;
-    padding: 0.32rem 0.15rem;
-}
-.table-hover tbody tr:hover {
-    background: rgba(25, 135, 84, 0.04);
 }
 .table th, .table td {
     min-width: 60px;
@@ -201,26 +117,6 @@ body { background: #f5f6f8 !important; }
     /* Hide Base Price and SRP columns */
     .hide-col-3 { display: none !important; }
     .hide-col-4 { display: none !important; }
-}
-.badge {
-    font-size: 0.95em;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    box-shadow: 0 1px 4px #ffc10722;
-    border-radius: 0.7em;
-    padding: 0.5em 1em;
-}
-.badge.bg-success {
-    background-color: #28a745 !important;
-    color: #fff;
-}
-.badge.bg-danger {
-    background-color: #dc3545 !important;
-    color: #fff;
-}
-.badge.bg-secondary {
-    background-color: #6c757d !important;
-    color: #fff;
 }
 input.form-control, select.form-control {
     border-radius: 1.2rem;

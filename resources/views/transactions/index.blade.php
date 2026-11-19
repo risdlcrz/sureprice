@@ -51,42 +51,4 @@
         @endif
     </div>
 </div>
-@push('styles')
-<style>
-body {
-    background: linear-gradient(135deg, #f8fafc 0%, #e9ecef 100%) !important;
-}
-.table-responsive {
-    border-radius: 1.1rem;
-    overflow-x: auto;
-    box-shadow: 0 4px 24px rgba(44,62,80,0.08), 0 1.5px 6px rgba(44,62,80,0.04);
-    background: #fff;
-    max-width: 100%;
-}
-.table {
-    margin-bottom: 0;
-    background: #fff;
-    border-radius: 1.1rem;
-    overflow: hidden;
-    font-size: 0.97rem;
-}
-.table th, .table td {
-    vertical-align: middle;
-    padding: 0.7rem 0.5rem;
-    border: none;
-    background: #f8fafc;
-    text-align: center;
-}
-.table thead th {
-    background: #e8f5e9;
-    font-weight: 700;
-    color: #198754;
-    border-bottom: 2px solid #e3e3e3;
-    text-align: center;
-}
-.table-hover tbody tr:hover {
-    background: #e3f2fd44;
-}
-</style>
-@endpush
 @endsection 

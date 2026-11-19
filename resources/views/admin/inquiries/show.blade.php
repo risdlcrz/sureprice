@@ -139,21 +139,4 @@
     </div>
 </div>
 
-@push('styles')
-<style>
-    .table th {
-        background-color: #f8f9fa;
-    }
-    .badge {
-        font-size: 0.9em;
-        background-color: #222 !important;
-        color: #fff !important;
-        padding: 0.5em 0.75em;
-        border-radius: 0.5em;
-    }
-    .table tbody tr {
-        background-color: #f6f6f6;
-    }
-</style>
-@endpush
 @endsection 

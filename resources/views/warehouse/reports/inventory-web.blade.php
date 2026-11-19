@@ -4,85 +4,14 @@
 @push('styles')
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-body {
-    background: linear-gradient(135deg, #e8f0ef 0%, #f8fafc 100%);
-    font-family: 'Inter', sans-serif;
-}
-.card {
-    background: rgba(255,255,255,0.85);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.10);
-    border-radius: 24px;
-    border: 1px solid rgba(255,255,255,0.18);
-    backdrop-filter: blur(6px);
-    transition: box-shadow 0.2s, transform 0.2s;
-}
-.card:hover {
-    box-shadow: 0 12px 32px 0 rgba(31, 38, 135, 0.16);
-    transform: translateY(-2px) scale(1.01);
-}
-.card-title, h1.h3 {
-    font-weight: 700;
-    color: #198754;
-    letter-spacing: 0.01em;
-}
-.btn-primary, .btn-success {
-    background: linear-gradient(90deg, #56ccf2 0%, #2f80ed 100%);
-    color: #fff;
-    border: none;
-    font-weight: 600;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(44,62,80,0.04);
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-}
-.btn-primary:hover, .btn-success:hover {
-    filter: brightness(0.95);
-}
-.form-select, .form-control {
-    border-radius: 12px;
-    font-size: 1rem;
-    box-shadow: 0 1px 4px rgba(44,62,80,0.04);
-}
 label.form-label {
     font-weight: 600;
     color: #198754;
-}
-.table {
-    border-radius: 16px;
-    overflow: hidden;
-    background: transparent;
-}
-.table thead th {
-    background: rgba(25,135,84,0.08);
-    color: #198754;
-    font-weight: 600;
-    border: none;
-}
-.table-hover tbody tr:hover {
-    background: #e6f4ea;
-    transition: background 0.2s;
 }
 .table-primary {
     background: #e3f2fd !important;
     font-weight: 600;
     color: #1976d2;
-}
-.badge.bg-success {
-    background: linear-gradient(90deg, #43e97b 0%, #38f9d7 100%);
-    color: #fff;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(67,233,123,0.08);
-}
-.badge.bg-warning {
-    background: linear-gradient(90deg, #f7971e 0%, #ffd200 100%);
-    color: #fff;
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(247,151,30,0.08);
-}
-.badge.bg-danger {
-    background: linear-gradient(90deg, #ff5858 0%, #f09819 100%);
-    color: #fff;
-    font-weight: 600;
 }
 .animated-empty {
     animation: fadeIn 1s ease-in;

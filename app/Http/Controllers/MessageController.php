@@ -17,21 +17,6 @@ class MessageController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        // Count unread messages for sidebar badge
-        $unreadMessagesCount = \App\Models\Message::whereHas('conversation', function($q) use ($user) {
-            if ($user->role === 'manager') {
-                $q->where('admin_id', $user->id);
-            } elseif ($user->isClientCompany()) {
-                $q->where('client_id', $user->id);
-            } elseif ($user->isSupplierCompany()) {
-                $q->where('supplier_id', $user->company->id);
-            } else {
-                $q->where('id', 0);
-            }
-        })
-        ->where('is_read', false)
-        ->where('sender_id', '!=', $user->id)
-        ->count();
         // Fetch all conversations for sidebar
         if ($user->role === 'manager') {
             $conversations = Conversation::where('admin_id', $user->id);
@@ -72,7 +57,7 @@ class MessageController extends Controller
                 ->where('sender_id', '!=', $user->id)
                 ->each->markAsRead();
         }
-        return view('messages.index', compact('conversations', 'conversation', 'messages', 'unreadMessagesCount'));
+        return view('messages.index', compact('conversations', 'conversation', 'messages'));
     }
 
     public function store(Request $request, Conversation $conversation)

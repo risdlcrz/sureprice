@@ -119,16 +119,6 @@ class ProcurementController extends Controller
         ));
     }
 
-    public function notificationHub()
-    {
-        $this->logPageView('Viewed Notification Hub');
-        // You can fetch procurement-specific notifications here
-        $notifications = \App\Models\Notification::where('for_role', 'procurement')
-                                     ->orWhere('for_user_id', Auth::id())
-                                     ->latest()->get();
-
-        return view('procurement.notification-hub', compact('notifications'));
-    }
 
     public function inventoryCreate()
     {

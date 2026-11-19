@@ -51,28 +51,9 @@ body.analytics-bg {
     color: #1e293b;
     letter-spacing: 0.01em;
 }
-.form-select, .form-control {
-    border-radius: 12px;
-    font-size: 1rem;
-    box-shadow: 0 1px 4px rgba(44,62,80,0.04);
-}
 label.form-label {
     font-weight: 600;
     color: #198754;
-}
-.btn-outline-primary, .btn-primary {
-    background: linear-gradient(90deg, #56ccf2 0%, #2f80ed 100%) !important;
-    color: #fff !important;
-    border: none !important;
-    font-weight: 600;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(44,62,80,0.04);
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-    transition: filter 0.2s;
-}
-.btn-outline-primary:hover, .btn-primary:hover {
-    filter: brightness(0.95);
 }
 .fab-download {
     position: fixed;

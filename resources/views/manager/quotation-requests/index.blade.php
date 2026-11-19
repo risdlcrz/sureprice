@@ -73,10 +73,10 @@
                                         <span class="text-muted">No responses yet</span>
                                     @endforelse
                                 </td>
-                                <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
+                                <td><a href="{{ route('quotations.show', $q) }}" class="btn btn-sm btn-primary">View</a></td>
                             </tr>
                         @empty
-                            <tr><td colspan="6">No supplier quotations found.</td></tr>
+                            <x-empty-row cols="6">No supplier quotations found.</x-empty-row>
                         @endforelse
                     </tbody>
                 </table>
@@ -87,12 +87,6 @@
 </div>
 @push('styles')
 <style>
-body { background: #f5f6f8 !important; }
-.card {
-    border: 1px solid #e8eaed;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-}
 .nav-link.active {
     background: #198754 !important;
     color: #fff !important;
@@ -124,7 +118,6 @@ body { background: #f5f6f8 !important; }
     border-radius: 6px;
 }
 .manager-quotations-table .btn-primary:hover { background: #157347 !important; }
-.table-responsive { border: 1px solid #e8eaed; border-radius: 8px; overflow: hidden; }
 </style>
 @endpush
 @endsection 

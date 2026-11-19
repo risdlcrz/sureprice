@@ -184,18 +184,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 @push('styles')
 <style>
-body { background: #f5f6f8 !important; }
-.card {
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    border: 1px solid #e8eaed;
-    margin-bottom: 1.5rem;
-}
-.card-header {
-    background: #fff;
-    border-bottom: 1px solid #e8eaed;
-    padding: 1rem 1.25rem;
-}
 .card-tools .btn-primary {
     background: #198754 !important;
     background-image: none !important;
@@ -257,11 +245,6 @@ body { background: #f5f6f8 !important; }
     border-radius: 8px;
 }
 .btn-default:hover { background: #e8eaed; }
-.table-responsive {
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #e8eaed;
-}
 #purchaseRequestsTable thead th {
     background: #f5f6f8;
     color: #1f2937;
@@ -279,8 +262,6 @@ body { background: #f5f6f8 !important; }
 #purchaseRequestsTable tbody tr:hover { background: rgba(25, 135, 84, 0.04); }
 #purchaseRequestsTable.table-striped tbody tr:nth-of-type(odd) { background: #fff; }
 #purchaseRequestsTable.table-striped tbody tr:hover { background: rgba(25, 135, 84, 0.04); }
-.badge { border-radius: 6px; font-weight: 500; }
-.btn-group .btn { border-radius: 6px; }
 @media (max-width: 1100px) {
     .stats-row { flex-direction: column; }
     .stats-card { min-width: 0; width: 100%; }

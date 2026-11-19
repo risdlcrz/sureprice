@@ -13,6 +13,7 @@ export default defineConfig({
                 'resources/css/infoman.css',
                 'resources/css/inventory.css',
                 'resources/css/login.css',
+                'resources/css/auth-card.css',
                 'resources/css/messages.css',
                 'resources/css/price.css',
                 'resources/css/projectapp.css',

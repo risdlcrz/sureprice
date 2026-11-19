@@ -4,11 +4,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
-body {
-    font-family: 'Inter', Arial, sans-serif;
-    background: linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%);
-    min-height: 100vh;
-}
 .quotation-card {
     max-width: 1600px;
     margin: 40px auto 32px auto;

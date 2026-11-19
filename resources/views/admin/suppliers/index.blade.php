@@ -206,15 +206,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 @push('styles')
 <style>
-    .table td {
-        vertical-align: middle;
-    }
-    .badge {
-        font-size: 0.9em;
-    }
-    .btn-group .btn {
-        margin-right: 2px;
-    }
     .fas {
         width: 16px;
         text-align: center;

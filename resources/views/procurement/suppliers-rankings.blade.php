@@ -43,10 +43,10 @@
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h4 class="card-title mb-0">Supplier Rankings</h4>
                     <div>
-                        <a href="#" class="btn btn-outline-primary me-2" disabled>
+                        <a href="{{ route('suppliers.template.download') }}" class="btn btn-outline-primary me-2">
                             <i class="fas fa-download"></i> Download Template
                         </a>
-                        <a href="#" class="btn btn-outline-primary" disabled>
+                        <a href="{{ route('suppliers.materials.template.download') }}" class="btn btn-outline-primary">
                             <i class="fas fa-download"></i> Materials Template
                         </a>
                     </div>
