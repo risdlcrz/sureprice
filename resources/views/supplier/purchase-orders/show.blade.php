@@ -103,7 +103,7 @@
         <div class="alert alert-secondary">No payment submitted yet.</div>
     @endif
     {{-- Supplier Shipped Out Button --}}
-    @if(auth()->user()->hasRole('supplier') && $purchaseOrder->canShipOut())
+    @if(auth()->user()->isSupplierCompany() && $purchaseOrder->canShipOut())
         <form method="POST" action="{{ route('purchase-orders.mark-shipped', $purchaseOrder->id) }}">
             @csrf
             <div class="mb-2">

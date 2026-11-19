@@ -173,8 +173,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/purchase-requests/{purchaseRequest}/items', [PurchaseRequestController::class, 'getItems'])->name('api.purchase-requests.items');
     Route::post('/purchase-requests/generate-from-contract', [App\Http\Controllers\PurchaseRequestController::class, 'generateFromContract'])->name('purchase-requests.generate-from-contract');
     // Purchase Orders
+    Route::post('purchase-orders/request-approval', [PurchaseOrderController::class, 'requestApproval'])->name('purchase-orders.request-approval');
     Route::resource('purchase-orders', PurchaseOrderController::class);
-    Route::get('purchase-orders/{id}/json', [App\Http\Controllers\PurchaseOrderController::class, 'showJson'])->name('purchase-orders.json');
+    Route::get('purchase-orders/{id}/json', [PurchaseOrderController::class, 'showJson'])->name('purchase-orders.json');
+    Route::post('purchase-orders/{purchaseOrder}/ship', [PurchaseOrderController::class, 'markAsShipped'])->name('purchase-orders.mark-shipped');
+    Route::post('purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'markAsReceived'])->name('purchase-orders.mark-received');
     // Transaction Routes
     Route::get('/transactions/past', [\App\Http\Controllers\TransactionController::class, 'pastTransactions'])->name('transactions.past');
     Route::resource('transactions', \App\Http\Controllers\TransactionController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
@@ -476,7 +479,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 Route::resource('material-requests', \App\Http\Controllers\MaterialRequestController::class)->only(['index', 'create', 'store', 'show']);
 Route::get('/admin/materials/{material}/suppliers', [\App\Http\Controllers\MaterialRequestController::class, 'getMaterialSuppliers'])->name('materials.suppliers');
 Route::get('/admin/materials/{material}/stock', [\App\Http\Controllers\MaterialRequestController::class, 'getMaterialStock'])->name('materials.stock');
-Route::resource('purchase-orders', \App\Http\Controllers\PurchaseOrderController::class);
 
 Route::post('purchase-requests/{purchaseRequest}/reject', [PurchaseRequestController::class, 'reject'])->name('purchase-requests.reject');
 Route::post('purchase-requests/{purchaseRequest}/supplier-approve', [PurchaseRequestController::class, 'supplierApprove'])->name('purchase-requests.supplier.approve')->middleware('auth', 'role:supplier');
@@ -496,8 +498,6 @@ Route::middleware(['auth'])->group(function () {
 
 Route::get('/api/clients/{id}/ban-status', [\App\Http\Controllers\PartyController::class, 'banStatus'])->name('api.clients.ban-status');
 
-Route::post('purchase-orders/{id}/ship', [\App\Http\Controllers\PurchaseOrderController::class, 'markAsShipped'])->name('purchase-orders.ship');
-Route::post('purchase-orders/{id}/deliver', [\App\Http\Controllers\PurchaseOrderController::class, 'markAsDelivered'])->name('purchase-orders.deliver');
 
 // Supplier Recommendation Route
 Route::get('/projects/{projectId}/recommend-suppliers', [ProjectController::class, 'recommendSuppliers'])->name('projects.recommend-suppliers');
@@ -522,7 +522,6 @@ Route::get('/warehouse/logs', [App\Http\Controllers\Warehouse\WarehouseDashboard
 
 // Procurement request approval routes
 Route::post('/purchase-requests/request-approval', [\App\Http\Controllers\PurchaseRequestController::class, 'requestApproval'])->name('purchase-requests.request-approval');
-Route::post('/purchase-orders/request-approval', [\App\Http\Controllers\PurchaseOrderController::class, 'requestApproval'])->name('purchase-orders.request-approval');
 
 Route::middleware(['auth', 'role:finance'])->group(function () {
     Route::get('/finance/dashboard', [\App\Http\Controllers\FinanceDashboardController::class, 'index'])->name('finance.dashboard');
@@ -563,7 +562,7 @@ Route::middleware(['auth'])->prefix('warehouse')->name('warehouse.')->group(func
     Route::post('deliveries/{delivery}/feedback', [\App\Http\Controllers\Warehouse\WarehouseDeliveryController::class, 'submitFeedback'])->name('deliveries.submitFeedback');
 });
 
-Route::post('/purchase-order-payments/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderPaymentController::class, 'store'])->name('purchase-order-payments.store');
+Route::post('/purchase-order-payments/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderPaymentController::class, 'store'])->middleware('auth')->name('purchase-order-payments.store');
 
 
 // Removed development-only diagnostic endpoints (auth and party debug routes) to keep production routing lean and faster.

@@ -291,37 +291,52 @@ class PurchaseOrder extends Model
         return $this->belongsTo(User::class, 'received_by');
     }
 
+    /** Statuses in which the order may still be edited or deleted (nothing paid or shipped yet). */
+    public const EDITABLE_STATUSES = ['draft', 'pending', 'pending_payment'];
+
+    public function isEditable(): bool
+    {
+        return in_array($this->status, self::EDITABLE_STATUSES, true);
+    }
+
+    /** Supplier may ship once the payment has been verified (status "paid"). */
     public function canShipOut(): bool
     {
-        // Only supplier can ship out, and only if payment is validated (PAID)
-        return $this->status === 'pending_payment' && $this->isPaymentValidated() && is_null($this->shipped_out_at);
+        return $this->status === 'paid' && is_null($this->shipped_out_at);
     }
 
+    /** Warehouse/admin may receive once shipped. */
     public function canReceive(): bool
     {
-        // Only warehouse can receive, and only if shipped out
-        return !is_null($this->shipped_out_at) && is_null($this->received_at);
+        return $this->status === self::STATUS_SHIPPING && is_null($this->received_at);
     }
 
-    public function markAsShippedOut()
+    /** Only approved/received orders can be completed (quality check + stock-in). */
+    public function canComplete(): bool
+    {
+        return in_array($this->status, ['approved', self::STATUS_DELIVERED], true);
+    }
+
+    public function markAsShippedOut(string $trackingNumber, ?string $note = null): void
     {
         if (!$this->canShipOut()) {
-            throw new \Exception('Cannot ship out unless payment is validated and not already shipped.');
+            throw new \Exception('This order cannot be shipped: payment must be verified and it must not already be shipped.');
         }
-        $this->shipped_out_at = now();
-        $this->shipped_out_by = auth()->id();
-        $this->status = 'shipping';
-        $this->save();
+        $this->forceFill([
+            'shipped_out_at' => now(), 'shipped_out_by' => auth()->id(), 'shipped_at' => now(),
+            'tracking_number' => $trackingNumber, 'shipping_note' => $note,
+            'shipping_status' => 'Shipped Out', 'status' => self::STATUS_SHIPPING,
+        ])->save();
     }
 
-    public function markAsReceived()
+    public function markAsReceived(): void
     {
         if (!$this->canReceive()) {
-            throw new \Exception('Cannot receive unless shipped out and not already received.');
+            throw new \Exception('Only shipped orders that have not been received can be marked as received.');
         }
-        $this->received_at = now();
-        $this->received_by = auth()->id();
-        $this->status = 'delivered';
-        $this->save();
+        $this->forceFill([
+            'received_at' => now(), 'received_by' => auth()->id(), 'delivered_at' => now(),
+            'is_delivered' => true, 'shipping_status' => 'Delivered', 'status' => self::STATUS_DELIVERED,
+        ])->save();
     }
 } 

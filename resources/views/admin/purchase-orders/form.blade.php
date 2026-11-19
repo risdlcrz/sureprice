@@ -27,7 +27,7 @@
                                     <option value="">Select Purchase Request</option>
                                     @foreach($purchaseRequests as $pr)
                                         <option value="{{ $pr->id }}" 
-                                            {{ (old('purchase_request_id', $purchaseOrder->purchase_request_id ?? '') == $pr->id) ? 'selected' : '' }}
+                                            {{ (old('purchase_request_id', $purchaseOrder->purchase_request_id ?? $selectedPurchaseRequestId ?? '') == $pr->id) ? 'selected' : '' }}
                                             data-contract-id="{{ $pr->contract_id }}">
                                             {{ $pr->pr_number }}
                                             @if($pr->contract)

@@ -14,7 +14,6 @@ class PurchaseOrderItem extends Model
         'unit',
         'unit_price',
         'total_amount',
-        'specifications',
         'notes'
     ];
 

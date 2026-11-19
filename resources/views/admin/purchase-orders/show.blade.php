@@ -6,12 +6,12 @@
     @endphp
     <div class="container">
         <x-page-header title="Purchase Order Details">
-            @if(in_array($purchaseOrder->status, ['draft', 'pending']))
+            @if($purchaseOrder->isEditable())
                     <a href="{{ route('purchase-orders.edit', $purchaseOrder) }}" class="btn btn-primary">
                         <i class="fas fa-edit"></i> Edit
                     </a>
                 @endif
-                @if($purchaseOrder->status === 'approved' && $payment && $payment->status === 'verified')
+                @if($purchaseOrder->canComplete())
                     <button type="button" class="btn btn-success" 
                             data-bs-toggle="modal" 
                             data-bs-target="#completePurchaseOrderModal"
@@ -167,16 +167,7 @@
                             <li class="{{ $purchaseOrder->status === 'delivered' || $purchaseOrder->status === 'completed' ? 'active' : '' }}">Received</li>
                             <li class="{{ $purchaseOrder->status === 'completed' ? 'active' : '' }}">Completed</li>
                         </ul>
-                        @if(auth()->user()->hasRole('supplier') && $purchaseOrder->canShipOut())
-                            <form method="POST" action="{{ route('purchase-orders.mark-shipped', $purchaseOrder->id) }}">
-                                @csrf
-                                <div class="mb-2">
-                                    <textarea name="shipping_note" class="form-control" placeholder="Shipping note (optional)"></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-info">Mark as Shipped Out</button>
-                            </form>
-                        @endif
-                        @if((auth()->user()->hasRole('warehouse') || auth()->user()->hasRole('admin')) && $purchaseOrder->canReceive())
+                        @if((auth()->user()->hasRole('warehousing') || auth()->user()->isAdmin()) && $purchaseOrder->canReceive())
                             <form method="POST" action="{{ route('purchase-orders.mark-received', $purchaseOrder->id) }}">
                                 @csrf
                                 <button type="submit" class="btn btn-success">Mark as Received</button>
@@ -410,7 +401,7 @@
                 successMessage.classList.add('d-none');
 
                 const formData = new FormData(this);
-                const response = await fetch(`/sure/sureprice/public/purchase-orders/${currentPurchaseOrderId}/complete`, {
+                const response = await fetch('{{ route('purchase-orders.complete', $purchaseOrder) }}', {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
