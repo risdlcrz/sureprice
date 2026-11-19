@@ -219,16 +219,6 @@ class MaterialController extends Controller
         }
     }
 
-    private function logPageView($description, $modelType = null, $modelId = null)
-    {
-        Activity::create([
-            'user_id' => auth()->id(),
-            'action' => 'viewed',
-            'description' => $description,
-            'model_type' => $modelType,
-            'model_id' => $modelId
-        ]);
-    }
 
     private function logAction($action, $description, $modelType = null, $modelId = null)
     {

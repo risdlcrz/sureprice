@@ -14,7 +14,7 @@ class ConversationPolicy
     {
         $isParticipant = $user->id === $conversation->client_id || $user->id === $conversation->admin_id;
 
-        if ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
+        if ($user->isSupplierCompany()) {
             $isParticipant = $isParticipant || $user->company->id === $conversation->supplier_id;
         }
 
@@ -30,7 +30,7 @@ class ConversationPolicy
     {
         $isParticipant = $user->id === $conversation->client_id || $user->id === $conversation->admin_id;
 
-        if ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
+        if ($user->isSupplierCompany()) {
             $isParticipant = $isParticipant || $user->company->id === $conversation->supplier_id;
         }
 

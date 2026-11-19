@@ -21,9 +21,9 @@ class MessageController extends Controller
         $unreadMessagesCount = \App\Models\Message::whereHas('conversation', function($q) use ($user) {
             if ($user->role === 'manager') {
                 $q->where('admin_id', $user->id);
-            } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
+            } elseif ($user->isClientCompany()) {
                 $q->where('client_id', $user->id);
-            } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
+            } elseif ($user->isSupplierCompany()) {
                 $q->where('supplier_id', $user->company->id);
             } else {
                 $q->where('id', 0);
@@ -35,9 +35,9 @@ class MessageController extends Controller
         // Fetch all conversations for sidebar
         if ($user->role === 'manager') {
             $conversations = Conversation::where('admin_id', $user->id);
-        } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
+        } elseif ($user->isClientCompany()) {
             $conversations = Conversation::where('client_id', $user->id);
-        } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
+        } elseif ($user->isSupplierCompany()) {
             $conversations = Conversation::where('supplier_id', $user->company->id);
         } else {
             $conversations = Conversation::where('id', 0);
@@ -229,7 +229,7 @@ class MessageController extends Controller
             }
         }
         // Client logic
-        if ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
+        if ($user->isClientCompany()) {
             $request->validate([
                 'manager_id' => 'required|exists:users,id',
                 'message' => 'required|string|max:1000'
@@ -267,7 +267,7 @@ class MessageController extends Controller
             return redirect()->route('messages.show', $conversation);
         }
         // Supplier logic
-        if ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
+        if ($user->isSupplierCompany()) {
             $request->validate([
                 'admin_id' => 'required|exists:users,id',
                 'message' => 'required|string|max:1000'

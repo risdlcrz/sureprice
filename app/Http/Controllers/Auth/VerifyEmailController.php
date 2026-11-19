@@ -17,48 +17,14 @@ class VerifyEmailController extends Controller
         $user = $request->user();
 
         if ($user->hasVerifiedEmail()) {
-            return $this->getRedirectBasedOnUserType($user);
+            return redirect()->route($user->homeRoute());
         }
 
         if ($user->markEmailAsVerified()) {
             event(new Verified($user));
         }
 
-        return $this->getRedirectBasedOnUserType($user);
+        return redirect()->route($user->homeRoute());
     }
 
-    /**
-     * Get the redirect route based on user type.
-     */
-    private function getRedirectBasedOnUserType($user): RedirectResponse
-    {
-        // For employees, redirect based on role
-        if ($user->user_type === 'employee') {
-            if ($user->role === 'procurement') {
-                return redirect()->route('procurement.dashboard');
-            } elseif ($user->role === 'warehousing') {
-                return redirect()->route('warehouse.dashboard');
-            }
-            // Fallback for other employee roles after verification if needed
-            return redirect()->route('home'); 
-        }
-
-        // For company users, check approval status and designation
-        if ($user->user_type === 'company') {
-            $company = $user->company;
-            if (!$company || $company->status !== 'approved') {
-                return redirect()->route('pending.approval');
-            }
-
-            // If approved, redirect based on designation
-            if ($company->designation === 'client') {
-                return redirect()->route('client.dashboard');
-            } elseif ($company->designation === 'supplier') {
-                return redirect()->route('supplier.dashboard');
-            }
-        }
-
-        // For all other cases, redirect to pending approval
-        return redirect()->route('pending.approval');
-    }
 }

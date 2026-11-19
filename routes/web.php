@@ -156,7 +156,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/quotations/response/attachment/{attachment}/download', [QuotationController::class, 'downloadResponseAttachment'])->name('quotations.response.attachment.download');
     // Invitation Routes
     Route::resource('supplier-invitations', SupplierInvitationController::class);
-    Route::post('/api/supplier-invitations/{invitation}/resend', [SupplierInvitationController::class, 'resend']);
+    Route::post('/api/supplier-invitations/{invitation}/resend', [SupplierInvitationController::class, 'resend'])->name('supplier-invitations.resend');
     Route::post('/api/supplier-invitations/remove-attachment', [SupplierInvitationController::class, 'removeAttachment']);
     Route::get('/api/supplier-invitations/search', [SupplierInvitationController::class, 'search'])->name('supplier-invitations.search');
     // Supplier Routes
@@ -222,6 +222,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/stock-alerts', [WarehouseDashboardController::class, 'getStockAlerts'])->name('stock-alerts');
         Route::get('/stock-movements', [WarehouseDashboardController::class, 'getStockMovements'])->name('stock-movements');
         Route::resource('deliveries', WarehouseDeliveryController::class);
+        Route::post('deliveries/{delivery}/process', [WarehouseDeliveryController::class, 'process'])->name('deliveries.process');
         Route::resource('inventory', WarehouseInventoryController::class);
         Route::post('inventory/add-stock', [WarehouseInventoryController::class, 'addStock'])->name('inventory.add-stock');
         Route::post('inventory/update-stock', [WarehouseInventoryController::class, 'updateStock'])->name('inventory.update-stock');
@@ -587,97 +588,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     })->name('dbadmin');
 });
 
-// Test route for notification count (remove in production)
-Route::get('/test-notifications', function () {
-    $service = new \App\Services\NotificationService();
-    $count = $service::getUnreadCount();
-    $user = auth()->user();
-    
-    // Also test the API route logic
-    $apiCount = \App\Models\Notification::where(function($query) use ($user) {
-            $query->where('notifiable_id', $user->id)
-                  ->orWhere('user_id', $user->id);
-        })
-        ->whereNull('read_at')
-        ->count();
-    
-    return response()->json([
-        'unread_count' => $count,
-        'api_count' => $apiCount,
-        'user_id' => $user->id,
-        'user_name' => $user->name ?? 'Unknown',
-        'global_unread_count' => $globalUnreadCount ?? 'not set'
-    ]);
-})->middleware('auth');
-
-// Test route for creating a sample purchase request notification (remove in production)
-Route::get('/test-purchase-request-notification', function () {
-    if (!auth()->user()->hasRole('admin')) {
-        return response()->json(['error' => 'Admin access required'], 403);
-    }
-    
-    // Create a sample notification
-    \App\Models\Notification::create([
-        'notifiable_id' => auth()->id(),
-        'notifiable_type' => \App\Models\User::class,
-        'type' => 'Purchase Request Approval Needed',
-        'data' => [
-            'title' => 'Test Purchase Request Approval Required',
-            'message' => 'A test purchase request #PR-000001 requires your approval.',
-            'link' => route('purchase-requests.index'),
-            'purchase_request_id' => 1,
-            'request_number' => 'PR-000001'
-        ],
-    ]);
-    
-    return response()->json(['success' => true, 'message' => 'Test notification created']);
-})->middleware('auth');
-
-Route::get('/test-notification-badge', function () {
-    if (!auth()->user()->hasRole('admin')) {
-        return response()->json(['error' => 'Admin access required'], 403);
-    }
-    
-    // Create a test notification for the current user
-    $notification = \App\Models\Notification::create([
-        'notifiable_id' => auth()->id(),
-        'notifiable_type' => \App\Models\User::class,
-        'type' => 'Test Notification',
-        'data' => [
-            'title' => 'Test Notification Badge',
-            'message' => 'This is a test notification to check if the badge appears.',
-        ],
-    ]);
-    
-    // Get the current count
-    $count = \App\Services\NotificationService::getUnreadCount();
-    
-    return response()->json([
-        'success' => true, 
-        'message' => 'Test notification created',
-        'notification_id' => $notification->id,
-        'current_count' => $count
-    ]);
-})->middleware('auth');
-
-// Clean up invalid notifications (remove in production)
-Route::get('/cleanup-notifications', function () {
-    if (!auth()->user()->hasRole('admin')) {
-        return response()->json(['error' => 'Admin access required'], 403);
-    }
-    
-    // Delete notifications with invalid purchase request data
-    $deleted = \App\Models\Notification::where('type', 'like', '%Purchase Request%')
-        ->where(function($query) {
-            $query->whereNull('data')
-                  ->orWhere('data', '')
-                  ->orWhere('data', '[]');
-        })
-        ->delete();
-    
-    return response()->json(['success' => true, 'deleted_count' => $deleted]);
-})->middleware('auth');
-
 Route::get('/api/unread-notifications-count', function () {
     $user = auth()->user();
     $count = \App\Models\Notification::where(function($query) use ($user) {
@@ -694,9 +604,9 @@ Route::get('/api/unread-messages-count', function () {
     $count = \App\Models\Message::whereHas('conversation', function($q) use ($user) {
         if ($user->role === 'manager' || $user->user_type === 'admin') {
             $q->where('admin_id', $user->id);
-        } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'client') {
+        } elseif ($user->isClientCompany()) {
             $q->where('client_id', $user->id);
-        } elseif ($user->user_type === 'company' && $user->company && $user->company->designation === 'supplier') {
+        } elseif ($user->isSupplierCompany()) {
             $q->where('supplier_id', $user->company->id);
         } else {
             $q->where('id', 0); // No conversations

@@ -106,9 +106,47 @@ class User extends Authenticatable // implements MustVerifyEmail
         return ($this->role ?? $this->user_type ?? null) === 'supplier';
     }
 
-    public function isWarehouse()
+    public function isClientCompany(): bool
     {
-        return ($this->role ?? $this->user_type ?? null) === 'warehouse';
+        return $this->user_type === 'company' && $this->company?->designation === 'client';
+    }
+
+    public function isSupplierCompany(): bool
+    {
+        return $this->user_type === 'company' && $this->company?->designation === 'supplier';
+    }
+
+    /**
+     * The client Party record for this user: linked by user_id first, then by email, then by company name,
+     * finally any party sharing the email (legacy records created before parties were linked to users).
+     */
+    public function clientParty(): ?Party
+    {
+        return Party::where('user_id', $this->id)->where('entity_type', 'client')->first()
+            ?? Party::where('email', $this->email)->where('user_id', $this->id)->first()
+            ?? Party::where('email', $this->email)->where('entity_type', 'client')->first()
+            ?? ($this->company ? Party::where('company_name', $this->company->company_name)->where('entity_type', 'client')->first() : null)
+            ?? Party::where('email', $this->email)->first();
+    }
+
+    /** Route name a user lands on after login or email verification. */
+    public function homeRoute(): string
+    {
+        $byRole = ['manager' => 'manager.dashboard', 'admin' => 'admin.dashboard', 'finance' => 'finance.dashboard'];
+        if (isset($byRole[$this->role ?? ''])) {
+            return $byRole[$this->role];
+        }
+        if ($this->user_type === 'employee') {
+            return ['procurement' => 'procurement.dashboard', 'warehousing' => 'warehouse.dashboard'][$this->role ?? ''] ?? 'home';
+        }
+        $company = $this->user_type === 'company' ? $this->company : null;
+        if ($company?->status === 'rejected') {
+            return 'account.rejected';
+        }
+        if ($company?->status === 'approved') {
+            return ['client' => 'landing.catalogue', 'supplier' => 'supplier.dashboard'][$company->designation] ?? 'pending.approval';
+        }
+        return 'pending.approval';
     }
 
     protected static function booted()

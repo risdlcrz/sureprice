@@ -23,36 +23,7 @@ class ClientPaymentController extends Controller
             ]);
         }
 
-        // Find the client party record for this user
-        $clientParty = \App\Models\Party::where('user_id', $user->id)
-            ->where('entity_type', 'client')
-            ->first();
-
-        // If no client party found, try to find by email with user_id set (prioritize linked parties)
-        if (!$clientParty) {
-            $clientParty = \App\Models\Party::where('email', $user->email)
-                ->where('user_id', $user->id)
-                ->first();
-        }
-
-        // If still no client party found, try to find by email with entity_type client
-        if (!$clientParty) {
-            $clientParty = \App\Models\Party::where('email', $user->email)
-                ->where('entity_type', 'client')
-                ->first();
-        }
-
-        // If still no client party found, try to find by company
-        if (!$clientParty && $company) {
-            $clientParty = \App\Models\Party::where('company_name', $company->company_name)
-                ->where('entity_type', 'client')
-                ->first();
-        }
-
-        // If still no client party found, try to find any party with the same email
-        if (!$clientParty) {
-            $clientParty = \App\Models\Party::where('email', $user->email)->first();
-        }
+        $clientParty = $user->clientParty();
 
         if (!$clientParty) {
             return view('client.payments.index', [
@@ -144,36 +115,7 @@ class ClientPaymentController extends Controller
             ]);
         }
 
-        // Find the client party record for this user
-        $clientParty = \App\Models\Party::where('user_id', $user->id)
-            ->where('entity_type', 'client')
-            ->first();
-
-        // If no client party found, try to find by email with user_id set (prioritize linked parties)
-        if (!$clientParty) {
-            $clientParty = \App\Models\Party::where('email', $user->email)
-                ->where('user_id', $user->id)
-                ->first();
-        }
-
-        // If still no client party found, try to find by email with entity_type client
-        if (!$clientParty) {
-            $clientParty = \App\Models\Party::where('email', $user->email)
-                ->where('entity_type', 'client')
-                ->first();
-        }
-
-        // If still no client party found, try to find by company
-        if (!$clientParty && $company) {
-            $clientParty = \App\Models\Party::where('company_name', $company->company_name)
-                ->where('entity_type', 'client')
-                ->first();
-        }
-
-        // If still no client party found, try to find any party with the same email
-        if (!$clientParty) {
-            $clientParty = \App\Models\Party::where('email', $user->email)->first();
-        }
+        $clientParty = $user->clientParty();
 
         if (!$clientParty) {
             return view('client.payments.dashboard', [

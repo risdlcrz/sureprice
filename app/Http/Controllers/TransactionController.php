@@ -87,7 +87,6 @@ class TransactionController extends Controller
 
     public function pastTransactions(Request $request)
     {
-        dd('You are in the pastTransactions method!');
         // Fetch all purchase request items (could also include purchase orders, etc.)
         $items = \App\Models\PurchaseRequestItem::with(['material', 'supplier'])
             ->orderByDesc('created_at')

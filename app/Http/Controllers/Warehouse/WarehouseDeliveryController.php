@@ -16,16 +16,6 @@ use App\Models\User;
 
 class WarehouseDeliveryController extends Controller
 {
-    private function logPageView($description, $modelType = null, $modelId = null)
-    {
-        Activity::create([
-            'user_id' => auth()->id(),
-            'action' => 'viewed',
-            'description' => $description,
-            'model_type' => $modelType,
-            'model_id' => $modelId
-        ]);
-    }
 
     public function index(Request $request)
     {
@@ -158,7 +148,7 @@ class WarehouseDeliveryController extends Controller
     {
         $user = Auth::user();
         $userWarehouseId = property_exists($user, 'warehouse_id') ? $user->warehouse_id : null;
-        $hasWarehouseRole = method_exists($user, 'hasRole') ? $user->hasRole('warehouse') : false;
+        $hasWarehouseRole = method_exists($user, 'hasRole') ? $user->hasRole('warehousing') : false;
         if ($delivery->status !== 'completed' || !$hasWarehouseRole || $delivery->warehouse_id !== $userWarehouseId) {
             abort(403, 'Feedback only allowed for completed deliveries by the assigned warehouse.');
         }
@@ -170,7 +160,7 @@ class WarehouseDeliveryController extends Controller
     {
         $user = Auth::user();
         $userWarehouseId = property_exists($user, 'warehouse_id') ? $user->warehouse_id : null;
-        $hasWarehouseRole = method_exists($user, 'hasRole') ? $user->hasRole('warehouse') : false;
+        $hasWarehouseRole = method_exists($user, 'hasRole') ? $user->hasRole('warehousing') : false;
         if ($delivery->status !== 'completed' || !$hasWarehouseRole || $delivery->warehouse_id !== $userWarehouseId) {
             abort(403, 'Feedback only allowed for completed deliveries by the assigned warehouse.');
         }

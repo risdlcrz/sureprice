@@ -279,7 +279,7 @@ class Contract extends Model
         // If no payment schedule exists, generate one first
         if (!$this->payment_schedule) {
             \Log::info('No payment schedule found, generating one first');
-            $this->generatePaymentSchedule();
+            $this->payment_schedule = json_encode($this->generatePaymentSchedule());
             $this->save();
         }
         
@@ -316,122 +316,70 @@ class Contract extends Model
         }
     }
 
-    public function generatePaymentSchedule()
+    /**
+     * Payment stages [stage, amount, due_date] for this contract's payment plan,
+     * falling back to the legacy free-text payment_terms when the plan is not recognised.
+     */
+    public function generatePaymentSchedule(): array
     {
-        $paymentSchedule = [];
-        
-        if ($this->payment_plan) {
-            $plan = $this->payment_plan;
-            $total = $this->total_amount;
-            
-            if ($plan === '30% down, 40% halfway, 30% on completion') {
-                $paymentSchedule[] = [
-                    'stage' => 'Downpayment',
-                    'amount' => $total * 0.30,
-                    'due_date' => $this->start_date->format('Y-m-d')
-                ];
-                
-                // Calculate halfway date (middle of project duration)
-                $projectDuration = $this->start_date->diffInDays($this->end_date);
-                $halfwayDate = $this->start_date->copy()->addDays($projectDuration / 2);
-                
-                $paymentSchedule[] = [
-                    'stage' => 'Halfway Payment',
-                    'amount' => $total * 0.40,
-                    'due_date' => $halfwayDate->format('Y-m-d')
-                ];
-                
-                $paymentSchedule[] = [
-                    'stage' => 'Completion Payment',
-                    'amount' => $total * 0.30,
-                    'due_date' => $this->end_date->format('Y-m-d')
-                ];
-            }
-            elseif ($plan === '50/50') {
-                $paymentSchedule[] = [
-                    'stage' => 'Downpayment',
-                    'amount' => $total * 0.50,
-                    'due_date' => $this->start_date->format('Y-m-d')
-                ];
-                
-                $paymentSchedule[] = [
-                    'stage' => 'Completion Payment',
-                    'amount' => $total * 0.50,
-                    'due_date' => $this->end_date->format('Y-m-d')
-                ];
-            }
-            elseif ($plan === 'Full upon completion') {
-                $paymentSchedule[] = [
-                    'stage' => 'Completion Payment',
-                    'amount' => $total,
-                    'due_date' => $this->end_date->format('Y-m-d')
-                ];
-            }
-            elseif ($plan === 'milestone') {
-                $paymentSchedule[] = [
-                    'stage' => 'Downpayment',
-                    'amount' => $total * 0.20,
-                    'due_date' => $this->start_date->format('Y-m-d')
-                ];
-                
-                // After Foundation (25% of project duration)
-                $foundationDate = $this->start_date->copy()->addDays($this->start_date->diffInDays($this->end_date) * 0.25);
-                $paymentSchedule[] = [
-                    'stage' => 'After Foundation',
-                    'amount' => $total * 0.20,
-                    'due_date' => $foundationDate->format('Y-m-d')
-                ];
-                
-                // After Structure (60% of project duration)
-                $structureDate = $this->start_date->copy()->addDays($this->start_date->diffInDays($this->end_date) * 0.60);
-                $paymentSchedule[] = [
-                    'stage' => 'After Structure',
-                    'amount' => $total * 0.30,
-                    'due_date' => $structureDate->format('Y-m-d')
-                ];
-                
-                $paymentSchedule[] = [
-                    'stage' => 'Completion Payment',
-                    'amount' => $total * 0.30,
-                    'due_date' => $this->end_date->format('Y-m-d')
-                ];
-            }
-            elseif ($plan === 'monthly3') {
-                $monthlyAmount = $total / 3;
-                for ($i = 1; $i <= 3; $i++) {
-                    $dueDate = $this->start_date->copy()->addMonths($i);
-                    $paymentSchedule[] = [
-                        'stage' => "Month {$i} Payment",
-                        'amount' => $monthlyAmount,
-                        'due_date' => $dueDate->format('Y-m-d')
-                    ];
-                }
-            }
-            elseif ($plan === 'monthly6') {
-                $monthlyAmount = $total / 6;
-                for ($i = 1; $i <= 6; $i++) {
-                    $dueDate = $this->start_date->copy()->addMonths($i);
-                    $paymentSchedule[] = [
-                        'stage' => "Month {$i} Payment",
-                        'amount' => $monthlyAmount,
-                        'due_date' => $dueDate->format('Y-m-d')
-                    ];
-                }
-            }
-            elseif ($plan === 'monthly12') {
-                $monthlyAmount = $total / 12;
-                for ($i = 1; $i <= 12; $i++) {
-                    $dueDate = $this->start_date->copy()->addMonths($i);
-                    $paymentSchedule[] = [
-                        'stage' => "Month {$i} Payment",
-                        'amount' => $monthlyAmount,
-                        'due_date' => $dueDate->format('Y-m-d')
-                    ];
-                }
-            }
+        if (!$this->payment_plan) {
+            return [];
         }
-        
-        return $paymentSchedule;
+        $total = $this->total_amount;
+        $start = $this->start_date;
+        $end = $this->end_date;
+        $row = fn (string $stage, $amount, $date) => ['stage' => $stage, 'amount' => $amount, 'due_date' => $date->format('Y-m-d')];
+        $at = fn (float $share) => $start->copy()->addDays($start->diffInDays($end) * $share);
+        $monthly = fn (int $n) => array_map(fn ($i) => $row("Month {$i} Payment", $total / $n, $start->copy()->addMonths($i)), range(1, $n));
+
+        return match ($this->payment_plan) {
+            '30% down, 40% halfway, 30% on completion' => [
+                $row('Downpayment', $total * 0.30, $start),
+                $row('Halfway Payment', $total * 0.40, $at(0.5)),
+                $row('Completion Payment', $total * 0.30, $end),
+            ],
+            '50/50' => [$row('Downpayment', $total * 0.50, $start), $row('Completion Payment', $total * 0.50, $end)],
+            'Full upon completion' => [$row('Completion Payment', $total, $end)],
+            'milestone' => [
+                $row('Downpayment', $total * 0.20, $start),
+                $row('After Foundation', $total * 0.20, $at(0.25)),
+                $row('After Structure', $total * 0.30, $at(0.60)),
+                $row('Completion Payment', $total * 0.30, $end),
+            ],
+            'monthly3' => $monthly(3),
+            'monthly6' => $monthly(6),
+            'monthly12' => $monthly(12),
+            default => $this->legacyPaymentSchedule($row),
+        };
+    }
+
+    /** Schedules for contracts that only carry the old free-text payment_terms. */
+    private function legacyPaymentSchedule(callable $row): array
+    {
+        $terms = (string) $this->payment_terms;
+        $total = $this->total_amount;
+        if (str_contains($terms, 'Pay All In')) {
+            return [$row('Full Payment', $total, $this->end_date)];
+        }
+        if (str_contains($terms, 'Progress Payment')) {
+            $advance = $total * 0.15;
+            $retention = $total * 0.10;
+            return [
+                $row('Advance Payment (15%)', $advance, $this->start_date),
+                $row('Progress Payment (75%)', $total - $advance - $retention, $this->end_date),
+                $row('Retention (10%)', $retention, $this->end_date->copy()->addDays(30)),
+            ];
+        }
+        if (str_contains($terms, 'Installment') && preg_match('/(\d+)% downpayment, (\d+) months/', $terms, $m)) {
+            [$percent, $months] = [intval($m[1]), intval($m[2])];
+            $down = ($total * $percent) / 100;
+            $schedule = [$row("Downpayment ({$percent}%)", $down, $this->start_date)];
+            for ($i = 1, $date = $this->start_date->copy(); $i <= $months; $i++) {
+                $schedule[] = $row("Installment {$i}", ($total - $down) / $months, $date->addMonth());
+            }
+            return $schedule;
+        }
+        return [];
     }
 
     private function getPaymentType($stage)

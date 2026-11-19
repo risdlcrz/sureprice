@@ -76,11 +76,11 @@
                     <a href="{{ route('material-requests.create', ['contract_id' => $contract->id]) }}" class="btn btn-info" id="createMaterialRequest">
                         <i class="fas fa-boxes"></i> Create Material Request
                     </a>
-                @elseif(Auth::user()->hasRole('warehouse') && $contract->status === 'approved')
+                @elseif(Auth::user()->hasRole('warehousing') && $contract->status === 'approved')
                     <a href="{{ route('material-requests.create', ['contract_id' => $contract->id]) }}" class="btn btn-info" id="createMaterialRequest">
                         <i class="fas fa-boxes"></i> Create Material Request
                     </a>
-                @elseif(in_array(Auth::user()->role, ['manager', 'procurement', 'warehouse']))
+                @elseif(in_array(Auth::user()->role, ['manager', 'procurement', 'warehousing']))
                     <button class="btn btn-info" disabled title="Contract must be approved by admin before requesting materials.">
                         <i class="fas fa-boxes"></i> Create Material Request
                     </button>

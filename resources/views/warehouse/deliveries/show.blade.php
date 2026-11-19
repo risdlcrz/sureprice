@@ -126,7 +126,7 @@
     </div>
     @endif
 
-    @if($delivery->status === 'completed' && auth()->user()->hasRole('warehouse'))
+    @if($delivery->status === 'completed' && auth()->user()->hasRole('warehousing'))
         @php
             $existingFeedback = \App\Models\DeliveryFeedback::where('delivery_id', $delivery->id)->where('warehouse_id', auth()->id())->first();
         @endphp

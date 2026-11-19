@@ -322,30 +322,6 @@ class ProjectTimelineController extends Controller
         return redirect()->back()->with('success', 'Task marked as delayed.');
     }
 
-    public function getTasksByContract(Contract $contract)
-    {
-        $tasks = $contract->tasks()
-            ->with(['room', 'scopeType', 'assignee'])
-            ->get()
-            ->map(function($task) {
-                return [
-                    'id' => $task->id,
-                    'title' => $task->title,
-                    'start' => $task->start_date->format('Y-m-d'),
-                    'end' => $task->end_date->format('Y-m-d'),
-                    'status' => $task->status,
-                    'priority' => $task->priority,
-                    'progress' => $task->progress,
-                    'room' => $task->room ? $task->room->name : null,
-                    'scope' => $task->scopeType ? $task->scopeType->name : null,
-                    'assignee' => $task->assignee ? $task->assignee->name : null,
-                    'url' => route('project-tasks.show', $task)
-                ];
-            });
-
-        return response()->json($tasks);
-    }
-
     public function apiEvents(Request $request)
     {
         try {
@@ -467,10 +443,6 @@ class ProjectTimelineController extends Controller
                 'calendar' => $calendarEvents,
                 'gantt' => $ganttTasks
             ]);
-
-            // Temporarily dump the data to debug
-            dd($calendarEvents->toJson(), $ganttTasks->toJson());
-
         } catch (\Exception $e) {
             // Log the error for debugging
             \Log::error('Error in ProjectTimelineController apiEvents: ' . $e->getMessage() . ' on line ' . $e->getLine() . ' in file ' . $e->getFile());

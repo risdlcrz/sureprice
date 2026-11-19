@@ -21,16 +21,6 @@ use App\Models\Activity;
 
 class ProcurementController extends Controller
 {
-    private function logPageView($description)
-    {
-        Activity::create([
-            'user_id' => auth()->id(),
-            'action' => 'viewed',
-            'description' => $description,
-            'model_type' => null,
-            'model_id' => null
-        ]);
-    }
 
     public function index()
     {
