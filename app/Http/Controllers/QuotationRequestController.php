@@ -85,21 +85,7 @@ class QuotationRequestController extends Controller
         if ($awardedSupplierId) {
             // Find the awarded supplier's quotation (RFQ)
             $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #' . $quotation->request_number . '%')->get();
-            foreach ($rfqs as $rfq) {
-                $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
-                    ->where('supplier_id', $awardedSupplierId)
-                    ->first();
-                if ($response) {
-                    $awardedDiscount = [
-                        'discount_type' => $response->discount_type,
-                        'discount_percentage' => $response->discount_percentage,
-                        'discount_amount' => $response->discount_amount,
-                        'final_amount' => $response->final_amount,
-                        'total_amount' => $response->total_amount,
-                    ];
-                    break;
-                }
-            }
+            $awardedDiscount = \App\Models\QuotationResponse::forSupplier($rfqs, $awardedSupplierId)?->awardedDiscount();
         }
         // Calculate discounted materials cost and grand total AFTER awardedDiscount is set
         $discountedMaterialsCost = $awardedDiscount['final_amount'] ?? $totalMaterialsCost;

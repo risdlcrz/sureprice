@@ -53,13 +53,8 @@
 </div>
 
 <!-- Signature Modal -->
-<div class="modal fade" id="signatureModal" tabindex="-1" aria-labelledby="signatureModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="signatureModalLabel">Add Signature</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
+<x-modal-dialog id="signatureModal" dialog-class="modal-dialog-centered">
+    <x-slot:title>Add Signature</x-slot:title>
       <div class="modal-body">
         <div id="signatureModalSubtitle" class="mb-2">Add Client signature below</div>
         <canvas id="signatureCanvas" width="400" height="150" style="border:1px solid #ccc; width:100%; height:150px;"></canvas>
@@ -68,9 +63,7 @@
           <button type="button" class="btn btn-primary" id="saveSignatureBtn">Save Signature</button>
         </div>
       </div>
-    </div>
-  </div>
-</div>
+</x-modal-dialog>
 
 @push('scripts')
 <!-- SignaturePad CDN -->

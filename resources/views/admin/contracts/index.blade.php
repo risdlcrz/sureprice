@@ -43,13 +43,8 @@
 
 
     <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="deleteModalLabel">Delete Contract</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+    <x-modal-dialog id="deleteModal">
+        <x-slot:title>Delete Contract</x-slot:title>
                 <div class="modal-body">
                     Are you sure you want to delete this contract? This action cannot be undone.
                 </div>
@@ -57,18 +52,11 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
                 </div>
-            </div>
-        </div>
-    </div>
+    </x-modal-dialog>
 
     <!-- Status Update Modal -->
-    <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="statusModalLabel">Update Contract Status</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
+    <x-modal-dialog id="statusModal">
+        <x-slot:title>Update Contract Status</x-slot:title>
                 <div class="modal-body">
                     <p>Are you sure you want to change the status of this contract?</p>
                     <div class="btn-group w-100 flex-wrap">
@@ -83,9 +71,7 @@
                         <button type="button" class="btn btn-outline-success status-btn" data-status="renewed">Renewed</button>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
+    </x-modal-dialog>
 
     <div class="card contracts-table-container">
         <div class="card-body">

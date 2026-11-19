@@ -1,12 +1,7 @@
 {{-- Admin-only supplier evaluation modal (resources/js/admin/suppliers/rankings.js) --}}
 
-<div class="modal fade" id="evaluationModal" tabindex="-1" aria-labelledby="evaluationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="evaluationModalLabel">Supplier Evaluation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="evaluationModal" dialog-class="modal-lg">
+    <x-slot:title>Supplier Evaluation</x-slot:title>
             <form id="evaluationForm">
                 @csrf
                 <div class="modal-body">
@@ -195,6 +190,4 @@
                     </button>
                 </div>
             </form>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>

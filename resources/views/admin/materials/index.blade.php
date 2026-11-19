@@ -188,13 +188,8 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Delete Material</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="deleteModal">
+    <x-slot:title>Delete Material</x-slot:title>
             <div class="modal-body">
                 <p>Are you sure you want to delete this material? This action cannot be undone.</p>
                 <form id="deleteMaterialForm" method="POST" style="display: none;">
@@ -206,18 +201,11 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 
 <!-- Bulk SRP Update Modal -->
-<div class="modal fade" id="bulkSrpModal" tabindex="-1" aria-labelledby="bulkSrpModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="bulkSrpModalLabel">Set SRP Prices</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="bulkSrpModal" dialog-class="modal-xl">
+    <x-slot:title>Set SRP Prices</x-slot:title>
             <div class="modal-body">
                 <!-- Add search field -->
                 <div class="row mb-3">
@@ -254,18 +242,11 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" id="saveSrpPrices">Save Changes</button>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 
 <!-- Supplier Prices Modal -->
-<div class="modal fade" id="supplierPricesModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Supplier Prices</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="supplierPricesModal" dialog-class="modal-lg">
+    <x-slot:title>Supplier Prices</x-slot:title>
             <div class="modal-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -284,9 +265,7 @@
                     </table>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 
 @push('scripts')
 <script>window.__page = Object.assign(window.__page || {}, { index0_0: {{ Js::from((string) (route('materials.destroy', ':id'))) }}, index0_1: @json((string) (route("api.materials.all"))), index0_2: @json((string) (route("materials.update-srp"))), index0_3: @json((string) (url('api/materials'))) });</script>

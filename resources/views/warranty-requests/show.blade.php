@@ -128,13 +128,8 @@
 </div>
 
 <!-- Status Update Modal -->
-<div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Update Status</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="statusModal">
+    <x-slot:title>Update Status</x-slot:title>
             <div class="modal-body">
                 <form id="statusForm">
                     <div class="mb-3">
@@ -147,9 +142,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="submitStatusUpdate()">Update Status</button>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 @endsection
 
 @push('scripts')

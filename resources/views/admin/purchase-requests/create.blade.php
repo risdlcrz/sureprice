@@ -198,30 +198,18 @@
 </div>
 
 <!-- Material Search Modal -->
-<div class="modal fade" id="materialSearchModal" tabindex="-1" aria-labelledby="materialSearchModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="materialSearchModalLabel">Select Material</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
+<x-modal-dialog id="materialSearchModal" dialog-class="modal-dialog-centered">
+    <x-slot:title>Select Material</x-slot:title>
       <div class="modal-body">
         <input type="text" id="modalMaterialSearchInput" class="form-control mb-2" placeholder="Search materials...">
         <div id="modalMaterialSearchResults" class="list-group" style="max-height: 300px; overflow-y: auto;"></div>
         <div id="modalMaterialSearchWarning" class="alert alert-warning mt-2 d-none"></div>
       </div>
-    </div>
-  </div>
-</div>
+</x-modal-dialog>
 
 <!-- Material Replace Modal -->
-<div class="modal fade" id="replaceMaterialModal" tabindex="-1" aria-labelledby="replaceMaterialModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="replaceMaterialModalLabel">Replace Material</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
+<x-modal-dialog id="replaceMaterialModal" dialog-class="modal-dialog-centered">
+    <x-slot:title>Replace Material</x-slot:title>
       <div class="modal-body">
         <input type="text" id="replaceMaterialSearchInput" class="form-control mb-2" placeholder="Search materials...">
         <div id="replaceMaterialSearchResults" class="list-group" style="max-height: 300px; overflow-y: auto;"></div>
@@ -232,18 +220,11 @@
             <button type="button" class="btn btn-primary mt-2" id="confirmReplaceMaterialBtn">Confirm Replace</button>
         </div>
       </div>
-    </div>
-  </div>
-</div>
+</x-modal-dialog>
 
 <!-- Supplier Recommendation Modal -->
-<div class="modal fade" id="supplierRecommendationModal" tabindex="-1" aria-labelledby="supplierRecommendationModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="supplierRecommendationModalLabel">Supplier Recommendation for <span id="modalMaterialName"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="supplierRecommendationModal">
+    <x-slot:title>Supplier Recommendation for <span id="modalMaterialName"></span></x-slot:title>
             <div class="modal-body">
                 <form id="supplier-recommendation-form" class="row g-3 mb-3">
                     <input type="hidden" name="material_id" id="modalMaterialId">
@@ -262,9 +243,7 @@
                 </form>
                 <div id="supplier-recommendation-results"></div>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 
 @push('scripts')
 <script>window.__page = Object.assign(window.__page || {}, { create0_0: @json((string) (url("/"))), create0_1: @json($suppliers ?? []), create0_2: @json($materials ?? []), create0_3: @json($contracts ?? []), create0_4: @json($bestSuppliers ?? []), create0_5: @json((string) (route("purchase-requests.recommend-suppliers"))) });</script>

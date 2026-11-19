@@ -142,13 +142,8 @@
 </div>
 
 <!-- Add Warranty Request Modal -->
-<div class="modal fade" id="addWarrantyModal" tabindex="-1" aria-labelledby="addWarrantyModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addWarrantyModalLabel">Add Warranty Request</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="addWarrantyModal" dialog-class="modal-lg">
+    <x-slot:title>Add Warranty Request</x-slot:title>
             <div class="modal-body">
                 <form id="addWarrantyForm" class="needs-validation" enctype="multipart/form-data" novalidate>
                     <div class="mb-3">
@@ -205,18 +200,11 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" id="submitAddWarranty">Submit Request</button>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 
 <!-- Import Modal -->
-<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="importModalLabel">Import Warranty Requests</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="importModal" dialog-class="modal-lg">
+    <x-slot:title>Import Warranty Requests</x-slot:title>
             <div class="modal-body">
                 <div class="alert alert-info">
                     <h6 class="alert-heading"><i class="bi bi-info-circle"></i> Instructions</h6>
@@ -257,18 +245,11 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="submit" form="importForm" class="btn btn-primary">Import</button>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 
 <!-- Additional Work Request Modal -->
-<div class="modal fade" id="additionalWorkModal" tabindex="-1" aria-labelledby="additionalWorkModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="additionalWorkModalLabel">Request Additional Work</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="additionalWorkModal" dialog-class="modal-xl">
+    <x-slot:title>Request Additional Work</x-slot:title>
             <div class="modal-body">
                 <form id="additionalWorkForm" class="needs-validation" novalidate>
                     <div class="row">
@@ -410,9 +391,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" id="submitAdditionalWork">Submit Request</button>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 
 @push('scripts')
 <script>window.__page = Object.assign(window.__page || {}, { index0_0: @json((string) (route("warranty-requests.export"))), index0_1: @json((string) (route("warranty-requests.index"))), index0_2: @json((string) (url('api/warranty-requests'))), index0_3: @json((string) (url('api/materials/search'))), index0_4: @json((string) (route("warranty-requests.additional-work"))), index0_5: @json((string) (csrf_token())) });</script>

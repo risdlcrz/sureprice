@@ -247,13 +247,8 @@
 </div>
 
 <!-- Search Contract Modal -->
-<div class="modal fade" id="searchContractModal" tabindex="-1" aria-labelledby="searchContractModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="searchContractModalLabel">Search Contracts</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="searchContractModal">
+    <x-slot:title>Search Contracts</x-slot:title>
             <div class="modal-body">
                 <div class="mb-3">
                     <label for="contractSearch" class="form-label">Search by Contract Number or Client Name</label>
@@ -261,9 +256,7 @@
                 </div>
                 <div id="searchResults"></div>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 
 @vite('resources/js/pages/client-payments-index.js')
 

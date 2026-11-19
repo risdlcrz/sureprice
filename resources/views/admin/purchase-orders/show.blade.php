@@ -183,381 +183,46 @@
                 </div>
             </div>
         </div>
-    </div>
 
     @vite('resources/css/pages/admin-purchase-orders-show.css')
 
-    <!-- Complete Purchase Order Modal -->
-    <div class="modal fade" id="completePurchaseOrderModal" tabindex="-1" aria-labelledby="completePurchaseOrderModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="completePurchaseOrderModalLabel">Complete Purchase Order</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form id="completePurchaseOrderForm" method="POST">
-                    @csrf
-                    <div class="modal-body">
-                        <div class="alert alert-success d-none" id="completeSuccessMessage">
-                            Purchase order completed successfully!
-                        </div>
+    @include('admin.purchase-orders.partials.complete-modal')
 
-                        <!-- Delivery Information -->
-                        <div class="mb-4">
-                            <h6 class="mb-3">Delivery Information</h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="delivery_date" class="form-label">Delivery Date</label>
-                                        <input type="date" class="form-control" id="delivery_date" name="delivery_date" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label class="form-label d-block">Delivery Status</label>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" name="is_on_time" id="ontime" value="1" checked>
-                                            <label class="form-check-label" for="ontime">On Time</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="radio" name="is_on_time" id="delayed" value="0">
-                                            <label class="form-check-label" for="delayed">Delayed</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Quality Assessment -->
-                        <div class="mb-4">
-                            <h6 class="mb-3">Quality Assessment</h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="total_units" class="form-label">Total Units Received</label>
-                                        <input type="number" class="form-control" id="total_units" name="total_units" min="0" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="defective_units" class="form-label">Defective Units</label>
-                                        <input type="number" class="form-control" id="defective_units" name="defective_units" min="0" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group mb-3">
-                                <label for="quality_notes" class="form-label">Quality Notes</label>
-                                <textarea class="form-control" id="quality_notes" name="quality_notes" rows="3"></textarea>
-                            </div>
-                        </div>
-
-                        <!-- Cost Information -->
-                        <div class="mb-4">
-                            <h6 class="mb-3">Cost Information</h6>
-                            <div class="table-responsive mb-3">
-                                <table class="table table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>Material</th>
-                                            <th>Quantity</th>
-                                            <th>SRP Price</th>
-                                            <th>Quoted Price</th>
-                                            <th>Total SRP</th>
-                                            <th>Total Quoted</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($purchaseOrder->items as $item)
-                                            <tr>
-                                                <td>{{ $item->material->name }}</td>
-                                                <td>{{ number_format($item->quantity, 2) }}</td>
-                                                <td>₱{{ number_format($item->material->srp_price, 2) }}</td>
-                                                <td>₱{{ number_format($item->unit_price, 2) }}</td>
-                                                <td>₱{{ number_format($item->quantity * $item->material->srp_price, 2) }}</td>
-                                                <td>₱{{ number_format($item->quantity * $item->unit_price, 2) }}</td>
-                                            </tr>
-                                        @endforeach
-                                        <tr class="table-secondary">
-                                            <td colspan="4" class="text-end"><strong>Total:</strong></td>
-                                            <td><strong>₱{{ number_format($purchaseOrder->calculateEstimatedCost(), 2) }}</strong></td>
-                                            <td><strong>₱{{ number_format($purchaseOrder->calculateActualCost(), 2) }}</strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="estimated_cost" class="form-label">Total SRP Cost</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">₱</span>
-                                            <input type="number" class="form-control" id="estimated_cost" name="estimated_cost" 
-                                                   value="{{ $purchaseOrder->calculateEstimatedCost() }}" readonly>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group mb-3">
-                                        <label for="actual_cost" class="form-label">Total Quoted Cost</label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">₱</span>
-                                            <input type="number" class="form-control" id="actual_cost" name="actual_cost" 
-                                                   value="{{ $purchaseOrder->calculateActualCost() }}" readonly>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="alert {{ $purchaseOrder->calculateActualCost() <= $purchaseOrder->calculateEstimatedCost() ? 'alert-success' : 'alert-warning' }} mb-0">
-                                @php
-                                    $variance = $purchaseOrder->calculateActualCost() - $purchaseOrder->calculateEstimatedCost();
-                                    $variancePercent = $purchaseOrder->calculateEstimatedCost() > 0 
-                                        ? ($variance / $purchaseOrder->calculateEstimatedCost()) * 100 
-                                        : 0;
-                                @endphp
-                                <strong>Cost Variance:</strong> 
-                                {{ $variance >= 0 ? '+' : '-' }}₱{{ number_format(abs($variance), 2) }} 
-                                ({{ number_format($variancePercent, 2) }}%)
-                                <br>
-                                <small>
-                                    @if($variance <= 0)
-                                        The quoted prices are within or below SRP.
-                                    @else
-                                        The quoted prices are above SRP. Consider reviewing the costs.
-                                    @endif
-                                </small>
-                            </div>
-                        </div>
-
-                        <input type="hidden" name="is_delivered" value="1">
-                        <input type="hidden" name="is_completed" value="1">
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-success" id="completeButton">
-                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                            Complete Purchase Order
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    @push('scripts')
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const completePurchaseOrderModal = document.getElementById('completePurchaseOrderModal');
-        const completePurchaseOrderForm = document.getElementById('completePurchaseOrderForm');
-        const completeButton = document.getElementById('completeButton');
-        const spinner = completeButton.querySelector('.spinner-border');
-        const successMessage = document.getElementById('completeSuccessMessage');
-        let currentPurchaseOrderId = null;
-
-        completePurchaseOrderModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            currentPurchaseOrderId = button.getAttribute('data-po-id');
-            
-            // Pre-fill estimated cost from total amount
-            document.getElementById('estimated_cost').value = '{{ $purchaseOrder->total_amount }}';
-            document.getElementById('total_units').value = '{{ $purchaseOrder->items->sum("quantity") }}';
-        });
-
-        completePurchaseOrderForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            if (!currentPurchaseOrderId) return;
-
-            try {
-                completeButton.disabled = true;
-                spinner.classList.remove('d-none');
-                successMessage.classList.add('d-none');
-
-                const formData = new FormData(this);
-                const response = await fetch('{{ route('purchase-orders.complete', $purchaseOrder) }}', {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    },
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Failed to complete purchase order');
-                }
-
-                successMessage.classList.remove('d-none');
-                successMessage.textContent = data.message || 'Purchase order completed successfully!';
-                
-                // Reload page after a delay
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-
-            } catch (error) {
-                console.error('Error:', error);
-                alert(error.message || 'Failed to complete purchase order. Please try again.');
-            } finally {
-                completeButton.disabled = false;
-                spinner.classList.add('d-none');
-            }
-        });
-    });
-    </script>
-    @endpush
-
-    <div class="mb-3">
-        @if($purchaseOrder->status === 'approved' && (!$payment || $payment->status === 'rejected') && auth()->user()->isAdmin())
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#submitPaymentModal">Submit Payment to Supplier</button>
-        @endif
-        @if($payment && $payment->status === 'for_verification' && auth()->user()->isSupplier())
-            <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#verifyPaymentModal">Verify Admin Payment</button>
-        @endif
-        @if($payment)
-            <div class="mt-2">
-                <strong>Payment Status:</strong> <x-status-badge :status="$payment->status" />
-                <br>
-                <strong>Amount:</strong> ₱{{ number_format($payment->amount, 2) }}<br>
-                <strong>Method:</strong> {{ ucfirst($payment->payment_method) }}<br>
-                <strong>Reference #:</strong> {{ $payment->admin_reference_number }}<br>
-                <strong>Date Paid:</strong> {{ $payment->admin_paid_date }}<br>
-                <strong>Proof:</strong> <a href="{{ asset('storage/' . $payment->admin_proof) }}" target="_blank">View</a><br>
-                <strong>Admin Notes:</strong> {{ $payment->admin_notes }}<br>
-                @if($payment->supplier_notes)
-                    <strong>Supplier Notes:</strong> {{ $payment->supplier_notes }}<br>
-                @endif
-            </div>
-        @endif
-    </div>
-    <!-- Admin Submit Payment Modal -->
-    <div class="modal fade" id="submitPaymentModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <form method="POST" action="{{ route('purchase-orders.payments.store', $purchaseOrder) }}" enctype="multipart/form-data">
-            @csrf
-            <div class="modal-header">
-              <h5 class="modal-title">Submit Payment to Supplier</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label>Amount</label>
-                <input type="number" name="amount" class="form-control" value="{{ $purchaseOrder->total_amount }}" required>
-              </div>
-              <div class="mb-3">
-                <label>Payment Method</label>
-                <select name="payment_method" class="form-control" required>
-                  <option value="bank_transfer">Bank Transfer</option>
-                  <option value="check">Check</option>
-                  <option value="cash">Cash</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label>Reference Number</label>
-                <input type="text" name="admin_reference_number" class="form-control" required>
-              </div>
-              <div class="mb-3">
-                <label>Date Paid</label>
-                <input type="date" name="admin_paid_date" class="form-control" value="{{ now()->toDateString() }}" required>
-              </div>
-              <div class="mb-3">
-                <label>Proof of Payment</label>
-                <input type="file" name="admin_proof" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
-              </div>
-              <div class="mb-3">
-                <label>Notes (optional)</label>
-                <textarea name="admin_notes" class="form-control"></textarea>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="submit" class="btn btn-primary">Submit for Verification</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-    @if($payment && $payment->status === 'for_verification' && auth()->user()->isSupplier())
-        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#verifyPaymentModal">Verify Admin Payment</button>
-        <!-- Supplier Verify Payment Modal -->
-        <div class="modal fade" id="verifyPaymentModal" tabindex="-1">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <form method="POST" action="{{ route('purchase-order-payments.verify', $payment) }}">
-                @csrf
-                <div class="modal-header">
-                  <h5 class="modal-title">Verify Admin Payment</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                  <p><strong>Amount:</strong> ₱{{ number_format($payment->amount, 2) }}</p>
-                  <p><strong>Method:</strong> {{ ucfirst($payment->payment_method) }}</p>
-                  <p><strong>Reference #:</strong> {{ $payment->admin_reference_number }}</p>
-                  <p><strong>Date Paid:</strong> {{ $payment->admin_paid_date }}</p>
-                  <p><strong>Proof:</strong> <a href="{{ asset('storage/' . $payment->admin_proof) }}" target="_blank">View</a></p>
-                  <div class="mb-3">
-                    <label>Notes (optional)</label>
-                    <textarea name="supplier_notes" class="form-control"></textarea>
-                  </div>
-                </div>
-                <div class="modal-footer">
-                  <button name="action" value="verify" class="btn btn-success">Verify</button>
-                  <button name="action" value="reject" class="btn btn-danger">Reject</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-    @endif
-
-{{-- Finance Payment/Validation Actions --}}
-@if(auth()->user()->hasRole('finance'))
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">Finance Actions</h5>
+    {{-- Payment to the supplier: admin/finance submit it, the supplier verifies it on their own PO page --}}
+    @php
+        $canPay = (auth()->user()->isAdmin() || auth()->user()->hasRole('finance'))
+            && in_array($purchaseOrder->status, ['pending_payment', 'approved'], true)
+            && (!$payment || $payment->status === 'rejected');
+    @endphp
+    <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Supplier Payment</span>
+            @if($canPay)
+                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#submitPaymentModal">
+                    <i class="fas fa-money-check-alt me-1"></i>{{ $payment ? 'Resubmit Payment' : 'Submit Payment to Supplier' }}
+                </button>
+            @endif
         </div>
         <div class="card-body">
-            @if(!$payment)
-                <form action="{{ route('purchase-orders.payments.store', $purchaseOrder) }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <div class="mb-3">
-                        <label>Amount</label>
-                        <input type="number" name="amount" class="form-control" value="{{ $purchaseOrder->total_amount }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label>Payment Method</label>
-                        <select name="payment_method" class="form-control" required>
-                            <option value="bank_transfer">Bank Transfer</option>
-                            <option value="check">Check</option>
-                            <option value="cash">Cash</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label>Reference Number</label>
-                        <input type="text" name="admin_reference_number" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label>Date Paid</label>
-                        <input type="date" name="admin_paid_date" class="form-control" value="{{ now()->toDateString() }}" required>
-                    </div>
-                    <div class="mb-3">
-                        <label>Proof of Payment</label>
-                        <input type="file" name="admin_proof" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
-                    </div>
-                    <div class="mb-3">
-                        <label>Notes (optional)</label>
-                        <textarea name="admin_notes" class="form-control"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Submit Payment</button>
-                </form>
-            @elseif($payment && $payment->status === 'pending')
-                <form action="{{ route('payments.markAsPaid', $payment) }}" method="POST">
-                    @csrf
-                    <button type="submit" class="btn btn-success">Validate Client Payment</button>
-                </form>
+            @if($payment)
+                <dl class="row mb-0">
+                    <dt class="col-sm-3">Status</dt><dd class="col-sm-9"><x-status-badge :status="$payment->status" /></dd>
+                    <dt class="col-sm-3">Amount</dt><dd class="col-sm-9">₱{{ number_format($payment->amount, 2) }}</dd>
+                    <dt class="col-sm-3">Method</dt><dd class="col-sm-9">{{ \App\Support\Status::label($payment->payment_method) }}</dd>
+                    <dt class="col-sm-3">Reference #</dt><dd class="col-sm-9">{{ $payment->admin_reference_number }}</dd>
+                    <dt class="col-sm-3">Date Paid</dt><dd class="col-sm-9">{{ $payment->admin_paid_date }}</dd>
+                    <dt class="col-sm-3">Proof</dt><dd class="col-sm-9"><a href="{{ asset('storage/' . $payment->admin_proof) }}" target="_blank">View</a></dd>
+                    @if($payment->admin_notes)<dt class="col-sm-3">Admin Notes</dt><dd class="col-sm-9">{{ $payment->admin_notes }}</dd>@endif
+                    @if($payment->supplier_notes)<dt class="col-sm-3">Supplier Notes</dt><dd class="col-sm-9">{{ $payment->supplier_notes }}</dd>@endif
+                </dl>
+            @else
+                <p class="text-muted mb-0">No payment submitted yet.</p>
             @endif
         </div>
     </div>
-@endif
+    @if($canPay)
+        @include('admin.purchase-orders.partials.payment-modal')
+    @endif
+</div>
 @endsection 

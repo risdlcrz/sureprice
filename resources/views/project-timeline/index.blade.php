@@ -187,13 +187,8 @@
 <!-- Warranty Request Modals -->
 @foreach($contracts as $contract)
     @if($contract->status === 'COMPLETED')
-        <div class="modal fade" id="warrantyModal{{ $contract->id }}" tabindex="-1" aria-labelledby="warrantyModalLabel{{ $contract->id }}" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="warrantyModalLabel{{ $contract->id }}">Warranty Request - Contract #{{ $contract->contract_number }}</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
+        <x-modal-dialog id="warrantyModal{{ $contract->id }}" dialog-class="modal-lg" title-id="warrantyModalLabel{{ $contract->id }}">
+            <x-slot:title>Warranty Request - Contract #{{ $contract->contract_number }}</x-slot:title>
                     <div class="modal-body">
                         <form id="warrantyForm{{ $contract->id }}" class="needs-validation" novalidate>
                             <div class="mb-3">
@@ -228,20 +223,13 @@
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button type="button" class="btn btn-primary" onclick="submitWarrantyRequest({{ $contract->id }})">Submit Request</button>
                     </div>
-                </div>
-            </div>
-        </div>
+        </x-modal-dialog>
     @endif
 @endforeach
 
 <!-- Additional Work Request Modal -->
-<div class="modal fade" id="additionalWorkModal" tabindex="-1" aria-labelledby="additionalWorkModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="additionalWorkModalLabel">Request Additional Work</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="additionalWorkModal" dialog-class="modal-lg">
+    <x-slot:title>Request Additional Work</x-slot:title>
             <div class="modal-body">
                 <!-- Info box for clients about additional work rules -->
                 <div class="alert alert-info alert-static" style="font-size: 1rem;">
@@ -324,9 +312,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" onclick="submitAdditionalWorkRequest()">Submit Request</button>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 
 @endsection
 

@@ -76,72 +76,7 @@
         </div>
     </div>
 
-    <!-- Import CSV Modal -->
-    <div class="modal fade" id="importCsvModal" tabindex="-1" aria-labelledby="importCsvModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="importCsvModalLabel">Import Data via CSV</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <!-- Instructions -->
-                    <div class="alert alert-info">
-                        <h6 class="alert-heading"><i class="fas fa-info-circle"></i> Instructions</h6>
-                        <ol class="mb-0">
-                            <li>Download the appropriate template file below</li>
-                            <li>Fill in the required information in the template</li>
-                            <li>Save the file as CSV format</li>
-                            <li>Upload the filled template using the form below</li>
-                        </ol>
-                    </div>
-                    
-                    <!-- Template Downloads -->
-                    <h6 class="mt-4">Download CSV Template:</h6>
-                    <div class="d-flex gap-2 mb-4">
-                        <a href="{{ route('information-management.template', ['type' => 'employee']) }}" class="btn btn-info btn-sm">
-                            <i class="fas fa-download me-1"></i> Employee Template
-                        </a>
-                        <a href="{{ route('information-management.template', ['type' => 'contractor']) }}" class="btn btn-secondary btn-sm">
-                            <i class="fas fa-download me-1"></i> Contractor Template
-                        </a>
-                    </div>
-
-                    <hr>
-
-                    <!-- Upload Form -->
-                    <h6 class="mt-4">Upload Your CSV File:</h6>
-                    <form action="{{ route('information-management.import') }}" method="POST" enctype="multipart/form-data" id="csvUploadForm">
-                        @csrf
-                        <div class="mb-3">
-                            <label for="import_type" class="form-label">Select Import Type:</label>
-                            <select class="form-select" name="type" id="import_type" required>
-                                <option value="employee">Employee</option>
-                                <option value="contractor">Contractor</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="csv_file" class="form-label">Choose CSV File:</label>
-                            <input type="file" name="csv_file" id="csv_file" class="form-control" accept=".csv" required>
-                        </div>
-                        <div class="alert alert-warning">
-                            <h6 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Important Notes</h6>
-                            <ul class="mb-0">
-                                <li>All fields marked with * are required</li>
-                                <li>For employees, role must be either 'procurement' or 'warehousing'</li>
-                                <li>Email addresses must be unique</li>
-                                <li>Usernames must be unique</li>
-                            </ul>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary">Import CSV</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    @include('admin.information-management.import-modal')
 
     <div class="data-card">
         <div class="table-responsive">
@@ -213,9 +148,7 @@
                                 <td>{{ $item->email }}</td>
                                 <td>{{ $item->mobile_number }}</td>
                                 <td>
-                                    <span class="status-badge status-{{ strtolower($item->status) }}">
-                                        {{ ucfirst($item->status) }}
-                                    </span>
+                                    <x-status-badge :status="$item->status" />
                                 </td>
                                 <td class="actions">
                                     <div class="d-flex justify-content-end gap-2">
@@ -228,64 +161,26 @@
                                             <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#approveModal{{ $item->id }}" title="Approve">
                                                 <i class="fas fa-check"></i>
                                             </button>
-                                            <!-- Approve Modal -->
-                                            <div class="modal fade" id="approveModal{{ $item->id }}" tabindex="-1">
-                                                <div class="modal-dialog">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title">Approve {{ $item->company_name }}</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <p>Are you sure you want to approve this company?</p>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <form action="{{ route('admin.companies.approve', $item->id) }}" method="POST">
-                                                                @csrf
-                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                                <button type="submit" class="btn btn-success">Approve</button>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <x-confirm-modal id="approveModal{{ $item->id }}" title="Approve {{ $item->company_name }}"
+                                                :action="route('admin.companies.approve', $item->id)" confirm="Approve" tone="success">
+                                                Are you sure you want to approve this company?
+                                            </x-confirm-modal>
 
                                             <!-- Reject Button triggers modal -->
                                             <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $item->id }}" title="Reject">
                                                 <i class="fas fa-times"></i>
                                             </button>
-                                            <!-- Reject Modal -->
-                                            <div class="modal fade" id="rejectModal{{ $item->id }}" tabindex="-1">
-                                                <div class="modal-dialog">
-                                                    <div class="modal-content">
-                                                        <div class="modal-header">
-                                                            <h5 class="modal-title">Reject {{ $item->company_name }}</h5>
-                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                        </div>
-                                                        <div class="modal-body">
-                                                            <p>Are you sure you want to reject this company?</p>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <form action="{{ route('admin.companies.reject', $item->id) }}" method="POST">
-                                                                @csrf
-                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                                <button type="submit" class="btn btn-danger">Reject</button>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                            <x-confirm-modal id="rejectModal{{ $item->id }}" title="Reject {{ $item->company_name }}"
+                                                :action="route('admin.companies.reject', $item->id)" confirm="Reject" tone="danger">
+                                                Are you sure you want to reject this company?
+                                            </x-confirm-modal>
                                         @endif
                                     </div>
                                 </td>
                             @endif
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="{{ $type === 'employee' ? 6 : 6 }}" class="text-center">
-                                No records found.
-                            </td>
-                        </tr>
+                        <x-empty-row :cols="$type === 'employee' ? 6 : 7">No records found.</x-empty-row>
                     @endforelse
                 </tbody>
             </table>
@@ -300,224 +195,13 @@
 
 @if($type === 'employee')
     @foreach($items as $item)
-        <!-- View Employee Modal -->
-        <div class="modal fade" id="viewModal{{ $item->id }}" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Employee Information</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <h6 class="text-primary">Personal Information</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered">
-                                            <tr>
-                                                <th width="40%">Full Name</th>
-                                                <td>{{ $item->first_name }} {{ $item->last_name }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Username</th>
-                                                <td>{{ $item->username }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Email</th>
-                                                <td>{{ $item->email }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Role</th>
-                                                <td>
-                                                    <span class="role-badge role-{{ strtolower($item->role) }}">
-                                                        {{ ucfirst($item->role) }}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                            @if($item->role === 'contractor')
-                                                <tr>
-                                                    <th>Company Name</th>
-                                                    <td>{{ $item->company_name }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Phone</th>
-                                                    <td>{{ $item->phone }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Street</th>
-                                                    <td>{{ $item->street }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Barangay</th>
-                                                    <td>{{ $item->barangay }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th>City</th>
-                                                    <td>{{ $item->city }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th>State</th>
-                                                    <td>{{ $item->state }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <th>Postal</th>
-                                                    <td>{{ $item->postal }}</td>
-                                                </tr>
-                                            @endif
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <h6 class="text-primary">Activity Information</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered">
-                                            <tr>
-                                                <th width="40%">Last Login</th>
-                                                <td>{{ $item->last_login_at ? $item->last_login_at->diffForHumans() : 'Never' }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Email Verified</th>
-                                                <td>
-                                                    @if($item->email_verified_at)
-                                                        <span class="text-success">
-                                                            <i class="fas fa-check-circle"></i> Verified
-                                                        </span>
-                                                    @else
-                                                        <span class="text-danger">
-                                                            <i class="fas fa-times-circle"></i> Not Verified
-                                                        </span>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <th>Created At</th>
-                                                <td>{{ $item->created_at->format('M d, Y H:i A') }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Updated At</th>
-                                                <td>{{ $item->updated_at->format('M d, Y H:i A') }}</td>
-                                            </tr>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        @include('admin.information-management.employee-modal')
     @endforeach
 @endif
 
 @if($type === 'company')
     @foreach($items as $company)
-        <!-- View Company Modal (Corrected for Companies) -->
-        <div class="modal fade" id="viewModal{{ $company->id }}" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Company Information</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <h6 class="text-primary">Company Details</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered">
-                                            <tr>
-                                                <th width="40%">Company Name</th>
-                                                <td>{{ $company->company_name }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Designation</th>
-                                                <td>{{ ucfirst($company->designation) }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Contact Person</th>
-                                                <td>{{ $company->contact_person }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Email</th>
-                                                <td>{{ $company->email }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Mobile Number</th>
-                                                <td>{{ $company->mobile_number }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Telephone Number</th>
-                                                <td>{{ $company->telephone_number }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Business Reg. No.</th>
-                                                <td>{{ $company->business_reg_no }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Supplier Type</th>
-                                                <td>{{ $company->supplier_type }}</td>
-                                            </tr>
-                                            @if($company->other_supplier_type)
-                                                <tr>
-                                                    <th>Other Supplier Type</th>
-                                                    <td>{{ $company->other_supplier_type }}</td>
-                                                </tr>
-                                            @endif
-                                            <tr>
-                                                <th>VAT Registered</th>
-                                                <td>{{ $company->vat_registered ? 'Yes' : 'No' }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Use Sureprice</th>
-                                                <td>{{ $company->use_sureprice ? 'Yes' : 'No' }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Payment Terms</th>
-                                                <td>{{ $company->payment_terms }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th>Status</th>
-                                                <td>
-                                                    <x-status-badge :status="$company->status" />
-                                                </td>
-                                            </tr>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <!-- Status Change Buttons -->
-                                <div class="mb-3">
-                                    <h6 class="text-primary">Change Status</h6>
-                                    <form action="{{ route('admin.companies.approve', $company->id) }}" method="POST" style="display:inline-block;">
-                                        @csrf
-                                        <button type="submit" class="btn btn-success btn-sm mb-1" {{ $company->status === 'approved' ? 'disabled' : '' }}>Approve</button>
-                                    </form>
-                                    <form action="{{ route('admin.companies.reject', $company->id) }}" method="POST" style="display:inline-block;">
-                                        @csrf
-                                        <input type="hidden" name="rejection_reason" value="Manual admin rejection">
-                                        <button type="submit" class="btn btn-danger btn-sm mb-1" {{ $company->status === 'rejected' ? 'disabled' : '' }}>Reject</button>
-                                    </form>
-                                    <form action="{{ route('admin.companies.update', $company->id) }}" method="POST" style="display:inline-block;">
-                                        @csrf
-                                        @method('PATCH')
-                                        <input type="hidden" name="status" value="pending">
-                                        <button type="submit" class="btn btn-warning btn-sm mb-1" {{ $company->status === 'pending' ? 'disabled' : '' }}>Set to Pending</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        @include('admin.information-management.company-modal')
     @endforeach
 @endif
 

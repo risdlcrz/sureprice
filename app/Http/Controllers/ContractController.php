@@ -75,32 +75,7 @@ class ContractController extends Controller
             'rooms.scopes.scopeType',
         ]);
 
-        // Fetch awarded supplier discount if linked to a quotation request
-        $awardedSupplierDiscount = null;
-        if ($contract->quotation_request_id) {
-            $qr = \App\Models\QuotationRequest::find($contract->quotation_request_id);
-            if ($qr && $qr->awarded_supplier_id) {
-                $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #' . $qr->request_number . '%')->get();
-                foreach ($rfqs as $rfq) {
-                    $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
-                        ->where('supplier_id', $qr->awarded_supplier_id)
-                        ->first();
-                    if ($response) {
-                        $awardedSupplierDiscount = [
-                            'discount_type' => $response->discount_type,
-                            'discount_percentage' => $response->discount_percentage,
-                            'discount_amount' => $response->discount_amount,
-                            'final_amount' => $response->final_amount,
-                            'total_amount' => $response->total_amount,
-                        ];
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Use unified view for both admin and manager
-        return view('admin.contracts.show', compact('contract', 'awardedSupplierDiscount'));
+        return view('admin.contracts.show', compact('contract'));
     }
 
     public function create()

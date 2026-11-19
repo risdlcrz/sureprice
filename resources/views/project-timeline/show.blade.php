@@ -185,13 +185,8 @@
 </div>
 
 <!-- Add Event Modal -->
-<div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addEventModalLabel">Add Event</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
+<x-modal-dialog id="addEventModal">
+    <x-slot:title>Add Event</x-slot:title>
       <div class="modal-body">
         <form id="add-event-form">
           <div class="mb-3">
@@ -209,9 +204,7 @@
           <button type="submit" class="btn btn-primary">Add Event</button>
         </form>
       </div>
-    </div>
-  </div>
-</div>
+</x-modal-dialog>
 @endsection
 
 @push('styles')

@@ -153,6 +153,34 @@ class QuotationResponse extends Model
         return $this->total_amount - $discountAmount;
     }
 
+    /** The supplier's response to the first of $rfqs (in order) that has one — one query. */
+    public static function forSupplier(iterable $rfqs, $supplierId): ?self
+    {
+        $ids = collect($rfqs)->pluck('id');
+        if (!$supplierId || $ids->isEmpty()) return null;
+        $responses = self::whereIn('quotation_id', $ids)->where('supplier_id', $supplierId)->get()->keyBy('quotation_id');
+
+        return $ids->map(fn ($id) => $responses->get($id))->first(fn ($r) => $r !== null);
+    }
+
+    /** Discount fields as stored in contract_data['awarded_supplier_discount']. */
+    public function awardedDiscount(): array
+    {
+        return $this->only(['discount_type', 'discount_percentage', 'discount_amount', 'final_amount', 'total_amount']);
+    }
+
+    /** Display values used by the client quotation page. */
+    public function discountSummary(): array
+    {
+        return [
+            'type' => $this->discount_type,
+            'value' => $this->discount_percentage ? $this->discount_percentage . '%' : ($this->discount_amount ? '₱' . number_format($this->discount_amount, 2) : null),
+            'final' => $this->final_amount,
+            'total' => $this->total_amount,
+            'found' => $this->discount_type && $this->discount_type !== 'none',
+        ];
+    }
+
     public function hasDiscount(): bool
     {
         return ($this->discount_percentage > 0) || ($this->discount_amount > 0);

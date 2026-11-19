@@ -84,13 +84,8 @@
 </div>
 
 <!-- Supplier Recommendation Modal (as before) -->
-<div class="modal fade" id="supplierRecommendationModal" tabindex="-1" aria-labelledby="supplierRecommendationModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="supplierRecommendationModalLabel">Supplier Recommendation for <span id="modalMaterialName"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="supplierRecommendationModal">
+    <x-slot:title>Supplier Recommendation for <span id="modalMaterialName"></span></x-slot:title>
             <div class="modal-body">
                 <form id="supplier-recommendation-form" class="row g-3 mb-3">
                     <input type="hidden" name="material_id" id="modalMaterialId">
@@ -109,9 +104,7 @@
                 </form>
                 <div id="supplier-recommendation-results"></div>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 @endsection
 
 @push('scripts')

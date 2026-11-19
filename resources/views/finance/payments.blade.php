@@ -207,13 +207,8 @@
 </div>
 
 <!-- Search Contract Modal -->
-<div class="modal fade" id="searchContractModal" tabindex="-1" aria-labelledby="searchContractModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="searchContractModalLabel">Search Contract</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="searchContractModal" dialog-class="modal-lg">
+    <x-slot:title>Search Contract</x-slot:title>
             <div class="modal-body">
                 <div class="mb-3">
                     <label for="contractSearch" class="form-label">Search by Contract Number or Client Name</label>
@@ -223,18 +218,11 @@
                     <!-- Search results will be populated here -->
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 
 <!-- All Contracts Modal -->
-<div class="modal fade" id="allContractsModal" tabindex="-1" aria-labelledby="allContractsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="allContractsModalLabel">All Contracts with Payments</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="allContractsModal" dialog-class="modal-xl">
+    <x-slot:title>All Contracts with Payments</x-slot:title>
             <div class="modal-body">
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -282,9 +270,7 @@
                     </table>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 
 <script>window.__page = Object.assign(window.__page || {}, { payments0_0: {{ Js::from($allContracts) }}, payments0_1: {{ Js::from((string) (url('payments'))) }} });</script>
 @vite('resources/js/pages/finance-payments.js')

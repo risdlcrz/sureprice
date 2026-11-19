@@ -45,13 +45,8 @@
                             </tr>
 
                             <!-- Documents Modal -->
-                            <div class="modal fade" id="documentsModal{{ $company->id }}" tabindex="-1">
-                                <div class="modal-dialog modal-lg">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">{{ $company->company_name }}'s Documents</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
+                            <x-modal-dialog id="documentsModal{{ $company->id }}" dialog-class="modal-lg">
+                                <x-slot:title>{{ $company->company_name }}'s Documents</x-slot:title>
                                         <div class="modal-body">
                                             <div class="row">
                                                 @foreach($company->documents as $document)
@@ -77,18 +72,11 @@
                                                 @endforeach
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
+                            </x-modal-dialog>
 
                             <!-- Approve Modal -->
-                            <div class="modal fade" id="approveModal{{ $company->id }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Approve {{ $company->company_name }}</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
+                            <x-modal-dialog id="approveModal{{ $company->id }}">
+                                <x-slot:title>Approve {{ $company->company_name }}</x-slot:title>
                                         <div class="modal-body">
                                             <p>Are you sure you want to approve this company?</p>
                                         </div>
@@ -99,18 +87,11 @@
                                                 <button type="submit" class="btn btn-success">Approve</button>
                                             </form>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
+                            </x-modal-dialog>
 
                             <!-- Reject Modal -->
-                            <div class="modal fade" id="rejectModal{{ $company->id }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Reject {{ $company->company_name }}</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
+                            <x-modal-dialog id="rejectModal{{ $company->id }}">
+                                <x-slot:title>Reject {{ $company->company_name }}</x-slot:title>
                                         <form action="{{ route('admin.companies.reject', $company) }}" method="POST">
                                             @csrf
                                             <div class="modal-body">
@@ -124,9 +105,7 @@
                                                 <button type="submit" class="btn btn-danger">Reject</button>
                                             </div>
                                         </form>
-                                    </div>
-                                </div>
-                            </div>
+                            </x-modal-dialog>
                         @empty
                             <x-empty-row cols="6">No pending companies found.</x-empty-row>
                         @endforelse

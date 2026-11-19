@@ -171,13 +171,8 @@ $altColors = ['#f9fafb', '#e8f5e9'];
 </div>
 
 <!-- All Services Modal -->
-<div class="modal fade" id="allServicesModal" tabindex="-1" aria-labelledby="allServicesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="allServicesModalLabel">Select Services for Quotation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="allServicesModal" dialog-class="modal-lg">
+    <x-slot:title>Select Services for Quotation</x-slot:title>
             <div class="modal-body">
                 <form id="allServicesForm">
                     <div class="row">
@@ -208,9 +203,7 @@ $altColors = ['#f9fafb', '#e8f5e9'];
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-success" id="requestAllServicesBtn">Request Quotation</button>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 
 <div class="join-section py-5">
     <div class="container text-center">

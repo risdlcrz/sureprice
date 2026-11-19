@@ -221,13 +221,8 @@
 </div>
 
 <!-- Stock History Modal -->
-<div class="modal fade" id="stockHistoryModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-history me-1"></i> Stock Movement History</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
+<x-modal-dialog id="stockHistoryModal" dialog-class="modal-lg">
+    <x-slot:title><i class="fas fa-history me-1"></i> Stock Movement History</x-slot:title>
             <div class="modal-body">
                 <div class="table-responsive">
                     <table class="table table-striped">
@@ -247,9 +242,7 @@
                     </table>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 
 @push('scripts')
 <script>

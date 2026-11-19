@@ -142,78 +142,32 @@
 <!-- Inline modals (from previous index view) -->
 @if(auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client')
     <!-- New Message Modal for Client -->
-    <div class="modal fade" id="newMessageModalClient" tabindex="-1" aria-labelledby="newMessageModalLabelClient" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="newMessageModalLabelClient">New Message</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form action="{{ route('messages.start') }}" method="POST">
-                    @csrf
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="manager_id" class="form-label">Select Manager</label>
-                            <select class="form-select" id="manager_id" name="manager_id" required>
-                                <option value="">Choose a manager...</option>
-                                @foreach(\App\Models\User::where('role', 'manager')->get() as $manager)
-                                    <option value="{{ $manager->id }}">{{ $manager->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="message" class="form-label">Message</label>
-                            <textarea class="form-control" id="message" name="message" rows="3" required></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Send Message</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    <x-messages.new-message-modal id="newMessageModalClient">
+        <label for="manager_id" class="form-label">Select Manager</label>
+        <select class="form-select" id="manager_id" name="manager_id" required>
+            <option value="">Choose a manager...</option>
+            @foreach(\App\Models\User::where('role', 'manager')->get() as $manager)
+                <option value="{{ $manager->id }}">{{ $manager->name }}</option>
+            @endforeach
+        </select>
+    </x-messages.new-message-modal>
 @endif
 @if(auth()->user()->user_type === 'admin')
     <!-- New Message Modal for Admin -->
-    <div class="modal fade" id="newMessageModalAdmin" tabindex="-1" aria-labelledby="newMessageModalLabelAdmin" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="newMessageModalLabelAdmin">New Message</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form action="{{ route('messages.start') }}" method="POST">
-                    @csrf
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="participant_select_admin" class="form-label">Start conversation with</label>
-                            <select class="form-control" id="participant_select_admin" required>
-                                <option value="">Select Client or Supplier</option>
-                                @foreach(\App\Models\User::where('user_type', 'company')->whereHas('company', function($q){ $q->where('designation', 'client'); })->get() as $client)
-                                    <option value="client_{{ $client->id }}">Client: {{ $client->company->company_name }}</option>
-                                @endforeach
-                                @foreach(\App\Models\Supplier::all() as $supplier)
-                                    <option value="supplier_{{ $supplier->id }}">Supplier: {{ $supplier->company_name }}</option>
-                                @endforeach
-                            </select>
-                            <input type="hidden" name="client_id" id="client_id_hidden_admin">
-                            <input type="hidden" name="supplier_id" id="supplier_id_hidden_admin">
-                        </div>
-                        <div class="mb-3">
-                            <label for="message" class="form-label">Message</label>
-                            <textarea class="form-control" id="message" name="message" rows="3" required></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary">Send Message</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    <x-messages.new-message-modal id="newMessageModalAdmin">
+        <label for="participant_select_admin" class="form-label">Start conversation with</label>
+        <select class="form-control" id="participant_select_admin" required>
+            <option value="">Select Client or Supplier</option>
+            @foreach(\App\Models\User::where('user_type', 'company')->whereHas('company', function($q){ $q->where('designation', 'client'); })->get() as $client)
+                <option value="client_{{ $client->id }}">Client: {{ $client->company->company_name }}</option>
+            @endforeach
+            @foreach(\App\Models\Supplier::all() as $supplier)
+                <option value="supplier_{{ $supplier->id }}">Supplier: {{ $supplier->company_name }}</option>
+            @endforeach
+        </select>
+        <input type="hidden" name="client_id" id="client_id_hidden_admin">
+        <input type="hidden" name="supplier_id" id="supplier_id_hidden_admin">
+    </x-messages.new-message-modal>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         const participantSelect = document.getElementById('participant_select_admin');
@@ -241,13 +195,8 @@
     </script>
 @endif
 <!-- Delete Conversation Modal -->
-<div class="modal fade" id="deleteConversationModal" tabindex="-1" aria-labelledby="deleteConversationModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteConversationModalLabel">Delete Conversation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="deleteConversationModal">
+    <x-slot:title>Delete Conversation</x-slot:title>
             <div class="modal-body">
                 Are you sure you want to delete this conversation? This action cannot be undone.
             </div>
@@ -255,18 +204,11 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirmDeleteConversation">Delete</button>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 <div id="contextMenu" class="position-fixed bg-white border rounded shadow-sm" style="display:none; z-index:9999; min-width:140px;"></div>
 <!-- Start Conversation Modal -->
-<div class="modal fade" id="startConversationModal" tabindex="-1" aria-labelledby="startConversationModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="startConversationModalLabel">Start Conversation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+<x-modal-dialog id="startConversationModal">
+    <x-slot:title>Start Conversation</x-slot:title>
             <div class="modal-body">
                 <form action="{{ route('messages.start') }}" method="POST">
                     @csrf
@@ -312,9 +254,7 @@
                     </div>
                 </form>
             </div>
-        </div>
-    </div>
-</div>
+</x-modal-dialog>
 <!-- Attachment Viewer Modal -->
 <div class="modal fade" id="attachmentViewerModal" tabindex="-1" aria-labelledby="attachmentViewerModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 90vw;">

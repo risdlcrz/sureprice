@@ -376,19 +376,12 @@
                                     </div>
 
                                     <!-- Transaction Details Modal -->
-                                    <div class="modal fade" id="transactionModal{{ $transaction->id }}" tabindex="-1">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">
-                                                        @if($transaction->type === 'purchase_order')
+                                    <x-modal-dialog id="transactionModal{{ $transaction->id }}">
+                                        <x-slot:title>@if($transaction->type === 'purchase_order')
                                                             Purchase Order Details
                                                         @else
                                                             Transaction Details
-                                                        @endif
-                                                    </h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
+                                                        @endif</x-slot:title>
                                                 <div class="modal-body">
                                                     <div class="mb-3">
                                                         <h6>Basic Information</h6>
@@ -431,9 +424,7 @@
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    </x-modal-dialog>
                                 @empty
                                     <div class="list-group-item text-center">No recent transactions found.</div>
                                 @endforelse

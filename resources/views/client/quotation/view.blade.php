@@ -149,26 +149,9 @@
                         $uniqueSuppliers = collect($selectedSuppliers)->unique()->filter();
                         $showDiscountSummary = $uniqueSuppliers->count() === 1 && count($selectedSuppliers) > 0;
                         $awardedSupplierId = $showDiscountSummary ? $uniqueSuppliers->first() : null;
-                        $totalQuoted = 0;
-                        $discountType = null;
-                        $discountValue = null;
-                        $finalAmount = null;
-                        $discountFound = false;
-                        if($showDiscountSummary && isset($rfqs)) {
-                            foreach($rfqs as $rfq) {
-                                $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
-                                    ->where('supplier_id', $awardedSupplierId)
-                                    ->first();
-                                if($response) {
-                                    $discountType = $response->discount_type;
-                                    $discountValue = $response->discount_percentage ? $response->discount_percentage.'%' : ($response->discount_amount ? '₱'.number_format($response->discount_amount,2) : null);
-                                    $finalAmount = $response->final_amount;
-                                    $totalQuoted = $response->total_amount;
-                                    $discountFound = $discountType && $discountType !== 'none';
-                                    break;
-                                }
-                            }
-                        }
+                        $awardedResponse = $awardedSupplierId ? \App\Models\QuotationResponse::forSupplier($rfqs ?? [], $awardedSupplierId) : null;
+                        ['type' => $discountType, 'value' => $discountValue, 'final' => $finalAmount, 'total' => $totalQuoted, 'found' => $discountFound]
+                            = $awardedResponse?->discountSummary() ?? ['type' => null, 'value' => null, 'final' => null, 'total' => 0, 'found' => false];
                     @endphp
                     @if($quotationRequest->status === 'proceeded')
                         <div class="alert alert-success text-center my-5">
@@ -185,28 +168,7 @@
                             $start = $contract['project_start_date'] ?? null;
                             $end = $contract['project_end_date'] ?? null;
                             $method = $contract['payment_method'] ?? null;
-                            $finalAmount = null;
-                            $totalQuoted = null;
-                            $discountType = null;
-                            $discountValue = null;
-                            $discountFound = false;
-                            $uniqueSuppliers = collect($selectedSuppliers)->unique()->filter();
-                            if($uniqueSuppliers->count() === 1 && isset($rfqs)) {
-                                $awardedSupplierId = $uniqueSuppliers->first();
-                                foreach($rfqs as $rfq) {
-                                    $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
-                                        ->where('supplier_id', $awardedSupplierId)
-                                        ->first();
-                                    if($response) {
-                                        $discountType = $response->discount_type;
-                                        $discountValue = $response->discount_percentage ? $response->discount_percentage.'%' : ($response->discount_amount ? '₱'.number_format($response->discount_amount,2) : null);
-                                        $finalAmount = $response->final_amount;
-                                        $totalQuoted = $response->total_amount;
-                                        $discountFound = $discountType && $discountType !== 'none';
-                                        break;
-                                    }
-                                }
-                            }
+                            // discount values come from the lookup above ($awardedResponse)
                             if(!$finalAmount) {
                                 // fallback: sum up all selected supplier prices
                                 $finalAmount = 0;
@@ -372,31 +334,6 @@
                             $uniqueSuppliers = collect($selectedSuppliers)->unique()->filter();
                         @endphp
                         @if($uniqueSuppliers->count() === 1)
-                            @php
-                                // Calculate total, discount, and final amount for the single supplier
-                                $totalQuoted = 0;
-                                $discountType = null;
-                                $discountValue = null;
-                                $finalAmount = null;
-                                $awardedSupplierId = $uniqueSuppliers->first();
-                                $discountFound = false;
-                                // Find the QuotationResponse for this supplier
-                                if(isset($rfqs)) {
-                                    foreach($rfqs as $rfq) {
-                                        $response = \App\Models\QuotationResponse::where('quotation_id', $rfq->id)
-                                            ->where('supplier_id', $awardedSupplierId)
-                                            ->first();
-                                        if($response) {
-                                            $discountType = $response->discount_type;
-                                            $discountValue = $response->discount_percentage ? $response->discount_percentage.'%' : ($response->discount_amount ? '₱'.number_format($response->discount_amount,2) : null);
-                                            $finalAmount = $response->final_amount;
-                                            $totalQuoted = $response->total_amount;
-                                            $discountFound = $discountType && $discountType !== 'none';
-                                            break;
-                                        }
-                                    }
-                                }
-                            @endphp
                             <div class="bg-info text-dark p-3 rounded mt-3" style="font-size:1.1em;">
                                 <strong>Summary for Supplier:</strong> {{ \App\Models\Supplier::find($awardedSupplierId)->company_name ?? 'N/A' }}<br>
                                 <strong>Total Quoted Price:</strong> ₱{{ number_format($totalQuoted, 2) }}<br>
@@ -538,13 +475,8 @@
                             </div>
                         </form>
                         <!-- Recommend Modal for Client -->
-                        <div class="modal fade" id="clientRecommendModal" tabindex="-1" aria-labelledby="clientRecommendModalLabel" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="clientRecommendModalLabel">Recommend Suppliers for All Materials</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
+                        <x-modal-dialog id="clientRecommendModal">
+                            <x-slot:title>Recommend Suppliers for All Materials</x-slot:title>
                                     <div class="modal-body">
                                         <label for="clientRecommendCategory" class="form-label">Optimization Category</label>
                                         <select id="clientRecommendCategory" class="form-select">
@@ -558,9 +490,7 @@
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                         <button type="button" class="btn btn-primary" id="clientApplyRecommendBtn">Apply Recommendation</button>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
+                        </x-modal-dialog>
                         @php
                             $allSuppliersSelected = true;
                             $hasAnyResponses = false;
