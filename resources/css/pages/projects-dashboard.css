@@ -1,0 +1,13 @@
+/* Project & Procurement dashboard tiles (resources/views/projects/dashboard.blade.php) */
+.dashboard-tile {
+    overflow: hidden;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.dashboard-tile:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .08);
+}
+.dashboard-tile .card-img-top {
+    height: 160px;
+    object-fit: cover;
+}

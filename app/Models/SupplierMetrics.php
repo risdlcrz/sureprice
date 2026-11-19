@@ -39,4 +39,11 @@ class SupplierMetrics extends Model
         }
         return ($this->ontime_deliveries / $this->total_deliveries) * 100;
     }
-} 
+
+    protected static function booted(): void
+    {
+        // rankings are cached; any change to evaluations/metrics must refresh them
+        static::saved(fn () => \App\Services\SupplierRankingService::forgetCache());
+        static::deleted(fn () => \App\Services\SupplierRankingService::forgetCache());
+    }
+}

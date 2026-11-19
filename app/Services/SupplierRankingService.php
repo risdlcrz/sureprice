@@ -21,6 +21,36 @@ class SupplierRankingService
         'sustainability' => 0.10
     ];
 
+    private const CACHE_KEY = 'supplier.rankings.light';
+
+    /**
+     * Rankings for all suppliers, cached for 30 minutes as lightweight rows (supplier_id, score, rank).
+     * Optionally filtered by company name. Each row: ['supplier' => Supplier, 'score' => float, 'rank' => int|null].
+     */
+    public function cachedRankings(?string $search = null): Collection
+    {
+        $light = \Illuminate\Support\Facades\Cache::remember(self::CACHE_KEY, now()->addMinutes(30), function () {
+            return $this->calculateRankings(Supplier::with(['evaluations', 'metrics'])->get())
+                ->map(fn ($r) => ['supplier_id' => $r['supplier']->id, 'score' => $r['score'], 'rank' => $r['rank']])
+                ->values()->all();
+        });
+
+        $suppliers = Supplier::with(['evaluations', 'metrics'])
+            ->whereIn('id', array_column($light, 'supplier_id'))
+            ->when($search, fn ($q) => $q->where('company_name', 'like', '%' . $search . '%'))
+            ->get()->keyBy('id');
+
+        return collect($light)
+            ->filter(fn ($row) => $suppliers->has($row['supplier_id']))
+            ->map(fn ($row) => ['supplier' => $suppliers[$row['supplier_id']], 'score' => $row['score'], 'rank' => $row['rank']])
+            ->values();
+    }
+
+    public static function forgetCache(): void
+    {
+        \Illuminate\Support\Facades\Cache::forget(self::CACHE_KEY);
+    }
+
     public function calculateRankings(Collection $suppliers)
     {
         return $suppliers->map(function ($supplier) {

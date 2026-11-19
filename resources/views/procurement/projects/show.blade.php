@@ -1,172 +1,48 @@
 @extends('layouts.app')
 
+@section('title', $project->name)
+
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2>{{ $project->name }}</h2>
-            <p class="text-muted mb-0">Project #{{ $project->project_number }}</p>
-        </div>
-        <div class="d-flex gap-2">
-            <a href="{{ route('procurement.projects.tasks', $project) }}" class="btn btn-outline-primary">
-                <i class="bi bi-list-task"></i> Tasks
-            </a>
-            <a href="{{ route('procurement.projects.procurement', $project) }}" class="btn btn-outline-success">
-                <i class="bi bi-cart"></i> Procurement
-            </a>
-            <a href="{{ route('procurement.projects.analytics', $project) }}" class="btn btn-outline-info">
-                <i class="bi bi-graph-up"></i> Analytics
-            </a>
-        </div>
-    </div>
+    <x-page-header :title="$project->name">
+        <span class="text-muted me-2">Project #{{ $project->project_number }}</span>
+        <a href="{{ route('procurement.projects.tasks', $project) }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-list-task"></i> Tasks</a>
+        <a href="{{ route('procurement.projects.procurement', $project) }}" class="btn btn-outline-success btn-sm"><i class="bi bi-cart"></i> Procurement</a>
+        <a href="{{ route('procurement.projects.analytics', $project) }}" class="btn btn-outline-info btn-sm"><i class="bi bi-graph-up"></i> Analytics</a>
+    </x-page-header>
 
     <div class="row">
-        <!-- Project Overview -->
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Project Overview</h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label class="fw-bold">Status</label>
-                        <div>
-                            <x-status-badge :status="$project->status" />
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="fw-bold">Project Manager</label>
-                        <div>{{ $project->projectManager->name }}</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="fw-bold">Client Representative</label>
-                        <div>{{ $project->clientRepresentative->name }}</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="fw-bold">Timeline</label>
-                        <div>{{ $project->start_date->format('M d, Y') }} - {{ $project->end_date->format('M d, Y') }}</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="fw-bold">Budget</label>
-                        <div>₱{{ number_format($project->budget, 2) }}</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="fw-bold">Progress</label>
-                        <div class="progress">
-                            <div class="progress-bar {{ $project->progress >= 100 ? 'bg-success' : 'bg-primary' }}" 
-                                role="progressbar" 
-                                style="width: {{ $project->progress }}%"
-                                aria-valuenow="{{ $project->progress }}" 
-                                aria-valuemin="0" 
-                                aria-valuemax="100">
-                                {{ $project->progress }}%
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Procurement Activities -->
+        <div class="col-md-4">@include('projects.partials.overview')</div>
         <div class="col-md-8">
             <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Recent Procurement Activities</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Type</th>
-                                    <th>Reference</th>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($project->contract->purchaseOrders->take(5) as $po)
+                <div class="card-header">Recent Procurement Activities</div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th>Type</th><th>Reference</th><th>Date</th><th>Status</th><th>Amount</th></tr></thead>
+                        <tbody>
+                            @forelse($project->contract?->purchaseOrders?->take(5) ?? [] as $po)
                                 <tr>
                                     <td>Purchase Order</td>
                                     <td>{{ $po->po_number }}</td>
                                     <td>{{ $po->created_at->format('M d, Y') }}</td>
-                                    <td>
-                                        <x-status-badge :status="$po->status" />
-                                    </td>
+                                    <td><x-status-badge :status="$po->status" /></td>
                                     <td>₱{{ number_format($po->total_amount, 2) }}</td>
                                 </tr>
-                                @empty
+                            @empty
                                 <x-empty-row cols="5">No recent procurement activities.</x-empty-row>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <!-- Recent Tasks -->
             <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Recent Tasks</h5>
-                </div>
+                <div class="card-header">Recent Tasks</div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Task</th>
-                                    <th>Assigned To</th>
-                                    <th>Due Date</th>
-                                    <th>Status</th>
-                                    <th>Progress</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($project->tasks->take(5) as $task)
-                                <tr>
-                                    <td>
-                                        {{ $task->name }}
-                                        @if($task->priority === 'high' || $task->priority === 'urgent')
-                                            <span class="badge bg-danger">{{ ucfirst($task->priority) }}</span>
-                                        @endif
-                                    </td>
-                                    <td>{{ $task->assignee->name }}</td>
-                                    <td>
-                                        {{ $task->due_date->format('M d, Y') }}
-                                        @if($task->isOverdue())
-                                            <span class="badge bg-danger">Overdue</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <x-status-badge :status="$task->status" />
-                                    </td>
-                                    <td>
-                                        <div class="progress">
-                                            <div class="progress-bar {{ $task->progress >= 100 ? 'bg-success' : 'bg-primary' }}" 
-                                                role="progressbar" 
-                                                style="width: {{ $task->progress }}%"
-                                                aria-valuenow="{{ $task->progress }}" 
-                                                aria-valuemin="0" 
-                                                aria-valuemax="100">
-                                                {{ $task->progress }}%
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @empty
-                                <x-empty-row cols="5">No recent tasks.</x-empty-row>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                    @include('projects.partials.tasks-table', ['tasks' => $project->tasks->take(5), 'actions' => false, 'empty' => 'No recent tasks.'])
                 </div>
             </div>
         </div>
     </div>
 </div>
-@endsection 
-
-@push('styles')
-    @vite(['resources/css/procurement/projects/show.css'])
-@endpush 
+@endsection

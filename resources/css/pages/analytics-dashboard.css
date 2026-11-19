@@ -1,0 +1,14 @@
+/* Analytics hub tiles (resources/views/analytics/dashboard.blade.php) */
+.analytics-tile {
+    overflow: hidden;
+    color: inherit;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.analytics-tile:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, .08);
+}
+.analytics-tile .card-img-top {
+    height: 160px;
+    object-fit: cover;
+}

@@ -63,13 +63,8 @@ class ProcurementController extends Controller
     public function projectDashboard()
     {
         $this->logPageView('Viewed Project Dashboard');
-        // Dummy or simple values for demonstration
-        $totalBudget = \App\Models\Contract::sum('total_amount');
-        $totalSpent = \App\Models\PurchaseOrder::sum('total_amount');
-        $recentContracts = \App\Models\Contract::latest()->take(5)->get();
-        $recentPurchaseOrders = \App\Models\PurchaseOrder::latest()->take(5)->get();
-        $recentPurchaseRequests = \App\Models\PurchaseRequest::latest()->take(5)->get();
-        return view('procurement.project-dashboard', compact('totalBudget', 'totalSpent', 'recentContracts', 'recentPurchaseOrders', 'recentPurchaseRequests'));
+
+        return view('projects.dashboard', \App\Support\DashboardStats::projectProcurement() + ['showProjects' => false]);
     }
 
     public function inventoryDashboard()
@@ -100,23 +95,12 @@ class ProcurementController extends Controller
     public function analyticsDashboard()
     {
         $this->logPageView('Viewed Analytics Dashboard');
-        // Get analytics data
-        $totalProjects = Project::count();
-        $activeProjects = Project::where('status', 'active')->count();
-        $completedProjects = Project::where('status', 'completed')->count();
-        
-        $totalPurchaseOrders = PurchaseOrder::count();
-        $pendingPurchaseOrders = PurchaseOrder::where('status', 'pending')->count();
-        $approvedPurchaseOrders = PurchaseOrder::where('status', 'approved')->count();
 
-        return view('procurement.analytics-dashboard', compact(
-            'totalProjects',
-            'activeProjects',
-            'completedProjects',
-            'totalPurchaseOrders',
-            'pendingPurchaseOrders',
-            'approvedPurchaseOrders'
-        ));
+        return view('analytics.dashboard', ['links' => [
+            'transactions' => 'procurement.analytics.transactions', 'budget' => 'procurement.analytics.budget-allocation',
+            'rankings' => 'procurement.suppliers.rankings', 'prices' => 'procurement.analytics.price-analysis',
+            'recommendation' => 'procurement.analytics.supplier-recommendation',
+        ]]);
     }
 
 
@@ -397,13 +381,17 @@ class ProcurementController extends Controller
         ));
     }
 
-    public function suppliersRankings()
+    public function suppliersRankings(Request $request)
     {
         $this->logPageView('Viewed Suppliers Rankings Page');
-        $suppliers = \App\Models\Supplier::with(['evaluations', 'metrics'])->get();
-        $rankingService = app(\App\Services\SupplierRankingService::class);
-        $rankings = $rankingService->calculateRankings($suppliers);
-        return view('procurement.suppliers-rankings', compact('rankings'));
+        $search = trim((string) $request->query('search', '')) ?: null;
+
+        return view('suppliers.rankings', [
+            'rankings' => app(\App\Services\SupplierRankingService::class)->cachedRankings($search),
+            'search' => $search,
+            'canEvaluate' => false,
+            'backRoute' => 'procurement.analytics',
+        ]);
     }
 
     // --- Supplier Recommendation for Procurement Analytics Dashboard ---

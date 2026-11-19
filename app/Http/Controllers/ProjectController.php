@@ -134,56 +134,7 @@ class ProjectController extends Controller
 
     public function dashboard()
     {
-        $totalProjects = Project::count();
-        $proposedProjects = Project::where('status', 'proposed')->count();
-        $planningProjects = Project::where('status', 'planning')->count();
-        $approvedProjects = Project::where('status', 'approved')->count();
-        $inProgressProjects = Project::where('status', 'in_progress')->count();
-        $onHoldProjects = Project::where('status', 'on_hold')->count();
-        $completedProjects = Project::where('status', 'completed')->count();
-        $closedProjects = Project::where('status', 'closed')->count();
-        $cancelledProjects = Project::where('status', 'cancelled')->count();
-
-        $recentProjects = Project::with(['contract', 'projectManager', 'clientRepresentative'])
-            ->latest()
-            ->take(5)
-            ->get();
-
-        $projectsByStatus = [
-            'proposed' => $proposedProjects,
-            'planning' => $planningProjects,
-            'approved' => $approvedProjects,
-            'in_progress' => $inProgressProjects,
-            'on_hold' => $onHoldProjects,
-            'completed' => $completedProjects,
-            'closed' => $closedProjects,
-            'cancelled' => $cancelledProjects,
-        ];
-
-        // --- Added for dashboard quick stats ---
-        $totalBudget = \App\Models\Contract::sum('total_amount');
-        $totalSpent = \App\Models\Contract::sum('materials_cost') + \App\Models\Contract::sum('labor_cost');
-        $recentContracts = \App\Models\Contract::latest()->take(5)->get();
-        $recentPurchaseOrders = \App\Models\PurchaseOrder::latest()->take(5)->get();
-        // ---------------------------------------
-
-        return view('admin.project-dashboard', compact(
-            'totalProjects',
-            'proposedProjects',
-            'planningProjects',
-            'approvedProjects',
-            'inProgressProjects',
-            'onHoldProjects',
-            'completedProjects',
-            'closedProjects',
-            'cancelledProjects',
-            'recentProjects',
-            'projectsByStatus',
-            'totalBudget',
-            'totalSpent',
-            'recentContracts',
-            'recentPurchaseOrders'
-        ));
+        return view('projects.dashboard', \App\Support\DashboardStats::projectProcurement() + ['showProjects' => true]);
     }
 
     public function updateProgress(Request $request, Project $project)
