@@ -268,7 +268,7 @@
                         <td>{{ $quotation->user ? $quotation->user->getDisplayNameAttribute() : 'N/A' }}</td>
                         <td><span class="badge bg-warning text-dark">{{ ucfirst($quotation->status) }}</span></td>
                         <td>
-                            <a href="{{ route('supplier.quotations.respond', $quotation) }}" class="btn btn-sm btn-primary">View / Respond</a>
+                            <a href="{{ route('supplier.quotations.respond.form', $quotation) }}" class="btn btn-sm btn-primary">View / Respond</a>
                         </td>
                     </tr>
                     @endforeach

@@ -1,0 +1,16 @@
+# Only public/ is meant to be served. The project root lives under htdocs, so without this
+# Apache would serve .env, storage/logs, source files and archives directly.
+# (Better long-term: point the virtual host's DocumentRoot at public/ and remove this file.)
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # /sureprice/ -> the app
+    RewriteRule ^$ public/ [R=302,L]
+    # everything outside public/ is forbidden
+    RewriteRule ^(?!public/) - [F,L]
+</IfModule>
+
+# Fallback if mod_rewrite is unavailable: at least block dotfiles (.env, .git) and archives/logs.
+<FilesMatch "(^\.|\.(zip|log|sql|sqlite)$)">
+    Require all denied
+</FilesMatch>

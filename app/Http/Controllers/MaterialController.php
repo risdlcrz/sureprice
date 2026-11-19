@@ -583,4 +583,14 @@ class MaterialController extends Controller
 
         return response()->json($materials);
     }
+
+    /** Remove one of a material's uploaded images (file + record). */
+    public function destroyImage(Material $material, \App\Models\MaterialImage $image)
+    {
+        abort_unless($image->material_id === $material->id, 404);
+        \Illuminate\Support\Facades\Storage::disk('public')->delete($image->path);
+        $image->delete();
+
+        return response()->json(['success' => true]);
+    }
 }

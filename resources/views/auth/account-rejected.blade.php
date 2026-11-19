@@ -16,6 +16,6 @@
     <p class="auth-card__subtitle">Please contact our support team if you believe this was a mistake or if you need assistance.</p>
     <div class="action-buttons">
         <a href="{{ $mailto }}" class="btn btn-primary"><i class="fas fa-envelope"></i> Contact Support</a>
-        <a href="{{ route('login') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Login</a>
+        <a href="{{ route('login.form') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Login</a>
     </div>
 </x-auth-card>

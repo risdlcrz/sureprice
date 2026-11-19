@@ -40,33 +40,15 @@ $(document).ready(function() {
     }
 
     // Image removal function
-    window.removeImage = function(imagePath) {
-        if (confirm('Are you sure you want to remove this image?')) {
-            fetch(appUrl(`api/materials/remove-image`), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({
-                    material_id: window.materialId || "",
-                    image_path: imagePath
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const imageContainer = document.querySelector(`img[src*="${imagePath}"]`).closest('.image-container');
-                    imageContainer.remove();
-                } else {
-                    alert('Failed to remove image');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Error removing image');
-            });
-        }
+    window.removeImage = function (button, url) {
+        if (!confirm('Are you sure you want to remove this image?')) return;
+        fetch(url, {
+            method: 'DELETE',
+            headers: { Accept: 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        })
+            .then(r => (r.ok ? r.json() : Promise.reject(r)))
+            .then(() => button.closest('.image-container').remove())
+            .catch(() => alert('Error removing image'));
     };
 
     $('#category').change(function() {

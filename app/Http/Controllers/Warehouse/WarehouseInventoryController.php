@@ -201,8 +201,14 @@ class WarehouseInventoryController extends Controller
 
     public function history(Request $request, $materialId)
     {
-        $this->logPageView('Viewed Stock History Page', \App\Models\Material::class, $materialId);
         $warehouseId = $request->input('warehouse_id');
+        // The inventory page's history modal asks for JSON
+        if ($request->wantsJson()) {
+            return response()->json(StockMovement::where('material_id', $materialId)
+                ->when($warehouseId, fn ($q) => $q->where('warehouse_id', $warehouseId))
+                ->latest()->take(50)->get());
+        }
+        $this->logPageView('Viewed Stock History Page', \App\Models\Material::class, $materialId);
         $stock = Stock::where('material_id', $materialId)
             ->when($warehouseId, function($q) use ($warehouseId) {
                 $q->where('warehouse_id', $warehouseId);

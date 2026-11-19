@@ -15,7 +15,7 @@
         @include('auth.partials.field', ['name' => 'email', 'type' => 'email', 'label' => 'Email Address', 'placeholder' => 'Enter your email address', 'attrs' => 'autofocus'])
         <div class="action-buttons">
             <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Email Password Reset Link</button>
-            <a href="{{ route('login') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Login</a>
+            <a href="{{ route('login.form') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Login</a>
         </div>
     </form>
 </x-auth-card>

@@ -273,9 +273,9 @@
                                     <div class="existing-images">
                                         @foreach($material->images as $image)
                                         <div class="image-container d-inline-block position-relative m-2">
-                                            <img src="{{ Storage::url($image) }}" alt="Material Image" class="img-thumbnail" style="max-width: 150px;">
+                                            <img src="{{ Storage::disk('public')->url($image->path) }}" alt="Material Image" class="img-thumbnail" style="max-width: 150px;">
                                             <button type="button" class="btn btn-danger btn-sm position-absolute" style="top: 0; right: 0;"
-                                                onclick="removeImage('{{ $image }}')">
+                                                onclick="removeImage(this, '{{ route('materials.images.destroy', [$material, $image]) }}')">
                                                 <i class="fas fa-times"></i>
                                             </button>
                                         </div>

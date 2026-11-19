@@ -572,7 +572,7 @@
           </button>
           
           <div class="auth-links">
-            Already have an account? <a href="{{ route('login') }}"><i class="fas fa-sign-in-alt"></i> Login here</a>
+            Already have an account? <a href="{{ route('login.form') }}"><i class="fas fa-sign-in-alt"></i> Login here</a>
           </div>
         </div>
       </form>

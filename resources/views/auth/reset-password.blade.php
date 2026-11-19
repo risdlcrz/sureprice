@@ -7,7 +7,7 @@
         @include('auth.partials.field', ['name' => 'password_confirmation', 'type' => 'password', 'label' => 'Confirm Password', 'placeholder' => 'Confirm new password', 'attrs' => 'autocomplete="new-password"'])
         <div class="action-buttons">
             <button type="submit" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Reset Password</button>
-            <a href="{{ route('login') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Login</a>
+            <a href="{{ route('login.form') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Login</a>
         </div>
     </form>
 </x-auth-card>

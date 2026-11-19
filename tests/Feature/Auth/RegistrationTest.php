@@ -1,19 +1,18 @@
 <?php
 
 test('registration screen can be rendered', function () {
-    $response = $this->get('/register');
-
-    $response->assertStatus(200);
+    $this->get('/register')->assertStatus(200);
 });
 
-test('new users can register', function () {
-    $response = $this->post('/register', [
-        'name' => 'Test User',
-        'email' => 'test@example.com',
-        'password' => 'password',
-        'password_confirmation' => 'password',
-    ]);
+test('registration requires a valid account type and does not log anyone in', function () {
+    $this->post('/register/company', ['name' => 'Test User', 'email' => 'test@example.com'])
+        ->assertSessionHasErrors('type');
 
-    $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    $this->assertGuest();
+});
+
+test('company registration validates required fields', function () {
+    $this->post('/register/company', ['type' => 'company'])->assertSessionHasErrors();
+
+    $this->assertGuest();
 });

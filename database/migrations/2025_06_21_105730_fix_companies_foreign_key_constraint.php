@@ -33,15 +33,9 @@ return new class extends Migration
         }
 
         // Now let's check if the foreign key constraint already exists
-        $foreignKeys = DB::select("
-            SELECT CONSTRAINT_NAME 
-            FROM information_schema.TABLE_CONSTRAINTS 
-            WHERE TABLE_SCHEMA = DATABASE() 
-            AND TABLE_NAME = 'companies' 
-            AND CONSTRAINT_TYPE = 'FOREIGN KEY'
-            AND CONSTRAINT_NAME = 'companies_user_id_foreign'
-        ");
-
+        // Driver-agnostic check (the old information_schema query only worked on MySQL)
+        $foreignKeys = collect(Schema::getForeignKeys('companies'))
+            ->filter(fn ($fk) => $fk['columns'] === ['user_id'] && $fk['foreign_table'] === 'users')->all();
         if (empty($foreignKeys)) {
             // Add the foreign key constraint if it doesn't exist
             Schema::table('companies', function (Blueprint $table) {

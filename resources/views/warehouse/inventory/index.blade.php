@@ -276,7 +276,7 @@
 <script>
 function showStockHistory(materialId) {
     // Fetch stock history for the material
-    fetch(`/api/materials/${materialId}/stock-history`)
+    fetch(`{{ url('warehouse/inventory/history') }}/${materialId}`, { headers: { Accept: 'application/json' } })
         .then(response => response.json())
         .then(data => {
             const tbody = document.getElementById('stockHistoryBody');

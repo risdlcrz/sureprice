@@ -18,11 +18,8 @@ return new class extends Migration
         });
 
         // Populate project_id based on existing contract_id relationships
-        DB::statement('
-            UPDATE project_tasks pt 
-            JOIN projects p ON pt.contract_id = p.contract_id 
-            SET pt.project_id = p.id
-        ');
+        // Portable (MySQL + SQLite) instead of UPDATE ... JOIN
+        DB::statement('UPDATE project_tasks SET project_id = (SELECT p.id FROM projects p WHERE p.contract_id = project_tasks.contract_id LIMIT 1) WHERE project_id IS NULL');
 
         // Make project_id not nullable after populating data
         Schema::table('project_tasks', function (Blueprint $table) {

@@ -310,10 +310,9 @@ class ProjectTimelineController extends Controller
 
         $task->updateProgress($validated['progress']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Progress updated successfully'
-        ]);
+        return $request->expectsJson()
+            ? response()->json(['success' => true, 'message' => 'Progress updated successfully'])
+            : back()->with('success', 'Progress updated successfully.');
     }
 
     public function markAsDelayed(ProjectTask $task)

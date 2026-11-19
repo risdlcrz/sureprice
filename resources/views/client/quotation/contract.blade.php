@@ -2,9 +2,6 @@
 
 @section('content')
 <div class="container py-4">
-    <script>
-        alert('Client contract view: script is running!');
-    </script>
     <h2>Contract for Quotation #{{ $quotationRequest->request_number }}</h2>
     <form method="POST" action="{{ route('client.contract.submit', ['id' => $quotationRequest->id]) }}">
         @csrf
@@ -52,7 +49,6 @@
             </div>
         </div>
         <button type="submit" class="btn btn-success">Submit Contract</button>
-        <a href="{{ route('client.contract.download', ['id' => $quotationRequest->id]) }}" class="btn btn-primary">Download as PDF</a>
     </form>
 </div>
 
@@ -82,12 +78,6 @@
 <!-- SweetAlert2 CDN (if not already included) -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-alert('Client signature script loaded!');
-if (typeof SignaturePad === 'undefined') {
-    alert('SignaturePad is NOT loaded!');
-} else {
-    alert('SignaturePad is loaded!');
-}
 // Setup for client signature only
 window.contractSignatureUrl = null; // Not used for client-side only
 
