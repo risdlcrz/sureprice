@@ -40,6 +40,11 @@
                 <a class="navbar-brand d-flex align-items-center gap-2" href="/">
                     <img src="{{ asset('images/sureprice_logo.png') }}" alt="SurePrice" class="landing-logo">
                 </a>
+                <nav class="landing-links d-none d-lg-flex ms-4">
+                    <a href="{{ route('landing.catalogue') }}#how-it-works">How it works</a>
+                    <a href="{{ route('landing.catalogue') }}#services">Services</a>
+                    <a href="{{ route('landing.catalogue') }}#why-sureprice">Why SurePrice</a>
+                </nav>
                 <div class="ms-auto d-flex align-items-center gap-2">
                     @auth
                         <div class="dropdown">

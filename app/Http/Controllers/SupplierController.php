@@ -13,7 +13,7 @@ class SupplierController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\Supplier::query();
+        $query = \App\Models\Supplier::query()->with('company');
 
         // Search
         if ($request->filled('search')) {
@@ -46,8 +46,8 @@ class SupplierController extends Controller
 
     public function edit(Supplier $supplier)
     {
-        $scopeTypes = \App\Models\ScopeType::orderBy('name')->get();
-        return view('admin.suppliers.form', compact('supplier', 'scopeTypes'));
+        $supplier->load('company');
+        return view('admin.suppliers.form', compact('supplier'));
     }
 
     public function update(Request $request, Supplier $supplier)
@@ -57,31 +57,15 @@ class SupplierController extends Controller
             'contact_person' => 'required|string|max:255',
             'email' => 'required|email|unique:suppliers,email,' . $supplier->id,
             'phone' => 'required|string|max:20',
-            'address' => 'required|string|max:255',
+            'address' => 'nullable|string|max:255',
             'tax_number' => 'nullable|string|max:50',
             'registration_number' => 'nullable|string|max:50',
             'status' => 'required|in:active,inactive,pending',
-            'materials' => 'nullable|array',
-            'materials.*.price' => 'required|numeric|min:0',
-            'materials.*.lead_time' => 'required|integer|min:0'
         ]);
 
+        // Only the supplier record is edited here. Material links (prices, approval, preferred flags) are
+        // managed in Material Management, so they are deliberately left untouched.
         $supplier->update($validated);
-
-        // Handle materials
-        if ($request->has('materials')) {
-            $materials = collect($request->input('materials'))->map(function ($item, $materialId) {
-                return [
-                    'material_id' => $materialId,
-                    'price' => $item['price'],
-                    'lead_time' => $item['lead_time']
-                ];
-            })->toArray();
-
-            $supplier->materials()->sync($materials);
-        } else {
-            $supplier->materials()->detach();
-        }
 
         return redirect()->route('suppliers.index')
             ->with('success', 'Supplier updated successfully');

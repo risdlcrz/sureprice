@@ -67,53 +67,72 @@
                                 </tr>
                             </thead>
                             <tbody id="suppliersTableBody">
-                                @foreach($suppliers as $supplier)
+                                @forelse($suppliers as $supplier)
+                                @php $company = $supplier->company; @endphp
                                 <tr>
                                     <td>
                                         <strong>{{ $supplier->company_name }}</strong>
                                     </td>
                                     <td>{{ $supplier->contact_person }}</td>
                                     <td>
-                                        <div>
-                                            <i class="fas fa-envelope"></i> {{ $supplier->email }}<br>
-                                            <i class="fas fa-phone"></i> {{ $supplier->mobile_number }}
+                                        <div class="small">
+                                            <i class="fas fa-envelope text-muted me-1"></i>{{ $supplier->email }}<br>
+                                            <i class="fas fa-phone text-muted me-1"></i>{{ $supplier->phone ?: '—' }}
                                         </div>
                                     </td>
-                                    <td>
-                                        <div>
-                                            {{ $supplier->city }}, {{ $supplier->state }}<br>
-                                            <small class="text-muted">{{ $supplier->street }}</small>
-                                        </div>
-                                    </td>
+                                    <td class="small">{{ $supplier->address ?: '—' }}</td>
                                     <td>
                                         <x-status-badge :status="$supplier->status" />
+                                        @if($company)
+                                            <div class="small text-muted mt-1">Account: <x-status-badge :status="$company->status" /></div>
+                                        @endif
                                     </td>
                                     <td>
-                                        <div class="btn-group">
-                                            <a href="{{ route('admin.companies.show', $supplier->id) }}" 
-                                                class="btn btn-sm btn-info" 
-                                                title="View">
+                                        <div class="d-flex flex-nowrap gap-1 align-items-center">
+                                            <a href="{{ route('suppliers.show', $supplier) }}" class="btn btn-sm btn-outline-secondary" title="View supplier">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            <form action="{{ route('admin.companies.approve', $supplier->id) }}" method="POST" style="display:inline-block;">
-                                                @csrf
-                                                <button type="submit" class="btn btn-success btn-sm mb-1" {{ $supplier->status === 'approved' ? 'disabled' : '' }}>Approve</button>
-                                            </form>
-                                            <form action="{{ route('admin.companies.reject', $supplier->id) }}" method="POST" style="display:inline-block;">
-                                                @csrf
-                                                <input type="hidden" name="rejection_reason" value="Manual admin rejection">
-                                                <button type="submit" class="btn btn-danger btn-sm mb-1" {{ $supplier->status === 'rejected' ? 'disabled' : '' }}>Reject</button>
-                                            </form>
-                                            <form action="{{ route('admin.companies.update', $supplier->id) }}" method="POST" style="display:inline-block;">
-                                                @csrf
-                                                @method('PATCH')
-                                                <input type="hidden" name="status" value="pending">
-                                                <button type="submit" class="btn btn-warning btn-sm mb-1" {{ $supplier->status === 'pending' ? 'disabled' : '' }}>Set to Pending</button>
-                                            </form>
+                                            <a href="{{ route('suppliers.edit', $supplier) }}" class="btn btn-sm btn-outline-primary" title="Edit supplier">
+                                                <i class="fas fa-pen"></i>
+                                            </a>
+                                            {{-- Account approval acts on the supplier's own company account (never on a company that merely shares the ID). --}}
+                                            @if($company)
+                                                <div class="dropdown">
+                                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        Account
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li>
+                                                            <form action="{{ route('admin.companies.approve', $company) }}" method="POST">
+                                                                @csrf
+                                                                <button type="submit" class="dropdown-item" @disabled($company->status === 'approved')><i class="fas fa-check text-success me-2"></i>Approve</button>
+                                                            </form>
+                                                        </li>
+                                                        <li>
+                                                            <form action="{{ route('admin.companies.update', $company) }}" method="POST">
+                                                                @csrf
+                                                                @method('PATCH')
+                                                                <input type="hidden" name="status" value="pending">
+                                                                <button type="submit" class="dropdown-item" @disabled($company->status === 'pending')><i class="fas fa-hourglass-half text-warning me-2"></i>Set to Pending</button>
+                                                            </form>
+                                                        </li>
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li>
+                                                            <form action="{{ route('admin.companies.reject', $company) }}" method="POST">
+                                                                @csrf
+                                                                <input type="hidden" name="rejection_reason" value="Manual admin rejection">
+                                                                <button type="submit" class="dropdown-item text-danger" @disabled($company->status === 'rejected')><i class="fas fa-ban me-2"></i>Reject</button>
+                                                            </form>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
-                                @endforeach
+                                @empty
+                                <x-empty-row cols="6">No suppliers found.</x-empty-row>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>

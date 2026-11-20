@@ -981,7 +981,17 @@ hr { border-color: var(--sp-border); opacity: 1; }
     background: var(--sp-green-800) !important;
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06), 0 6px 24px rgba(16, 32, 22, 0.12);
 }
-.landing-logo { height: 56px; }
+.landing-logo { height: 52px; }
+.landing-links { gap: 1.75rem; }
+.landing-links a {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.landing-links a:hover { color: #fff; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
 .landing-navbar .btn-outline-light {
     --bs-btn-color: #fff;
     --bs-btn-bg: transparent;

@@ -72,9 +72,13 @@ class Supplier extends Model
         return $this->hasOne(SupplierMetrics::class);
     }
 
+    /**
+     * The supplier's company account (approval status, documents). Suppliers and companies are linked
+     * through the shared user; `suppliers.company_id` is not populated.
+     */
     public function company()
     {
-        return $this->belongsTo(Company::class);
+        return $this->belongsTo(Company::class, 'user_id', 'user_id');
     }
 
     public function user()

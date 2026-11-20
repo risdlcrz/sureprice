@@ -2,10 +2,11 @@
 
 @section('content')
 <div class="container py-4">
+    <x-page-header title="Supplier Details" icon="truck" :subtitle="$supplier->company_name">
+        <a href="{{ route('suppliers.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> All Suppliers</a>
+        <a href="{{ route('suppliers.edit', $supplier) }}" class="btn btn-primary"><i class="fas fa-pen me-1"></i> Edit Supplier</a>
+    </x-page-header>
     <div class="card">
-        <div class="card-header">
-            <h4>Supplier Details</h4>
-        </div>
         <div class="card-body">
             <dl class="row">
                 <dt class="col-sm-3">Company Name</dt>

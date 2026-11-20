@@ -166,8 +166,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/supplier-invitations/{invitation}/resend', [SupplierInvitationController::class, 'resend'])->name('supplier-invitations.resend');
     Route::get('/api/supplier-invitations/search', [SupplierInvitationController::class, 'search'])->name('supplier-invitations.search');
     // Supplier Routes
-    Route::resource('suppliers', SupplierController::class)->only(['index', 'show', 'edit', 'update', 'destroy']);
-    Route::get('/admin/suppliers/search', [SupplierController::class, 'search'])->name('admin.suppliers.search');
+    // Supplier management is staff-only (clients and suppliers must not see or edit other suppliers).
+    Route::middleware('role:admin,manager,procurement')->group(function () {
+        Route::resource('suppliers', SupplierController::class)->only(['index', 'show', 'edit', 'update', 'destroy']);
+        Route::get('/admin/suppliers/search', [SupplierController::class, 'search'])->name('admin.suppliers.search');
+    });
     // Purchase Requests
     // Must precede the resource so {purchase_request} doesn't swallow it.
     Route::get('purchase-requests/recommend-suppliers-for-material', [PurchaseRequestController::class, 'recommendSuppliersForMaterial'])->name('purchase-requests.recommend-suppliers');
