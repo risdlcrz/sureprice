@@ -60,7 +60,8 @@ log `$request->all()` (passwords, personal data).
 ones). Shared queries belong in scopes/helpers, e.g. `User::role('admin', 'manager')`,
 `Notification::forUser($user)`, `QuotationResponse::forSupplier()`, `ProjectTask::rules()`,
 `Project::STATUSES`. Dashboard counts: `App\Support\DashboardStats`; unread badges: `App\Support\UnreadCounts`
-(cached per request); supplier rankings: `SupplierRankingService::cachedRankings()` (cache cleared by model
+(cached per request); supplier on-time/late figures use `purchase_orders.is_on_time` (set when an order is completed);
+supplier rankings: `SupplierRankingService::cachedRankings()` (cache cleared by model
 events).
 
 ## Known open items
@@ -68,7 +69,5 @@ events).
 - Apache DocumentRoot should point at `public/`, and `APP_DEBUG=false` in production.
 - The rejected-account appeal address is `SUPPORT_EMAIL` (config `app.support_email`); its default is still a personal address — set it in `.env`.
 - `LogAdminActivityMiddleware` exists but is not registered.
-- Some analytics queries use MySQL-only functions (`YEAR`, `DATE_FORMAT`, `DATEDIFF`), so those pages
-  don't run on SQLite.
-- `SupplierDashboardController::ranking()` computes "on-time" as `delivery_date <= delivery_date` (always true);
-  it needs an expected-delivery column to compare against.
+- Some analytics queries use MySQL-only functions (`YEAR`, `MONTH`, `DATE_FORMAT`) — supplier dashboard sales chart,
+  warehouse reports, feedback and budget analytics — so those pages don't run on SQLite (tests, scratch DBs).

@@ -26,42 +26,23 @@ class SupplierDashboardController extends Controller
             ->where('supplier_id', $supplier->id)
             ->first();
 
-        // Get completed orders count
-        $completedOrders = PurchaseOrder::where('supplier_id', $supplier->id)
+        // Completing an order records the actual delivery date and whether it was on time (PurchaseOrderController::complete).
+        $completed = PurchaseOrder::where('supplier_id', $supplier->id)
             ->where('status', 'completed')
-            ->count();
-
-        // Calculate on-time delivery rate
-        $totalDeliveries = PurchaseOrder::where('supplier_id', $supplier->id)
-            ->where('status', 'completed')
-            ->count();
-        $onTimeDeliveries = PurchaseOrder::where('supplier_id', $supplier->id)
-            ->where('status', 'completed')
-            ->where('delivery_date', '<=', DB::raw('delivery_date'))
-            ->count();
-        $onTimeRate = $totalDeliveries > 0 ? round(($onTimeDeliveries / $totalDeliveries) * 100) : 0;
-
-        // Calculate average delivery time
-        $averageDeliveryTime = PurchaseOrder::where('supplier_id', $supplier->id)
-            ->where('status', 'completed')
-            ->whereNotNull('delivery_date')
-            ->avg(DB::raw('DATEDIFF(delivery_date, created_at)'));
-
-        // Get late deliveries count
-        $lateDeliveries = PurchaseOrder::where('supplier_id', $supplier->id)
-            ->where('status', 'completed')
-            ->where('delivery_date', '>', DB::raw('delivery_date'))
-            ->count();
+            ->get(['id', 'created_at', 'delivery_date', 'is_on_time', 'has_returns']);
+        $completedOrders = $totalDeliveries = $completed->count();
+        $onTimeRate = $totalDeliveries > 0 ? round($completed->where('is_on_time', true)->count() / $totalDeliveries * 100) : 0;
+        $lateDeliveries = $completed->where('is_on_time', false)->count();
+        // average days from order to delivery
+        $averageDeliveryTime = $completed->whereNotNull('delivery_date')
+            ->avg(fn ($po) => $po->created_at->copy()->startOfDay()->diffInDays($po->delivery_date));
 
         // Get quality metrics
         $qualityRating = OrderEvaluation::whereHas('order', function($query) use ($supplier) {
             $query->where('supplier_id', $supplier->id);
         })->avg('quality_rating');
 
-        $returnCount = PurchaseOrder::where('supplier_id', $supplier->id)
-            ->where('status', 'completed')
-            ->where('has_returns', true)
-            ->count();
+        $returnCount = $completed->where('has_returns', true)->count();
         $returnRate = $totalDeliveries > 0 ? round(($returnCount / $totalDeliveries) * 100) : 0;
 
         $qualityComplaints = OrderEvaluation::whereHas('order', function($query) use ($supplier) {
@@ -128,10 +109,9 @@ class SupplierDashboardController extends Controller
         
         if ($supplier) {
             $ranking = SupplierRanking::where('supplier_id', $supplier->id)->first();
-            $completedOrders = PurchaseOrder::where('supplier_id', $supplier->id)->where('status', 'completed')->count();
-            $totalDeliveries = PurchaseOrder::where('supplier_id', $supplier->id)->where('status', 'completed')->count();
-            $onTimeDeliveries = PurchaseOrder::where('supplier_id', $supplier->id)->where('status', 'completed')->where('delivery_date', '<=', DB::raw('delivery_date'))->count();
-            $onTimeRate = $totalDeliveries > 0 ? round(($onTimeDeliveries / $totalDeliveries) * 100) : 0;
+            $completed = PurchaseOrder::where('supplier_id', $supplier->id)->where('status', 'completed');
+            $completedOrders = (clone $completed)->count();
+            $onTimeRate = $completedOrders > 0 ? round((clone $completed)->where('is_on_time', true)->count() / $completedOrders * 100) : 0;
             $averageRating = OrderEvaluation::whereHas('order', function($query) use ($supplier) {
                 $query->where('supplier_id', $supplier->id);
             })->avg('quality_rating');
