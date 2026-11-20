@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="admin-budget-allocation mx-auto">
         <!-- Standalone Page Header -->
-        <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Project Cost Management</h1>
+        <h1 class="h3 mb-4 text-center page-title">Project Cost Management</h1>
         <!-- Page Actions -->
         <div class="d-flex justify-content-end align-items-center mb-4 no-print">
             <div class="d-flex gap-2">
@@ -448,10 +448,7 @@
 @endpush
 
 @push('scripts')
-    @vite([
-        'resources/js/admin/budget-allocation.js',
-        'resources/js/budget.js' // analytics scripts for spending and cost charts
-    ])
+    @vite('resources/js/budget.js') {{-- analytics scripts for spending and cost charts --}}
 @endpush
 @endsection
 

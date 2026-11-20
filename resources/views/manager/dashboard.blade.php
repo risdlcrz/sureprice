@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container py-4">
-    <h1 class="h3 mb-4 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Manager Dashboard</h1>
+    <h1 class="h3 mb-4 text-center page-title">Manager Dashboard</h1>
     <div class="row mb-4">
         <div class="col-md-4 mb-3">
             <div class="card h-100 shadow-sm border-0 hover-shadow">

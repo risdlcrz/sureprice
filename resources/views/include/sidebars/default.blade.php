@@ -1,45 +1,23 @@
-<div class="logo-title-container">
-    <img src="{{ asset('images/sureprice_logo.png') }}" alt="SurePrice Logo" class="header-logo">
-</div>
-
-<!-- Profile Section -->
-<div class="profile-container">
-    <div class="label">Logged in as</div>
-    @if(auth()->check())
-        <div class="username">
-            @if(auth()->user()->role === 'manager')
-                Manager
-            @elseif(auth()->user()->role === 'admin')
-                Admin
-            @else
-                {{ auth()->user() ? auth()->user()->getDisplayNameAttribute() : 'N/A' }}
-            @endif
-        </div>
-        <div class="role">{{ ucfirst(auth()->user()->role) }}</div>
-    @else
-        <div class="username">Guest</div>
-    @endif
-    <i class="fas fa-user-circle profile-icon"></i>
-</div>
+@include('include.sidebars._brand')
 
 <!-- Navigation Links -->
 <div class="nav-buttons">
     @if(!auth()->check())
-        <a href="{{ url('/') }}" class="btn" style="display: flex; align-items: center; gap: 8px;">
-            <i class="fas fa-home"></i> <span>Home</span>
+        <a href="{{ url('/') }}" class="btn">
+            <i class="fas fa-home"></i>Home
         </a>
-        <a href="{{ route('client.quotation.create') }}" class="btn" style="display: flex; align-items: center; gap: 8px;">
-            <i class="fas fa-file-alt"></i> <span>Request Quotation</span>
+        <a href="{{ route('client.quotation.create') }}" class="btn">
+            <i class="fas fa-file-alt"></i>Request Quotation
         </a>
-        <a href="{{ route('login.form') }}" class="btn" style="display: flex; align-items: center; gap: 8px;">
-            <i class="fas fa-sign-in-alt"></i> <span>Login</span>
+        <a href="{{ route('login.form') }}" class="btn">
+            <i class="fas fa-sign-in-alt"></i>Login
         </a>
-        <a href="{{ route('register') }}" class="btn" style="display: flex; align-items: center; gap: 8px;">
-            <i class="fas fa-user-plus"></i> <span>Sign up</span>
+        <a href="{{ route('register') }}" class="btn">
+            <i class="fas fa-user-plus"></i>Sign up
         </a>
     @elseif(auth()->check() && auth()->user()->user_type === 'company' && (optional(auth()->user()->company)->designation === 'client' || auth()->user()->role === 'client'))
-        <a href="{{ url('/') }}" class="btn" style="display: flex; align-items: center; gap: 8px;">
-            <i class="fas fa-building"></i> <span>Home</span>
+        <a href="{{ url('/') }}" class="btn">
+            <i class="fas fa-building"></i>Home
         </a>
         <a href="{{ route('client.quotation.index') }}" class="btn">
             <i class="fas fa-tachometer-alt"></i>Dashboard
@@ -140,13 +118,4 @@
     @endif
 </div>
 
-<div class="sidebar-bottom">
-    <hr class="separator">
-    <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="btn">
-        <i class="fas fa-sign-out-alt"></i>Logout
-    </a>
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-        @csrf
-    </form>
-</div>
-
+@include('include.sidebars._footer')

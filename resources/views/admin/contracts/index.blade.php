@@ -13,7 +13,7 @@
             <br>Please contact support for more information.
         </div>
     @endif
-    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Contracts</h1>
+    <h1 class="h3 mb-4 text-center page-title">Contracts</h1>
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div></div>
         <div>

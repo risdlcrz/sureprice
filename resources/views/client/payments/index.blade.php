@@ -5,7 +5,7 @@
 @vite('resources/css/pages/client-payments-index.css')
 
 <div class="container">
-    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">My Payments Dashboard</h1>
+    <h1 class="h3 mb-4 text-center page-title">My Payments Dashboard</h1>
     
     @if(isset($error))
         <div class="alert alert-warning">

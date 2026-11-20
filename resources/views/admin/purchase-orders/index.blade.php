@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="container">
-        <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Purchase Orders</h1>
+        <h1 class="h3 mb-4 text-center page-title">Purchase Orders</h1>
         <div class="d-flex justify-content-end align-items-center mb-4">
             <a href="{{ route('purchase-orders.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> New Purchase Order

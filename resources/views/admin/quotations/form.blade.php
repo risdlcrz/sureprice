@@ -1,16 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
-<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">
+<h1 class="h3 mb-4 text-center page-title">
     {{ isset($quotation) ? 'Edit Request for Quotation' : 'Create Request for Quotation' }}
 </h1>
 <div class="container-fluid py-4">
     <div class="row justify-content-center">
         <div class="col-12">
             <div class="card shadow">
-                <div class="card-header bg-white py-3">
-                    <!-- Heading moved above -->
-                </div>
                 <div class="card-body">
                     <form id="quotationForm" method="POST" action="{{ isset($quotation) ? route('quotations.update', $quotation->id) : route('quotations.store') }}" enctype="multipart/form-data">
                         @csrf

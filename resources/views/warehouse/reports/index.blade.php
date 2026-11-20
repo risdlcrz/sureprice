@@ -6,7 +6,7 @@
 @vite('resources/css/pages/warehouse-reports-index.css')
 @endpush
 <div class="container py-4">
-        <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Warehouse Reports</h1>
+        <h1 class="h3 mb-4 text-center page-title">Warehouse Reports</h1>
 
 
     <div class="row">

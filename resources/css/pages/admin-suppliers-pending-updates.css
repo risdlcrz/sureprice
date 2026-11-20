@@ -29,12 +29,12 @@
     box-shadow: 0 1px 4px #ffc10722;
 }
 .modern-table .btn-primary {
-    background: linear-gradient(90deg, #38b6ff 0%, #198754 100%);
+    background: linear-gradient(90deg, #2e7d32 0%, #198754 100%);
     border: none;
     font-weight: 600;
     transition: background 0.2s, box-shadow 0.2s;
 }
 .modern-table .btn-primary:hover {
     filter: brightness(1.08);
-    box-shadow: 0 2px 8px #38b6ff33;
+    box-shadow: 0 2px 8px #2e7d3233;
 }

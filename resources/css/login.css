@@ -2,8 +2,8 @@
 :root {
   --login-bg: #f5f5f5;
   --login-card-bg: #fff;
-  --login-primary: #02912d;
-  --login-primary-hover: #027a26;
+  --login-primary: #1b5e20;
+  --login-primary-hover: #2e7d32;
   --login-border: #e0e0e0;
   --login-text: #333;
   --login-text-muted: #666;
@@ -11,7 +11,7 @@
   --login-spacing: 1rem;
   --login-spacing-lg: 1.5rem;
   --login-input-padding: 12px 14px;
-  --login-font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --login-font: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
 * {
@@ -86,7 +86,7 @@ body {
 .login-card__illustration {
   width: 42%;
   min-width: 280px;
-  background: #e8f5e9 url('../Images/loginimage.png') center/contain no-repeat;
+  background: #e8f5e9 var(--illustration, none) center/contain no-repeat;
   background-color: #f0f4f0;
 }
 

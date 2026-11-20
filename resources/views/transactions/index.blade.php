@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container py-4">
-    <h1 class="h3 mb-4 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Transactions</h1>
+    <h1 class="h3 mb-4 text-center page-title">Transactions</h1>
     @if(isset($warning))
         <div class="alert alert-warning">{{ $warning }}</div>
     @endif

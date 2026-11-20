@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <div class="container py-4 fadein-analytics">
-<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Warehouse Analytics & Trends</h1>
+<h1 class="h3 mb-4 text-center page-title">Warehouse Analytics & Trends</h1>
     <div class="d-flex justify-content-between align-items-center mb-4">
         
         <a href="{{ route('warehouse.reports.analytics.pdf', request()->query()) }}" class="btn btn-outline-primary d-none d-lg-inline-block">

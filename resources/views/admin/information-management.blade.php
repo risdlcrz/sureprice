@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="content">
+<div class="page-content">
     <div class="page-header">
-        <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Information Management</h1>
+        <h1 class="h3 mb-4 text-center page-title">Information Management</h1>
     </div>
 
     <div class="top-controls d-flex justify-content-between align-items-center flex-wrap mb-4 gap-3">

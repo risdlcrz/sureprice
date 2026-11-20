@@ -6,7 +6,7 @@
 @vite('resources/css/pages/warehouse-reports-usage-web.css')
 @endpush
 <div class="container py-4">
-<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Material Usage Report (Web Preview)</h1>
+<h1 class="h3 mb-4 text-center page-title">Material Usage Report (Web Preview)</h1>
     <div class="d-flex justify-content-between align-items-center mb-4">
         
         <a href="{{ route('warehouse.reports.usage.pdf', request()->all()) }}" class="btn btn-primary">

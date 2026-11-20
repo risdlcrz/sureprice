@@ -1,8 +1,4 @@
 /* Extracted from resources/views/warehouse/reports/analytics.blade.php */
-body.analytics-bg {
-    background: linear-gradient(135deg, #e8f0ef 0%, #f8fafc 100%) !important;
-    font-family: 'Inter', sans-serif;
-}
 .fadein-analytics {
     animation: fadeIn 1.2s cubic-bezier(.39,.575,.56,1.000);
 }
@@ -53,7 +49,7 @@ body.analytics-bg {
     z-index: 1000;
     border-radius: 50%;
     box-shadow: 0 4px 16px rgba(54, 162, 235, 0.18);
-    background: linear-gradient(135deg, #3b82f6 60%, #06b6d4 100%);
+    background: linear-gradient(135deg, #1b5e20 60%, #2e7d32 100%);
     color: #fff;
     width: 64px;
     height: 64px;
@@ -64,7 +60,7 @@ body.analytics-bg {
     transition: background 0.2s;
 }
 .fab-download:hover {
-    background: linear-gradient(135deg, #2563eb 60%, #0ea5e9 100%);
+    background: linear-gradient(135deg, #1b5e20 60%, #2e7d32 100%);
     color: #fff;
     text-decoration: none;
 }

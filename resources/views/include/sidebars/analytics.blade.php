@@ -1,17 +1,7 @@
-<!-- Logo and Title -->
-<div class="logo-title-container">
-    <img src="{{ asset('images/sureprice_logo.png') }}" alt="SurePrice Logo" class="header-logo">
-</div>
-
-<!-- Profile Section -->
-<div class="profile-container">
-    <div class="label">Logged in as</div>
-    <div class="username">Main Admin</div>
-    <i class="fas fa-user-circle profile-icon"></i>
-</div>
+@include('include.sidebars._brand', ['sidebarRole' => 'Analytics'])
 
 <!-- Back Button -->
-<div class="nav-buttons mb-3">
+<div class="nav-buttons nav-buttons--back">
     <a href="{{ route('admin.dbadmin') }}" class="btn btn-back">
         <i class="fas fa-arrow-left"></i>Back to Main Dashboard
     </a>
@@ -34,20 +24,10 @@
     <a href="{{ route('admin.price-analysis') }}" class="btn {{ request()->routeIs('admin.price-analysis') ? 'active' : '' }}">
         <i class="fas fa-chart-line"></i>Price Analysis
     </a>
-    <li class="nav-item">
-        <a class="nav-link" href="{{ route('payments.index') }}">
-            <i class="fas fa-money-check-alt"></i> Payments
-        </a>
-    </li>
+    <a href="{{ route('payments.index') }}" class="btn {{ request()->routeIs('payments.*') ? 'active' : '' }}">
+        <i class="fas fa-money-check-alt"></i>Payments
+    </a>
     @include('include.sidebars._inbox')
 </div>
 
-<!-- Logout Button -->
-<div class="logout-container">
-    <form method="POST" action="{{ route('logout') }}">
-        @csrf
-        <button type="submit" class="btn">
-            <i class="fas fa-sign-out-alt"></i>Logout
-        </button>
-    </form>
-</div> 
+@include('include.sidebars._footer')

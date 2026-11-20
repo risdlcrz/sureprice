@@ -11,7 +11,7 @@ body {
     line-height: 1.6;
 }
 .header {
-    background: linear-gradient(135deg, #02912d 0%, #154406 100%);
+    background: linear-gradient(135deg, #1b5e20 0%, #154406 100%);
     color: white;
     padding: 20px 0;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -86,7 +86,7 @@ body {
     font-size: 24px;
     font-weight: 600;
     margin-bottom: 15px;
-    border-bottom: 2px solid #02912d;
+    border-bottom: 2px solid #1b5e20;
     padding-bottom: 8px;
 }
 .section h3 {
@@ -109,7 +109,7 @@ body {
 }
 .highlight-box {
     background: #f8f9fa;
-    border-left: 4px solid #02912d;
+    border-left: 4px solid #1b5e20;
     padding: 20px;
     margin: 20px 0;
     border-radius: 0 8px 8px 0;
@@ -118,7 +118,7 @@ body {
     color: #154406;
 }
 .contact-info {
-    background: linear-gradient(135deg, #02912d, #154406);
+    background: linear-gradient(135deg, #1b5e20, #154406);
     color: white;
     padding: 30px;
     border-radius: 12px;

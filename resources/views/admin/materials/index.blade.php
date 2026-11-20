@@ -5,7 +5,7 @@
 @endpush
 
 @section('content')
-<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Materials</h1>
+<h1 class="h3 mb-4 text-center page-title">Materials</h1>
 <div class="container-fluid py-4">
     <div class="row">
         <div class="col-12">
@@ -266,6 +266,8 @@
                 </div>
             </div>
 </x-modal-dialog>
+
+@endsection
 
 @push('scripts')
 <script>window.__page = Object.assign(window.__page || {}, { index0_0: {{ Js::from((string) (route('materials.destroy', ':id'))) }}, index0_1: @json((string) (route("api.materials.all"))), index0_2: @json((string) (route("materials.update-srp"))), index0_3: @json((string) (url('api/materials'))) });</script>

@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container py-4">
-    <h1 class="display-5 mb-4">Material Request #{{ $materialRequest->id }}</h1>
+    <h1 class="h3 mb-4 page-title">Material Request #{{ $materialRequest->id }}</h1>
     <div class="mb-3">
         <a href="{{ route('warehouse.material-requests.index') }}" class="btn btn-secondary">
             <i class="fas fa-arrow-left"></i> Back to List

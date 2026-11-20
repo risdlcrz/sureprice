@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container py-4">
-    <h1 class="h3 mb-4 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Procurement Dashboard</h1>
+    <h1 class="h3 mb-4 text-center page-title">Procurement Dashboard</h1>
     <div class="row mb-4">
         <div class="col-md-4 mb-3">
             <div class="card h-100 shadow-sm border-0 hover-shadow">
@@ -121,7 +121,7 @@
         <div class="row row-cols-1 row-cols-md-3 g-4">
             <div class="col">
                 <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('procurement.projects.index') }}';" style="cursor:pointer;">
-                    <img src="{{ asset('images/ppimage9.jpg') }}" class="card-img-top flex-grow-1" alt="Project & Procurement" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <img src="{{ asset('images/ppimage9.jpg') }}" class="card-img-top flex-grow-1" alt="Project & Procurement" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.svg') }}';">
                     <div class="card-body text-center">
                         <h5 class="card-title">Project & Procurement</h5>
                     </div>
@@ -129,7 +129,7 @@
             </div>
             <div class="col">
                 <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('procurement.history') }}';" style="cursor:pointer;">
-                    <img src="{{ asset('images/projectdash1.jpg') }}" class="card-img-top flex-grow-1" alt="Project History" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <img src="{{ asset('images/projectdash1.jpg') }}" class="card-img-top flex-grow-1" alt="Project History" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.svg') }}';">
                     <div class="card-body text-center">
                         <h5 class="card-title">Project History</h5>
                     </div>
@@ -137,7 +137,7 @@
             </div>
             <div class="col">
                 <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('procurement.inventory.index') }}';" style="cursor:pointer;">
-                    <img src="{{ asset('images/historydash3.jpg') }}" class="card-img-top flex-grow-1" alt="Inventory" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <img src="{{ asset('images/historydash3.jpg') }}" class="card-img-top flex-grow-1" alt="Inventory" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.svg') }}';">
                     <div class="card-body text-center">
                         <h5 class="card-title">Inventory</h5>
                     </div>
@@ -145,7 +145,7 @@
             </div>
             <div class="col">
                 <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('procurement.analytics') }}';" style="cursor:pointer;">
-                    <img src="{{ asset('images/ppimage10.png') }}" class="card-img-top flex-grow-1" alt="Analytics" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <img src="{{ asset('images/ppimage10.png') }}" class="card-img-top flex-grow-1" alt="Analytics" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.svg') }}';">
                     <div class="card-body text-center">
                         <h5 class="card-title">Analytics</h5>
                     </div>
@@ -153,7 +153,7 @@
             </div>
             <div class="col">
                 <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('procurement.logs') }}';" style="cursor:pointer;">
-                    <img src="{{ asset('images/ppimage1.jpg') }}" class="card-img-top flex-grow-1" alt="Logs" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <img src="{{ asset('images/ppimage1.jpg') }}" class="card-img-top flex-grow-1" alt="Logs" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.svg') }}';">
                     <div class="card-body text-center">
                         <h5 class="card-title">Logs</h5>
                     </div>
@@ -161,7 +161,7 @@
             </div>
             <div class="col">
                 <div class="card h-100 shadow-sm d-flex flex-column" onclick="window.location.href = '{{ route('messages.index') }}';" style="cursor:pointer;">
-                    <img src="{{ asset('images/messages.avif') }}" class="card-img-top flex-grow-1" alt="Messages" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                    <img src="{{ asset('images/messages.avif') }}" class="card-img-top flex-grow-1" alt="Messages" style="width: 100%; height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.svg') }}';">
                     <div class="card-body text-center">
                         <h5 class="card-title">Messages</h5>
                     </div>

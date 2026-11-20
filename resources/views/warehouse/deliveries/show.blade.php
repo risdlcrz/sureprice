@@ -29,8 +29,8 @@
                     </p>
                 </div>
                 <div class="col-md-3">
-                    <h6 class="text-muted mb-1">Expected Date</h6>
-                    <p class="mb-0">{{ $delivery->expected_date->format('M d, Y') }}</p>
+                    <h6 class="text-muted mb-1">Delivery Date</h6>
+                    <p class="mb-0">{{ $delivery->delivery_date?->format('M d, Y') ?? 'N/A' }}</p>
                 </div>
                 <div class="col-md-3">
                     <h6 class="text-muted mb-1">Total Items</h6>

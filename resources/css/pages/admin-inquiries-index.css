@@ -1,5 +1,5 @@
 /* Extracted from resources/views/admin/inquiries/index.blade.php */
-.filter-input, .form-control, .form-select {
+.filter-input {
     border-radius: 1.2rem;
     border: 1px solid #d1d5db;
     background: #f8fafc;
@@ -7,8 +7,8 @@
     padding: 0.85rem 1.1rem;
     transition: border-color 0.2s, box-shadow 0.2s;
 }
-.filter-input:focus, .form-control:focus, .form-select:focus {
-    border-color: #38b6ff;
-    box-shadow: 0 0 0 2px #38b6ff33;
+.filter-input:focus {
+    border-color: #2e7d32;
+    box-shadow: 0 0 0 2px #2e7d3233;
     background: #fff;
 }

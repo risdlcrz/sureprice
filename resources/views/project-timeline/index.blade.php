@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Project Timeline</h1>
+<h1 class="h3 mb-4 text-center page-title">Project Timeline</h1>
 <div class="container-fluid main-bg py-4">
     <div class="row mb-4 justify-content-center">
         <div class="col-12 col-lg-11">

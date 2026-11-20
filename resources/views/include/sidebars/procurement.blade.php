@@ -1,19 +1,4 @@
-<!-- Logo and Title -->
-<div class="logo-title-container">
-    <img src="{{ asset('images/sureprice_logo.png') }}" alt="SurePrice Logo" class="header-logo">
-</div>
-
-<!-- Profile Section -->
-<div class="profile-container">
-    <div class="label">Logged in as</div>
-    @if(auth()->check())
-        <div class="username">{{ auth()->user() ? auth()->user()->getDisplayNameAttribute() : 'N/A' }}</div>
-        <div class="role">{{ ucfirst(auth()->user()->role) }}</div>
-    @else
-        <div class="username">Guest</div>
-    @endif
-    <i class="fas fa-user-circle profile-icon"></i>
-</div>
+@include('include.sidebars._brand')
 
 <!-- Navigation Links -->
 <div class="nav-buttons">
@@ -38,12 +23,4 @@
     @include('include.sidebars._inbox')
 </div>
 
-<!-- Logout Button -->
-<div class="logout-container">
-    <form method="POST" action="{{ route('logout') }}">
-        @csrf
-        <button type="submit" class="btn">
-            <i class="fas fa-sign-out-alt"></i>Logout
-        </button>
-    </form>
-</div> 
+@include('include.sidebars._footer')

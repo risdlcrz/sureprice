@@ -10,24 +10,12 @@
 .text-info { color: #0dcaf0 !important; }
 
 /* Contract Payments Section */
-.card-header {
-    border-bottom: none;
-    padding: 1.5rem 2rem 1rem 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
 
 .card-header h5 {
     font-weight: 700;
     color: #495057;
     margin: 0;
 }
-
-.bg-success { background-color: #198754 !important; }
-.bg-warning { background-color: #ffc107 !important; color: #000 !important; }
-.bg-info { background-color: #0dcaf0 !important; }
-.bg-danger { background-color: #dc3545 !important; }
 
 .alert-warning {
     background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
@@ -76,8 +64,7 @@
     margin-bottom: 0.5rem;
 }
 
-.modal .form-control,
-.modal .form-select {
+.modal .form-control, .modal .form-select {
     border-radius: 1rem;
     border: 1.5px solid #ced4da;
     padding: 0.7rem 1.2rem;
@@ -85,8 +72,7 @@
     transition: all 0.2s ease;
 }
 
-.modal .form-control:focus,
-.modal .form-select:focus {
+.modal .form-control:focus, .modal .form-select:focus {
     border-color: #198754;
     box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
 }
@@ -106,17 +92,9 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .card-body {
-        padding: 1.5rem;
-    }
     
     .table-responsive {
         font-size: 0.9rem;
-    }
-    
-    .btn {
-        padding: 0.4em 1.2em;
-        font-size: 1rem;
     }
 }
 /* Comprehensive fix for modal glitching */
@@ -156,13 +134,9 @@ body.modal-open * {
 }
 
 /* Fix button loading states */
-.btn:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-}
 
 /* Disable hover effects on form elements */
-.form-control, .form-select, .form-check-input {
+.form-check-input {
     transition: none !important;
 }
 

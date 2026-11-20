@@ -4,7 +4,7 @@
 <div class="container">
     <div class="row">
         <div class="col-12">
-            <h1 class="h3 mb-4" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Payment Dashboard</h1>
+            <h1 class="h3 mb-4 page-title">Payment Dashboard</h1>
 
             @if(isset($error))
                 <div class="alert alert-warning">

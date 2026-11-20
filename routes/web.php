@@ -235,6 +235,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/stock-movements', [WarehouseDashboardController::class, 'getStockMovements'])->name('stock-movements');
         Route::resource('deliveries', WarehouseDeliveryController::class)->only(['index', 'create', 'store', 'show', 'edit']);
         Route::post('deliveries/{delivery}/process', [WarehouseDeliveryController::class, 'process'])->name('deliveries.process');
+        Route::get('deliveries/{delivery}/feedback', [WarehouseDeliveryController::class, 'feedbackForm'])->name('deliveries.feedback');
+        Route::post('deliveries/{delivery}/feedback', [WarehouseDeliveryController::class, 'submitFeedback'])->name('deliveries.submitFeedback');
         Route::resource('inventory', WarehouseInventoryController::class)->only(['index']);
         Route::post('inventory/add-stock', [WarehouseInventoryController::class, 'addStock'])->name('inventory.add-stock');
         Route::post('inventory/update-stock', [WarehouseInventoryController::class, 'updateStock'])->name('inventory.update-stock');
@@ -553,12 +555,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/dbadmin', function () {
         return view('admin.dbadmin');
     })->name('dbadmin');
-});
-
-Route::middleware(['auth'])->prefix('warehouse')->name('warehouse.')->group(function () {
-    Route::resource('deliveries', \App\Http\Controllers\Warehouse\WarehouseDeliveryController::class)->only(['index', 'create', 'store', 'show', 'edit']);
-    Route::get('deliveries/{delivery}/feedback', [\App\Http\Controllers\Warehouse\WarehouseDeliveryController::class, 'feedbackForm'])->name('deliveries.feedback');
-    Route::post('deliveries/{delivery}/feedback', [\App\Http\Controllers\Warehouse\WarehouseDeliveryController::class, 'submitFeedback'])->name('deliveries.submitFeedback');
 });
 
 Route::post('/purchase-order-payments/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderPaymentController::class, 'store'])->middleware('auth')->name('purchase-order-payments.store');

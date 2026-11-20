@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="container-fluid bg-light py-4 min-vh-100">
-    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Price Trend Analysis</h1>
+    <h1 class="h3 mb-4 text-center page-title">Price Trend Analysis</h1>
         <div class="row justify-content-center mb-4">
             <div class="col-lg-10">
                 <div class="card shadow-lg rounded p-4">

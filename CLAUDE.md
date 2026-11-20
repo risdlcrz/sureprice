@@ -44,9 +44,18 @@ share the same page where they used to have copies; create/edit use one form vie
 | `<x-nav-count kind>` | live unread counter in the sidebar |
 | `<x-messages.new-message-modal>` | compose-message modal |
 
+**Design system** — `resources/css/app-layout.css` holds the tokens (`--sp-*`: brand greens, neutrals, radii,
+shadows), the app shell (sidebar, mobile drawer) and the Bootstrap component layer (cards, tables, buttons, forms,
+soft badges, alerts, modals, KPI tiles). It loads before `@stack('styles')`, so page CSS refines it — but page CSS
+must not restyle global elements (`body`, `.container`, `h1`, `.card`, `.btn-*`, `.badge`, form controls); use a
+page-specific class instead. Brand: `#1b5e20` (sidebar, primary), `#198754` (success); no blue gradients.
+Page titles use `.page-title` (or `<x-page-header>`). Tailwind (`resources/css/app.css`) is only for the Breeze guest
+layout — it breaks Bootstrap, so keep it out of `layouts/app`. Sidebars: `include/sidebars/*`, sharing `_brand`
+(logo + user card) and `_footer` (logout); the active link is highlighted by `app-layout.js` when not set in markup.
+
 **CSS / JS** — no inline `<style>` or `<script>` logic in views. Page code lives in `resources/js/pages/*.js`
-and `resources/css/pages/*.css`; files there are registered with Vite automatically (`vite.config.js`,
-`pageAssets`). Load with `@vite('resources/js/pages/<name>.js')`. Pass server data through
+and `resources/css/pages/*.css`; every file under `resources/css` and `resources/js` is a Vite entry automatically
+(`vite.config.js`), so any `@vite('resources/...')` resolves in production builds. Load with `@vite('resources/js/pages/<name>.js')`. Pass server data through
 `window.__page`, using `{{ Js::from($value) }}` (not `@json` with comma-containing expressions):
 
 ```blade

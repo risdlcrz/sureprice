@@ -1,14 +1,11 @@
 @extends('layouts.app')
 
 @section('content')
-<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">{{ isset($invitation) ? 'Edit Supplier Invitation' : 'New Supplier Invitation' }}</h1>
+<h1 class="h3 mb-4 text-center page-title">{{ isset($invitation) ? 'Edit Supplier Invitation' : 'New Supplier Invitation' }}</h1>
 <div class="container-fluid py-4">
     <div class="row justify-content-center">
         <div class="col-12">
             <div class="card shadow">
-                <div class="card-header bg-white py-3">
-                    <!-- Heading moved above -->
-                </div>
                 <div class="card-body">
                     <form method="POST" 
                           action="{{ isset($invitation) ? route('supplier-invitations.update', $invitation) : route('supplier-invitations.store') }}">

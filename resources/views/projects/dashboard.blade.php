@@ -41,7 +41,7 @@
                     <div class="col">
                         <div class="card h-100 dashboard-tile">
                             <img src="{{ asset('images/' . $image) }}" class="card-img-top" alt="{{ $title }}"
-                                 onerror="this.onerror=null;this.src='{{ asset('images/placeholder.png') }}';">
+                                 onerror="this.onerror=null;this.src='{{ asset('images/placeholder.svg') }}';">
                             <div class="card-body">
                                 <h5 class="card-title">{{ $title }}</h5>
                                 <p class="card-text text-muted small mb-0">{{ $text }}</p>

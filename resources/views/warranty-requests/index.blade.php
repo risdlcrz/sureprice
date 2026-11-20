@@ -393,6 +393,8 @@
             </div>
 </x-modal-dialog>
 
+@endsection
+
 @push('scripts')
 <script>window.__page = Object.assign(window.__page || {}, { index0_0: @json((string) (route("warranty-requests.export"))), index0_1: @json((string) (route("warranty-requests.index"))), index0_2: @json((string) (url('api/warranty-requests'))), index0_3: @json((string) (url('api/materials/search'))), index0_4: @json((string) (route("warranty-requests.additional-work"))), index0_5: @json((string) (csrf_token())) });</script>
 @vite('resources/js/pages/warranty-requests-index.js')

@@ -7,7 +7,7 @@
 
 @section('content')
 <div class="container py-5">
-<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Inventory Management</h1>
+<h1 class="h3 mb-4 text-center page-title">Inventory Management</h1>
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <div class="d-flex gap-2">
             <button type="button" class="btn btn-success shadow-sm" data-bs-toggle="modal" data-bs-target="#addStockModal">

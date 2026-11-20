@@ -11,7 +11,7 @@
 </head>
 <body class="tone-{{ $tone }}">
     <div class="auth-card">
-        <img class="auth-card__logo" src="{{ asset('Images/gdc_logo.png') }}" alt="GDC Logo">
+        <img class="auth-card__logo" src="{{ asset('images/gdc_logo.png') }}" alt="GDC Logo">
         <h1 class="auth-card__title">{{ $title }}</h1>
         <div class="auth-card__icon"><i class="fas fa-{{ $icon }}"></i></div>
         @if($subtitle)<p class="auth-card__subtitle">{{ $subtitle }}</p>@endif

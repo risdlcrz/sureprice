@@ -6,17 +6,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Admin Center</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
   <header class="login-header">
-    <img src="{{ asset('Images/gdc_logo.png') }}" alt="Logo" class="login-header__logo">
+    <img src="{{ asset('images/gdc_logo.png') }}" alt="Logo" class="login-header__logo">
     <span class="login-header__title">Admin Center</span>
   </header>
 
   <main class="login-main">
     <div class="login-card">
-      <div class="login-card__illustration" aria-hidden="true"></div>
+      <div class="login-card__illustration" aria-hidden="true" style="--illustration: url('{{ asset('images/loginimage.png') }}')"></div>
 
       <div class="login-card__form-wrap">
         <h1 class="login-card__title">Login</h1>

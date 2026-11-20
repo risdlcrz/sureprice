@@ -6,7 +6,7 @@
     // $grouped = $payments->groupBy('contract_id');
 @endphp
 <div class="container">
-<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Payments</h1>
+<h1 class="h3 mb-4 text-center page-title">Payments</h1>
 
 @if(isset($error))
     <div class="alert alert-warning">

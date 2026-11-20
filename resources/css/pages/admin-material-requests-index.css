@@ -1,9 +1,4 @@
 /* Extracted from resources/views/admin/material-requests/index.blade.php */
-.card-header {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-}
 .small-box {
     border-radius: 10px;
     color: #fff;
@@ -54,13 +49,6 @@
     border: none;
 }
 .input-group-append .btn:hover { background: #157347 !important; }
-.btn-default {
-    background: #f5f6f8;
-    color: #1f2937;
-    border: 1px solid #e8eaed;
-    border-radius: 8px;
-}
-.btn-default:hover { background: #e8eaed; }
 #materialRequestsTable thead th {
     background: #f5f6f8;
     color: #1f2937;
@@ -78,12 +66,6 @@
 #materialRequestsTable tbody tr:last-child td { border-bottom: none; }
 #materialRequestsTable tbody tr:hover { background: rgba(25, 135, 84, 0.04); }
 @media (max-width: 991.98px) {
-    .card-header {
-        padding: 1rem 0.5rem 0.5rem 0.5rem;
-    }
-    .card {
-        padding: 0.5rem;
-    }
     .table th, .table td {
         padding: 0.4rem 0.2rem;
         font-size: 0.93rem;

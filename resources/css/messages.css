@@ -56,7 +56,7 @@
     font-size: 14px;
 }
 
-.input-group .btn {
+.input-group textarea + .btn {
     border-radius: 0 20px 20px 0;
     padding: 12px 20px;
     font-weight: 500;
@@ -130,46 +130,6 @@
     text-overflow: ellipsis;
 }
 
-/* Modal styling */
-.modal-content {
-    border-radius: 12px;
-    border: none;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-
-.modal-header {
-    border-bottom: 1px solid #e9ecef;
-    padding: 20px 24px;
-}
-
-.modal-body {
-    padding: 24px;
-}
-
-.modal-footer {
-    border-top: 1px solid #e9ecef;
-    padding: 20px 24px;
-}
-
-/* Form styling */
-.form-label {
-    font-weight: 500;
-    color: #495057;
-    margin-bottom: 8px;
-}
-
-.form-select, .form-control {
-    border-radius: 8px;
-    border: 1px solid #ced4da;
-    padding: 10px 12px;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.form-select:focus, .form-control:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .message-content {
@@ -185,9 +145,6 @@
         padding: 15px;
     }
     
-    .modal-dialog {
-        margin: 10px;
-    }
 }
 
 /* Loading states */

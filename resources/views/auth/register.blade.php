@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   @vite('resources/css/auth-register.css')
 </head>
-<body>
+<body style="--signup-bg: url('{{ asset('images/signupimage.png') }}')">
 
   <!-- Notification System -->
   @if (session('success'))
@@ -38,7 +38,7 @@
 
   <!-- Top Navigation -->
   <div class="top-bar">
-    <img src="{{ asset('Images/gdc_logo.png') }}" alt="GDC Logo">
+    <img src="{{ asset('images/gdc_logo.png') }}" alt="GDC Logo">
     <span class="top-title">GDC Admin Center</span>
   </div>
 

@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container py-4">
-    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Warehouse Dashboard</h1>
+    <h1 class="h3 mb-4 text-center page-title">Warehouse Dashboard</h1>
 
     <!-- Warehouse Logs Card -->
     <div class="row g-4 mb-4">

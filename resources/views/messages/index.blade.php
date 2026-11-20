@@ -159,7 +159,7 @@
         <select class="form-control" id="participant_select_admin" required>
             <option value="">Select Client or Supplier</option>
             @foreach(\App\Models\User::where('user_type', 'company')->whereHas('company', function($q){ $q->where('designation', 'client'); })->get() as $client)
-                <option value="client_{{ $client->id }}">Client: {{ $client->company->company_name }}</option>
+                <option value="client_{{ $client->id }}">Client: {{ $client->company?->company_name ?? $client->name }}</option>
             @endforeach
             @foreach(\App\Models\Supplier::all() as $supplier)
                 <option value="supplier_{{ $supplier->id }}">Supplier: {{ $supplier->company_name }}</option>

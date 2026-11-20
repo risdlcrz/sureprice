@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container">
-<h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Supplier Recommendations</h1>
+<h1 class="h3 mb-4 text-center page-title">Supplier Recommendations</h1>
     <form id="general-recommendation-form" class="row g-3 mb-4">
         <div class="col-md-4">
             <label for="material_id" class="form-label">Select Material</label>

@@ -1,8 +1,1 @@
 /* Extracted from resources/views/warehouse/inventory/index.blade.php */
-.btn-success, .btn-primary, .btn-outline-primary, .btn-outline-info {
-    padding: 0.5em 1.5em;
-    font-size: 1.08em;
-}
-.btn-outline-info:hover {
-    border: none;
-}

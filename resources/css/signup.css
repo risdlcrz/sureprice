@@ -6,7 +6,7 @@
 }
 
 :root {
-  --primary-color: #02912d;
+  --primary-color: #1b5e20;
   --primary-dark: #026f22;
   --secondary-color: #154406;
   --accent-color: #4CAF50;
@@ -27,7 +27,7 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: url('../Images/signupimage.png') no-repeat center center fixed;
+  background: var(--signup-bg, none) no-repeat center center fixed;
   background-size: cover;
   color: var(--text-color);
   line-height: 1.6;

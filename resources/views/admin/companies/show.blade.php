@@ -5,7 +5,7 @@
 @endpush
 
 @section('content')
-<div class="content">
+<div class="page-content">
     <div class="page-header d-flex justify-content-between align-items-center">
         <div>
             <h1 class="page-title">Company Details</h1>

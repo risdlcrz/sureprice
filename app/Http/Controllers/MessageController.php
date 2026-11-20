@@ -430,7 +430,7 @@ class MessageController extends Controller
             ->get()
             ->map(function($conversation) {
                 $lastMessage = $conversation->messages->first();
-                $participantName = $conversation->client ? $conversation->client->company->company_name : 
+                $participantName = $conversation->client ? ($conversation->client->company?->company_name ?? $conversation->client->name ?? 'Unknown') : 
                                  ($conversation->supplier ? $conversation->supplier->company_name : 'Unknown');
                 
                 return [
@@ -452,7 +452,7 @@ class MessageController extends Controller
             ->get()
             ->map(function($conversation) {
                 $lastMessage = $conversation->messages->first();
-                $participantName = $conversation->client ? $conversation->client->company->company_name : 
+                $participantName = $conversation->client ? ($conversation->client->company?->company_name ?? $conversation->client->name ?? 'Unknown') : 
                                  ($conversation->supplier ? $conversation->supplier->company_name : 'Unknown');
                 
                 return [

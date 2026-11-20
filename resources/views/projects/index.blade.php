@@ -11,7 +11,7 @@
             <br>Please contact support for more information.
         </div>
     @endif
-    <h1 class="h3 mb-4 text-gray-800 text-center" style="font-weight:700;color:#198754;letter-spacing:0.01em;">Projects Dashboard</h1>
+    <h1 class="h3 mb-4 text-center page-title">Projects Dashboard</h1>
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <form method="GET" action="{{ route('projects.index') }}" class="flex-grow-1 me-3" style="max-width: 600px;">
             <div class="input-group search-bar-container custom-search-bar">

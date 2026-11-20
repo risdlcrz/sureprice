@@ -210,7 +210,4 @@
 @push('styles')
     @vite(['resources/css/project-timeline/show.css'])
 @endpush
-
-@push('scripts')
-    @vite(['resources/js/project-timeline/show.js'])
-@endpush 
+ 
