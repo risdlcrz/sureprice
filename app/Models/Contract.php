@@ -116,6 +116,41 @@ class Contract extends Model
         return $this->belongsTo(Party::class, 'client_id');
     }
 
+    /** The project & procurement team (manage contracts). */
+    public const STAFF_ROLES = ['admin', 'manager', 'procurement', 'contractor'];
+
+    /** Roles that may view every contract: staff plus finance (read-only, for payments). */
+    public const VIEW_ALL_ROLES = [...self::STAFF_ROLES, 'finance'];
+
+    /**
+     * Contracts the given user may see: staff and finance see all, client companies only contracts whose client party
+     * is theirs (linked user, email, or company name), everyone else none.
+     */
+    public function scopeVisibleTo($query, ?\App\Models\User $user)
+    {
+        if ($user && in_array($user->role, self::VIEW_ALL_ROLES, true)) {
+            return $query;
+        }
+        if (!$user || !($user->isClientCompany() || $user->role === 'client')) {
+            return $query->whereRaw('1 = 0');
+        }
+        $company = $user->company;
+
+        return $query->whereHas('client', function ($q) use ($user, $company) {
+            $q->where('user_id', $user->id)->orWhere('email', $user->email);
+            if ($company) {
+                $q->orWhere('email', $company->email)
+                    ->orWhere('company_name', $company->company_name)
+                    ->orWhere('name', $company->company_name);
+            }
+        });
+    }
+
+    public function isVisibleTo(?\App\Models\User $user): bool
+    {
+        return static::visibleTo($user)->whereKey($this->getKey())->exists();
+    }
+
     /** Projects reference their contract (projects.contract_id). */
     public function project(): \Illuminate\Database\Eloquent\Relations\HasOne
     {

@@ -16,6 +16,10 @@ class WarrantyRequestController extends Controller
 {
     public function store(Request $request)
     {
+        // Clients may only file requests against their own contracts.
+        if ($request->filled('contract_id') && ($target = Contract::find($request->contract_id))) {
+            abort_unless($target->isVisibleTo($request->user()), 403);
+        }
         $validator = Validator::make($request->all(), [
             'contract_id' => 'required|exists:contracts,id',
             'product_name' => 'required|string|max:255',
@@ -336,6 +340,10 @@ class WarrantyRequestController extends Controller
 
     public function storeAdditionalWork(Request $request)
     {
+        // Clients may only file requests against their own contracts.
+        if ($request->filled('contract_id') && ($target = Contract::find($request->contract_id))) {
+            abort_unless($target->isVisibleTo($request->user()), 403);
+        }
         $validator = Validator::make($request->all(), [
             'contract_id' => 'required|exists:contracts,id',
             'work_type' => 'required|in:installation,maintenance,repair,upgrade,other',

@@ -322,8 +322,8 @@ class ClientQuotationController extends Controller
 
     public function cancel($id)
     {
-        $quotationRequest = \App\Models\QuotationRequest::findOrFail($id);
-        // Optionally, check if the user is authorized to cancel
+        // Clients can only act on their own quotation requests.
+        $quotationRequest = \App\Models\QuotationRequest::where('user_id', auth()->id())->findOrFail($id);
         $quotationRequest->status = 'cancelled';
         $quotationRequest->save();
 
@@ -336,7 +336,7 @@ class ClientQuotationController extends Controller
 
     public function showContractForm($id)
     {
-        $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType'])->findOrFail($id);
+        $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType'])->where('user_id', auth()->id())->findOrFail($id);
         // Calculate timeline
         $crewSize = 8;
         $hoursPerDay = 8;
@@ -374,7 +374,7 @@ class ClientQuotationController extends Controller
         $request->validate([
             'client_signature' => 'required|string',
         ]);
-        $quotationRequest = \App\Models\QuotationRequest::findOrFail($id);
+        $quotationRequest = \App\Models\QuotationRequest::where('user_id', auth()->id())->findOrFail($id);
         $signaturePath = null;
         if ($request->has('client_signature')) {
             $base64_image = $request->input('client_signature');

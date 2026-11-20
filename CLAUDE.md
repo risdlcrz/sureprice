@@ -22,7 +22,16 @@ Before committing a change, run all of the above that apply. Business-logic chan
 
 **Routing / access** — everything is in `routes/web.php` (`routes/auth.php` for password/verification flows;
 there is no API routes file). Protect routes with `auth` + `role:a,b` middleware; numeric route params are
-constrained globally. Login/register are behind `guest` (signed-in users are redirected to their home route,
+constrained globally. Who may use what (tested in `AccessControlTest`):
+- **Staff** — `role:admin,manager,procurement,contractor`: materials, inventory, purchase requests, quotations,
+  inquiries, invitations, suppliers, projects/tasks, material requests, transactions, warranty management, search.
+  Contractors are treated as procurement (`User::hasRole('procurement')` is true for them; same area & home).
+- **Contracts / project timeline** — staff manage; clients view only their own (`Contract::visibleTo()` /
+  `isVisibleTo()`), finance views all read-only. Check ownership in the controller for any new client-facing
+  contract/payment/quotation action.
+- **Payments** — `role:admin,manager,finance`; clients use `/client/payments`. Purchase orders are checked per
+  action in `PurchaseOrderController` (staff incl. finance; the order's supplier ships; warehouse receives).
+- Links to restricted pages must be hidden from roles that can't open them. Login/register are behind `guest` (signed-in users are redirected to their home route,
 `bootstrap/app.php`). Middleware aliases and the redirect are configured in `bootstrap/app.php`; schedules in
 `routes/console.php`.
 

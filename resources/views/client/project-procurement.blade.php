@@ -10,13 +10,13 @@
             <!-- Create Contract Card -->
             <div class="col">
                 <div class="card h-100">
-                    <img src="{{ asset('images/ppimage1.jpg') }}" class="card-img-top" alt="Create Contract" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.svg') }}';">
+                    <img src="{{ asset('images/ppimage1.jpg') }}" class="card-img-top" alt="Start a Project" onerror="this.onerror=null;this.src='{{ asset('images/placeholder.svg') }}';">
                     <div class="card-body">
-                        <h5 class="card-title">Create Contract</h5>
-                        <p class="card-text">Start a new contract and set up initial terms and conditions.</p>
+                        <h5 class="card-title">Start a Project</h5>
+                        <p class="card-text">Request a quotation — your contract is prepared from the quotation you accept.</p>
                     </div>
                     <div class="card-footer">
-                        <a href="{{ route('contracts.create') }}" class="btn btn-primary w-100">Create New Contract</a>
+                        <a href="{{ route('client.quotation.create') }}" class="btn btn-primary w-100">Request a Quotation</a>
                     </div>
                 </div>
             </div>

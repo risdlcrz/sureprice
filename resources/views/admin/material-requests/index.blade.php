@@ -9,7 +9,8 @@
                 <div class="card-header">
                     <div class="card-tools">
                         @if(auth()->user()->hasRole('manager'))
-                        <a href="{{ route('material-requests.create') }}" class="btn btn-primary">
+                        {{-- Material requests are raised from an approved contract ("Create Material Request" on the contract page). --}}
+                        <a href="{{ route('contracts.index', ['status' => 'approved']) }}" class="btn btn-primary" title="Choose an approved contract to request materials for">
                             <i class="fas fa-plus"></i> New Material Request
                         </a>
                         @endif

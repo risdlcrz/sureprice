@@ -144,9 +144,11 @@
                         <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#additionalWorkModal">
                             <i class="bi bi-tools"></i> Request Additional Work
                         </button>
+                        @if(in_array(auth()->user()->role, \App\Models\Contract::STAFF_ROLES, true))
                         <a href="{{ route('warranty-requests.index') }}" class="btn btn-warning">
                             <i class="bi bi-shield-check"></i> Warranty Requests
                         </a>
+                        @endif
                         <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse" aria-expanded="false" aria-controls="filtersCollapse">
                             <i class="bi bi-funnel"></i> Filters
                         </button>

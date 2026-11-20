@@ -250,6 +250,12 @@ class PaymentController extends Controller
      */
     public function showProof(Request $request, Payment $payment)
     {
+        // Staff (admin/manager/finance) may view any proof; clients only proofs for their own contracts.
+        $user = Auth::user();
+        if (!in_array($user->role, ['admin', 'manager', 'finance'], true)) {
+            abort_unless($payment->contract && $payment->contract->isVisibleTo($user), 403);
+        }
+
         $proofPath = $payment->client_payment_proof
             ?? ($payment->attachment ? $payment->attachment->path : null)
             ?? $payment->admin_payment_proof;

@@ -97,140 +97,153 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/account-rejected', function () {
         return view('auth.account-rejected');
     })->name('account.rejected');
-    // Project Dashboard
-    Route::get('/project-dashboard', [ProjectController::class, 'dashboard'])->name('admin.project');
-    // Contract Dashboard
-    // Contract Routes
-    Route::prefix('contracts')->name('contracts.')->group(function () {
-        Route::get('/', [ContractController::class, 'index'])->name('index');
-        Route::get('/create', [ContractController::class, 'create'])->name('create');
-        Route::post('/', [ContractController::class, 'store'])->name('store');
-        Route::get('/{contract}/edit', [ContractController::class, 'edit'])->name('edit');
-        Route::put('/{contract}', [ContractController::class, 'update'])->name('update');
-        Route::delete('/{contract}', [ContractController::class, 'destroy'])->name('destroy');
-        Route::get('/{contract}', [ContractController::class, 'show'])->name('show');
-        Route::get('/{contract}/download', [ContractController::class, 'download'])->name('download');
-        Route::get('/{contract}/pdf', [ContractController::class, 'download'])->name('pdf');
-        Route::patch('/{contract}/status', [ContractController::class, 'updateStatus'])->name('updateStatus');
-        Route::post('/{contract}/status', [ContractController::class, 'updateStatus']);
-        Route::post('/{contract}/generate-payments', [ContractController::class, 'generatePayments'])->name('generatePayments');
-        Route::post('/{contract}/signatures', [ContractController::class, 'updateSignatures'])->name('updateSignatures');
-        Route::post('/save-signature', [ContractController::class, 'saveSignature'])->name('contracts.save.signature');
-        Route::post('/{contract}/request-approval', [ContractController::class, 'requestApproval'])->name('requestApproval');
-    
-    // Debug routes have been removed for production to reduce overhead and avoid exposing
-    // internal diagnostic endpoints. These were only needed during development.
+    // ---- Who can use the internal pages --------------------------------------------------------
+    // STAFF: the project & procurement team (contractors work alongside procurement).
+    // Clients only get the read-only contract/timeline pages below, limited to their own contracts.
+    // Project Dashboard + contract management (staff)
+    Route::middleware('role:admin,manager,procurement,contractor')->group(function () {
+        Route::get('/project-dashboard', [ProjectController::class, 'dashboard'])->name('admin.project');
+        Route::prefix('contracts')->name('contracts.')->group(function () {
+            Route::get('/create', [ContractController::class, 'create'])->name('create');
+            Route::post('/', [ContractController::class, 'store'])->name('store');
+            Route::get('/{contract}/edit', [ContractController::class, 'edit'])->name('edit');
+            Route::put('/{contract}', [ContractController::class, 'update'])->name('update');
+            Route::delete('/{contract}', [ContractController::class, 'destroy'])->name('destroy');
+            Route::patch('/{contract}/status', [ContractController::class, 'updateStatus'])->name('updateStatus');
+            Route::post('/{contract}/status', [ContractController::class, 'updateStatus']);
+            Route::post('/{contract}/generate-payments', [ContractController::class, 'generatePayments'])->name('generatePayments');
+            Route::post('/{contract}/signatures', [ContractController::class, 'updateSignatures'])->name('updateSignatures');
+            Route::post('/save-signature', [ContractController::class, 'saveSignature'])->name('contracts.save.signature');
+            Route::post('/{contract}/request-approval', [ContractController::class, 'requestApproval'])->name('requestApproval');
+        });
     });
-    // Supporting routes for contract form
-    Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
-    Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
-    Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
-    // Material Routes
-    Route::prefix('materials')->name('materials.')->group(function () {
-        Route::get('/', [MaterialController::class, 'index'])->name('index');
-        Route::get('/create', [MaterialController::class, 'create'])->name('create');
-        Route::post('/', [MaterialController::class, 'store'])->name('store');
-        Route::get('/{material}', [MaterialController::class, 'show'])->name('show');
-        Route::get('/{material}/edit', [MaterialController::class, 'edit'])->name('edit');
-        Route::put('/{material}', [MaterialController::class, 'update'])->name('update');
-        Route::delete('/{material}', [MaterialController::class, 'destroy'])->name('destroy');
-        Route::delete('/{material}/images/{image}', [MaterialController::class, 'destroyImage'])->name('images.destroy');
-        Route::get('/search', [MaterialController::class, 'search'])->name('search');
-        Route::get('/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('suppliers');
-        Route::post('/update-srp', [MaterialController::class, 'updateSrpPrices'])->name('update-srp');
-        Route::post('/ajax-store', [MaterialController::class, 'ajaxStore'])->name('ajax-store');
-        Route::get('/check-code', [MaterialController::class, 'checkCode'])->name('check-code');
-        Route::get('/{material}/transactions', [MaterialController::class, 'transactions'])->name('materials.transactions');
-    });
-    // API Material Routes
-    Route::prefix('api/materials')->name('api.materials.')->group(function () {
-        Route::get('/search', [MaterialController::class, 'apiSearch'])->name('search');
-        Route::get('/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('suppliers');
-        Route::get('/all', [MaterialController::class, 'getAllMaterials'])->name('all');
-        Route::get('/search-by-supplier', [MaterialController::class, 'searchBySupplier'])->name('search-by-supplier');
-    });
-    // Inquiry Routes
-    Route::resource('inquiries', InquiryController::class);
-    Route::post('/api/inquiries/{inquiry}/remove-attachment', [InquiryController::class, 'removeAttachment']);
-    Route::get('/api/inquiries/search', [InquiryController::class, 'search'])->name('inquiries.search');
-    // Quotation Routes
-    Route::resource('quotations', QuotationController::class);
-    Route::post('/api/quotations/{quotation}/send', [QuotationController::class, 'send']);
-    Route::post('/api/quotations/remove-attachment', [QuotationController::class, 'removeAttachment']);
-    Route::get('/api/quotations/search', [QuotationController::class, 'search'])->name('quotations.search');
-    Route::get('/quotations/attachment/{attachment}/download', [QuotationController::class, 'downloadAttachment'])->name('quotations.attachment.download');
-    Route::get('/quotations/response/attachment/{attachment}/download', [QuotationController::class, 'downloadResponseAttachment'])->name('quotations.response.attachment.download');
-    // Invitation Routes
-    // Controller methods take `SupplierInvitation $invitation`, so the route parameter must be named to match.
-    Route::resource('supplier-invitations', SupplierInvitationController::class)->parameters(['supplier-invitations' => 'invitation']);
-    Route::post('/api/supplier-invitations/{invitation}/resend', [SupplierInvitationController::class, 'resend'])->name('supplier-invitations.resend');
-    Route::get('/api/supplier-invitations/search', [SupplierInvitationController::class, 'search'])->name('supplier-invitations.search');
-    // Supplier Routes
-    // Supplier management is staff-only (clients and suppliers must not see or edit other suppliers).
-    Route::middleware('role:admin,manager,procurement')->group(function () {
-        Route::resource('suppliers', SupplierController::class)->only(['index', 'show', 'edit', 'update', 'destroy']);
-        Route::get('/admin/suppliers/search', [SupplierController::class, 'search'])->name('admin.suppliers.search');
-    });
-    // Purchase Requests
-    // Must precede the resource so {purchase_request} doesn't swallow it.
-    Route::get('purchase-requests/recommend-suppliers-for-material', [PurchaseRequestController::class, 'recommendSuppliersForMaterial'])->name('purchase-requests.recommend-suppliers');
-    Route::resource('purchase-requests', PurchaseRequestController::class);
-    Route::get('/api/purchase-requests/{purchaseRequest}/items', [PurchaseRequestController::class, 'getItems'])->name('api.purchase-requests.items');
-    Route::post('/purchase-requests/generate-from-contract', [App\Http\Controllers\PurchaseRequestController::class, 'generateFromContract'])->name('purchase-requests.generate-from-contract');
+    // Purchase orders: PurchaseOrderController checks roles per action (staff incl. finance; the order's
+    // supplier marks it shipped; warehouse marks it received), so these stay outside the staff-only group.
     // Purchase Orders
     Route::post('purchase-orders/request-approval', [PurchaseOrderController::class, 'requestApproval'])->name('purchase-orders.request-approval');
     Route::resource('purchase-orders', PurchaseOrderController::class);
     Route::get('purchase-orders/{id}/json', [PurchaseOrderController::class, 'showJson'])->name('purchase-orders.json');
     Route::post('purchase-orders/{purchaseOrder}/ship', [PurchaseOrderController::class, 'markAsShipped'])->name('purchase-orders.mark-shipped');
     Route::post('purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'markAsReceived'])->name('purchase-orders.mark-received');
-    // Transaction Routes
-    Route::get('/transactions/past', [\App\Http\Controllers\TransactionController::class, 'pastTransactions'])->name('transactions.past');
-    Route::resource('transactions', \App\Http\Controllers\TransactionController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
-    // Supplier Rankings Routes
-    Route::prefix('admin/suppliers')->name('suppliers.')->middleware(['auth'])->group(function () {
-        Route::get('rankings', [AnalyticsController::class, 'supplierRankings'])->name('rankings');
-        Route::get('template/download', [SupplierRankingController::class, 'downloadTemplate'])->name('template.download');
-        Route::get('materials/template/download', [SupplierRankingController::class, 'downloadMaterialsTemplate'])->name('materials.template.download');
-        Route::post('{supplier}/evaluations', [SupplierRankingController::class, 'storeEvaluation'])->name('evaluations.store');
-        Route::post('{supplier}/metrics', [SupplierRankingController::class, 'updateMetrics'])->name('metrics.update');
+
+    // Contract pages clients can also open (ContractController restricts clients to their own contracts)
+    Route::middleware('role:admin,manager,procurement,contractor,finance,client')->prefix('contracts')->name('contracts.')->group(function () {
+        Route::get('/', [ContractController::class, 'index'])->name('index');
+        Route::get('/{contract}', [ContractController::class, 'show'])->name('show');
+        Route::get('/{contract}/download', [ContractController::class, 'download'])->name('download');
+        Route::get('/{contract}/pdf', [ContractController::class, 'download'])->name('pdf');
+        Route::get('/{contract}/items', [ContractController::class, 'getItems'])->name('items');
     });
-    // Inventory Management Routes
-    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
-    Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
-    Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
-    Route::get('/inventory/{inventory}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
-    Route::put('/inventory/{inventory}', [InventoryController::class, 'update'])->name('inventory.update');
-    Route::delete('/inventory/{inventory}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
-    Route::post('/inventory/{inventory}/adjust-stock', [InventoryController::class, 'adjustStock'])->name('inventory.adjust-stock');
-    Route::get('/inventory/low-stock', [InventoryController::class, 'lowStock'])->name('inventory.low-stock');
-    Route::get('/inventory/expiring', [InventoryController::class, 'expiring'])->name('inventory.expiring');
-    // Project Timeline Route
-    Route::get('/project-timeline', [ProjectTimelineController::class, 'index'])->name('project-timeline.index');
-    Route::get('/project-timeline/create', [ProjectTimelineController::class, 'create'])->name('project-timeline.create');
-    Route::post('/project-timeline', [ProjectTimelineController::class, 'store'])->name('project-timeline.store');
-    Route::get('/project-timeline/{task}', [ProjectTimelineController::class, 'show'])->name('project-timeline.show');
-    Route::get('/project-timeline/{task}/edit', [ProjectTimelineController::class, 'edit'])->name('project-timeline.edit');
-    Route::put('/project-timeline/{task}', [ProjectTimelineController::class, 'update'])->name('project-timeline.update');
-    Route::delete('/project-timeline/{task}', [ProjectTimelineController::class, 'destroy'])->name('project-timeline.destroy');
-    Route::put('/project-timeline/{task}/progress', [ProjectTimelineController::class, 'updateProgress'])->name('project-timeline.update-progress');
-    Route::put('/project-timeline/{task}/delayed', [ProjectTimelineController::class, 'markAsDelayed'])->name('project-timeline.mark-delayed');
-    // Add this route for fetching contract items (materials) for web requests
-    Route::get('/contracts/{contract}/items', [\App\Http\Controllers\ContractController::class, 'getItems'])->name('contracts.items');
-    // Warranty Requests Routes
-    Route::prefix('warranty-requests')->name('warranty-requests.')->group(function () {
-        Route::get('/', [WarrantyRequestController::class, 'index'])->name('index');
-        Route::get('/export', [WarrantyRequestController::class, 'export'])->name('export');
-        Route::get('/template', [WarrantyRequestController::class, 'template'])->name('template');
-        Route::post('/import', [WarrantyRequestController::class, 'import'])->name('import');
-        Route::post('/additional-work', [WarrantyRequestController::class, 'storeAdditionalWork'])->name('additional-work');
-        Route::get('/{warrantyRequest}', [WarrantyRequestController::class, 'show'])->name('show');
-        Route::post('/', [WarrantyRequestController::class, 'store'])->name('store');
-        Route::post('/{warrantyRequest}/status', [WarrantyRequestController::class, 'updateStatus'])->name('update-status');
+    // Project timeline overview + warranty / additional-work requests (clients see only their own contracts)
+    Route::middleware('role:admin,manager,procurement,contractor,client')->group(function () {
+        Route::get('/project-timeline', [ProjectTimelineController::class, 'index'])->name('project-timeline.index');
+        Route::post('/warranty-requests', [WarrantyRequestController::class, 'store'])->name('warranty-requests.store');
+        Route::post('/warranty-requests/additional-work', [WarrantyRequestController::class, 'storeAdditionalWork'])->name('warranty-requests.additional-work');
+        Route::post('/api/warranty-requests', [WarrantyRequestController::class, 'store']);
     });
-    // History Dashboard Route
-    Route::get('/history-dashboard', function () {
-        return view('admin.history-dashboard');
-    })->name('history.dashboard');
+
+    Route::middleware('role:admin,manager,procurement,contractor')->group(function () {
+        // Supporting routes for contract form
+        Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
+        Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
+        Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
+        // Material Routes
+        Route::prefix('materials')->name('materials.')->group(function () {
+            Route::get('/', [MaterialController::class, 'index'])->name('index');
+            Route::get('/create', [MaterialController::class, 'create'])->name('create');
+            Route::post('/', [MaterialController::class, 'store'])->name('store');
+            Route::get('/{material}', [MaterialController::class, 'show'])->name('show');
+            Route::get('/{material}/edit', [MaterialController::class, 'edit'])->name('edit');
+            Route::put('/{material}', [MaterialController::class, 'update'])->name('update');
+            Route::delete('/{material}', [MaterialController::class, 'destroy'])->name('destroy');
+            Route::delete('/{material}/images/{image}', [MaterialController::class, 'destroyImage'])->name('images.destroy');
+            Route::get('/search', [MaterialController::class, 'search'])->name('search');
+            Route::get('/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('suppliers');
+            Route::post('/update-srp', [MaterialController::class, 'updateSrpPrices'])->name('update-srp');
+            Route::post('/ajax-store', [MaterialController::class, 'ajaxStore'])->name('ajax-store');
+            Route::get('/check-code', [MaterialController::class, 'checkCode'])->name('check-code');
+            Route::get('/{material}/transactions', [MaterialController::class, 'transactions'])->name('materials.transactions');
+        });
+        // API Material Routes
+        Route::prefix('api/materials')->name('api.materials.')->group(function () {
+            Route::get('/search', [MaterialController::class, 'apiSearch'])->name('search');
+            Route::get('/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('suppliers');
+            Route::get('/all', [MaterialController::class, 'getAllMaterials'])->name('all');
+            Route::get('/search-by-supplier', [MaterialController::class, 'searchBySupplier'])->name('search-by-supplier');
+        });
+        // Inquiry Routes
+        Route::resource('inquiries', InquiryController::class);
+        Route::post('/api/inquiries/{inquiry}/remove-attachment', [InquiryController::class, 'removeAttachment']);
+        Route::get('/api/inquiries/search', [InquiryController::class, 'search'])->name('inquiries.search');
+        // Quotation Routes
+        Route::resource('quotations', QuotationController::class);
+        Route::post('/api/quotations/{quotation}/send', [QuotationController::class, 'send']);
+        Route::post('/api/quotations/remove-attachment', [QuotationController::class, 'removeAttachment']);
+        Route::get('/api/quotations/search', [QuotationController::class, 'search'])->name('quotations.search');
+        Route::get('/quotations/attachment/{attachment}/download', [QuotationController::class, 'downloadAttachment'])->name('quotations.attachment.download');
+        Route::get('/quotations/response/attachment/{attachment}/download', [QuotationController::class, 'downloadResponseAttachment'])->name('quotations.response.attachment.download');
+        // Invitation Routes
+        // Controller methods take `SupplierInvitation $invitation`, so the route parameter must be named to match.
+        Route::resource('supplier-invitations', SupplierInvitationController::class)->parameters(['supplier-invitations' => 'invitation']);
+        Route::post('/api/supplier-invitations/{invitation}/resend', [SupplierInvitationController::class, 'resend'])->name('supplier-invitations.resend');
+        Route::get('/api/supplier-invitations/search', [SupplierInvitationController::class, 'search'])->name('supplier-invitations.search');
+        // Supplier Routes
+        // Supplier management is staff-only (clients and suppliers must not see or edit other suppliers).
+        Route::middleware('role:admin,manager,procurement,contractor')->group(function () {
+            Route::resource('suppliers', SupplierController::class)->only(['index', 'show', 'edit', 'update', 'destroy']);
+            Route::get('/admin/suppliers/search', [SupplierController::class, 'search'])->name('admin.suppliers.search');
+        });
+        // Purchase Requests
+        // Must precede the resource so {purchase_request} doesn't swallow it.
+        Route::get('purchase-requests/recommend-suppliers-for-material', [PurchaseRequestController::class, 'recommendSuppliersForMaterial'])->name('purchase-requests.recommend-suppliers');
+        Route::resource('purchase-requests', PurchaseRequestController::class);
+        Route::get('/api/purchase-requests/{purchaseRequest}/items', [PurchaseRequestController::class, 'getItems'])->name('api.purchase-requests.items');
+        Route::post('/purchase-requests/generate-from-contract', [App\Http\Controllers\PurchaseRequestController::class, 'generateFromContract'])->name('purchase-requests.generate-from-contract');
+        // Transaction Routes
+        Route::get('/transactions/past', [\App\Http\Controllers\TransactionController::class, 'pastTransactions'])->name('transactions.past');
+        Route::resource('transactions', \App\Http\Controllers\TransactionController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+        // Supplier Rankings Routes
+        Route::prefix('admin/suppliers')->name('suppliers.')->middleware(['auth'])->group(function () {
+            Route::get('rankings', [AnalyticsController::class, 'supplierRankings'])->name('rankings');
+            Route::get('template/download', [SupplierRankingController::class, 'downloadTemplate'])->name('template.download');
+            Route::get('materials/template/download', [SupplierRankingController::class, 'downloadMaterialsTemplate'])->name('materials.template.download');
+            Route::post('{supplier}/evaluations', [SupplierRankingController::class, 'storeEvaluation'])->name('evaluations.store');
+            Route::post('{supplier}/metrics', [SupplierRankingController::class, 'updateMetrics'])->name('metrics.update');
+        });
+        // Inventory Management Routes
+        Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
+        Route::get('/inventory/create', [InventoryController::class, 'create'])->name('inventory.create');
+        Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store');
+        Route::get('/inventory/{inventory}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
+        Route::put('/inventory/{inventory}', [InventoryController::class, 'update'])->name('inventory.update');
+        Route::delete('/inventory/{inventory}', [InventoryController::class, 'destroy'])->name('inventory.destroy');
+        Route::post('/inventory/{inventory}/adjust-stock', [InventoryController::class, 'adjustStock'])->name('inventory.adjust-stock');
+        Route::get('/inventory/low-stock', [InventoryController::class, 'lowStock'])->name('inventory.low-stock');
+        Route::get('/inventory/expiring', [InventoryController::class, 'expiring'])->name('inventory.expiring');
+        // Project Timeline Route
+        Route::get('/project-timeline/create', [ProjectTimelineController::class, 'create'])->name('project-timeline.create');
+        Route::post('/project-timeline', [ProjectTimelineController::class, 'store'])->name('project-timeline.store');
+        Route::get('/project-timeline/{task}', [ProjectTimelineController::class, 'show'])->name('project-timeline.show');
+        Route::get('/project-timeline/{task}/edit', [ProjectTimelineController::class, 'edit'])->name('project-timeline.edit');
+        Route::put('/project-timeline/{task}', [ProjectTimelineController::class, 'update'])->name('project-timeline.update');
+        Route::delete('/project-timeline/{task}', [ProjectTimelineController::class, 'destroy'])->name('project-timeline.destroy');
+        Route::put('/project-timeline/{task}/progress', [ProjectTimelineController::class, 'updateProgress'])->name('project-timeline.update-progress');
+        Route::put('/project-timeline/{task}/delayed', [ProjectTimelineController::class, 'markAsDelayed'])->name('project-timeline.mark-delayed');
+        // Warranty Requests Routes
+        Route::prefix('warranty-requests')->name('warranty-requests.')->group(function () {
+            Route::get('/', [WarrantyRequestController::class, 'index'])->name('index');
+            Route::get('/export', [WarrantyRequestController::class, 'export'])->name('export');
+            Route::get('/template', [WarrantyRequestController::class, 'template'])->name('template');
+            Route::post('/import', [WarrantyRequestController::class, 'import'])->name('import');
+            Route::get('/{warrantyRequest}', [WarrantyRequestController::class, 'show'])->name('show');
+            Route::post('/{warrantyRequest}/status', [WarrantyRequestController::class, 'updateStatus'])->name('update-status');
+        });
+        // History Dashboard Route
+        Route::get('/history-dashboard', function () {
+            return view('admin.history-dashboard');
+        })->name('history.dashboard');
+    }); // end staff-only pages
+
     // Warehouse Routes
     Route::middleware([\App\Http\Middleware\WarehouseMiddleware::class])->prefix('warehouse')->name('warehouse.')->group(function () {
         Route::get('/dashboard', [WarehouseDashboardController::class, 'index'])->name('dashboard');
@@ -274,13 +287,17 @@ Route::middleware(['auth'])->group(function () {
     // Purchase Order Payment Routes
     Route::post('/purchase-orders/{po}/payments', [PurchaseOrderPaymentController::class, 'store'])->name('purchase-orders.payments.store');
     Route::post('/purchase-order-payments/{payment}/verify', [PurchaseOrderPaymentController::class, 'verify'])->name('purchase-order-payments.verify');
-    Route::post('/clients/{id}/ban', [\App\Http\Controllers\PartyController::class, 'ban'])->name('clients.ban');
-    Route::post('/clients/{id}/unban', [\App\Http\Controllers\PartyController::class, 'unban'])->name('clients.unban');
+    Route::middleware('role:admin,manager')->group(function () {
+        Route::post('/clients/{id}/ban', [\App\Http\Controllers\PartyController::class, 'ban'])->name('clients.ban');
+        Route::post('/clients/{id}/unban', [\App\Http\Controllers\PartyController::class, 'unban'])->name('clients.unban');
+    });
 });
-// Payments routes
-Route::middleware(['auth'])->group(function () {
+// Payments: managed by admin, manager and finance. Clients may only view the proof for their own payments
+// (checked in PaymentController::showProof); their own payment pages are under /client.
+Route::get('/payments/{payment}/proof', [PaymentController::class, 'showProof'])->name('payments.proof')
+    ->middleware(['auth', 'role:admin,manager,finance,client']);
+Route::middleware(['auth', 'role:admin,manager,finance'])->group(function () {
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
-    Route::get('/payments/{payment}/proof', [PaymentController::class, 'showProof'])->name('payments.proof');
     Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
     Route::post('/payments/{payment}/mark-as-paid', [PaymentController::class, 'markAsPaid'])->name('payments.markAsPaid');
     Route::post('/payments/{payment}/upload-proof', [PaymentController::class, 'uploadProof'])->name('payments.uploadProof');
@@ -320,10 +337,10 @@ Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefi
     Route::get('/quotation/view', [\App\Http\Controllers\ClientQuotationController::class, 'view'])->name('quotation.view');
     Route::post('/quotation/{id}/finalize', [\App\Http\Controllers\ClientQuotationController::class, 'finalizeSelection'])->name('quotation.finalize');
 });
-Route::post('/client/quotation/{id}/cancel', [App\Http\Controllers\ClientQuotationController::class, 'cancel'])->name('client.quotation.cancel')->middleware('auth');
-Route::get('/client/quotation/{id}/contract', [App\Http\Controllers\ClientQuotationController::class, 'showContractForm'])->name('client.contract.fill')->middleware('auth');
-Route::post('/client/quotation/{id}/proceed', [\App\Http\Controllers\ClientQuotationController::class, 'finalizeSelection'])->name('client.quotation.proceed')->middleware('auth');
-Route::post('/client/quotation/{id}/contract', [\App\Http\Controllers\ClientQuotationController::class, 'submitContract'])->name('client.contract.submit')->middleware('auth');
+Route::post('/client/quotation/{id}/cancel', [App\Http\Controllers\ClientQuotationController::class, 'cancel'])->name('client.quotation.cancel')->middleware(['auth', 'role:client']);
+Route::get('/client/quotation/{id}/contract', [App\Http\Controllers\ClientQuotationController::class, 'showContractForm'])->name('client.contract.fill')->middleware(['auth', 'role:client']);
+Route::post('/client/quotation/{id}/proceed', [\App\Http\Controllers\ClientQuotationController::class, 'finalizeSelection'])->name('client.quotation.proceed')->middleware(['auth', 'role:client']);
+Route::post('/client/quotation/{id}/contract', [\App\Http\Controllers\ClientQuotationController::class, 'submitContract'])->name('client.contract.submit')->middleware(['auth', 'role:client']);
 
 // Procurement Routes
 Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->prefix('procurement')->name('procurement.')->group(function () {
@@ -417,7 +434,8 @@ Route::get('/admin/suppliers/{supplier}/purchase-order-metrics', [SupplierRankin
     ->name('admin.suppliers.purchase-order-metrics')->middleware(['auth', 'admin']);
 // Add this route for fetching contract items (materials) for web requests
 // Search Routes
-Route::prefix('search')->middleware('auth')->group(function () {
+// Lookup endpoints expose user/client/contract data: staff only.
+Route::prefix('search')->middleware(['auth', 'role:admin,manager,procurement,contractor'])->group(function () {
     Route::get('users', [SearchController::class, 'users'])->name('search.users');
     Route::get('contractors', [SearchController::class, 'contractors'])->name('search.contractors');
     Route::get('clients', [SearchController::class, 'clients'])->name('search.clients');
@@ -429,7 +447,6 @@ Route::prefix('search')->middleware('auth')->group(function () {
     Route::get('quotation-requests', [SearchController::class, 'quotationRequests'])->name('search.quotation-requests'); // <-- Added
 });
 // API Routes for Warranty Requests
-Route::post('/api/warranty-requests', [WarrantyRequestController::class, 'store'])->middleware('auth');
 // Budget Tracking Routes
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
@@ -482,17 +499,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('materials/{material}/suppliers', [AdminMaterialController::class, 'updateSuppliers'])->name('materials.suppliers.update');
 });
 
-Route::resource('material-requests', \App\Http\Controllers\MaterialRequestController::class)->only(['index', 'create', 'store', 'show'])->middleware('auth');
-Route::get('/admin/materials/{material}/suppliers', [\App\Http\Controllers\MaterialRequestController::class, 'getMaterialSuppliers'])->name('materials.suppliers')->middleware('auth');
-Route::get('/admin/materials/{material}/stock', [\App\Http\Controllers\MaterialRequestController::class, 'getMaterialStock'])->name('materials.stock')->middleware('auth');
+Route::resource('material-requests', \App\Http\Controllers\MaterialRequestController::class)->only(['index', 'create', 'store', 'show'])->middleware(['auth', 'role:admin,manager,procurement,contractor']);
+Route::get('/admin/materials/{material}/suppliers', [\App\Http\Controllers\MaterialRequestController::class, 'getMaterialSuppliers'])->name('materials.suppliers')->middleware(['auth', 'role:admin,manager,procurement,contractor']);
+Route::get('/admin/materials/{material}/stock', [\App\Http\Controllers\MaterialRequestController::class, 'getMaterialStock'])->name('materials.stock')->middleware(['auth', 'role:admin,manager,procurement,contractor']);
 
 Route::post('purchase-requests/{purchaseRequest}/supplier-approve', [PurchaseRequestController::class, 'supplierApprove'])->name('purchase-requests.supplier.approve')->middleware('auth', 'role:supplier');
 
 // Material Search
-Route::get('/materials/all', [MaterialController::class, 'getAllMaterials'])->name('materials.all')->middleware('auth');
+Route::get('/materials/all', [MaterialController::class, 'getAllMaterials'])->name('materials.all')->middleware(['auth', 'role:admin,manager,procurement,contractor']);
 
 // Project Management Routes
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:admin,manager,procurement,contractor'])->group(function () {
     Route::resource('projects', ProjectController::class);
     Route::get('projects/{project}/feedback', [ProjectController::class, 'feedbackForm'])->name('projects.feedback');
     Route::post('projects/{project}/feedback', [ProjectController::class, 'submitFeedback'])->name('projects.submitFeedback');
@@ -500,14 +517,14 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('projects.tasks', ProjectTaskController::class);
 });
 
-Route::get('/api/clients/{id}/ban-status', [\App\Http\Controllers\PartyController::class, 'banStatus'])->name('api.clients.ban-status')->middleware('auth');
+Route::get('/api/clients/{id}/ban-status', [\App\Http\Controllers\PartyController::class, 'banStatus'])->name('api.clients.ban-status')->middleware(['auth', 'role:admin,manager']);
 
 
 // Supplier Recommendation Route
-Route::get('/projects/{projectId}/recommend-suppliers', [ProjectController::class, 'recommendSuppliers'])->name('projects.recommend-suppliers')->middleware('auth');
+Route::get('/projects/{projectId}/recommend-suppliers', [ProjectController::class, 'recommendSuppliers'])->name('projects.recommend-suppliers')->middleware(['auth', 'role:admin,manager,procurement,contractor']);
 
 // General Supplier Recommendation Route for Analytics
-Route::get('/analytics/supplier-recommendation', [ProjectController::class, 'generalSupplierRecommendation'])->name('analytics.supplier-recommendation')->middleware('auth');
+Route::get('/analytics/supplier-recommendation', [ProjectController::class, 'generalSupplierRecommendation'])->name('analytics.supplier-recommendation')->middleware(['auth', 'role:admin,manager,procurement,contractor']);
 
 
 // Procurement Supplier Rankings
@@ -525,7 +542,7 @@ Route::get('/admin/logs', [App\Http\Controllers\AdminController::class, 'adminis
 Route::get('/warehouse/logs', [App\Http\Controllers\Warehouse\WarehouseDashboardController::class, 'warehouseLogs'])->name('warehouse.logs')->middleware(['auth', 'role:warehousing,admin']);
 
 // Procurement request approval routes
-Route::post('/purchase-requests/request-approval', [\App\Http\Controllers\PurchaseRequestController::class, 'requestApproval'])->name('purchase-requests.request-approval')->middleware('auth');
+Route::post('/purchase-requests/request-approval', [\App\Http\Controllers\PurchaseRequestController::class, 'requestApproval'])->name('purchase-requests.request-approval')->middleware(['auth', 'role:admin,manager,procurement,contractor']);
 
 Route::middleware(['auth', 'role:finance'])->group(function () {
     Route::get('/finance/dashboard', [\App\Http\Controllers\FinanceDashboardController::class, 'index'])->name('finance.dashboard');
@@ -536,8 +553,8 @@ Route::middleware(['auth', 'role:finance'])->group(function () {
 });
 
 // API endpoint for fetching a single quotation request by ID
-Route::get('/api/quotation-requests/{id}', [App\Http\Controllers\QuotationRequestController::class, 'showJson'])->middleware('auth');
-Route::get('/api/quotation-requests', [\App\Http\Controllers\QuotationRequestController::class, 'search'])->middleware('auth');
+Route::get('/api/quotation-requests/{id}', [App\Http\Controllers\QuotationRequestController::class, 'showJson'])->middleware(['auth', 'role:admin,manager,procurement,contractor']);
+Route::get('/api/quotation-requests', [\App\Http\Controllers\QuotationRequestController::class, 'search'])->middleware(['auth', 'role:admin,manager,procurement,contractor']);
 
 // Manager dashboard and routes
 Route::middleware(['auth', 'role:manager'])->prefix('manager')->name('manager.')->group(function () {

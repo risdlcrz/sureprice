@@ -6,7 +6,7 @@
     @include('include.sidebars.analytics')
 @elseif($u && $u->role === 'warehousing')
     @include('include.sidebars.warehousing')
-@elseif($u && $u->user_type === 'employee' && $u->role === 'procurement')
+@elseif($u && $u->user_type === 'employee' && in_array($u->role, ['procurement', 'contractor'], true))
     @include('include.sidebars.procurement')
 @else
     @include('include.sidebars.default')

@@ -48,9 +48,11 @@
                                 <tr>
                                     <th>Originating Quotation Request</th>
                                     <td>
-                                        <a href="{{ route('admin.quotation.review', $materialRequest->quotationRequest->id) }}">
+                                        @if(in_array(auth()->user()->role, ['admin', 'manager'], true))
+                                            <a href="{{ route('admin.quotation.review', $materialRequest->quotationRequest->id) }}">{{ $materialRequest->quotationRequest->request_number }}</a>
+                                        @else
                                             {{ $materialRequest->quotationRequest->request_number }}
-                                        </a>
+                                        @endif
                                     </td>
                                 </tr>
                                 @endif

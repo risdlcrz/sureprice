@@ -34,7 +34,13 @@
                                 <td>{{ $qr->user->name ?? 'N/A' }}</td>
                                 <td><x-status-badge :status="$qr->status" /></td>
                                 <td>{{ $qr->created_at->format('Y-m-d H:i') }}</td>
-                                <td><a href="{{ route('manager.quotation-requests.view', $qr->id) }}" class="btn btn-sm btn-primary">View</a></td>
+                                <td>
+                                    @if(auth()->user()->role === 'manager')
+                                        <a href="{{ route('manager.quotation-requests.view', $qr->id) }}" class="btn btn-sm btn-primary">View</a>
+                                    @elseif(auth()->user()->isAdmin())
+                                        <a href="{{ route('admin.quotation.review', $qr->id) }}" class="btn btn-sm btn-primary">Review</a>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr><td colspan="5">No client quotation requests found.</td></tr>

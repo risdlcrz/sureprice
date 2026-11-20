@@ -33,25 +33,8 @@ class ContractController extends Controller
                 return $query->where('status', $status);
             });
 
-        // If the logged-in user is a client company, only show their own contracts
-        if ($user &&
-            $user->user_type === 'company' &&
-            (optional($user->company)->designation === 'client' || $user->role === 'client')) {
-
-            $company = $user->company;
-            $contractsQuery->whereHas('client', function ($q) use ($user, $company) {
-                $q->where('email', $user->email);
-
-                if ($company) {
-                    $q->orWhere('email', $company->email)
-                      ->orWhere('company_name', $company->company_name)
-                      ->orWhere('name', $company->company_name);
-                }
-
-                // Also match explicit user linkage if present
-                $q->orWhere('user_id', $user->id);
-            });
-        }
+        // Clients only see their own contracts (staff see all) — see Contract::scopeVisibleTo().
+        $contractsQuery->visibleTo($user);
 
         $contracts = $contractsQuery
             ->orderBy('created_at', 'desc')
@@ -62,6 +45,7 @@ class ContractController extends Controller
 
     public function show(Contract $contract)
     {
+        abort_unless($contract->isVisibleTo(Auth::user()), 403);
         $contract->load([
             'contractor',
             'client',
@@ -340,6 +324,7 @@ class ContractController extends Controller
 
     public function download(Contract $contract)
     {
+        abort_unless($contract->isVisibleTo(Auth::user()), 403);
         $contract->load(['contractor', 'client', 'property', 'items.material.suppliers']);
         
         $pdf = PDF::loadView('admin.contracts.pdf', [
@@ -1038,6 +1023,7 @@ class ContractController extends Controller
     public function getItems($contractId)
     {
         $contract = Contract::with(['items.material.suppliers', 'items.supplier'])->findOrFail($contractId);
+        abort_unless($contract->isVisibleTo(Auth::user()), 403);
         return response()->json($contract->items);
     }
 

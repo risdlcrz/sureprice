@@ -27,9 +27,11 @@
 
     @php
         $isClient = auth()->check() && auth()->user()->user_type === 'company' && auth()->user()->company && auth()->user()->company->designation === 'client';
+        // Only the project & procurement team manages contracts; clients and finance view them read-only.
+        $canManage = auth()->check() && in_array(auth()->user()->role, \App\Models\Contract::STAFF_ROLES, true);
     @endphp
     <x-page-header title="Contract Details">
-        @if(!$isClient)
+        @if($canManage)
                 @if(Auth::user()->hasRole('admin'))
                     @if($contract->canBeEdited())
                         <div class="btn-group me-2">
@@ -80,7 +82,7 @@
                     <a href="{{ route('material-requests.create', ['contract_id' => $contract->id]) }}" class="btn btn-info" id="createMaterialRequest">
                         <i class="fas fa-boxes"></i> Create Material Request
                     </a>
-                @elseif(in_array(Auth::user()->role, ['manager', 'procurement', 'warehousing']))
+                @elseif(in_array(Auth::user()->role, ['manager', 'procurement', 'contractor', 'warehousing']))
                     <button class="btn btn-info" disabled title="Contract must be approved by admin before requesting materials.">
                         <i class="fas fa-boxes"></i> Create Material Request
                     </button>

@@ -24,12 +24,13 @@ class ProcurementMiddleware
         $user = Auth::user();
         
         // Check role in users table first
-        if ($user->role === 'procurement') {
+        // Contractors work alongside procurement and share its area.
+        if (in_array($user->role, ['procurement', 'contractor'], true)) {
             return $next($request);
         }
         
         // If not found in users table, check in employees table
-        if ($user->employee && $user->employee->role === 'procurement') {
+        if ($user->employee && in_array($user->employee->role, ['procurement', 'contractor'], true)) {
             return $next($request);
         }
 

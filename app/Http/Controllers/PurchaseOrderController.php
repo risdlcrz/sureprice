@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Log;
  */
 class PurchaseOrderController extends Controller
 {
-    private const STAFF_ROLES = ['admin', 'manager', 'finance', 'procurement'];
+    private const STAFF_ROLES = ['admin', 'manager', 'finance', 'procurement', 'contractor'];
 
     public function index(Request $request)
     {

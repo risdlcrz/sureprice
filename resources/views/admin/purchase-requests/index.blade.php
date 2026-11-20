@@ -130,7 +130,7 @@
                                                     </button>
                                                 </form>
                                             @endif
-                                            @if($request->status === 'pending' && (auth()->user()->role === 'procurement' || auth()->user()->role === 'admin'))
+                                            @if($request->status === 'pending' && (auth()->user()->hasRole('procurement') || auth()->user()->role === 'admin'))
                                                 <form action="{{ route('purchase-requests.approve', $request) }}" method="POST" class="d-inline me-1">
                                                     @csrf
                                                     <button type="submit" class="btn btn-sm btn-success" {{ $request->status === 'approved' ? 'disabled' : '' }} onclick="return confirm('Are you sure you want to approve this request?')">

@@ -84,6 +84,10 @@ class User extends Authenticatable // implements MustVerifyEmail
         if ($this->role === $role) {
             return true;
         }
+        // Contractors work alongside procurement and have the same permissions.
+        if ($role === 'procurement' && $this->role === 'contractor') {
+            return true;
+        }
         // If not found in users table, check in employees table
         if ($this->employee && $this->employee->role === $role) {
             return true;
@@ -139,7 +143,7 @@ class User extends Authenticatable // implements MustVerifyEmail
             return $byRole[$this->role];
         }
         if ($this->user_type === 'employee') {
-            return ['procurement' => 'procurement.dashboard', 'warehousing' => 'warehouse.dashboard'][$this->role ?? ''] ?? 'home';
+            return ['procurement' => 'procurement.dashboard', 'contractor' => 'procurement.dashboard', 'warehousing' => 'warehouse.dashboard'][$this->role ?? ''] ?? 'home';
         }
         $company = $this->user_type === 'company' ? $this->company : null;
         if ($company?->status === 'rejected') {

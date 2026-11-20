@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+@php $canManage = in_array(auth()->user()->role, \App\Models\Contract::STAFF_ROLES, true); @endphp
 {{-- @formatter:off --}}
 {{-- stylelint-disable --}}
 <div class="container mt-4">
@@ -31,7 +32,9 @@
                     Rejected
                 </a>
             </div>
-            @if(auth()->user() && auth()->user()->party && auth()->user()->party->banned)
+            @if(!in_array(auth()->user()->role, \App\Models\Contract::STAFF_ROLES, true))
+                {{-- Clients and finance view contracts only. --}}
+            @elseif(auth()->user()->party && auth()->user()->party->banned)
                 <button class="btn btn-primary" disabled title="You are banned and cannot create new contracts."><i class="bi bi-plus-lg"></i> New Contract</button>
             @else
                 <a href="{{ route('contracts.create') }}" class="btn btn-primary">
@@ -160,7 +163,9 @@
                                            class="btn btn-outline-primary" title="View">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        @if($contract->canBeEdited())
+                                        @if(!$canManage)
+                                            {{-- read-only for clients and finance --}}
+                                        @elseif($contract->canBeEdited())
                                             <a href="{{ route('contracts.edit', $contract->id) }}" 
                                                class="btn btn-outline-secondary" title="Edit">
                                                 <i class="bi bi-pencil"></i>
@@ -178,7 +183,7 @@
                                             </span>
                                         @endif
                                     </div>
-                                    @if($contract->canBeDeleted())
+                                    @if($canManage && $contract->canBeDeleted())
                                         <form id="delete-form-{{ $contract->id }}" 
                                               action="{{ route('contracts.destroy', $contract->id) }}" 
                                               method="POST" 

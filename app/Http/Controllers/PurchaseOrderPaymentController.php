@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderPayment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PurchaseOrderPaymentController extends Controller
 {
     // Admin submits payment
     public function store(Request $request, $poId)
     {
+        // Only the purchasing/finance staff record payments to suppliers.
+        abort_unless(in_array(Auth::user()->role, ['admin', 'manager', 'finance', 'procurement', 'contractor'], true), 403);
         $po = PurchaseOrder::findOrFail($poId);
         $data = $request->validate([
             'amount' => 'required|numeric|min:0.01',
@@ -31,7 +34,10 @@ class PurchaseOrderPaymentController extends Controller
     // Supplier verifies or rejects payment
     public function verify(Request $request, $paymentId)
     {
-        $payment = PurchaseOrderPayment::findOrFail($paymentId);
+        $payment = PurchaseOrderPayment::with('purchaseOrder.supplier')->findOrFail($paymentId);
+        // Only the supplier the order was placed with (or an admin) may verify or reject its payment.
+        $user = Auth::user();
+        abort_unless($user->isAdmin() || ($payment->purchaseOrder?->supplier && $payment->purchaseOrder->supplier->user_id === $user->id), 403);
         $data = $request->validate([
             'supplier_reference_number' => 'required|string',
             'supplier_notes' => 'nullable|string',

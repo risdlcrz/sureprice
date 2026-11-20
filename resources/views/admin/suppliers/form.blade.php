@@ -46,10 +46,12 @@
                 <div class="card-body">
                     @if($supplier->company)
                         <p class="mb-2">Account status: <x-status-badge :status="$supplier->company->status" /></p>
-                        <p class="text-muted small mb-3">Approval and documents are managed on the company page.</p>
-                        <a href="{{ route('admin.companies.show', $supplier->company) }}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-building me-1"></i> Open Company Details
-                        </a>
+                        <p class="text-muted small mb-3">Approval and documents are managed on the company page{{ auth()->user()->isAdmin() ? '' : ' by an administrator' }}.</p>
+                        @if(auth()->user()->isAdmin())
+                            <a href="{{ route('admin.companies.show', $supplier->company) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-building me-1"></i> Open Company Details
+                            </a>
+                        @endif
                     @else
                         <p class="text-muted small mb-0">This supplier has no linked company account.</p>
                     @endif
