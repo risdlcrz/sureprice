@@ -1,0 +1,20 @@
+/* Account settings (resources/views/account/edit.blade.php); layout pieces come from requests.css. */
+.account-avatar {
+    flex: none;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--sp-green-100, #dcefe0);
+    color: var(--sp-green-800, #1b5e20);
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+.account-page .min-w-0 { min-width: 0; }
+.account-page .req-meta { grid-template-columns: 1fr; gap: 0.75rem; }
+
+/* "Request a name change" disclosure */
+.account-change > summary { list-style: none; display: inline-block; }
+.account-change > summary::-webkit-details-marker { display: none; }
+.account-change[open] > summary { display: none; }

@@ -156,8 +156,10 @@
                         </div>
                     @else
                         <div class="text-center py-4">
-                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No payments found.</p>
+                            <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
+                            <h5>No payments yet</h5>
+                            <p class="text-muted">Payments appear here once you have an approved contract.</p>
+                            <a href="{{ route('client.quotation.create') }}" class="btn btn-success"><i class="fas fa-plus me-1"></i> Request a quotation</a>
                         </div>
                     @endif
                 </div>

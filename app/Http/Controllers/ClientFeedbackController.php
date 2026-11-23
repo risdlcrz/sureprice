@@ -24,17 +24,8 @@ class ClientFeedbackController extends Controller
             ]);
         }
 
-        $clientParty = $user->clientParty();
-
-        if (!$clientParty) {
-            return view('client.feedback.index', [
-                'feedbacks' => collect([]),
-                'error' => 'No client profile found. Please contact the administrator.'
-            ]);
-        }
-
-        // Get all feedback for this client
-        $feedbacks = ClientFeedback::where('client_id', $clientParty->id)
+        // Feedback on the client's own contracts (none yet is normal: the page shows an empty state)
+        $feedbacks = ClientFeedback::whereHas('contract', fn ($q) => $q->visibleTo($user))
             ->with(['contract', 'contract.contractor'])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -86,16 +77,11 @@ class ClientFeedbackController extends Controller
             'is_anonymous' => 'boolean',
         ]);
 
-        // Find client party
-        $clientParty = $user->clientParty();
-        if (!$clientParty) {
-            abort(403, 'No client profile found.');
-        }
 
         // Create feedback
         $feedback = ClientFeedback::create([
             'contract_id' => $contract->id,
-            'client_id' => $clientParty->id,
+            'client_id' => $contract->client_id,
             'user_id' => $user->id,
             'overall_rating' => $request->overall_rating,
             'communication_rating' => $request->communication_rating,
@@ -214,14 +200,8 @@ class ClientFeedbackController extends Controller
 
     private function canProvideFeedback($user, $contract)
     {
-        // Find client party
-        $clientParty = $user->clientParty();
-        if (!$clientParty) {
-            return false;
-        }
-
-        // Check if contract belongs to this client
-        if ($contract->client_id !== $clientParty->id) {
+        // The contract must be one of this client's own
+        if (!$contract->isVisibleTo($user)) {
             return false;
         }
 

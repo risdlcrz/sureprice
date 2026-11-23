@@ -1,636 +1,319 @@
-// Extracted from resources/views/messages/index.blade.php
-// Blocks kept in their original order: they used to run as consecutive inline scripts.
-const __page = window.__page || {};
+// Messages page (resources/views/messages/index.blade.php): conversation list, thread, composer,
+// "new message" recipient search and the attachment viewer. Server data comes from window.__page.
+const page = window.__page || {};
+const TZ = 'Asia/Manila';
+const url = (path) => (window.appUrl ? window.appUrl(path) : `/${path}`);
 
-// ---- block 1 ----
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('participant_search_start');
-    const resultsDiv = document.getElementById('participant_search_results_start');
-    const clientIdHidden = document.getElementById('client_id_hidden_start');
-    const supplierIdHidden = document.getElementById('supplier_id_hidden_start');
-    let searchTimeout;
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        const term = searchInput.value.trim();
-        clientIdHidden.value = '';
-        supplierIdHidden.value = '';
-        clientIdHidden.name = '';
-        supplierIdHidden.name = '';
-        if (term.length < 2) {
-            resultsDiv.style.display = 'none';
-            resultsDiv.innerHTML = '';
-            return;
-        }
-        searchTimeout = setTimeout(function() {
-            fetch(`${__page.index1_0}?search=${encodeURIComponent(term)}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.data && data.data.length > 0) {
-                        resultsDiv.innerHTML = data.data.map(item =>
-                            `<a href="#" class="list-group-item list-group-item-action d-flex align-items-center" data-id="${item.id}" data-designation="${item.designation.toLowerCase()}">
-                                <span class="fw-semibold flex-grow-1">${item.text}</span>
-                                <span class="badge bg-${item.designation.toLowerCase() === 'client' ? 'primary' : 'success'} ms-2">${item.designation}</span>
-                            </a>`
-                        ).join('');
-                        resultsDiv.style.display = 'block';
-                    } else {
-                        resultsDiv.innerHTML = '<div class="list-group-item">No results found</div>';
-                        resultsDiv.style.display = 'block';
-                    }
-                });
-        }, 250);
-    });
-    resultsDiv.addEventListener('click', function(e) {
-        if (e.target.closest('.list-group-item-action')) {
-            e.preventDefault();
-            const item = e.target.closest('.list-group-item-action');
-            const id = item.getAttribute('data-id');
-            const designation = item.getAttribute('data-designation');
-            clientIdHidden.value = '';
-            supplierIdHidden.value = '';
-            clientIdHidden.name = '';
-            supplierIdHidden.name = '';
-            if (designation === 'client') {
-                clientIdHidden.name = 'client_id';
-                clientIdHidden.value = id;
-            } else if (designation === 'supplier') {
-                supplierIdHidden.name = 'supplier_id';
-                supplierIdHidden.value = id;
-            }
-            searchInput.value = item.querySelector('.fw-semibold').textContent;
-            resultsDiv.style.display = 'none';
-        }
-    });
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('#participant_search_start, #participant_search_results_start')) {
-            resultsDiv.style.display = 'none';
-        }
-    });
-});
+const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const initial = (name) => esc((String(name || '?').trim()[0] || '?').toUpperCase());
+const timeOf = (iso) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ });
+const dayKey = (iso) => new Date(iso).toLocaleDateString('en-CA', { timeZone: TZ }); // YYYY-MM-DD
+const formatSize = (bytes) => {
+    if (!bytes) return '0 B';
+    const i = Math.min(3, Math.floor(Math.log(bytes) / Math.log(1024)));
+    return `${parseFloat((bytes / 1024 ** i).toFixed(1))} ${['B', 'KB', 'MB', 'GB'][i]}`;
+};
 
-// ---- block 2 ----
-// Modern AJAX-based messaging system
-class MessengerApp {
+// ---------------------------------------------------------------- conversation list: search + mobile toggle
+function setupSidebar() {
+    const chat = document.getElementById('chat');
+    const search = document.getElementById('chatSearch');
+    const list = document.getElementById('chatList');
+    const empty = document.getElementById('chatSearchEmpty');
+
+    search?.addEventListener('input', () => {
+        const term = search.value.trim().toLowerCase();
+        let shown = 0;
+        list.querySelectorAll('.chat-list__item').forEach((item) => {
+            const match = !term || item.textContent.toLowerCase().includes(term);
+            item.hidden = !match;
+            shown += match ? 1 : 0;
+        });
+        if (empty) empty.hidden = !term || shown > 0;
+    });
+
+    document.getElementById('chatBack')?.addEventListener('click', () => chat.classList.remove('is-thread-open'));
+}
+
+// After sending: show the new message as the active conversation's preview and move it to the top.
+function bumpActiveConversation(message) {
+    const list = document.getElementById('chatList');
+    const item = list?.querySelector(`.chat-list__item[data-conversation-id="${CSS.escape(String(page.conversationId))}"]`);
+    if (!item) return;
+    const preview = item.querySelector('.chat-list__preview');
+    const time = item.querySelector('.chat-list__time');
+    if (preview) preview.innerHTML = `<span class="text-muted">You: </span>${esc(message.content ? message.content.slice(0, 60) : 'Sent an attachment')}`;
+    if (time) time.textContent = timeOf(message.created_at);
+    list.prepend(item);
+}
+
+// ---------------------------------------------------------------- thread + composer
+class Thread {
     constructor() {
-        this.conversationId = __page.index2_0;
-        this.currentUserId = __page.index2_1;
-        this.messagesArea = document.getElementById('messagesArea');
-        this.messageForm = document.getElementById('messageForm');
-        this.messageContent = document.getElementById('messageContent');
+        this.area = document.getElementById('messagesArea');
+        this.form = document.getElementById('messageForm');
+        this.input = document.getElementById('messageContent');
         this.fileInput = document.getElementById('fileInput');
-        this.attachBtn = document.getElementById('attachBtn');
-        this.attachmentPreview = document.getElementById('attachmentPreview');
-        this.sendBtn = document.querySelector('.messenger-send-btn');
-        
-        // Track processed message IDs to prevent duplicates
-        this.processedMessageIds = new Set();
-        this.lastMessageId = null;
-        
-        // Debounce sidebar updates
-        this.sidebarUpdateTimeout = null;
-        this.lastSidebarUpdate = 0;
-        
-        this.init();
-    }
+        this.preview = document.getElementById('attachmentPreview');
+        this.sendBtn = document.getElementById('sendBtn');
+        this.sending = false;
 
-    init() {
-        this.setupEventListeners();
-        this.setupAutoResize();
+        this.form.addEventListener('submit', (e) => { e.preventDefault(); this.send(); });
+        this.input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.send(); }
+        });
+        this.input.addEventListener('input', () => this.autosize());
+        document.getElementById('attachBtn').addEventListener('click', () => this.fileInput.click());
+        this.fileInput.addEventListener('change', () => this.pickFile(this.fileInput.files[0]));
+        this.preview.addEventListener('click', (e) => { if (e.target.closest('[data-clear-attachment]')) this.clearFile(); });
+
         this.scrollToBottom();
-        this.initializeMessageTracking();
-        this.setupRealTimeUpdates();
-        // Update sidebar on page load to show current state
-        this.updateSidebar();
+        this.input.focus({ preventScroll: true });
     }
 
-    initializeMessageTracking() {
-        // Clear processed IDs to start fresh
-        this.processedMessageIds.clear();
-        
-        // Track existing messages to prevent duplicates
-        const existingMessages = this.messagesArea.querySelectorAll('[data-message-id]');
-        existingMessages.forEach(message => {
-            const messageId = message.getAttribute('data-message-id');
-            this.processedMessageIds.add(parseInt(messageId));
-        });
-        
-        // Set the last message ID for real-time updates
-        if (existingMessages.length > 0) {
-            const lastMessage = existingMessages[existingMessages.length - 1];
-            this.lastMessageId = parseInt(lastMessage.getAttribute('data-message-id'));
-        }
-        
-
-    }
-
-    setupEventListeners() {
-        // Form submission
-        this.messageForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.sendMessage();
-        });
-
-        // Enter key handling
-        this.messageContent.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.sendMessage();
-            }
-        });
-
-        // File attachment
-        this.attachBtn.addEventListener('click', () => {
-            this.fileInput.click();
-        });
-
-        this.fileInput.addEventListener('change', (e) => {
-            this.handleFileSelection(e.target.files[0]);
-        });
-
-        // Auto-resize textarea
-        this.messageContent.addEventListener('input', () => {
-            this.autoResizeTextarea();
-        });
-    }
-
-    setupAutoResize() {
-        this.autoResizeTextarea();
-    }
-
-    autoResizeTextarea() {
-        this.messageContent.style.height = 'auto';
-        this.messageContent.style.height = Math.min(this.messageContent.scrollHeight, 120) + 'px';
-    }
-
-    handleFileSelection(file) {
-        if (!file) {
-            this.clearAttachmentPreview();
-            return;
-        }
-
-        // Check file size (10MB limit)
-        if (file.size > 10 * 1024 * 1024) {
-            alert('File size must be less than 10MB.');
-            this.fileInput.value = '';
-            this.clearAttachmentPreview();
-            return;
-        }
-
-        this.showAttachmentPreview(file);
-    }
-
-    showAttachmentPreview(file) {
-        const icon = this.getFileIcon(file);
-        const sizeText = this.formatFileSize(file.size);
-
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                this.attachmentPreview.innerHTML = `
-                    <div class="d-flex align-items-center bg-light rounded-3 p-2 border position-relative">
-                        <img src="${e.target.result}" style="max-width:60px;max-height:60px;border-radius:8px;margin-right:10px;">
-                        <div class="flex-grow-1">
-                            <div class="fw-semibold">${file.name}</div>
-                            <div class="text-muted small">${sizeText}</div>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-light position-absolute top-0 end-0 m-1 p-0" 
-                                style="border-radius:50%;" onclick="messengerApp.clearAttachmentPreview()">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                    </div>
-                `;
-                this.attachmentPreview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            this.attachmentPreview.innerHTML = `
-                <div class="d-flex align-items-center bg-light rounded-3 p-2 border position-relative">
-                    <i class="bi ${icon} fs-3 me-2"></i>
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold">${file.name}</div>
-                        <div class="text-muted small">${sizeText}</div>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-light position-absolute top-0 end-0 m-1 p-0" 
-                            style="border-radius:50%;" onclick="messengerApp.clearAttachmentPreview()">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-            `;
-            this.attachmentPreview.style.display = 'block';
-        }
-    }
-
-    clearAttachmentPreview() {
-        this.attachmentPreview.innerHTML = '';
-        this.attachmentPreview.style.display = 'none';
-        this.fileInput.value = '';
-    }
-
-    getFileIcon(file) {
-        if (file.type.startsWith('image/')) {
-            return 'bi-file-earmark-image text-warning';
-        } else if (file.type.startsWith('video/')) {
-            return 'bi-file-earmark-play text-danger';
-        } else if (file.type.startsWith('audio/')) {
-            return 'bi-file-earmark-music text-info';
-        } else if (file.type.includes('pdf')) {
-            return 'bi-file-earmark-pdf text-danger';
-        } else if (file.type.includes('word') || file.type.includes('document')) {
-            return 'bi-file-earmark-word text-primary';
-        } else if (file.type.includes('excel') || file.type.includes('spreadsheet')) {
-            return 'bi-file-earmark-excel text-success';
-        } else if (file.type.includes('powerpoint') || file.type.includes('presentation')) {
-            return 'bi-file-earmark-ppt text-warning';
-        } else {
-            return 'bi-file-earmark text-secondary';
-        }
-    }
-
-    formatFileSize(bytes) {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-    }
-
-    async sendMessage() {
-        const content = this.messageContent.value.trim();
-        const file = this.fileInput.files[0];
-
-        if (!content && !file) {
-            alert('Please enter a message or attach a file.');
-            return;
-        }
-
-        // Disable send button and show loading state
-        this.sendBtn.disabled = true;
-        this.sendBtn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
-
-        const formData = new FormData();
-        formData.append('content', content);
-        formData.append('_token', __page.index2_2);
-        if (file) {
-            formData.append('file', file);
-        }
-
-        try {
-            const response = await fetch(`${__page.index2_3}`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-
-            if (response.ok) {
-                const messageData = await response.json();
-                this.addMessageToUI(messageData);
-                this.clearForm();
-                // Update sidebar immediately after sending message
-                this.updateSidebar();
-            } else {
-                const errorData = await response.json();
-                alert(errorData.message || 'Failed to send message.');
-            }
-        } catch (error) {
-            console.error('Error sending message:', error);
-            alert('Failed to send message. Please try again.');
-        } finally {
-            // Re-enable send button
-            this.sendBtn.disabled = false;
-            this.sendBtn.innerHTML = 'Send';
-        }
-    }
-
-    addMessageToUI(messageData) {
-        const messageId = parseInt(messageData.id);
-        
-        // Check if message already exists in processed IDs
-        if (this.processedMessageIds.has(messageId)) {
-            return;
-        }
-
-        // Double-check if message exists in DOM
-        const existingMessage = this.messagesArea.querySelector(`[data-message-id="${messageId}"]`);
-        if (existingMessage) {
-            this.processedMessageIds.add(messageId); // Add to processed set anyway
-            return;
-        }
-
-        // Add message ID to processed set
-        this.processedMessageIds.add(messageId);
-        this.lastMessageId = messageId;
-
-        const messageHtml = this.createMessageHTML(messageData);
-        this.messagesArea.insertAdjacentHTML('beforeend', messageHtml);
-        this.scrollToBottom();
-        
-
-    }
-
-    createMessageHTML(message) {
-        const isCurrentUser = message.sender_id === this.currentUserId;
-        const time = new Date(message.created_at).toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
-
-        let attachmentHtml = '';
-        if (message.file_path || message.image) {
-            const fileUrl = `/storage/${message.file_path || message.image}`;
-            const fileName = message.file_name || 'Download';
-            const isImage = message.file_type && message.file_type.startsWith('image/');
-            
-            if (isImage) {
-                attachmentHtml = `
-                    <div class="mt-2">
-                        <div class="attachment-preview" 
-                             onclick="messengerApp.openAttachmentViewer('${fileUrl}', '${fileName}', 'image')"
-                             style="cursor: pointer; display: inline-block; position: relative;">
-                            <img src="${fileUrl}" 
-                                 alt="attachment" 
-                                 style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;">
-                            <div class="attachment-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s;">
-                                <i class="bi bi-zoom-in text-white fs-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                attachmentHtml = `
-                    <div class="mt-2">
-                        <div class="attachment-preview" 
-                             onclick="messengerApp.openAttachmentViewer('${fileUrl}', '${fileName}', 'file')"
-                             style="cursor: pointer; display: inline-block; padding: 10px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa;">
-                            <i class="bi bi-file-earmark me-2"></i>${fileName}
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        return `
-            <div class="messenger-message-row ${isCurrentUser ? 'sent' : 'received'}" data-message-id="${message.id}">
-                ${!isCurrentUser ? `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(message.sender.name)}&background=0D8ABC&color=fff" class="messenger-message-avatar">` : ''}
-                <div>
-                    <div class="messenger-message-bubble">
-                        ${message.content || ''}
-                        ${attachmentHtml}
-                    </div>
-                    <div class="messenger-message-time">${time}</div>
-                </div>
-            </div>
-        `;
-    }
-
-    clearForm() {
-        this.messageContent.value = '';
-        this.clearAttachmentPreview();
-        this.autoResizeTextarea();
+    autosize() {
+        this.input.style.height = 'auto';
+        this.input.style.height = `${Math.min(this.input.scrollHeight, 140)}px`;
     }
 
     scrollToBottom() {
-        if (this.messagesArea) {
-            this.messagesArea.scrollTop = this.messagesArea.scrollHeight;
-        }
+        this.area.scrollTop = this.area.scrollHeight;
     }
 
-    setupRealTimeUpdates() {
-        // Temporarily disable Echo to prevent conflicts
-        // if (typeof Echo !== 'undefined' && this.conversationId) {
-        //     Echo.private(`conversation.${this.conversationId}`)
-        //         .listen('NewMessage', (e) => {
-        //             if (e.message.sender_id !== this.currentUserId) {
-        //                 this.addMessageToUI(e.message);
-        //                 // Update sidebar immediately when receiving new messages
-        //                 this.updateSidebar();
-        //             }
-        //         });
-        // }
-        
-        // No automatic polling - only update when messages are sent/received
-        this.updateSidebarOnSend = true;
-    }
-
-    async updateSidebar() {
-        const now = Date.now();
-        
-        // Prevent updates more frequent than 2 seconds
-        if (now - this.lastSidebarUpdate < 2000) {
+    pickFile(file) {
+        if (!file) { this.clearFile(); return; }
+        if (file.size > 10 * 1024 * 1024) {
+            this.clearFile();
+            this.flash('Attachments must be 10 MB or smaller.');
             return;
         }
-        
-        // Clear any pending timeout
-        if (this.sidebarUpdateTimeout) {
-            clearTimeout(this.sidebarUpdateTimeout);
-        }
-        
-        // Debounce the update
-        this.sidebarUpdateTimeout = setTimeout(async () => {
-            try {
-                const response = await fetch(__page.index2_4);
-                if (response.ok) {
-                    const conversations = await response.json();
-                    this.updateConversationList(conversations);
-                    this.lastSidebarUpdate = Date.now();
-                }
-            } catch (error) {
-                console.error('Error updating sidebar:', error);
-            }
-        }, 500); // 500ms debounce
+        const isImage = file.type.startsWith('image/');
+        const thumb = isImage ? `<img src="${URL.createObjectURL(file)}" alt="">` : '<i class="bi bi-file-earmark-text" aria-hidden="true"></i>';
+        this.preview.innerHTML = `
+            <div class="chat-file-chip">
+                ${thumb}
+                <span class="chat-file-chip__text"><strong>${esc(file.name)}</strong><small>${formatSize(file.size)}</small></span>
+                <button type="button" class="btn btn-sm btn-light" data-clear-attachment aria-label="Remove attachment"><i class="bi bi-x-lg"></i></button>
+            </div>`;
+        this.preview.hidden = false;
     }
 
-    updateConversationList(conversations) {
-        const chatList = document.querySelector('.messenger-chat-list');
-        if (!chatList) return;
-
-        // Clear existing conversations to prevent duplicates
-        chatList.innerHTML = '';
-
-        conversations.forEach(conversation => {
-            const conversationHtml = `
-                <a href="${conversation.url}" class="messenger-chat-item ${conversation.id == __page.index2_5 ? 'active' : ''}" data-conversation-id="${conversation.id}">
-                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(conversation.name)}&background=0D8ABC&color=fff" class="messenger-chat-avatar">
-                    <div class="messenger-chat-info">
-                        <div class="messenger-chat-name">${conversation.name}</div>
-                        <div class="messenger-chat-preview">${conversation.last_message}</div>
-                    </div>
-                    ${conversation.unread_count > 0 ? `<span class="messenger-unread-dot"></span>` : ''}
-                </a>
-            `;
-
-            chatList.insertAdjacentHTML('beforeend', conversationHtml);
-        });
+    clearFile() {
+        this.fileInput.value = '';
+        this.preview.innerHTML = '';
+        this.preview.hidden = true;
     }
 
-    openAttachmentViewer(url, name, type) {
-        const modalContent = document.getElementById('attachmentViewerContent');
-        modalContent.innerHTML = ''; // Clear previous content
-
-        if (type === 'image') {
-            const img = document.createElement('img');
-            img.src = url;
-            img.alt = name;
-            img.style.maxWidth = '100%';
-            img.style.maxHeight = '100%';
-            img.style.width = 'auto';
-            img.style.height = 'auto';
-            img.style.objectFit = 'contain';
-            img.style.display = 'block';
-            img.style.margin = 'auto';
-            
-            // Add loading state
-            img.style.opacity = '0';
-            img.style.transition = 'opacity 0.3s ease';
-            
-            img.onload = function() {
-                this.style.opacity = '1';
-            };
-            
-            img.onerror = function() {
-                console.error('Failed to load image:', url);
-                modalContent.innerHTML = `<div class="text-center text-muted">Failed to load image: ${name}</div>`;
-            };
-            
-            modalContent.appendChild(img);
-        } else {
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = name;
-            a.textContent = name;
-            a.className = 'btn btn-primary';
-            modalContent.appendChild(a);
+    flash(text) {
+        let note = this.form.querySelector('.chat-composer__error');
+        if (!note) {
+            note = document.createElement('div');
+            note.className = 'chat-composer__error';
+            note.setAttribute('role', 'alert');
+            this.form.prepend(note);
         }
-
-        const modal = new bootstrap.Modal(document.getElementById('attachmentViewerModal'));
-        modal.show();
-
-        // Add event listeners for zoom/reset buttons
-        const zoomInBtn = document.getElementById('zoomInBtn');
-        const zoomOutBtn = document.getElementById('zoomOutBtn');
-        const resetZoomBtn = document.getElementById('resetZoomBtn');
-        const downloadBtn = document.getElementById('downloadAttachmentBtn');
-
-        const img = modalContent.querySelector('img');
-        if (img) {
-            img.addEventListener('load', () => {
-                this.updateZoomButtons(img.naturalWidth, img.naturalHeight);
-            });
-        }
-
-        downloadBtn.addEventListener('click', () => {
-            const a = modalContent.querySelector('a');
-            if (a && a.href) {
-                window.open(a.href, '_blank');
-            }
-        });
-
-        zoomInBtn.addEventListener('click', () => this.zoomImage(img, 'in'));
-        zoomOutBtn.addEventListener('click', () => this.zoomImage(img, 'out'));
-        resetZoomBtn.addEventListener('click', () => this.resetImageZoom(img));
-
-        // Close modal on outside click
-        modalContent.addEventListener('click', (e) => {
-            if (e.target === modalContent) {
-                modal.hide();
-            }
-        });
+        note.textContent = text;
+        clearTimeout(this.flashTimer);
+        this.flashTimer = setTimeout(() => note.remove(), 4000);
     }
 
-    updateZoomButtons(width, height) {
-        const img = document.getElementById('attachmentViewerContent').querySelector('img');
-        if (img) {
-            const zoomInBtn = document.getElementById('zoomInBtn');
-            const zoomOutBtn = document.getElementById('zoomOutBtn');
-            const resetZoomBtn = document.getElementById('resetZoomBtn');
+    async send() {
+        const content = this.input.value.trim();
+        const file = this.fileInput.files[0];
+        if (this.sending || (!content && !file)) return;
 
-            if (width > img.offsetWidth) {
-                zoomInBtn.style.display = 'inline-block';
-            } else {
-                zoomInBtn.style.display = 'none';
+        this.sending = true;
+        this.sendBtn.disabled = true;
+        this.sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>';
+
+        const data = new FormData(this.form);
+        data.set('content', content);
+        try {
+            const res = await fetch(page.sendUrl, { method: 'POST', body: data, headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+            const body = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                this.flash(body.message || 'Your message could not be sent. Please try again.');
+                return;
             }
-            if (img.offsetWidth > 100) { // Smaller than 100px, zoom out
-                zoomOutBtn.style.display = 'inline-block';
-            } else {
-                zoomOutBtn.style.display = 'none';
-            }
-            resetZoomBtn.style.display = 'inline-block';
+            this.append(body);
+            this.input.value = '';
+            this.clearFile();
+            this.autosize();
+            bumpActiveConversation(body);
+        } catch (e) {
+            this.flash('Your message could not be sent. Check your connection and try again.');
+        } finally {
+            this.sending = false;
+            this.sendBtn.disabled = false;
+            this.sendBtn.innerHTML = '<i class="bi bi-send-fill"></i>';
+            this.input.focus();
         }
     }
 
-    zoomImage(img, direction) {
-        if (!img) return;
-        const currentTransform = img.style.transform || 'scale(1)';
-        const currentScale = parseFloat(currentTransform.replace('scale(', '').replace(')', ''));
-        let newScale;
-        if (direction === 'in') {
-            newScale = currentScale * 1.2;
-        } else {
-            newScale = currentScale / 1.2;
-        }
-        img.style.transform = `scale(${newScale})`;
-        this.updateZoomButtons(img.naturalWidth, img.naturalHeight);
-    }
+    append(message) {
+        if (!message?.id || this.area.querySelector(`[data-message-id="${CSS.escape(String(message.id))}"]`)) return;
+        document.getElementById('threadEmpty')?.remove();
 
-    resetImageZoom(img) {
-        if (!img) return;
-        img.style.transform = 'scale(1)';
-        this.updateZoomButtons(img.naturalWidth, img.naturalHeight);
+        const rows = this.area.querySelectorAll('.chat-msg');
+        const prev = rows[rows.length - 1];
+        const days = this.area.querySelectorAll('.chat-day');
+        const lastDay = days[days.length - 1]?.dataset.day;
+        const day = dayKey(message.created_at);
+        let html = '';
+        if (day !== lastDay) html += `<div class="chat-day" data-day="${day}"><span>Today</span></div>`;
+        const grouped = day === lastDay && prev && prev.dataset.senderId === String(message.sender_id);
+        html += messageHtml(message, String(message.sender_id) === String(page.currentUserId), grouped);
+
+        this.area.insertAdjacentHTML('beforeend', html);
+        this.scrollToBottom();
     }
 }
 
-// Initialize the messenger app when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    window.messengerApp = new MessengerApp();
-});
+// Mirrors resources/views/messages/partials/message.blade.php
+function messageHtml(m, mine, grouped) {
+    const path = m.file_path || m.image;
+    const name = m.file_name || (path ? path.split('/').pop() : '');
+    const isImage = path && (m.file_type ? m.file_type.startsWith('image/') : /\.(jpe?g|png|gif|webp)$/i.test(path));
+    const fileUrl = path ? url(`storage/${path}`) : '';
+    const attrs = path ? `data-attachment-url="${esc(fileUrl)}" data-attachment-name="${esc(name)}" data-download-url="${esc(url(`messages/attachment/${m.id}/download`))}"` : '';
+    let attachment = '';
+    if (path && isImage) {
+        attachment = `<button type="button" class="chat-attachment chat-attachment--image" ${attrs} data-attachment-type="image"><img src="${esc(fileUrl)}" alt="${esc(name)}" loading="lazy"></button>`;
+    } else if (path) {
+        attachment = `<button type="button" class="chat-attachment chat-attachment--file" ${attrs} data-attachment-type="file"><i class="bi bi-file-earmark-text" aria-hidden="true"></i><span>${esc(name)}</span></button>`;
+    }
 
-// Enhanced Enter key functionality for modal textareas
-function addEnterKeyToModals() {
-    document.querySelectorAll('.modal textarea[name="message"], .modal textarea[id="message"]').forEach(function(textarea) {
-        textarea.removeEventListener('keydown', handleModalEnterKey);
-        textarea.addEventListener('keydown', handleModalEnterKey);
+    return `
+        <div class="chat-msg ${mine ? 'is-mine' : 'is-theirs'} ${grouped ? 'is-grouped' : ''}" data-message-id="${esc(m.id)}" data-sender-id="${esc(m.sender_id)}">
+            ${mine ? '' : `<span class="chat-avatar chat-avatar--sm" aria-hidden="true">${initial(m.sender?.name)}</span>`}
+            <div class="chat-msg__body">
+                ${m.content ? `<div class="chat-bubble">${esc(m.content)}</div>` : ''}
+                ${attachment}
+                <time class="chat-msg__time" datetime="${esc(m.created_at)}">${timeOf(m.created_at)}</time>
+            </div>
+        </div>`;
+}
+
+// ---------------------------------------------------------------- attachment viewer
+function setupViewer() {
+    const modalEl = document.getElementById('attachmentViewerModal');
+    if (!modalEl) return;
+    const body = document.getElementById('attachmentViewerContent');
+    const title = document.getElementById('attachmentViewerTitle');
+    const download = document.getElementById('downloadAttachmentBtn');
+    const zoomIn = document.getElementById('zoomInBtn');
+    const zoomOut = document.getElementById('zoomOutBtn');
+    let scale = 1;
+    let img = null;
+    const applyZoom = () => { if (img) img.style.transform = `scale(${scale})`; };
+
+    zoomIn.addEventListener('click', () => { scale = Math.min(4, scale * 1.25); applyZoom(); });
+    zoomOut.addEventListener('click', () => { scale = Math.max(0.5, scale / 1.25); applyZoom(); });
+
+    document.addEventListener('click', (e) => {
+        const trigger = e.target.closest('[data-attachment-url]');
+        if (!trigger) return;
+        const { attachmentUrl, attachmentName, attachmentType, downloadUrl } = trigger.dataset;
+        title.textContent = attachmentName || 'Attachment';
+        download.href = downloadUrl || attachmentUrl;
+        scale = 1;
+
+        if (attachmentType === 'image') {
+            body.innerHTML = '';
+            img = document.createElement('img');
+            img.src = attachmentUrl;
+            img.alt = attachmentName || '';
+            img.addEventListener('error', () => { body.innerHTML = '<p class="text-muted m-4">This image could not be loaded.</p>'; });
+            body.appendChild(img);
+        } else {
+            img = null;
+            body.innerHTML = `
+                <div class="chat-viewer__file">
+                    <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                    <p class="mb-3">${esc(attachmentName)}</p>
+                    <a href="${esc(downloadUrl || attachmentUrl)}" class="btn btn-success"><i class="bi bi-download me-1"></i> Download file</a>
+                </div>`;
+        }
+        zoomIn.hidden = zoomOut.hidden = attachmentType !== 'image';
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
     });
 }
 
-function handleModalEnterKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        
-        const content = this.value.trim();
-        
-        if (content) {
-            const form = this.closest('form');
-            if (form) {
-                const requiredFields = form.querySelectorAll('[required]');
-                let isValid = true;
-                
-                requiredFields.forEach(function(field) {
-                    if (!field.value.trim()) {
-                        isValid = false;
-                        field.focus();
-                    }
-                });
-                
-                if (isValid) {
-                    form.submit();
-                }
-            }
+// ---------------------------------------------------------------- "new message" modal
+function setupStartModal() {
+    const form = document.getElementById('startConversationForm');
+    if (!form) return;
+
+    // Enter sends, Shift + Enter adds a line (like the thread composer)
+    form.querySelector('textarea[name="message"]')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (form.reportValidity()) form.requestSubmit();
         }
-    }
+    });
+
+    // Managers: search approved clients/suppliers
+    const search = document.getElementById('participant_search_start');
+    const results = document.getElementById('participant_search_results_start');
+    const clientId = document.getElementById('client_id_hidden_start');
+    const supplierId = document.getElementById('supplier_id_hidden_start');
+    if (!search || !results) return;
+
+    const clearPick = () => {
+        [clientId, supplierId].forEach((el) => { el.value = ''; el.removeAttribute('name'); });
+        search.setCustomValidity('Choose a client or supplier from the list.');
+    };
+    clearPick();
+
+    let timer;
+    search.addEventListener('input', () => {
+        clearTimeout(timer);
+        clearPick();
+        const term = search.value.trim();
+        if (term.length < 2) { results.hidden = true; results.innerHTML = ''; return; }
+        timer = setTimeout(async () => {
+            try {
+                const res = await fetch(`${page.participantSearchUrl}?search=${encodeURIComponent(term)}`, { headers: { Accept: 'application/json' } });
+                const { data = [] } = await res.json();
+                results.innerHTML = data.length
+                    ? data.map((item) => {
+                        const kind = String(item.designation || '').toLowerCase();
+                        return `<button type="button" class="list-group-item list-group-item-action d-flex align-items-center gap-2" data-id="${esc(item.id)}" data-kind="${esc(kind)}" data-label="${esc(item.text)}">
+                            <span class="chat-avatar chat-avatar--sm" aria-hidden="true">${initial(item.text)}</span>
+                            <span class="flex-grow-1 text-start"><strong>${esc(item.text)}</strong>${item.contact_person ? `<small class="d-block text-muted">${esc(item.contact_person)}</small>` : ''}</span>
+                            <span class="badge ${kind === 'client' ? 'bg-info' : 'bg-success'}">${esc(item.designation)}</span>
+                        </button>`;
+                    }).join('')
+                    : '<div class="list-group-item text-muted">No clients or suppliers found.</div>';
+                results.hidden = false;
+            } catch (e) {
+                results.innerHTML = '<div class="list-group-item text-danger">Search failed. Please try again.</div>';
+                results.hidden = false;
+            }
+        }, 250);
+    });
+
+    results.addEventListener('click', (e) => {
+        const item = e.target.closest('[data-id]');
+        if (!item) return;
+        clearPick();
+        const target = item.dataset.kind === 'supplier' ? supplierId : clientId;
+        target.name = item.dataset.kind === 'supplier' ? 'supplier_id' : 'client_id';
+        target.value = item.dataset.id;
+        search.value = item.dataset.label;
+        search.setCustomValidity('');
+        results.hidden = true;
+        form.querySelector('textarea[name="message"]')?.focus();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#participant_search_start, #participant_search_results_start')) results.hidden = true;
+    });
 }
 
-// Add Enter key functionality when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    addEnterKeyToModals();
+document.addEventListener('DOMContentLoaded', () => {
+    setupSidebar();
+    setupViewer();
+    setupStartModal();
+    if (document.getElementById('messageForm')) window.messengerThread = new Thread();
 });
-
-// Add Enter key functionality when modals are shown
-document.addEventListener('shown.bs.modal', function(e) {
-    addEnterKeyToModals();
-});
-
-// Periodically check for new modals
-setInterval(addEnterKeyToModals, 1000);

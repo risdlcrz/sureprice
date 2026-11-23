@@ -132,8 +132,8 @@
                     @else
                         <div class="text-center py-5">
                             <i class="fas fa-comments fa-4x text-muted mb-3"></i>
-                            <h5 class="text-muted">No feedback yet</h5>
-                            <p class="text-muted">You haven't provided any feedback for your completed contracts yet.</p>
+                            <h5>No feedback yet</h5>
+                            <p class="text-muted mb-0">Once a contract is completed and fully paid, you can rate the work here.</p>
                         </div>
                     @endif
                 </div>

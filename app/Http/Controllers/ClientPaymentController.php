@@ -23,17 +23,8 @@ class ClientPaymentController extends Controller
             ]);
         }
 
-        $clientParty = $user->clientParty();
-
-        if (!$clientParty) {
-            return view('client.payments.index', [
-                'pagedContracts' => collect([]),
-                'error' => 'No client profile found. Please contact the administrator.'
-            ]);
-        }
-
-        // Get all contracts for this client
-        $contracts = Contract::where('client_id', $clientParty->id)
+        // The client's approved contracts (a new client has none yet: the page shows an empty state, not an error)
+        $contracts = Contract::visibleTo($user)
             ->where('status', 'approved')
             ->with(['payments', 'client', 'contractor'])
             ->get();
@@ -52,11 +43,8 @@ class ClientPaymentController extends Controller
         // Refresh contracts to get the newly generated payments
         $contracts->load(['payments', 'client', 'contractor']);
 
-        // Get all payments for this client's contracts using the party relationship
         $allPayments = Payment::with(['contract', 'attachment'])
-            ->whereHas('contract', function($query) use ($clientParty) {
-                $query->where('client_id', $clientParty->id);
-            })
+            ->whereHas('contract', fn ($query) => $query->visibleTo($user))
             ->orderBy('due_date')
             ->get();
 
@@ -86,7 +74,7 @@ class ClientPaymentController extends Controller
         if ($contractsWithPayments->isEmpty()) {
             return view('client.payments.index', [
                 'pagedContracts' => collect([]),
-                'message' => 'No payments found for your contracts.'
+                'hasContracts' => $contracts->isNotEmpty(),
             ]);
         }
 
@@ -114,16 +102,8 @@ class ClientPaymentController extends Controller
             ]);
         }
 
-        $clientParty = $user->clientParty();
-
-        if (!$clientParty) {
-            return view('client.payments.dashboard', [
-                'error' => 'No client profile found. Please contact the administrator.'
-            ]);
-        }
-
-        // Get all contracts for this client and ensure payments are generated
-        $contracts = Contract::where('client_id', $clientParty->id)
+        // The client's approved contracts; make sure their payment schedules have payment records
+        $contracts = Contract::visibleTo($user)
             ->where('status', 'approved')
             ->with(['payments', 'client', 'contractor'])
             ->get();
@@ -142,10 +122,7 @@ class ClientPaymentController extends Controller
         // Refresh contracts to get the newly generated payments
         $contracts->load(['payments', 'client', 'contractor']);
         
-        // Get client's payments using the party relationship
-        $payments = Payment::whereHas('contract', function ($query) use ($clientParty) {
-            $query->where('client_id', $clientParty->id);
-        })
+        $payments = Payment::whereHas('contract', fn ($query) => $query->visibleTo($user))
         ->with(['contract'])
         ->latest()
         ->get();
@@ -179,29 +156,7 @@ class ClientPaymentController extends Controller
             abort(403, 'No company associated with this account.');
         }
 
-        // Find the client party record for this user
-        $clientParty = \App\Models\Party::where('user_id', $user->id)
-            ->where('entity_type', 'client')
-            ->first();
-
-        // If no client party found, try to find by email
-        if (!$clientParty) {
-            $clientParty = \App\Models\Party::where('email', $user->email)
-                ->where('entity_type', 'client')
-                ->first();
-        }
-
-        // If still no client party found, try to find any party with the same email
-        if (!$clientParty) {
-            $clientParty = \App\Models\Party::where('email', $user->email)->first();
-        }
-
-        if (!$clientParty) {
-            abort(403, 'No client profile found.');
-        }
-        
-        // Check if this payment belongs to the client using the party relationship
-        if (!$payment->contract || $payment->contract->client_id !== $clientParty->id) {
+        if (!$payment->contract || !$payment->contract->isVisibleTo($user)) {
             abort(403, 'You are not authorized to view this payment.');
         }
 

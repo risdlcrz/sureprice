@@ -57,6 +57,23 @@ Route::middleware(['auth'])->get('/home', function () {
     // Adjust this target if you want a different default dashboard
     return redirect()->route('contracts.index');
 })->name('home');
+
+// Account settings: every signed-in user (name, username, email, password; clients also contact details and address)
+Route::middleware('auth')->group(function () {
+    Route::get('/account', [\App\Http\Controllers\AccountController::class, 'edit'])->name('account.edit');
+    Route::put('/account', [\App\Http\Controllers\AccountController::class, 'update'])->name('account.update');
+    // Clients: change the registered company name (applied after an admin approves the uploaded proof)
+    Route::post('/account/company-name', [\App\Http\Controllers\CompanyChangeRequestController::class, 'store'])->name('account.company-name.store');
+    Route::delete('/account/company-name/{changeRequest}', [\App\Http\Controllers\CompanyChangeRequestController::class, 'destroy'])->name('account.company-name.destroy');
+    Route::get('/company-changes/{changeRequest}/proof', [\App\Http\Controllers\CompanyChangeRequestController::class, 'proof'])->name('company-changes.proof');
+});
+
+// Admin review of client company-name changes
+Route::middleware(['auth', 'role:admin'])->prefix('admin/company-changes')->name('admin.company-changes.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Admin\CompanyChangeRequestController::class, 'index'])->name('index');
+    Route::post('/{changeRequest}/approve', [\App\Http\Controllers\Admin\CompanyChangeRequestController::class, 'approve'])->name('approve');
+    Route::post('/{changeRequest}/reject', [\App\Http\Controllers\Admin\CompanyChangeRequestController::class, 'reject'])->name('reject');
+});
 // ================== Authentication Routes ==================
 Route::middleware('web')->group(function () {
     require __DIR__.'/auth.php';

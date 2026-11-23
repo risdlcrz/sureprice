@@ -14,11 +14,17 @@ class MessageController extends Controller
         $this->middleware('auth');
     }
 
+    /** Managers and administrators are the staff side of a conversation (conversations.admin_id). */
+    private function isStaff($user): bool
+    {
+        return $user->role === 'manager' || $user->user_type === 'admin' || $user->role === 'admin';
+    }
+
     public function index(Request $request)
     {
         $user = Auth::user();
         // Fetch all conversations for sidebar
-        if ($user->role === 'manager') {
+        if ($this->isStaff($user)) {
             $conversations = Conversation::where('admin_id', $user->id);
         } elseif ($user->isClientCompany()) {
             $conversations = Conversation::where('client_id', $user->id);
@@ -131,8 +137,8 @@ class MessageController extends Controller
     {
         $user = Auth::user();
 
-        // Manager starts conversation with client or supplier
-        if ($user->role === 'manager') {
+        // A manager or admin starts a conversation with a client or a supplier
+        if ($this->isStaff($user)) {
             if ($request->has('client_id')) {
                 $request->validate([
                     'client_id' => 'required|exists:users,id',
@@ -220,10 +226,10 @@ class MessageController extends Controller
                 'message' => 'required|string|max:1000'
             ]);
             $manager = \App\Models\User::where('id', $request->manager_id)
-                ->where('role', 'manager')
+                ->where(fn ($q) => $q->where('role', 'manager')->orWhere('user_type', 'admin')->orWhere('role', 'admin'))
                 ->first();
             if (!$manager) {
-                return redirect()->back()->with('error', 'Selected manager is not valid.');
+                return redirect()->back()->with('error', 'Selected recipient is not valid.');
             }
             $existingConversation = Conversation::where('client_id', $user->id)
                 ->where('admin_id', $request->manager_id)
@@ -259,7 +265,7 @@ class MessageController extends Controller
             ]);
 
             $admin = \App\Models\User::where('id', $request->admin_id)
-                ->where('user_type', 'admin')
+                ->where(fn ($q) => $q->where('user_type', 'admin')->orWhere('role', 'admin'))
                 ->first();
 
             if (!$admin) {
@@ -364,52 +370,8 @@ class MessageController extends Controller
     {
         $this->authorize('view', $conversation);
 
-        // Mark messages as read
-        $conversation->messages()
-            ->where('sender_id', '!=', Auth::id())
-            ->where('is_read', false)
-            ->update(['is_read' => true, 'read_at' => now()]);
-
-        $messages = $conversation->messages()
-            ->with('sender')
-            ->orderBy('created_at', 'asc')
-            ->get();
-
-        // Get conversations for sidebar
-        $user = Auth::user();
-        $conversations = collect();
-
-        if ($user->user_type === 'admin') {
-            $conversations = Conversation::with(['client', 'supplier', 'messages' => function($q) {
-                $q->latest()->limit(1);
-            }])
-            ->where(function($q) use ($user) {
-                $q->where('admin_id', $user->id)
-                  ->orWhere(function($subQ) {
-                      $subQ->whereNotNull('client_id')->orWhereNotNull('supplier_id');
-                  });
-            })
-            ->orderBy('last_message_at', 'desc')
-            ->get();
-        } elseif ($user->role === 'manager') {
-            $conversations = Conversation::with(['client', 'supplier', 'messages' => function($q) {
-                $q->latest()->limit(1);
-            }])
-            ->where('admin_id', $user->id)
-            ->orderBy('last_message_at', 'desc')
-            ->get();
-        } elseif ($user->user_type === 'company') {
-            $conversations = Conversation::with(['admin', 'messages' => function($q) {
-                $q->latest()->limit(1);
-            }])
-            ->where('client_id', $user->id)
-            ->orderBy('last_message_at', 'desc')
-            ->get();
-        }
-
-        return view('messages.index', compact('conversation', 'messages', 'conversations'));
+        return redirect()->route('messages.index', ['conversation' => $conversation->id]);
     }
-
     public function getConversationsUpdate(Request $request)
     {
         $user = Auth::user();
@@ -419,12 +381,7 @@ class MessageController extends Controller
             $conversations = Conversation::with(['client', 'supplier', 'messages' => function($q) {
                 $q->latest()->limit(1);
             }])
-            ->where(function($q) use ($user) {
-                $q->where('admin_id', $user->id)
-                  ->orWhere(function($subQ) {
-                      $subQ->whereNotNull('client_id')->orWhereNotNull('supplier_id');
-                  });
-            })
+            ->where('admin_id', $user->id)
             ->distinct()
             ->orderBy('last_message_at', 'desc')
             ->get()

@@ -16,13 +16,13 @@
             <i class="fas fa-user-plus"></i>Sign up
         </a>
     @elseif(auth()->check() && auth()->user()->user_type === 'company' && (optional(auth()->user()->company)->designation === 'client' || auth()->user()->role === 'client'))
-        <a href="{{ url('/') }}" class="btn">
-            <i class="fas fa-building"></i>Home
-        </a>
-        <a href="{{ route('client.quotation.index') }}" class="btn">
+        <a href="{{ route('client.dashboard') }}" class="btn">
             <i class="fas fa-tachometer-alt"></i>Dashboard
         </a>
-        <a href="{{ route('client.quotation.create') }}" class="btn">
+        <a href="{{ url('/') }}" class="btn">
+            <i class="fas fa-globe"></i>Home page
+        </a>
+        <a href="{{ route('client.project.procurement') }}" class="btn">
             <i class="fas fa-tasks"></i>Project & Procurement
         </a>
         <a href="{{ route('contracts.index') }}" class="btn">
@@ -104,7 +104,12 @@
         <a href="{{ route('information-management.index') }}" class="btn">
             <i class="fas fa-folder-open"></i>Information Management
         </a>
-        @include('include.sidebars._inbox', ['messages' => false])
+        @include('include.sidebars._inbox')
+        @php $pendingNameChanges = \App\Models\CompanyChangeRequest::pending()->count(); @endphp
+        <a href="{{ route('admin.company-changes.index') }}" class="btn d-flex align-items-center">
+            <i class="fas fa-id-card"></i>Company Name Changes
+            @if($pendingNameChanges)<span class="badge rounded-pill bg-danger ms-auto">{{ $pendingNameChanges }}</span>@endif
+        </a>
         <a href="{{ route('admin.analytics') }}" class="btn">
             <i class="fas fa-chart-bar"></i>Analytics
         </a>

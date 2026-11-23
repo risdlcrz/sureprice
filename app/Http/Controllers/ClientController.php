@@ -61,23 +61,17 @@ class ClientController extends Controller
             return redirect()->route('login.form')->with('error', 'No company associated with this account.');
         }
 
-        // Find the client party record for this user (middleware already confirmed client designation)
-        $user->loadMissing('company');
-        $clientParty = \App\Models\Party::where('user_id', $user->id)
-            ->where('entity_type', 'client')
-            ->first();
-
-        if (!$clientParty) {
-            return redirect()->route('landing.catalogue')->with('error', 'No client profile found. Please contact the administrator.');
-        }
-
-        // Get only the client's own contracts using the party relationship
-        $contracts = Contract::where('client_id', $clientParty->id)
-            ->with(['items'])
-            ->latest()
+        // Only the client's own records (none yet is normal for a new client — the page shows empty states)
+        $contracts = Contract::visibleTo($user)->latest()->get();
+        $quotationRequests = \App\Models\QuotationRequest::where('user_id', $user->id)->withCount('rooms')->latest()->get();
+        $payments = \App\Models\Payment::with('contract')
+            ->whereHas('contract', fn ($q) => $q->visibleTo($user))
+            ->orderBy('due_date')
             ->get();
+        $openPayments = $payments->whereNotIn('status', ['paid', 'cancelled'])->values();
+        $unreadMessages = \App\Support\UnreadCounts::messages();
 
-        return view('client.dashboard', compact('user', 'company', 'contracts'));
+        return view('client.dashboard', compact('user', 'company', 'contracts', 'quotationRequests', 'payments', 'openPayments', 'unreadMessages'));
     }
 
     /**
@@ -92,16 +86,7 @@ class ClientController extends Controller
             return redirect()->route('client.dashboard')->with('error', 'No company associated with this account.');
         }
 
-        // Find the client party record for this user
-        $clientParty = \App\Models\Party::where('user_id', $user->id)
-            ->where('entity_type', 'client')
-            ->first();
-
-        if (!$clientParty) {
-            return redirect()->route('client.dashboard')->with('error', 'No client profile found. Please contact the administrator.');
-        }
-
-        $contracts = Contract::where('client_id', $clientParty->id)
+        $contracts = Contract::visibleTo($user)
             ->with(['items'])
             ->latest()
             ->get();

@@ -237,9 +237,16 @@
                 @endif
             @else
                 <div class="text-center py-5">
-                    <i class="fas fa-file-contract fa-4x text-muted mb-3"></i>
-                    <h5 class="text-muted">No contracts found</h5>
-                    <p class="text-muted">You don't have any contracts with payment schedules yet.</p>
+                    <i class="fas fa-file-invoice-dollar fa-4x text-muted mb-3"></i>
+                    @if($hasContracts ?? false)
+                        <h5>No payments scheduled yet</h5>
+                        <p class="text-muted mb-0">Your payment schedule will appear here as soon as it's set up for your contract.</p>
+                    @else
+                        <h5>No payments yet</h5>
+                        <p class="text-muted">Payments appear here once you have an approved contract. Start by requesting a quotation — when you proceed with it, our team prepares your contract.</p>
+                        <a href="{{ route('client.quotation.index') }}" class="btn btn-outline-secondary me-2">My quotation requests</a>
+                        <a href="{{ route('client.quotation.create') }}" class="btn btn-success"><i class="fas fa-plus me-1"></i> Request a quotation</a>
+                    @endif
                 </div>
             @endif
         </div>

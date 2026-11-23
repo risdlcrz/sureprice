@@ -31,6 +31,10 @@ constrained globally. Who may use what (tested in `AccessControlTest`):
   contract/payment/quotation action.
 - **Payments** — `role:admin,manager,finance`; clients use `/client/payments`. Purchase orders are checked per
   action in `PurchaseOrderController` (staff incl. finance; the order's supplier ships; warehouse receives).
+- **Account settings** — `/account` (`AccountController`, every signed-in user; linked from the sidebar footer): name, username,
+  email (synced to the `employees` / `companies` row), clients' contact details and address; passwords via `password.update`.
+  Clients change their company name through `CompanyChangeRequest` (proof upload on the private `local` disk), applied
+  only when an admin approves it at `/admin/company-changes`.
 - Links to restricted pages must be hidden from roles that can't open them. Login/register are behind `guest` (signed-in users are redirected to their home route,
 `bootstrap/app.php`). Middleware aliases and the redirect are configured in `bootstrap/app.php`; schedules in
 `routes/console.php`.
@@ -51,7 +55,6 @@ share the same page where they used to have copies; create/edit use one form vie
 | `<x-progress :value>` | progress bar |
 | `<x-flash>` | session success/error messages (already in the layout) |
 | `<x-nav-count kind>` | live unread counter in the sidebar |
-| `<x-messages.new-message-modal>` | compose-message modal |
 | `<x-address-fields :street :barangay :city :state :postal>` | PH address: Region → Province → City → Barangay dropdowns + street/ZIP (data in `public/data/ph-address`, rebuilt by `node scripts/build-ph-address.mjs`) |
 
 **Design system** — `resources/css/app-layout.css` holds the tokens (`--sp-*`: brand greens, neutrals, radii,

@@ -27,7 +27,6 @@
          .collapse/.container utilities break Bootstrap.) --}}
     @vite([
         'resources/css/app-layout.css',
-        'resources/css/messages.css',
         'resources/js/app.js',
     ])
     @stack('styles')

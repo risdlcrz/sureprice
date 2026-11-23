@@ -1,0 +1,37 @@
+/* Admin: company name change review (resources/views/admin/company-changes/index.blade.php). */
+.change-review {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.5rem;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--sp-border, #e3e8e5);
+    border-radius: var(--sp-radius, 12px);
+    background: var(--sp-surface, #fff);
+}
+.change-review__main { flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 0.55rem; }
+.change-review__diff { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; font-size: 1rem; }
+.change-review__diff i { color: var(--sp-text-muted, #6b7770); font-size: 0.8rem; }
+.change-review__old { color: var(--sp-text-muted, #6b7770); text-decoration: line-through; }
+.change-review__new { color: var(--sp-green-800, #1b5e20); }
+.change-review__reason { font-size: 0.875rem; color: var(--sp-text-2, #3f4b44); }
+.change-review__proof {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--sp-border, #e3e8e5);
+    border-radius: var(--sp-radius-sm, 8px);
+    background: var(--sp-surface-2, #f8faf9);
+    color: var(--sp-text, #1c2721);
+    font-size: 0.85rem;
+    text-decoration: none;
+    max-width: 100%;
+}
+.change-review__proof:hover { border-color: var(--sp-border-strong, #cfd8d2); color: var(--sp-text, #1c2721); }
+.change-review__proof i { color: var(--sp-green-700, #2e7d32); }
+.change-review__proof span { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.change-review__proof small { color: var(--sp-text-muted, #6b7770); white-space: nowrap; }
+.change-review__actions { display: flex; gap: 0.5rem; }

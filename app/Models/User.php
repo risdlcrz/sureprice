@@ -128,7 +128,7 @@ class User extends Authenticatable // implements MustVerifyEmail
      */
     public function clientParty(): ?Party
     {
-        return Party::where('user_id', $this->id)->where('entity_type', 'client')->first()
+        return Party::where('user_id', $this->id)->where(fn ($q) => $q->where('type', 'client')->orWhere('entity_type', 'client'))->first()
             ?? Party::where('email', $this->email)->where('user_id', $this->id)->first()
             ?? Party::where('email', $this->email)->where('entity_type', 'client')->first()
             ?? ($this->company ? Party::where('company_name', $this->company->company_name)->where('entity_type', 'client')->first() : null)
@@ -150,7 +150,7 @@ class User extends Authenticatable // implements MustVerifyEmail
             return 'account.rejected';
         }
         if ($company?->status === 'approved') {
-            return ['client' => 'landing.catalogue', 'supplier' => 'supplier.dashboard'][$company->designation] ?? 'pending.approval';
+            return ['client' => 'client.dashboard', 'supplier' => 'supplier.dashboard'][$company->designation] ?? 'pending.approval';
         }
         return 'pending.approval';
     }

@@ -22,20 +22,8 @@ class PaymentController extends Controller
         // Get payments based on user role
         if (auth()->user()->role === 'client') {
             // For clients, only show their contract payments
-            $client = auth()->user()->party;
-            
-            // Check if client has a party record
-            if (!$client) {
-                return view('payments.index', [
-                    'pagedContracts' => collect([]),
-                    'error' => 'No client profile found. Please contact the administrator.'
-                ]);
-            }
-            
             $allPayments = Payment::with(['contract', 'attachment'])
-                ->whereHas('contract', function($query) use ($client) {
-                    $query->where('client_id', $client->id);
-                })
+                ->whereHas('contract', fn ($query) => $query->visibleTo(auth()->user()))
                 ->orderBy('due_date')
                 ->get();
         } else {

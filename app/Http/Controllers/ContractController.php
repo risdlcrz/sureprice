@@ -149,9 +149,7 @@ class ContractController extends Controller
                     'email' => $clientData['email'],
                 ]
             );
-            
-            // Ensure client party is linked to the correct user/company
-            $this->ensureClientPartyLink($client, $clientData['email']);
+
             $property = Property::create([
                 'street' => $propertyData['street'] ?? '',
                 'barangay' => $propertyData['barangay'] ?? '',
@@ -165,6 +163,8 @@ class ContractController extends Controller
             if ($quotationRequestId) {
                 $quotationRequest = \App\Models\QuotationRequest::with(['rooms.scopes.scopeType.materials'])->find($quotationRequestId);
             }
+            // Link the client party to the client's account so the contract shows on their payments/feedback pages
+            $this->linkClientParty($client, $quotationRequest?->user_id);
             $awardedSupplierDiscount = null;
             if ($quotationRequest && isset($quotationRequest->contract_data['awarded_supplier_discount'])) {
                 $awardedSupplierDiscount = $quotationRequest->contract_data['awarded_supplier_discount'];
@@ -427,6 +427,7 @@ class ContractController extends Controller
                         'phone' => $request->client_phone
                     ]
                 );
+                $this->linkClientParty($client);
             
                 // Save property with basic info
                 $property = Property::create([
@@ -1157,19 +1158,26 @@ class ContractController extends Controller
     /**
      * Ensure client party is linked to the correct user/company
      */
-    private function ensureClientPartyLink(Party $clientParty, string $clientEmail)
+    /**
+     * Link a contract's client party to the client's user account (parties.user_id), so the client sees the
+     * contract — and its payments and feedback — even if the email typed on the contract differs from their login.
+     * Uses the quotation request's user when known, else a client account / client company with the same email,
+     * else a client company with the same company name. An existing link is never overwritten.
+     */
+    private function linkClientParty(Party $client, ?int $userId = null): void
     {
-        // Try to find a matching company for this client
-        $matchingCompany = \App\Models\Company::where('designation', 'client')
-            ->where(function($query) use ($clientEmail, $clientParty) {
-                $query->where('email', $clientEmail)
-                      ->orWhere('company_name', $clientParty->company_name)
-                      ->orWhere('contact_person', $clientParty->name);
-            })->first();
+        if ($client->user_id) {
+            return;
+        }
 
-        if ($matchingCompany && !$clientParty->user_id) {
-            // Link the party to the company's user
-            $clientParty->update(['user_id' => $matchingCompany->user_id]);
+        $userId ??= \App\Models\User::where('email', $client->email)->where('role', 'client')->value('id')
+            ?? \App\Models\Company::where('designation', 'client')->where('email', $client->email)->value('user_id')
+            ?? ($client->company_name
+                ? \App\Models\Company::where('designation', 'client')->where('company_name', $client->company_name)->value('user_id')
+                : null);
+
+        if ($userId) {
+            $client->update(['user_id' => $userId]);
         }
     }
 

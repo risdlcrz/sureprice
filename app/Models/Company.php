@@ -64,6 +64,11 @@ class Company extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function changeRequests()
+    {
+        return $this->hasMany(CompanyChangeRequest::class)->latest();
+    }
+
     public function documents()
     {
         return $this->hasMany(CompanyDocument::class);

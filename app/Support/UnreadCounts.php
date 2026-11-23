@@ -19,7 +19,7 @@ class UnreadCounts
     {
         return self::remember('messages', fn (User $user) => Message::whereHas('conversation', function ($q) use ($user) {
             match (true) {
-                $user->role === 'manager' || $user->user_type === 'admin' => $q->where('admin_id', $user->id),
+                $user->role === 'manager' || $user->user_type === 'admin' || $user->role === 'admin' => $q->where('admin_id', $user->id),
                 $user->isClientCompany() => $q->where('client_id', $user->id),
                 $user->isSupplierCompany() => $q->where('supplier_id', $user->company->id),
                 default => $q->whereRaw('1 = 0'),
