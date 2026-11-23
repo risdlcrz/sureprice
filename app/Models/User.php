@@ -20,6 +20,7 @@ class User extends Authenticatable // implements MustVerifyEmail
         'role',
         'user_type',
         'email_verified_at',
+        'avatar_path',
         'last_login_at'
     ];
 
@@ -133,6 +134,23 @@ class User extends Authenticatable // implements MustVerifyEmail
             ?? Party::where('email', $this->email)->where('entity_type', 'client')->first()
             ?? ($this->company ? Party::where('company_name', $this->company->company_name)->where('entity_type', 'client')->first() : null)
             ?? Party::where('email', $this->email)->first();
+    }
+
+    /** Disk holding profile photos (private; served by AvatarController). */
+    public const AVATAR_DISK = 'local';
+
+    /** URL of the profile photo, or null to show initials (<x-avatar>). Versioned so a new photo isn't cached. */
+    public function avatarUrl(): ?string
+    {
+        return $this->avatar_path
+            ? route('avatars.show', ['user' => $this->id, 'v' => substr(md5($this->avatar_path), 0, 8)])
+            : null;
+    }
+
+    /** Name shown next to the avatar: company name for company accounts, else the person's name. */
+    public function avatarName(): string
+    {
+        return ($this->user_type === 'company' ? $this->company?->company_name : null) ?: ($this->name ?: $this->username ?: '?');
     }
 
     /** Route name a user lands on after login or email verification. */

@@ -4,14 +4,14 @@
     $me = auth()->user();
     $tz = 'Asia/Manila';
 
-    // [display name, role label] for the other side of a conversation
+    // [display name, role label, user (for the avatar)] for the other side of a conversation
     $who = function ($conv) use ($me) {
         $other = $conv?->getOtherParticipant($me);
         if (!$other) {
-            return ['Deleted user', null];
+            return ['Deleted user', null, null];
         }
         if ($other instanceof \App\Models\Company) {
-            return [$other->company_name ?: 'Supplier', 'Supplier'];
+            return [$other->company_name ?: 'Supplier', 'Supplier', $other->user];
         }
         $label = match (true) {
             $other->role === 'manager' => 'Manager',
@@ -21,9 +21,8 @@
             default => null,
         };
 
-        return [$other->company?->company_name ?: ($other->name ?: 'User'), $label];
+        return [$other->company?->company_name ?: ($other->name ?: 'User'), $label, $other];
     };
-    $initial = fn (?string $name) => Str::upper(Str::substr(trim((string) $name) ?: '?', 0, 1));
     $shortTime = function ($date) use ($tz) {
         if (!$date) {
             return '';
@@ -45,7 +44,7 @@
     $canStart = $isStaff || $isClient || $isSupplier;
     $admins = fn () => \App\Models\User::where(fn ($q) => $q->where('user_type', 'admin')->orWhere('role', 'admin'))->orderBy('name')->get();
     $openThread = isset($conversation, $messages) && $conversation;
-    [$otherName, $otherRole] = $openThread ? $who($conversation) : [null, null];
+    [$otherName, $otherRole, $otherUser] = $openThread ? $who($conversation) : [null, null, null];
 @endphp
 
 @push('styles')
@@ -71,14 +70,14 @@
         <nav class="chat-list" id="chatList">
             @forelse($conversations as $c)
                 @php
-                    [$name, $role] = $who($c);
+                    [$name, $role, $avatarUser] = $who($c);
                     $last = $c->messages->first();
                     $unread = $c->messages->where('is_read', false)->where('sender_id', '!=', $me->id)->count();
                     $active = $openThread && $c->id == $conversation->id;
                 @endphp
                 <a href="{{ route('messages.index', ['conversation' => $c->id]) }}" class="chat-list__item @if($active) is-active @endif @if($unread) is-unread @endif"
                    data-conversation-id="{{ $c->id }}" @if($active) aria-current="true" @endif>
-                    <span class="chat-avatar" aria-hidden="true">{{ $initial($name) }}</span>
+                    <x-avatar :user="$avatarUser" :name="$name" class="chat-avatar" />
                     <span class="chat-list__text">
                         <span class="chat-list__row">
                             <span class="chat-list__name">{{ $name }}</span>
@@ -114,7 +113,7 @@
         @if($openThread)
             <header class="chat-thread__head">
                 <button type="button" class="btn btn-sm btn-light chat-back" id="chatBack" aria-label="Back to conversations"><i class="bi bi-arrow-left"></i></button>
-                <span class="chat-avatar" aria-hidden="true">{{ $initial($otherName) }}</span>
+                <x-avatar :user="$otherUser" :name="$otherName" class="chat-avatar" />
                 <div class="chat-thread__who">
                     <div class="chat-thread__name">{{ $otherName }}</div>
                     @if($otherRole)<div class="chat-thread__role">{{ $otherRole }}</div>@endif

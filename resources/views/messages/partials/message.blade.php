@@ -12,7 +12,7 @@
 @endphp
 <div class="chat-msg {{ $mine ? 'is-mine' : 'is-theirs' }} @if($grouped) is-grouped @endif" data-message-id="{{ $message->id }}" data-sender-id="{{ $message->sender_id }}">
     @unless($mine)
-        <span class="chat-avatar chat-avatar--sm" aria-hidden="true">{{ Str::upper(Str::substr($senderName, 0, 1)) }}</span>
+        <x-avatar :user="$message->sender" :name="$senderName" size="sm" class="chat-avatar chat-avatar--sm" />
     @endunless
     <div class="chat-msg__body">
         @if($message->content)

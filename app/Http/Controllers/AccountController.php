@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 /**
@@ -90,5 +92,38 @@ class AccountController extends Controller
         });
 
         return redirect()->route('account.edit')->with('success', 'Your account settings were saved.');
+    }
+
+    /** Upload or replace the profile photo (the browser crops it to a square first; see resources/js/pages/account.js). */
+    public function updatePhoto(Request $request)
+    {
+        $request->validateWithBag('photo', [
+            'photo' => 'required|image|mimes:jpg,jpeg,png,webp|max:4096|dimensions:min_width=64,min_height=64,max_width=4000,max_height=4000',
+        ], [
+            'photo.image' => 'Choose a JPG, PNG or WebP image.',
+            'photo.mimes' => 'Choose a JPG, PNG or WebP image.',
+            'photo.max' => 'The photo must be 4 MB or smaller.',
+            'photo.dimensions' => 'The photo must be at least 64 × 64 pixels.',
+        ]);
+
+        $user = $request->user();
+        $old = $user->avatar_path;
+        $user->update(['avatar_path' => $request->file('photo')->store("avatars/{$user->id}", User::AVATAR_DISK)]);
+        if ($old) {
+            Storage::disk(User::AVATAR_DISK)->delete($old);
+        }
+
+        return redirect()->route('account.edit')->with('success', 'Your profile photo was updated.');
+    }
+
+    public function destroyPhoto(Request $request)
+    {
+        $user = $request->user();
+        if ($user->avatar_path) {
+            Storage::disk(User::AVATAR_DISK)->delete($user->avatar_path);
+            $user->update(['avatar_path' => null]);
+        }
+
+        return redirect()->route('account.edit')->with('success', 'Your profile photo was removed.');
     }
 }

@@ -581,6 +581,17 @@ img, svg { vertical-align: middle; }
 .content .stats-card[class*="bg-"] .fw-semibold { color: var(--sp-text-muted); font-size: 0.85rem; }
 .content .small-box[class*="bg-"] .small-box-footer { color: var(--tile) !important; background: var(--sp-surface-2) !important; }
 
+/* --- Avatars (<x-avatar>): profile photo or initials -------------------- */
+.sp-avatar { flex: none; display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: var(--sp-green-100); color: var(--sp-green-800); font-weight: 700; font-size: 0.95rem; line-height: 1; user-select: none; }
+.sp-avatar--xs { width: 24px; height: 24px; font-size: 0.65rem; }
+.sp-avatar--sm { width: 30px; height: 30px; font-size: 0.78rem; }
+.sp-avatar--lg { width: 56px; height: 56px; font-size: 1.3rem; }
+.sp-avatar--xl { width: 96px; height: 96px; font-size: 2.2rem; }
+img.sp-avatar { background: var(--sp-surface-2); }
+.profile-avatar.sp-avatar { width: 38px; height: 38px; background: #fff; }
+a.profile-container { color: inherit; text-decoration: none; transition: background-color 0.15s; }
+a.profile-container:hover { background-color: rgba(255, 255, 255, 0.1); }
+
 /* --- Buttons ------------------------------------------------------------ */
 .btn {
     --bs-btn-font-weight: 500;

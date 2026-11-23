@@ -101,13 +101,38 @@
         <div class="col-xl-4">
             <div class="card mb-4">
                 <div class="card-body">
-                    <div class="d-flex align-items-center gap-3 mb-3">
-                        <span class="account-avatar" aria-hidden="true">{{ Str::upper(Str::substr($company?->company_name ?: $user->name ?: '?', 0, 1)) }}</span>
-                        <div class="min-w-0">
+                    {{-- Profile photo: the browser crops/resizes it to a square before upload (resources/js/pages/account.js) --}}
+                    <div class="account-photo">
+                        <div class="account-photo__preview" id="photoPreview">
+                            <x-avatar :user="$user" size="xl" id="photoCurrent" />
+                        </div>
+                        <div class="min-w-0 text-center">
                             <div class="fw-semibold text-truncate">{{ $company?->company_name ?: $user->name }}</div>
                             <div class="text-muted small">{{ $roleLabel }}</div>
                         </div>
+
+                        <form method="POST" action="{{ route('account.photo.update') }}" enctype="multipart/form-data" id="photoForm" class="account-photo__actions">
+                            @csrf
+                            <input type="file" name="photo" id="photoInput" class="visually-hidden" accept="image/jpeg,image/png,image/webp">
+                            <label for="photoInput" class="btn btn-sm btn-outline-success mb-0" id="photoPick">
+                                <i class="fas fa-camera me-1"></i>{{ $user->avatar_path ? 'Change photo' : 'Upload photo' }}
+                            </label>
+                            <button type="submit" class="btn btn-sm btn-success" id="photoSave" hidden><i class="fas fa-check me-1"></i>Save photo</button>
+                            <button type="button" class="btn btn-sm btn-light" id="photoCancel" hidden>Cancel</button>
+                        </form>
+                        @if($user->avatar_path)
+                            <form method="POST" action="{{ route('account.photo.destroy') }}" id="photoRemoveForm" onsubmit="return confirm('Remove your profile photo?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-link text-danger p-0">Remove photo</button>
+                            </form>
+                        @endif
+                        <p class="form-text text-center mb-0" id="photoHelp">JPG, PNG or WebP. It's cropped to a square — shown in the menu and in messages.</p>
+                        @if($errors->photo->has('photo'))
+                            <div class="invalid-feedback d-block text-center">{{ $errors->photo->first('photo') }}</div>
+                        @endif
                     </div>
+                    <hr>
                     <dl class="req-meta">
                         <div><dt>Member since</dt><dd>{{ $user->created_at?->format('M d, Y') ?? '—' }}</dd></div>
                         <div><dt>Last sign-in</dt><dd>{{ $user->last_login_at?->timezone('Asia/Manila')->format('M d, Y g:i A') ?? '—' }}</dd></div>
@@ -137,4 +162,8 @@
 
 @push('styles')
 @vite(['resources/css/pages/requests.css', 'resources/css/pages/account.css'])
+@endpush
+
+@push('scripts')
+@vite('resources/js/pages/account.js')
 @endpush

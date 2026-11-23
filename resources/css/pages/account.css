@@ -1,16 +1,10 @@
 /* Account settings (resources/views/account/edit.blade.php); layout pieces come from requests.css. */
-.account-avatar {
-    flex: none;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    background: var(--sp-green-100, #dcefe0);
-    color: var(--sp-green-800, #1b5e20);
-    font-size: 1.25rem;
-    font-weight: 700;
-}
+.account-photo { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+.account-photo__preview { position: relative; }
+.account-photo__preview .sp-avatar { box-shadow: 0 0 0 4px var(--sp-surface, #fff), 0 0 0 5px var(--sp-border, #e3e8e5); }
+.account-photo__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.4rem; margin: 0; }
+.account-photo__actions label { cursor: pointer; }
+.account-photo__actions:focus-within label { box-shadow: var(--sp-ring, none); }
 .account-page .min-w-0 { min-width: 0; }
 .account-page .req-meta { grid-template-columns: 1fr; gap: 0.75rem; }
 

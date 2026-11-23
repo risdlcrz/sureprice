@@ -62,6 +62,9 @@ Route::middleware(['auth'])->get('/home', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/account', [\App\Http\Controllers\AccountController::class, 'edit'])->name('account.edit');
     Route::put('/account', [\App\Http\Controllers\AccountController::class, 'update'])->name('account.update');
+    Route::post('/account/photo', [\App\Http\Controllers\AccountController::class, 'updatePhoto'])->name('account.photo.update');
+    Route::delete('/account/photo', [\App\Http\Controllers\AccountController::class, 'destroyPhoto'])->name('account.photo.destroy');
+    Route::get('/avatars/{user}', [\App\Http\Controllers\AvatarController::class, 'show'])->name('avatars.show');
     // Clients: change the registered company name (applied after an admin approves the uploaded proof)
     Route::post('/account/company-name', [\App\Http\Controllers\CompanyChangeRequestController::class, 'store'])->name('account.company-name.store');
     Route::delete('/account/company-name/{changeRequest}', [\App\Http\Controllers\CompanyChangeRequestController::class, 'destroy'])->name('account.company-name.destroy');

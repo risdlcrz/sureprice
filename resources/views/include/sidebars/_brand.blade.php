@@ -18,10 +18,10 @@
     <img src="{{ asset('images/sureprice_logo.png') }}" alt="SurePrice" class="header-logo">
 </a>
 
-<div class="profile-container">
-    <span class="profile-avatar" aria-hidden="true">{{ strtoupper(mb_substr($sbName ?: '?', 0, 1)) }}</span>
+<{{ $sbUser ? 'a' : 'div' }} @if($sbUser) href="{{ route('account.edit') }}" title="Account settings" @endif class="profile-container">
+    <x-avatar :user="$sbUser" :name="$sbName" class="profile-avatar" />
     <div class="profile-text">
         <div class="username" title="{{ $sbName }}">{{ $sbName }}</div>
         @if($sbRole)<div class="role">{{ $sbRole }}</div>@endif
     </div>
-</div>
+</{{ $sbUser ? 'a' : 'div' }}>

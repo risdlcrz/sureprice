@@ -25,6 +25,7 @@
     color: var(--sp-green-800, #1b5e20);
     font-weight: 700;
     font-size: 0.95rem;
+    object-fit: cover;
 }
 .chat-avatar--sm { width: 30px; height: 30px; font-size: 0.78rem; }
 

@@ -53,6 +53,7 @@ share the same page where they used to have copies; create/edit use one form vie
 | `<x-confirm-modal id title :action confirm tone>` | "are you sure" modal that submits a form |
 | `<x-empty-row cols>` | "no records" table row |
 | `<x-progress :value>` | progress bar |
+| `<x-avatar :user size>` | profile photo (`users.avatar_path`, served by `avatars.show`) or initials |
 | `<x-flash>` | session success/error messages (already in the layout) |
 | `<x-nav-count kind>` | live unread counter in the sidebar |
 | `<x-address-fields :street :barangay :city :state :postal>` | PH address: Region → Province → City → Barangay dropdowns + street/ZIP (data in `public/data/ph-address`, rebuilt by `node scripts/build-ph-address.mjs`) |
