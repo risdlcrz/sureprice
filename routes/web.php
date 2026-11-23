@@ -150,6 +150,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:admin,manager,procurement,contractor,finance,client')->prefix('contracts')->name('contracts.')->group(function () {
         Route::get('/', [ContractController::class, 'index'])->name('index');
         Route::get('/{contract}', [ContractController::class, 'show'])->name('show');
+        Route::get('/{contract}/print', [ContractController::class, 'printPreview'])->name('print');
         Route::get('/{contract}/download', [ContractController::class, 'download'])->name('download');
         Route::get('/{contract}/pdf', [ContractController::class, 'download'])->name('pdf');
         Route::get('/{contract}/items', [ContractController::class, 'getItems'])->name('items');

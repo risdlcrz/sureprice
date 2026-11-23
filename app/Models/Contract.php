@@ -69,27 +69,7 @@ class Contract extends Model
         static::creating(function ($contract) {
             DB::beginTransaction();
             try {
-                // Get the current year
-                $year = date('Y');
-                
-                // Get the last contract number for this year
-                $lastContract = static::where('contract_number', 'like', "CT{$year}%")
-                    ->orderBy('contract_number', 'desc')
-                    ->lockForUpdate()  // Add lock to prevent race conditions
-                    ->first();
-
-                if ($lastContract) {
-                    // Extract the number from the last contract number and increment it
-                    $lastNumber = intval(substr($lastContract->contract_number, -4));
-                    $newNumber = $lastNumber + 1;
-                } else {
-                    // If no contracts exist for this year, start with 0001
-                    $newNumber = 1;
-                }
-
-                // Generate the new contract number
-                $contract->contract_number = sprintf("CT%s%04d", $year, $newNumber);
-                
+                $contract->contract_number = static::nextNumber(lock: true);
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
@@ -104,6 +84,20 @@ class Contract extends Model
                 }
             });
         });
+    }
+
+    /**
+     * The next contract number for this year (CT<year><0001>). Without $lock it is only a preview
+     * (shown on the create form); the number is assigned when the contract is saved.
+     */
+    public static function nextNumber(bool $lock = false): string
+    {
+        $year = date('Y');
+
+        $query = static::where('contract_number', 'like', "CT{$year}%")->orderBy('contract_number', 'desc');
+        $last = ($lock ? $query->lockForUpdate() : $query)->value('contract_number');
+
+        return sprintf('CT%s%04d', $year, $last ? intval(substr($last, -4)) + 1 : 1);
     }
 
     public function contractor(): BelongsTo

@@ -94,8 +94,8 @@
                     </button>
                 @endif
             @endif
-            <a href="{{ route('contracts.download', $contract->id) }}" class="btn btn-success">
-                <i class="bi bi-download"></i> Download PDF
+            <a href="{{ route('contracts.print', $contract->id) }}" class="btn btn-success">
+                <i class="fas fa-print"></i> Print Preview
             </a>
             <a href="{{ route('contracts.index') }}" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Back to List

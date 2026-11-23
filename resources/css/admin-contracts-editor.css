@@ -1,523 +1,325 @@
-.contract-template {
-    max-width: 1000px;
-    margin: 32px auto 32px auto;
-    padding-left: 0;
-    padding-right: 0;
+/* Construction Contract Agreement editor (admin/contracts/editor.blade.php).
+   Everything is scoped to .contract-editor so global Bootstrap/app-layout styles stay untouched. */
+
+.contract-editor {
+    --ce-ink: #14532d;          /* deep forest green: headings, accents, focus */
+    --ce-ink-rgb: 20, 83, 45;
+    --ce-tint: #f0fdf4;         /* emerald tint: soft fills */
+    --ce-border: #e2e8f0;       /* slate-200 */
+    --ce-muted: #64748b;        /* slate-500 */
+    --ce-inset: rgba(248, 250, 252, 0.7); /* slate-50 / 70% */
+    --ce-head: rgba(2, 44, 34, 0.05);     /* emerald-950 / 5% */
+    --ce-head-ink: #022c22;     /* emerald-950 */
+
+    max-width: 56rem;           /* max-w-4xl */
+    margin: 1.5rem auto 2.5rem;
 }
 
-.contract-border {
-    border: 2px solid #e0e0e0;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+/* ---------- Toolbar ---------- */
+.contract-editor .ce-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+.contract-editor .ce-toolbar-source { flex: 1 1 22rem; min-width: 0; }
+.contract-editor .ce-toolbar-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* ---------- Card ---------- */
+.contract-editor .ce-card {
     background: #fff;
-    padding: 4rem 3rem 3rem 3rem;
-    margin-left: 0;
-    margin-right: 0;
-    position: relative;
+    border: 1px solid var(--ce-border);
+    border-radius: 1rem;        /* rounded-2xl */
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05); /* shadow-sm */
+    padding: 2rem;              /* p-8 */
 }
 
-.contract-title {
-    font-size: 2.75rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    margin-bottom: 1.5rem;
-    color: #2c3e50;
-    text-align: center;
+/* Metadata bar */
+.contract-editor .ce-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1.25rem;
+    margin-bottom: 1.75rem;
+    border-bottom: 1px solid var(--ce-border);
+}
+.contract-editor .ce-meta-number { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.contract-editor .ce-meta-date { display: flex; align-items: center; gap: 0.75rem; }
+.contract-editor .ce-meta-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    border-bottom: 3px solid #3498db;
-    padding-bottom: 1rem;
-    margin-bottom: 2.5rem;
+    color: var(--ce-muted);
+    margin: 0;
+    white-space: nowrap;
 }
-
-.section {
-    margin-bottom: 2.5rem;
-    padding: 0;
-}
-
-.section strong {
-    font-size: 1.25rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #2c3e50;
+.contract-editor .ce-number-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: var(--ce-tint);
+    border: 1px solid rgba(var(--ce-ink-rgb), 0.18);
+    color: var(--ce-ink);
     font-weight: 700;
-    display: block;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #ecf0f1;
-    position: relative;
-}
-
-.section strong::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 60px;
-    height: 3px;
-    background: #3498db;
-}
-
-.section p {
-    font-size: 1.1rem;
-    line-height: 1.8;
-    color: #34495e;
-    margin-bottom: 1rem;
-    text-align: justify;
-}
-
-.contract-blank {
-    display: inline-block;
-    min-width: 140px;
-    border-bottom: 2px solid #34495e;
-    padding: 0.3em 0.6em;
-    margin: 0 0.3em;
-    font-weight: 600;
-    color: #2c3e50;
-    background: #f8f9fa;
-    border-radius: 6px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    transition: all 0.3s ease;
-}
-
-.contract-blank:hover {
-    background: #e9ecef;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.contract-inline-input {
-    border: none;
-    border-bottom: 2px solid #34495e;
-    background: #f8f9fa;
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: #2c3e50;
-    min-width: 160px;
-    margin: 0 0.4em;
-    padding: 0.4em 0.6em 0.3em 0.6em;
-    outline: none;
-    display: inline-block;
-    box-shadow: none;
-    border-radius: 6px;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.contract-inline-input:focus {
-    border-bottom: 3px solid #3498db;
-    background: #ebf3fd;
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
-    transform: translateY(-1px);
-}
-
-.contract-inline-input:hover {
-    background: #e9ecef;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-/* Form controls */
-.form-control, .form-select {
-    border-radius: 8px;
-    border: 2px solid #e0e0e0;
-    font-size: 1rem;
-    padding: 0.875rem 1rem;
-    transition: all 0.3s ease;
-    background: #fff;
-    color: #2c3e50;
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-    background: #ebf3fd;
-}
-
-.form-label {
-    font-weight: 600;
-    color: #2c3e50;
-    margin-bottom: 0.5rem;
-    font-size: 1rem;
-}
-
-/* Signature sections */
-.signature-section {
-    margin-top: 3rem;
-    padding-top: 2.5rem;
-    border-top: 2px solid #ecf0f1;
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 2rem;
-    margin-bottom: 2rem;
-}
-
-.signature-pad {
-    border: 2px solid #bdc3c7;
-    border-radius: 8px;
-    background: #fff;
-    cursor: crosshair;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.signature-pad:hover {
-    border-color: #3498db;
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
-}
-
-.signature-pad:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
-}
-
-/* Client signature restrictions */
-.client-signature-only .contractor-signature-section {
-    opacity: 0.6;
-    pointer-events: none;
-    position: relative;
-}
-
-.client-signature-only .contractor-signature-section::after {
-    content: "Only contractors can sign here";
-    display: block;
-    text-align: center;
-    color: #7f8c8d;
-    font-style: italic;
-    margin-top: 0.5rem;
     font-size: 0.9rem;
-    background: #ecf0f1;
-    padding: 0.5rem;
-    border-radius: 6px;
-    border: 1px dashed #bdc3c7;
-}
-
-/* Buttons */
-.btn {
-    border-radius: 8px;
-    font-weight: 600;
-    padding: 0.875rem 1.75rem;
-    transition: all 0.3s ease;
-    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
 }
+.contract-editor .ce-meta-hint { font-size: 0.78rem; color: var(--ce-muted); }
+.contract-editor .ce-date { width: auto; min-width: 11rem; }
 
-.btn-success {
-    background: #27ae60;
-    border-color: #27ae60;
-    color: #fff;
+/* Header */
+.contract-editor .ce-header { text-align: center; margin-bottom: 2rem; }
+.contract-editor .contract-title {
+    display: inline-block;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ce-ink);
+    margin: 0 0 0.75rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 3px solid var(--ce-ink);
+}
+.contract-editor .ce-subtitle {
+    max-width: 40rem;
+    margin: 0 auto;
+    color: var(--ce-muted);
+    font-size: 0.95rem;
 }
 
-.btn-success:hover {
-    background: #229954;
-    border-color: #229954;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
+/* ---------- Sections ---------- */
+.contract-editor .ce-section { margin-bottom: 2.25rem; }
+.contract-editor .ce-section:last-of-type { margin-bottom: 0; }
+.contract-editor .ce-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ce-ink);
+    margin: 0 0 1rem;
 }
-
-.btn-info {
-    background: #3498db;
-    border-color: #3498db;
-    color: #fff;
+.contract-editor .ce-step {
+    display: inline-grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 999px;
+    background: var(--ce-tint);
+    color: var(--ce-ink);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
 }
-
-.btn-info:hover {
-    background: #2980b9;
-    border-color: #2980b9;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
-}
-
-.btn-secondary {
-    background: #95a5a6;
-    border-color: #95a5a6;
-    color: #fff;
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-}
-
-.btn-secondary:hover {
-    background: #7f8c8d;
-    border-color: #7f8c8d;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(149, 165, 166, 0.3);
-}
-
-/* Property address autofill */
-#property_address[readonly] {
-    background-color: #ecf0f1;
-    color: #7f8c8d;
-    cursor: not-allowed;
-    border-bottom-color: #bdc3c7;
-}
-
-/* Contract scope list */
-.contract-scope-list {
-    margin-left: 1.5em;
-    margin-bottom: 1rem;
-    padding-left: 0;
-}
-
-.contract-scope-list li {
-    border-bottom: 1px dotted #bdc3c7;
+.contract-editor .ce-lead,
+.contract-editor .ce-terms { color: #334155; line-height: 1.7; margin-bottom: 1rem; }
+.contract-editor .ce-subheading {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #334155;
     margin-bottom: 0.5rem;
-    padding-bottom: 0.5rem;
-    font-size: 1.05em;
-    line-height: 1.7;
-    color: #34495e;
-    position: relative;
-    padding-left: 1rem;
 }
 
-.contract-scope-list li::before {
-    content: "•";
-    color: #3498db;
-    font-weight: bold;
-    position: absolute;
-    left: -0.5rem;
+/* Form controls: green focus instead of the default ring */
+.contract-editor .form-label { font-weight: 600; color: #334155; font-size: 0.875rem; }
+.contract-editor .form-control:focus,
+.contract-editor .form-select:focus {
+    border-color: var(--ce-ink);
+    box-shadow: 0 0 0 3px rgba(var(--ce-ink-rgb), 0.15);
+}
+.contract-editor .form-control[readonly] {
+    background: var(--ce-inset);
+    color: #334155;
+}
+.contract-editor .form-check-input:checked { background-color: var(--ce-ink); border-color: var(--ce-ink); }
+.contract-editor .form-check-input:focus { border-color: var(--ce-ink); box-shadow: 0 0 0 3px rgba(var(--ce-ink-rgb), 0.15); }
+.contract-editor .select2-container--default .select2-selection--single { border-radius: var(--sp-radius-sm, 8px); }
+.contract-editor .select2-container--focus .select2-selection--single,
+.contract-editor .select2-container--open .select2-selection--single { border-color: var(--ce-ink); }
+
+/* ---------- Parties (2-column) ---------- */
+.contract-editor .ce-parties {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+@media (min-width: 768px) {
+    .contract-editor .ce-parties { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.contract-editor .ce-party {
+    border: 1px solid var(--ce-border);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    background: #fff;
+}
+.contract-editor .ce-party-head {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 0.9rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--ce-border);
+}
+.contract-editor .ce-party-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.6rem;
+    background: var(--ce-tint);
+    color: var(--ce-ink);
+}
+.contract-editor .ce-party-role { font-weight: 700; color: var(--ce-ink); }
+.contract-editor .ce-party-note { font-size: 0.8rem; color: var(--ce-muted); }
+
+/* ---------- Property inset ---------- */
+.contract-editor .ce-inset {
+    background: var(--ce-inset);
+    border: 1px solid var(--ce-border);
+    border-radius: 0.75rem;     /* rounded-xl */
+    padding: 1rem;              /* p-4 */
+}
+.contract-editor .ce-inset .form-control:not([readonly]) { background: #fff; }
+
+/* ---------- Scope of work ---------- */
+.contract-editor .selected-scopes-list ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.contract-editor .selected-scopes-list li {
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: var(--ce-tint);
+    border: 1px solid rgba(var(--ce-ink-rgb), 0.15);
+    color: var(--ce-ink);
+    font-size: 0.85rem;
+    font-weight: 500;
 }
 
-/* Row styling */
-.row {
+.contract-editor .ce-table-wrap {
+    border: 1px solid var(--ce-border);
+    border-radius: 0.75rem;
+    overflow: hidden;
     margin-bottom: 1.5rem;
 }
-
-.col-md-6 {
-    padding: 0 1rem;
+.contract-editor .ce-table { font-size: 0.875rem; }
+.contract-editor .ce-table > thead > tr > th {
+    background: var(--ce-head);
+    color: var(--ce-head-ink);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--ce-border);
+    padding: 0.7rem 0.85rem;
 }
-
-/* Text styling */
-.fw-bold {
-    font-weight: 600 !important;
-    color: #2c3e50;
+.contract-editor .ce-table > tbody > tr > td {
+    padding: 0.65rem 0.85rem;
+    border-color: var(--ce-border);
+    vertical-align: middle;
 }
+.contract-editor .ce-table > tbody > tr:last-child > td { border-bottom: 0; }
+.contract-editor .ce-table > tbody > tr:not(.ce-empty):hover > td { background: var(--ce-tint); }
+.contract-editor .ce-num { font-variant-numeric: tabular-nums; }
+.contract-editor .ce-table td.ce-num { text-align: right; white-space: nowrap; }
 
-.text-center {
+.contract-editor .ce-empty > td {
     text-align: center;
+    padding: 2.5rem 1rem !important;
+    color: var(--ce-muted);
+}
+.contract-editor .ce-empty i { font-size: 1.6rem; color: rgba(var(--ce-ink-rgb), 0.35); margin-bottom: 0.5rem; }
+.contract-editor .ce-empty-title { font-weight: 600; color: #334155; }
+.contract-editor .ce-empty-text { font-size: 0.85rem; }
+
+.contract-editor .ce-costs {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem 1.5rem;
+}
+@media (min-width: 768px) {
+    .contract-editor .ce-costs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.contract-editor input.ce-num { text-align: right; }
+
+.contract-editor .ce-grand-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.25rem;
+    padding: 0.9rem 1.1rem;
+    border-radius: 0.75rem;
+    background: var(--ce-tint);
+    color: var(--ce-ink);
+    font-weight: 700;
+}
+.contract-editor .ce-grand-total .ce-num { font-size: 1.15rem; }
+
+/* Discount summary (rendered by the page JS) */
+.contract-editor #discount-summary { font-size: 0.9rem; }
+.contract-editor #discount-summary .discount-original { text-decoration: line-through; color: var(--ce-muted); }
+.contract-editor #discount-summary .discount-label { display: block; margin-top: 0.4em; font-weight: 600; }
+.contract-editor #discount-summary .discount-value { color: var(--ce-ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.contract-editor #discount-summary .discount-type { color: var(--ce-ink); font-weight: 500; }
+
+/* Payment breakdown table (rendered by the page JS) */
+.contract-editor #payment-breakdown .table { font-variant-numeric: tabular-nums; }
+.contract-editor #payment-breakdown .table th { background: var(--ce-head); color: var(--ce-head-ink); }
+
+/* ---------- Signatures ---------- */
+.contract-editor .ce-signature {
+    text-align: center;
+    border: 1px solid var(--ce-border);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    background: var(--ce-inset);
+}
+.contract-editor .signature-pad {
+    max-width: 100%;
+    border: 1px dashed #cbd5e1;
+    border-radius: 0.5rem;
+    background: #fff;
+    cursor: crosshair;
+}
+.contract-editor .signature-pad:hover { border-color: var(--ce-ink); }
+
+.client-signature-only .contract-editor .contractor-signature-section {
+    opacity: 0.6;
+    pointer-events: none;
+}
+.client-signature-only .contract-editor .contractor-signature-section::after {
+    content: "Only contractors can sign here";
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    font-style: italic;
+    color: var(--ce-muted);
 }
 
-/* Responsive design */
-@media (max-width: 900px) {
-    .contract-template { 
-        max-width: 100vw; 
-        padding-left: 0.5rem; 
-        padding-right: 0.5rem; 
-    }
-    .contract-border { 
-        padding: 2rem 1.5rem; 
-    }
-    .contract-title {
-        font-size: 2.25rem;
-    }
-    .section strong {
-        font-size: 1.1rem;
-    }
-    .contract-inline-input {
-        min-width: 120px;
-        font-size: 1rem;
-    }
+/* ---------- Small screens ---------- */
+@media (max-width: 575.98px) {
+    .contract-editor .ce-card { padding: 1.25rem; }
+    .contract-editor .contract-title { font-size: 1.25rem; }
+    .contract-editor .ce-meta-date { width: 100%; justify-content: space-between; }
 }
 
+/* ---------- Print (browser print of this page) ---------- */
 @media print {
-    /* Reset all margins and padding for print */
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-    
-    body { 
-        background: white !important;
-        font-size: 12pt;
-        line-height: 1.4;
-        color: black !important;
-        font-family: "Times New Roman", serif;
-    }
-    
-    /* Hide all interactive elements */
-    .btn, #po-search, #po-search-results, #save-btn, #download-pdf,
-    .contract-inline-input, select, input[type="date"], input[type="text"] { 
-        display: none !important;
-    }
-    
-    /* Contract container styling for print */
-    .contract-template, .contract-border { 
-        margin: 0;
-        padding: 20pt;
-        border: none;
-        box-shadow: none;
-        max-width: none;
-        background: white;
-    }
-    
-    /* Title styling for print */
-    .contract-title {
-        font-size: 24pt;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 20pt;
-        page-break-after: avoid;
-        border-bottom: 2pt solid black;
-        padding-bottom: 10pt;
-        color: black !important;
-    }
-    
-    /* Section headers for print */
-    .section strong {
-        font-size: 14pt;
-        font-weight: bold;
-        text-transform: uppercase;
-        margin-bottom: 10pt;
-        page-break-after: avoid;
-        border-bottom: 1pt solid black;
-        padding-bottom: 5pt;
-        color: black !important;
-    }
-    
-    .section strong::after {
-        display: none;
-    }
-    
-    /* Paragraphs for print */
-    .section p {
-        font-size: 12pt;
-        line-height: 1.5;
-        margin-bottom: 10pt;
-        text-align: justify;
-        color: black !important;
-    }
-    
-    /* Contract blanks for print */
-    .contract-blank {
-        border-bottom: 1pt solid black;
-        background: none;
-        box-shadow: none;
-        font-weight: bold;
-        min-width: 120pt;
-        display: inline-block;
-        padding: 2pt 4pt;
-        color: black !important;
-    }
-    
-    /* Tables for print */
-    .table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 15pt;
-        font-size: 11pt;
-    }
-    
-    .table th, .table td {
-        border: 1pt solid black;
-        padding: 5pt;
-        text-align: left;
-    }
-    
-    .table th {
-        background: #f0f0f0 !important;
-        font-weight: bold;
-    }
-    
-    /* Form controls for print - show as text */
-    .form-control, .form-select {
-        border: none;
-        background: none;
-        font-weight: bold;
-        padding: 0;
-        margin: 0;
-        color: black !important;
-    }
-    
-    /* Signature section for print */
-    .signature-section {
-        page-break-inside: avoid;
-        margin-top: 30pt;
-        border-top: 1pt solid black;
-        padding-top: 20pt;
-        background: white !important;
-    }
-    
-    .signature-pad {
-        border: 1pt solid black;
-        background: white;
-        height: 80pt;
-        width: 200pt;
-    }
-    
-    /* Payment breakdown for print */
-    #payment-breakdown {
-        page-break-inside: avoid;
-        margin-top: 15pt;
-    }
-    
-    /* Cost summary for print */
-    .row {
-        margin-bottom: 10pt;
-    }
-    
-    .col-md-6 {
-        display: inline-block;
-        width: 48%;
-        vertical-align: top;
-    }
-    
-    /* Page breaks */
-    .section {
-        page-break-inside: avoid;
-        margin-bottom: 20pt;
-    }
-    
-    /* Ensure proper spacing between sections */
-    .mb-3 {
-        margin-bottom: 15pt !important;
-    }
-    
-    .mb-4 {
-        margin-bottom: 20pt !important;
-    }
-    
-    /* Hide any remaining interactive elements */
-    .signature-pad, canvas {
-        border: 1pt solid black;
-        background: white;
-    }
-    
-    /* Ensure text is readable */
-    .text-muted {
-        color: black !important;
-    }
-    
-    /* Alert boxes for print */
-    .alert {
-        border: 1pt solid black;
-        background: white !important;
-        color: black !important;
-        padding: 10pt;
-        margin-bottom: 15pt;
-    }
-    
-    .alert-info {
-        background: #f8f9fa !important;
-    }
-    
-    /* Ensure proper page breaks */
-    h1, h2, h3, h4, h5, h6 {
-        page-break-after: avoid;
-    }
-    
-    /* Table of contents or lists */
-    ul, ol {
-        margin-left: 20pt;
-        margin-bottom: 10pt;
-    }
-    
-    li {
-        margin-bottom: 5pt;
-    }
-    
-    /* Additional print optimizations */
-    .contract-inline-input {
-        color: black !important;
-        border-bottom-color: black !important;
-        background: white !important;
-    }
-} 
+    .contract-editor .ce-toolbar,
+    .contract-editor .btn { display: none !important; }
+    .contract-editor .ce-card { border: 0; box-shadow: none; padding: 0; }
+    .contract-editor .ce-section { break-inside: avoid; }
+}

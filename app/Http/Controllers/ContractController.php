@@ -77,7 +77,9 @@ class ContractController extends Controller
                 ->get();
         });
 
-        return view('admin.contracts.create', compact('contractors', 'quotationRequests'));
+        $nextContractNumber = Contract::nextNumber();
+
+        return view('admin.contracts.create', compact('contractors', 'quotationRequests', 'nextContractNumber'));
     }
 
     public function store(Request $request)
@@ -322,20 +324,36 @@ class ContractController extends Controller
         return $this->saveContract($request, $contract);
     }
 
+    /** Server-rendered PDF file (direct link / API use; the UI opens the print preview instead). */
     public function download(Contract $contract)
     {
+        $pdf = PDF::loadView('admin.contracts.pdf', $this->agreementData($contract))->setPaper('letter', 'portrait');
+
+        return $pdf->download('contract-' . $contract->id . '.pdf');
+    }
+
+    /** The agreement as a printable page: "Print / Save as PDF" uses the browser's print dialog, nothing is downloaded. */
+    public function printPreview(Contract $contract)
+    {
+        return view('admin.contracts.pdf', $this->agreementData($contract) + [
+            'preview' => true,
+            'backUrl' => route('contracts.show', $contract),
+            'pdfUrl' => route('contracts.download', $contract),
+        ]);
+    }
+
+    private function agreementData(Contract $contract): array
+    {
         abort_unless($contract->isVisibleTo(Auth::user()), 403);
-        $contract->load(['contractor', 'client', 'property', 'items.material.suppliers']);
-        
-        $pdf = PDF::loadView('admin.contracts.pdf', [
+        $contract->load(['contractor', 'client', 'property', 'quotationRequest', 'items.material', 'items.supplier', 'items.room', 'items.scope']);
+
+        return [
             'contract' => $contract,
             'contractor' => $contract->contractor,
             'client' => $contract->client,
             'property' => $contract->property,
-            'items' => $contract->items
-        ]);
-        
-        return $pdf->download('contract-' . $contract->id . '.pdf');
+            'items' => $contract->items,
+        ];
     }
 
     protected function saveContract(Request $request, Contract $contract = null)
