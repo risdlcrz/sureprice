@@ -5,152 +5,136 @@
 @endpush
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="h3 mb-4">Inventory Management</h1>
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-tools d-none"><!-- hidden, moved button below --></div>
-                </div>
-                <div class="card-body">
-                    <div class="row mb-4">
-                        <div class="col-md-4">
-                            <div class="small-box bg-info">
-                                <div class="inner">
-                                    <h3>{{ $totalItems }}</h3>
-                                    <p>Total Items</p>
-                                </div>
-                                <div class="icon">
-                                    <i class="fas fa-boxes"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="small-box bg-warning">
-                                <div class="inner">
-                                    <h3>{{ $lowStockItems }}</h3>
-                                    <p>Low Stock Items</p>
-                                </div>
-                                <div class="icon">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="small-box bg-danger">
-                                <div class="inner">
-                                    <h3>{{ $expiringItems }}</h3>
-                                    <p>Expiring Items</p>
-                                </div>
-                                <div class="icon">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+@php
+    // "Warehouse A" -> "WH A" for the column header; the full name stays in the tooltip and the mobile label.
+    $shortWarehouse = fn ($name) => preg_replace('/^warehouse\s+/i', 'WH ', $name);
+    $qty = fn ($v) => rtrim(rtrim(number_format((float) $v, 2), '0'), '.');
+    $colCount = 6 + $warehouses->count();
+@endphp
+<div class="container-fluid inventory-page">
+    <x-page-header title="Inventory Management" icon="boxes-stacked" />
 
-                    <div class="row mb-3">
-                        <div class="col-md-9">
-                            <div class="input-group">
-                                <input type="text" id="searchInput" class="form-control" placeholder="Search inventory...">
-                                <div class="input-group-append d-flex align-items-center">
-                                    <button class="btn btn-default">
-                                        <i class="fas fa-search"></i>
-                                    </button>
-                                    <a href="{{ route('inventory.create') }}" class="btn btn-primary ml-2">
-                                        <i class="fas fa-plus"></i> Add New Item
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 text-right">
-                            <a href="{{ route('inventory.low-stock') }}" class="btn btn-warning">
-                                <i class="fas fa-exclamation-triangle"></i> Low Stock
-                            </a>
-                            <a href="{{ route('inventory.expiring') }}" class="btn btn-danger">
-                                <i class="fas fa-clock"></i> Expiring Soon
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover" id="inventoryTable">
-                            <thead>
-                                <tr>
-                                    <th>Material</th>
-                                    <th>Category</th>
-                                    @foreach($warehouses as $warehouse)
-                                        <th>{{ $warehouse->name }} Stock</th>
-                                    @endforeach
-                                    <th>Total Quantity</th>
-                                    <th>Unit</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($materials as $material)
-                                <tr>
-                                    <td data-label="Material">{{ $material->name }}</td>
-                                    <td data-label="Category">{{ $material->category->name ?? '-' }}</td>
-                                    @foreach($warehouses as $warehouse)
-                                        <td data-label="{{ $warehouse->name }} Stock">{{ $material->warehouse_stocks[$warehouse->id] ?? 0 }}</td>
-                                    @endforeach
-                                    <td data-label="Total Quantity">{{ $material->total_stock }}</td>
-                                    <td data-label="Unit">{{ $material->unit }}</td>
-                                    <td data-label="Status">
-                                        @php
-                                            $threshold = $material->minimum_stock ?? 0;
-                                        @endphp
-                                        @if($material->total_stock <= 0)
-                                            <span class="badge bg-danger">Out of Stock</span>
-                                        @elseif($material->total_stock < $threshold)
-                                            <span class="badge bg-warning text-dark">Low Stock</span>
-                                        @else
-                                            <span class="badge bg-success">Active</span>
-                                        @endif
-                                    </td>
-                                    <td data-label="Actions">
-                                        <div class="btn-group">
-                                            <a href="{{ route('purchase-requests.create', ['material_id' => $material->id]) }}" class="btn btn-sm btn-success" title="Request Restock">
-                                                <i class="fas fa-plus"></i>
-                                            </a>
-                                            @if($material->primary_inventory)
-                                                <a href="{{ route('inventory.edit', $material->primary_inventory) }}" class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form action="{{ route('inventory.destroy', $material->primary_inventory) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this item?')">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            @else
-                                                {{-- fallback in case inventory record is missing --}}
-                                                <a href="{{ route('inventory.create') }}" class="btn btn-sm btn-primary" title="Create inventory record">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="mt-4">
-                        {{ $materials->links() }}
-                    </div>
-                </div>
+    {{-- KPI tiles --}}
+    <div class="inv-kpis">
+        <div class="inv-kpi inv-kpi--total">
+            <div>
+                <div class="inv-kpi-label">Total Items</div>
+                <div class="inv-kpi-value">{{ number_format($totalItems) }}</div>
             </div>
+            <span class="inv-kpi-icon"><i class="fas fa-boxes"></i></span>
+        </div>
+        <div class="inv-kpi inv-kpi--low">
+            <div>
+                <div class="inv-kpi-label">Low Stock Items</div>
+                <div class="inv-kpi-value">{{ number_format($lowStockItems) }}</div>
+            </div>
+            <span class="inv-kpi-icon"><i class="fas fa-exclamation-triangle"></i></span>
+        </div>
+        <div class="inv-kpi inv-kpi--expiring">
+            <div>
+                <div class="inv-kpi-label">Expiring Items</div>
+                <div class="inv-kpi-value">{{ number_format($expiringItems) }}</div>
+            </div>
+            <span class="inv-kpi-icon"><i class="fas fa-clock"></i></span>
         </div>
     </div>
+
+    <div class="card">
+        <div class="card-body">
+            {{-- Toolbar: search on the left, actions on the right --}}
+            <div class="inv-toolbar">
+                <form class="inv-search" role="search" id="inventorySearch">
+                    <label for="searchInput" class="visually-hidden">Search inventory</label>
+                    <input type="search" id="searchInput" class="form-control" placeholder="Search inventory..." autocomplete="off">
+                    <button type="submit" class="btn btn-outline-secondary" title="Search"><i class="fas fa-search"></i></button>
+                </form>
+                <div class="inv-toolbar-actions">
+                    <a href="{{ route('inventory.create') }}" class="btn btn-success"><i class="fas fa-plus me-1"></i> Add New Item</a>
+                    <a href="{{ route('inventory.low-stock') }}" class="btn btn-outline-warning"><i class="fas fa-exclamation-triangle me-1"></i> Low Stock</a>
+                    <a href="{{ route('inventory.expiring') }}" class="btn btn-outline-danger"><i class="fas fa-clock me-1"></i> Expiring Soon</a>
+                </div>
+            </div>
+
+            <div class="table-responsive inv-table-wrap">
+                <table class="table inv-table mb-0" id="inventoryTable">
+                    <thead>
+                        <tr>
+                            <th>Material</th>
+                            <th>Category</th>
+                            @foreach($warehouses as $warehouse)
+                                <th class="text-end" title="{{ $warehouse->name }} stock">{{ $shortWarehouse($warehouse->name) }}</th>
+                            @endforeach
+                            <th class="text-end">Total</th>
+                            <th>Unit</th>
+                            <th>Status</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($materials as $material)
+                            @php
+                                $threshold = $material->minimum_stock ?? 0;
+                                [$statusClass, $statusLabel] = match (true) {
+                                    $material->total_stock <= 0 => ['out', 'Out of Stock'],
+                                    $material->total_stock < $threshold => ['low', 'Low Stock'],
+                                    default => ['active', 'Active'],
+                                };
+                            @endphp
+                            <tr>
+                                <td data-label="Material" class="inv-material">{{ $material->name }}</td>
+                                <td data-label="Category" class="text-muted">{{ $material->category->name ?? '—' }}</td>
+                                @foreach($warehouses as $warehouse)
+                                    <td data-label="{{ $warehouse->name }}" class="inv-num">{{ $qty($material->warehouse_stocks[$warehouse->id] ?? 0) }}</td>
+                                @endforeach
+                                <td data-label="Total" class="inv-num fw-semibold">{{ $qty($material->total_stock) }}</td>
+                                <td data-label="Unit">{{ $material->unit }}</td>
+                                <td data-label="Status"><span class="inv-pill inv-pill--{{ $statusClass }}">{{ $statusLabel }}</span></td>
+                                <td data-label="Actions">
+                                    <div class="inv-actions">
+                                        <a href="{{ route('purchase-requests.create', ['material_id' => $material->id]) }}" class="inv-icon-btn inv-icon-btn--restock" title="Add / restock" aria-label="Restock {{ $material->name }}">
+                                            <i class="fas fa-plus"></i>
+                                        </a>
+                                        @if($material->primary_inventory)
+                                            <a href="{{ route('inventory.edit', $material->primary_inventory) }}" class="inv-icon-btn inv-icon-btn--edit" title="Edit" aria-label="Edit {{ $material->name }}">
+                                                <i class="fas fa-pen"></i>
+                                            </a>
+                                            <button type="button" class="inv-icon-btn inv-icon-btn--delete" title="Delete" aria-label="Delete {{ $material->name }}"
+                                                    data-bs-toggle="modal" data-bs-target="#deleteInventory{{ $material->primary_inventory->id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        @else
+                                            {{-- No inventory record yet: offer to create one --}}
+                                            <a href="{{ route('inventory.create') }}" class="inv-icon-btn inv-icon-btn--edit" title="Create inventory record" aria-label="Create inventory record for {{ $material->name }}">
+                                                <i class="fas fa-pen"></i>
+                                            </a>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <x-empty-row :cols="$colCount">No inventory items yet.</x-empty-row>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if($materials->hasPages())
+                <div class="mt-3">{{ $materials->links() }}</div>
+            @endif
+        </div>
+    </div>
+
+    @foreach($materials as $material)
+        @if($material->primary_inventory)
+            <x-confirm-modal :id="'deleteInventory' . $material->primary_inventory->id" title="Delete inventory item"
+                             :action="route('inventory.destroy', $material->primary_inventory)" method="DELETE" confirm="Delete" tone="danger">
+                Delete <strong>{{ $material->name }}</strong> from inventory? This cannot be undone.
+            </x-confirm-modal>
+        @endif
+    @endforeach
 </div>
 
 @push('scripts')
 @vite('resources/js/procurement/inventory-dashboard.js')
 @endpush
-@endsection 
+@endsection
