@@ -1,84 +1,59 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Edit Purchase Request</h3>
-                    <div class="card-tools">
-                        <a href="{{ route('purchase-requests.show', $purchaseRequest) }}" class="btn btn-default">
-                            <i class="fas fa-arrow-left"></i> Back to Details
-                        </a>
+<div class="container-fluid req-page">
+    <x-page-header :title="'Edit ' . $purchaseRequest->request_number" icon="file-invoice" subtitle="Only pending requests can be edited.">
+        <a href="{{ route('purchase-requests.show', $purchaseRequest) }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Back to details</a>
+    </x-page-header>
+
+    <form action="{{ route('purchase-requests.update', $purchaseRequest) }}" method="POST" id="purchaseRequestForm">
+        @csrf
+        @method('PUT')
+        <input type="hidden" name="is_project_related" value="{{ $purchaseRequest->contract_id ? 1 : 0 }}">
+        @if($purchaseRequest->contract_id)
+            <input type="hidden" name="contract_id" value="{{ $purchaseRequest->contract_id }}">
+        @endif
+
+        <div class="card mb-4">
+            <div class="card-header"><h3 class="req-section-title"><i class="fas fa-sliders-h"></i> Request details</h3></div>
+            <div class="card-body">
+                <dl class="req-meta mb-3">
+                    <div>
+                        <dt>Request type</dt>
+                        <dd>{{ $purchaseRequest->contract_id ? 'Contract related' : 'Standalone' }}</dd>
                     </div>
-                </div>
-                <form action="{{ route('purchase-requests.update', $purchaseRequest) }}" method="POST" id="purchaseRequestForm">
-                    @csrf
-                    @method('PUT')
-                    <div class="card-body">
+                    @if($purchaseRequest->contract_id && $purchaseRequest->contract)
+                        <div id="projectRelatedFields">
+                            <dt>Contract</dt>
+                            <dd>{{ $purchaseRequest->contract->contract_number }}<span class="req-sub">{{ $purchaseRequest->contract->name ?? $purchaseRequest->contract->title ?? '' }}</span></dd>
+                        </div>
+                    @endif
+                    <div>
+                        <dt>Status</dt>
+                        <dd><x-status-badge :status="$purchaseRequest->status" /></dd>
+                    </div>
+                </dl>
+                <label for="notes" class="form-label">Notes</label>
+                <textarea name="notes" id="notes" class="form-control" rows="2">{{ $purchaseRequest->notes }}</textarea>
+            </div>
+        </div>
 
-                        <!-- Request Type Selection -->
-                        @if($purchaseRequest->contract_id)
-                            <div class="row mb-4">
-                                <div class="col-md-12">
-                                    <div class="form-group">
-                                        <label>Request Type</label>
-                                        <div class="custom-control custom-radio custom-control-inline">
-                                            <input type="radio" id="project_related" name="is_project_related" value="1" class="custom-control-input" checked disabled>
-                                            <label class="custom-control-label" for="project_related">Project Related</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <input type="hidden" name="is_project_related" value="1">
-                            <input type="hidden" name="contract_id" value="{{ $purchaseRequest->contract_id }}">
-                        @else
-                            <div class="row mb-4">
-                                <div class="col-md-12">
-                                    <div class="form-group">
-                                        <label>Request Type</label>
-                                        <div class="custom-control custom-radio custom-control-inline">
-                                            <input type="radio" id="standalone" name="is_project_related" value="0" class="custom-control-input" checked disabled>
-                                            <label class="custom-control-label" for="standalone">Standalone Request</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <input type="hidden" name="is_project_related" value="0">
-                        @endif
-
-                        <!-- Project/Contract Selection -->
-                        @if($purchaseRequest->contract_id && $purchaseRequest->contract)
-                            <div class="row mb-4" id="projectRelatedFields" style="display: flex;">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="contract_id">Contract</label>
-                                        <input type="text" class="form-control bg-light" value="{{ $purchaseRequest->contract->contract_number . ' - ' . ($purchaseRequest->contract->name ?? $purchaseRequest->contract->title ?? '') }}" readonly>
-                                        <input type="hidden" name="contract_id" value="{{ $purchaseRequest->contract_id }}">
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
-
-                        <!-- Items Section -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h4>Request Items</h4>
-                                <div class="table-responsive">
-                                    <table class="table table-bordered" id="itemsTable">
+        <div class="card">
+            <div class="card-header"><h3 class="req-section-title"><i class="fas fa-boxes"></i> Items</h3></div>
+            <div class="table-responsive">
+                                    <table class="table req-form-table" id="itemsTable">
                                         <thead>
                                             <tr>
                                                 <th>Material</th>
                                                 <th>Description</th>
                                                 <th>Quantity</th>
                                                 <th>Unit</th>
-                                                <th>Estimated Unit Price</th>
-                                                <th>Total Amount</th>
-                                                <th>Preferred Brand</th>
-                                                <th>Preferred Supplier</th>
+                                                <th>Est. unit price</th>
+                                                <th>Amount</th>
+                                                <th>Preferred brand</th>
+                                                <th>Supplier</th>
                                                 <th>Notes</th>
-                                                <th>Actions</th>
+                                                <th><span class="visually-hidden">Actions</span></th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -120,13 +95,12 @@
                                                             <option value="">Select Supplier</option>
                                                             <!-- Options will be dynamically populated based on selected material -->
                                                         </select>
-                                                        <script>console.log('Blade Debug: Item Index {{ $index }}, Preferred Supplier ID: {{ $item->preferred_supplier_id }}');</script>
                                                     </td>
                                                     <td>
                                                         <input type="text" name="items[{{ $index }}][notes]" class="form-control" value="{{ $item->notes }}">
                                                     </td>
                                                     <td>
-                                                        <button type="button" class="btn btn-danger btn-sm remove-row">
+                                                        <button type="button" class="btn btn-outline-danger btn-sm remove-row" title="Remove">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                     </td>
@@ -134,36 +108,22 @@
                                             @endforeach
                                         </tbody>
                                     </table>
-                                </div>
-                                <button type="button" class="btn btn-success" id="addRow">
-                                    <i class="fas fa-plus"></i> Add Item
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Notes Section -->
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label for="notes">Notes</label>
-                                    <textarea name="notes" id="notes" class="form-control" rows="3">{{ $purchaseRequest->notes }}</textarea>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Update Purchase Request
-                        </button>
-                    </div>
-                </form>
+            </div>
+            <div class="card-body pt-3">
+                <button type="button" class="btn btn-outline-success" id="addRow"><i class="fas fa-plus me-1"></i> Add item</button>
+            </div>
+            <div class="req-form-footer">
+                <a href="{{ route('purchase-requests.show', $purchaseRequest) }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i> Save changes</button>
             </div>
         </div>
-    </div>
+    </form>
 </div>
-
 @push('scripts')
 <script>window.__page = Object.assign(window.__page || {}, { edit1_0: {{ Js::from($purchaseRequest->items->count()) }} });</script>
 @vite('resources/js/pages/admin-purchase-requests-edit.js')
+@endpush
+@push('styles')
+@vite('resources/css/pages/requests.css')
 @endpush
 @endsection 

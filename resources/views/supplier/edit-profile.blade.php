@@ -43,32 +43,9 @@
                 </div>
                 <div class="col-md-6">
                     <label for="supplier_type" class="form-label">Type of Company</label>
-                    @php
-                        $company_types = [
-                            'Construction & Engineering',
-                            'Architecture & Design',
-                            'Real Estate & Property Development',
-                            'Manufacturing',
-                            'Wholesale & Distribution',
-                            'Retail & E-Commerce',
-                            'Information Technology & Software',
-                            'Telecommunications',
-                            'Healthcare & Medical',
-                            'Logistics & Transportation',
-                            'Energy & Utilities',
-                            'Financial Services',
-                            'Legal & Compliance',
-                            'Education & Training',
-                            'Marketing & Advertising',
-                            'Hospitality & Tourism',
-                            'Government & Public Sector',
-                            'Nonprofit / NGO',
-                            'Other'
-                        ];
-                    @endphp
                     <select class="form-select" id="supplier_type" name="supplier_type" required>
                         <option value="">Select company type</option>
-                        @foreach($company_types as $type)
+                        @foreach(\App\Models\Company::TYPES as $type)
                             <option value="{{ $type }}" {{ old('supplier_type', $supplier->supplier_type) == $type ? 'selected' : '' }}>{{ $type }}</option>
                         @endforeach
                     </select>
@@ -108,25 +85,8 @@
                     <label for="telephone_number" class="form-label">Telephone Number</label>
                     <input type="text" class="form-control" id="telephone_number" name="telephone_number" value="{{ old('telephone_number', $supplier->telephone_number) }}">
                 </div>
-                <div class="col-md-6">
-                    <label for="street" class="form-label">Street Address</label>
-                    <input type="text" class="form-control" id="street" name="street" value="{{ old('street', $supplier->street) }}" required>
-                </div>
-                <div class="col-md-6">
-                    <label for="barangay" class="form-label">Barangay</label>
-                    <input type="text" class="form-control" id="barangay" name="barangay" value="{{ old('barangay', $supplier->barangay) }}" required>
-                </div>
-                <div class="col-md-6">
-                    <label for="city" class="form-label">City/Municipality</label>
-                    <input type="text" class="form-control" id="city" name="city" value="{{ old('city', $supplier->city) }}" required>
-                </div>
-                <div class="col-md-6">
-                    <label for="state" class="form-label">Province</label>
-                    <input type="text" class="form-control" id="state" name="state" value="{{ old('state', $supplier->state) }}" required>
-                </div>
-                <div class="col-md-6">
-                    <label for="postal" class="form-label">ZIP Code</label>
-                    <input type="text" class="form-control" id="postal" name="postal" value="{{ old('postal', $supplier->postal) }}" required>
+                <div class="col-12">
+                    <x-address-fields :street="$supplier->street" :barangay="$supplier->barangay" :city="$supplier->city" :state="$supplier->state" :postal="$supplier->postal" />
                 </div>
             </div>
             <h4 class="mt-4 mb-3">Business Details</h4>
@@ -183,12 +143,9 @@
             <div class="row g-3">
                 <div class="col-md-4">
                     <label for="bank_name" class="form-label">Bank Name</label>
-                    @php
-                        $banks = ['BDO', 'BPI', 'MetroBank', 'PNB', 'Security Bank', 'Union Bank', 'RCBC', 'China Bank'];
-                    @endphp
                     <select class="form-select" id="bank_name" name="bank_name">
                         <option value="">Select a bank</option>
-                        @foreach($banks as $bank)
+                        @foreach(\App\Models\Company::BANKS as $bank)
                             <option value="{{ $bank }}" {{ (old('bank_name', $bankDetails->bank_name ?? $supplier->bank_name ?? '') == $bank) ? 'selected' : '' }}>{{ $bank }}</option>
                         @endforeach
                     </select>

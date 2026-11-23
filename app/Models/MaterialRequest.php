@@ -7,7 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class MaterialRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, Concerns\HasStatusFilters;
+
+    /** List-page status groups: key => [label, statuses, tone, icon] (see HasStatusFilters). */
+    public const STATUS_FILTERS = [
+        'pending' => ['Pending', ['pending', 'pending_admin_approval'], 'warning', 'fa-hourglass-half'],
+        'in_progress' => ['In progress', ['approved', 'partial', 'requested'], 'info', 'fa-dolly'],
+        'completed' => ['Completed', ['completed', 'fulfilled'], 'success', 'fa-check-circle'],
+        'cancelled' => ['Cancelled / rejected', ['cancelled', 'rejected'], 'danger', 'fa-times-circle'],
+    ];
 
     protected $fillable = [
         'contract_id',

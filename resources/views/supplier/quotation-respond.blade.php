@@ -10,24 +10,23 @@
                 </div>
                 <div class="card-body">
                     @if(isset($quotationRequest) && $quotationRequest)
-                        <div class="alert alert-secondary mb-4">
-                            <h5 class="mb-1">Client Quotation Request #{{ $quotationRequest->request_number }}</h5>
-                            <x-status-badge :status="$quotationRequest->status" />
-                            <ul class="mb-1 mt-2">
-                                <li><strong>Submitted At:</strong> {{ $quotationRequest->created_at->format('M d, Y H:i') }}</li>
-                                <li><strong>Requested By (User ID):</strong> {{ $quotationRequest->user_id }}</li>
-                                <li><strong>Rooms/Scopes/Materials:</strong>
-                                    <ul>
-                                        @foreach($quotationRequest->rooms as $room)
-                                            <li>
-                                                <strong>{{ $room->name ?? 'Room' }}</strong>
-                                                <ul>
-                                                    @foreach($room->scopes as $scope)
-                                                        <li>
-                                                            {{ $scope->scopeType->name ?? 'Scope' }}:
-                                                            @if($scope->scopeType && $scope->scopeType->materials)
-                                                                {{ $scope->scopeType->materials->pluck('name')->join(', ') }}
-                                                            @endif
+                        <div class="req-page mb-4">
+                            <div class="req-hero mb-3">
+                                <div>
+                                    <div class="req-hero__ref">Client quotation request</div>
+                                    <h2 class="req-hero__title">{{ $quotationRequest->request_number }} <x-status-badge :status="$quotationRequest->status" /></h2>
+                                </div>
+                            </div>
+                            <dl class="req-meta mb-3">
+                                <div><dt>Submitted</dt><dd>{{ $quotationRequest->created_at->format('M d, Y H:i') }}</dd></div>
+                                <div><dt>Rooms</dt><dd>{{ $quotationRequest->rooms->count() }}</dd></div>
+                                @if($quotation->due_date ?? null)
+                                    <div><dt>Respond by</dt><dd>{{ $quotation->due_date->format('M d, Y') }}</dd></div>
+                                @endif
+                            </dl>
+                            <x-requests.rooms :rooms="$quotationRequest->rooms" />
+                        </div>
+                    @endif
                                                         </li>
                                                     @endforeach
                                                 </ul>
@@ -260,7 +259,7 @@
 </div>
 
 @push('styles')
-    @vite(['resources/css/supplier/quotation-respond.css'])
+    @vite(['resources/css/pages/requests.css', 'resources/css/supplier/quotation-respond.css'])
 @endpush
 
 @push('scripts')

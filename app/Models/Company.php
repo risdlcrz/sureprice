@@ -9,6 +9,21 @@ class Company extends Model
 {
     use HasFactory;
 
+    /** Options offered on the registration / profile forms (validated with Rule::in). */
+    public const TYPES = [
+        'Construction & Engineering', 'Architecture & Design', 'Real Estate & Property Development', 'Manufacturing',
+        'Wholesale & Distribution', 'Retail & E-Commerce', 'Information Technology & Software', 'Telecommunications',
+        'Healthcare & Medical', 'Logistics & Transportation', 'Energy & Utilities', 'Financial Services',
+        'Legal & Compliance', 'Education & Training', 'Marketing & Advertising', 'Hospitality & Tourism',
+        'Government & Public Sector', 'Nonprofit / NGO', 'Other',
+    ];
+
+    public const BANKS = ['BDO', 'BPI', 'MetroBank', 'PNB', 'Security Bank', 'Union Bank', 'RCBC', 'China Bank'];
+
+    public const BUSINESS_SIZES = ['Solo', 'Small Enterprise', 'Medium', 'Large'];
+
+    public const PAYMENT_TERMS = ['7 days', '15 days', '30 days'];
+
     protected $fillable = [
         'user_id',
         'company_name',

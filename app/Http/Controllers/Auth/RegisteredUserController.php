@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class RegisteredUserController extends Controller
@@ -85,14 +86,9 @@ class RegisteredUserController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error($type . ' registration failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'input' => $request->except('password')
-            ]);
+            Log::error($type . ' registration failed', ['error' => $e->getMessage()]);
 
-            // Show the actual error to the user for debugging
-            return back()->withInput()->withErrors(['error' => 'Registration failed: ' . $e->getMessage()]);
+            return back()->withInput()->withErrors(['error' => 'Registration could not be completed. Please try again, or contact support if it keeps happening.']);
         }
     }
 
@@ -115,33 +111,33 @@ class RegisteredUserController extends Controller
         $rules = [
             'username' => 'required|string|max:50|unique:users',
             'email' => 'required|email|unique:users',
-            'password' => 'required|string|confirmed',
+            'password' => 'required|string|min:8|confirmed',
             'contact_person' => 'required|string|max:100',
-            'mobile_number' => 'required|string|max:20',
+            'mobile_number' => ['required', 'regex:/^09\d{9}$/'],
             'telephone_number' => 'nullable|string|max:20',
-            'supplier_type' => 'required|in:Construction & Engineering,Architecture & Design,Real Estate & Property Development,Manufacturing,Wholesale & Distribution,Retail & E-Commerce,Information Technology & Software,Telecommunications,Healthcare & Medical,Logistics & Transportation,Energy & Utilities,Financial Services,Legal & Compliance,Education & Training,Marketing & Advertising,Hospitality & Tourism,Government & Public Sector,Nonprofit / NGO,Other',
+            'supplier_type' => ['required', Rule::in(Company::TYPES)],
             'designation' => 'required|in:client,supplier',
             'business_reg_no' => 'nullable|string|max:100',
             'street' => 'required|string|max:255',
             'barangay' => 'required|string|max:100',
             'city' => 'required|string|max:100',
-            'state' => 'nullable|string|max:100',
-            'postal' => 'nullable|string|max:10',
-            'years_operation' => 'nullable|numeric|min:0',
+            'state' => 'required|string|max:100',
+            'postal' => 'required|digits:4',
+            'years_operation' => 'nullable|integer|min:0|max:200',
             'primary_products_services' => 'nullable|string|max:500',
-            'business_size' => 'nullable|string|max:100',
+            'business_size' => ['nullable', Rule::in(Company::BUSINESS_SIZES)],
             'service_areas' => 'nullable|string|max:255',
-            'payment_terms' => 'nullable|string|max:100',
+            'payment_terms' => ['nullable', Rule::in(Company::PAYMENT_TERMS)],
             'vat_registered' => 'required|in:0,1',
             'use_sureprice' => 'required|in:0,1',
-            'bank_name' => 'nullable|in:BDO,BPI,MetroBank,PNB,Security Bank,Union Bank,RCBC,China Bank',
+            'bank_name' => ['nullable', Rule::in(Company::BANKS)],
             'bank_account_name' => 'nullable|string|max:100',
             'bank_account_number' => 'nullable|string|max:50',
             'accreditations_certifications' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
             'company_profile_portfolio' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
             'sample_price_list' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
             'agree_terms' => 'required|accepted',
-            'agree_contact' => 'nullable|accepted',
+            'agree_contact' => 'nullable|boolean',
             'type' => 'required|in:employee,company',
         ];
 
@@ -165,8 +161,6 @@ class RegisteredUserController extends Controller
             // For clients, all file uploads are optional
             $rules['business_permit_mayor_permit'] = 'nullable|file|mimes:pdf,jpg,png|max:10240';
             $rules['valid_id_owner_rep'] = 'nullable|file|mimes:pdf,jpg,png|max:10240';
-        } else {
-            \Log::warning('Unknown designation: ' . $request->designation);
         }
 
         if ($request->supplier_type === 'Other') {

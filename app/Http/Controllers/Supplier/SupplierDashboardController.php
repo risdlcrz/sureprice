@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Supplier;
 
 use App\Http\Controllers\Controller;
+use App\Models\Company;
 use App\Models\PurchaseOrder;
 use App\Models\SupplierRanking;
 use App\Models\OrderEvaluation;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -198,7 +200,7 @@ class SupplierDashboardController extends Controller
         $validated = $request->validate([
             'username' => 'required|string|max:50',
             'company_name' => 'required|string|max:255',
-            'supplier_type' => 'required|in:Construction & Engineering,Architecture & Design,Real Estate & Property Development,Manufacturing,Wholesale & Distribution,Retail & E-Commerce,Information Technology & Software,Telecommunications,Healthcare & Medical,Logistics & Transportation,Energy & Utilities,Financial Services,Legal & Compliance,Education & Training,Marketing & Advertising,Hospitality & Tourism,Government & Public Sector,Nonprofit / NGO,Other',
+            'supplier_type' => ['required', Rule::in(Company::TYPES)],
             'other_supplier_type' => 'nullable|string|max:100',
             'designation' => 'required|string',
             'business_reg_no' => 'nullable|string|max:100',
@@ -218,7 +220,7 @@ class SupplierDashboardController extends Controller
             'payment_terms' => 'nullable|string',
             'vat_registered' => 'required|in:0,1',
             'use_sureprice' => 'required|in:0,1',
-            'bank_name' => 'nullable|in:BDO,BPI,MetroBank,PNB,Security Bank,Union Bank,RCBC,China Bank',
+            'bank_name' => ['nullable', Rule::in(Company::BANKS)],
             'bank_account_name' => 'nullable|string|max:100',
             'bank_account_number' => 'nullable|string|max:50',
         ]);

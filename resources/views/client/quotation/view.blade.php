@@ -1,588 +1,491 @@
 @extends('layouts.app')
 
 @push('styles')
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-@vite('resources/css/pages/client-quotation-view.css')
+@vite('resources/css/pages/requests.css')
 @endpush
 
-@section('content')
-<div class="container-fluid my-4">
-    <div class="row justify-content-center">
-        <div class="col-12">
-            <div class="card shadow-sm quotation-card">
-                <div class="card-body">
-                    <!-- Top Title Row -->
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div>
-                            <h1 class="fw-bold mb-2" style="font-size:2rem; color:#2563eb;">Quotation Request Details</h1>
-                            <div class="d-flex align-items-center gap-3">
-                                <span class="fs-6 fw-semibold">Request Number: <span class="badge bg-primary fs-6">{{ $quotationRequest->request_number }}</span></span>
-                                <span class="fs-6 fw-semibold">Status: <x-status-badge :status="$quotationRequest->status" class="fs-6" /></span>
-                            </div>
-                        </div>
-                        <div class="d-flex flex-wrap gap-2 justify-content-end">
-                            <a href="{{ route('client.quotation.create') }}" class="btn btn-primary btn-sm">Request Another Quotation</a>
-                            <a href="{{ route('client.quotation.index') }}" class="btn btn-success btn-sm">View All Requests</a>
-                            <a href="{{ url('/') }}" class="btn btn-secondary btn-sm">Back to Home</a>
-                        </div>
-                    </div>
-                    <hr>
-                    <h3 class="mb-3 fw-bold" style="font-size:1.5rem;">Quotation Request Details</h3>
-                    
-                    @if($quotationRequest && $quotationRequest->rooms->count() > 0)
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped w-100">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Room</th>
-                                        <th>Dimensions</th>
-                                        <th>Area</th>
-                                        <th>Volume</th>
-                                        <th>Scopes</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($quotationRequest->rooms as $room)
-                                        <tr>
-                                            <td><strong>{{ $room->name }}</strong></td>
-                                            <td>{{ $room->length }}m × {{ $room->width }}m × {{ $room->height }}m</td>
-                                            <td>{{ $room->area }} sqm</td>
-                                            <td>{{ $room->volume }} cubic m</td>
-                                            <td>
-                                                @if($room->scopes->count() > 0)
-                                                    <ul class="list-unstyled mb-0">
-                                                        @foreach($room->scopes as $scope)
-                                                            <li><strong>{{ $scope->scope_name }}</strong> ({{ $scope->scope_category }})
-                                                                @if(is_array($scope->selected_materials) && count($scope->selected_materials) > 0)
-                                                                    <div class="table-responsive mt-2">
-                                                                        <table class="table table-sm table-bordered">
-                                                                            <thead>
-                                                                                <tr>
-                                                                                    <th>Material</th>
-                                                                                    <th>Requested Quantity</th>
-                                                                                    <th>Unit</th>
-                                                                                </tr>
-                                                                            </thead>
-                                                                            <tbody>
-                                                                                @foreach($scope->selected_materials as $mat)
-                                                                                    @php
-                                                                                        $material = \App\Models\Material::find($mat['material_id']);
-                                                                                    @endphp
-                                                                                    <tr>
-                                                                                        <td>{{ $material ? $material->name : 'Material #'.$mat['material_id'] }}</td>
-                                                                                        <td>{{ $mat['quantity'] }}{{ $mat['coverage_info'] ?? '' }}</td>
-                                                                                        <td>{{ $mat['unit'] ?? ($material ? $material->unit : '') }}</td>
-                                                                                    </tr>
-                                                                                @endforeach
-                                                                            </tbody>
-                                                                        </table>
-                                                                    </div>
-                                                                @endif
-                                                            </li>
-                                                        @endforeach
-                                                    </ul>
-                                                @else
-                                                    <span class="text-muted">No scopes selected</span>
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @elseif($sessionData)
-                        <div class="table-responsive" style="min-width: 1200px; width: 100%;">
-                            <table class="table table-bordered table-striped w-100" style="width: 100%; min-width: 1200px; table-layout: fixed;">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Room</th>
-                                        <th>Dimensions</th>
-                                        <th>Area</th>
-                                        <th>Volume</th>
-                                        <th>Scopes</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($sessionData['rooms'] as $room)
-                                        @php
-                                            $area = $room['length'] * $room['width'];
-                                            $volume = $area * $room['height'];
-                                        @endphp
-                                        <tr>
-                                            <td><strong>{{ $room['name'] }}</strong></td>
-                                            <td>{{ $room['length'] }}m × {{ $room['width'] }}m × {{ $room['height'] }}m</td>
-                                            <td>{{ $area }} sqm</td>
-                                            <td>{{ $volume }} cubic m</td>
-                                            <td>
-                                                @if(isset($room['scope']) && count($room['scope']) > 0)
-                                                    <ul class="list-unstyled mb-0">
-                                                        @foreach($room['scope'] as $scopeCode => $scopeData)
-                                                            @if(!empty($scopeData['materials']))
-                                                                <li><strong>{{ $scopeCode }}</strong></li>
-                                                            @endif
-                                                        @endforeach
-                                                    </ul>
-                                                @else
-                                                    <span class="text-muted">No scopes selected</span>
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @else
-                        <div class="alert alert-info text-center">
-                            No quotation request data found.
-                        </div>
-                    @endif
+@php
+    $qr = $quotationRequest;
+    $status = $qr->status;
+    $rooms = $qr->rooms ?? collect();
+    $totalArea = $rooms->sum(fn ($r) => $r->area ?? $r->length * $r->width);
 
-                    <hr>
-                    <h3 class="mb-3 fw-bold" style="font-size:1.5rem;">Supplier Offers & Selection</h3>
-                    @if($quotationRequest->status === 'pending' || $quotationRequest->status === 'reviewed')
-                    <div class="alert alert-info alert-static mb-3" id="discount-tip-alert">
-                        <strong>Tip:</strong> If you choose the <b>same supplier for all materials</b>, you may get a discount if that supplier offers one. If you choose different suppliers, <b>no discount will be applied</b>.
+    // Progress: Submitted → Supplier quotes → Your selection → Processing
+    $stage = ['pending' => 1, 'reviewed' => 2, 'proceeded' => 4][$status] ?? 1;
+    $cancelled = in_array($status, ['cancelled', 'rejected'], true);
+    $steps = [
+        ['Submitted', 'done', $qr->created_at],
+        ['Supplier quotes', $stage > 1 ? 'done' : ($cancelled ? 'failed' : 'current'), null],
+        ['Your selection', $stage > 2 ? 'done' : ($stage === 2 ? ($cancelled ? 'failed' : 'current') : 'todo'), null],
+        ['Processing', $stage === 4 ? 'current' : 'todo', null],
+    ];
+    $stepIcons = ['done' => 'fa-check', 'current' => 'fa-hourglass-half', 'failed' => 'fa-times', 'todo' => ''];
+
+    $uniqueSuppliers = collect($selectedSuppliers)->unique()->filter();
+    $showDiscountSummary = $uniqueSuppliers->count() === 1 && count($selectedSuppliers) > 0;
+    $awardedSupplierId = $showDiscountSummary ? $uniqueSuppliers->first() : null;
+    $awardedResponse = $awardedSupplierId ? \App\Models\QuotationResponse::forSupplier($rfqs ?? [], $awardedSupplierId) : null;
+    ['type' => $discountType, 'value' => $discountValue, 'final' => $finalAmount, 'total' => $totalQuoted, 'found' => $discountFound]
+        = $awardedResponse?->discountSummary() ?? ['type' => null, 'value' => null, 'final' => null, 'total' => 0, 'found' => false];
+@endphp
+
+@section('content')
+<div class="container-fluid req-page">
+    <x-page-header title="Quotation Request" icon="file-signature">
+        <a href="{{ route('client.quotation.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> My requests</a>
+        <a href="{{ route('client.quotation.create') }}" class="btn btn-success"><i class="fas fa-plus me-1"></i> Request another quotation</a>
+    </x-page-header>
+
+    {{-- Summary --}}
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="req-hero mb-4">
+                <div>
+                    <div class="req-hero__ref">Quotation request</div>
+                    <h2 class="req-hero__title">{{ $qr->request_number }} <x-status-badge :status="$status" /></h2>
+                </div>
+                @if($status === 'proceeded' && $finalAmount)
+                    <div class="req-hero__amount">
+                        <strong>₱{{ number_format($finalAmount, 2) }}</strong>
+                        <span>{{ $discountFound ? 'after discount' : 'quoted total' }}</span>
                     </div>
-                    @endif
-                    @php
-                        $uniqueSuppliers = collect($selectedSuppliers)->unique()->filter();
-                        $showDiscountSummary = $uniqueSuppliers->count() === 1 && count($selectedSuppliers) > 0;
-                        $awardedSupplierId = $showDiscountSummary ? $uniqueSuppliers->first() : null;
-                        $awardedResponse = $awardedSupplierId ? \App\Models\QuotationResponse::forSupplier($rfqs ?? [], $awardedSupplierId) : null;
-                        ['type' => $discountType, 'value' => $discountValue, 'final' => $finalAmount, 'total' => $totalQuoted, 'found' => $discountFound]
-                            = $awardedResponse?->discountSummary() ?? ['type' => null, 'value' => null, 'final' => null, 'total' => 0, 'found' => false];
-                    @endphp
-                    @if($quotationRequest->status === 'proceeded')
-                        <div class="alert alert-success text-center my-5">
-                            <h4>Thank you for proceeding!</h4>
-                            <p>Your quotation request has already been submitted and is being processed by our admin team.</p>
-                            <p>Request Number: <span class="badge bg-primary">{{ $quotationRequest->request_number }}</span></p>
-                            <a href="{{ route('client.quotation.index') }}" class="btn btn-primary mt-3">Back to My Quotations</a>
-                        </div>
-                        {{-- Confirmation Summary Card --}}
-                        @php
-                            $contract = $quotationRequest->contract_data ?? [];
-                            $plan = $contract['payment_plan'] ?? null;
-                            $address = $contract['property_address'] ?? null;
-                            $start = $contract['project_start_date'] ?? null;
-                            $end = $contract['project_end_date'] ?? null;
-                            $method = $contract['payment_method'] ?? null;
-                            // discount values come from the lookup above ($awardedResponse)
-                            if(!$finalAmount) {
-                                // fallback: sum up all selected supplier prices
-                                $finalAmount = 0;
-                                if(isset($materialSupplierResponses) && isset($selectedSuppliers)) {
-                                    foreach($selectedSuppliers as $materialId => $supplierId) {
-                                        if(isset($materialSupplierResponses[$materialId])) {
-                                            foreach($materialSupplierResponses[$materialId] as $offer) {
-                                                if($offer['supplier_id'] == $supplierId && isset($offer['unit_price'])) {
-                                                    $finalAmount += $offer['unit_price'] * ($offer['quantity'] ?? 1);
-                                                }
+                @endif
+            </div>
+
+            @unless($cancelled)
+                <ol class="req-steps mb-4" aria-label="Request progress">
+                    @foreach($steps as [$label, $state, $date])
+                        <li class="req-steps__item is-{{ $state }}" @if($state === 'current') aria-current="step" @endif>
+                            <span class="req-steps__dot">@if($stepIcons[$state])<i class="fas {{ $stepIcons[$state] }}" aria-hidden="true"></i>@else{{ $loop->iteration }}@endif</span>
+                            <span class="req-steps__label">{{ $label }}</span>
+                            <span class="req-steps__date">{{ $date ? $date->format('M d, Y') : ($state === 'current' ? 'In progress' : '') }}</span>
+                        </li>
+                    @endforeach
+                </ol>
+            @endunless
+
+            <dl class="req-meta">
+                <div><dt>Submitted</dt><dd>{{ $qr->created_at->format('M d, Y H:i') }}</dd></div>
+                <div><dt>Rooms</dt><dd>{{ $rooms->count() }}</dd></div>
+                <div><dt>Total floor area</dt><dd>{{ rtrim(rtrim(number_format($totalArea, 2), '0'), '.') }} m²</dd></div>
+                @if(!empty($qr->contract_data['property_address']))
+                    <div><dt>Property</dt><dd>{{ $qr->contract_data['property_address'] }}</dd></div>
+                @endif
+            </dl>
+
+            @if($qr->notes)
+                <div class="mt-4">
+                    <div class="form-label">Your notes</div>
+                    <div class="req-note">{{ $qr->notes }}</div>
+                </div>
+            @endif
+            @if($qr->admin_notes)
+                <div class="mt-3">
+                    <div class="form-label">Response from our team</div>
+                    <div class="req-note">{{ $qr->admin_notes }}</div>
+                </div>
+            @endif
+        </div>
+    </div>
+
+    {{-- What happens next --}}
+    @if($status === 'pending')
+        <div class="req-callout req-callout--info mb-4">
+            <div class="req-callout__text">
+                <i class="fas fa-hourglass-half" aria-hidden="true"></i>
+                <div><strong>We're collecting quotes from suppliers.</strong><br>You'll be able to compare their offers and choose a supplier for each material here once they reply.</div>
+            </div>
+        </div>
+    @elseif($status === 'reviewed')
+        <div class="req-callout req-callout--warning mb-4">
+            <div class="req-callout__text">
+                <i class="fas fa-hand-pointer" aria-hidden="true"></i>
+                <div><strong>Supplier quotes are in.</strong><br>Choose a supplier for each material below, then proceed with the quotation.</div>
+            </div>
+        </div>
+    @elseif($status === 'proceeded')
+        <div class="req-callout req-callout--success mb-4">
+            <div class="req-callout__text">
+                <i class="fas fa-check-circle" aria-hidden="true"></i>
+                <div><strong>Thank you for proceeding!</strong><br>Your quotation has been submitted and our team is preparing your contract.</div>
+            </div>
+        </div>
+    @elseif($cancelled)
+        <div class="req-callout req-callout--danger mb-4">
+            <div class="req-callout__text">
+                <i class="fas fa-times-circle" aria-hidden="true"></i>
+                <div><strong>This quotation request was {{ $status }}.</strong> You can submit a new one at any time.</div>
+            </div>
+            <a href="{{ route('client.quotation.create') }}" class="btn btn-outline-secondary">New request</a>
+        </div>
+    @endif
+
+    {{-- Rooms & scopes --}}
+    <div class="card mb-4">
+        <div class="card-header"><h3 class="req-section-title"><i class="fas fa-ruler-combined"></i> Rooms &amp; scope of work</h3></div>
+        <div class="card-body">
+            @if($rooms->count() > 0)
+                <x-requests.rooms :rooms="$rooms" />
+            @elseif($sessionData)
+                <div class="req-rooms">
+                    @foreach($sessionData['rooms'] as $room)
+                        @php $area = $room['length'] * $room['width']; @endphp
+                        <section class="req-room">
+                            <header class="req-room__head">
+                                <span class="req-room__index">{{ $loop->iteration }}</span>
+                                <div class="req-room__title">
+                                    <div class="req-room__name">{{ $room['name'] }}</div>
+                                    <div class="req-room__dims">{{ $room['length'] }} m × {{ $room['width'] }} m × {{ $room['height'] }} m</div>
+                                </div>
+                                <dl class="req-room__stats">
+                                    <div><dt>Area</dt><dd>{{ $area }} m²</dd></div>
+                                    <div><dt>Volume</dt><dd>{{ $area * $room['height'] }} m³</dd></div>
+                                </dl>
+                            </header>
+                            <div class="req-scope">
+                                <div class="req-scope__name"><i class="fas fa-tools" aria-hidden="true"></i><span>Scopes</span></div>
+                                <div class="req-room__scopes">
+                                    @forelse(collect($room['scope'] ?? [])->filter(fn ($s) => !empty($s['materials'])) as $scopeCode => $scopeData)
+                                        <span class="req-tag">{{ $scopeCode }}</span>
+                                    @empty
+                                        <span class="text-muted small">No scopes selected.</span>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </section>
+                    @endforeach
+                </div>
+            @else
+                <p class="text-muted mb-0">No room details found for this request.</p>
+            @endif
+        </div>
+    </div>
+
+    @if($status === 'proceeded')
+        @php
+            $contract = $qr->contract_data ?? [];
+            $plan = $contract['payment_plan'] ?? null;
+            $address = $contract['property_address'] ?? null;
+            $method = $contract['payment_method'] ?? null;
+            // discount values come from the lookup above ($awardedResponse)
+            if (!$finalAmount) {
+                // fallback: sum up all selected supplier prices
+                $finalAmount = 0;
+                foreach ($selectedSuppliers ?? [] as $materialId => $supplierId) {
+                    foreach ($materialSupplierResponses[$materialId] ?? [] as $offer) {
+                        if ($offer['supplier_id'] == $supplierId && isset($offer['unit_price'])) {
+                            $finalAmount += $offer['unit_price'] * ($offer['quantity'] ?? 1);
+                        }
+                    }
+                }
+            }
+            $breakdownRows = match (true) {
+                $plan === '30% down, 40% halfway, 30% on completion' => [['Downpayment', 30], ['Halfway payment', 40], ['Completion payment', 30]],
+                $plan === '50/50' => [['Downpayment', 50], ['Completion payment', 50]],
+                $plan === 'Full upon completion' => [['Completion payment', 100]],
+                $plan === 'milestone' => [['Downpayment', 20], ['After foundation', 20], ['After structure', 30], ['Completion payment', 30]],
+                in_array($plan, ['monthly3', 'monthly6', 'monthly12'], true) => collect(range(1, (int) substr($plan, 7)))->map(fn ($i) => ["Month $i payment", 100 / (int) substr($plan, 7)])->all(),
+                default => [],
+            };
+            $planLabels = ['50/50' => '50% down, 50% on completion', 'milestone' => 'Milestone-based', 'monthly3' => 'Monthly for 3 months', 'monthly6' => 'Monthly for 6 months', 'monthly12' => 'Monthly for 12 months'];
+        @endphp
+
+        <div class="card mb-4">
+            <div class="card-header"><h3 class="req-section-title"><i class="fas fa-file-contract"></i> What you submitted</h3></div>
+            <div class="card-body">
+                <dl class="req-meta mb-4">
+                    <div><dt>Property address</dt><dd>{{ $address ?: '—' }}</dd></div>
+                    <div><dt>Start date</dt><dd>{{ !empty($contract['project_start_date']) ? \Carbon\Carbon::parse($contract['project_start_date'])->format('M d, Y') : '—' }}</dd></div>
+                    <div><dt>End date</dt><dd>{{ !empty($contract['project_end_date']) ? \Carbon\Carbon::parse($contract['project_end_date'])->format('M d, Y') : '—' }}</dd></div>
+                    <div><dt>Payment method</dt><dd>{{ $method ? ucfirst(str_replace('_', ' ', $method)) : '—' }}</dd></div>
+                    <div><dt>Payment plan</dt><dd>{{ $planLabels[$plan] ?? $plan ?? '—' }}</dd></div>
+                </dl>
+
+                @if($breakdownRows)
+                    <div class="form-label">Payment schedule</div>
+                    <div class="table-responsive">
+                        <table class="table req-table">
+                            <thead><tr><th>Stage</th><th class="req-num">Share</th><th class="req-num">Amount</th></tr></thead>
+                            <tbody>
+                                @foreach($breakdownRows as [$label, $percent])
+                                    <tr>
+                                        <td>{{ $label }}</td>
+                                        <td class="req-num">{{ rtrim(rtrim(number_format($percent, 2), '0'), '.') }}%</td>
+                                        <td class="req-num">₱{{ number_format(round($finalAmount * $percent / 100, 2), 2) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot><tr><th>Total</th><th class="req-num">100%</th><th class="req-num">₱{{ number_format($finalAmount, 2) }}</th></tr></tfoot>
+                        </table>
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        @if(isset($materialSupplierResponses) && count($selectedSuppliers ?? []) > 0)
+            <div class="card mb-4">
+                <div class="card-header"><h3 class="req-section-title"><i class="fas fa-handshake"></i> Your chosen suppliers</h3></div>
+                <div class="table-responsive">
+                    <table class="table req-table">
+                        <thead>
+                            <tr>
+                                <th>Material</th>
+                                <th>Supplier</th>
+                                <th class="req-num">Quoted price</th>
+                                <th>Highlights</th>
+                                <th>Contact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($selectedSuppliers as $materialId => $supplierId)
+                                @php
+                                    $materialName = null;
+                                    $supplierName = null;
+                                    $price = null;
+                                    $badges = [];
+                                    $contact = null;
+                                    foreach ($materialSupplierResponses[$materialId] ?? [] as $offer) {
+                                        if ($offer['supplier_id'] == $supplierId) {
+                                            $supplierName = $offer['supplier_name'] ?? 'Unknown';
+                                            $price = $offer['unit_price'] ?? null;
+                                            $badges = $offer['badges'] ?? [];
+                                            $contact = $offer['supplier_contact'] ?? null;
+                                        }
+                                        $materialName = $offer['material_name'] ?? $materialName;
+                                    }
+                                    // Fallback: the price on the RFQ pivot (material_quotation)
+                                    if ($price === null && isset($rfqs)) {
+                                        foreach ($rfqs as $rfq) {
+                                            $mat = $rfq->materials->firstWhere('id', $materialId);
+                                            if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id == $supplierId) {
+                                                $price = $mat->pivot->unit_price ?? null;
+                                                break;
                                             }
                                         }
                                     }
-                                }
-                            }
-                            // Payment breakdown logic
-                            $breakdownRows = [];
-                            if($plan === '30% down, 40% halfway, 30% on completion') {
-                                $breakdownRows = [
-                                    ['Downpayment', 30],
-                                    ['Halfway Payment', 40],
-                                    ['Completion Payment', 30],
-                                ];
-                            } elseif($plan === '50/50') {
-                                $breakdownRows = [
-                                    ['Downpayment', 50],
-                                    ['Completion Payment', 50],
-                                ];
-                            } elseif($plan === 'Full upon completion') {
-                                $breakdownRows = [
-                                    ['Completion Payment', 100],
-                                ];
-                            } elseif($plan === 'milestone') {
-                                $breakdownRows = [
-                                    ['Downpayment', 20],
-                                    ['After Foundation', 20],
-                                    ['After Structure', 30],
-                                    ['Completion Payment', 30],
-                                ];
-                            } elseif($plan === 'monthly3') {
-                                for($i=1;$i<=3;$i++) $breakdownRows[] = ["Month $i Payment", 100/3];
-                            } elseif($plan === 'monthly6') {
-                                for($i=1;$i<=6;$i++) $breakdownRows[] = ["Month $i Payment", 100/6];
-                            } elseif($plan === 'monthly12') {
-                                for($i=1;$i<=12;$i++) $breakdownRows[] = ["Month $i Payment", 100/12];
-                            }
-                        @endphp
-                        <div class="card mb-4">
-                            <div class="card-header bg-info text-white"><h5 class="mb-0">Your Submitted Quotation Details</h5></div>
-                            <div class="card-body">
-                                <p><strong>Property Address:</strong> {{ $address }}</p>
-                                <p><strong>Start Date:</strong> {{ $contract['project_start_date'] ?? '' }}</p>
-                                <p><strong>End Date:</strong> {{ $contract['project_end_date'] ?? '' }}</p>
-                                <p><strong>Payment Method:</strong> {{ ucfirst(str_replace('_',' ',$contract['payment_method'] ?? '')) }}</p>
-                                <p><strong>Payment Plan:</strong> {{ $plan }}</p>
-                                <div class="mb-3">
-                                    <strong>Payment Breakdown:</strong>
-                                    <table class="table table-bordered mt-2">
-                                        <thead><tr><th>Stage</th><th>Percent</th><th>Amount (₱)</th></tr></thead>
-                                        <tbody>
-                                            @php $sum = 0; @endphp
-                                            @foreach($breakdownRows as [$label, $percent])
-                                                @php $amt = round($finalAmount * $percent / 100, 2); $sum += $amt; @endphp
-                                                <tr><td>{{ $label }}</td><td>{{ rtrim(rtrim(number_format($percent,2), '0'), '.') }}%</td><td>₱{{ number_format($amt,2) }}</td></tr>
-                                            @endforeach
-                                            <tr class="fw-bold"><td>Total</td><td>100%</td><td>₱{{ number_format($finalAmount,2) }}</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        @if(isset($materialSupplierResponses) && isset($selectedSuppliers) && count($selectedSuppliers) > 0)
-                        <div class="card mt-4">
-                            <div class="card-header bg-success text-white">
-                                <h5 class="mb-0">Chosen Suppliers</h5>
-                            </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-bordered mb-0 align-middle">
-                                        <thead>
-                                            <tr>
-                                                <th>Material</th>
-                                                <th>Chosen Supplier</th>
-                                                <th>Quoted Price</th>
-                                                <th>Badges</th>
-                                                <th>Contact</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($selectedSuppliers as $materialId => $supplierId)
-                                                @php
-                                                    $materialName = null;
-                                                    $supplierName = null;
-                                                    $price = null;
-                                                    $badges = [];
-                                                    $contact = null;
-                                                    // Try to get from offers (supplier responses)
-                                                    if(isset($materialSupplierResponses[$materialId])) {
-                                                        foreach($materialSupplierResponses[$materialId] as $offer) {
-                                                            if($offer['supplier_id'] == $supplierId) {
-                                                                $supplierName = $offer['supplier_name'] ?? 'Unknown';
-                                                                $price = isset($offer['unit_price']) ? $offer['unit_price'] : null;
-                                                                $badges = $offer['badges'] ?? [];
-                                                                $contact = $offer['supplier_contact'] ?? null;
-                                                            }
-                                                            $materialName = $offer['material_name'] ?? $materialName;
-                                                        }
-                                                    }
-                                                    // Fallback: try to get from pivot (material_quotation)
-                                                    if ($price === null && isset($rfqs)) {
-                                                        foreach ($rfqs as $rfq) {
-                                                            $mat = $rfq->materials->firstWhere('id', $materialId);
-                                                            if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id == $supplierId) {
-                                                                $price = $mat->pivot->unit_price ?? null;
-                                                                break;
-                                                            }
-                                                        }
-                                                    }
-                                                    $contact = $contact ?? (isset($supplierId) ? (\App\Models\Supplier::find($supplierId)->phone ?? null) : null);
-                                                @endphp
-                                                <tr>
-                                                    <td>{{ $materialName ?? 'Material #'.$materialId }}</td>
-                                                    <td>
-                                                        @if($supplierName)
-                                                            {{ $supplierName }}
-                                                        @elseif($supplierId)
-                                                            {{ \App\Models\Supplier::find($supplierId)->company_name ?? 'N/A' }}
-                                                        @else
-                                                            N/A
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if($price && $price > 0)
-                                                            ₱{{ number_format($price, 2) }}
-                                                        @else
-                                                            <span class="text-muted">-</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if(!empty($badges))
-                                                            @foreach($badges as $badge)
-                                                                <span class="badge @if($badge=='Cheapest') badge-cheapest @elseif($badge=='Best Delivery') badge-delivery @elseif($badge=='Least Defects') badge-defects @elseif($badge=='Overall Best') badge-overall @endif" data-bs-toggle="tooltip" title="{{ $badge }}">{{ $badge }}</span>
-                                                            @endforeach
-                                                        @else
-                                                            <span class="text-muted">-</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if($contact)
-                                                            <span class="text-nowrap"><i class="fas fa-phone-alt me-1"></i>{{ $contact }}</span>
-                                                        @else
-                                                            <span class="text-muted">-</span>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        @php
-                            $uniqueSuppliers = collect($selectedSuppliers)->unique()->filter();
-                        @endphp
-                        @if($uniqueSuppliers->count() === 1)
-                            <div class="bg-info text-dark p-3 rounded mt-3" style="font-size:1.1em;">
-                                <strong>Summary for Supplier:</strong> {{ \App\Models\Supplier::find($awardedSupplierId)->company_name ?? 'N/A' }}<br>
-                                <strong>Total Quoted Price:</strong> ₱{{ number_format($totalQuoted, 2) }}<br>
-                                @if($discountFound)
-                                    <strong>Discount:</strong> {{ ucfirst($discountType) }} ({{ $discountValue }})<br>
-                                    <strong>Final Amount After Discount:</strong> ₱{{ number_format($finalAmount, 2) }}
-                                @else
-                                    <span class="text-danger">No discount was offered by this supplier.</span>
-                                @endif
-                            </div>
-                        @else
-                            <div class="alert alert-warning mt-3">
-                                <strong>No discount will be applied if you select different suppliers for your materials.</strong>
-                            </div>
-                        @endif
-                        @endif
-                    @elseif($quotationRequest->status === 'reviewed')
-                        {{-- Supplier selection and proceed UI --}}
-                        <form method="POST" action="{{ route('client.quotation.finalize', ['id' => $quotationRequest->id]) }}" id="client-finalize-form-table">
-                            @csrf
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="fw-bold fs-5">Choose your preferred supplier for each material below:</span>
-                                <button type="button" class="btn btn-primary" id="clientRecommendAllBtn">Recommend for All</button>
-                            </div>
-                            @php
-                                $hasAnySupplierResponses = false;
-                                if(isset($materialSupplierResponses)) {
-                                    foreach($materialSupplierResponses as $materialId => $offers) {
-                                        if(count($offers) > 0) {
-                                            $hasAnySupplierResponses = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                            @endphp
-                            @if(!$hasAnySupplierResponses)
-                                <div class="alert alert-warning text-center mb-3">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                    <strong>No supplier responses yet!</strong> Please wait for suppliers to submit their offers before making recommendations or proceeding.
-                                </div>
-                            @endif
-                            <div class="row mt-4">
-                                <div class="col-12">
-                                    {{-- Materials Table (existing) --}}
-                                    @if(isset($materialSupplierResponses) && count($materialSupplierResponses) > 0)
-                                        <div class="table-responsive" style="overflow-x: auto;">
-                                            <table class="table table-bordered table-striped" style="width: 100%; min-width: 1400px; table-layout: fixed; font-size: 14px;">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th style="width: 25%; padding: 15px 10px; text-align: center; font-weight: 600;">Material</th>
-                                                        <th style="width: 15%; padding: 15px 10px; text-align: center; font-weight: 600;">Supplier Responses</th>
-                                                        <th style="width: 60%; padding: 15px 10px; text-align: center; font-weight: 600;">Your Selection</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach($materialSupplierResponses as $materialId => $offers)
-                                                        <tr>
-                                                            <td style="padding: 15px 10px; vertical-align: middle;">
-                                                                @php
-                                                                    $materialName = null;
-                                                                    if($quotationRequest) {
-                                                                        foreach($quotationRequest->rooms as $room) {
-                                                                            foreach($room->scopes as $scope) {
-                                                                                if($scope->scopeType && $scope->scopeType->materials) {
-                                                                                    foreach($scope->scopeType->materials as $mat) {
-                                                                                        if($mat->id == $materialId) $materialName = $mat->name;
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                @endphp
-                                                                <strong style="font-size: 16px;">{{ $materialName ?? 'Material #'.$materialId }}</strong>
-                                                            </td>
-                                                            <td style="padding: 15px 10px; text-align: center; vertical-align: middle;">
-                                                                <span class="badge bg-secondary" style="font-size: 14px; padding: 8px 12px;">{{ count($offers) }}</span>
-                                                            </td>
-                                                            <td style="padding: 15px 10px; vertical-align: middle;">
-                                                                @if(count($offers) > 0)
-                                                                    <select name="selected_suppliers[{{ $materialId }}]" class="form-select supplier-select" data-material-id="{{ $materialId }}" style="width: 100%; padding: 12px; font-size: 14px; border: 2px solid #dee2e6; border-radius: 8px;">
-                                                                        <option value="">Select Supplier</option>
-                                                                        @php
-                                                                            // Ensure only one supplier per badge per material
-                                                                            $badgeWinners = [];
-                                                                            foreach ($offers as $offer) {
-                                                                                if (!empty($offer['badges'])) {
-                                                                                    foreach ($offer['badges'] as $badge) {
-                                                                                        if (!isset($badgeWinners[$badge])) {
-                                                                                            $badgeWinners[$badge] = $offer['supplier_id'];
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        @endphp
-                                                                        @foreach($offers as $offer)
-                                                                            @php
-                                                                                $uniqueBadges = [];
-                                                                                if (!empty($offer['badges'])) {
-                                                                                    foreach ($offer['badges'] as $badge) {
-                                                                                        if (isset($badgeWinners[$badge]) && $badgeWinners[$badge] == $offer['supplier_id']) {
-                                                                                            $uniqueBadges[] = $badge;
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            @endphp
-                                                                            <option value="{{ $offer['supplier_id'] }}"
-                                                                                data-badges='@json($uniqueBadges)'
-                                                                                data-supplier="{{ $offer['supplier_name'] ?? 'Unknown' }}"
-                                                                                data-price="{{ isset($offer['unit_price']) ? number_format($offer['unit_price'], 2) : '0.00' }}"
-                                                                                @if(isset($selectedSuppliers[$materialId]) && $selectedSuppliers[$materialId] == $offer['supplier_id']) selected @endif>
-                                                                                {{ $offer['supplier_name'] ?? 'Unknown' }} (₱{{ isset($offer['unit_price']) ? number_format($offer['unit_price'], 2) : '0.00' }})
-                                                                            </option>
-                                                                        @endforeach
-                                                                    </select>
-                                                                @else
-                                                                    <span class="text-muted">No selection</span>
-                                                                @endif
-                                                            </td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <div id="live-supplier-summary" class="alert alert-info alert-static mt-3" style="display:none;"></div>
-                                        
-                                        <!-- Materials Cost Breakdown Section -->
-                                        <div class="card mt-4" id="materials-cost-breakdown" style="display:none;">
-                                            <div class="card-header">
-                                                <h5 class="mb-0">Materials Cost Breakdown</h5>
-                                            </div>
-                                            <div class="card-body">
-                                                <div id="materials-cost-table"></div>
-                                            </div>
-                                        </div>
-                                    @else
-                                        <div class="alert alert-info text-center">No supplier offers available yet.</div>
-                                    @endif
-                                </div>
-                            </div>
-                        </form>
-                        <!-- Recommend Modal for Client -->
-                        <x-modal-dialog id="clientRecommendModal">
-                            <x-slot:title>Recommend Suppliers for All Materials</x-slot:title>
-                                    <div class="modal-body">
-                                        <label for="clientRecommendCategory" class="form-label">Optimization Category</label>
-                                        <select id="clientRecommendCategory" class="form-select">
-                                            <option value="overall_best">Overall Best</option>
-                                            <option value="cheapest">Cheapest</option>
-                                            <option value="fastest_delivery">Best Delivery</option>
-                                            <option value="least_defects">Least Defects</option>
-                                        </select>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="button" class="btn btn-primary" id="clientApplyRecommendBtn">Apply Recommendation</button>
-                                    </div>
-                        </x-modal-dialog>
-                        @php
-                            $allSuppliersSelected = true;
-                            $hasAnyResponses = false;
-                            if(isset($materialSupplierResponses)) {
-                                foreach($materialSupplierResponses as $materialId => $offers) {
-                                    if(count($offers) > 0) {
-                                        $hasAnyResponses = true;
-                                    }
-                                    if(empty($selectedSuppliers[$materialId])) {
-                                        $allSuppliersSelected = false;
-                                    }
-                                }
-                            }
-                        @endphp
-                        <!-- Always render Proceed Button and Modal -->
-                        <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
-                            <button type="button" class="btn btn-success btn-lg" id="proceedQuotationBtn" data-bs-toggle="modal" data-bs-target="#proceedQuotationModal" disabled title="Please select suppliers for all materials before proceeding.">Proceed with Quotation</button>
-                            <!-- Modal for Proceed Confirmation -->
-                            <div class="modal fade" id="proceedQuotationModal" tabindex="-1" aria-labelledby="proceedQuotationModalLabel" aria-hidden="true">
-                                <div class="modal-dialog modal-lg">
-                                    <div class="modal-content">
-                                        <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $quotationRequest->id]) }}" id="proceedQuotationForm">
-                                            @csrf
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="proceedQuotationModalLabel">Proceed with Quotation</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label for="property_address" class="form-label">Property Address</label>
-                                                    <input type="text" class="form-control" id="property_address" name="property_address" required>
-                                                </div>
-                                                <div class="row mb-3">
-                                                    <div class="col-md-6">
-                                                        <label for="project_start_date" class="form-label">Start Date</label>
-                                                        <input type="date" class="form-control" id="project_start_date" name="project_start_date" required>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label for="project_end_date" class="form-label">End Date</label>
-                                                        <input type="date" class="form-control" id="project_end_date" name="project_end_date" required readonly>
-                                                    </div>
-                                                </div>
-                                                <div class="row mb-3">
-                                                    <div class="col-md-6">
-                                                        <label for="payment_method" class="form-label">Payment Method</label>
-                                                        <select name="payment_method" id="payment_method" class="form-select" required>
-                                                            <option value="">Select Method</option>
-                                                            <option value="bank_transfer">Bank Transfer</option>
-                                                            <option value="check">Check</option>
-                                                            <option value="cash">Cash</option>
-                                                        </select>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label for="payment_plan" class="form-label">Payment Plan</label>
-                                                        <select name="payment_plan" id="payment_plan" class="form-select" required>
-                                                            <option value="">Select Plan</option>
-                                                            <option value="30% down, 40% halfway, 30% on completion">30% down, 40% halfway, 30% on completion</option>
-                                                            <option value="50/50">50% down, 50% on completion</option>
-                                                            <option value="Full upon completion">Full upon completion</option>
-                                                            <option value="milestone">Milestone-based (20% down, 20% after foundation, 30% after structure, 30% on completion)</option>
-                                                            <option value="monthly3" data-months="3">Monthly for 3 months (equal payments)</option>
-                                                            <option value="monthly6" data-months="6">Monthly for 6 months (equal payments)</option>
-                                                            <option value="monthly12" data-months="12">Monthly for 12 months (equal payments)</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <!-- Payment Breakdown Section -->
-                                                <div id="payment-breakdown" class="mt-3"></div>
-                                                <p>Are you sure you want to proceed with this quotation? This action cannot be undone.</p>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-success">Yes, Proceed</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                            <form method="POST" action="{{ route('client.quotation.cancel', ['id' => $quotationRequest->id]) }}" onsubmit="return confirm('Are you sure you want to cancel this quotation?');" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-danger btn-lg">Cancel Quotation</button>
-                            </form>
-                        </div>
-                    @endif
+                                    $supplierModel = $supplierId && (!$supplierName || !$contact) ? \App\Models\Supplier::find($supplierId) : null;
+                                    $supplierName ??= $supplierModel->company_name ?? null;
+                                    $contact ??= $supplierModel->phone ?? null;
+                                @endphp
+                                <tr>
+                                    <td class="fw-semibold">{{ $materialName ?? 'Material #' . $materialId }}</td>
+                                    <td>{{ $supplierName ?? '—' }}</td>
+                                    <td class="req-num">{{ $price && $price > 0 ? '₱' . number_format($price, 2) : '—' }}</td>
+                                    <td>
+                                        @forelse($badges as $badge)
+                                            <span class="badge {{ ['Cheapest' => 'badge-cheapest', 'Best Delivery' => 'badge-delivery', 'Least Defects' => 'badge-defects', 'Overall Best' => 'badge-overall'][$badge] ?? 'bg-light' }}">{{ $badge }}</span>
+                                        @empty
+                                            <span class="text-muted">—</span>
+                                        @endforelse
+                                    </td>
+                                    <td>
+                                        @if($contact)
+                                            <span class="text-nowrap"><i class="fas fa-phone-alt me-1 text-muted"></i>{{ $contact }}</span>
+                                        @else
+                                            <span class="text-muted">—</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
             </div>
+
+            @if($uniqueSuppliers->count() === 1)
+                <dl class="req-summary mb-4">
+                    <div><dt>Supplier</dt><dd>{{ \App\Models\Supplier::find($awardedSupplierId)->company_name ?? '—' }}</dd></div>
+                    <div><dt>Total quoted</dt><dd>₱{{ number_format($totalQuoted, 2) }}</dd></div>
+                    @if($discountFound)
+                        <div><dt>Discount</dt><dd>{{ ucfirst($discountType) }} ({{ $discountValue }})</dd></div>
+                        <div><dt>Final amount</dt><dd class="is-total">₱{{ number_format($finalAmount, 2) }}</dd></div>
+                    @else
+                        <div><dt>Discount</dt><dd class="text-muted fw-normal fs-6">None offered by this supplier</dd></div>
+                    @endif
+                </dl>
+            @else
+                <div class="req-callout req-callout--warning mb-4">
+                    <div class="req-callout__text">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                        <div>You chose different suppliers for your materials, so no supplier discount applies.</div>
+                    </div>
+                </div>
+            @endif
+        @endif
+
+    @elseif($status === 'reviewed')
+        @php
+            $hasAnySupplierResponses = collect($materialSupplierResponses ?? [])->contains(fn ($offers) => count($offers) > 0);
+            // Material names from the request's scopes
+            $materialNames = [];
+            foreach ($rooms as $room) {
+                foreach ($room->scopes as $scope) {
+                    foreach ($scope->scopeType?->materials ?? [] as $mat) {
+                        $materialNames[$mat->id] = $mat->name;
+                    }
+                }
+            }
+        @endphp
+
+        <form method="POST" action="{{ route('client.quotation.finalize', ['id' => $qr->id]) }}" id="client-finalize-form-table">
+            @csrf
+            <div class="card mb-4">
+                <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <h3 class="req-section-title"><i class="fas fa-store"></i> Choose your suppliers</h3>
+                    <button type="button" class="btn btn-sm btn-outline-success" id="clientRecommendAllBtn"><i class="fas fa-magic me-1"></i> Recommend for all</button>
+                </div>
+
+                <div class="card-body pb-0">
+                    <div class="alert alert-info mb-3" id="discount-tip-alert">
+                        <i class="fas fa-lightbulb me-1"></i>
+                        <strong>Tip:</strong> choose the <strong>same supplier for every material</strong> to get that supplier's discount, if they offer one. Mixing suppliers means no discount.
+                    </div>
+                    @unless($hasAnySupplierResponses)
+                        <div class="alert alert-warning mb-3">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            <strong>No supplier responses yet.</strong> Please wait for suppliers to send their offers before choosing.
+                        </div>
+                    @endunless
+                </div>
+
+                @if(isset($materialSupplierResponses) && count($materialSupplierResponses) > 0)
+                    <div class="table-responsive">
+                        <table class="table req-table req-pick-table">
+                            <thead>
+                                <tr>
+                                    <th>Material</th>
+                                    <th>Your supplier</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($materialSupplierResponses as $materialId => $offers)
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">{{ $materialNames[$materialId] ?? 'Material #' . $materialId }}</div>
+                                            <span class="req-pick-count">{{ count($offers) }} {{ Str::plural('offer', count($offers)) }}</span>
+                                        </td>
+                                        <td class="req-wrap">
+                                            @if(count($offers) > 0)
+                                                @php
+                                                    // Each badge goes to one supplier per material (the first that earned it)
+                                                    $badgeWinners = [];
+                                                    foreach ($offers as $offer) {
+                                                        foreach ($offer['badges'] ?? [] as $badge) {
+                                                            $badgeWinners[$badge] ??= $offer['supplier_id'];
+                                                        }
+                                                    }
+                                                @endphp
+                                                <select name="selected_suppliers[{{ $materialId }}]" class="form-select supplier-select" data-material-id="{{ $materialId }}" aria-label="Supplier for {{ $materialNames[$materialId] ?? 'material ' . $materialId }}">
+                                                    <option value="">Select supplier</option>
+                                                    @foreach($offers as $offer)
+                                                        @php $uniqueBadges = collect($offer['badges'] ?? [])->filter(fn ($b) => ($badgeWinners[$b] ?? null) == $offer['supplier_id'])->values()->all(); @endphp
+                                                        <option value="{{ $offer['supplier_id'] }}"
+                                                            data-badges='@json($uniqueBadges)'
+                                                            data-supplier="{{ $offer['supplier_name'] ?? 'Unknown' }}"
+                                                            data-price="{{ isset($offer['unit_price']) ? number_format($offer['unit_price'], 2) : '0.00' }}"
+                                                            @selected(isset($selectedSuppliers[$materialId]) && $selectedSuppliers[$materialId] == $offer['supplier_id'])>
+                                                            {{ $offer['supplier_name'] ?? 'Unknown' }} (₱{{ isset($offer['unit_price']) ? number_format($offer['unit_price'], 2) : '0.00' }})
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            @else
+                                                <span class="text-muted">No offers yet</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <div class="card-body pt-0"><p class="text-muted mb-0">No supplier offers available yet.</p></div>
+                @endif
+            </div>
+
+            <div id="live-supplier-summary" class="alert alert-info mb-4" style="display:none;"></div>
+
+            <div class="card mb-4" id="materials-cost-breakdown" style="display:none;">
+                <div class="card-header"><h3 class="req-section-title"><i class="fas fa-calculator"></i> Materials cost</h3></div>
+                <div class="card-body" id="materials-cost-table"></div>
+            </div>
+        </form>
+
+        <x-modal-dialog id="clientRecommendModal">
+            <x-slot:title>Recommend suppliers for all materials</x-slot:title>
+            <div class="modal-body">
+                <label for="clientRecommendCategory" class="form-label">Optimise for</label>
+                <select id="clientRecommendCategory" class="form-select">
+                    <option value="overall_best">Overall best</option>
+                    <option value="cheapest">Cheapest</option>
+                    <option value="fastest_delivery">Best delivery</option>
+                    <option value="least_defects">Least defects</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="clientApplyRecommendBtn">Apply recommendation</button>
+            </div>
+        </x-modal-dialog>
+
+        <div class="req-callout mb-4">
+            <div class="req-callout__text">
+                <i class="fas fa-flag-checkered text-success" aria-hidden="true"></i>
+                <div><strong>Ready to go ahead?</strong><br>Pick a supplier for every material, then proceed to enter your project dates and payment plan.</div>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <form method="POST" action="{{ route('client.quotation.cancel', ['id' => $qr->id]) }}" onsubmit="return confirm('Cancel this quotation request? This cannot be undone.');">
+                    @csrf
+                    <button type="submit" class="btn btn-outline-danger">Cancel request</button>
+                </form>
+                <button type="button" class="btn btn-success" id="proceedQuotationBtn" data-bs-toggle="modal" data-bs-target="#proceedQuotationModal" disabled
+                    title="Select a supplier for every material first.">Proceed with quotation <i class="fas fa-arrow-right ms-1"></i></button>
+            </div>
         </div>
-    </div>
+
+        <x-modal-dialog id="proceedQuotationModal" dialog-class="modal-lg">
+            <x-slot:title>Proceed with quotation</x-slot:title>
+            <form method="POST" action="{{ route('client.quotation.proceed', ['id' => $qr->id]) }}" id="proceedQuotationForm">
+                @csrf
+                <div class="modal-body">
+                    <div class="row">
+                        <x-field name="property_address" label="Property address" col="md-12" required placeholder="House no., street, barangay, city" />
+                        <x-field name="project_start_date" type="date" label="Start date" col="md-6" required />
+                        <x-field name="project_end_date" type="date" label="End date" col="md-6" required readonly />
+                        <x-field name="payment_method" label="Payment method" col="md-6" required>
+                            <select name="payment_method" id="payment_method" class="form-select" required>
+                                <option value="">Select method</option>
+                                <option value="bank_transfer">Bank transfer</option>
+                                <option value="check">Check</option>
+                                <option value="cash">Cash</option>
+                            </select>
+                        </x-field>
+                        <x-field name="payment_plan" label="Payment plan" col="md-6" required>
+                            <select name="payment_plan" id="payment_plan" class="form-select" required>
+                                <option value="">Select plan</option>
+                                <option value="30% down, 40% halfway, 30% on completion">30% down, 40% halfway, 30% on completion</option>
+                                <option value="50/50">50% down, 50% on completion</option>
+                                <option value="Full upon completion">Full upon completion</option>
+                                <option value="milestone">Milestone-based (20% down, 20% after foundation, 30% after structure, 30% on completion)</option>
+                                <option value="monthly3" data-months="3">Monthly for 3 months (equal payments)</option>
+                                <option value="monthly6" data-months="6">Monthly for 6 months (equal payments)</option>
+                                <option value="monthly12" data-months="12">Monthly for 12 months (equal payments)</option>
+                            </select>
+                        </x-field>
+                    </div>
+                    <div id="payment-breakdown" class="mt-2"></div>
+                    <p class="text-muted small mb-0 mt-3">Once you proceed, your supplier choices are final and our team will prepare the contract.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Back</button>
+                    <button type="submit" class="btn btn-success">Yes, proceed</button>
+                </div>
+            </form>
+        </x-modal-dialog>
+    @endif
 </div>
-<!-- Place this div above the modal or where you want the summary to appear -->
 <div id="quotation-confirmation-summary" style="display:none;"></div>
-@endsection 
+@endsection
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -590,7 +493,6 @@
     'discount_type' => (string) $r->discount_type, 'discount_percentage' => (string) $r->discount_percentage,
     'discount_amount' => (string) $r->discount_amount, 'final_amount' => (string) $r->final_amount,
 ]])->all() ?: new \stdClass) }} });</script>
-<script>window.__page = Object.assign(window.__page || {}, { view1_0: @json($totalEstimatedDays ?? 1) });</script>
-</script>
+<script>window.__page = Object.assign(window.__page || {}, { view1_0: {{ Js::from($totalEstimatedDays ?? 1) }} });</script>
 @vite('resources/js/pages/client-quotation-view.js')
-@endpush 
+@endpush

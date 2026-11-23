@@ -1,410 +1,330 @@
 @extends('layouts.app')
 
+@php
+    $pr = $purchaseRequest;
+    $user = auth()->user();
+    $orders = $pr->purchaseOrder ?? collect();
+    $hasPO = $orders->isNotEmpty();
+    $rejected = in_array($pr->status, ['rejected', 'cancelled'], true);
+    $adminDone = $pr->admin_approved || in_array($pr->status, ['pending_supplier_approval', 'approved'], true);
+    $supplierDone = $pr->supplier_approved || $pr->status === 'approved';
+
+    // Approval tracker: [label, state (done|current|failed|todo), date]
+    $steps = [
+        ['Created', 'done', $pr->created_at],
+        ['Admin approval', $adminDone ? 'done' : ($rejected ? 'failed' : 'current'), $pr->admin_approved_at],
+        ['Supplier approval', $supplierDone ? 'done' : ($rejected && $adminDone ? 'failed' : ($adminDone ? 'current' : 'todo')), $pr->supplier_approved_at],
+        ['Purchase order', $hasPO ? 'done' : ($adminDone && $supplierDone ? 'current' : 'todo'), $orders->first()?->created_at],
+    ];
+    $stepIcons = ['done' => 'fa-check', 'current' => 'fa-hourglass-half', 'failed' => 'fa-times', 'todo' => ''];
+
+    // Supplier the client picked for each material during the quotation process (cheapest pick wins).
+    $quotationRequest = $pr->materialRequest?->quotationRequest;
+    $rfqs = $quotationRequest
+        ? \App\Models\Quotation::where('notes', 'like', '%client quotation request #' . $quotationRequest->request_number . '%')->with('materials')->get()
+        : collect();
+@endphp
+
 @section('content')
+<div class="container-fluid req-page">
+    <x-page-header title="Purchase Request" icon="file-invoice">
+        <a href="{{ route('purchase-requests.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Back</a>
+        @if($pr->status === 'pending')
+            <a href="{{ route('purchase-requests.edit', $pr) }}" class="btn btn-outline-secondary"><i class="fas fa-pen me-1"></i> Edit</a>
+        @endif
+        @if($pr->admin_approved && $pr->supplier_approved && !$hasPO)
+            <a href="{{ route('purchase-orders.create', ['purchase_request_id' => $pr->id]) }}" class="btn btn-success">
+                <i class="fas fa-file-invoice me-1"></i> Create Purchase Order
+            </a>
+        @endif
+    </x-page-header>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Purchase Request Details</h3>
-                    <div class="card-tools">
-                        <a href="{{ route('purchase-requests.index') }}" class="btn btn-default">
-                            <i class="fas fa-arrow-left"></i> Back to List
-                        </a>
-                        @if(auth()->user()->hasRole('admin') && $purchaseRequest->status === 'pending_admin_approval')
-                            <form method="POST" action="{{ route('purchase-requests.approve', $purchaseRequest) }}" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-success">
-                                    <i class="fas fa-check"></i> Approve Purchase Request
-                                </button>
-                            </form>
-                        @endif
-                        @php
-                            $hasPO = $purchaseRequest->purchaseOrder && $purchaseRequest->purchaseOrder->count() > 0;
-                        @endphp
-                        @if($purchaseRequest->admin_approved && $purchaseRequest->supplier_approved && !$hasPO)
-                            <a href="{{ route('purchase-orders.create', ['purchase_request_id' => $purchaseRequest->id]) }}" class="btn btn-success">
-                                <i class="fas fa-file-invoice"></i> Create Purchase Order
-                            </a>
-                        @endif
-                    </div>
+    {{-- Summary --}}
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="req-hero mb-4">
+                <div>
+                    <div class="req-hero__ref">{{ $pr->is_project_related ? 'Contract related' : 'Standalone' }} request</div>
+                    <h2 class="req-hero__title">{{ $pr->request_number }} <x-status-badge :status="$pr->status" /></h2>
                 </div>
-                <div class="card-body">
-                    <!-- Request Information -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <h4>Request Information</h4>
-                            <table class="table table-bordered">
-                                <tr>
-                                    <th style="width: 200px;">Request Number</th>
-                                    <td>{{ $purchaseRequest->request_number }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Status</th>
-                                    <td>
-                                        @php
-                                            $statusColors = [
-                                                'pending' => 'warning',
-                                                'pending_admin_approval' => 'warning',
-                                                'pending_supplier_approval' => 'info',
-                                                'approved' => 'success',
-                                                'rejected' => 'danger',
-                                                'cancelled' => 'secondary'
-                                            ];
-                                            $statusColor = $statusColors[$purchaseRequest->status] ?? 'secondary';
-                                        @endphp
-                                        <x-status-badge :status="$purchaseRequest->status" />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Request Type</th>
-                                    <td>{{ $purchaseRequest->is_project_related ? 'Project Related' : 'Standalone' }}</td>
-                                </tr>
-                                @if($purchaseRequest->is_project_related)
-                                    <tr>
-                                        <th>Contract</th>
-                                        <td>
-                                            @if($purchaseRequest->contract)
-                                                {{ $purchaseRequest->contract->contract_number }} - {{ $purchaseRequest->contract->client->name ?? '' }}
-                                            @else
-                                                N/A
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endif
-                                <tr>
-                                    <th>Requested By</th>
-                                    <td>{{ $purchaseRequest->requestedBy?->name ?? 'N/A' }}</td>
-                                </tr>
-                                @if($purchaseRequest->materialRequest)
-                                <tr>
-                                    <th>Originating Material Request</th>
-                                    <td>
-                                        <a href="{{ route('material-requests.show', $purchaseRequest->materialRequest) }}">
-                                            {{ $purchaseRequest->materialRequest->request_number ?? $purchaseRequest->material_request_id }}
-                                        </a>
-                                    </td>
-                                </tr>
-                                @if($purchaseRequest->materialRequest->quotationRequest)
-                                <tr>
-                                    <th>Originating Quotation Request</th>
-                                    <td>
-                                        @if(in_array(auth()->user()->role, ['admin', 'manager'], true))
-                                            <a href="{{ route('admin.quotation.review', $purchaseRequest->materialRequest->quotationRequest->id) }}">{{ $purchaseRequest->materialRequest->quotationRequest->request_number }}</a>
-                                        @else
-                                            {{ $purchaseRequest->materialRequest->quotationRequest->request_number }}
-                                        @endif
-                                    </td>
-                                </tr>
-                                @endif
-                                @endif
-                                <tr>
-                                    <th>Created Date</th>
-                                    <td>{{ $purchaseRequest->created_at->format('M d, Y H:i') }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Last Updated</th>
-                                    <td>{{ $purchaseRequest->updated_at->format('M d, Y H:i') }}</td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <h4>Financial Summary</h4>
-                            <table class="table table-bordered">
-                                <tr>
-                                    <th style="width: 200px;">Total Amount</th>
-                                    <td class="text-right">{{ $purchaseRequest->total_amount ? number_format($purchaseRequest->total_amount, 2) : 'N/A' }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Number of Items</th>
-                                    <td class="text-right">{{ $purchaseRequest->items?->count() ?? 0 }}</td>
-                                </tr>
-                            </table>
+                <div class="req-hero__amount">
+                    <strong>{{ $pr->total_amount ? '₱' . number_format($pr->total_amount, 2) : '—' }}</strong>
+                    <span>{{ $pr->items?->count() ?? 0 }} {{ Str::plural('item', $pr->items?->count() ?? 0) }} · estimated total</span>
+                </div>
+            </div>
 
-                            @if($purchaseRequest->notes)
-                                <h4 class="mt-4">Notes</h4>
-                                <div class="p-3 bg-light">
-                                    {{ $purchaseRequest->notes }}
-                            </div>
+            <ol class="req-steps mb-4" aria-label="Approval progress">
+                @foreach($steps as [$label, $state, $date])
+                    <li class="req-steps__item is-{{ $state }}" @if($state === 'current') aria-current="step" @endif>
+                        <span class="req-steps__dot">@if($stepIcons[$state])<i class="fas {{ $stepIcons[$state] }}" aria-hidden="true"></i>@else{{ $loop->iteration }}@endif</span>
+                        <span class="req-steps__label">{{ $label }}</span>
+                        <span class="req-steps__date">{{ $date ? $date->format('M d, Y') : ($state === 'failed' ? ucfirst($pr->status) : ($state === 'current' ? 'Waiting' : '')) }}</span>
+                    </li>
+                @endforeach
+            </ol>
+
+            <dl class="req-meta">
+                <div>
+                    <dt>Requested by</dt>
+                    <dd>{{ $pr->requestedBy?->name ?? '—' }}</dd>
+                </div>
+                @if($pr->is_project_related)
+                    <div>
+                        <dt>Contract</dt>
+                        <dd>
+                            @if($pr->contract)
+                                <a href="{{ route('contracts.show', $pr->contract) }}">{{ $pr->contract->contract_number }}</a>
+                                @if($pr->contract->client)<span class="req-sub">{{ $pr->contract->client->name }}</span>@endif
+                            @else
+                                —
                             @endif
+                        </dd>
                     </div>
-                </div>
-
-                    <!-- Request Items -->
-                    <div class="row">
-                        <div class="col-12">
-                            <h4>Request Items</h4>
-                        <div class="table-responsive">
-                                <table class="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Material</th>
-                                        <th>Description</th>
-                                        <th>Quantity</th>
-                                        <th>Unit</th>
-                                        <th>Estimated Unit Price</th>
-                                        <th>Total Amount</th>
-                                        <th>Preferred Supplier</th>
-                                        <th>Notes</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if($purchaseRequest->items)
-                                        @foreach($purchaseRequest->items as $item)
-                                            <tr>
-                                                <td>{{ $item->material?->name ?? 'N/A' }}</td>
-                                                <td>{{ $item->description }}</td>
-                                                    <td class="text-right">{{ $item->quantity ? number_format($item->quantity, 2) : 'N/A' }}</td>
-                                                <td>{{ $item->unit }}</td>
-                                                    <td class="text-right">{{ $item->estimated_unit_price ? number_format($item->estimated_unit_price, 2) : 'N/A' }}</td>
-                                                    <td class="text-right">{{ $item->total_amount ? number_format($item->total_amount, 2) : 'N/A' }}</td>
-                                                    <td>
-                                                        @php
-                                                            $selectedSupplier = null;
-                                                            $selectedSupplierPrice = null;
-                                                            if ($purchaseRequest->materialRequest && $purchaseRequest->materialRequest->quotationRequest) {
-                                                                $quotationRequest = $purchaseRequest->materialRequest->quotationRequest;
-                                                                $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'. $quotationRequest->request_number .'%')->with(['materials'])->get();
-                                                                foreach ($rfqs as $rfq) {
-                                                                    $material = $rfq->materials->firstWhere('id', $item->material_id);
-                                                                    if ($material && $material->pivot && $material->pivot->selected_supplier_id) {
-                                                                        $supplier = \App\Models\Supplier::find($material->pivot->selected_supplier_id);
-                                                                        $unitPrice = $material->pivot->unit_price ?? null;
-                                                                        if (!$selectedSupplier || ($unitPrice !== null && ($selectedSupplierPrice === null || $unitPrice < $selectedSupplierPrice))) {
-                                                                            $selectedSupplier = $supplier;
-                                                                            $selectedSupplierPrice = $unitPrice;
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        @endphp
-                                                        @if($selectedSupplier)
-                                                            {{ $selectedSupplier->company_name }}
-                                                            @if($selectedSupplierPrice)
-                                                                <span class="text-muted">(₱{{ number_format($selectedSupplierPrice, 2) }})</span>
-                                                            @endif
-                                                        @elseif($item->preferred_supplier_id)
-                                                            {{ optional(\App\Models\Supplier::find($item->preferred_supplier_id))->company_name ?? 'Unknown Supplier' }}
-                                                        @else
-                                                            <span class="text-danger">No supplier selected by client</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>{{ $item->notes ?? 'N/A' }}</td>
-                                            </tr>
-                                        @endforeach
-                                    @else
-                                        <x-empty-row cols="9">No items found</x-empty-row>
-                                    @endif
-                                </tbody>
-                                    <tfoot>
-                                        <tr>
-                                            <th colspan="5" class="text-right">Total:</th>
-                                            <th class="text-right">{{ $purchaseRequest->total_amount ? number_format($purchaseRequest->total_amount, 2) : 'N/A' }}</th>
-                                            <th colspan="3"></th>
-                                        </tr>
-                                    </tfoot>
-                            </table>
-                        </div>
+                @endif
+                @if($pr->materialRequest)
+                    <div>
+                        <dt>From material request</dt>
+                        <dd><a href="{{ route('material-requests.show', $pr->materialRequest) }}">{{ $pr->materialRequest->request_number ?? 'MR-' . $pr->material_request_id }}</a></dd>
                     </div>
+                @endif
+                @if($quotationRequest)
+                    <div>
+                        <dt>From quotation request</dt>
+                        <dd>
+                            @if(in_array($user->role, ['admin', 'manager'], true))
+                                <a href="{{ route('admin.quotation.review', $quotationRequest->id) }}">{{ $quotationRequest->request_number }}</a>
+                            @else
+                                {{ $quotationRequest->request_number }}
+                            @endif
+                        </dd>
+                    </div>
+                @endif
+                <div>
+                    <dt>Created</dt>
+                    <dd>{{ $pr->created_at->format('M d, Y H:i') }}</dd>
                 </div>
+                <div>
+                    <dt>Last updated</dt>
+                    <dd>{{ $pr->updated_at->format('M d, Y H:i') }}</dd>
+                </div>
+            </dl>
 
-                    <!-- Approval Actions for Admin -->
-                    @if($purchaseRequest->status === 'pending_admin_approval' && (auth()->user()->role === 'admin'))
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h4 class="card-title">Approval Actions</h4>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="text-info mb-3">
-                                            <i class="fas fa-info-circle"></i> 
-                                            This purchase request is pending your approval. Once approved, it will be sent to the supplier for their approval.
-                                        </p>
-                                        <form action="{{ route('purchase-requests.approve', $purchaseRequest) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to approve this request?')">
-                                                <i class="fas fa-check"></i> Approve Request
-                                            </button>
-                                        </form>
-                                        <form action="{{ route('purchase-requests.reject', $purchaseRequest) }}" method="POST" class="d-inline">
-                                            @csrf
-                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to reject this request?')">
-                                                <i class="fas fa-times"></i> Reject Request
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @elseif($purchaseRequest->status === 'pending_supplier_approval')
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h4 class="card-title">Status Information</h4>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="text-info">
-                                            <i class="fas fa-info-circle"></i> 
-                                            This purchase request has been approved by admin and is now pending supplier approval.
-                                        </p>
-                                        @if($purchaseRequest->admin_approved_at)
-                                            <p class="text-success">
-                                                <i class="fas fa-check-circle"></i> 
-                                                Approved by admin on {{ $purchaseRequest->admin_approved_at->format('M d, Y H:i') }}
-                                            </p>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @elseif($purchaseRequest->status === 'approved')
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h4 class="card-title">Approval Status</h4>
-                                    </div>
-                                    <div class="card-body">
-                                        <p class="text-success">
-                                            <i class="fas fa-check-circle"></i> 
-                                            This purchase request has been fully approved by both admin and supplier.
-                                        </p>
-                                        @if($purchaseRequest->admin_approved_at)
-                                            <p>Admin approved on: {{ $purchaseRequest->admin_approved_at->format('M d, Y H:i') }}</p>
-                                        @endif
-                                        @if($purchaseRequest->supplier_approved_at)
-                                            <p>Supplier approved on: {{ $purchaseRequest->supplier_approved_at->format('M d, Y H:i') }}</p>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
+            @if($pr->notes)
+                <div class="mt-4">
+                    <div class="form-label">Notes</div>
+                    <div class="req-note">{{ $pr->notes }}</div>
+                </div>
+            @endif
+        </div>
+    </div>
 
-                    <!-- Supplier Approval Section -->
-                    @if($purchaseRequest->status === 'pending_supplier_approval' && auth()->user()->hasRole('supplier') && $purchaseRequest->items->every(fn($item) => $item->preferred_supplier_id === auth()->user()->company?->id))
-                        <div class="card mt-4">
-                            <div class="card-header">
-                                <h4 class="card-title">Supplier Approval</h4>
-                            </div>
-                            <div class="card-body">
-                                @if(!$purchaseRequest->supplier_approved)
-                                    <p>This request is pending your approval.</p>
-                                    <form action="{{ route('purchase-requests.supplier.approve', $purchaseRequest) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-success">
-                                            <i class="fas fa-check"></i> Approve as Supplier
-                                        </button>
-                                    </form>
-                                @else
-                                    <p class="text-success"><i class="fas fa-check-circle"></i> You have approved this request.</p>
-                                @endif
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Related Purchase Orders -->
-                    @if($purchaseRequest->purchaseOrders?->count() > 0)
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <h4>Related Purchase Orders</h4>
-                                <div class="table-responsive">
-                                    <table class="table table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>PO Number</th>
-                                                <th>Supplier</th>
-                                                <th>Total Amount</th>
-                                                <th>Status</th>
-                                                <th>Payment Status</th>
-                                                <th>Created Date</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($purchaseRequest->purchaseOrders as $po)
-                                                @php $poPayment = $po->payments->last(); @endphp
-                                                <tr>
-                                                    <td>{{ $po->po_number }}</td>
-                                                    <td>{{ $po->supplier->company_name }}</td>
-                                                    <td class="text-right">{{ $po->total_amount ? number_format($po->total_amount, 2) : 'N/A' }}</td>
-                                                    <td>
-                                                        <x-status-badge :status="$po->status" />
-                                                    </td>
-                                                    <td>
-                                                        @if($poPayment)
-                                                            <x-status-badge :status="$poPayment->status" />
-                                                        @else
-                                                            <span class="badge bg-secondary">Unpaid</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>{{ $po->created_at->format('M d, Y') }}</td>
-                                                    <td>
-                                                        <a href="{{ route('purchase-orders.show', $po) }}" class="btn btn-sm btn-info">View</a>
-                                                        @if(auth()->user()->isAdmin() && (!$poPayment || $poPayment->status === 'rejected'))
-                                                            <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#submitPaymentModal{{ $po->id }}">Pay</button>
-                                                            <!-- Payment Modal for this PO -->
-                                                            <div class="modal fade" id="submitPaymentModal{{ $po->id }}" tabindex="-1">
-                                                              <div class="modal-dialog">
-                                                                <div class="modal-content">
-                                                                  <form method="POST" action="{{ route('purchase-orders.payments.store', $po) }}" enctype="multipart/form-data">
-                                                                    @csrf
-                                                                    <div class="modal-header">
-                                                                      <h5 class="modal-title">Submit Payment to Supplier</h5>
-                                                                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                                    </div>
-                                                                    <div class="modal-body">
-                                                                      <div class="mb-3">
-                                                                        <label>Amount</label>
-                                                                        <input type="number" name="amount" class="form-control" value="{{ $po->total_amount }}" required>
-                                                                      </div>
-                                                                      <div class="mb-3">
-                                                                        <label>Payment Method</label>
-                                                                        <select name="payment_method" class="form-control" required>
-                                                                          <option value="bank_transfer">Bank Transfer</option>
-                                                                          <option value="check">Check</option>
-                                                                          <option value="cash">Cash</option>
-                                                                        </select>
-                                                                      </div>
-                                                                      <div class="mb-3">
-                                                                        <label>Reference Number</label>
-                                                                        <input type="text" name="admin_reference_number" class="form-control" required>
-                                                                      </div>
-                                                                      <div class="mb-3">
-                                                                        <label>Date Paid</label>
-                                                                        <input type="date" name="admin_paid_date" class="form-control" value="{{ now()->toDateString() }}" required>
-                                                                      </div>
-                                                                      <div class="mb-3">
-                                                                        <label>Proof of Payment</label>
-                                                                        <input type="file" name="admin_proof" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
-                                                                      </div>
-                                                                      <div class="mb-3">
-                                                                        <label>Notes (optional)</label>
-                                                                        <textarea name="admin_notes" class="form-control"></textarea>
-                                                                      </div>
-                                                                    </div>
-                                                                    <div class="modal-footer">
-                                                                      <button type="submit" class="btn btn-primary">Submit for Verification</button>
-                                                                    </div>
-                                                                  </form>
-                                                                </div>
-                                                              </div>
-                                                            </div>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
+    {{-- What happens next --}}
+    @if(($pr->status === 'pending_admin_approval' && $user->role === 'admin') || ($pr->status === 'pending' && ($user->hasRole('procurement') || $user->role === 'admin')))
+        <div class="req-callout req-callout--warning mb-4">
+            <div class="req-callout__text">
+                <i class="fas fa-hourglass-half" aria-hidden="true"></i>
+                <div><strong>Waiting for approval.</strong><br>Once approved, the request goes to the supplier for their approval.</div>
+            </div>
+            <div class="d-flex gap-2">
+                <form action="{{ route('purchase-requests.reject', $pr) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Reject this purchase request?')"><i class="fas fa-ban me-1"></i> Reject</button>
+                </form>
+                <form action="{{ route('purchase-requests.approve', $pr) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-success" onclick="return confirm('Approve this purchase request?')"><i class="fas fa-check me-1"></i> Approve</button>
+                </form>
+            </div>
+        </div>
+    @elseif($pr->status === 'pending_supplier_approval')
+        <div class="req-callout req-callout--info mb-4">
+            <div class="req-callout__text">
+                <i class="fas fa-truck" aria-hidden="true"></i>
+                <div>
+                    <strong>Waiting for the supplier.</strong> The admin approved this request
+                    @if($pr->admin_approved_at) on {{ $pr->admin_approved_at->format('M d, Y H:i') }}@endif; the supplier now needs to confirm it.
+                </div>
+            </div>
+            @if($user->hasRole('supplier') && !$pr->supplier_approved && $pr->items->every(fn ($item) => $item->preferred_supplier_id === $user->company?->id))
+                <form action="{{ route('purchase-requests.supplier.approve', $pr) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-success"><i class="fas fa-check me-1"></i> Approve as supplier</button>
+                </form>
+            @endif
+        </div>
+    @elseif($pr->status === 'approved')
+        <div class="req-callout req-callout--success mb-4">
+            <div class="req-callout__text">
+                <i class="fas fa-check-circle" aria-hidden="true"></i>
+                <div>
+                    <strong>Fully approved.</strong>
+                    @if($pr->admin_approved_at) Admin approved {{ $pr->admin_approved_at->format('M d, Y H:i') }}.@endif
+                    @if($pr->supplier_approved_at) Supplier approved {{ $pr->supplier_approved_at->format('M d, Y H:i') }}.@endif
+                    @unless($hasPO) A purchase order can now be created.@endunless
                 </div>
             </div>
         </div>
+    @elseif($rejected)
+        <div class="req-callout req-callout--danger mb-4">
+            <div class="req-callout__text">
+                <i class="fas fa-times-circle" aria-hidden="true"></i>
+                <div><strong>This request was {{ $pr->status }}.</strong> No purchase order will be created from it.</div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Items --}}
+    <div class="card mb-4">
+        <div class="card-header"><h3 class="req-section-title"><i class="fas fa-boxes"></i> Items</h3></div>
+        <div class="table-responsive">
+            <table class="table req-table">
+                <thead>
+                    <tr>
+                        <th>Material</th>
+                        <th>Description</th>
+                        <th class="req-num">Quantity</th>
+                        <th class="req-num">Unit price</th>
+                        <th class="req-num">Amount</th>
+                        <th>Supplier</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($pr->items ?? [] as $item)
+                        @php
+                            $selectedSupplier = null;
+                            $selectedSupplierPrice = null;
+                            foreach ($rfqs as $rfq) {
+                                $material = $rfq->materials->firstWhere('id', $item->material_id);
+                                if ($material && $material->pivot && $material->pivot->selected_supplier_id) {
+                                    $unitPrice = $material->pivot->unit_price ?? null;
+                                    if (!$selectedSupplier || ($unitPrice !== null && ($selectedSupplierPrice === null || $unitPrice < $selectedSupplierPrice))) {
+                                        $selectedSupplier = \App\Models\Supplier::find($material->pivot->selected_supplier_id);
+                                        $selectedSupplierPrice = $unitPrice;
+                                    }
+                                }
+                            }
+                        @endphp
+                        <tr>
+                            <td class="fw-semibold">{{ $item->material?->name ?? '—' }}</td>
+                            <td class="req-wrap">{{ $item->description ?: '—' }}</td>
+                            <td class="req-num">{{ $item->quantity ? number_format($item->quantity, 2) : '—' }} <span class="text-muted">{{ $item->unit }}</span></td>
+                            <td class="req-num">{{ $item->estimated_unit_price ? '₱' . number_format($item->estimated_unit_price, 2) : '—' }}</td>
+                            <td class="req-num">{{ $item->total_amount ? '₱' . number_format($item->total_amount, 2) : '—' }}</td>
+                            <td class="req-wrap">
+                                @if($selectedSupplier)
+                                    {{ $selectedSupplier->company_name }}
+                                    @if($selectedSupplierPrice)<span class="req-sub">Quoted ₱{{ number_format($selectedSupplierPrice, 2) }}</span>@endif
+                                @elseif($item->preferred_supplier_id)
+                                    {{ $item->preferredSupplier?->company_name ?? optional(\App\Models\Supplier::find($item->preferred_supplier_id))->company_name ?? 'Unknown supplier' }}
+                                @else
+                                    <span class="badge bg-warning">No supplier selected</span>
+                                @endif
+                            </td>
+                            <td class="req-wrap">{{ $item->notes ?: '—' }}</td>
+                        </tr>
+                    @empty
+                        <x-empty-row cols="7">No items on this request.</x-empty-row>
+                    @endforelse
+                </tbody>
+                @if($pr->items?->isNotEmpty())
+                    <tfoot>
+                        <tr>
+                            <th colspan="4" class="text-end">Total</th>
+                            <th class="req-num">{{ $pr->total_amount ? '₱' . number_format($pr->total_amount, 2) : '—' }}</th>
+                            <th colspan="2"></th>
+                        </tr>
+                    </tfoot>
+                @endif
+            </table>
+        </div>
     </div>
-@endsection 
+
+    {{-- Purchase orders --}}
+    @if($hasPO)
+        <div class="card mb-4">
+            <div class="card-header"><h3 class="req-section-title"><i class="fas fa-file-invoice-dollar"></i> Purchase orders</h3></div>
+            <div class="table-responsive">
+                <table class="table req-table">
+                    <thead>
+                        <tr>
+                            <th>PO number</th>
+                            <th>Supplier</th>
+                            <th class="req-num">Amount</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Created</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($orders as $po)
+                            @php $poPayment = $po->payments->last(); @endphp
+                            <tr>
+                                <td><a href="{{ route('purchase-orders.show', $po) }}" class="req-ref">{{ $po->po_number }}</a></td>
+                                <td>{{ $po->supplier?->company_name ?? '—' }}</td>
+                                <td class="req-num">{{ $po->total_amount ? '₱' . number_format($po->total_amount, 2) : '—' }}</td>
+                                <td><x-status-badge :status="$po->status" /></td>
+                                <td>
+                                    @if($poPayment)
+                                        <x-status-badge :status="$poPayment->status" />
+                                    @else
+                                        <span class="badge bg-secondary">Unpaid</span>
+                                    @endif
+                                </td>
+                                <td>{{ $po->created_at->format('M d, Y') }}</td>
+                                <td class="text-end">
+                                    <div class="req-actions">
+                                        <a href="{{ route('purchase-orders.show', $po) }}" class="btn btn-sm btn-outline-secondary">View</a>
+                                        @if($user->isAdmin() && (!$poPayment || $poPayment->status === 'rejected'))
+                                            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#submitPaymentModal{{ $po->id }}">Pay</button>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @if($user->isAdmin())
+            @foreach($orders as $po)
+                @php $poPayment = $po->payments->last(); @endphp
+                @if(!$poPayment || $poPayment->status === 'rejected')
+                    <x-modal-dialog id="submitPaymentModal{{ $po->id }}">
+                        <x-slot:title>Pay supplier · {{ $po->po_number }}</x-slot:title>
+                        <form method="POST" action="{{ route('purchase-orders.payments.store', $po) }}" enctype="multipart/form-data">
+                            @csrf
+                            <div class="modal-body">
+                                <div class="row">
+                                    <x-field name="amount" id="amount{{ $po->id }}" type="number" label="Amount (₱)" :value="$po->total_amount" col="md-6" required step="0.01" min="0" />
+                                    <x-field name="payment_method" id="payment_method{{ $po->id }}" label="Payment method" col="md-6" required>
+                                        <select name="payment_method" id="payment_method{{ $po->id }}" class="form-select" required>
+                                            <option value="bank_transfer">Bank transfer</option>
+                                            <option value="check">Check</option>
+                                            <option value="cash">Cash</option>
+                                        </select>
+                                    </x-field>
+                                    <x-field name="admin_reference_number" id="admin_reference_number{{ $po->id }}" label="Reference number" col="md-6" required />
+                                    <x-field name="admin_paid_date" id="admin_paid_date{{ $po->id }}" type="date" label="Date paid" :value="now()->toDateString()" col="md-6" required />
+                                    <x-field name="admin_proof" id="admin_proof{{ $po->id }}" type="file" label="Proof of payment" col="md-12" required accept=".jpg,.jpeg,.png,.pdf" />
+                                    <x-field name="admin_notes" id="admin_notes{{ $po->id }}" type="textarea" label="Notes (optional)" col="md-12" rows="2" />
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-success">Submit for verification</button>
+                            </div>
+                        </form>
+                    </x-modal-dialog>
+                @endif
+            @endforeach
+        @endif
+    @endif
+</div>
+@endsection
+
+@push('styles')
+@vite('resources/css/pages/requests.css')
+@endpush

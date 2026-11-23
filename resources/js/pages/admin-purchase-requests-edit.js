@@ -62,9 +62,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form validation
     document.getElementById('purchaseRequestForm').addEventListener('submit', function(e) {
-        const isProjectRelated = document.getElementById('project_related').checked;
-        const contractId = document.getElementById('contract_id').value;
-        const projectId = document.getElementById('project_id').value;
+        const isProjectRelated = document.getElementById('project_related')?.checked;
+        const contractId = document.querySelector('[name="contract_id"]')?.value;
+        const projectId = document.getElementById('project_id')?.value;
 
         if (isProjectRelated && !contractId && !projectId) {
             e.preventDefault();

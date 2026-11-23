@@ -1,188 +1,105 @@
 @extends('layouts.app')
 
 @section('content')
-<h1 class="h3 mb-4 text-center page-title">Purchase Requests</h1>
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-end align-items-center">
-                    <div class="card-tools">
-                        <a href="{{ route('purchase-requests.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> New Purchase Request
-                        </a>
-                    </div>
-                </div>
-                <div class="card-body">
+<div class="container-fluid req-page">
+    <x-page-header title="Purchase Requests" icon="file-invoice" subtitle="Requests for materials that need to be bought from suppliers.">
+        <a href="{{ route('purchase-requests.create') }}" class="btn btn-success">
+            <i class="fas fa-plus me-1"></i> New Purchase Request
+        </a>
+    </x-page-header>
 
-                    <!-- Statistics Cards -->
-                    <div class="stats-row">
-                        <div class="stats-card bg-info">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="fs-2 fw-bold me-2">{{ $purchaseRequests->where('status', 'pending')->count() }}</span>
-                                <span class="icon"><i class="fas fa-clock"></i></span>
-                            </div>
-                            <div class="fw-semibold">Pending Requests</div>
-                        </div>
-                        <div class="stats-card bg-success">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="fs-2 fw-bold me-2">{{ $purchaseRequests->where('status', 'approved')->count() }}</span>
-                                <span class="icon"><i class="fas fa-check"></i></span>
-                            </div>
-                            <div class="fw-semibold">Approved Requests</div>
-                        </div>
-                        <div class="stats-card bg-warning">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="fs-2 fw-bold me-2">{{ $purchaseRequests->where('status', 'rejected')->count() }}</span>
-                                <span class="icon"><i class="fas fa-times"></i></span>
-                            </div>
-                            <div class="fw-semibold">Rejected Requests</div>
-                        </div>
-                        <div class="stats-card bg-primary">
-                            <div class="d-flex align-items-center mb-2">
-                                <span class="fs-2 fw-bold me-2">{{ $purchaseRequests->where('is_project_related', true)->count() }}</span>
-                                <span class="icon"><i class="fas fa-project-diagram"></i></span>
-                            </div>
-                            <div class="fw-semibold">Project Related</div>
-                        </div>
-                    </div>
+    <x-requests.kpis :filters="App\Models\PurchaseRequest::STATUS_FILTERS" :counts="$counts" route="purchase-requests.index" />
 
-                    <!-- Search and Filter -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <div class="input-group">
-                                <input type="text" id="searchInput" class="form-control" placeholder="Search purchase requests...">
-                                <div class="input-group-append">
-                                    <button class="btn btn-default">
-                                        <i class="fas fa-search"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 text-right">
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-default" data-toggle="dropdown">
-                                    <i class="fas fa-filter"></i> Filter
-                                </button>
-                                <div class="dropdown-menu dropdown-menu-right">
-                                    <a class="dropdown-item" href="{{ route('purchase-requests.index', ['status' => 'pending']) }}">Pending</a>
-                                    <a class="dropdown-item" href="{{ route('purchase-requests.index', ['status' => 'approved']) }}">Approved</a>
-                                    <a class="dropdown-item" href="{{ route('purchase-requests.index', ['status' => 'rejected']) }}">Rejected</a>
-                                    <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item" href="{{ route('purchase-requests.index', ['type' => 'project']) }}">Project Related</a>
-                                    <a class="dropdown-item" href="{{ route('purchase-requests.index', ['type' => 'standalone']) }}">Standalone</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    <div class="card">
+        <x-requests.toolbar route="purchase-requests.index" placeholder="Search by request #, contract or requester"
+            :pills="['type' => ['project' => 'Contract related', 'standalone' => 'Standalone']]" :pill-counts="$typeCounts" />
 
-                    <!-- Purchase Requests Table -->
-                    <div class="table-responsive mb-4">
-                        <table class="table table-hover" id="purchaseRequestsTable">
-                            <thead>
-                                <tr>
-                                    <th>Request #</th>
-                                    <th>Project/Contract</th>
-                                    <th>Requested By</th>
-                                    <th>Total Amount</th>
-                                    <th>Status</th>
-                                    <th>Created Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($purchaseRequests as $request)
-                                <tr>
-                                    <td>{{ $request->request_number }}</td>
-                                    <td>
-                                        @if($request->is_project_related)
-                                            @if($request->contract)
-                                                <a href="{{ route('contracts.show', $request->contract) }}">
-                                                    {{ $request->contract->contract_number ?? '[No Contract Number]' }} - {{ $request->contract->name ?? $request->contract->title ?? '[No Contract Name]' }}
-                                                </a>
-                                            @else
-                                                <span class="text-muted">Project Related</span>
-                                            @endif
-                                        @else
-                                            <span class="text-muted">Standalone</span>
+        <div class="table-responsive">
+            <table class="table table-hover req-table">
+                <thead>
+                    <tr>
+                        <th>Request</th>
+                        <th>Contract</th>
+                        <th>Requested by</th>
+                        <th class="req-num">Items</th>
+                        <th class="req-num">Total</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $canDecide = auth()->user()->hasRole('procurement') || auth()->user()->role === 'admin'; @endphp
+                    @forelse($purchaseRequests as $pr)
+                        <tr>
+                            <td>
+                                <a href="{{ route('purchase-requests.show', $pr) }}" class="req-ref">{{ $pr->request_number }}</a>
+                                <span class="req-sub">{{ $pr->created_at->format('M d, Y') }}</span>
+                            </td>
+                            <td class="req-wrap">
+                                @if($pr->is_project_related && $pr->contract)
+                                    <a href="{{ route('contracts.show', $pr->contract) }}">{{ $pr->contract->contract_number ?? 'Contract' }}</a>
+                                    <span class="req-sub">{{ $pr->contract->title ?? $pr->contract->name ?? '' }}</span>
+                                @elseif($pr->is_project_related)
+                                    <span class="text-muted">Contract related</span>
+                                @else
+                                    <span class="badge bg-light">Standalone</span>
+                                @endif
+                            </td>
+                            <td>{{ $pr->requestedBy?->name ?? '—' }}</td>
+                            <td class="req-num">{{ $pr->items_count }}</td>
+                            <td class="req-num">₱{{ number_format($pr->total_amount, 2) }}</td>
+                            <td><x-status-badge :status="$pr->status" /></td>
+                            <td class="text-end">
+                                <div class="req-actions">
+                                    <a href="{{ route('purchase-requests.show', $pr) }}" class="btn btn-sm btn-outline-secondary req-icon-btn" title="View" aria-label="View {{ $pr->request_number }}">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    @if($pr->status === 'pending')
+                                        <a href="{{ route('purchase-requests.edit', $pr) }}" class="btn btn-sm btn-outline-secondary req-icon-btn" title="Edit" aria-label="Edit {{ $pr->request_number }}">
+                                            <i class="fas fa-pen"></i>
+                                        </a>
+                                        @if($canDecide)
+                                            <form action="{{ route('purchase-requests.approve', $pr) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-outline-success req-icon-btn" title="Approve" aria-label="Approve {{ $pr->request_number }}"
+                                                    onclick="return confirm('Approve purchase request {{ $pr->request_number }}?')">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </form>
+                                            <form action="{{ route('purchase-requests.reject', $pr) }}" method="POST">
+                                                @csrf
+                                                <button type="submit" class="btn btn-sm btn-outline-warning req-icon-btn" title="Reject" aria-label="Reject {{ $pr->request_number }}"
+                                                    onclick="return confirm('Reject purchase request {{ $pr->request_number }}?')">
+                                                    <i class="fas fa-ban"></i>
+                                                </button>
+                                            </form>
                                         @endif
-                                    </td>
-                                    <td>{{ $request->requestedBy->name }}</td>
-                                    <td>{{ number_format($request->total_amount, 2) }}</td>
-                                    <td>
-                                        <x-status-badge :status="$request->status" />
-                                    </td>
-                                    <td>{{ $request->created_at->format('M d, Y') }}</td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <a href="{{ route('purchase-requests.show', $request) }}" class="btn btn-sm btn-info me-1">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            @if($request->status === 'pending')
-                                                <a href="{{ route('purchase-requests.edit', $request) }}" class="btn btn-sm btn-primary me-1">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <form action="{{ route('purchase-requests.destroy', $request) }}" method="POST" class="d-inline me-1">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this request?')">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                            @if($request->status === 'pending' && (auth()->user()->hasRole('procurement') || auth()->user()->role === 'admin'))
-                                                <form action="{{ route('purchase-requests.approve', $request) }}" method="POST" class="d-inline me-1">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm btn-success" {{ $request->status === 'approved' ? 'disabled' : '' }} onclick="return confirm('Are you sure you want to approve this request?')">
-                                                        <i class="fas fa-check"></i>
-                                                    </button>
-                                                </form>
-                                                <form action="{{ route('purchase-requests.reject', $request) }}" method="POST" class="d-inline me-1">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm btn-danger" {{ $request->status === 'rejected' ? 'disabled' : '' }} onclick="return confirm('Are you sure you want to reject this request?')">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div class="mt-4">
-                        {{ $purchaseRequests->links() }}
-                    </div>
-                </div>
-            </div>
+                                        <form action="{{ route('purchase-requests.destroy', $pr) }}" method="POST">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger req-icon-btn" title="Delete" aria-label="Delete {{ $pr->request_number }}"
+                                                onclick="return confirm('Delete purchase request {{ $pr->request_number }}? This cannot be undone.')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <x-empty-row cols="7">No purchase requests match these filters.</x-empty-row>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+
+        @if($purchaseRequests->hasPages())
+            <div class="req-footer">{{ $purchaseRequests->links() }}</div>
+        @endif
     </div>
 </div>
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Search functionality
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        searchInput.addEventListener('keyup', function() {
-            const input = this.value.toLowerCase();
-            const rows = document.querySelectorAll('#purchaseRequestsTable tbody tr');
-            
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(input) ? '' : 'none';
-            });
-        });
-    }
-});
-</script>
-@endpush
+@endsection
 
 @push('styles')
-@vite('resources/css/pages/admin-purchase-requests-index.css')
-@endpush 
-@endsection 
+@vite('resources/css/pages/requests.css')
+@endpush

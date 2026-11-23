@@ -13,10 +13,25 @@ use Illuminate\Support\Facades\Log;
 
 class MaterialRequestController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $materialRequests = MaterialRequest::with(['quotationRequest', 'user'])->latest()->paginate(10);
-        return view('admin.material-requests.index', compact('materialRequests'));
+        $search = trim((string) $request->query('q', ''));
+        $mrId = preg_match('/^(?:MR-?)?(\d+)$/i', $search, $m) ? (int) $m[1] : null;
+
+        $materialRequests = MaterialRequest::with(['contract', 'user'])
+            ->withCount('items')
+            ->inStatusGroup($request->query('status'))
+            ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w
+                ->when($mrId, fn ($x) => $x->where('id', $mrId))
+                ->orWhereHas('contract', fn ($c) => $c->where('contract_number', 'like', "%{$search}%")->orWhere('title', 'like', "%{$search}%"))
+                ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%"))))
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        $counts = MaterialRequest::statusGroupCounts();
+
+        return view('admin.material-requests.index', compact('materialRequests', 'counts'));
     }
 
     public function create(Request $request)

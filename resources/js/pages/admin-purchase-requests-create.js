@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button type="button" class="btn btn-outline-secondary btn-sm replace-material" title="Replace Material">
                                 <i class="fas fa-exchange-alt"></i>
                             </button>
-                            <button type="button" class="btn btn-danger btn-sm remove-row" title="Remove">
+                            <button type="button" class="btn btn-outline-danger btn-sm remove-row" title="Remove">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </td>

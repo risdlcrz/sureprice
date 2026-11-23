@@ -52,6 +52,7 @@ share the same page where they used to have copies; create/edit use one form vie
 | `<x-flash>` | session success/error messages (already in the layout) |
 | `<x-nav-count kind>` | live unread counter in the sidebar |
 | `<x-messages.new-message-modal>` | compose-message modal |
+| `<x-address-fields :street :barangay :city :state :postal>` | PH address: Region → Province → City → Barangay dropdowns + street/ZIP (data in `public/data/ph-address`, rebuilt by `node scripts/build-ph-address.mjs`) |
 
 **Design system** — `resources/css/app-layout.css` holds the tokens (`--sp-*`: brand greens, neutrals, radii,
 shadows), the app shell (sidebar, mobile drawer) and the Bootstrap component layer (cards, tables, buttons, forms,

@@ -42,11 +42,10 @@
                     <legend class="h6 text-muted">Contractor details</legend>
                     <x-field name="company_name" label="Company Name (optional)" :value="$e?->company_name" col="md-6" />
                     <x-field name="phone" label="Phone Number" :value="$e?->phone" col="md-6" data-contractor-required />
-                    <x-field name="street" label="Street Address" :value="$e?->street" col="md-6" data-contractor-required />
-                    <x-field name="barangay" label="Barangay" :value="$e?->barangay" col="md-6" data-contractor-required />
-                    <x-field name="city" label="City/Municipality" :value="$e?->city" col="md-4" data-contractor-required />
-                    <x-field name="state" label="Province/State" :value="$e?->state" col="md-4" data-contractor-required />
-                    <x-field name="postal" label="Postal Code" :value="$e?->postal" col="md-4" data-contractor-required />
+                    <div class="col-12">
+                        {{-- required is toggled with the role by admin-employees-form.js --}}
+                        <x-address-fields :street="$e?->street" :barangay="$e?->barangay" :city="$e?->city" :state="$e?->state" :postal="$e?->postal" :required="false" />
+                    </div>
                 </fieldset>
 
                 <div class="d-flex justify-content-end gap-2">

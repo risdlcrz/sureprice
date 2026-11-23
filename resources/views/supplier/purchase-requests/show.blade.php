@@ -1,160 +1,107 @@
 @extends('layouts.app')
 
+@php
+    $pr = $purchaseRequest;
+    $itemCount = $pr->items?->count() ?? 0;
+@endphp
+
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Purchase Request Details</h3>
+<div class="container-fluid req-page">
+    <x-page-header title="Purchase Request" icon="file-invoice">
+        <a href="{{ route('supplier.purchase-requests.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Back</a>
+    </x-page-header>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="req-hero mb-4">
+                <div>
+                    <div class="req-hero__ref">Purchase request</div>
+                    <h2 class="req-hero__title">{{ $pr->request_number }} <x-status-badge :status="$pr->status" /></h2>
                 </div>
-                <div class="card-body">
-                    <!-- Request Information -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <h4>Request Information</h4>
-                            <table class="table table-bordered">
-                                <tr>
-                                    <th style="width: 200px;">Request Number</th>
-                                    <td>{{ $purchaseRequest->request_number }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Status</th>
-                                    <td>
-                                        @php
-                                            $statusColors = [
-                                                'pending' => 'warning',
-                                                'pending_admin_approval' => 'warning',
-                                                'pending_supplier_approval' => 'info',
-                                                'approved' => 'success',
-                                                'rejected' => 'danger',
-                                                'cancelled' => 'secondary'
-                                            ];
-                                            $statusColor = $statusColors[$purchaseRequest->status] ?? 'secondary';
-                                        @endphp
-                                        <x-status-badge :status="$purchaseRequest->status" />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Requested By</th>
-                                    <td>{{ $purchaseRequest->requestedBy?->name ?? 'N/A' }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Created Date</th>
-                                    <td>{{ $purchaseRequest->created_at->format('M d, Y H:i') }}</td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <h4>Financial Summary</h4>
-                            <table class="table table-bordered">
-                                <tr>
-                                    <th style="width: 200px;">Total Amount</th>
-                                    <td class="text-right">{{ $purchaseRequest->total_amount ? number_format($purchaseRequest->total_amount, 2) : 'N/A' }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Number of Items</th>
-                                    <td class="text-right">{{ $purchaseRequest->items?->count() ?? 0 }}</td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Request Items -->
-                    <div class="row">
-                        <div class="col-12">
-                            <h4>Request Items</h4>
-                            <div class="table-responsive">
-                                <table class="table table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>Material</th>
-                                            <th>Description</th>
-                                            <th>Quantity</th>
-                                            <th>Unit</th>
-                                            <th>Notes</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($purchaseRequest->items as $item)
-                                            <tr>
-                                                <td>{{ $item->material?->name ?? 'N/A' }}</td>
-                                                <td>{{ $item->description }}</td>
-                                                <td class="text-right">{{ $item->quantity ? number_format($item->quantity, 2) : 'N/A' }}</td>
-                                                <td>{{ $item->unit }}</td>
-                                                <td>{{ $item->notes ?? 'N/A' }}</td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Supplier Approval Section -->
-                    @if($purchaseRequest->status === 'pending_supplier_approval')
-                        <div class="card mt-4">
-                            <div class="card-header">
-                                <h4 class="card-title">Approval Actions</h4>
-                            </div>
-                            <div class="card-body">
-                                @if(!$purchaseRequest->supplier_approved)
-                                    <p class="text-info mb-3">
-                                        <i class="fas fa-info-circle"></i> 
-                                        This purchase request has been approved by admin and is now pending your approval.
-                                    </p>
-                                    @if($purchaseRequest->admin_approved_at)
-                                        <p class="text-success mb-3">
-                                            <i class="fas fa-check-circle"></i> 
-                                            Approved by admin on {{ $purchaseRequest->admin_approved_at->format('M d, Y H:i') }}
-                                        </p>
-                                    @endif
-                                    <form action="{{ route('supplier.purchase-requests.approve', $purchaseRequest) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to approve this request?')">
-                                            <i class="fas fa-check"></i> Approve Request
-                                        </button>
-                                    </form>
-                                @else
-                                    <p class="text-success">
-                                        <i class="fas fa-check-circle"></i> 
-                                        You have approved this request on {{ $purchaseRequest->supplier_approved_at->format('M d, Y H:i') }}.
-                                    </p>
-                                @endif
-                            </div>
-                        </div>
-                    @elseif($purchaseRequest->status === 'approved')
-                        <div class="card mt-4">
-                            <div class="card-header">
-                                <h4 class="card-title">Approval Status</h4>
-                            </div>
-                            <div class="card-body">
-                                <p class="text-success">
-                                    <i class="fas fa-check-circle"></i> 
-                                    This purchase request has been fully approved and is ready for purchase order creation.
-                                </p>
-                                @if($purchaseRequest->supplier_approved_at)
-                                    <p>You approved on: {{ $purchaseRequest->supplier_approved_at->format('M d, Y H:i') }}</p>
-                                @endif
-                            </div>
-                        </div>
-                    @elseif($purchaseRequest->status === 'pending_admin_approval')
-                        <div class="card mt-4">
-                            <div class="card-header">
-                                <h4 class="card-title">Status Information</h4>
-                            </div>
-                            <div class="card-body">
-                                <p class="text-warning">
-                                    <i class="fas fa-clock"></i> 
-                                    This purchase request is pending admin approval.
-                                </p>
-                            </div>
-                        </div>
-                    @endif
-
+                <div class="req-hero__amount">
+                    <strong>{{ $pr->total_amount ? '₱' . number_format($pr->total_amount, 2) : '—' }}</strong>
+                    <span>{{ $itemCount }} {{ Str::plural('item', $itemCount) }} · estimated total</span>
                 </div>
             </div>
+            <dl class="req-meta">
+                <div><dt>Requested by</dt><dd>{{ $pr->requestedBy?->name ?? '—' }}</dd></div>
+                <div><dt>Created</dt><dd>{{ $pr->created_at->format('M d, Y H:i') }}</dd></div>
+                @if($pr->admin_approved_at)
+                    <div><dt>Admin approved</dt><dd>{{ $pr->admin_approved_at->format('M d, Y H:i') }}</dd></div>
+                @endif
+                @if($pr->supplier_approved_at)
+                    <div><dt>You approved</dt><dd>{{ $pr->supplier_approved_at->format('M d, Y H:i') }}</dd></div>
+                @endif
+            </dl>
+        </div>
+    </div>
+
+    @if($pr->status === 'pending_supplier_approval')
+        @if(!$pr->supplier_approved)
+            <div class="req-callout req-callout--warning mb-4">
+                <div class="req-callout__text">
+                    <i class="fas fa-hourglass-half" aria-hidden="true"></i>
+                    <div><strong>Waiting for your approval.</strong><br>The admin has approved this request. Confirm you can supply the items below so a purchase order can be issued.</div>
+                </div>
+                <form action="{{ route('supplier.purchase-requests.approve', $pr) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn btn-success" onclick="return confirm('Approve this purchase request?')"><i class="fas fa-check me-1"></i> Approve request</button>
+                </form>
+            </div>
+        @else
+            <div class="req-callout req-callout--success mb-4">
+                <div class="req-callout__text">
+                    <i class="fas fa-check-circle" aria-hidden="true"></i>
+                    <div><strong>You approved this request</strong>@if($pr->supplier_approved_at) on {{ $pr->supplier_approved_at->format('M d, Y H:i') }}@endif.</div>
+                </div>
+            </div>
+        @endif
+    @elseif($pr->status === 'approved')
+        <div class="req-callout req-callout--success mb-4">
+            <div class="req-callout__text">
+                <i class="fas fa-check-circle" aria-hidden="true"></i>
+                <div><strong>Fully approved.</strong> This request is ready for a purchase order.</div>
+            </div>
+        </div>
+    @elseif($pr->status === 'pending_admin_approval')
+        <div class="req-callout req-callout--info mb-4">
+            <div class="req-callout__text">
+                <i class="fas fa-clock" aria-hidden="true"></i>
+                <div><strong>Pending admin approval.</strong> You'll be able to approve it once the admin has.</div>
+            </div>
+        </div>
+    @endif
+
+    <div class="card">
+        <div class="card-header"><h3 class="req-section-title"><i class="fas fa-boxes"></i> Items</h3></div>
+        <div class="table-responsive">
+            <table class="table req-table">
+                <thead>
+                    <tr>
+                        <th>Material</th>
+                        <th>Description</th>
+                        <th class="req-num">Quantity</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($pr->items as $item)
+                        <tr>
+                            <td class="fw-semibold">{{ $item->material?->name ?? '—' }}</td>
+                            <td class="req-wrap">{{ $item->description ?: '—' }}</td>
+                            <td class="req-num">{{ $item->quantity ? number_format($item->quantity, 2) : '—' }} <span class="text-muted">{{ $item->unit }}</span></td>
+                            <td class="req-wrap">{{ $item->notes ?: '—' }}</td>
+                        </tr>
+                    @empty
+                        <x-empty-row cols="4">No items on this request.</x-empty-row>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
-@endsection 
+@endsection
+
+@push('styles')
+@vite('resources/css/pages/requests.css')
+@endpush

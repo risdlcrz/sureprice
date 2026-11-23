@@ -50,10 +50,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         </select>
                     </td>
                     <td>
-                        <button type="button" class="btn btn-info btn-sm recommend-supplier-btn" data-material-id="" data-material-name="">\
+                        <button type="button" class="btn btn-outline-success btn-sm recommend-supplier-btn" data-material-id="" data-material-name="">\
                             <i class="fas fa-lightbulb"></i> Recommend Supplier
                         </button>
-                        <button type="button" class="btn btn-danger btn-sm remove-row" title="Remove"><i class="fas fa-trash"></i></button>
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-row" title="Remove"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
             `;

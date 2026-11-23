@@ -1,61 +1,61 @@
 @extends('layouts.app')
 
-@push('styles')
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-@vite('resources/css/pages/warehouse-material-requests.css')
-@endpush
-
 @section('content')
-<div class="container py-4">
-    <h1 class="h3 mb-4 text-center page-title">Material Requests - Approval</h1>
+<div class="container-fluid req-page">
+    <x-page-header title="Material Requests" icon="dolly" subtitle="Approve requests to release the materials from stock." />
+
     <div class="card">
-        <div class="card-body">
-            <table class="table table-hover">
+        <div class="table-responsive">
+            <table class="table table-hover req-table">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>Request</th>
                         <th>Contract</th>
-                        <th>Requested By</th>
+                        <th>Requested by</th>
                         <th>Status</th>
-                        <th>Requested At</th>
-                        <th>Actions</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($materialRequests as $request)
+                    @forelse($materialRequests as $mr)
                         <tr>
-                            <td>{{ $request->id }}</td>
-                            <td>{{ $request->quotationRequest->user->name ?? '-' }}</td>
-                            <td>{{ $request->requestedBy->name ?? $request->user->name ?? '-' }}</td>
                             <td>
-                                <x-status-badge :status="$request->status" />
+                                <a href="{{ route('warehouse.material-requests.show', $mr) }}" class="req-ref">MR-{{ $mr->id }}</a>
+                                <span class="req-sub">{{ $mr->created_at->format('M d, Y H:i') }}</span>
                             </td>
-                            <td>{{ $request->created_at->format('M d, Y H:i') }}</td>
                             <td>
-                                <a href="{{ route('warehouse.material-requests.show', $request) }}" class="btn btn-info btn-sm">
-                                    <i class="fas fa-eye"></i> View
-                                </a>
-                                @if($request->status === 'pending')
-                                <form action="{{ route('warehouse.material-requests.approve', $request) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Approve this material request?')">
-                                        <i class="fas fa-check"></i> Approve
-                                    </button>
-                                </form>
-                                @else
-                                    <span class="text-success">Approved</span>
-                                @endif
+                                {{ $mr->contract->contract_number ?? '—' }}
+                                @if($mr->contract?->title)<span class="req-sub">{{ $mr->contract->title }}</span>@endif
+                            </td>
+                            <td>{{ $mr->requestedBy->name ?? $mr->user->name ?? '—' }}</td>
+                            <td><x-status-badge :status="$mr->status" /></td>
+                            <td class="text-end">
+                                <div class="req-actions">
+                                    <a href="{{ route('warehouse.material-requests.show', $mr) }}" class="btn btn-sm btn-outline-secondary">View</a>
+                                    @if($mr->status === 'pending')
+                                        <form action="{{ route('warehouse.material-requests.approve', $mr) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Approve material request MR-{{ $mr->id }}?')">
+                                                <i class="fas fa-check me-1"></i> Approve
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty
-                        <x-empty-row cols="6">No material requests found.</x-empty-row>
+                        <x-empty-row cols="5">No material requests found.</x-empty-row>
                     @endforelse
                 </tbody>
             </table>
-            <div class="mt-3">
-                {{ $materialRequests->links() }}
-            </div>
         </div>
+        @if($materialRequests->hasPages())
+            <div class="req-footer">{{ $materialRequests->links() }}</div>
+        @endif
     </div>
 </div>
-@endsection 
+@endsection
+
+@push('styles')
+@vite('resources/css/pages/requests.css')
+@endpush

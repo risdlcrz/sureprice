@@ -1,584 +1,307 @@
+@php
+    use App\Models\Company;
+
+    $steps = [
+        'type' => ['Account type', 'bi-person-badge'],
+        'login' => ['Login & contact', 'bi-person-lock'],
+        'business' => ['Business', 'bi-briefcase'],
+        'address' => ['Address', 'bi-geo-alt'],
+        'documents' => ['Documents', 'bi-file-earmark-arrow-up'],
+        'review' => ['Review', 'bi-check2-square'],
+    ];
+    $role = old('designation');
+    $clientType = old('client_type');
+    $file = fn ($name) => 'form-control' . ($errors->has($name) ? ' is-invalid' : '');
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign Up - GDC Admin Center</title>
-  @vite(['resources/css/signup.css', 'resources/js/signup-alert.js'])
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  @vite('resources/css/auth-register.css')
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create an account - GDC Admin Center</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    @vite('resources/css/pages/auth-register.css')
 </head>
-<body style="--signup-bg: url('{{ asset('images/signupimage.png') }}')">
+<body class="register-page">
 
-  <!-- Notification System -->
-  @if (session('success'))
-    <div class="notification success">
-      <div class="notification-content">
-        <i class="fas fa-check-circle"></i>
-        <span>{{ session('success') }}</span>
-      </div>
-      <div class="progress-bar"></div>
+<header class="register-header">
+    <a href="{{ route('login.form') }}" class="register-header__brand">
+        <img src="{{ asset('images/gdc_logo.png') }}" alt="GDC logo">
+        <span>GDC Admin Center</span>
+    </a>
+    <span class="register-header__login d-none d-sm-inline">Already registered? <a href="{{ route('login.form') }}">Log in</a></span>
+</header>
+
+<main class="register-main">
+    <div class="register-intro">
+        <h1>Create your account</h1>
+        <p>Register as a client or supplier. An administrator reviews every new account &mdash; we&rsquo;ll email you once yours is approved.</p>
     </div>
-  @endif
 
-  @if ($errors->any())
-    <div class="notification error">
-      <div class="notification-content">
-        <i class="fas fa-exclamation-circle"></i>
-        <span>Registration failed. Please check the form for errors.</span>
-        <ul style="margin: 0 0 0 1.5rem; padding: 0;">
-          @foreach ($errors->all() as $error)
-            <li>{{ $error }}</li>
-          @endforeach
-        </ul>
-      </div>
-      <div class="progress-bar"></div>
-    </div>
-  @endif
+    <ol class="register-steps" id="registerSteps" aria-label="Registration steps">
+        @foreach($steps as $key => [$label, $icon])
+            <li class="register-steps__item" data-step-link="{{ $key }}">
+                <span class="register-steps__dot"><i class="bi {{ $icon }}" aria-hidden="true"></i></span>
+                <span class="register-steps__label">{{ $label }}</span>
+            </li>
+        @endforeach
+    </ol>
 
-  <!-- Top Navigation -->
-  <div class="top-bar">
-    <img src="{{ asset('images/gdc_logo.png') }}" alt="GDC Logo">
-    <span class="top-title">GDC Admin Center</span>
-  </div>
-
-    <!-- Company Sign Up Form -->
-        <div class="signup-box" id="company-form">
-      <div class="form-header">
-        <h2><i class="fas fa-building"></i> Company Registration</h2>
-      <div class="approval-warning" id="approvalNotice" style="margin: 0.5rem 0 0 0; background: #e8f5e9; color: #256029; border: 1px solid #b2dfdb; border-radius: 6px; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; position: relative;">
-        <i class="fas fa-info-circle" style="font-size: 1.2rem;"></i>
-        <span style="flex:1"><strong>Notice:</strong> All client and supplier accounts must be reviewed and approved by an administrator before you can access the system. You will receive an email once your account is approved.</span>
-        <button type="button" aria-label="Dismiss notice" onclick="document.getElementById('approvalNotice').style.display='none'" style="background: none; border: none; color: #256029; font-size: 1.2rem; cursor: pointer; position: absolute; top: 8px; right: 12px; line-height: 1;">&times;</button>
-      </div>
-      
-      <!-- Dynamic file upload requirements notice -->
-      <div class="file-requirements-notice" id="fileRequirementsNotice" style="display: none;">
-        <i class="fas fa-info-circle"></i>
-        <span id="fileRequirementsText"></span>
-      </div>
-      </div>
-      
-      <!-- Enhanced error display -->
-      @if($errors->any())
-      <div class="alert alert-danger">
-          <h4><i class="fas fa-exclamation-triangle"></i> Registration Error</h4>
-          
-          <!-- Check for duplicate errors specifically -->
-          @php
-            $duplicateErrors = collect($errors->all())->filter(function($error) {
-                return str_contains(strtolower($error), 'already been taken') || 
-                       str_contains(strtolower($error), 'duplicate') ||
-                       str_contains(strtolower($error), 'unique');
-            });
-          @endphp
-          
-          @if($duplicateErrors->count() > 0)
-            <div class="duplicate-error">
-              <strong><i class="fas fa-exclamation-triangle"></i> Duplicate Registration Detected</strong><br>
-              The following information is already registered in our system:
-              <ul>
-                @foreach($duplicateErrors as $error)
-                  <li>{{ $error }}</li>
-                @endforeach
-              </ul>
-              <small>If you believe this is an error, please contact support or try using different information.</small>
-            </div>
-          @endif
-          
-          <ul>
-              @foreach($errors->all() as $error)
-                  @if(!str_contains(strtolower($error), 'already been taken') && 
-                      !str_contains(strtolower($error), 'duplicate') &&
-                      !str_contains(strtolower($error), 'unique'))
-                      <li>{{ $error }}</li>
-                  @endif
-              @endforeach
-          </ul>
-      </div>
-      @endif
-      
-      <form method="POST" action="{{ route('register.company') }}" enctype="multipart/form-data" id="registrationForm">
-        @csrf
-        <input type="hidden" name="type" value="company">
-
-      <!-- Company Role Section (moved to top) -->
-      <div class="form-section">
-        <div class="form-group @error('designation') has-error @enderror">
-          <label for="designation">Company Role <span class="text-danger">*</span></label>
-          <div class="select-with-icon">
-            <i class="fas fa-user-tag"></i>
-            <select id="designation" name="designation" required>
-              <option value="">Select company role</option>
-              <option value="client" {{ old('designation') == 'client' ? 'selected' : '' }}>Client</option>
-              <option value="supplier" {{ old('designation') == 'supplier' ? 'selected' : '' }}>Supplier</option>
-            </select>
-          </div>
-          @error('designation')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-        </div>
-
-        <!-- Client Type Dropdown (only if Client is selected) -->
-        <div class="form-group" id="client_type_group" style="display:none;">
-          <label for="client_type">Are you registering as an Individual or a Company? <span class="text-danger">*</span></label>
-          <div class="select-with-icon">
-            <i class="fas fa-user"></i>
-            <select id="client_type" name="client_type">
-              <option value="">Select type</option>
-              <option value="individual" {{ old('client_type') == 'individual' ? 'selected' : '' }}>Individual</option>
-              <option value="company" {{ old('client_type') == 'company' ? 'selected' : '' }}>Company</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-        <!-- Account Information Section -->
-        <div class="form-section">
-          <h3><i class="fas fa-user-circle"></i> Account Information</h3>
-          
-          <div class="form-row">
-            <div class="form-group @error('username') has-error @enderror">
-              <label for="company_username">Username <span class="text-danger">*</span></label>
-              <div class="input-with-icon">
-                <i class="fas fa-at"></i>
-                <input type="text" id="company_username" name="username" value="{{ old('username') }}" placeholder="Choose a username" required />
-              </div>
-              @error('username')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-            </div>
-            
-            <div class="form-group @error('password') has-error @enderror">
-              <label for="company_password">Password <span class="text-danger">*</span></label>
-              <div class="input-with-icon">
-                <i class="fas fa-lock"></i>
-                <input type="password" id="company_password" name="password" placeholder="Create a password" required />
-              </div>
-              @error('password')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-            </div>
-            
-            <div class="form-group @error('password_confirmation') has-error @enderror">
-              <label for="company_password_confirmation">Confirm Password <span class="text-danger">*</span></label>
-              <div class="input-with-icon">
-                <i class="fas fa-lock"></i>
-                <input type="password" id="company_password_confirmation" name="password_confirmation" placeholder="Confirm your password" required />
-              </div>
-              @error('password_confirmation')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-            </div>
-          </div>
-        </div>
-
-        <!-- Basic Information Section -->
-        <div class="form-section">
-          <h3><i class="fas fa-info-circle"></i> Basic Information</h3>
-          
-        <div class="form-group @error('company_name') has-error @enderror" id="company_name_group">
-            <label for="company_name">Company Name <span class="text-danger" id="company_name_required">*</span></label>
-            <div class="input-with-icon">
-              <i class="fas fa-building"></i>
-            <input type="text" id="company_name" name="company_name" value="{{ old('company_name') }}" placeholder="Enter company name" />
-            </div>
-            @error('company_name')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-          </div>
-          
-          <div class="form-row">
-            <div class="form-group @error('supplier_type') has-error @enderror">
-              <label for="supplier_type">Type of Company <span class="text-danger">*</span></label>
-                @php
-                    $company_types = [
-                        'Construction & Engineering',
-                        'Architecture & Design',
-                        'Real Estate & Property Development',
-                        'Manufacturing',
-                        'Wholesale & Distribution',
-                        'Retail & E-Commerce',
-                        'Information Technology & Software',
-                        'Telecommunications',
-                        'Healthcare & Medical',
-                        'Logistics & Transportation',
-                        'Energy & Utilities',
-                        'Financial Services',
-                        'Legal & Compliance',
-                        'Education & Training',
-                        'Marketing & Advertising',
-                        'Hospitality & Tourism',
-                        'Government & Public Sector',
-                        'Nonprofit / NGO',
-                        'Other'
-                    ];
-                @endphp
-              <div class="select-with-icon">
-                <i class="fas fa-tag"></i>
-                <select id="supplier_type" name="supplier_type" required>
-                  <option value="">Select company type</option>
-                    @foreach($company_types as $type)
-                        <option value="{{ $type }}" {{ old('supplier_type') == $type ? 'selected' : '' }}>{{ $type }}</option>
+    <div class="register-card">
+        @if (session('success'))
+            <div class="alert alert-success d-flex gap-2" role="alert"><i class="bi bi-check-circle-fill"></i><span>{{ session('success') }}</span></div>
+        @endif
+        @if ($errors->any())
+            <div class="alert alert-danger" role="alert">
+                <div class="fw-semibold mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Please fix the following:</div>
+                <ul class="mb-0 ps-3">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
                     @endforeach
-                </select>
-              </div>
-              @error('supplier_type')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
+                </ul>
             </div>
-            
-            <div class="form-group @error('other_supplier_type') has-error @enderror" id="other_supplier_type_group" style="{{ old('supplier_type') == 'Other' ? 'display:block' : 'display:none' }}">
-              <label for="other_supplier_type">Specify Type</label>
-              <div class="input-with-icon">
-                <i class="fas fa-pen"></i>
-                <input type="text" id="other_supplier_type" name="other_supplier_type" value="{{ old('other_supplier_type') }}" placeholder="Please specify company type" />
-              </div>
-              @error('other_supplier_type')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-            </div>
-          </div>
-          
-        <div class="form-group file-upload-group @error('dti_sec_registration') has-error @enderror" id="dti_sec_registration_group">
-          <label for="dti_sec_registration">DTI/SEC Registration <span class="text-danger" id="dti_required_star">*</span> <span id="dti_optional_text" class="optional-text" style="display:none;">(Optional for clients)</span></label>
-            <div class="file-upload-wrapper">
-              <label class="file-upload-label" for="dti_sec_registration">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <span class="file-upload-text">Choose file (PDF, JPG, PNG)</span>
-                <input type="file" id="dti_sec_registration" name="dti_sec_registration" accept=".pdf,.jpg,.png" class="visually-hidden-file" />
-              </label>
-              <div class="file-preview" id="dti_sec_preview"></div>
-            </div>
-            @error('dti_sec_registration')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-          </div>
-        </div>
+        @endif
 
-<!-- Contact Details Section -->
-<div class="form-section">
-  <h3><i class="fas fa-address-book"></i> Contact Details</h3>
-  
-  <div class="form-group @error('contact_person') has-error @enderror">
-    <label for="contact_person">Contact Person <span class="text-danger">*</span></label>
-    <div class="input-with-icon">
-      <i class="fas fa-user"></i>
-      <input type="text" id="contact_person" name="contact_person" value="{{ old('contact_person') }}" placeholder="Full name of contact person" required />
-    </div>
-    @error('contact_person')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-  </div>
-  
-  <div class="form-group @error('email') has-error @enderror">
-    <label for="company_email">Email Address <span class="text-danger">*</span></label>
-    <div class="input-with-icon">
-      <i class="fas fa-envelope"></i>
-      <input type="email" id="company_email" name="email" value="{{ old('email') }}" placeholder="company.email@example.com" required />
-    </div>
-    @error('email')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-  </div>
-  
-  <div class="form-row">
-    <div class="form-group @error('mobile_number') has-error @enderror">
-      <label for="mobile_number">Mobile Number <span class="text-danger">*</span></label>
-      <div class="input-with-icon">
-        <i class="fas fa-mobile-alt"></i>
-        <input type="text" id="mobile_number" name="mobile_number" value="{{ old('mobile_number') }}" placeholder="e.g. 09123456789" required />
-      </div>
-      @error('mobile_number')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-    </div>
-    
-    <div class="form-group @error('telephone_number') has-error @enderror">
-      <label for="telephone_number">Telephone Number</label>
-      <div class="input-with-icon">
-        <i class="fas fa-phone"></i>
-        <input type="text" id="telephone_number" name="telephone_number" value="{{ old('telephone_number') }}" placeholder="e.g. 8123456" />
-      </div>
-      @error('telephone_number')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-    </div>
-  </div>
-  
-  <div class="form-group @error('street') has-error @enderror">
-    <label for="street">Street Address <span class="text-danger">*</span></label>
-    <div class="input-with-icon">
-      <i class="fas fa-map-marker-alt"></i>
-      <input type="text" id="street" name="street" value="{{ old('street') }}" placeholder="Building/Street name" required />
-    </div>
-    @error('street')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-  </div>
-  
-  <div class="form-group @error('barangay') has-error @enderror">
-    <label for="barangay">Barangay <span class="text-danger">*</span></label>
-    <div class="input-with-icon">
-      <i class="fas fa-map-marker-alt"></i>
-      <input type="text" id="barangay" name="barangay" value="{{ old('barangay') }}" placeholder="Barangay name" required />
-    </div>
-    @error('barangay')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-  </div>
+        <form method="POST" action="{{ route('register.company') }}" enctype="multipart/form-data" id="registrationForm" novalidate>
+            @csrf
+            <input type="hidden" name="type" value="company">
 
-  <div class="form-row">
-    <div class="form-group @error('city') has-error @enderror">
-      <label for="city">City/Municipality <span class="text-danger">*</span></label>
-      <div class="input-with-icon">
-        <i class="fas fa-city"></i>
-        <input type="text" id="city" name="city" value="{{ old('city') }}" placeholder="City name" required />
-      </div>
-      @error('city')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-    </div>
-    
-    <div class="form-group @error('state') has-error @enderror">
-      <label for="province">Province <span class="text-danger">*</span></label>
-      <div class="input-with-icon">
-        <i class="fas fa-map"></i>
-        <input type="text" id="province" name="state" value="{{ old('state') }}" placeholder="Province name" required />
-      </div>
-      @error('state')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-    </div>
-    
-    <div class="form-group @error('postal') has-error @enderror">
-      <label for="zip_code">ZIP Code <span class="text-danger">*</span></label>
-      <div class="input-with-icon">
-        <i class="fas fa-mail-bulk"></i>
-        <input type="text" id="zip_code" name="postal" value="{{ old('postal') }}" placeholder="e.g. 1000" required />
-      </div>
-      @error('postal')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-    </div>
-  </div>
-</div>
+            {{-- 1. Account type --}}
+            <section class="register-step" data-step="type">
+                <h2 class="register-step__title">How will you use SurePrice?</h2>
+                <div class="choice-grid @error('designation') is-invalid @enderror" role="radiogroup" aria-label="Account type">
+                    <label class="choice-card">
+                        <input type="radio" name="designation" value="client" required @checked($role === 'client')>
+                        <span class="choice-card__body">
+                            <i class="bi bi-house-door choice-card__icon" aria-hidden="true"></i>
+                            <span class="choice-card__title">Client</span>
+                            <span class="choice-card__text">I want to request quotations and manage construction projects.</span>
+                        </span>
+                    </label>
+                    <label class="choice-card">
+                        <input type="radio" name="designation" value="supplier" required @checked($role === 'supplier')>
+                        <span class="choice-card__body">
+                            <i class="bi bi-truck choice-card__icon" aria-hidden="true"></i>
+                            <span class="choice-card__title">Supplier</span>
+                            <span class="choice-card__text">I supply materials or services and want to receive purchase requests.</span>
+                        </span>
+                    </label>
+                </div>
+                @error('designation')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
 
-<!-- Business Details Section -->
-<div class="form-section">
-  <h3><i class="fas fa-briefcase"></i> Business Details</h3>
-  
-  <div class="form-group @error('years_operation') has-error @enderror">
-    <label for="years_operation">Years in Operation</label>
-    <div class="input-with-icon">
-      <i class="fas fa-calendar-alt"></i>
-      <input type="number" id="years_operation" name="years_operation" value="{{ old('years_operation') }}" placeholder="Number of years" min="0" />
-    </div>
-    @error('years_operation')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-  </div>
-  
-  <div class="form-group @error('primary_products_services') has-error @enderror">
-    <label for="primary_products_services">Primary Products/Services</label>
-    <div class="input-with-icon">
-      <i class="fas fa-box"></i>
-      <textarea id="primary_products_services" name="primary_products_services" placeholder="List your primary products or services (e.g., Cement, Gravel, Scaffolding Rental, Skilled Labor, etc.)" rows="4">{{ old('primary_products_services') }}</textarea>
-    </div>
-    @error('primary_products_services')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-  </div>
-  
-  <div class="form-group @error('service_areas') has-error @enderror">
-    <label for="service_areas">Areas of Operation</label>
-    <div class="input-with-icon">
-      <i class="fas fa-map-marked-alt"></i>
-      <textarea id="service_areas" name="service_areas" placeholder="List the areas where you operate">{{ old('service_areas') }}</textarea>
-    </div>
-    @error('service_areas')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-  </div>
-  
-  <div class="form-group @error('business_size') has-error @enderror">
-    <label for="business_size">Business Size</label>
-    <div class="select-with-icon">
-      <i class="fas fa-chart-bar"></i>
-      <select id="business_size" name="business_size">
-        <option value="">Select business size</option>
-        <option value="Solo" {{ old('business_size') == 'Solo' ? 'selected' : '' }}>Solo</option>
-        <option value="Small Enterprise" {{ old('business_size') == 'Small Enterprise' ? 'selected' : '' }}>Small Enterprise</option>
-        <option value="Medium" {{ old('business_size') == 'Medium' ? 'selected' : '' }}>Medium</option>
-        <option value="Large" {{ old('business_size') == 'Large' ? 'selected' : '' }}>Large</option>
-      </select>
-    </div>
-    @error('business_size')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-  </div>
-  
-  <div class="form-group file-upload-group @error('accreditations_certifications') has-error @enderror">
-    <label for="accreditations_certifications">Accreditations/Certifications</label>
-    <div class="file-upload-wrapper">
-      <label class="file-upload-label" for="accreditations_certifications">
-        <i class="fas fa-cloud-upload-alt"></i>
-        <span class="file-upload-text">Choose file (PDF, JPG, PNG)</span>
-        <input type="file" id="accreditations_certifications" name="accreditations_certifications" accept=".pdf,.jpg,.png" class="visually-hidden-file" />
-      </label>
-      <div class="file-preview" id="accreditations_preview"></div>
-    </div>
-    @error('accreditations_certifications')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-  </div>
-</div>
+                <div class="mt-4" data-when="client">
+                    <h3 class="register-step__subtitle">Are you registering as an individual or a company?</h3>
+                    <div class="choice-grid choice-grid--compact" role="radiogroup" aria-label="Client type">
+                        <label class="choice-card">
+                            <input type="radio" name="client_type" value="individual" data-required-when="client" @checked($clientType === 'individual')>
+                            <span class="choice-card__body">
+                                <i class="bi bi-person choice-card__icon" aria-hidden="true"></i>
+                                <span class="choice-card__title">Individual</span>
+                            </span>
+                        </label>
+                        <label class="choice-card">
+                            <input type="radio" name="client_type" value="company" data-required-when="client" @checked($clientType === 'company')>
+                            <span class="choice-card__body">
+                                <i class="bi bi-building choice-card__icon" aria-hidden="true"></i>
+                                <span class="choice-card__title">Company</span>
+                            </span>
+                        </label>
+                    </div>
+                    @error('client_type')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                </div>
 
-<!-- Pricing & Terms Section -->
-<div class="form-section">
-  <h3><i class="fas fa-file-invoice-dollar"></i> Pricing & Terms</h3>
-  
-  <div class="form-group @error('payment_terms') has-error @enderror">
-    <label for="payment_terms">Payment Terms</label>
-    <div class="select-with-icon">
-      <i class="fas fa-calendar-check"></i>
-      <select id="payment_terms" name="payment_terms">
-        <option value="">Select preferred terms</option>
-        <option value="7 days" {{ old('payment_terms') == '7 days' ? 'selected' : '' }}>7 days</option>
-        <option value="15 days" {{ old('payment_terms') == '15 days' ? 'selected' : '' }}>15 days</option>
-        <option value="30 days" {{ old('payment_terms') == '30 days' ? 'selected' : '' }}>30 days</option>
-      </select>
-    </div>
-    @error('payment_terms')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-  </div>
-  
-  <div class="form-group @error('vat_registered') has-error @enderror">
-    <label for="vat_registered">VAT Registered? <span class="text-danger">*</span></label>
-    <div class="select-with-icon">
-      <i class="fas fa-receipt"></i>
-      <select id="vat_registered" name="vat_registered" required>
-        <option value="">-- Select --</option>
-        <option value="1" {{ old('vat_registered') == '1' ? 'selected' : '' }}>Yes</option>
-        <option value="0" {{ old('vat_registered') == '0' ? 'selected' : '' }}>No</option>
-      </select>
-    </div>
-    @error('vat_registered')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-  </div>
-  
-  <div class="form-group @error('use_sureprice') has-error @enderror">
-    <label for="use_sureprice">Use SurePrice? <span class="text-danger">*</span></label>
-    <div class="select-with-icon">
-      <i class="fas fa-check-circle"></i>
-      <select id="use_sureprice" name="use_sureprice" required>
-        <option value="">-- Select --</option>
-        <option value="1" {{ old('use_sureprice') == '1' ? 'selected' : '' }}>Yes</option>
-        <option value="0" {{ old('use_sureprice') == '0' ? 'selected' : '' }}>No</option>
-      </select>
-    </div>
-    @error('use_sureprice')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-  </div>
-</div>
+                <div class="register-note mt-4" data-when="supplier">
+                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                    Suppliers need to upload their DTI/SEC registration, business permit and a valid ID for approval.
+                </div>
+                <div class="register-note mt-4" data-when="client">
+                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                    Document uploads are optional for clients &mdash; you can provide them later if needed.
+                </div>
+            </section>
 
-  <!-- Documents Section -->
-  <div class="form-section">
-    <h3><i class="fas fa-file-alt"></i> Required Documents</h3>
-    <p class="text-muted mb-3"><small>Please upload the following documents. Required documents are marked with <span class="text-danger">*</span></small></p>
-    
-    <div class="form-row">
-      <div class="form-group file-upload-group @error('business_permit_mayor_permit') has-error @enderror">
-        <label for="business_permit_mayor_permit">Business Permit/Mayor's Permit <span class="text-danger" id="business_permit_required">*</span> <span id="business_permit_optional_text" class="optional-text" style="display:none;">(Optional for clients)</span></label>
-        <div class="file-upload-wrapper">
-          <label class="file-upload-label" for="business_permit_mayor_permit">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <span class="file-upload-text">Choose file (PDF, JPG, PNG)</span>
-            <input type="file" id="business_permit_mayor_permit" name="business_permit_mayor_permit" accept=".pdf,.jpg,.png" class="visually-hidden-file" />
-          </label>
-          <div class="file-preview" id="business_permit_preview"></div>
-        </div>
-        @error('business_permit_mayor_permit')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-      </div>
-      
-      <div class="form-group file-upload-group @error('valid_id_owner_rep') has-error @enderror">
-        <label for="valid_id_owner_rep">Valid ID (Owner/Rep) <span class="text-danger" id="valid_id_required">*</span> <span id="valid_id_optional_text" class="optional-text" style="display:none;">(Optional for clients)</span></label>
-        <div class="file-upload-wrapper">
-          <label class="file-upload-label" for="valid_id_owner_rep">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <span class="file-upload-text">Choose file (PDF, JPG, PNG)</span>
-            <input type="file" id="valid_id_owner_rep" name="valid_id_owner_rep" accept=".pdf,.jpg,.png" class="visually-hidden-file" />
-          </label>
-          <div class="file-preview" id="valid_id_preview"></div>
-        </div>
-        @error('valid_id_owner_rep')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-      </div>
-    </div>
-    
-    <div class="form-row">
-      <div class="form-group file-upload-group @error('company_profile_portfolio') has-error @enderror">
-        <label for="company_profile_portfolio">Company Profile/Portfolio</label>
-        <div class="file-upload-wrapper">
-          <label class="file-upload-label" for="company_profile_portfolio">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <span class="file-upload-text">Choose file (PDF, JPG, PNG)</span>
-            <input type="file" id="company_profile_portfolio" name="company_profile_portfolio" accept=".pdf,.jpg,.png" class="visually-hidden-file" />
-          </label>
-          <div class="file-preview" id="company_profile_preview"></div>
-        </div>
-        @error('company_profile_portfolio')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-      </div>
-      
-      <div class="form-group file-upload-group @error('sample_price_list') has-error @enderror" id="sample_price_list_group" style="display:none;">
-        <label for="sample_price_list">Sample Price List</label>
-        <div class="file-upload-wrapper">
-          <label class="file-upload-label" for="sample_price_list">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <span class="file-upload-text">Choose file (PDF, JPG, PNG)</span>
-            <input type="file" id="sample_price_list" name="sample_price_list" accept=".pdf,.jpg,.png" class="visually-hidden-file" />
-          </label>
-          <div class="file-preview" id="price_list_preview"></div>
-        </div>
-        @error('sample_price_list')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-      </div>
-    </div>
-  </div>
+            {{-- 2. Login & contact --}}
+            <section class="register-step" data-step="login">
+                <h2 class="register-step__title">Login details</h2>
+                <div class="row">
+                    <x-field name="username" label="Username" col="md-6" required maxlength="50" autocomplete="username" placeholder="Choose a username" />
+                    <x-field name="email" type="email" label="Email address" col="md-6" required autocomplete="email" placeholder="you@company.com" />
+                    <x-field name="password" label="Password" col="md-6" required>
+                        <div class="input-group has-validation">
+                            <input type="password" id="password" name="password" class="form-control @error('password') is-invalid @enderror"
+                                required minlength="8" autocomplete="new-password" placeholder="At least 8 characters" aria-describedby="passwordHelp">
+                            <button class="btn btn-outline-secondary" type="button" data-toggle-password="password" aria-label="Show password"><i class="bi bi-eye"></i></button>
+                        </div>
+                        <div class="password-meter" aria-hidden="true"><span id="passwordMeter"></span></div>
+                        <div class="form-text" id="passwordHelp">Use 8 or more characters; mixing letters, numbers and symbols makes it stronger.</div>
+                    </x-field>
+                    <x-field name="password_confirmation" label="Confirm password" col="md-6" required>
+                        <div class="input-group">
+                            <input type="password" id="password_confirmation" name="password_confirmation" class="form-control"
+                                required autocomplete="new-password" placeholder="Re-enter your password">
+                            <button class="btn btn-outline-secondary" type="button" data-toggle-password="password_confirmation" aria-label="Show password"><i class="bi bi-eye"></i></button>
+                        </div>
+                    </x-field>
+                </div>
 
-        <!-- Bank Details Section -->
-        <div class="form-section">
-          <h3><i class="fas fa-university"></i> Bank Details (Optional)</h3>
-          
-          <div class="form-row">
-            <div class="form-group @error('bank_name') has-error @enderror">
-              <label for="bank_name">Bank Name</label>
-              @php
-                  $banks = ['BDO', 'BPI', 'MetroBank', 'PNB', 'Security Bank', 'Union Bank', 'RCBC', 'China Bank'];
-              @endphp
-              <div class="select-with-icon">
-                <i class="fas fa-landmark"></i>
-                <select id="bank_name" name="bank_name">
-                    <option value="">Select a bank</option>
-                    @foreach($banks as $bank)
-                        <option value="{{ $bank }}" {{ old('bank_name') == $bank ? 'selected' : '' }}>{{ $bank }}</option>
+                <h2 class="register-step__title mt-2">Contact person</h2>
+                <div class="row">
+                    <x-field name="contact_person" label="Full name" col="md-12" required maxlength="100" autocomplete="name" placeholder="e.g. Juan Dela Cruz" />
+                    <x-field name="mobile_number" type="tel" label="Mobile number" col="md-6" required inputmode="numeric" maxlength="11"
+                        pattern="09\d{9}" title="11 digits starting with 09, e.g. 09171234567" autocomplete="tel" placeholder="09171234567" />
+                    <x-field name="telephone_number" type="tel" label="Telephone number" col="md-6" inputmode="numeric" maxlength="20" placeholder="e.g. 02 8123 4567" />
+                </div>
+            </section>
+
+            {{-- 3. Business --}}
+            <section class="register-step" data-step="business">
+                <h2 class="register-step__title">About your business</h2>
+                <div class="row">
+                    <div class="col-md-12 mb-3 reg-field" data-when="supplier client-company" data-required-field>
+                        <label for="company_name" class="form-label">Company name</label>
+                        <input type="text" id="company_name" name="company_name" value="{{ old('company_name') }}" maxlength="100"
+                            class="form-control @error('company_name') is-invalid @enderror" data-required-when="supplier client-company"
+                            autocomplete="organization" placeholder="Registered business name">
+                        @error('company_name')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                    </div>
+                    <x-field name="supplier_type" label="Type of company" col="md-6" required>
+                        <select id="supplier_type" name="supplier_type" class="form-select @error('supplier_type') is-invalid @enderror" required>
+                            <option value="">Select company type</option>
+                            @foreach(Company::TYPES as $t)
+                                <option value="{{ $t }}" @selected(old('supplier_type') === $t)>{{ $t }}</option>
+                            @endforeach
+                        </select>
+                    </x-field>
+                    <div class="col-md-6 mb-3 reg-field is-required" id="other_supplier_type_group">
+                        <label for="other_supplier_type" class="form-label">Specify type</label>
+                        <input type="text" id="other_supplier_type" name="other_supplier_type" value="{{ old('other_supplier_type') }}" maxlength="100"
+                            class="form-control @error('other_supplier_type') is-invalid @enderror" placeholder="Describe your business">
+                        @error('other_supplier_type')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                    </div>
+                    <x-field name="years_operation" type="number" label="Years in operation" col="md-6" min="0" max="200" step="1" placeholder="e.g. 5" />
+                    <x-field name="business_size" label="Business size" col="md-6">
+                        <select id="business_size" name="business_size" class="form-select @error('business_size') is-invalid @enderror">
+                            <option value="">Select business size</option>
+                            @foreach(Company::BUSINESS_SIZES as $size)
+                                <option value="{{ $size }}" @selected(old('business_size') === $size)>{{ $size }}</option>
+                            @endforeach
+                        </select>
+                    </x-field>
+                    <x-field name="primary_products_services" type="textarea" label="Primary products / services" col="md-12" maxlength="500"
+                        placeholder="e.g. Cement, gravel, scaffolding rental, skilled labor" />
+                    <x-field name="service_areas" type="textarea" label="Areas of operation" col="md-12" maxlength="255" rows="2"
+                        placeholder="e.g. Metro Manila, Cavite, Laguna" />
+                </div>
+
+                <h2 class="register-step__title mt-2">Pricing &amp; terms</h2>
+                <div class="row">
+                    <x-field name="payment_terms" label="Preferred payment terms" col="md-4">
+                        <select id="payment_terms" name="payment_terms" class="form-select @error('payment_terms') is-invalid @enderror">
+                            <option value="">Select terms</option>
+                            @foreach(Company::PAYMENT_TERMS as $term)
+                                <option value="{{ $term }}" @selected(old('payment_terms') === $term)>{{ $term }}</option>
+                            @endforeach
+                        </select>
+                    </x-field>
+                    @foreach(['vat_registered' => 'VAT registered?', 'use_sureprice' => 'Use SurePrice?'] as $name => $label)
+                        <div class="col-md-4 mb-3">
+                            <span class="form-label d-block">{{ $label }}<span class="text-danger"> *</span></span>
+                            <div class="btn-group w-100 segmented" role="radiogroup" aria-label="{{ $label }}">
+                                <input type="radio" class="btn-check" name="{{ $name }}" id="{{ $name }}_1" value="1" required @checked(old($name) === '1')>
+                                <label class="btn btn-outline-success" for="{{ $name }}_1">Yes</label>
+                                <input type="radio" class="btn-check" name="{{ $name }}" id="{{ $name }}_0" value="0" required @checked(old($name) === '0')>
+                                <label class="btn btn-outline-success" for="{{ $name }}_0">No</label>
+                            </div>
+                            @error($name)<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                        </div>
                     @endforeach
-                </select>
-              </div>
-              @error('bank_name')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-            </div>
-            
-            <div class="form-group @error('bank_account_name') has-error @enderror">
-              <label for="bank_account_name">Account Name</label>
-              <div class="input-with-icon">
-                <i class="fas fa-user-tie"></i>
-                <input type="text" id="bank_account_name" name="bank_account_name" value="{{ old('bank_account_name') }}" placeholder="Account holder name" />
-              </div>
-              @error('bank_account_name')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-            </div>
-            
-            <div class="form-group @error('bank_account_number') has-error @enderror">
-              <label for="bank_account_number">Account Number</label>
-              <div class="input-with-icon">
-                <i class="fas fa-credit-card"></i>
-                <input type="text" id="bank_account_number" name="bank_account_number" value="{{ old('bank_account_number') }}" placeholder="Account number" />
-              </div>
-              @error('bank_account_number')<span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> {{ $message }}</span>@enderror
-            </div>
-          </div>
-        </div>
+                </div>
+            </section>
 
-        <!-- Agreement Section -->
-        <div class="form-section">
-    <h3><i class="fas fa-handshake"></i> Agreement & Consent</h3>
-    
-    <div class="agreement-consent">
-        <label class="agreement-label">
-            <input type="checkbox" name="agree_terms" required {{ old('agree_terms') ? 'checked' : '' }}>
-            <span class="checkbox-custom"></span>
-            <span class="agreement-text">
-                I agree to the <a href="{{ route('terms.conditions') }}" target="_blank" class="terms-links">Terms and Conditions</a> and <a href="{{ route('privacy.policy') }}" target="_blank" class="terms-links">Privacy Policy</a>
-            </span>
-        </label>
-        
-        <label class="agreement-label">
-            <input type="checkbox" name="agree_contact" {{ old('agree_contact') ? 'checked' : '' }}>
-            <span class="checkbox-custom"></span>
-            <span class="agreement-text">
-                I consent to be contacted for verification and partnership opportunities
-            </span>
-        </label>
-    </div>
-    
-    @error('agree_terms')
-        <span class="error-message" data-server-error><i class="fas fa-exclamation-circle"></i> You must agree to the terms and conditions</span>
-    @enderror
-</div>
+            {{-- 4. Address --}}
+            <section class="register-step" data-step="address">
+                <h2 class="register-step__title">Business address</h2>
+                <p class="register-step__hint">Pick your region first &mdash; the province, city and barangay lists narrow down as you go.</p>
+                <x-address-fields />
+            </section>
 
-        <div class="form-footer">
-          <button type="submit" class="submit-btn">
-            <i class="fas fa-building"></i> Register Company
-          </button>
-          
-          <div class="auth-links">
-            Already have an account? <a href="{{ route('login.form') }}"><i class="fas fa-sign-in-alt"></i> Login here</a>
-          </div>
-        </div>
-      </form>
+            {{-- 5. Documents --}}
+            <section class="register-step" data-step="documents">
+                <h2 class="register-step__title">Documents</h2>
+                <p class="register-step__hint">PDF, JPG or PNG, up to 10&nbsp;MB each.
+                    <span data-when="supplier">Fields marked <span class="text-danger">*</span> are required for suppliers.</span>
+                    <span data-when="client">All documents are optional for clients.</span>
+                </p>
+                <div class="row">
+                    @foreach([
+                        'dti_sec_registration' => ['DTI / SEC registration', 'supplier'],
+                        'business_permit_mayor_permit' => ["Business permit / Mayor's permit", 'supplier'],
+                        'valid_id_owner_rep' => ['Valid ID (owner / representative)', 'supplier'],
+                        'accreditations_certifications' => ['Accreditations / certifications', null],
+                        'company_profile_portfolio' => ['Company profile / portfolio', null],
+                    ] as $name => [$label, $requiredFor])
+                        <div class="col-md-6 mb-3 reg-field" @if($requiredFor) data-required-field @endif>
+                            <label for="{{ $name }}" class="form-label">{{ $label }}</label>
+                            <input type="file" id="{{ $name }}" name="{{ $name }}" class="{{ $file($name) }}" accept=".pdf,.jpg,.jpeg,.png"
+                                data-max-size="10485760" @if($requiredFor) data-required-when="{{ $requiredFor }}" @endif>
+                            @error($name)<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                        </div>
+                    @endforeach
+                    <div class="col-md-6 mb-3 reg-field" data-when="supplier">
+                        <label for="sample_price_list" class="form-label">Sample price list</label>
+                        <input type="file" id="sample_price_list" name="sample_price_list" class="{{ $file('sample_price_list') }}" accept=".pdf,.jpg,.jpeg,.png" data-max-size="10485760">
+                        @error('sample_price_list')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+
+                <h2 class="register-step__title mt-2">Bank details <span class="register-step__optional">optional</span></h2>
+                <div class="row">
+                    <x-field name="bank_name" label="Bank" col="md-4">
+                        <select id="bank_name" name="bank_name" class="form-select @error('bank_name') is-invalid @enderror">
+                            <option value="">Select a bank</option>
+                            @foreach(Company::BANKS as $bank)
+                                <option value="{{ $bank }}" @selected(old('bank_name') === $bank)>{{ $bank }}</option>
+                            @endforeach
+                        </select>
+                    </x-field>
+                    <x-field name="bank_account_name" label="Account name" col="md-4" maxlength="100" placeholder="Account holder" />
+                    <x-field name="bank_account_number" label="Account number" col="md-4" maxlength="50" inputmode="numeric" placeholder="Account number" />
+                </div>
+            </section>
+
+            {{-- 6. Review --}}
+            <section class="register-step" data-step="review">
+                <h2 class="register-step__title">Review &amp; submit</h2>
+                <dl class="review-list" id="reviewList" aria-live="polite"></dl>
+
+                <div class="form-check mb-2">
+                    <input class="form-check-input @error('agree_terms') is-invalid @enderror" type="checkbox" name="agree_terms" id="agree_terms" value="1" required @checked(old('agree_terms'))>
+                    <label class="form-check-label" for="agree_terms">
+                        I agree to the <a href="{{ route('terms.conditions') }}" target="_blank" rel="noopener">Terms and Conditions</a>
+                        and <a href="{{ route('privacy.policy') }}" target="_blank" rel="noopener">Privacy Policy</a><span class="text-danger"> *</span>
+                    </label>
+                    @error('agree_terms')<div class="invalid-feedback d-block">You must agree to the terms and conditions.</div>@enderror
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="agree_contact" id="agree_contact" value="1" @checked(old('agree_contact'))>
+                    <label class="form-check-label" for="agree_contact">I consent to be contacted for verification and partnership opportunities</label>
+                </div>
+            </section>
+
+            <div class="register-actions">
+                <button type="button" class="btn btn-outline-secondary" data-step-prev><i class="bi bi-arrow-left"></i> Back</button>
+                <span class="register-actions__progress" id="stepProgress"></span>
+                <button type="button" class="btn btn-success" data-step-next>Continue <i class="bi bi-arrow-right"></i></button>
+                <button type="submit" class="btn btn-success" data-step-submit><i class="bi bi-send"></i> Create account</button>
+            </div>
+        </form>
     </div>
-  </div>
-</body>
-</html>
+
+    <p class="register-footer">Already have an account? <a href="{{ route('login.form') }}">Log in here</a></p>
+</main>
 
 @vite('resources/js/pages/auth-register.js')
+</body>
+</html>

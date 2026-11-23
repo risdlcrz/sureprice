@@ -21,13 +21,31 @@ class PurchaseRequestController extends Controller
     {
         $this->rankingService = $rankingService;
     }
-    public function index()
+    public function index(Request $request)
     {
-        $purchaseRequests = PurchaseRequest::with(['contract', 'project', 'requestedBy', 'items.material', 'items.supplier'])
-            ->latest()
-            ->paginate(10);
+        $search = trim((string) $request->query('q', ''));
+        $type = $request->query('type');
 
-        return view('admin.purchase-requests.index', compact('purchaseRequests'));
+        $purchaseRequests = PurchaseRequest::with(['contract', 'requestedBy'])
+            ->withCount('items')
+            ->inStatusGroup($request->query('status'))
+            ->when($type === 'project', fn ($q) => $q->where('is_project_related', true))
+            ->when($type === 'standalone', fn ($q) => $q->where('is_project_related', false))
+            ->when($search !== '', fn ($q) => $q->where(fn ($w) => $w
+                ->where('request_number', 'like', "%{$search}%")
+                ->orWhereHas('contract', fn ($c) => $c->where('contract_number', 'like', "%{$search}%"))
+                ->orWhereHas('requestedBy', fn ($u) => $u->where('name', 'like', "%{$search}%"))))
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        $counts = PurchaseRequest::statusGroupCounts();
+        $typeCounts = [
+            'project' => PurchaseRequest::where('is_project_related', true)->count(),
+            'standalone' => PurchaseRequest::where('is_project_related', false)->count(),
+        ];
+
+        return view('admin.purchase-requests.index', compact('purchaseRequests', 'counts', 'typeCounts'));
     }
 
     public function create(Request $request)
@@ -263,7 +281,7 @@ class PurchaseRequestController extends Controller
 
     public function show(PurchaseRequest $purchaseRequest)
     {
-        $purchaseRequest->load(['contract', 'requestedBy', 'items.material', 'items.supplier', 'items.preferredSupplier']);
+        $purchaseRequest->load(['contract.client', 'requestedBy', 'items.material', 'items.supplier', 'items.preferredSupplier', 'materialRequest.quotationRequest', 'purchaseOrder.supplier', 'purchaseOrder.payments']);
         return view('admin.purchase-requests.show', compact('purchaseRequest'));
     }
 

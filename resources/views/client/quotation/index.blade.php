@@ -1,75 +1,71 @@
 @extends('layouts.app')
 
+@php
+    // What the client should know / do next for each status
+    $nextStep = [
+        'pending' => ['fa-hourglass-half', 'Collecting supplier quotes'],
+        'reviewed' => ['fa-hand-pointer', 'Quotes ready — choose your suppliers'],
+        'proceeded' => ['fa-check-circle', 'Submitted — contract in preparation'],
+        'cancelled' => ['fa-times-circle', 'Cancelled'],
+        'rejected' => ['fa-times-circle', 'Rejected'],
+    ];
+@endphp
+
 @section('content')
-<div class="container py-5">
-    <h1 class="h3 mb-4 text-center client-page-title">My Quotation Requests</h1>
-    <div class="d-flex justify-content-end mb-4">
-        <a href="{{ route('client.quotation.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> New Quotation Request
-        </a>
-    </div>
+<div class="container-fluid req-page">
+    <x-page-header title="My Quotation Requests" icon="file-signature" subtitle="Track your requests, compare supplier offers and go ahead when you're ready.">
+        <a href="{{ route('client.quotation.create') }}" class="btn btn-success"><i class="fas fa-plus me-1"></i> New quotation request</a>
+    </x-page-header>
 
     @if($quotationRequests->count() > 0)
-        <div class="row">
+        <div class="req-request-grid">
             @foreach($quotationRequests as $request)
-                <div class="col-md-6 col-lg-4 mb-4">
-                    <div class="card h-100">
-                        <div class="card-header d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0">{{ $request->request_number }}</h6>
-                            <x-status-badge :status="$request->status" />
-                        </div>
-                        <div class="card-body">
-                            <p class="text-muted mb-2">
-                                <i class="fas fa-calendar"></i> 
-                                {{ $request->created_at->format('M d, Y') }}
-                            </p>
-                            <p class="mb-2">
-                                <strong>Rooms:</strong> {{ $request->rooms->count() }}
-                            </p>
-                            <p class="mb-3">
-                                <strong>Total Area:</strong> 
-                                {{ $request->rooms->sum('area') }} sqm
-                            </p>
-                            
-                            @if($request->notes)
-                                <p class="mb-3">
-                                    <strong>Notes:</strong><br>
-                                    <small class="text-muted">{{ Str::limit($request->notes, 100) }}</small>
-                                </p>
-                            @endif
-
-                            @if($request->admin_notes)
-                                <div class="alert alert-info p-2 mb-3">
-                                    <small>
-                                        <strong>Admin Response:</strong><br>
-                                        {{ Str::limit($request->admin_notes, 150) }}
-                                    </small>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="card-footer">
-                            <div class="d-flex justify-content-between">
-                                <a href="{{ route('client.quotation.view') }}?id={{ $request->id }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye"></i> View Details
-                                </a>
-                                @if($request->status === 'pending')
-                                    <span class="text-muted small">Under Review</span>
-                                @endif
-                            </div>
-                        </div>
+                @php
+                    [$icon, $hint] = $nextStep[$request->status] ?? ['fa-info-circle', \App\Support\Status::label($request->status)];
+                    $area = $request->rooms->sum(fn ($r) => $r->area ?? $r->length * $r->width);
+                    $actionable = $request->status === 'reviewed';
+                @endphp
+                <a href="{{ route('client.quotation.view') }}?id={{ $request->id }}" class="req-request-card @if($actionable) is-actionable @endif">
+                    <div class="req-request-card__top">
+                        <span class="req-ref">{{ $request->request_number }}</span>
+                        <x-status-badge :status="$request->status" />
                     </div>
-                </div>
+                    <dl class="req-request-card__facts">
+                        <div><dt>Submitted</dt><dd>{{ $request->created_at->format('M d, Y') }}</dd></div>
+                        <div><dt>Rooms</dt><dd>{{ $request->rooms->count() }}</dd></div>
+                        <div><dt>Floor area</dt><dd>{{ rtrim(rtrim(number_format($area, 2), '0'), '.') }} m²</dd></div>
+                    </dl>
+                    @if($request->rooms->isNotEmpty())
+                        <div class="req-room__scopes mb-2">
+                            @foreach($request->rooms->take(4) as $room)
+                                <span class="req-tag">{{ $room->name }}</span>
+                            @endforeach
+                            @if($request->rooms->count() > 4)<span class="req-tag">+{{ $request->rooms->count() - 4 }} more</span>@endif
+                        </div>
+                    @endif
+                    @if($request->admin_notes)
+                        <p class="req-request-card__note"><i class="fas fa-comment-dots me-1"></i>{{ Str::limit($request->admin_notes, 120) }}</p>
+                    @endif
+                    <div class="req-request-card__next">
+                        <i class="fas {{ $icon }}" aria-hidden="true"></i> {{ $hint }}
+                        <span class="ms-auto">View <i class="fas fa-arrow-right" aria-hidden="true"></i></span>
+                    </div>
+                </a>
             @endforeach
         </div>
     @else
-        <div class="text-center py-5">
-            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
-            <h4 class="text-muted">No Quotation Requests Yet</h4>
-            <p class="text-muted">You haven't submitted any quotation requests yet.</p>
-            <a href="{{ route('client.quotation.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Create Your First Request
-            </a>
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-file-signature fa-3x text-muted mb-3" aria-hidden="true"></i>
+                <h2 class="h5">No quotation requests yet</h2>
+                <p class="text-muted">Describe your rooms and the work you need, and we'll gather quotes from our suppliers.</p>
+                <a href="{{ route('client.quotation.create') }}" class="btn btn-success"><i class="fas fa-plus me-1"></i> Create your first request</a>
+            </div>
         </div>
     @endif
 </div>
-@endsection 
+@endsection
+
+@push('styles')
+@vite('resources/css/pages/requests.css')
+@endpush

@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 
 class PurchaseRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, Concerns\HasStatusFilters;
 
     protected $fillable = [
         'request_number',
@@ -45,6 +45,14 @@ class PurchaseRequest extends Model
     const STATUS_APPROVED = 'approved';
     const STATUS_REJECTED = 'rejected';
     const STATUS_CANCELLED = 'cancelled';
+
+    /** List-page status groups: key => [label, statuses, tone, icon] (see HasStatusFilters). */
+    public const STATUS_FILTERS = [
+        'awaiting' => ['Awaiting approval', ['pending', 'pending_admin_approval'], 'warning', 'fa-hourglass-half'],
+        'supplier' => ['With supplier', ['pending_supplier_approval'], 'info', 'fa-truck'],
+        'approved' => ['Approved', ['approved'], 'success', 'fa-check-circle'],
+        'rejected' => ['Rejected / cancelled', ['rejected', 'cancelled'], 'danger', 'fa-times-circle'],
+    ];
 
     // Relationships
     public function materialRequest(): BelongsTo

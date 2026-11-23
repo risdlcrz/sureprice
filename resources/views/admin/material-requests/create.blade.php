@@ -1,49 +1,41 @@
 @extends('layouts.app')
 
 @section('content')
-<h1 class="h3 mb-4 text-center page-title">Create Material Request</h1>
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-tools">
-                        <a href="{{ route('material-requests.index') }}" class="btn btn-default">
-                            <i class="fas fa-arrow-left"></i> Back to List
-                        </a>
-                    </div>
-                </div>
-                <form action="{{ route('material-requests.store') }}" method="POST" id="materialRequestForm">
-                    @csrf
-                    @if(isset($quotation_id))
-                        <input type="hidden" name="quotation_request_id" value="{{ $quotation_id }}">
-                    @endif
-                    @if(isset($contract_id))
-                        <input type="hidden" name="contract_id" value="{{ $contract_id }}">
-                    @endif
-                    <div class="card-body">
+<div class="container-fluid req-page">
+    <x-page-header title="New Material Request" icon="dolly" subtitle="Stock is reserved first; anything short can go straight to a purchase request.">
+        <a href="{{ route('material-requests.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Back</a>
+    </x-page-header>
 
-                        <!-- Items Section -->
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <h4>Request Items</h4>
-                                @if(isset($selectedSuppliers) && count($selectedSuppliers) > 0)
-                                    <div class="alert alert-success">
-                                        <i class="fas fa-check-circle"></i>
-                                        <strong>Client Supplier Selection:</strong> The client has already selected suppliers for these materials during the quotation process. 
-                                        The selected suppliers will be automatically used for procurement.
-                                    </div>
-                                @endif
-                                <div class="table-responsive">
-                                    <table class="table table-bordered" id="itemsTable">
+    <form action="{{ route('material-requests.store') }}" method="POST" id="materialRequestForm">
+        @csrf
+        @if(isset($quotation_id))
+            <input type="hidden" name="quotation_request_id" value="{{ $quotation_id }}">
+        @endif
+        @if(isset($contract_id))
+            <input type="hidden" name="contract_id" value="{{ $contract_id }}">
+        @endif
+
+        @if(isset($selectedSuppliers) && count($selectedSuppliers) > 0)
+            <div class="req-callout req-callout--success mb-4">
+                <div class="req-callout__text">
+                    <i class="fas fa-check-circle" aria-hidden="true"></i>
+                    <div><strong>Suppliers already chosen.</strong> The client picked suppliers for these materials during the quotation; they'll be used for procurement.</div>
+                </div>
+            </div>
+        @endif
+
+        <div class="card">
+            <div class="card-header"><h3 class="req-section-title"><i class="fas fa-boxes"></i> Items</h3></div>
+            <div class="table-responsive">
+                                    <table class="table req-form-table" id="itemsTable">
                                         <thead>
                                             <tr>
                                                 <th>Material</th>
                                                 <th>Unit</th>
-                                                <th>Available Stock</th>
-                                                <th>Requested Quantity</th>
+                                                <th>In stock</th>
+                                                <th>Quantity</th>
                                                 <th>Supplier</th>
-                                                <th>Actions</th>
+                                                <th><span class="visually-hidden">Actions</span></th>
                                             </tr>
                                         </thead>
                                         <tbody id="items-container">
@@ -72,8 +64,8 @@
                                                                 <div class="d-flex align-items-center">
                                                                     <i class="fas fa-check-circle text-success me-2"></i>
                                                                     <div>
-                                                                        <span class="text-success font-weight-bold">{{ $selectedSupplier ? $selectedSupplier->company_name : 'Client Selected Supplier' }}</span>
-                                                                        <small class="text-muted d-block">(Client's choice)</small>
+                                                                        <span class="text-success fw-semibold">{{ $selectedSupplier ? $selectedSupplier->company_name : 'Client Selected Supplier' }}</span>
+                                                                        <small class="text-muted d-block">Client's choice</small>
                                                                     </div>
                                                                 </div>
                                                             @else
@@ -99,49 +91,39 @@
                                             @endif
                                         </tbody>
                                     </table>
-                                </div>
-                                <button type="button" class="btn btn-success" id="addRow">
-                                    <i class="fas fa-plus"></i> Add Item
-                                </button>
-                            </div>
-                        </div>
+            </div>
+            <div class="card-body pt-3">
+                <button type="button" class="btn btn-outline-success" id="addRow"><i class="fas fa-plus me-1"></i> Add item</button>
 
-                        <!-- Notes Section -->
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label for="notes">Notes</label>
-                                    <textarea name="notes" id="notes" class="form-control" rows="3"></textarea>
-                                </div>
+                <div class="row mt-4">
+                    <div class="col-lg-7 mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea name="notes" id="notes" class="form-control" rows="3" placeholder="Delivery instructions, site contact, …"></textarea>
+                    </div>
+                    <div class="col-lg-5 mb-3">
+                        <div class="form-label">Out-of-stock items</div>
+                        <div class="req-note">
+                            <div class="form-check mb-1">
+                                <input type="checkbox" class="form-check-input" id="create_purchase_request" name="create_purchase_request" value="1" @if($anyShort) checked disabled @endif>
+                                <label class="form-check-label" for="create_purchase_request">Create a purchase request for items not in stock</label>
                             </div>
-                        </div>
-
-                        <!-- Purchase Request Options -->
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <div class="custom-control custom-checkbox">
-                                        <input type="checkbox" class="custom-control-input" id="create_purchase_request" name="create_purchase_request" value="1" @if($anyShort) checked disabled @endif>
-                                        <label class="custom-control-label" for="create_purchase_request">
-                                            Create purchase request for items not available in stock
-                                        </label>
-                                    </div>
-                                    <small class="form-text text-muted">
-                                        If checked, a purchase request will be automatically created for any items that cannot be fulfilled from current stock.
-                                    </small>
-                                </div>
+                            <div class="form-text mb-0">
+                                @if($anyShort)
+                                    Some items exceed available stock, so a purchase request will be created for the shortfall.
+                                @else
+                                    Anything that can't be filled from current stock is sent to purchasing automatically.
+                                @endif
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Create Material Request
-                        </button>
-                    </div>
-                </form>
+                </div>
+            </div>
+            <div class="req-form-footer">
+                <a href="{{ route('material-requests.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-success"><i class="fas fa-paper-plane me-1"></i> Create material request</button>
             </div>
         </div>
-    </div>
+    </form>
 </div>
 
 <!-- Supplier Recommendation Modal -->
@@ -173,7 +155,6 @@
 @endpush
 
 @push('styles')
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-@vite('resources/css/pages/admin-material-requests-create.css')
+@vite('resources/css/pages/requests.css')
 @endpush
 @endsection

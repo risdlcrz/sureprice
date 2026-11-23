@@ -1,59 +1,84 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container py-4">
-    <h1 class="h3 mb-4 page-title">Material Request #{{ $materialRequest->id }}</h1>
-    <div class="mb-3">
-        <a href="{{ route('warehouse.material-requests.index') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to List
-        </a>
-    </div>
+@php $mr = $materialRequest; @endphp
+<div class="container-fluid req-page">
+    <x-page-header title="Material Request" icon="dolly">
+        <a href="{{ route('warehouse.material-requests.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Back</a>
+    </x-page-header>
+
     <div class="card mb-4">
         <div class="card-body">
-            <h5 class="card-title">Request Details</h5>
-            <p><strong>Contract:</strong> {{ $materialRequest->contract->contract_number ?? '-' }}</p>
-            <p><strong>Requested By:</strong> {{ $materialRequest->user->name ?? '-' }}</p>
-            <p><strong>Status:</strong> <x-status-badge :status="$materialRequest->status" /></p>
-            <p><strong>Requested At:</strong> {{ $materialRequest->created_at->format('M d, Y H:i') }}</p>
-            <p><strong>Notes:</strong> {{ $materialRequest->notes ?? '-' }}</p>
+            <div class="req-hero mb-4">
+                <div>
+                    <div class="req-hero__ref">Material request</div>
+                    <h2 class="req-hero__title">MR-{{ $mr->id }} <x-status-badge :status="$mr->status" /></h2>
+                </div>
+            </div>
+            <dl class="req-meta">
+                <div><dt>Contract</dt><dd>{{ $mr->contract->contract_number ?? '—' }}@if($mr->contract?->title)<span class="req-sub">{{ $mr->contract->title }}</span>@endif</dd></div>
+                <div><dt>Requested by</dt><dd>{{ $mr->user->name ?? '—' }}</dd></div>
+                <div><dt>Requested</dt><dd>{{ $mr->created_at->format('M d, Y H:i') }}</dd></div>
+            </dl>
+            @if($mr->notes)
+                <div class="mt-4">
+                    <div class="form-label">Notes</div>
+                    <div class="req-note">{{ $mr->notes }}</div>
+                </div>
+            @endif
         </div>
     </div>
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5 class="card-title">Requested Items</h5>
-            <table class="table table-bordered">
+
+    @if($mr->status === 'pending')
+        <div class="req-callout req-callout--warning mb-4">
+            <div class="req-callout__text">
+                <i class="fas fa-hourglass-half" aria-hidden="true"></i>
+                <div><strong>Waiting for warehouse approval.</strong><br>Approving releases the requested quantities from stock.</div>
+            </div>
+            <form action="{{ route('warehouse.material-requests.approve', $mr) }}" method="POST">
+                @csrf
+                <button type="submit" class="btn btn-success" onclick="return confirm('Approve this material request?')"><i class="fas fa-check me-1"></i> Approve request</button>
+            </form>
+        </div>
+    @elseif($mr->status === 'approved')
+        <div class="req-callout req-callout--success mb-4">
+            <div class="req-callout__text">
+                <i class="fas fa-check-circle" aria-hidden="true"></i>
+                <div><strong>Approved.</strong> The materials have been released.</div>
+            </div>
+        </div>
+    @endif
+
+    <div class="card">
+        <div class="card-header"><h3 class="req-section-title"><i class="fas fa-boxes"></i> Items</h3></div>
+        <div class="table-responsive">
+            <table class="table req-table">
                 <thead>
                     <tr>
                         <th>Material</th>
-                        <th>Quantity</th>
+                        <th class="req-num">Requested</th>
+                        <th class="req-num">Fulfilled</th>
                         <th>Unit</th>
-                        <th>Fulfilled</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($materialRequest->items as $item)
+                    @forelse($mr->items as $item)
                         <tr>
-                            <td>{{ $item->material->name ?? '-' }}</td>
-                            <td>{{ $item->quantity }}</td>
+                            <td class="fw-semibold">{{ $item->material->name ?? '—' }}</td>
+                            <td class="req-num">{{ number_format($item->quantity, 2) }}</td>
+                            <td class="req-num">{{ number_format($item->fulfilled_quantity ?? 0, 2) }}</td>
                             <td>{{ $item->unit }}</td>
-                            <td>{{ $item->fulfilled_quantity ?? 0 }}</td>
                         </tr>
                     @empty
-                        <x-empty-row cols="4">No items found.</x-empty-row>
+                        <x-empty-row cols="4">No items on this request.</x-empty-row>
                     @endforelse
                 </tbody>
             </table>
         </div>
     </div>
-    @if($materialRequest->status === 'pending')
-    <form action="{{ route('warehouse.material-requests.approve', $materialRequest) }}" method="POST" class="d-inline">
-        @csrf
-        <button type="submit" class="btn btn-success" onclick="return confirm('Approve this material request?')">
-            <i class="fas fa-check"></i> Approve Request
-        </button>
-    </form>
-    @elseif($materialRequest->status === 'approved')
-        <div class="alert alert-success">This request has been approved.</div>
-    @endif
 </div>
-@endsection 
+@endsection
+
+@push('styles')
+@vite('resources/css/pages/requests.css')
+@endpush

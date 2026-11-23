@@ -1,204 +1,170 @@
 @extends('layouts.app')
 
+@php
+    $mr = $materialRequest;
+    $items = collect($mr->items);
+    $grouped = $items->groupBy(fn ($item) => ($item->material->name ?? 'Unknown material') . '|' . $item->unit);
+    $totalRequested = $items->sum('quantity');
+    $totalFulfilled = $items->sum('fulfilled_quantity');
+    $fulfilledPct = $totalRequested > 0 ? min(100, round($totalFulfilled / $totalRequested * 100)) : 0;
+
+    // Supplier for an item: its own supplier, else the client's pick on the quotation / contract.
+    $quotationRequest = $mr->quotationRequest ?? $mr->contract?->quotationRequest;
+    $selectedSuppliers = $quotationRequest?->selected_suppliers ?? [];
+    $rfqs = null;
+    $supplierFor = function ($item) use ($mr, $quotationRequest, $selectedSuppliers, &$rfqs) {
+        if ($item->supplier) {
+            return $item->supplier->company_name;
+        }
+        if (!$quotationRequest) {
+            return null;
+        }
+        $id = $selectedSuppliers[$item->material_id] ?? $selectedSuppliers[(string) $item->material_id] ?? null;
+        if ($id && ($supplier = \App\Models\Supplier::find($id))) {
+            return $supplier->company_name;
+        }
+        if ($mr->quotationRequest) { // RFQ pivot fallback (only for requests raised from a quotation)
+            $rfqs ??= \App\Models\Quotation::where('notes', 'like', '%client quotation request #' . $quotationRequest->request_number . '%')->with(['materials', 'suppliers'])->get();
+            foreach ($rfqs as $rfq) {
+                $mat = $rfq->materials->firstWhere('id', $item->material_id);
+                if ($mat?->pivot?->selected_supplier_id && ($supplier = $rfq->suppliers->firstWhere('id', $mat->pivot->selected_supplier_id))) {
+                    return $supplier->company_name;
+                }
+            }
+        }
+
+        return null;
+    };
+@endphp
+
 @section('content')
-@vite('resources/css/pages/admin-material-requests-show.css')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Material Request Details</h3>
-                    <div class="card-tools">
-                        <a href="{{ route('material-requests.index') }}" class="btn btn-default">
-                            <i class="fas fa-arrow-left"></i> Back to List
-                        </a>
-        </div>
-                    </div>
-                    <div class="card-body">
-                    
-                    @if($purchaseRequest)
-                        <div class="alert alert-info alert-dismissible fade show" role="alert">
-                            <i class="fas fa-info-circle"></i>
-                            <strong>Purchase Request Created:</strong> A purchase request has been automatically created for items that exceeded available stock.
-                            <a href="{{ route('purchase-requests.show', $purchaseRequest->id) }}" class="alert-link">View Purchase Request #{{ $purchaseRequest->request_number }}</a>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    @endif
-                    
-                    <!-- Request Information -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <h4>Request Information</h4>
-                            <table class="table table-bordered">
-                                <tr>
-                                    <th style="width: 200px;">Request Number</th>
-                                    <td>MR-{{ $materialRequest->id }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Status</th>
-                                    <td>
-                                        <x-status-badge :status="$materialRequest->status" />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th>Requested By</th>
-                                    <td>{{ $materialRequest->requestedBy?->name ?? 'N/A' }}</td>
-                                </tr>
-                                @if($materialRequest->quotationRequest)
-                                <tr>
-                                    <th>Originating Quotation Request</th>
-                                    <td>
-                                        @if(in_array(auth()->user()->role, ['admin', 'manager'], true))
-                                            <a href="{{ route('admin.quotation.review', $materialRequest->quotationRequest->id) }}">{{ $materialRequest->quotationRequest->request_number }}</a>
-                                        @else
-                                            {{ $materialRequest->quotationRequest->request_number }}
-                                        @endif
-                                    </td>
-                                </tr>
-                                @endif
-                                <tr>
-                                    <th>Created Date</th>
-                                    <td>{{ $materialRequest->created_at->format('M d, Y H:i') }}</td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            @if($materialRequest->notes)
-                                <h4 class="mt-4">Notes</h4>
-                                <div class="p-3 bg-light">
-                                    {{ $materialRequest->notes }}
-                            </div>
-                            @endif
-                    </div>
-                </div>
+<div class="container-fluid req-page">
+    <x-page-header title="Material Request" icon="dolly">
+        <a href="{{ route('material-requests.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Back</a>
+    </x-page-header>
 
-                    <!-- Request Items -->
-                    <div class="row">
-                        <div class="col-12">
-                            <h4>Request Items</h4>
-                            <div class="table-responsive">
-                                <table class="table table-bordered grouped-items-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Material</th>
-                                            <th>Supplier</th>
-                                            <th>Requested Quantity</th>
-                                            <th>Fulfilled from Stock</th>
-                                            <th>Needs Purchasing</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                    @php
-                                        $grouped = collect($materialRequest->items)->groupBy(function($item) {
-                                            return $item->material->name . '|' . $item->unit;
-                                        });
-                                    @endphp
-                                    @foreach($grouped as $key => $rows)
-                                        @php
-                                            [$matName, $unit] = explode('|', $key);
-                                            $totalRequested = $rows->sum('quantity');
-                                            $totalFulfilled = $rows->sum('fulfilled_quantity');
-                                            $totalNeeds = $rows->sum(function($item){ return $item->quantity - $item->fulfilled_quantity; });
-                                        @endphp
-                                        <tr class="table-primary">
-                                            <td colspan="5" style="font-weight:bold; background:#e0e7ef;">{{ $matName }} ({{ $unit }})</td>
-                                        </tr>
-                                        @foreach($rows as $item)
-                                        <tr>
-                                            <td class="material-indent"></td>
-                                            <td>
-                                                @php
-                                                    $supplierName = null;
-                                                    
-                                                    // Check if item has direct supplier
-                                                    if ($item->supplier) {
-                                                        $supplierName = $item->supplier->company_name;
-                                                    }
-                                                    // Check quotation request selected suppliers
-                                                    elseif ($materialRequest->quotationRequest) {
-                                                        $quotationRequest = $materialRequest->quotationRequest;
-                                                        $selectedSuppliers = $quotationRequest->selected_suppliers ?? [];
-                                                        $selectedSupplierId = $selectedSuppliers[$item->material_id] ?? $selectedSuppliers[(string)$item->material_id] ?? null;
-                                                        
-                                                        if ($selectedSupplierId) {
-                                                            $supplier = \App\Models\Supplier::find($selectedSupplierId);
-                                                            $supplierName = $supplier ? $supplier->company_name : null;
-                                                        }
-                                                        
-                                                        // Fallback to material_quotation pivot if not found in selected_suppliers
-                                                        if (!$supplierName) {
-                                                            $rfqs = \App\Models\Quotation::where('notes', 'like', '%client quotation request #'.$quotationRequest->request_number.'%')->with(['materials', 'suppliers'])->get();
-                                                            foreach ($rfqs as $rfq) {
-                                                                $mat = $rfq->materials->firstWhere('id', $item->material_id);
-                                                                if ($mat && $mat->pivot && $mat->pivot->selected_supplier_id) {
-                                                                    $supplier = $rfq->suppliers->firstWhere('id', $mat->pivot->selected_supplier_id);
-                                                                    if ($supplier) {
-                                                                        $supplierName = $supplier->company_name;
-                                                                        break;
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    // Check contract selected suppliers
-                                                    elseif ($materialRequest->contract && $materialRequest->contract->quotationRequest) {
-                                                        $quotationRequest = $materialRequest->contract->quotationRequest;
-                                                        $selectedSuppliers = $quotationRequest->selected_suppliers ?? [];
-                                                        $selectedSupplierId = $selectedSuppliers[$item->material_id] ?? $selectedSuppliers[(string)$item->material_id] ?? null;
-                                                        
-                                                        if ($selectedSupplierId) {
-                                                            $supplier = \App\Models\Supplier::find($selectedSupplierId);
-                                                            $supplierName = $supplier ? $supplier->company_name : null;
-                                                        }
-                                                    }
-                                                @endphp
-                                                @if($supplierName)
-                                                    <span class="text-success font-weight-bold">{{ $supplierName }}</span>
-                                                    <small class="text-muted d-block">(Client's choice)</small>
-                                                @else
-                                                    <span class="text-danger">No Supplier</span>
-                                                @endif
-                                            </td>
-                                            <td>{{ number_format($item->quantity, 2) }} {{ $item->unit }}</td>
-                                            <td>{{ number_format($item->fulfilled_quantity, 2) }} {{ $item->unit }}</td>
-                                            <td>{{ number_format($item->quantity - $item->fulfilled_quantity, 2) }} {{ $item->unit }}</td>
-                                        </tr>
-                                        @endforeach
-                                        <tr class="table-info subtotal-row">
-                                            <td style="font-weight:bold;">Subtotal</td>
-                                            <td></td>
-                                            <td style="font-weight:bold;">{{ number_format($totalRequested, 2) }} {{ $unit }}</td>
-                                            <td style="font-weight:bold;">{{ number_format($totalFulfilled, 2) }} {{ $unit }}</td>
-                                            <td style="font-weight:bold;">{{ number_format($totalNeeds, 2) }} {{ $unit }}</td>
-                                        </tr>
-                                    @endforeach
-                                    </tbody>
-                                </table>
-                                <div class="legend mt-2">
-                                    <span style="background:#e0e7ef; padding:2px 8px; border-radius:4px;">Material Group</span>
-                                    <span style="background:#dbeafe; padding:2px 8px; border-radius:4px; margin-left:10px;">Subtotal</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Associated Purchase Request -->
-                    @if($purchaseRequest)
-                        <div class="row mt-4">
-                            <div class="col-12">
-                                <h4>Associated Purchase Request</h4>
-                                <p>
-                                    Some items were not available in stock and a purchase request has been generated.
-                                    <a href="{{ route('purchase-requests.show', $purchaseRequest) }}" class="btn btn-primary btn-sm">
-                                        View Purchase Request #{{ $purchaseRequest->request_number }}
-                                    </a>
-                                </p>
-                            </div>
-                        </div>
-                    @endif
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="req-hero mb-4">
+                <div>
+                    <div class="req-hero__ref">Material request</div>
+                    <h2 class="req-hero__title">MR-{{ $mr->id }} <x-status-badge :status="$mr->status" /></h2>
                 </div>
+                <div class="req-hero__amount req-hero__progress">
+                    <x-progress :value="$fulfilledPct" height="10" />
+                    <span>{{ $fulfilledPct }}% filled from stock</span>
                 </div>
             </div>
+
+            <dl class="req-meta">
+                <div><dt>Requested by</dt><dd>{{ $mr->requestedBy?->name ?? '—' }}</dd></div>
+                @if($mr->contract)
+                    <div>
+                        <dt>Contract</dt>
+                        <dd><a href="{{ route('contracts.show', $mr->contract) }}">{{ $mr->contract->contract_number }}</a><span class="req-sub">{{ $mr->contract->title }}</span></dd>
+                    </div>
+                @endif
+                @if($mr->quotationRequest)
+                    <div>
+                        <dt>From quotation request</dt>
+                        <dd>
+                            @if(in_array(auth()->user()->role, ['admin', 'manager'], true))
+                                <a href="{{ route('admin.quotation.review', $mr->quotationRequest->id) }}">{{ $mr->quotationRequest->request_number }}</a>
+                            @else
+                                {{ $mr->quotationRequest->request_number }}
+                            @endif
+                        </dd>
+                    </div>
+                @endif
+                <div><dt>Created</dt><dd>{{ $mr->created_at->format('M d, Y H:i') }}</dd></div>
+                @if($purchaseRequest)
+                    <div>
+                        <dt>Purchase request</dt>
+                        <dd><a href="{{ route('purchase-requests.show', $purchaseRequest) }}">{{ $purchaseRequest->request_number }}</a><span class="req-sub">for items short in stock</span></dd>
+                    </div>
+                @endif
+            </dl>
+
+            @if($mr->notes)
+                <div class="mt-4">
+                    <div class="form-label">Notes</div>
+                    <div class="req-note">{{ $mr->notes }}</div>
+                </div>
+            @endif
         </div>
     </div>
-@endsection 
+
+    @if($purchaseRequest)
+        <div class="req-callout req-callout--info mb-4">
+            <div class="req-callout__text">
+                <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                <div><strong>Some items weren't in stock.</strong> Purchase request {{ $purchaseRequest->request_number }} was created for the shortfall.</div>
+            </div>
+            <a href="{{ route('purchase-requests.show', $purchaseRequest) }}" class="btn btn-outline-secondary">View purchase request</a>
+        </div>
+    @endif
+
+    <div class="card">
+        <div class="card-header"><h3 class="req-section-title"><i class="fas fa-boxes"></i> Items</h3></div>
+        <div class="table-responsive">
+            <table class="table req-table">
+                <thead>
+                    <tr>
+                        <th>Material / supplier</th>
+                        <th class="req-num">Requested</th>
+                        <th class="req-num">From stock</th>
+                        <th class="req-num">To purchase</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($grouped as $key => $rows)
+                        @php
+                            [$matName, $unit] = explode('|', $key);
+                            $requested = $rows->sum('quantity');
+                            $fulfilled = $rows->sum('fulfilled_quantity');
+                        @endphp
+                        <tr class="req-group-row">
+                            <td colspan="4">{{ $matName }} <span class="fw-normal text-muted">· {{ $unit }}</span></td>
+                        </tr>
+                        @foreach($rows as $item)
+                            @php $supplierName = $supplierFor($item); $short = $item->quantity - $item->fulfilled_quantity; @endphp
+                            <tr>
+                                <td class="req-indent">
+                                    @if($supplierName)
+                                        <span class="text-body fw-semibold">{{ $supplierName }}</span> <span class="req-sub d-inline">· client's choice</span>
+                                    @else
+                                        <span class="badge bg-warning">No supplier</span>
+                                    @endif
+                                </td>
+                                <td class="req-num">{{ number_format($item->quantity, 2) }}</td>
+                                <td class="req-num">{{ number_format($item->fulfilled_quantity, 2) }}</td>
+                                <td class="req-num">
+                                    @if($short > 0)
+                                        <span class="badge bg-warning">{{ number_format($short, 2) }}</span>
+                                    @else
+                                        <span class="text-muted">0.00</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                        @if($rows->count() > 1)
+                            <tr class="req-subtotal-row">
+                                <td class="text-end">Subtotal</td>
+                                <td class="req-num">{{ number_format($requested, 2) }} {{ $unit }}</td>
+                                <td class="req-num">{{ number_format($fulfilled, 2) }} {{ $unit }}</td>
+                                <td class="req-num">{{ number_format($requested - $fulfilled, 2) }} {{ $unit }}</td>
+                            </tr>
+                        @endif
+                    @empty
+                        <x-empty-row cols="4">No items on this request.</x-empty-row>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@endsection
+
+@push('styles')
+@vite('resources/css/pages/requests.css')
+@endpush
