@@ -332,9 +332,16 @@ class ContractController extends Controller
         return $pdf->download('contract-' . $contract->id . '.pdf');
     }
 
-    /** The agreement as a printable page: "Print / Save as PDF" uses the browser's print dialog, nothing is downloaded. */
-    public function printPreview(Contract $contract)
+    /**
+     * The agreement as a printable page (Close Preview / Print / Save as PDF toolbar).
+     * With ?embed=1 it returns just the document, which the in-page preview modal loads.
+     */
+    public function printPreview(Request $request, Contract $contract)
     {
+        if ($request->boolean('embed')) {
+            return view('admin.contracts.pdf', $this->agreementData($contract) + ['embed' => true]);
+        }
+
         return view('admin.contracts.pdf', $this->agreementData($contract) + [
             'preview' => true,
             'backUrl' => route('contracts.show', $contract),

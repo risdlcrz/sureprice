@@ -94,7 +94,13 @@
                     </button>
                 @endif
             @endif
-            <a href="{{ route('contracts.print', $contract->id) }}" class="btn btn-success">
+            {{-- Opens the in-page preview modal; the href is the full-page fallback --}}
+            <a href="{{ route('contracts.print', $contract->id) }}" class="btn btn-success" data-contract-preview
+               data-embed-url="{{ route('contracts.print', ['contract' => $contract->id, 'embed' => 1]) }}"
+               data-pdf-url="{{ route('contracts.download', $contract->id) }}"
+               data-title="Print Preview · Contract No. {{ $contract->contract_number }}"
+               data-file-name="Contract {{ $contract->contract_number }}"
+               data-footer="Construction Contract Agreement · Contract No. {{ $contract->contract_number }}">
                 <i class="fas fa-print"></i> Print Preview
             </a>
             <a href="{{ route('contracts.index') }}" class="btn btn-secondary">
@@ -241,4 +247,5 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>window.__page = Object.assign(window.__page || {}, { show0_0: @json((string) (url('/contracts/' . ($contract->id ?? 'MISSING_ID') . '/signatures'))), show0_1: {{ Js::from((string) (route('contracts.updateStatus', $contract->id))) }}, show0_2: @json($contract->id), show0_3: @json((string) (url('contracts'))) });</script>
 @vite('resources/js/pages/admin-contracts-show.js')
+@vite('resources/js/pages/contract-preview-modal.js')
 @endpush 

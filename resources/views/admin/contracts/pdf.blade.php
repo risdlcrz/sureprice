@@ -8,7 +8,8 @@
          - Browser print preview (ContractController@printPreview, $preview = true): adds the toolbar and the on-screen "sheet";
            the toolbar is hidden by @media print, and the browser's print dialog does the "Save as PDF".
          Amounts use DejaVu Sans where available because Helvetica/Arial in DomPDF have no ₱ glyph. --}}
-    @php $preview = $preview ?? false; @endphp
+    @php $preview = $preview ?? false; $embed = $embed ?? false; @endphp
+    {{-- $embed: just the document, loaded into the in-page preview modal (resources/js/pages/contract-preview-modal.js). --}}
     @if($preview)
         <meta name="viewport" content="width=device-width, initial-scale=1">
     @endif
@@ -16,7 +17,8 @@
         /* Formal black-and-white agreement: black text and rules, #333 only for small labels; square corners throughout. */
         @page { size: 8.5in 11in; margin: 0.65in 0.7in; }
         * { box-sizing: border-box; }
-        body { margin: 0; font-family: 'Times New Roman', Times, Georgia, serif; font-size: 10pt; line-height: 1.45; color: #000; }
+        /* .doc-root is the wrapper the preview modal puts the document in (inside a shadow root, where body rules don't apply) */
+        body, .doc-root { margin: 0; font-family: 'Times New Roman', Times, Georgia, serif; font-size: 10pt; line-height: 1.45; color: #000; }
         p { margin: 0 0 10px; }
         table { width: 100%; border-collapse: collapse; }
         .num { font-family: 'DejaVu Serif', 'Times New Roman', Georgia, serif; font-size: 9pt; white-space: nowrap; }
@@ -103,6 +105,9 @@
         .footer td { padding: 0; }
         .footer .page:after { content: "Page " counter(page); }
     </style>
+    @if($embed)
+    <style>.footer { display: none; }</style>
+    @endif
     @if($preview)
     <style>
         /* ---- Browser print preview only ---- */

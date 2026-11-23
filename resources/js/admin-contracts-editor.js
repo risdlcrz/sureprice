@@ -1,6 +1,38 @@
 // Custom JS extracted from admin/contracts/editor.blade.php
 // (CDN includes for Select2 and SignaturePad should remain in the Blade file or be managed by npm)
 
+import { openContractPreview } from './pages/contract-preview-modal.js';
+
+// Document styles for the draft preview (rendered inside the modal's shadow root; .doc-root is the document wrapper).
+const DRAFT_DOCUMENT_CSS = `
+    * { box-sizing: border-box; }
+    .doc-root { font-family: 'Times New Roman', Times, Georgia, serif; font-size: 10pt; line-height: 1.45; color: #000; }
+    .ce-meta { display: flex; justify-content: space-between; border-bottom: 1.5px solid #000; padding-bottom: 8px; margin-bottom: 16px; }
+    .ce-meta-hint, .ce-party-note, .ce-party-icon, .ce-step { display: none; }
+    .ce-header { text-align: center; }
+    .contract-title { font-size: 22px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
+    .ce-subtitle { margin: 0 0 12px; }
+    .ce-section { margin-bottom: 18px; break-inside: avoid; }
+    .ce-section-title { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 3px; }
+    .ce-costs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .ce-parties { display: block; }
+    .ce-party { border: 1px solid #000; padding: 12px 16px; margin-bottom: 10px; break-inside: avoid; }
+    .ce-party-head { margin-bottom: 6px; }
+    .ce-signature { display: inline-block; width: 46%; vertical-align: top; margin-right: 4%; text-align: center; }
+    .ce-party-role, .form-label, .ce-subheading { font-weight: bold; display: block; margin-top: 6px; }
+    .contract-blank { display: block; border-bottom: 1px solid #000; min-height: 1.3em; padding: 0 4px; }
+    .ce-number-badge { font-weight: bold; }
+    .selected-scopes-list ul { margin: 0; padding-left: 18px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th, td { border-bottom: 0.5pt solid #000; padding: 6px 8px; text-align: left; }
+    th { border-top: 1.5px solid #000; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
+    .text-end, .ce-num { text-align: right; }
+    .ce-empty i { display: none; }
+    .ce-grand-total { display: flex; justify-content: space-between; font-weight: bold; margin-top: 10px; }
+    .signature-pad { border: 1px solid #000; width: 300px; max-width: 100%; height: 100px; }
+    .mb-0 { margin-bottom: 0; } .mt-2 { margin-top: .5rem; } .mb-1 { margin-bottom: .25rem; }
+`;
+
 // Escape API text before it is placed in table markup.
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const peso = (v) => '₱' + parseFloat(v).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -520,15 +552,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize signature pads when DOM is loaded
     initializeSignaturePads();
     
-    // Print preview of the (possibly unsaved) contract: opens a preview window with Print / Close controls.
-    // Nothing is downloaded and the print dialog only opens when the user clicks "Print / Save as PDF".
+    // Print preview of the (possibly unsaved) contract, in the in-page modal (pages/contract-preview-modal.js).
+    // Nothing is downloaded and nothing prints until the user clicks Print or Save as PDF.
     document.getElementById('download-pdf').addEventListener('click', function() {
-        const printWindow = window.open('', '_blank');
-        if (!printWindow) {
-            alert('Your browser blocked the print preview window. Allow pop-ups for this site and try again.');
-            return;
-        }
-        // innerHTML drops typed values, so print a copy with each field replaced by its current value.
+        // innerHTML drops typed values, so preview a copy with each field replaced by its current value.
         const source = document.querySelector('.contract-border');
         const copy = source.cloneNode(true);
         const originals = source.querySelectorAll('input, select, textarea');
@@ -552,87 +579,18 @@ document.addEventListener('DOMContentLoaded', function() {
             canvas.replaceWith(img);
         });
         copy.querySelectorAll('button').forEach((b) => b.remove());
-        const contractContent = copy.innerHTML;
 
-        printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <title>Print Preview - Contract Agreement</title>
-                <style>
-                    @page { size: 8.5in 11in; margin: 0.65in 0.7in; }
-                    html { background: #d4d4d4; }
-                    body { font-family: 'Times New Roman', Times, Georgia, serif; font-size: 10pt; line-height: 1.45; margin: 0; color: #000; }
-                    .preview-bar { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
-                        justify-content: space-between; padding: 10px 20px; background: #111; color: #fff; font-family: Arial, sans-serif; font-size: 14px; }
-                    .preview-bar .hint { color: #ccc; font-size: 12px; }
-                    .preview-actions { display: flex; gap: 8px; }
-                    .preview-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 8px;
-                        border: 1px solid rgba(255,255,255,.35); background: transparent; color: #fff; font: inherit; font-weight: bold; cursor: pointer; }
-                    .preview-btn:hover { background: rgba(255,255,255,.12); }
-                    .preview-btn.primary { background: #fff; color: #000; border-color: #fff; }
-                    .preview-btn.primary:hover { background: #e5e5e5; }
-                    .preview-btn svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2;
-                        stroke-linecap: round; stroke-linejoin: round; }
-                    .sheet { width: 8.5in; min-height: 11in; margin: 24px auto; padding: 0.65in 0.7in; background: #fff;
-                        box-shadow: 0 4px 24px rgba(15,23,42,.15); box-sizing: border-box; }
-                    @media (max-width: 9in) { .sheet { width: auto; min-height: 0; margin: 0; padding: 24px 16px; box-shadow: none; } }
-                    .ce-meta { display: flex; justify-content: space-between; border-bottom: 1.5px solid #000; padding-bottom: 8px; margin-bottom: 16px; }
-                    .ce-meta-hint, .ce-party-note, .ce-party-icon { display: none; }
-                    .ce-header { text-align: center; }
-                    .contract-title { font-size: 22px; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
-                    .ce-section { margin-bottom: 18px; break-inside: avoid; }
-                    .ce-section-title { font-size: 13px; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 3px; }
-                    .ce-step { display: none; }
-                    .ce-costs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-                    .ce-parties { display: block; }
-                    .ce-party { border: 1px solid #000; padding: 12px 16px; margin-bottom: 10px; break-inside: avoid; }
-                    .ce-signature { display: inline-block; width: 46%; vertical-align: top; margin-right: 4%; }
-                    .ce-party-role, .form-label, .ce-subheading { font-weight: bold; display: block; margin-top: 6px; }
-                    .contract-blank { display: block; border-bottom: 1px solid #000; min-height: 1.3em; padding: 0 4px; }
-                    .ce-number-badge { font-weight: bold; }
-                    table { width: 100%; border-collapse: collapse; font-size: 12px; }
-                    th, td { border-bottom: 0.5pt solid #000; padding: 6px 8px; text-align: left; }
-                    th { border-top: 1.5px solid #000; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; }
-                    .text-end, .ce-num { text-align: right; }
-                    .ce-grand-total { display: flex; justify-content: space-between; font-weight: bold; margin-top: 10px; }
-                    .ce-signature { text-align: center; }
-                    .signature-pad { border: 1px solid #000; width: 300px; height: 100px; }
-                    @media print {
-                        html, body { background: #fff; }
-                        .preview-bar, .preview-actions, .preview-btn, .btn { display: none !important; }
-                        .sheet { width: auto; min-height: 0; margin: 0; padding: 0; box-shadow: none; }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="preview-bar" role="toolbar" aria-label="Print preview">
-                    <div><strong>Print Preview</strong> &middot; Draft contract
-                        <div class="hint">Unsaved draft: Save as PDF opens the print dialog &mdash; choose &ldquo;Save as PDF&rdquo; as the destination.</div></div>
-                    <div class="preview-actions">
-                        <button type="button" class="preview-btn" id="close-preview">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg> Close Preview</button>
-                        <button type="button" class="preview-btn" id="print-contract">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z"/></svg> Print</button>
-                        <button type="button" class="preview-btn primary" id="save-pdf">
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M12 11v6M9 14l3 3 3-3"/></svg> Save as PDF</button>
-                    </div>
-                </div>
-                <main class="sheet">${contractContent}</main>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
-        // Wire the controls from here so the preview document needs no inline script.
-        printWindow.document.getElementById('print-contract').addEventListener('click', () => printWindow.print());
-        // A draft has no server-side PDF yet, so Save as PDF uses the print dialog; the document title becomes the default file name.
-        printWindow.document.getElementById('save-pdf').addEventListener('click', function () {
-            const number = (document.querySelector('.ce-number-badge')?.textContent || '').trim();
-            printWindow.document.title = 'Contract ' + (number && number !== '—' ? number + ' (draft)' : 'draft');
-            printWindow.print();
+        const number = (document.querySelector('.ce-number-badge')?.textContent || '').trim();
+        const label = number && number !== '—' ? number : '';
+        // A draft has no server-side PDF yet, so Save as PDF uses the print dialog (file name from fileName).
+        openContractPreview({
+            title: 'Print Preview · Draft contract' + (label ? ' ' + label : ''),
+            html: copy.innerHTML,
+            css: DRAFT_DOCUMENT_CSS,
+            pdfUrl: null,
+            fileName: 'Contract ' + (label ? label + ' (draft)' : 'draft'),
+            footer: 'Construction Contract Agreement · Draft' + (label ? ' ' + label : ''),
         });
-        printWindow.document.getElementById('close-preview').addEventListener('click', () => printWindow.close());
-        printWindow.focus();
     });
     
     // Global function for clearing signatures

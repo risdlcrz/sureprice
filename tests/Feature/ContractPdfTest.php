@@ -100,6 +100,10 @@ test('print preview opens the agreement as a page with print controls instead of
     // the contract page offers the preview, not a download
     $this->actingAs($admin)->get("/contracts/{$contract->id}")->assertOk()
         ->assertSee('href="' . route('contracts.print', $contract->id) . '"', false)->assertSeeText('Print Preview')
+        // ...which opens in the in-page modal, loading the embeddable document
+        ->assertSee('data-contract-preview', false)
+        ->assertSee('data-embed-url="' . route('contracts.print', ['contract' => $contract->id, 'embed' => 1]) . '"', false)
+        ->assertSee('data-pdf-url="' . route('contracts.download', $contract->id) . '"', false)
         ->assertDontSee('href="' . route('contracts.download', $contract->id) . '"', false);
 });
 
@@ -110,4 +114,14 @@ test('clients cannot open the print preview of another client\'s contract', func
         'company_name' => 'Other Co', 'designation' => 'client', 'status' => 'approved']);
 
     $this->actingAs($stranger)->get("/contracts/{$contract->id}/print")->assertForbidden();
+});
+
+test('the embeddable preview returns just the document for the in-page modal', function () {
+    $contract = pdfContract(2);
+    $admin = User::factory()->create(['role' => 'admin', 'user_type' => 'employee']);
+
+    $this->actingAs($admin)->get("/contracts/{$contract->id}/print?embed=1")->assertOk()
+        ->assertSee('CONSTRUCTION CONTRACT AGREEMENT')->assertSee('Total Contract Amount')->assertSee('IN WITNESS WHEREOF')
+        ->assertSee('body, .doc-root {', false)      // document styles also apply inside the modal's shadow root
+        ->assertDontSee('preview-bar', false)->assertDontSee('id="print-contract"', false);
 });

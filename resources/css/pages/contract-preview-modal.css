@@ -1,0 +1,113 @@
+/* In-page contract preview modal (resources/js/pages/contract-preview-modal.js).
+   The document itself lives in a shadow root, so these rules only style the overlay chrome. */
+
+.cp-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.5);            /* bg-black/50 */
+    animation: cp-fade 0.15s ease-out;
+}
+.cp-modal[hidden] { display: none; }
+@keyframes cp-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.cp-dialog {
+    display: flex;
+    flex-direction: column;
+    width: min(100%, calc(8.5in + 48px));
+    max-height: 100%;
+    background: #e5e5e5;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+}
+
+/* Header / toolbar */
+.cp-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px 10px 18px;
+    background: #111;
+    color: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+}
+.cp-title { font-weight: bold; }
+.cp-hint { color: #ccc; font-size: 12px; }
+.cp-actions { display: flex; align-items: center; gap: 8px; }
+.cp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: transparent;
+    color: #fff;
+    font: inherit;
+    font-weight: bold;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.cp-btn:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.cp-btn.primary { background: #fff; color: #000; border-color: #fff; }
+.cp-btn.primary:hover { background: #e5e5e5; color: #000; }
+.cp-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cp-btn svg, .cp-x svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cp-x {
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    margin-left: 4px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+}
+.cp-x:hover { background: rgba(255, 255, 255, 0.12); }
+.cp-x:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* Scrollable area holding the letter-size sheet */
+.cp-scroll { flex: 1 1 auto; overflow: auto; padding: 24px; overscroll-behavior: contain; }
+.cp-sheet {
+    width: 8.5in;
+    max-width: 100%;
+    min-height: 11in;
+    margin: 0 auto;
+    padding: 0.65in 0.7in;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+.cp-status { padding: 3rem 1rem; text-align: center; font-family: Arial, sans-serif; color: #333; }
+
+body.cp-open { overflow: hidden; }
+
+@media (max-width: 9.5in) {
+    .cp-modal { padding: 0; }
+    .cp-dialog { width: 100%; height: 100%; border-radius: 0; }
+    .cp-scroll { padding: 0; }
+    .cp-sheet { width: 100%; min-height: 0; padding: 24px 16px; box-shadow: none; }
+}
+
+/* Printing with the preview open: only the contract document goes to paper / PDF */
+@media print {
+    body.cp-open > *:not(.cp-modal) { display: none !important; }
+    body.cp-open { overflow: visible; background: #fff !important; }
+    .cp-modal { position: static; display: block; padding: 0; background: none; animation: none; }
+    .cp-dialog { display: block; width: auto; max-height: none; border-radius: 0; box-shadow: none; background: none; overflow: visible; }
+    .cp-toolbar, .cp-actions, .cp-btn, .cp-x { display: none !important; }
+    .cp-scroll { overflow: visible; padding: 0; }
+    .cp-sheet { width: auto; min-height: 0; padding: 0; box-shadow: none; }
+}
