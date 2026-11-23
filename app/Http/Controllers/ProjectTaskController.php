@@ -7,6 +7,7 @@ use App\Models\ProjectTask;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Support\SafeErrors;
 
 class ProjectTaskController extends Controller
 {
@@ -64,7 +65,7 @@ class ProjectTaskController extends Controller
             return redirect()->route('projects.tasks.index', $project)
                 ->with('success', 'Task deleted successfully.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to delete task: ' . $e->getMessage());
+            return back()->with('error', SafeErrors::message($e, 'Failed to delete task'));
         }
     }
 } 

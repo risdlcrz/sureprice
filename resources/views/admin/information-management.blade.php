@@ -9,11 +9,11 @@
     <div class="top-controls d-flex justify-content-between align-items-center flex-wrap mb-4 gap-3">
         <!-- Type Filter -->
         <div class="btn-group" role="group">
-            <a href="{{ route('information-management.index', ['type' => 'employee'] + request()->except('type')) }}" 
+            <a href="{{ route('information-management.index', ['type' => 'employee'] + request()->except('type')) }}"
                class="btn {{ $type === 'employee' ? 'btn-primary' : 'btn-outline-secondary' }}">
                 <i class="fas fa-users me-1"></i> Employees
             </a>
-            <a href="{{ route('information-management.index', ['type' => 'company'] + request()->except('type')) }}" 
+            <a href="{{ route('information-management.index', ['type' => 'company'] + request()->except('type')) }}"
                class="btn {{ $type === 'company' ? 'btn-primary' : 'btn-outline-secondary' }}">
                 <i class="fas fa-building me-1"></i> Companies
             </a>
@@ -22,19 +22,19 @@
         <!-- Role Filter Buttons (Only show for employees) -->
         @if($type === 'employee')
         <div class="filter-buttons">
-            <a href="{{ route('information-management.index', ['role' => 'all'] + request()->except('role')) }}" 
+            <a href="{{ route('information-management.index', ['role' => 'all'] + request()->except('role')) }}"
                class="btn {{ $role === 'all' ? 'btn-primary' : 'btn-outline-secondary' }}">
                 <i class="fas fa-th-list me-1"></i> All
             </a>
-            <a href="{{ route('information-management.index', ['role' => 'procurement'] + request()->except('role')) }}" 
+            <a href="{{ route('information-management.index', ['role' => 'procurement'] + request()->except('role')) }}"
                class="btn {{ $role === 'procurement' ? 'btn-primary' : 'btn-outline-secondary' }}">
                 <i class="fas fa-box me-1"></i> Procurement
             </a>
-            <a href="{{ route('information-management.index', ['role' => 'warehousing'] + request()->except('role')) }}" 
+            <a href="{{ route('information-management.index', ['role' => 'warehousing'] + request()->except('role')) }}"
                class="btn {{ $role === 'warehousing' ? 'btn-primary' : 'btn-outline-secondary' }}">
                 <i class="fas fa-warehouse me-1"></i> Warehousing
             </a>
-            <a href="{{ route('information-management.index', ['role' => 'contractor'] + request()->except('role')) }}" 
+            <a href="{{ route('information-management.index', ['role' => 'contractor'] + request()->except('role')) }}"
                class="btn {{ $role === 'contractor' ? 'btn-primary' : 'btn-outline-secondary' }}">
                 <i class="fas fa-user-tie me-1"></i> Contractor
             </a>
@@ -47,7 +47,7 @@
             <form method="GET" action="{{ route('information-management.index') }}" class="search-form d-flex">
                 <input type="hidden" name="type" value="{{ $type }}">
                 <input type="hidden" name="role" value="{{ $role }}">
-                <input type="search" class="form-control form-control-sm" name="search" 
+                <input type="search" class="form-control form-control-sm" name="search"
                        placeholder="Search..." value="{{ $search }}">
                 <button class="btn btn-sm btn-primary ms-2" type="submit">
                     <i class="fas fa-search"></i>
@@ -60,12 +60,12 @@
                 <a href="{{ route('information-management.create') }}" class="btn btn-sm btn-primary">
                     <i class="fas fa-user-plus me-1"></i> Add Employee
                 </a>
-                
+
                 <!-- New Import CSV button to trigger modal -->
                 <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#importCsvModal" title="Import CSV">
                     <i class="fas fa-file-csv me-1"></i> Import CSV
                 </button>
-                
+
                 <!-- Original Download Template button -->
                 <a href="{{ route('information-management.template') }}" class="btn btn-sm btn-outline-success" title="Download Template">
                     <i class="fas fa-download"></i>
@@ -89,6 +89,7 @@
                             <th>Last Name</th>
                             <th>Username</th>
                             <th>Email</th>
+                            <th>Account</th>
                         @else
                             <th>Company Name</th>
                             <th>Designation</th>
@@ -96,6 +97,7 @@
                             <th>Email</th>
                             <th>Mobile</th>
                             <th>Status</th>
+                            <th>Account</th>
                         @endif
                         <th class="text-end">Actions</th>
                     </tr>
@@ -113,28 +115,41 @@
                                 <td>{{ $item->last_name }}</td>
                                 <td>{{ $item->username }}</td>
                                 <td>{{ $item->email }}</td>
+                                <td>@include('admin.information-management.account-lock', ['account' => $item->user, 'part' => 'status'])</td>
                                 <td class="actions">
+                                    @php $lockedForMe = $item->user?->isLocked() && !auth()->user()->isAdmin(); @endphp
                                     <div class="d-flex justify-content-end gap-2">
-                                        <button type="button" class="btn btn-sm btn-info" 
-                                           data-bs-toggle="modal" 
+                                        <button type="button" class="btn btn-sm btn-info"
+                                           data-bs-toggle="modal"
                                            data-bs-target="#viewModal{{ $item->id }}"
                                            title="View">
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <a href="{{ route('information-management.edit', $item->id) }}" 
-                                           class="btn btn-sm btn-primary" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <form action="{{ route('information-management.destroy', $item->id) }}" 
-                                              method="POST" class="d-inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-danger" 
-                                                    onclick="return confirm('Are you sure you want to delete this employee?')" 
-                                                    title="Delete">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                        </form>
+                                        @if($lockedForMe)
+                                            {{-- Locked accounts can only be changed by an administrator (also enforced in InformationManagementController) --}}
+                                            <span class="d-inline-block" tabindex="0" title="Locked by an administrator">
+                                                <button type="button" class="btn btn-sm btn-primary" disabled aria-label="Edit (locked)"><i class="fas fa-edit"></i></button>
+                                            </span>
+                                            <span class="d-inline-block" tabindex="0" title="Locked by an administrator">
+                                                <button type="button" class="btn btn-sm btn-danger" disabled aria-label="Delete (locked)"><i class="fas fa-trash-alt"></i></button>
+                                            </span>
+                                        @else
+                                            <a href="{{ route('information-management.edit', $item->id) }}"
+                                               class="btn btn-sm btn-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form action="{{ route('information-management.destroy', $item->id) }}"
+                                                  method="POST" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger"
+                                                        onclick="return confirm('Are you sure you want to delete this employee?')"
+                                                        title="Delete">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+                                        @include('admin.information-management.account-lock', ['account' => $item->user, 'part' => 'actions'])
                                     </div>
                                 </td>
                             @else
@@ -150,6 +165,7 @@
                                 <td>
                                     <x-status-badge :status="$item->status" />
                                 </td>
+                                <td>@include('admin.information-management.account-lock', ['account' => $item->user, 'part' => 'status'])</td>
                                 <td class="actions">
                                     <div class="d-flex justify-content-end gap-2">
                                         <a href="{{ route('admin.companies.show', $item->id) }}"
@@ -175,12 +191,13 @@
                                                 Are you sure you want to reject this company?
                                             </x-confirm-modal>
                                         @endif
+                                        @include('admin.information-management.account-lock', ['account' => $item->user, 'part' => 'actions'])
                                     </div>
                                 </td>
                             @endif
                         </tr>
                     @empty
-                        <x-empty-row :cols="$type === 'employee' ? 6 : 7">No records found.</x-empty-row>
+                        <x-empty-row :cols="$type === 'employee' ? 7 : 8">No records found.</x-empty-row>
                     @endforelse
                 </tbody>
             </table>
@@ -198,6 +215,11 @@
         @include('admin.information-management.employee-modal')
     @endforeach
 @endif
+
+{{-- Lock / unlock dialogs (admins only; the partial renders nothing for others) --}}
+@foreach($items as $row)
+    @include('admin.information-management.account-lock', ['account' => $row->user, 'part' => 'modals'])
+@endforeach
 
 @if($type === 'company')
     @foreach($items as $company)

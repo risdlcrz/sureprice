@@ -6,6 +6,8 @@ use App\Models\Conversation;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use App\Support\Uploads;
 
 class MessageController extends Controller
 {
@@ -70,11 +72,14 @@ class MessageController extends Controller
     {
         $this->authorize('view', $conversation);
 
+        // One attachment per message: 'file' (current composer) or 'image' (older clients)
+        $file = Uploads::file('file', 'attachments', label: 'The attachment');
+        $image = Uploads::file('image', 'images', label: 'The image');
         $request->validate([
             'content' => 'nullable|string|max:1000',
-            'image' => 'nullable|file|max:10240', // 10MB limit for images
-            'file' => 'nullable|file|max:10240' // 10MB limit for general files
-        ]);
+            ...$file->rules,
+            ...$image->rules,
+        ], $file->messages + $image->messages);
 
         if (!$request->filled('content') && !$request->hasFile('image') && !$request->hasFile('file')) {
             if ($request->wantsJson()) {
@@ -354,16 +359,46 @@ class MessageController extends Controller
         return back()->with('success', 'Attachment removed.');
     }
 
+    /**
+     * Shows an attachment in the browser (chat thumbnails and the image viewer) for conversation participants.
+     * Served through the app rather than /storage, so it works without the public/storage symlink.
+     * Only raster images are shown inline; anything else (including SVG/HTML) is sent as a download.
+     */
+    public function showAttachment(Message $message)
+    {
+        [$file, $fileName] = $this->attachmentFile($message);
+        $mime = \Illuminate\Support\Facades\File::mimeType($file) ?: 'application/octet-stream';
+
+        if (!in_array($mime, Message::INLINE_IMAGE_TYPES, true)) {
+            return response()->download($file, $fileName);
+        }
+
+        return response()->file($file, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => \Symfony\Component\HttpFoundation\HeaderUtils::makeDisposition('inline', $fileName, \Illuminate\Support\Str::ascii($fileName) ?: 'image'),
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, max-age=86400',
+        ]);
+    }
+
     public function downloadAttachment(Message $message)
     {
+        [$file, $fileName] = $this->attachmentFile($message);
+
+        return response()->download($file, $fileName);
+    }
+
+    /** [absolute path, display name] of a message's attachment, after checking the user is in the conversation. */
+    private function attachmentFile(Message $message): array
+    {
+        $this->authorize('view', $message->conversation);
+
         $path = $message->getAttachmentPath();
-        $fileName = $message->getAttachmentName();
-        
-        if (!$path || !\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+        if (!$path || !Storage::disk('public')->exists($path)) {
             abort(404, 'File not found');
         }
 
-        return response()->download(storage_path('app/public/' . $path), $fileName);
+        return [Storage::disk('public')->path($path), $message->getAttachmentName() ?: basename($path)];
     }
 
     public function show(Conversation $conversation)

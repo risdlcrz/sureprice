@@ -32,7 +32,85 @@ class User extends Authenticatable // implements MustVerifyEmail
     protected $casts = [
         'email_verified_at' => 'datetime',
         'last_login_at' => 'datetime',
+        'is_locked' => 'boolean',
+        'locked_at' => 'datetime',
+        'failed_login_attempts' => 'integer',
     ];
+
+    // ---------------------------------------------------------------- account lock
+    // The lock columns are deliberately not $fillable: only lockBy() / unlock() / the sign-in flow change them.
+
+    /** Consecutive failed sign-ins that lock the account automatically. */
+    public const MAX_FAILED_LOGINS = 5;
+
+    public const AUTO_LOCK_REASON = 'Locked automatically after too many failed sign-in attempts.';
+
+    public function lockedBy()
+    {
+        return $this->belongsTo(User::class, 'locked_by');
+    }
+
+    public function isLocked(): bool
+    {
+        return (bool) $this->is_locked;
+    }
+
+    /** Lock the account ($admin null = automatic lock) and end its sessions and remember-me token. */
+    public function lockBy(?User $admin, string $reason): void
+    {
+        $this->forceFill([
+            'is_locked' => true,
+            'locked_at' => now(),
+            'locked_by' => $admin?->id,
+            'lock_reason' => mb_substr(trim($reason), 0, 255),
+            'remember_token' => \Illuminate\Support\Str::random(60),
+        ])->save();
+
+        $this->endSessions();
+    }
+
+    public function unlock(): void
+    {
+        $this->forceFill([
+            'is_locked' => false,
+            'locked_at' => null,
+            'locked_by' => null,
+            'lock_reason' => null,
+            'failed_login_attempts' => 0,
+        ])->save();
+    }
+
+    /** Count a failed sign-in; locks the account on the MAX_FAILED_LOGINS-th. Returns true if it just locked. */
+    public function registerFailedLogin(): bool
+    {
+        if ($this->isLocked()) {
+            return false;
+        }
+        $this->forceFill(['failed_login_attempts' => $this->failed_login_attempts + 1])->save();
+
+        if ($this->failed_login_attempts >= self::MAX_FAILED_LOGINS) {
+            $this->lockBy(null, self::AUTO_LOCK_REASON);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    public function clearFailedLogins(): void
+    {
+        if ($this->failed_login_attempts !== 0) {
+            $this->forceFill(['failed_login_attempts' => 0])->save();
+        }
+    }
+
+    /** Sign the user out everywhere (database sessions); other drivers are caught by EnsureAccountIsNotLocked. */
+    private function endSessions(): void
+    {
+        if (config('session.driver') === 'database') {
+            \Illuminate\Support\Facades\DB::table(config('session.table', 'sessions'))->where('user_id', $this->id)->delete();
+        }
+    }
 
     // Relationships
     public function employee()

@@ -8,6 +8,7 @@ use App\Models\Delivery;
 use App\Models\Material;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Support\SafeErrors;
 
 class BudgetTrackingService
 {
@@ -27,7 +28,7 @@ class BudgetTrackingService
                 'is_over_budget' => $remainingBudget < 0
             ];
         } catch (\Exception $e) {
-            Log::error('Error calculating contract budget: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error calculating contract budget');
             throw $e;
         }
     }
@@ -83,7 +84,7 @@ class BudgetTrackingService
                 'average_unit_cost' => $averageUnitCost
             ];
         } catch (\Exception $e) {
-            Log::error('Error tracking material costs: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error tracking material costs');
             throw $e;
         }
     }
@@ -122,7 +123,7 @@ class BudgetTrackingService
                 'materials' => $materialCosts
             ];
         } catch (\Exception $e) {
-            Log::error('Error generating budget report: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error generating budget report');
             throw $e;
         }
     }

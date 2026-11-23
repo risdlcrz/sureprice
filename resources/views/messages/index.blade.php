@@ -156,16 +156,16 @@
                 @csrf
                 <div class="chat-composer__attachment" id="attachmentPreview" hidden></div>
                 <div class="chat-composer__row">
-                    <button type="button" class="btn chat-composer__icon" id="attachBtn" title="Attach a file (max 10 MB)" aria-label="Attach a file">
+                    <button type="button" class="btn chat-composer__icon" id="attachBtn" title="Attach a file: {{ \App\Support\Uploads::hint('attachments') }}" aria-label="Attach a file">
                         <i class="bi bi-paperclip"></i>
                     </button>
-                    <input type="file" name="file" class="d-none" id="fileInput">
+                    <input type="file" name="file" class="d-none" id="fileInput" {{ \App\Support\Uploads::attributes('attachments', 1) }}>
                     <textarea name="content" class="chat-composer__input" rows="1" maxlength="1000" placeholder="Write a message…" id="messageContent" aria-label="Message"></textarea>
                     <button type="submit" class="btn btn-success chat-composer__send" id="sendBtn" aria-label="Send">
                         <i class="bi bi-send-fill"></i>
                     </button>
                 </div>
-                <div class="chat-composer__hint">Enter to send · Shift + Enter for a new line</div>
+                <div class="chat-composer__hint">Enter to send · Shift + Enter for a new line · Attachments: {{ \App\Support\Uploads::hint('attachments') }}</div>
             </form>
         @else
             <div class="chat-empty chat-empty--thread">

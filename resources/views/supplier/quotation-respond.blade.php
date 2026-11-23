@@ -27,16 +27,6 @@
                             <x-requests.rooms :rooms="$quotationRequest->rooms" />
                         </div>
                     @endif
-                                                        </li>
-                                                    @endforeach
-                                                </ul>
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                </li>
-                            </ul>
-                        </div>
-                    @endif
 
                     @if($existingResponse)
                     <div class="alert alert-info">

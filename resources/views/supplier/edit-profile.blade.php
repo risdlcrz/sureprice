@@ -163,42 +163,42 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label for="dti_sec_registration" class="form-label">DTI/SEC Registration</label>
-                    <input type="file" class="form-control" id="dti_sec_registration" name="dti_sec_registration">
+                    <input type="file" class="form-control" id="dti_sec_registration" name="dti_sec_registration" {{ \App\Support\Uploads::attributes('documents', 1) }}>
                     @if(isset($documents['DTI_SEC_REGISTRATION']))
                         <small class="text-success">Current: <a href="{{ asset('storage/' . $documents['DTI_SEC_REGISTRATION']->path) }}" target="_blank">{{ $documents['DTI_SEC_REGISTRATION']->original_name }}</a></small>
                     @endif
                 </div>
                 <div class="col-md-6">
                     <label for="business_permit_mayor_permit" class="form-label">Business Permit/Mayor's Permit</label>
-                    <input type="file" class="form-control" id="business_permit_mayor_permit" name="business_permit_mayor_permit">
+                    <input type="file" class="form-control" id="business_permit_mayor_permit" name="business_permit_mayor_permit" {{ \App\Support\Uploads::attributes('documents', 1) }}>
                     @if(isset($documents['BUSINESS_PERMIT_MAYOR_PERMIT']))
                         <small class="text-success">Current: <a href="{{ asset('storage/' . $documents['BUSINESS_PERMIT_MAYOR_PERMIT']->path) }}" target="_blank">{{ $documents['BUSINESS_PERMIT_MAYOR_PERMIT']->original_name }}</a></small>
                     @endif
                 </div>
                 <div class="col-md-6">
                     <label for="valid_id_owner_rep" class="form-label">Valid ID (Owner/Rep)</label>
-                    <input type="file" class="form-control" id="valid_id_owner_rep" name="valid_id_owner_rep">
+                    <input type="file" class="form-control" id="valid_id_owner_rep" name="valid_id_owner_rep" {{ \App\Support\Uploads::attributes('documents', 1) }}>
                     @if(isset($documents['VALID_ID_OWNER_REP']))
                         <small class="text-success">Current: <a href="{{ asset('storage/' . $documents['VALID_ID_OWNER_REP']->path) }}" target="_blank">{{ $documents['VALID_ID_OWNER_REP']->original_name }}</a></small>
                     @endif
                 </div>
                 <div class="col-md-6">
                     <label for="accreditations_certifications" class="form-label">Accreditations/Certifications</label>
-                    <input type="file" class="form-control" id="accreditations_certifications" name="accreditations_certifications">
+                    <input type="file" class="form-control" id="accreditations_certifications" name="accreditations_certifications" {{ \App\Support\Uploads::attributes('documents', 1) }}>
                     @if(isset($documents['ACCREDITATIONS_CERTIFICATIONS']))
                         <small class="text-success">Current: <a href="{{ asset('storage/' . $documents['ACCREDITATIONS_CERTIFICATIONS']->path) }}" target="_blank">{{ $documents['ACCREDITATIONS_CERTIFICATIONS']->original_name }}</a></small>
                     @endif
                 </div>
                 <div class="col-md-6">
                     <label for="company_profile_portfolio" class="form-label">Company Profile/Portfolio</label>
-                    <input type="file" class="form-control" id="company_profile_portfolio" name="company_profile_portfolio">
+                    <input type="file" class="form-control" id="company_profile_portfolio" name="company_profile_portfolio" {{ \App\Support\Uploads::attributes('documents', 1) }}>
                     @if(isset($documents['COMPANY_PROFILE_PORTFOLIO']))
                         <small class="text-success">Current: <a href="{{ asset('storage/' . $documents['COMPANY_PROFILE_PORTFOLIO']->path) }}" target="_blank">{{ $documents['COMPANY_PROFILE_PORTFOLIO']->original_name }}</a></small>
                     @endif
                 </div>
                 <div class="col-md-6">
                     <label for="sample_price_list" class="form-label">Sample Price List</label>
-                    <input type="file" class="form-control" id="sample_price_list" name="sample_price_list">
+                    <input type="file" class="form-control" id="sample_price_list" name="sample_price_list" {{ \App\Support\Uploads::attributes('documents', 1) }}>
                     @if(isset($documents['SAMPLE_PRICE_LIST']))
                         <small class="text-success">Current: <a href="{{ asset('storage/' . $documents['SAMPLE_PRICE_LIST']->path) }}" target="_blank">{{ $documents['SAMPLE_PRICE_LIST']->original_name }}</a></small>
                     @endif

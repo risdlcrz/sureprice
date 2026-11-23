@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Support\SafeErrors;
 
 /**
  * Purchase order lifecycle:
@@ -207,9 +208,9 @@ class PurchaseOrderController extends Controller
                 $this->stockIn($purchaseOrder);
             });
         } catch (\Throwable $e) {
-            Log::error('Error completing purchase order', ['purchase_order_id' => $purchaseOrder->id, 'error' => $e->getMessage()]);
+            SafeErrors::log($e, 'Error completing purchase order', ['purchase_order_id' => $purchaseOrder->id,]);
 
-            return response()->json(['error' => 'Failed to complete purchase order: ' . $e->getMessage()], 500);
+            return response()->json(['error' => SafeErrors::message($e, 'Failed to complete purchase order')], 500);
         }
         $this->logActivity('completed', $purchaseOrder);
 
@@ -225,7 +226,7 @@ class PurchaseOrderController extends Controller
         try {
             $purchaseOrder->markAsShippedOut($data['tracking_number'], $data['shipping_note'] ?? null);
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', SafeErrors::message($e));
         }
 
         $this->notifyUsers(User::role('admin', 'manager', 'finance', 'warehousing')->get(), $purchaseOrder, 'Purchase Order Shipped',
@@ -242,7 +243,7 @@ class PurchaseOrderController extends Controller
         try {
             $purchaseOrder->markAsReceived();
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', SafeErrors::message($e));
         }
 
         $recipients = User::role('admin')->get()->push($purchaseOrder->supplier?->user)->filter();

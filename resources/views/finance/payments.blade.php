@@ -185,7 +185,7 @@
                                   </div>
                                   <div class="mb-3">
                                     <label for="admin_proof-{{ $po->id }}" class="form-label">Upload Proof</label>
-                                    <input type="file" class="form-control" id="admin_proof-{{ $po->id }}" name="admin_proof" accept=".jpg,.jpeg,.png,.pdf" required>
+                                    <input type="file" class="form-control" id="admin_proof-{{ $po->id }}" name="admin_proof" required {{ \App\Support\Uploads::attributes('documents', 1) }}>
                                   </div>
                                   <div class="mb-3">
                                     <label for="admin_notes-{{ $po->id }}" class="form-label">Notes</label>

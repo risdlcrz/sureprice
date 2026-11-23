@@ -118,10 +118,10 @@ class PurchaseRequest extends Model
     {
         $user = Auth::user();
         if (!$user || !$user->hasRole('admin')) {
-            throw new \Exception('Only administrators can approve purchase requests.');
+            throw new \App\Exceptions\UserFacingException('Only administrators can approve purchase requests.');
         }
         if ($this->status !== self::STATUS_PENDING_ADMIN_APPROVAL) {
-            throw new \Exception('Purchase request is not pending admin approval.');
+            throw new \App\Exceptions\UserFacingException('Purchase request is not pending admin approval.');
         }
         $this->admin_approved = true;
         $this->admin_approved_at = now();
@@ -134,10 +134,10 @@ class PurchaseRequest extends Model
     {
         $user = Auth::user();
         if (!$user || !$user->hasRole('supplier')) {
-            throw new \Exception('Only suppliers can approve purchase requests.');
+            throw new \App\Exceptions\UserFacingException('Only suppliers can approve purchase requests.');
         }
         if ($this->status !== self::STATUS_PENDING_SUPPLIER_APPROVAL) {
-            throw new \Exception('Purchase request is not pending supplier approval.');
+            throw new \App\Exceptions\UserFacingException('Purchase request is not pending supplier approval.');
         }
         $this->supplier_approved = true;
         $this->supplier_approved_at = now();

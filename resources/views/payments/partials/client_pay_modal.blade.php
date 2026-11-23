@@ -10,7 +10,7 @@
         <div class="modal-body">
           <div class="mb-3">
             <label for="client_payment_proof_{{ $payment->id }}" class="form-label">Upload Proof of Payment</label>
-            <input type="file" class="form-control" name="client_payment_proof" id="client_payment_proof_{{ $payment->id }}" accept=".jpg,.jpeg,.png,.pdf" required>
+            <input type="file" class="form-control" name="client_payment_proof" id="client_payment_proof_{{ $payment->id }}" required {{ \App\Support\Uploads::attributes('documents', 1, 5120) }}>
           </div>
           <div class="mb-3">
             <label for="client_payment_method_{{ $payment->id }}" class="form-label">Payment Method</label>

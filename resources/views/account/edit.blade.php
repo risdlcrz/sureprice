@@ -113,7 +113,7 @@
 
                         <form method="POST" action="{{ route('account.photo.update') }}" enctype="multipart/form-data" id="photoForm" class="account-photo__actions">
                             @csrf
-                            <input type="file" name="photo" id="photoInput" class="visually-hidden" accept="image/jpeg,image/png,image/webp">
+                            <input type="file" name="photo" id="photoInput" class="visually-hidden" {{ \App\Support\Uploads::attributes('images', 1, 4096) }}>
                             <label for="photoInput" class="btn btn-sm btn-outline-success mb-0" id="photoPick">
                                 <i class="fas fa-camera me-1"></i>{{ $user->avatar_path ? 'Change photo' : 'Upload photo' }}
                             </label>
@@ -127,7 +127,7 @@
                                 <button type="submit" class="btn btn-sm btn-link text-danger p-0">Remove photo</button>
                             </form>
                         @endif
-                        <p class="form-text text-center mb-0" id="photoHelp">JPG, PNG or WebP. It's cropped to a square — shown in the menu and in messages.</p>
+                        <p class="form-text text-center mb-0" id="photoHelp">{{ \App\Support\Uploads::hint('images', 1, 4096) }}. It's cropped to a square — shown in the menu and in messages.</p>
                         @if($errors->photo->has('photo'))
                             <div class="invalid-feedback d-block text-center">{{ $errors->photo->first('photo') }}</div>
                         @endif

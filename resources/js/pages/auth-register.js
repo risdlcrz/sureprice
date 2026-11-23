@@ -1,4 +1,5 @@
 // Sign-up page (auth/register): step-by-step navigation, account-type dependent fields, client-side checks.
+import '../upload-limits.js';
 const form = document.getElementById('registrationForm');
 const main = form?.closest('.register-main');
 

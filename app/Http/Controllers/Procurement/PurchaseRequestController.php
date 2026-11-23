@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Activity;
 use App\Models\Notification;
+use App\Support\SafeErrors;
 
 class PurchaseRequestController extends Controller
 {
@@ -182,8 +183,8 @@ class PurchaseRequestController extends Controller
                 ->with('success', 'Purchase request created successfully and is pending admin approval.');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error creating purchase request', ['exception' => $e, 'request' => $request->all()]);
-            return back()->with('error', 'Error creating purchase request: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error creating purchase request', ['fields' => array_keys($request->all())]);
+            return back()->with('error', SafeErrors::message($e, 'Error creating purchase request'));
         }
     }
 
@@ -277,8 +278,8 @@ class PurchaseRequestController extends Controller
                 ->with('success', 'Purchase request updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error updating purchase request', ['exception' => $e, 'request' => $request->all()]);
-            return back()->with('error', 'Error updating purchase request: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error updating purchase request', ['fields' => array_keys($request->all())]);
+            return back()->with('error', SafeErrors::message($e, 'Error updating purchase request'));
         }
     }
 
@@ -308,7 +309,7 @@ class PurchaseRequestController extends Controller
             return redirect()->route('procurement.purchase-requests.index')
                 ->with('success', 'Purchase request deleted successfully.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Error deleting purchase request: ' . $e->getMessage());
+            return back()->with('error', SafeErrors::message($e, 'Error deleting purchase request'));
         }
     }
 

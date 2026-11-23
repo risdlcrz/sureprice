@@ -36,7 +36,7 @@
                                                     <strong>End:</strong> {{ $contract->end_date ? \Carbon\Carbon::parse($contract->end_date)->format('M d, Y') : 'N/A' }}
                 </div>
                                                 <div class="mb-2"><strong>Budget:</strong> ₱{{ number_format($contract->total_amount ?? 0, 2) }}</div>
-                                                
+
                                                 @php
                                                     $pendingPO = $contract->purchaseOrders->where('status', 'pending')->count();
                                                     $partiallyDeliveredPO = $contract->purchaseOrders->where('status', 'partially_delivered')->count();
@@ -210,13 +210,13 @@
                             </div>
                             <div class="mb-3">
                                 <label for="purchaseProof{{ $contract->id }}" class="form-label">Proof of Purchase</label>
-                                <input type="file" class="form-control" id="purchaseProof{{ $contract->id }}" name="purchaseProof" accept=".pdf,.jpg,.jpeg,.png" required>
-                                <div class="form-text">Upload receipt, invoice, or any proof of purchase (PDF, JPG, PNG)</div>
+                                <input type="file" class="form-control" id="purchaseProof{{ $contract->id }}" name="purchaseProof" required {{ \App\Support\Uploads::attributes('documents', 1, 5120) }}>
+                                <div class="form-text">Upload a receipt, invoice, or any proof of purchase.</div>
                                 <div class="invalid-feedback">Please provide proof of purchase.</div>
                             </div>
                             <div class="mb-3">
                                 <label for="issuePhotos{{ $contract->id }}" class="form-label">Photos of the Issue</label>
-                                <input type="file" class="form-control" id="issuePhotos{{ $contract->id }}" name="issuePhotos" accept=".jpg,.jpeg,.png" multiple>
+                                <input type="file" class="form-control" id="issuePhotos{{ $contract->id }}" name="issuePhotos[]" multiple {{ \App\Support\Uploads::attributes('images', 5, 5120) }}>
                                 <div class="form-text">Upload photos showing the issue (optional)</div>
                             </div>
                         </form>
@@ -332,4 +332,4 @@
     window.calendarEvents = @json($calendarEvents ?? []);
 </script>
 @vite('resources/js/project-timeline-index.js')
-@endpush 
+@endpush

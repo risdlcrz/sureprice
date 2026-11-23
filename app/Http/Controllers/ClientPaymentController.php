@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Support\SafeErrors;
 
 class ClientPaymentController extends Controller
 {
@@ -35,7 +36,7 @@ class ClientPaymentController extends Controller
                 try {
                     $contract->generatePayments();
                 } catch (\Exception $e) {
-                    Log::error("Error generating payments for contract: " . $contract->id . " - " . $e->getMessage());
+                    SafeErrors::log($e, "Error generating payments for contract: " . $contract->id);
                 }
             }
         }
@@ -114,7 +115,7 @@ class ClientPaymentController extends Controller
                 try {
                     $contract->generatePayments();
                 } catch (\Exception $e) {
-                    Log::error("Error generating payments for contract: " . $contract->id . " - " . $e->getMessage());
+                    SafeErrors::log($e, "Error generating payments for contract: " . $contract->id);
                 }
             }
         }

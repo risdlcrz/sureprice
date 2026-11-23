@@ -52,7 +52,7 @@
                         <label for="client_reference_number_{{ $payment->id }}" class="form-label fw-bold">
                             # Reference Number
                         </label>
-                        <input type="text" name="client_reference_number" id="client_reference_number_{{ $payment->id }}" 
+                        <input type="text" name="client_reference_number" id="client_reference_number_{{ $payment->id }}"
                                class="form-control" placeholder="Enter transaction/reference number" required>
                         <div class="form-text">Enter the transaction number, check number, or any reference number from your payment.</div>
                     </div>
@@ -64,7 +64,7 @@
                         </label>
                         <div class="input-group">
                             <span class="input-group-text">₱</span>
-                            <input type="number" name="client_paid_amount" id="client_paid_amount_{{ $payment->id }}" 
+                            <input type="number" name="client_paid_amount" id="client_paid_amount_{{ $payment->id }}"
                                    class="form-control" value="{{ $payment->amount }}" step="0.01" min="0" required>
                         </div>
                         <div class="form-text">Enter the exact amount you paid (should match the due amount).</div>
@@ -75,7 +75,7 @@
                         <label for="client_paid_date_{{ $payment->id }}" class="form-label fw-bold">
                             Payment Date
                         </label>
-                        <input type="date" name="client_paid_date" id="client_paid_date_{{ $payment->id }}" 
+                        <input type="date" name="client_paid_date" id="client_paid_date_{{ $payment->id }}"
                                class="form-control" value="{{ date('Y-m-d') }}" required>
                         <div class="form-text">Select the date when you made the payment.</div>
                     </div>
@@ -85,11 +85,10 @@
                         <label for="client_payment_proof_{{ $payment->id }}" class="form-label fw-bold">
                             Upload Payment Proof
                         </label>
-                        <input type="file" name="client_payment_proof" id="client_payment_proof_{{ $payment->id }}" 
-                               class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
+                        <input type="file" name="client_payment_proof" id="client_payment_proof_{{ $payment->id }}"
+                               class="form-control" required {{ \App\Support\Uploads::attributes('documents', 1, 5120) }}>
                         <div class="form-text">
                             Upload a screenshot, photo, or scanned copy of your payment receipt, bank transfer confirmation, or check image.
-                            <br>Accepted formats: JPG, PNG, PDF (Max 5MB)
                         </div>
                     </div>
 
@@ -98,8 +97,8 @@
                         <label for="client_notes_{{ $payment->id }}" class="form-label fw-bold">
                             Additional Notes (Optional)
                         </label>
-                        <textarea name="client_notes" id="client_notes_{{ $payment->id }}" 
-                                  class="form-control" rows="3" 
+                        <textarea name="client_notes" id="client_notes_{{ $payment->id }}"
+                                  class="form-control" rows="3"
                                   placeholder="Add any additional information about your payment..."></textarea>
                         <div class="form-text">Include any additional details that might help with verification.</div>
                     </div>
@@ -107,8 +106,8 @@
                     <!-- Important Notice -->
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i>
-                        <strong>Important:</strong> Your payment will be reviewed by our finance team. 
-                        You will receive a notification once the payment is verified. 
+                        <strong>Important:</strong> Your payment will be reviewed by our finance team.
+                        You will receive a notification once the payment is verified.
                         Please ensure all information provided is accurate.
                     </div>
                 </div>
@@ -129,7 +128,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const modalId = 'submitPaymentModal{{ $payment->id }}';
     const modal = document.getElementById(modalId);
-    
+
     if (!modal) {
         console.error('Modal not found:', modalId);
         return;
@@ -168,27 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Simple file validation
-    if (fileInput) {
-        fileInput.addEventListener('change', function() {
-            const file = this.files[0];
-            const maxSize = 5 * 1024 * 1024; // 5MB
-            
-            if (file && file.size > maxSize) {
-                alert('File size must be less than 5MB. Selected file size: ' + (file.size / 1024 / 1024).toFixed(2) + 'MB');
-                this.value = '';
-                return;
-            }
-
-            // Validate file type
-            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
-            if (file && !allowedTypes.includes(file.type)) {
-                alert('Please select a valid file type: JPG, PNG, or PDF');
-                this.value = '';
-                return;
-            }
-        });
-    }
+    // File type/size/count are checked by resources/js/upload-limits.js (data-upload-* on the input)
 
     // Simple form submission without complex validation
     if (form) {
@@ -196,7 +175,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Basic validation
             const requiredFields = form.querySelectorAll('[required]');
             let isValid = true;
-            
+
             requiredFields.forEach(field => {
                 if (!field.value.trim()) {
                     field.classList.add('is-invalid');
@@ -231,4 +210,4 @@ document.addEventListener('DOMContentLoaded', function() {
     // Remove all modal event listeners that might cause glitching
     // Only keep essential functionality
 });
-</script> 
+</script>

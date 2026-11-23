@@ -81,7 +81,7 @@
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label for="client_payment_proof" class="form-label">Proof of Payment</label>
-                                        <input type="file" name="client_payment_proof" id="client_payment_proof" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
+                                        <input type="file" name="client_payment_proof" id="client_payment_proof" class="form-control" required {{ \App\Support\Uploads::attributes('documents', 1, 5120) }}>
                                         <small class="form-text text-muted">Upload receipt, screenshot, or proof of payment</small>
                                     </div>
                                     <div class="mb-3">
@@ -155,7 +155,7 @@
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label for="admin_payment_proof" class="form-label">Proof of Receipt</label>
-                                        <input type="file" name="admin_payment_proof" id="admin_payment_proof" class="form-control" accept=".jpg,.jpeg,.png,.pdf" required>
+                                        <input type="file" name="admin_payment_proof" id="admin_payment_proof" class="form-control" required {{ \App\Support\Uploads::attributes('documents', 1, 5120) }}>
                                         <small class="form-text text-muted">Upload proof that payment was received</small>
                                     </div>
                                     <div class="mb-3">

@@ -10,6 +10,7 @@ use App\Models\Stock;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Support\SafeErrors;
 
 class MaterialRequestController extends Controller
 {
@@ -185,7 +186,7 @@ class MaterialRequestController extends Controller
                 $remainingQty = $requestedQty;
                 $unit = $itemData['unit'] ?? ($material ? $material->unit : null);
                 if (empty($unit)) {
-                    throw new \RuntimeException('Material "' . ($material ? $material->name : 'Unknown') . '" (ID: ' . ($material ? $material->id : 'N/A') . ') is missing a unit. Please check your materials data.');
+                    throw new \App\Exceptions\UserFacingException('Material "' . ($material ? $material->name : 'Unknown') . '" (ID: ' . ($material ? $material->id : 'N/A') . ') is missing a unit. Please check your materials data.');
                 }
 
                 // Deduct from stock across all warehouses
@@ -345,11 +346,9 @@ class MaterialRequestController extends Controller
                         ]);
                     }
                 } catch (\Exception $e) {
-                    \Log::error('Error creating purchase request: ' . $e->getMessage(), [
+                    SafeErrors::log($e, 'Error creating purchase request', [
                         'material_request_id' => $materialRequest->id,
                         'purchase_request_items' => $purchaseRequestItems,
-                        'exception' => $e,
-                        'trace' => $e->getTraceAsString()
                     ]);
                     // Continue with material request creation even if purchase request fails
                 }
@@ -367,7 +366,7 @@ class MaterialRequestController extends Controller
             return redirect()->route('material-requests.show', $materialRequest)->with('success', $successMessage);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error creating material request: ' . $e->getMessage(), ['exception' => $e]);
+            SafeErrors::log($e, 'Error creating material request');
             return back()->with('error', 'There was an error creating the material request. Please try again.');
         }
     }

@@ -26,7 +26,7 @@
           <h6>Admin/Finance Verification</h6>
           <div class="mb-3">
             <label for="admin_payment_proof_{{ $payment->id }}" class="form-label">Upload Proof of Receipt</label>
-            <input type="file" class="form-control" name="admin_payment_proof" id="admin_payment_proof_{{ $payment->id }}" accept=".jpg,.jpeg,.png,.pdf" required>
+            <input type="file" class="form-control" name="admin_payment_proof" id="admin_payment_proof_{{ $payment->id }}" required {{ \App\Support\Uploads::attributes('documents', 1, 5120) }}>
           </div>
           <div class="mb-3">
             <label for="admin_payment_method_{{ $payment->id }}" class="form-label">Payment Method</label>

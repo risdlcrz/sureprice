@@ -47,6 +47,12 @@ class Message extends Model
         }
     }
 
+    /** Included in JSON (the chat appends sent messages from the store() response). */
+    protected $appends = ['attachment_url', 'download_url'];
+
+    /** Attachment types the browser may display inline (chat thumbnails / viewer); everything else downloads. */
+    public const INLINE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/avif'];
+
     // File attachment methods
     public function hasAttachment(): bool
     {
@@ -123,32 +129,15 @@ class Message extends Model
         return round($size, 2) . ' ' . $units[$i];
     }
 
+    /** Viewer URL (inline for images); served by MessageController so it needs no public/storage symlink. */
+    public function getAttachmentUrlAttribute(): string
+    {
+        return $this->hasAttachment() ? route('messages.attachment.show', $this) : '';
+    }
+
     public function getDownloadUrlAttribute(): string
     {
-        $path = $this->getAttachmentPath();
-        if (!$path) {
-            return '';
-        }
-        
-        // Check if file exists in storage
-        if (!Storage::disk('public')->exists($path)) {
-            // Try alternative paths
-            $alternativePaths = [
-                str_replace('messages/files/', 'messages/', $path),
-                str_replace('messages/', 'messages/files/', $path)
-            ];
-            
-            foreach ($alternativePaths as $altPath) {
-                if (Storage::disk('public')->exists($altPath)) {
-                    return Storage::url($altPath);
-                }
-            }
-            
-            // If file doesn't exist, return empty
-            return '';
-        }
-        
-        return Storage::url($path);
+        return $this->hasAttachment() ? route('messages.attachment.download', $this) : '';
     }
 
     public function getFileIconAttribute(): string
@@ -180,13 +169,13 @@ class Message extends Model
     private function getMimeTypeFromPath(): ?string
     {
         $path = $this->getAttachmentPath();
-        return $path ? Storage::mimeType($path) : null;
+        return $path && Storage::disk('public')->exists($path) ? Storage::disk('public')->mimeType($path) : null;
     }
 
     private function getFileSizeFromStorage(): ?int
     {
         $path = $this->getAttachmentPath();
-        return $path ? Storage::size($path) : null;
+        return $path && Storage::disk('public')->exists($path) ? Storage::disk('public')->size($path) : null;
     }
 
     protected static function boot()
@@ -196,8 +185,8 @@ class Message extends Model
         static::deleting(function ($message) {
             // Delete the file from storage when message is deleted
             $path = $message->getAttachmentPath();
-            if ($path && Storage::exists($path)) {
-                Storage::delete($path);
+            if ($path && Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
             }
         });
     }

@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Models\Notification;
+use App\Support\Uploads;
 
 class SupplierDashboardController extends Controller
 {
@@ -197,6 +198,16 @@ class SupplierDashboardController extends Controller
     public function updateProfile(Request $request)
     {
         $supplier = Auth::user()->company;
+
+        // Document uploads on this form: validated on their own so they never reach $supplier->update($validated)
+        $documentRules = $documentMessages = [];
+        foreach (\App\Http\Controllers\Auth\RegisteredUserController::DOCUMENT_LABELS as $field => $label) {
+            $upload = Uploads::file($field, 'documents', label: $label);
+            $documentRules += $upload->rules;
+            $documentMessages += $upload->messages;
+        }
+        $request->validate($documentRules, $documentMessages);
+
         $validated = $request->validate([
             'username' => 'required|string|max:50',
             'company_name' => 'required|string|max:255',

@@ -205,7 +205,7 @@ class PurchaseOrder extends Model
     public function markAsShippedOut(string $trackingNumber, ?string $note = null): void
     {
         if (!$this->canShipOut()) {
-            throw new \Exception('This order cannot be shipped: payment must be verified and it must not already be shipped.');
+            throw new \App\Exceptions\UserFacingException('This order cannot be shipped: payment must be verified and it must not already be shipped.');
         }
         $this->forceFill([
             'shipped_out_at' => now(), 'shipped_out_by' => auth()->id(), 'shipped_at' => now(),
@@ -217,7 +217,7 @@ class PurchaseOrder extends Model
     public function markAsReceived(): void
     {
         if (!$this->canReceive()) {
-            throw new \Exception('Only shipped orders that have not been received can be marked as received.');
+            throw new \App\Exceptions\UserFacingException('Only shipped orders that have not been received can be marked as received.');
         }
         $this->forceFill([
             'received_at' => now(), 'received_by' => auth()->id(), 'delivered_at' => now(),

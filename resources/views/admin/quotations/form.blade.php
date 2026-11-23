@@ -30,11 +30,11 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="purchase_request_id">Purchase Request</label>
-                                        <select class="form-control @error('purchase_request_id') is-invalid @enderror" 
+                                        <select class="form-control @error('purchase_request_id') is-invalid @enderror"
                                             id="purchase_request_id" name="purchase_request_id">
                                             <option value="">Select Purchase Request</option>
                                             @foreach($purchaseRequests as $pr)
-                                                <option value="{{ $pr->id }}" 
+                                                <option value="{{ $pr->id }}"
                                                     {{ old('purchase_request_id', $quotation->purchase_request_id ?? '') == $pr->id ? 'selected' : '' }}
                                                     data-materials='@json($pr->items)'>
                                                     PR-{{ $pr->id }} ({{ $pr->department }})
@@ -49,8 +49,8 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label for="due_date">Due Date</label>
-                                        <input type="date" class="form-control @error('due_date') is-invalid @enderror" 
-                                            id="due_date" name="due_date" 
+                                        <input type="date" class="form-control @error('due_date') is-invalid @enderror"
+                                            id="due_date" name="due_date"
                                             value="{{ old('due_date', $quotation->due_date ?? '') }}" required>
                                         @error('due_date')
                                             <div class="invalid-feedback">{{ $message }}</div>
@@ -137,9 +137,9 @@
                                                     <small class="text-muted">{{ $supplier->email }} | {{ $supplier->phone }}</small>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    <input type="text" class="form-control form-control-sm" 
-                                                        name="supplier_notes[{{ $supplier->id }}]" 
-                                                        value="{{ $supplier->pivot->notes ?? '' }}" 
+                                                    <input type="text" class="form-control form-control-sm"
+                                                        name="supplier_notes[{{ $supplier->id }}]"
+                                                        value="{{ $supplier->pivot->notes ?? '' }}"
                                                         placeholder="Notes for this supplier">
                                                 </div>
                                             </div>
@@ -194,8 +194,8 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="payment_terms">Payment Terms</label>
-                                        <input type="text" class="form-control @error('payment_terms') is-invalid @enderror" 
-                                            id="payment_terms" name="payment_terms" 
+                                        <input type="text" class="form-control @error('payment_terms') is-invalid @enderror"
+                                            id="payment_terms" name="payment_terms"
                                             value="{{ old('payment_terms', $quotation->payment_terms ?? '') }}"
                                             placeholder="e.g., Net 30, COD">
                                         @error('payment_terms')
@@ -206,8 +206,8 @@
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="delivery_terms">Delivery Terms</label>
-                                        <input type="text" class="form-control @error('delivery_terms') is-invalid @enderror" 
-                                            id="delivery_terms" name="delivery_terms" 
+                                        <input type="text" class="form-control @error('delivery_terms') is-invalid @enderror"
+                                            id="delivery_terms" name="delivery_terms"
                                             value="{{ old('delivery_terms', $quotation->delivery_terms ?? '') }}"
                                             placeholder="e.g., FOB Destination">
                                         @error('delivery_terms')
@@ -218,8 +218,8 @@
                                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label for="validity_period">Validity Period</label>
-                                        <input type="text" class="form-control @error('validity_period') is-invalid @enderror" 
-                                            id="validity_period" name="validity_period" 
+                                        <input type="text" class="form-control @error('validity_period') is-invalid @enderror"
+                                            id="validity_period" name="validity_period"
                                             value="{{ old('validity_period', $quotation->validity_period ?? '') }}"
                                             placeholder="e.g., 30 days">
                                         @error('validity_period')
@@ -237,7 +237,7 @@
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label for="notes">Notes and Special Instructions</label>
-                                        <textarea class="form-control @error('notes') is-invalid @enderror" 
+                                        <textarea class="form-control @error('notes') is-invalid @enderror"
                                             id="notes" name="notes" rows="4"
                                             placeholder="Enter any additional notes or special instructions for suppliers">{{ old('notes', $quotation->notes ?? '') }}</textarea>
                                         @error('notes')
@@ -255,12 +255,8 @@
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label for="attachments">Upload Files</label>
-                                        <input type="file" class="form-control-file @error('attachments') is-invalid @enderror" 
-                                            id="attachments" name="attachments[]" multiple>
-                                        <small class="form-text text-muted">
-                                            You can upload multiple files. Maximum size per file: 10MB.
-                                            Supported formats: PDF, DOC, DOCX, XLS, XLSX, JPG, PNG
-                                        </small>
+                                        <input type="file" class="form-control-file @error('attachments') is-invalid @enderror"
+                                            id="attachments" name="attachments[]" multiple {{ \App\Support\Uploads::attributes('attachments', 5) }}>
                                         @error('attachments')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -288,11 +284,11 @@
                                                     <td>{{ $attachment->formatted_size }}</td>
                                                     <td>
                                                         <div class="btn-group">
-                                                            <a href="{{ route('quotations.attachment.download', $attachment->id) }}" 
+                                                            <a href="{{ route('quotations.attachment.download', $attachment->id) }}"
                                                                 class="btn btn-sm btn-info">
                                                                 <i class="fas fa-download"></i>
                                                             </a>
-                                                            <button type="button" 
+                                                            <button type="button"
                                                                 class="btn btn-sm btn-danger remove-attachment"
                                                                 data-quotation="{{ $quotation->id }}"
                                                                 data-attachment="{{ $attachment->id }}">
@@ -350,4 +346,4 @@
 @push('scripts')
     @vite(['resources/js/admin/quotations/form.js'])
 @endpush
-@endsection 
+@endsection

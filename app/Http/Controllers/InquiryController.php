@@ -7,6 +7,7 @@ use App\Models\Contract;
 use App\Models\Material;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Support\Uploads;
 
 class InquiryController extends Controller
 {
@@ -70,8 +71,8 @@ class InquiryController extends Controller
             'materials.*.id' => 'required|exists:materials,id',
             'materials.*.quantity' => 'required|numeric|min:1',
             'materials.*.notes' => 'nullable|string',
-            'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xlsx,xls|max:10240'
-        ]);
+            ...Uploads::files('attachments', 'attachments', label: 'Attachments')->rules,
+        ], Uploads::files('attachments', 'attachments', label: 'Attachments')->messages);
 
         $inquiry = Inquiry::create([
             'contract_id' => $validated['contract_id'],
@@ -132,8 +133,8 @@ class InquiryController extends Controller
             'materials.*.id' => 'required|exists:materials,id',
             'materials.*.quantity' => 'required|numeric|min:1',
             'materials.*.notes' => 'nullable|string',
-            'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xlsx,xls|max:10240'
-        ]);
+            ...Uploads::files('attachments', 'attachments', label: 'Attachments')->rules,
+        ], Uploads::files('attachments', 'attachments', label: 'Attachments')->messages);
 
         $inquiry->update([
             'contract_id' => $validated['contract_id'],

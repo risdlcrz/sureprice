@@ -39,7 +39,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="csv_file" class="form-label">Choose CSV File:</label>
-                        <input type="file" name="csv_file" id="csv_file" class="form-control" accept=".csv" required>
+                        <input type="file" name="csv_file" id="csv_file" class="form-control" required {{ \App\Support\Uploads::attributes('csv', 1) }}>
                     </div>
                     <div class="alert alert-warning">
                         <h6 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Important Notes</h6>

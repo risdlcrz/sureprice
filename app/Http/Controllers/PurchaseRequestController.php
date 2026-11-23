@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Services\SupplierRankingService;
 use App\Models\Activity;
 use App\Models\Notification;
+use App\Support\SafeErrors;
 
 class PurchaseRequestController extends Controller
 {
@@ -274,8 +275,8 @@ class PurchaseRequestController extends Controller
                 ->with('success', 'Purchase request created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error creating purchase request', ['exception' => $e, 'request' => $request->all()]);
-            return back()->with('error', 'Error creating purchase request: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error creating purchase request', ['fields' => array_keys($request->all())]);
+            return back()->with('error', SafeErrors::message($e, 'Error creating purchase request'));
         }
     }
 
@@ -378,7 +379,7 @@ class PurchaseRequestController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error updating purchase request: ' . $e->getMessage());
+            return back()->with('error', SafeErrors::message($e, 'Error updating purchase request'));
         }
     }
 
@@ -404,7 +405,7 @@ class PurchaseRequestController extends Controller
             return redirect()->route('purchase-requests.index')
                 ->with('success', 'Purchase request deleted successfully.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Error deleting purchase request: ' . $e->getMessage());
+            return back()->with('error', SafeErrors::message($e, 'Error deleting purchase request'));
         }
     }
 
@@ -456,7 +457,7 @@ class PurchaseRequestController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', SafeErrors::message($e));
         }
 
         $successMessage = 'Purchase request approved by admin.';
@@ -536,7 +537,7 @@ class PurchaseRequestController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            return back()->with('error', $e->getMessage());
+            return back()->with('error', SafeErrors::message($e));
         }
 
         $successMessage = 'Purchase request approved by supplier.';
@@ -640,21 +641,20 @@ class PurchaseRequestController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error: ' . $e->getMessage(),
+                'message' => SafeErrors::message($e, 'Validation error'),
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
             // Log the error for debugging
-            \Log::error('Error generating purchase request: ' . $e->getMessage(), [
+            SafeErrors::log($e, 'Error generating purchase request', [
                 'contract_id' => $request->input('contract_id'),
                 'items_count' => count($request->input('items', [])),
                 'user_id' => Auth::id(),
-                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error generating purchase request: ' . $e->getMessage()
+                'message' => SafeErrors::message($e, 'Error generating purchase request')
             ], 500);
         }
     }

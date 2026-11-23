@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PDF;
 use App\Models\Employee;
+use App\Support\Uploads;
+use App\Support\SafeErrors;
 
 class ContractController extends Controller
 {
@@ -292,7 +294,7 @@ class ContractController extends Controller
             return redirect()->route('contracts.show', $contract->id)->with('success', 'Contract created successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withInput()->withErrors(['error' => 'Error saving contract: ' . $e->getMessage()]);
+            return back()->withInput()->withErrors(['error' => SafeErrors::message($e, 'Error saving contract')]);
         }
     }
 
@@ -617,9 +619,9 @@ class ContractController extends Controller
                 throw $e;
             }
         } catch (\Exception $e) {
-            \Log::error('Contract save error: ' . $e->getMessage());
+            SafeErrors::log($e, 'Contract save error');
             return back()->withInput()
-                ->withErrors(['error' => 'Error saving contract: ' . $e->getMessage()]);
+                ->withErrors(['error' => SafeErrors::message($e, 'Error saving contract')]);
         }
     }
 
@@ -693,6 +695,8 @@ class ContractController extends Controller
                 }
                 // If it's a file upload
                 else if ($request->hasFile("{$type}_signature")) {
+                    $signature = Uploads::file("{$type}_signature", 'images', label: 'The signature image');
+                    $request->validate($signature->rules, $signature->messages);
                     $path = $request->file("{$type}_signature")->store('signatures', 'public');
                 $signatures[$type] = $path;
                 }
@@ -779,7 +783,7 @@ class ContractController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->route('contracts.index')
-                ->with('error', 'Error deleting contract: ' . $e->getMessage());
+                ->with('error', SafeErrors::message($e, 'Error deleting contract'));
         }
     }
 
@@ -888,10 +892,10 @@ class ContractController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error updating contract status: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error updating contract status');
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating contract status: ' . $e->getMessage()
+                'message' => SafeErrors::message($e, 'Error updating contract status')
             ], 500);
         }
     }
@@ -975,7 +979,7 @@ class ContractController extends Controller
             
             return response()->json(['success' => false, 'message' => 'Invalid signature format']);
         } catch (\Exception $e) {
-            \Log::error('Error saving signature: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error saving signature');
             return response()->json(['success' => false, 'message' => 'Error saving signature']);
         }
     }
@@ -1034,12 +1038,10 @@ class ContractController extends Controller
 
             return response()->json(['success' => false, 'message' => 'Invalid signature format']);
         } catch (\Exception $e) {
-            \Log::error('Error updating signature: ' . $e->getMessage(), [
+            SafeErrors::log($e, 'Error updating signature', [
                 'contract_id' => $contract->id,
-                'exception' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['success' => false, 'message' => 'Error updating signature: ' . $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => SafeErrors::message($e, 'Error updating signature')]);
         }
     }
 
@@ -1231,10 +1233,10 @@ class ContractController extends Controller
                 'payments_count' => $contract->payments()->count()
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error generating payments for contract: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error generating payments for contract');
             return response()->json([
                 'success' => false,
-                'message' => 'Error generating payments: ' . $e->getMessage()
+                'message' => SafeErrors::message($e, 'Error generating payments')
             ], 500);
         }
     }

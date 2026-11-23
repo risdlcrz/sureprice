@@ -12,6 +12,7 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Support\SafeErrors;
 
 class SupplierRankingController extends Controller
 {
@@ -77,7 +78,7 @@ class SupplierRankingController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error storing supplier evaluation: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error storing supplier evaluation');
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to submit evaluation. Please try again.'

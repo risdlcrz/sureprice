@@ -77,6 +77,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin/company-changes')->name
     Route::post('/{changeRequest}/approve', [\App\Http\Controllers\Admin\CompanyChangeRequestController::class, 'approve'])->name('approve');
     Route::post('/{changeRequest}/reject', [\App\Http\Controllers\Admin\CompanyChangeRequestController::class, 'reject'])->name('reject');
 });
+
+// Admin lock / unlock of user accounts (also locked automatically after User::MAX_FAILED_LOGINS failed sign-ins)
+Route::middleware(['auth', 'role:admin'])->prefix('admin/users/{user}/lock')->name('admin.users.')->whereNumber('user')->group(function () {
+    Route::post('/', [\App\Http\Controllers\Admin\AccountLockController::class, 'lock'])->name('lock');
+    Route::delete('/', [\App\Http\Controllers\Admin\AccountLockController::class, 'unlock'])->name('unlock');
+});
 // ================== Authentication Routes ==================
 Route::middleware('web')->group(function () {
     require __DIR__.'/auth.php';
@@ -300,6 +306,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/messages/{conversation}', [MessageController::class, 'destroy'])->name('messages.destroy');
     Route::delete('/messages/message/{message}', [MessageController::class, 'destroyMessage'])->name('messages.message.destroy');
     Route::delete('/messages/attachment/{message}', [MessageController::class, 'removeAttachment'])->name('messages.attachment.remove');
+    Route::get('/messages/attachment/{message}', [MessageController::class, 'showAttachment'])->name('messages.attachment.show');
     Route::get('/messages/attachment/{message}/download', [MessageController::class, 'downloadAttachment'])->name('messages.attachment.download');
     Route::get('/messages/{conversation}', [MessageController::class, 'show'])->name('messages.show');
     Route::get('/messages/conversations/update', [MessageController::class, 'getConversationsUpdate'])->name('messages.conversations.update');

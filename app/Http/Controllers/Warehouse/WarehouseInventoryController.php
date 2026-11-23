@@ -12,6 +12,7 @@ use App\Models\Warehouse;
 use App\Models\Stock;
 use App\Models\Supplier;
 use App\Models\Activity;
+use App\Support\SafeErrors;
 
 class WarehouseInventoryController extends Controller
 {
@@ -128,8 +129,8 @@ class WarehouseInventoryController extends Controller
             return redirect()->route('warehouse.inventory.index', ['warehouse_id' => $request->warehouse_id])
                 ->with('success', 'Stock added successfully');
         } catch (\Exception $e) {
-            \Log::error('Error adding stock: ' . $e->getMessage(), ['exception' => $e]);
-            return back()->with('error', 'Failed to add stock: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error adding stock');
+            return back()->with('error', SafeErrors::message($e, 'Failed to add stock'));
         }
     }
 
@@ -160,7 +161,7 @@ class WarehouseInventoryController extends Controller
                         break;
                     case 'remove':
                         if ($request->quantity > $stock->current_stock) {
-                            throw new \Exception('Cannot remove more stock than available');
+                            throw new \App\Exceptions\UserFacingException('Cannot remove more stock than available');
                         }
                         $stock->current_stock -= $request->quantity;
                         $type = 'out';
@@ -194,8 +195,8 @@ class WarehouseInventoryController extends Controller
             return redirect()->route('warehouse.inventory.index', ['warehouse_id' => $request->warehouse_id])
                 ->with('success', 'Stock updated successfully');
         } catch (\Exception $e) {
-            \Log::error('Error updating stock: ' . $e->getMessage(), ['exception' => $e]);
-            return back()->with('error', 'Failed to update stock: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error updating stock');
+            return back()->with('error', SafeErrors::message($e, 'Failed to update stock'));
         }
     }
 

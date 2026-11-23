@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Support\Uploads;
 
 /**
  * "Account settings" for every signed-in user: name, username and email (kept in sync with the employee /
@@ -97,12 +98,10 @@ class AccountController extends Controller
     /** Upload or replace the profile photo (the browser crops it to a square first; see resources/js/pages/account.js). */
     public function updatePhoto(Request $request)
     {
+        $photo = Uploads::file('photo', 'images', required: true, maxKb: 4096, label: 'The photo');
         $request->validateWithBag('photo', [
-            'photo' => 'required|image|mimes:jpg,jpeg,png,webp|max:4096|dimensions:min_width=64,min_height=64,max_width=4000,max_height=4000',
-        ], [
-            'photo.image' => 'Choose a JPG, PNG or WebP image.',
-            'photo.mimes' => 'Choose a JPG, PNG or WebP image.',
-            'photo.max' => 'The photo must be 4 MB or smaller.',
+            'photo' => [...$photo->rules['photo'], 'dimensions:min_width=64,min_height=64,max_width=4000,max_height=4000'],
+        ], $photo->messages + [
             'photo.dimensions' => 'The photo must be at least 64 × 64 pixels.',
         ]);
 

@@ -4,6 +4,8 @@ const page = window.__page || {};
 const TZ = 'Asia/Manila';
 const url = (path) => (window.appUrl ? window.appUrl(path) : `/${path}`);
 
+const INLINE_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/avif'];
+
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const initial = (name) => esc((String(name || '?').trim()[0] || '?').toUpperCase());
 const timeOf = (iso) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ });
@@ -81,12 +83,8 @@ class Thread {
     }
 
     pickFile(file) {
+        // Type and size were already checked by resources/js/upload-limits.js; a rejected file arrives here as none.
         if (!file) { this.clearFile(); return; }
-        if (file.size > 10 * 1024 * 1024) {
-            this.clearFile();
-            this.flash('Attachments must be 10 MB or smaller.');
-            return;
-        }
         const isImage = file.type.startsWith('image/');
         const thumb = isImage ? `<img src="${URL.createObjectURL(file)}" alt="">` : '<i class="bi bi-file-earmark-text" aria-hidden="true"></i>';
         this.preview.innerHTML = `
@@ -173,12 +171,14 @@ class Thread {
 function messageHtml(m, mine, grouped) {
     const path = m.file_path || m.image;
     const name = m.file_name || (path ? path.split('/').pop() : '');
-    const isImage = path && (m.file_type ? m.file_type.startsWith('image/') : /\.(jpe?g|png|gif|webp)$/i.test(path));
-    const fileUrl = path ? url(`storage/${path}`) : '';
-    const attrs = path ? `data-attachment-url="${esc(fileUrl)}" data-attachment-name="${esc(name)}" data-download-url="${esc(url(`messages/attachment/${m.id}/download`))}"` : '';
+    // Inline only for raster images (Message::INLINE_IMAGE_TYPES); others are offered as downloads
+    const isImage = path && (m.file_type ? INLINE_IMAGE_TYPES.includes(m.file_type) : /\.(jpe?g|png|gif|webp|bmp|avif)$/i.test(path));
+    // Served by MessageController@showAttachment (participants only; no public/storage symlink needed)
+    const fileUrl = path ? (m.attachment_url || url(`messages/attachment/${m.id}`)) : '';
+    const attrs = path ? `data-attachment-url="${esc(fileUrl)}" data-attachment-name="${esc(name)}" data-download-url="${esc(m.download_url || url(`messages/attachment/${m.id}/download`))}"` : '';
     let attachment = '';
     if (path && isImage) {
-        attachment = `<button type="button" class="chat-attachment chat-attachment--image" ${attrs} data-attachment-type="image"><img src="${esc(fileUrl)}" alt="${esc(name)}" loading="lazy"></button>`;
+        attachment = `<button type="button" class="chat-attachment chat-attachment--image" ${attrs} data-attachment-type="image" aria-label="Open image ${esc(name)}"><img src="${esc(fileUrl)}" alt="${esc(name)}" loading="lazy" decoding="async"></button>`;
     } else if (path) {
         attachment = `<button type="button" class="chat-attachment chat-attachment--file" ${attrs} data-attachment-type="file"><i class="bi bi-file-earmark-text" aria-hidden="true"></i><span>${esc(name)}</span></button>`;
     }
@@ -209,6 +209,19 @@ function setupViewer() {
 
     zoomIn.addEventListener('click', () => { scale = Math.min(4, scale * 1.25); applyZoom(); });
     zoomOut.addEventListener('click', () => { scale = Math.max(0.5, scale / 1.25); applyZoom(); });
+
+    // A thumbnail that fails to load (file removed, no access) becomes a placeholder instead of a broken image.
+    // 'error' doesn't bubble, so listen in the capture phase; this also covers messages added after page load.
+    document.addEventListener('error', (e) => {
+        const thumb = e.target;
+        if (!(thumb instanceof HTMLImageElement) || !thumb.closest('.chat-attachment--image')) return;
+        const button = thumb.closest('.chat-attachment--image');
+        button.classList.add('is-broken');
+        thumb.replaceWith(Object.assign(document.createElement('span'), {
+            className: 'chat-attachment__fallback',
+            innerHTML: '<i class="bi bi-image" aria-hidden="true"></i> Image unavailable',
+        }));
+    }, true);
 
     document.addEventListener('click', (e) => {
         const trigger = e.target.closest('[data-attachment-url]');

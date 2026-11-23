@@ -23,6 +23,15 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrap();
 
+        // A fresh error reference per request (App\Support\SafeErrors).
+        \App\Support\SafeErrors::reset();
+
+        // Debug pages show stack traces, SQL and file paths: only ever on a developer machine.
+        if (config('app.debug') && !$this->app->environment('local', 'testing')) {
+            config(['app.debug' => false]);
+            \Illuminate\Support\Facades\Log::error('APP_DEBUG is on outside the local environment; it was turned off for this request. Set APP_DEBUG=false in .env.');
+        }
+
         // Numeric ids only, so static paths like /materials/all or /budgets/alerts aren't captured as ids.
         \Illuminate\Support\Facades\Route::pattern('material', '[0-9]+');
         \Illuminate\Support\Facades\Route::pattern('contract', '[0-9]+');

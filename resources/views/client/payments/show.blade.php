@@ -189,8 +189,7 @@
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label for="client_payment_proof" class="form-label fw-bold">Payment Proof *</label>
-                                        <input type="file" class="form-control" id="client_payment_proof" name="client_payment_proof" 
-                                               accept="image/*,.pdf" required>
+                                        <input type="file" class="form-control" id="client_payment_proof" name="client_payment_proof" required {{ \App\Support\Uploads::attributes('documents', 1, 5120) }}>
                                         <div class="form-text">Upload screenshot, photo, or PDF of your payment receipt/proof (Max: 5MB)</div>
                                         @error('client_payment_proof')
                                             <div class="text-danger">{{ $message }}</div>

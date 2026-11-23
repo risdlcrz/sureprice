@@ -174,7 +174,7 @@
                                     <div class="form-group">
                                         <label for="attachments">Upload Files</label>
                                         <input type="file" class="form-control-file @error('attachments') is-invalid @enderror" 
-                                            id="attachments" name="attachments[]" multiple>
+                                            id="attachments" name="attachments[]" multiple {{ \App\Support\Uploads::attributes('attachments', 5) }}>
                                         @error('attachments')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror

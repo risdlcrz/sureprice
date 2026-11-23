@@ -5,6 +5,7 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Support\Uploads;
 
 class PurchaseOrderPaymentController extends Controller
 {
@@ -17,11 +18,11 @@ class PurchaseOrderPaymentController extends Controller
         $data = $request->validate([
             'amount' => 'required|numeric|min:0.01',
             'payment_method' => 'required|string',
-            'admin_proof' => 'required|file|mimes:jpg,jpeg,png,pdf',
+            ...Uploads::file('admin_proof', 'documents', required: true, label: 'The proof of payment')->rules,
             'admin_reference_number' => 'required|string',
             'admin_paid_date' => 'required|date',
             'admin_notes' => 'nullable|string',
-        ]);
+        ], Uploads::file('admin_proof', 'documents', required: true, label: 'The proof of payment')->messages);
         $data['admin_proof'] = $request->file('admin_proof')->store('po_payments', 'public');
         $data['status'] = 'for_verification';
         $payment = $po->payments()->create($data);

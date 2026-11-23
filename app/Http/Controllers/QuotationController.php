@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use App\Models\QuotationAttachment;
 use App\Models\QuotationResponseAttachment;
 use App\Models\Activity;
+use App\Support\Uploads;
 
 class QuotationController extends Controller
 {
@@ -98,11 +99,11 @@ class QuotationController extends Controller
             'payment_terms' => 'nullable|string',
             'delivery_terms' => 'nullable|string',
             'validity_period' => 'nullable|string',
-            'attachments.*' => 'nullable|file|max:10240',
+            ...Uploads::files('attachments', 'attachments', label: 'Attachments')->rules,
             'materials' => 'array', // For standalone quotations
             'materials.*.id' => 'required_with:materials|exists:materials,id',
             'materials.*.quantity' => 'required_with:materials|numeric|min:0.01',
-        ]);
+        ], Uploads::files('attachments', 'attachments', label: 'Attachments')->messages);
 
         // Validate material requirements based on quotation type
         if ($request->boolean('is_standalone')) {
@@ -228,11 +229,11 @@ class QuotationController extends Controller
             'payment_terms' => 'nullable|string',
             'delivery_terms' => 'nullable|string',
             'validity_period' => 'nullable|string',
-            'attachments.*' => 'nullable|file|max:10240',
+            ...Uploads::files('attachments', 'attachments', label: 'Attachments')->rules,
             'materials' => 'array',
             'materials.*.id' => 'required_with:materials|exists:materials,id',
             'materials.*.quantity' => 'required_with:materials|numeric|min:0.01',
-        ]);
+        ], Uploads::files('attachments', 'attachments', label: 'Attachments')->messages);
 
         // Conditional validation for materials based on quotation type
         $isStandalone = $request->boolean('is_standalone');

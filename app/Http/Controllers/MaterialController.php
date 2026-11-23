@@ -11,6 +11,8 @@ use App\Models\QuotationAttachment;
 use App\Models\QuotationResponseAttachment;
 use App\Models\Supplier;
 use App\Models\Activity;
+use App\Support\Uploads;
+use App\Support\SafeErrors;
 
 class MaterialController extends Controller
 {
@@ -82,7 +84,7 @@ class MaterialController extends Controller
             'suppliers.*' => 'exists:suppliers,id',
             'scope_types' => 'nullable|array',
             'scope_types.*' => 'exists:scope_types,id',
-            'images.*' => 'nullable|image|max:2048',
+            ...Uploads::files('images', 'images', maxKb: 2048, label: 'Images')->rules,
             'is_per_area' => 'sometimes|boolean',
             'is_wall_material' => 'sometimes|boolean',
             'coverage_rate' => 'nullable|numeric|min:0.01|required_if:is_per_area,1',
@@ -158,8 +160,8 @@ class MaterialController extends Controller
                 ->with('success', 'Material created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error creating material: ' . $e->getMessage());
-            return back()->with('error', 'Error creating material: ' . $e->getMessage())->withInput();
+            SafeErrors::log($e, 'Error creating material');
+            return back()->with('error', SafeErrors::message($e, 'Error creating material'))->withInput();
         }
     }
 
@@ -187,7 +189,7 @@ class MaterialController extends Controller
             'suppliers.*' => 'exists:suppliers,id',
             'scope_types' => 'nullable|array',
             'scope_types.*' => 'exists:scope_types,id',
-            'images.*' => 'nullable|image|max:2048',
+            ...Uploads::files('images', 'images', maxKb: 2048, label: 'Images')->rules,
             'is_per_area' => 'sometimes|boolean',
             'is_wall_material' => 'sometimes|boolean',
             'coverage_rate' => 'nullable|numeric|min:0.01|required_if:is_per_area,1',
@@ -243,8 +245,8 @@ class MaterialController extends Controller
                 ->with('success', 'Material updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error updating material: ' . $e->getMessage());
-            return back()->with('error', 'Failed to update material: ' . $e->getMessage())->withInput();
+            SafeErrors::log($e, 'Error updating material');
+            return back()->with('error', SafeErrors::message($e, 'Failed to update material'))->withInput();
         }
     }
 
@@ -288,17 +290,17 @@ class MaterialController extends Controller
                 ->with('success', 'Material deleted successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error deleting material: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error deleting material');
             
             if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to delete material: ' . $e->getMessage()
+                    'message' => SafeErrors::message($e, 'Failed to delete material')
                 ], 500);
             }
             
             return redirect()->route('materials.index')
-                ->with('error', 'Failed to delete material: ' . $e->getMessage());
+                ->with('error', SafeErrors::message($e, 'Failed to delete material'));
         }
     }
 
@@ -329,7 +331,7 @@ class MaterialController extends Controller
 
             return response()->json($materials);
         } catch (\Exception $e) {
-            Log::error('Material search error: ' . $e->getMessage());
+            SafeErrors::log($e, 'Material search error');
             return response()->json(['error' => 'An error occurred while searching materials'], 500);
         }
     }
@@ -399,10 +401,10 @@ class MaterialController extends Controller
             ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error updating SRP prices: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error updating SRP prices');
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update SRP prices: ' . $e->getMessage()
+                'message' => SafeErrors::message($e, 'Failed to update SRP prices')
             ], 500);
         }
     }
@@ -475,8 +477,8 @@ class MaterialController extends Controller
             'specifications' => 'nullable|string',
             'scope_types' => 'nullable|array',
             'scope_types.*' => 'exists:scope_types,id',
-            'images.*' => 'nullable|image|max:2048'
-        ]);
+            ...Uploads::files('images', 'images', maxKb: 2048, label: 'Images')->rules,
+        ], Uploads::files('images', 'images', maxKb: 2048, label: 'Images')->messages);
 
         try {
             DB::beginTransaction();
@@ -523,10 +525,10 @@ class MaterialController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error creating material: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error creating material');
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create material: ' . $e->getMessage()
+                'message' => SafeErrors::message($e, 'Failed to create material')
             ], 500);
         }
     }

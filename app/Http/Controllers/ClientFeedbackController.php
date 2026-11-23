@@ -9,6 +9,7 @@ use App\Notifications\ClientFeedbackSubmittedNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Support\SafeErrors;
 
 class ClientFeedbackController extends Controller
 {
@@ -232,9 +233,8 @@ class ClientFeedbackController extends Controller
             }
 
         } catch (\Exception $e) {
-            Log::error("Error sending feedback notifications", [
+            SafeErrors::log($e, "Error sending feedback notifications", [
                 'feedback_id' => $feedback->id,
-                'error' => $e->getMessage()
             ]);
         }
     }

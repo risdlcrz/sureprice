@@ -15,9 +15,21 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use App\Support\Uploads;
+use App\Support\SafeErrors;
 
 class RegisteredUserController extends Controller
 {
+    /** Document uploads on the registration form (and the supplier profile), with the label used in error messages. */
+    public const DOCUMENT_LABELS = [
+        'dti_sec_registration' => 'The DTI/SEC registration',
+        'business_permit_mayor_permit' => "The business / mayor's permit",
+        'valid_id_owner_rep' => 'The valid ID',
+        'accreditations_certifications' => 'The accreditations / certifications',
+        'company_profile_portfolio' => 'The company profile / portfolio',
+        'sample_price_list' => 'The sample price list',
+    ];
+
     /**
      * Display the registration view.
      */
@@ -86,7 +98,7 @@ class RegisteredUserController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error($type . ' registration failed', ['error' => $e->getMessage()]);
+            SafeErrors::log($e, $type . ' registration failed');
 
             return back()->withInput()->withErrors(['error' => 'Registration could not be completed. Please try again, or contact support if it keeps happening.']);
         }
@@ -133,41 +145,49 @@ class RegisteredUserController extends Controller
             'bank_name' => ['nullable', Rule::in(Company::BANKS)],
             'bank_account_name' => 'nullable|string|max:100',
             'bank_account_number' => 'nullable|string|max:50',
-            'accreditations_certifications' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
-            'company_profile_portfolio' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
-            'sample_price_list' => 'nullable|file|mimes:pdf,jpg,png|max:10240',
+            'accreditations_certifications' => 'nullable',
+            'company_profile_portfolio' => 'nullable',
+            'sample_price_list' => 'nullable',
             'agree_terms' => 'required|accepted',
             'agree_contact' => 'nullable|boolean',
             'type' => 'required|in:employee,company',
         ];
 
-        // Set file upload rules based on designation
+        // Which document uploads are required for this designation (the file rules themselves come from Uploads below)
         if ($request->designation === 'supplier') {
             $rules['company_name'] = 'required|string|max:100';
-            $rules['dti_sec_registration'] = 'required|file|mimes:pdf,jpg,png|max:10240';
-            $rules['business_permit_mayor_permit'] = 'required|file|mimes:pdf,jpg,png|max:10240';
-            $rules['valid_id_owner_rep'] = 'required|file|mimes:pdf,jpg,png|max:10240';
+            $rules['dti_sec_registration'] = 'required';
+            $rules['business_permit_mayor_permit'] = 'required';
+            $rules['valid_id_owner_rep'] = 'required';
         } else if ($request->designation === 'client') {
             $rules['client_type'] = 'required|in:individual,company';
             
             if ($request->client_type === 'company') {
                 $rules['company_name'] = 'required|string|max:100';
-                $rules['dti_sec_registration'] = 'nullable|file|mimes:pdf,jpg,png|max:10240';
+                $rules['dti_sec_registration'] = 'nullable';
             } else {
                 $rules['company_name'] = 'nullable|string|max:100';
-                $rules['dti_sec_registration'] = 'nullable|file|mimes:pdf,jpg,png|max:10240';
+                $rules['dti_sec_registration'] = 'nullable';
             }
             
             // For clients, all file uploads are optional
-            $rules['business_permit_mayor_permit'] = 'nullable|file|mimes:pdf,jpg,png|max:10240';
-            $rules['valid_id_owner_rep'] = 'nullable|file|mimes:pdf,jpg,png|max:10240';
+            $rules['business_permit_mayor_permit'] = 'nullable';
+            $rules['valid_id_owner_rep'] = 'nullable';
         }
 
         if ($request->supplier_type === 'Other') {
             $rules['other_supplier_type'] = 'required|string|max:100';
         }
 
-        return $request->validate($rules);
+        // Every document upload: documents kind (images + PDF), app-wide size limit; required where set above
+        $messages = [];
+        foreach (self::DOCUMENT_LABELS as $field => $label) {
+            $upload = Uploads::file($field, 'documents', required: str_starts_with((string) ($rules[$field] ?? ''), 'required'), label: $label);
+            $rules = array_merge($rules, $upload->rules);
+            $messages += $upload->messages;
+        }
+
+        return $request->validate($rules, $messages);
     }
 
     protected function createUser(array $data, string $type)

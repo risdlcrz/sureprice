@@ -308,7 +308,7 @@
                                     </x-field>
                                     <x-field name="admin_reference_number" id="admin_reference_number{{ $po->id }}" label="Reference number" col="md-6" required />
                                     <x-field name="admin_paid_date" id="admin_paid_date{{ $po->id }}" type="date" label="Date paid" :value="now()->toDateString()" col="md-6" required />
-                                    <x-field name="admin_proof" id="admin_proof{{ $po->id }}" type="file" label="Proof of payment" col="md-12" required accept=".jpg,.jpeg,.png,.pdf" />
+                                    <x-field name="admin_proof" id="admin_proof{{ $po->id }}" type="file" label="Proof of payment" col="md-12" required upload="documents" />
                                     <x-field name="admin_notes" id="admin_notes{{ $po->id }}" type="textarea" label="Notes (optional)" col="md-12" rows="2" />
                                 </div>
                             </div>

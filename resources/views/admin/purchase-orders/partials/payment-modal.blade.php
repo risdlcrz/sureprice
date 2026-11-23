@@ -14,7 +14,7 @@
             </x-field>
             <x-field name="admin_reference_number" label="Reference Number" required />
             <x-field name="admin_paid_date" label="Date Paid" type="date" :value="now()->toDateString()" required />
-            <x-field name="admin_proof" label="Proof of Payment" type="file" accept=".jpg,.jpeg,.png,.pdf" required />
+            <x-field name="admin_proof" label="Proof of Payment" type="file" upload="documents" required />
             <x-field name="admin_notes" label="Notes (optional)" type="textarea" />
         </div>
         <div class="modal-footer">

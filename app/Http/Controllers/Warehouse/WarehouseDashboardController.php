@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\Activity;
+use App\Support\SafeErrors;
 
 class WarehouseDashboardController extends Controller
 {
@@ -61,8 +62,8 @@ class WarehouseDashboardController extends Controller
                 'monthlyMovements'
             ));
         } catch (\Exception $e) {
-            \Log::error('Error loading warehouse dashboard: ' . $e->getMessage(), ['exception' => $e]);
-            return back()->with('error', 'Failed to load warehouse dashboard: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error loading warehouse dashboard');
+            return back()->with('error', SafeErrors::message($e, 'Failed to load warehouse dashboard'));
         }
     }
     
@@ -86,7 +87,7 @@ class WarehouseDashboardController extends Controller
                 
             return response()->json($alerts);
         } catch (\Exception $e) {
-            \Log::error('Error fetching stock alerts: ' . $e->getMessage(), ['exception' => $e]);
+            SafeErrors::log($e, 'Error fetching stock alerts');
             return response()->json(['error' => 'Failed to fetch stock alerts.'], 500);
         }
     }
@@ -111,7 +112,7 @@ class WarehouseDashboardController extends Controller
             
             return response()->json($movements);
         } catch (\Exception $e) {
-            \Log::error('Error fetching stock movements: ' . $e->getMessage(), ['exception' => $e]);
+            SafeErrors::log($e, 'Error fetching stock movements');
             return response()->json(['error' => 'Failed to fetch stock movements.'], 500);
         }
     }

@@ -11,6 +11,8 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use App\Support\Uploads;
+use App\Support\SafeErrors;
 
 class WarrantyRequestController extends Controller
 {
@@ -28,9 +30,10 @@ class WarrantyRequestController extends Controller
             'receipt_number' => 'nullable|string|max:255',
             'model_number' => 'nullable|string|max:255',
             'issue_description' => 'required|string',
-            'purchaseProof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120', // 5MB max
-            'issuePhotos.*' => 'nullable|file|mimes:jpg,jpeg,png|max:5120', // 5MB max per file
-        ]);
+            ...Uploads::file('purchaseProof', 'documents', required: true, maxKb: 5120, label: 'The proof of purchase')->rules,
+            ...Uploads::files('issuePhotos', 'images', maxKb: 5120, label: 'Photos of the issue')->rules,
+        ], Uploads::file('purchaseProof', 'documents', required: true, maxKb: 5120, label: 'The proof of purchase')->messages
+            + Uploads::files('issuePhotos', 'images', maxKb: 5120, label: 'Photos of the issue')->messages);
 
         if ($validator->fails()) {
             return response()->json([
@@ -92,7 +95,7 @@ class WarrantyRequestController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to submit warranty request: ' . $e->getMessage()
+                'message' => SafeErrors::message($e, 'Failed to submit warranty request')
             ], 500);
         }
     }
@@ -223,7 +226,7 @@ class WarrantyRequestController extends Controller
 
             return response()->stream($callback, 200, $headers);
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to export warranty requests: ' . $e->getMessage());
+            return back()->with('error', SafeErrors::message($e, 'Failed to export warranty requests'));
         }
     }
 
@@ -272,9 +275,8 @@ class WarrantyRequestController extends Controller
 
     public function import(Request $request)
     {
-        $request->validate([
-            'file' => 'required|file|mimes:csv|max:5120' // 5MB max
-        ]);
+        $csv = Uploads::file('file', 'csv', required: true, maxKb: 5120, label: 'The CSV file');
+        $request->validate($csv->rules, $csv->messages);
 
         try {
             $file = fopen($request->file('file')->getPathname(), 'r');
@@ -290,19 +292,19 @@ class WarrantyRequestController extends Controller
                 try {
                     // Validate required fields
                     if (count($data) < 8) {
-                        throw new \Exception('Invalid number of columns');
+                        throw new \App\Exceptions\UserFacingException('Invalid number of columns');
                     }
 
                     // Find contract by number
                     $contract = Contract::where('contract_number', $data[0])->first();
                     if (!$contract) {
-                        throw new \Exception('Contract not found');
+                        throw new \App\Exceptions\UserFacingException('Contract not found');
                     }
 
                     // Validate status
                     $validStatuses = ['pending', 'in_review', 'approved', 'rejected'];
                     if (!in_array(strtolower($data[7]), $validStatuses)) {
-                        throw new \Exception('Invalid status');
+                        throw new \App\Exceptions\UserFacingException('Invalid status');
                     }
 
                     // Create warranty request
@@ -321,7 +323,7 @@ class WarrantyRequestController extends Controller
 
                     $imported++;
                 } catch (\Exception $e) {
-                    $errors[] = "Row {$row}: " . $e->getMessage();
+                    $errors[] = SafeErrors::message($e, "Row {$row}");
                 }
                 $row++;
             }
@@ -334,7 +336,7 @@ class WarrantyRequestController extends Controller
 
             return back()->with('success', "Successfully imported {$imported} warranty requests");
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to import file: ' . $e->getMessage());
+            return back()->with('error', SafeErrors::message($e, 'Failed to import file'));
         }
     }
 
@@ -403,7 +405,7 @@ class WarrantyRequestController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to submit additional work request: ' . $e->getMessage()
+                'message' => SafeErrors::message($e, 'Failed to submit additional work request')
             ], 500);
         }
     }

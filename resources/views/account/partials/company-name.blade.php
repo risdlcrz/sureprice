@@ -74,9 +74,9 @@
                         </div>
                         <div class="col-md-12 mb-3">
                             <label for="proof" class="form-label">Proof document<span class="text-danger"> *</span></label>
-                            <input type="file" id="proof" name="proof" accept=".pdf,.jpg,.jpeg,.png" required
-                                class="form-control @if($err->has('proof')) is-invalid @endif">
-                            <div class="form-text">PDF, JPG or PNG, up to 10 MB. Only administrators can see it.</div>
+                            <input type="file" id="proof" name="proof" required
+                                class="form-control @if($err->has('proof')) is-invalid @endif" {{ \App\Support\Uploads::attributes('documents', 1) }}>
+                            <div class="form-text">Only administrators can see it.</div>
                             @if($err->has('proof'))<div class="invalid-feedback d-block">{{ $err->first('proof') }}</div>@endif
                         </div>
                         <div class="col-md-12 mb-3">

@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
+use App\Support\Uploads;
 
 class InformationManagementController extends Controller
 {
@@ -21,7 +23,7 @@ class InformationManagementController extends Controller
         $roles = [];
 
         if ($type === 'employee') {
-            $query = Employee::with('user')
+            $query = Employee::with('user.lockedBy')
                 ->when($role !== 'all', function ($query) use ($role) {
                     return $query->where('role', $role);
                 })
@@ -39,7 +41,7 @@ class InformationManagementController extends Controller
             $items = $query->paginate(10);
             $roles = ['procurement', 'warehousing', 'contractor'];
         } else { // type === 'company'
-            $query = Company::with('user')
+            $query = Company::with('user.lockedBy')
                 ->when($search, function ($query) use ($search) {
                     return $query->where(function ($q) use ($search) {
                         $q->where('company_name', 'like', "%{$search}%")
@@ -106,19 +108,22 @@ class InformationManagementController extends Controller
                            ->with('success', 'Employee created successfully');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to create employee: ' . $e->getMessage());
+            Log::error('Employee create failed', ['exception' => $e]);
+            return back()->withInput()->with('error', 'The employee could not be created. Please try again.');
         }
     }
 
     public function edit($id)
     {
         $employee = Employee::with('user')->findOrFail($id);
+        $this->abortIfLockedForNonAdmin($employee);
         return view('admin.employees.form', compact('employee'));
     }
 
     public function update(Request $request, $id)
     {
         $employee = Employee::findOrFail($id);
+        $this->abortIfLockedForNonAdmin($employee);
         $request->validate($this->employeeRules($request, $employee));
         DB::beginTransaction();
         try {
@@ -163,14 +168,16 @@ class InformationManagementController extends Controller
                            ->with('success', 'Employee updated successfully');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to update employee: ' . $e->getMessage());
+            Log::error('Employee update failed', ['employee_id' => $employee->id, 'exception' => $e]);
+            return back()->withInput()->with('error', 'The employee could not be updated. Please try again.');
         }
     }
 
     public function destroy($id)
     {
         $employee = Employee::findOrFail($id);
-        
+        $this->abortIfLockedForNonAdmin($employee);
+
         DB::beginTransaction();
         try {
             $employee->user->delete();
@@ -181,16 +188,18 @@ class InformationManagementController extends Controller
                            ->with('success', 'Employee deleted successfully');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to delete employee: ' . $e->getMessage());
+            Log::error('Employee delete failed', ['employee_id' => $employee->id, 'exception' => $e]);
+            return back()->with('error', 'The employee could not be deleted. Please try again.');
         }
     }
 
     public function import(Request $request)
     {
+        $csv = Uploads::file('csv_file', 'csv', required: true, label: 'The CSV file');
         $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt',
+            ...$csv->rules,
             'type' => 'required|in:employee,contractor'
-        ]);
+        ], $csv->messages);
 
         try {
             DB::beginTransaction();
@@ -282,8 +291,8 @@ class InformationManagementController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Import failed: ' . $e->getMessage());
-            return back()->with('error', 'Failed to import data: ' . $e->getMessage());
+            Log::error('Employee import failed', ['exception' => $e]);
+            return back()->with('error', 'The file could not be imported. Check that it matches the template and try again.');
         }
     }
 
@@ -352,6 +361,14 @@ class InformationManagementController extends Controller
     }
 
     /** Validation for creating ($employee null) or updating an employee account. */
+    /** Locked accounts can only be changed by an admin (managers also use this page). */
+    private function abortIfLockedForNonAdmin(Employee $employee): void
+    {
+        if ($employee->user?->isLocked() && !request()->user()->isAdmin()) {
+            abort(403, 'This account is locked by an administrator. Only an administrator can change it.');
+        }
+    }
+
     private function employeeRules(Request $request, ?Employee $employee = null): array
     {
         $userId = $employee?->user_id;

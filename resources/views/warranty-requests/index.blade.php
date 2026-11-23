@@ -185,13 +185,13 @@
                     </div>
                     <div class="mb-3">
                         <label for="purchase_proof" class="form-label">Upload Purchase Slip</label>
-                        <input type="file" class="form-control" id="purchase_proof" name="purchaseProof" accept=".pdf,.jpg,.jpeg,.png" required>
-                        <div class="form-text">Upload a photo or scan of the receipt (PDF, JPG, PNG)</div>
+                        <input type="file" class="form-control" id="purchase_proof" name="purchaseProof" required {{ \App\Support\Uploads::attributes('documents', 1, 5120) }}>
+                        <div class="form-text">Upload a photo or scan of the receipt.</div>
                         <div class="invalid-feedback">Please provide the purchase slip.</div>
                     </div>
                     <div class="mb-3">
                         <label for="issue_photos" class="form-label">Photos of the Issue</label>
-                        <input type="file" class="form-control" id="issue_photos" name="issuePhotos[]" accept=".jpg,.jpeg,.png" multiple>
+                        <input type="file" class="form-control" id="issue_photos" name="issuePhotos[]" multiple {{ \App\Support\Uploads::attributes('images', 5, 5120) }}>
                         <div class="form-text">Upload photos showing the issue (optional)</div>
                     </div>
                 </form>
@@ -226,7 +226,7 @@
                     @csrf
                     <div class="mb-3">
                         <label for="importFile" class="form-label">Select CSV File</label>
-                        <input type="file" class="form-control" id="importFile" name="file" accept=".csv" required>
+                        <input type="file" class="form-control" id="importFile" name="file" required {{ \App\Support\Uploads::attributes('csv', 1, 5120) }}>
                         <div class="form-text">Only CSV files are accepted. Maximum file size: 5MB</div>
                     </div>
                 </form>
@@ -259,7 +259,7 @@
                             <select class="form-select" id="work_contract_id" name="contract_id" required>
                                 <option value="">Choose a contract...</option>
                                 @foreach(App\Models\Contract::where('status', 'COMPLETED')->get() as $contract)
-                                    <option value="{{ $contract->id }}" 
+                                    <option value="{{ $contract->id }}"
                                             data-client="{{ $contract->client->name }}"
                                             data-number="{{ $contract->contract_number }}">
                                         {{ $contract->contract_number }} - {{ $contract->client->name }}
@@ -398,4 +398,4 @@
 @push('scripts')
 <script>window.__page = Object.assign(window.__page || {}, { index0_0: @json((string) (route("warranty-requests.export"))), index0_1: @json((string) (route("warranty-requests.index"))), index0_2: @json((string) (url('api/warranty-requests'))), index0_3: @json((string) (url('api/materials/search'))), index0_4: @json((string) (route("warranty-requests.additional-work"))), index0_5: @json((string) (csrf_token())) });</script>
 @vite('resources/js/pages/warranty-requests-index.js')
-@endpush 
+@endpush

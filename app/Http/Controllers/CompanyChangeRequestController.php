@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Support\Uploads;
 
 /**
  * Clients ask to change their registered company name from Account settings. The change only takes effect once an
@@ -23,14 +24,15 @@ class CompanyChangeRequestController extends Controller
             return back()->with('error', 'You already have a company name change waiting for review.');
         }
 
+        $proof = Uploads::file('proof', 'documents', required: true, label: 'The proof document');
         $data = $request->validateWithBag('companyName', [
             'new_company_name' => ['required', 'string', 'min:2', 'max:100', Rule::notIn(array_filter([$company->company_name]))],
             'reason' => 'nullable|string|max:500',
-            'proof' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            ...$proof->rules,
         ], [
             'new_company_name.not_in' => 'That is already your registered company name.',
             'proof.required' => 'Upload a document that shows the new name (e.g. DTI/SEC registration or amended certificate).',
-        ], ['new_company_name' => 'new company name']);
+        ] + $proof->messages, ['new_company_name' => 'new company name']);
 
         $file = $request->file('proof');
         $changeRequest = $company->changeRequests()->create([

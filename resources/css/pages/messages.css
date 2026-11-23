@@ -213,3 +213,7 @@
     .chat-msg { max-width: 88%; }
     .chat-composer__hint { display: none; }
 }
+
+/* Image attachment that failed to load (see setupViewer in resources/js/pages/messages-index.js) */
+.chat-attachment--image.is-broken { display: inline-flex; align-items: center; min-height: 0; padding: 0.6rem 0.8rem; background: #f1f5f9; border: 1px dashed #cbd5e1; }
+.chat-attachment__fallback { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: #64748b; white-space: nowrap; }

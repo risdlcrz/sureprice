@@ -44,6 +44,7 @@ class NewMessage implements ShouldBroadcast
                 'file_size' => $this->message->file_size,
                 'has_attachment' => $this->message->hasAttachment(),
                 'is_image' => $this->message->isImage(),
+                'attachment_url' => $this->message->attachment_url,
                 'download_url' => $this->message->download_url,
                 'file_icon' => $this->message->file_icon,
                 'formatted_size' => $this->message->formatted_size

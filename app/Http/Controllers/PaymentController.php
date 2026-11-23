@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Notifications\PaymentStatusNotification;
+use App\Support\Uploads;
+use App\Support\SafeErrors;
 
 class PaymentController extends Controller
 {
@@ -195,26 +197,22 @@ class PaymentController extends Controller
                                ->with('success', 'Payment #' . $payment->payment_number . ' has been marked as paid successfully.');
             } catch (\Exception $e) {
                 DB::rollBack();
-                Log::error('Failed to create transaction', [
+                SafeErrors::log($e, 'Failed to create transaction', [
                     'payment_id' => $payment->id,
-                    'error_message' => $e->getMessage(),
-                    'error_trace' => $e->getTraceAsString()
                 ]);
 
                 return redirect()->back()
-                               ->with('error', 'Failed to create transaction: ' . $e->getMessage());
+                               ->with('error', SafeErrors::message($e, 'Failed to create transaction'));
             }
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Failed to mark payment as paid', [
+            SafeErrors::log($e, 'Failed to mark payment as paid', [
                 'payment_id' => $payment->id,
-                'error_message' => $e->getMessage(),
-                'error_trace' => $e->getTraceAsString()
             ]);
 
             return redirect()->back()
-                           ->with('error', 'Failed to mark payment as paid: ' . $e->getMessage());
+                           ->with('error', SafeErrors::message($e, 'Failed to mark payment as paid'));
         }
     }
 
@@ -271,8 +269,8 @@ class PaymentController extends Controller
     {
         $request->validate([
             'reference_number' => 'required|string|max:255',
-            'payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
-        ]);
+            ...Uploads::file('payment_proof', 'documents', required: true, maxKb: 5120, label: 'The proof of payment')->rules,
+        ], Uploads::file('payment_proof', 'documents', required: true, maxKb: 5120, label: 'The proof of payment')->messages);
 
         $payment->update([
             'reference_number' => $request->reference_number,
@@ -297,9 +295,9 @@ class PaymentController extends Controller
             'client_reference_number' => 'required|string|max:255',
             'client_paid_amount' => 'required|numeric|min:0',
             'client_paid_date' => 'required|date',
-            'client_payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            ...Uploads::file('client_payment_proof', 'documents', required: true, maxKb: 5120, label: 'The proof of payment')->rules,
             'client_notes' => 'nullable|string|max:1000',
-        ]);
+        ], Uploads::file('client_payment_proof', 'documents', required: true, maxKb: 5120, label: 'The proof of payment')->messages);
 
         try {
             DB::beginTransaction();
@@ -337,24 +335,22 @@ class PaymentController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Failed to submit client proof', [
+            SafeErrors::log($e, 'Failed to submit client proof', [
                 'payment_id' => $payment->id,
-                'error_message' => $e->getMessage(),
-                'error_trace' => $e->getTraceAsString()
             ]);
-            return redirect()->back()->with('error', 'Failed to submit payment proof: ' . $e->getMessage());
+            return redirect()->back()->with('error', SafeErrors::message($e, 'Failed to submit payment proof'));
         }
     }
 
     public function submitAdminProof(Request $request, Payment $payment)
     {
         $request->validate([
-            'admin_payment_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            ...Uploads::file('admin_payment_proof', 'documents', required: true, maxKb: 5120, label: 'The proof of payment')->rules,
             'admin_reference_number' => 'required|string',
             'admin_received_amount' => 'required|numeric',
             'admin_received_date' => 'required|date',
             'admin_notes' => 'nullable|string',
-        ]);
+        ], Uploads::file('admin_payment_proof', 'documents', required: true, maxKb: 5120, label: 'The proof of payment')->messages);
 
         try {
             DB::beginTransaction();
@@ -423,12 +419,10 @@ class PaymentController extends Controller
             return redirect()->back()->with('success', 'Payment verified successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Failed to process admin proof', [
+            SafeErrors::log($e, 'Failed to process admin proof', [
                 'payment_id' => $payment->id,
-                'error_message' => $e->getMessage(),
-                'error_trace' => $e->getTraceAsString()
             ]);
-            return redirect()->back()->with('error', 'Failed to process admin proof: ' . $e->getMessage());
+            return redirect()->back()->with('error', SafeErrors::message($e, 'Failed to process admin proof'));
         }
     }
 
@@ -439,8 +433,8 @@ class PaymentController extends Controller
             'admin_received_amount' => 'required|numeric',
             'admin_received_date' => 'required|date',
             'admin_notes' => 'nullable|string',
-            'admin_payment_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
-        ]);
+            ...Uploads::file('admin_payment_proof', 'documents', maxKb: 5120, label: 'The proof of payment')->rules,
+        ], Uploads::file('admin_payment_proof', 'documents', maxKb: 5120, label: 'The proof of payment')->messages);
 
         try {
             DB::beginTransaction();
@@ -522,12 +516,10 @@ class PaymentController extends Controller
             return redirect()->back()->with('success', 'Payment verified successfully!');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Failed to verify payment', [
+            SafeErrors::log($e, 'Failed to verify payment', [
                 'payment_id' => $payment->id,
-                'error_message' => $e->getMessage(),
-                'error_trace' => $e->getTraceAsString()
             ]);
-            return redirect()->back()->with('error', 'Failed to verify payment: ' . $e->getMessage());
+            return redirect()->back()->with('error', SafeErrors::message($e, 'Failed to verify payment'));
         }
     }
 
@@ -582,12 +574,10 @@ class PaymentController extends Controller
             return redirect()->back()->with('success', 'Payment rejected. Client will be notified to resubmit.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Failed to reject payment', [
+            SafeErrors::log($e, 'Failed to reject payment', [
                 'payment_id' => $payment->id,
-                'error_message' => $e->getMessage(),
-                'error_trace' => $e->getTraceAsString()
             ]);
-            return redirect()->back()->with('error', 'Failed to reject payment: ' . $e->getMessage());
+            return redirect()->back()->with('error', SafeErrors::message($e, 'Failed to reject payment'));
         }
     }
 
@@ -635,12 +625,10 @@ class PaymentController extends Controller
             return redirect()->back()->with('success', 'Information request sent to client.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Failed to request more info', [
+            SafeErrors::log($e, 'Failed to request more info', [
                 'payment_id' => $payment->id,
-                'error_message' => $e->getMessage(),
-                'error_trace' => $e->getTraceAsString()
             ]);
-            return redirect()->back()->with('error', 'Failed to request more information: ' . $e->getMessage());
+            return redirect()->back()->with('error', SafeErrors::message($e, 'Failed to request more information'));
         }
     }
 } 

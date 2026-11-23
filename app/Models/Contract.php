@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Support\SafeErrors;
 
 class Contract extends Model
 {
@@ -322,8 +323,7 @@ class Contract extends Model
                     'created_by' => auth()->id() ?? 1
                 ]);
             } catch (\Exception $e) {
-                \Log::error('Error creating payment for contract: ' . $this->id, [
-                    'error' => $e->getMessage(),
+                SafeErrors::log($e, 'Error creating payment for contract: ' . $this->id, [
                     'schedule' => $schedule
                 ]);
             }

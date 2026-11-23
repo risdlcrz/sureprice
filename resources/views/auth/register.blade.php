@@ -230,7 +230,7 @@
             {{-- 5. Documents --}}
             <section class="register-step" data-step="documents">
                 <h2 class="register-step__title">Documents</h2>
-                <p class="register-step__hint">PDF, JPG or PNG, up to 10&nbsp;MB each.
+                <p class="register-step__hint">{{ \App\Support\Uploads::hint('documents') }} each.
                     <span data-when="supplier">Fields marked <span class="text-danger">*</span> are required for suppliers.</span>
                     <span data-when="client">All documents are optional for clients.</span>
                 </p>
@@ -244,14 +244,14 @@
                     ] as $name => [$label, $requiredFor])
                         <div class="col-md-6 mb-3 reg-field" @if($requiredFor) data-required-field @endif>
                             <label for="{{ $name }}" class="form-label">{{ $label }}</label>
-                            <input type="file" id="{{ $name }}" name="{{ $name }}" class="{{ $file($name) }}" accept=".pdf,.jpg,.jpeg,.png"
-                                data-max-size="10485760" @if($requiredFor) data-required-when="{{ $requiredFor }}" @endif>
+                            <input type="file" id="{{ $name }}" name="{{ $name }}" class="{{ $file($name) }}"
+                                data-max-size="{{ \App\Support\Uploads::maxKb() * 1024 }}" @if($requiredFor) data-required-when="{{ $requiredFor }}" @endif {{ \App\Support\Uploads::attributes('documents', 1) }}>
                             @error($name)<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                         </div>
                     @endforeach
                     <div class="col-md-6 mb-3 reg-field" data-when="supplier">
                         <label for="sample_price_list" class="form-label">Sample price list</label>
-                        <input type="file" id="sample_price_list" name="sample_price_list" class="{{ $file('sample_price_list') }}" accept=".pdf,.jpg,.jpeg,.png" data-max-size="10485760">
+                        <input type="file" id="sample_price_list" name="sample_price_list" class="{{ $file('sample_price_list') }}" data-max-size="{{ \App\Support\Uploads::maxKb() * 1024 }}" {{ \App\Support\Uploads::attributes('documents', 1) }}>
                         @error('sample_price_list')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                     </div>
                 </div>

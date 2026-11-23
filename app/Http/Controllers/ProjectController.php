@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Services\SupplierSelectionService;
 use App\Models\ProjectFeedback;
+use App\Support\SafeErrors;
 
 class ProjectController extends Controller
 {
@@ -77,7 +78,7 @@ class ProjectController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Failed to create project: ' . $e->getMessage());
+            return back()->with('error', SafeErrors::message($e, 'Failed to create project'));
         }
     }
 
@@ -122,7 +123,7 @@ class ProjectController extends Controller
             return redirect()->route('projects.show', $project)
                 ->with('success', 'Project updated successfully.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to update project: ' . $e->getMessage());
+            return back()->with('error', SafeErrors::message($e, 'Failed to update project'));
         }
     }
 
@@ -133,7 +134,7 @@ class ProjectController extends Controller
             return redirect()->route('projects.index')
                 ->with('success', 'Project deleted successfully.');
         } catch (\Exception $e) {
-            return back()->with('error', 'Failed to delete project: ' . $e->getMessage());
+            return back()->with('error', SafeErrors::message($e, 'Failed to delete project'));
         }
     }
 
@@ -158,7 +159,7 @@ class ProjectController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update project progress: ' . $e->getMessage()
+                'message' => SafeErrors::message($e, 'Failed to update project progress')
             ], 500);
         }
     }

@@ -6,6 +6,7 @@ use App\Models\Contract;
 use App\Services\BudgetTrackingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Support\SafeErrors;
 
 class BudgetController extends Controller
 {
@@ -37,7 +38,7 @@ class BudgetController extends Controller
 
             return view('admin.budgets.index', compact('budgetData'));
         } catch (\Exception $e) {
-            Log::error('Error in budget index: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error in budget index');
             return redirect()->back()->with('error', 'Error loading budget data');
         }
     }
@@ -50,7 +51,7 @@ class BudgetController extends Controller
 
             return view('admin.budgets.show', compact('contract', 'report', 'alert'));
         } catch (\Exception $e) {
-            Log::error('Error in budget show: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error in budget show');
             return redirect()->back()->with('error', 'Error generating budget report');
         }
     }
@@ -65,7 +66,7 @@ class BudgetController extends Controller
             
             return $pdf->download('budget-report-' . $contract->contract_number . '.pdf');
         } catch (\Exception $e) {
-            Log::error('Error exporting budget report: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error exporting budget report');
             return redirect()->back()->with('error', 'Error exporting budget report');
         }
     }
@@ -89,7 +90,7 @@ class BudgetController extends Controller
 
             return response()->json($alerts);
         } catch (\Exception $e) {
-            Log::error('Error getting budget alerts: ' . $e->getMessage());
+            SafeErrors::log($e, 'Error getting budget alerts');
             return response()->json(['error' => 'Error retrieving budget alerts'], 500);
         }
     }

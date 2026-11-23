@@ -1,4 +1,5 @@
 // App shell behaviour: mobile drawer, collapsible sidebar, active nav link, flash auto-hide, live unread badges.
+import './upload-limits.js';
 
 const root = document.documentElement;
 
