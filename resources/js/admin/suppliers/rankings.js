@@ -18,60 +18,108 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeSearch();
 });
 
-// Chart initialization
+// --- Top Performing Suppliers chart ---------------------------------------------------------
+// Podium colours by overall rank (validated: contrast >= 3:1 on white, distinct for colour-blind readers).
+// Rank is also shown by the badges and names, so colour is never the only cue.
+const PODIUM = { 1: '#9c7206', 2: '#4a78b0', 3: '#b85c22' };
+const INK = '#0f172a';      // value labels: text ink, never the bar colour
+const MUTED = '#64748b';    // axis ticks
+const GRID = '#e2e8f0';
+
+// Draws each bar's score just above it (Chart.js has no built-in data labels).
+const valueLabels = {
+    id: 'rkValueLabels',
+    afterDatasetsDraw(chart) {
+        const { ctx } = chart;
+        const meta = chart.getDatasetMeta(0);
+        ctx.save();
+        ctx.font = '600 13px system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+        ctx.fillStyle = INK;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        meta.data.forEach((bar, i) => {
+            const value = chart.data.datasets[0].data[i];
+            ctx.fillText(Number(value).toFixed(2), bar.x, bar.y - 6);
+        });
+        ctx.restore();
+    },
+};
+
 function initializeChart() {
-    const rankings = window.rankingsData || [];
-    const topSuppliers = rankings.slice(0, 3);
-    const ctx = document.getElementById('topSuppliersChart')?.getContext('2d');
-    
-    if (ctx && topSuppliers.length > 0) {
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: topSuppliers.map(s => s.supplier.company_name),
-                datasets: [{
-                    label: 'Overall Score',
-                    data: topSuppliers.map(s => s.score),
-                    backgroundColor: ['#FFD700', '#C0C0C0', '#CD7F32'],
-                    borderColor: ['#FFD700', '#C0C0C0', '#CD7F32'],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        max: 5
-                    }
+    const top = (window.__page && window.__page.topSuppliers) || [];
+    const canvas = document.getElementById('topSuppliersChart');
+    if (!canvas || top.length === 0) return;
+
+    const colors = top.map((s) => PODIUM[s.rank] || MUTED);
+    const chart = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: top.map((s) => s.name),
+            datasets: [{
+                label: 'Overall score',
+                data: top.map((s) => s.score),
+                backgroundColor: colors,
+                hoverBackgroundColor: colors,
+                borderRadius: { topLeft: 8, topRight: 8 },   // rounded data end, square at the baseline
+                borderSkipped: 'start',
+                barPercentage: 0.55,
+                categoryPercentage: 0.7,
+                maxBarThickness: 80,
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 24 } },               // room for the value labels
+            animation: { duration: 400 },
+            scales: {
+                // Bars start at zero on the score's real 0-5 range: a cut axis would exaggerate small gaps.
+                y: {
+                    min: 0, max: 5,
+                    ticks: { stepSize: 1, color: MUTED, font: { size: 11 } },
+                    grid: { color: GRID, lineWidth: 1, drawTicks: false },
+                    border: { display: false, dash: [4, 4] },   // v4: border.dash styles the gridlines (soft, dashed)
                 },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-        
-        // Create custom legend
-        const legendContainer = document.getElementById('topSuppliersLegend');
-        const medals = ['🥇', '🥈', '🥉'];
-        topSuppliers.forEach((supplier, index) => {
-            const div = document.createElement('div');
-            div.className = 'mb-3';
-            div.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <span class="me-2">${medals[index]}</span>
-                    <div>
-                        <h6 class="mb-0">${supplier.supplier.company_name}</h6>
-                        <small class="text-muted">Score: ${supplier.score.toFixed(2)}</small>
-                    </div>
-                </div>
-            `;
-            legendContainer?.appendChild(div);
-        });
-    }
+                x: {
+                    grid: { display: false },
+                    border: { color: GRID },
+                    ticks: { color: '#334155', font: { size: 12, weight: '600' } },
+                },
+            },
+            plugins: {
+                legend: { display: false },                    // one series: the card title names it
+                tooltip: {
+                    backgroundColor: '#0f172a',
+                    padding: 10,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        title: (items) => `#${top[items[0].dataIndex].rank} · ${items[0].label}`,
+                        label: (item) => `Overall score: ${Number(item.raw).toFixed(2)} / 5`,
+                    },
+                },
+            },
+        },
+        plugins: [valueLabels],
+    });
+    // Hovering / focusing a Performance Metrics row highlights its bar
+    document.querySelectorAll('.rk-item[data-chart-index]').forEach((item) => {
+        const index = Number(item.dataset.chartIndex);
+        const show = () => {
+            chart.setActiveElements([{ datasetIndex: 0, index }]);
+            chart.tooltip.setActiveElements([{ datasetIndex: 0, index }], { x: 0, y: 0 });
+            chart.update();
+        };
+        const hide = () => {
+            chart.setActiveElements([]);
+            chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+            chart.update();
+        };
+        item.addEventListener('mouseenter', show);
+        item.addEventListener('focus', show);
+        item.addEventListener('mouseleave', hide);
+        item.addEventListener('blur', hide);
+    });
 }
 
 // Score controls (increment/decrement buttons)
@@ -402,7 +450,3 @@ function initializeFormSubmission() {
     });
 }
 
-// Expose rankings data from Blade
-if (typeof rankings === 'undefined' && window.rankingsData === undefined) {
-    window.rankingsData = [];
-}

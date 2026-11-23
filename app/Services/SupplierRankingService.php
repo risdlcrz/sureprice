@@ -46,6 +46,20 @@ class SupplierRankingService
             ->values();
     }
 
+    /**
+     * The overall top suppliers (ignoring any search), as compact rows for the rankings chart:
+     * [['rank' => int, 'name' => string, 'score' => float], ...]. Suppliers without a score are left out.
+     */
+    public function topSuppliers(int $count = 3): Collection
+    {
+        return $this->cachedRankings()
+            ->filter(fn ($row) => $row['rank'] !== null && (float) $row['score'] > 0)
+            ->sortBy('rank')
+            ->take($count)
+            ->map(fn ($row) => ['rank' => (int) $row['rank'], 'name' => $row['supplier']->company_name, 'score' => round((float) $row['score'], 2)])
+            ->values();
+    }
+
     public static function forgetCache(): void
     {
         \Illuminate\Support\Facades\Cache::forget(self::CACHE_KEY);

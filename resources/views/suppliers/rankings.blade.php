@@ -1,4 +1,4 @@
-{{-- Supplier rankings (admin and procurement). Params: $rankings, $search, $canEvaluate (admin), $backRoute. --}}
+{{-- Supplier rankings (admin and procurement). Params: $rankings, $topSuppliers (overall top 3: rank, name, score), $search, $canEvaluate (admin), $backRoute. --}}
 @extends('layouts.app')
 
 @section('title', 'Supplier Rankings')
@@ -10,21 +10,53 @@
 @endphp
 
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid rankings-page">
     <x-page-header title="Supplier Rankings" icon="trophy">
         <a href="{{ route($backRoute) }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Analytics</a>
     </x-page-header>
 
     <div class="card mb-4">
-        <div class="card-header">Top Performing Suppliers</div>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Top Performing Suppliers</span>
+            <span class="rk-scale-note">Overall score, 0&ndash;5</span>
+        </div>
         <div class="card-body">
-            <div class="row">
-                <div class="col-md-8"><canvas id="topSuppliersChart" height="200"></canvas></div>
-                <div class="col-md-4">
-                    <h6 class="text-muted mb-3">Performance Metrics</h6>
-                    <div id="topSuppliersLegend"></div>
+            @if($topSuppliers->isEmpty())
+                <p class="text-muted text-center my-4">No supplier has been evaluated yet.</p>
+            @else
+                <div class="row g-4 align-items-stretch">
+                    <div class="col-lg-8">
+                        {{-- Height includes the x-axis labels so the card never scrolls --}}
+                        <div class="rk-chart"><canvas id="topSuppliersChart" role="img"
+                            aria-label="Bar chart of the top {{ $topSuppliers->count() }} suppliers by overall score out of 5: {{ $topSuppliers->map(fn ($s) => $s['name'] . ' ' . number_format($s['score'], 2))->implode(', ') }}"></canvas></div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="rk-metrics">
+                            <h6 class="rk-metrics-title">Performance Metrics</h6>
+                            @php $leader = $topSuppliers->first()['score']; @endphp
+                            {{-- A plain list (no <ol>): the rank badge is the only rank number --}}
+                            <div class="rk-list" role="list">
+                                @foreach($topSuppliers as $i => $top)
+                                    <div class="rk-item" role="listitem" data-chart-index="{{ $i }}" tabindex="0">
+                                        <div class="rk-left">
+                                            <span class="rk-badge rk-badge--{{ $top['rank'] }}" aria-label="Rank {{ $top['rank'] }}">{{ $top['rank'] }}</span>
+                                            <span class="rk-name">{{ $top['name'] }}</span>
+                                        </div>
+                                        <div class="rk-right">
+                                            <span class="rk-score-value">{{ number_format($top['score'], 2) }}</span>
+                                            @if($loop->first)
+                                                <span class="rk-delta rk-delta--lead">Leader</span>
+                                            @else
+                                                <span class="rk-delta">&minus;{{ number_format($leader - $top['score'], 2) }} vs #1</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            @endif
         </div>
     </div>
 
@@ -45,26 +77,32 @@
             </form>
 
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table class="table rk-table mb-0">
                     <thead>
                         <tr>
-                            <th>Rank</th><th>Company Name</th><th>Score</th>
-                            @foreach($scores as [$heading])<th>{{ $heading }}</th>@endforeach
-                            @if($canEvaluate)<th>Actions</th>@endif
+                            <th class="rk-rank-col">Rank</th><th>Company Name</th><th class="text-end">Score</th>
+                            @foreach($scores as [$heading])<th class="text-end">{{ $heading }}</th>@endforeach
+                            @if($canEvaluate)<th class="text-end">Actions</th>@endif
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($rankings as $ranking)
                             @php $latest = $ranking['supplier']->evaluations->last(); @endphp
                             <tr>
-                                <td>{{ $ranking['rank'] ?? 'N/A' }}</td>
-                                <td>{{ $ranking['supplier']->company_name }}</td>
-                                <td>{{ number_format($ranking['score'], 2) }}</td>
+                                <td class="rk-rank-col">
+                                    @if(in_array($ranking['rank'], [1, 2, 3], true))
+                                        <span class="rk-badge rk-badge--{{ $ranking['rank'] }}">{{ $ranking['rank'] }}</span>
+                                    @else
+                                        <span class="rk-rank-plain">{{ $ranking['rank'] ?? '—' }}</span>
+                                    @endif
+                                </td>
+                                <td class="rk-company">{{ $ranking['supplier']->company_name }}</td>
+                                <td class="rk-num fw-semibold">{{ number_format($ranking['score'], 2) }}</td>
                                 @foreach($scores as [, $attr])
-                                    <td>{{ $latest ? number_format($latest->$attr, 2) : 'N/A' }}</td>
+                                    <td class="rk-num">{{ $latest ? number_format($latest->$attr, 2) : '—' }}</td>
                                 @endforeach
                                 @if($canEvaluate)
-                                    <td>
+                                    <td class="text-end">
                                         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#evaluationModal"
                                                 data-supplier-id="{{ $ranking['supplier']->id }}">
                                             <i class="fas fa-star"></i> Evaluate
@@ -95,7 +133,7 @@
 
 @push('scripts')
     <script>
-        window.rankingsData = {{ Js::from($rankings) }};
+        window.__page = Object.assign(window.__page || {}, { topSuppliers: {{ Js::from($topSuppliers) }} });
         window.appBaseUrl = {{ Js::from(url('')) }};
     </script>
     @vite(['resources/js/admin/suppliers/rankings.js'])

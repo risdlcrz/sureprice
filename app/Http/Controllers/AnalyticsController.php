@@ -36,6 +36,7 @@ class AnalyticsController extends Controller
 
         return view('suppliers.rankings', [
             'rankings' => $this->rankingService->cachedRankings($search),
+            'topSuppliers' => $this->rankingService->topSuppliers(),
             'search' => $search,
             'canEvaluate' => $request->user()->isAdmin(),
             'backRoute' => 'admin.analytics',

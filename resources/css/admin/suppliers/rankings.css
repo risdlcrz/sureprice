@@ -144,3 +144,111 @@
     outline: 2px solid #198754;
     outline-offset: 1px;
 }
+/* ===== Supplier Rankings page (scoped) ===== */
+.rankings-page {
+    --rk-ink: #14532d;
+    --rk-border: #e2e8f0;
+    --rk-muted: #64748b;
+    --rk-hover: rgba(236, 253, 245, 0.6);
+    --rk-gold: #9c7206;
+    --rk-steel: #4a78b0;
+    --rk-bronze: #b85c22;
+}
+.rankings-page .rk-scale-note { font-size: 0.78rem; font-weight: 500; color: var(--rk-muted); }
+
+/* Chart: fixed height that includes the x-axis labels */
+.rankings-page .rk-chart { position: relative; height: 260px; }
+
+/* Rank badges (panel + table) */
+.rankings-page .rk-badge {
+    flex: none;
+    display: inline-grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+.rankings-page .rk-badge--1 { background: var(--rk-gold); }
+.rankings-page .rk-badge--2 { background: var(--rk-steel); }
+.rankings-page .rk-badge--3 { background: var(--rk-bronze); }
+.rankings-page .rk-rank-plain {
+    display: inline-block;
+    min-width: 1.75rem;
+    text-align: center;
+    font-weight: 600;
+    color: var(--rk-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Performance Metrics panel */
+.rankings-page .rk-metrics { height: 100%; padding-left: 1.25rem; border-left: 1px solid var(--rk-border); }
+.rankings-page .rk-metrics-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--rk-muted);
+    margin-bottom: 0.75rem;
+}
+.rankings-page .rk-list { display: grid; gap: 0.5rem; margin: 0; padding: 0; }
+/* One structured row: badge + name on the left, score + delta pill on the right */
+.rankings-page .rk-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--rk-border);
+    border-radius: 0.6rem;
+    background: #fff;
+    transition: background-color 0.15s, border-color 0.15s;
+    cursor: default;
+}
+.rankings-page .rk-item:hover,
+.rankings-page .rk-item:focus-visible { background: var(--rk-hover); border-color: #a7d7b8; outline: none; }
+.rankings-page .rk-item:focus-visible { box-shadow: 0 0 0 2px rgba(20, 83, 45, 0.35); }
+.rankings-page .rk-left { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
+.rankings-page .rk-name { min-width: 0; font-weight: 600; color: #0f172a; line-height: 1.3; }
+.rankings-page .rk-right { flex: none; display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+.rankings-page .rk-score-value { font-size: 1.05rem; font-weight: 700; color: var(--rk-ink); font-variant-numeric: tabular-nums; }
+.rankings-page .rk-delta {
+    display: inline-block;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.rankings-page .rk-delta--lead { background: #dcfce7; color: var(--rk-ink); }
+
+/* All Suppliers table */
+.rankings-page .table-responsive:has(> .rk-table) { border: 1px solid var(--rk-border); border-radius: 0.75rem; }
+.rankings-page .rk-table { font-size: 0.875rem; }
+.rankings-page .rk-table > :not(caption) > * > * { padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--rk-border); vertical-align: middle; }
+.rankings-page .rk-table > thead > tr > th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.rankings-page .rk-table > tbody > tr:last-child > td { border-bottom: 0; }
+.rankings-page .rk-table > tbody > tr > td { transition: background-color 0.15s; }
+.rankings-page .rk-table > tbody > tr:hover > td { background: var(--rk-hover); }
+.rankings-page .rk-rank-col { width: 4rem; text-align: center; }
+.rankings-page .rk-company { font-weight: 600; color: #0f172a; }
+.rankings-page .rk-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+@media (max-width: 991.98px) {
+    .rankings-page .rk-metrics { padding-left: 0; border-left: 0; padding-top: 1rem; border-top: 1px solid var(--rk-border); }
+    .rankings-page .rk-chart { height: 240px; }
+}

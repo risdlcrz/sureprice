@@ -386,8 +386,11 @@ class ProcurementController extends Controller
         $this->logPageView('Viewed Suppliers Rankings Page');
         $search = trim((string) $request->query('search', '')) ?: null;
 
+        $rankingService = app(\App\Services\SupplierRankingService::class);
+
         return view('suppliers.rankings', [
-            'rankings' => app(\App\Services\SupplierRankingService::class)->cachedRankings($search),
+            'rankings' => $rankingService->cachedRankings($search),
+            'topSuppliers' => $rankingService->topSuppliers(),
             'search' => $search,
             'canEvaluate' => false,
             'backRoute' => 'procurement.analytics',
