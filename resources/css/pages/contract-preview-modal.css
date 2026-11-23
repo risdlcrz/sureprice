@@ -33,7 +33,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    padding: 10px 12px 10px 18px;
+    padding: 10px 18px;
     background: #111;
     color: #fff;
     font-family: Arial, Helvetica, sans-serif;
@@ -63,21 +63,7 @@
 .cp-btn.primary { background: #fff; color: #000; border-color: #fff; }
 .cp-btn.primary:hover { background: #e5e5e5; color: #000; }
 .cp-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.cp-btn svg, .cp-x svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-.cp-x {
-    display: inline-grid;
-    place-items: center;
-    width: 36px;
-    height: 36px;
-    margin-left: 4px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: #fff;
-    cursor: pointer;
-}
-.cp-x:hover { background: rgba(255, 255, 255, 0.12); }
-.cp-x:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.cp-btn svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 /* Scrollable area holding the letter-size sheet */
 .cp-scroll { flex: 1 1 auto; overflow: auto; padding: 24px; overscroll-behavior: contain; }
@@ -107,7 +93,7 @@ body.cp-open { overflow: hidden; }
     body.cp-open { overflow: visible; background: #fff !important; }
     .cp-modal { position: static; display: block; padding: 0; background: none; animation: none; }
     .cp-dialog { display: block; width: auto; max-height: none; border-radius: 0; box-shadow: none; background: none; overflow: visible; }
-    .cp-toolbar, .cp-actions, .cp-btn, .cp-x { display: none !important; }
+    .cp-toolbar, .cp-actions, .cp-btn { display: none !important; }
     .cp-scroll { overflow: visible; padding: 0; }
     .cp-sheet { width: auto; min-height: 0; padding: 0; box-shadow: none; }
 }

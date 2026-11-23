@@ -37,7 +37,6 @@ function build() {
                     <button type="button" class="cp-btn" data-cp-close>${ICONS.close} Close Preview</button>
                     <button type="button" class="cp-btn" data-cp-print>${ICONS.print} Print</button>
                     <a class="cp-btn primary" data-cp-pdf href="#">${ICONS.pdf} Save as PDF</a>
-                    <button type="button" class="cp-x" data-cp-close aria-label="Close preview">${ICONS.close}</button>
                 </div>
             </div>
             <div class="cp-scroll"><div class="cp-sheet"></div></div>
