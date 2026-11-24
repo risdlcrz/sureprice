@@ -61,10 +61,10 @@
     ];
 
     $features = [
-        ['tags', 'Fair, compared pricing', 'Supplier prices are ranked on cost, delivery and quality so every quote reflects the market.'],
-        ['diagram-project', 'Project timeline', 'See each scope of work, its schedule and progress in one place.'],
-        ['money-check-dollar', 'Clear payments', 'Know what is due and when, upload proof of payment and see it verified.'],
-        ['comments', 'Direct messaging', 'Talk to the SurePrice team about your project without leaving the platform.'],
+        ['tags', 'Data-Driven Supplier Scoring', 'Evaluate vendors consistently across price and performance metrics instead of sorting through disconnected quotes.'],
+        ['diagram-project', 'Streamlined Bid-to-Award Workflow', 'Move from sourcing to approval faster with fewer manual handoffs and bottlenecks.'],
+        ['money-check-dollar', 'Disciplined Budget Control', 'Allocate orders strategically to protect project margins and minimize costly last-minute changes.'],
+        ['comments', 'Traceable, Contract-Ready Records', 'Maintain clear documentation and formal contract previews that support accountability and faster sign-off.'],
     ];
 @endphp
 
@@ -75,10 +75,10 @@
         <div class="row align-items-center g-5">
             <div class="col-lg-6 lp-reveal">
                 <span class="lp-eyebrow"><i class="fas fa-hard-hat me-2"></i>Construction &amp; procurement management</span>
-                <h1 class="lp-hero-title">Build with confidence.<br><span>Priced right, every time.</span></h1>
+                <h1 class="lp-hero-title">Streamline Procurement.<br><span>Maximize Project Margins.</span></h1>
                 <p class="lp-hero-text">
-                    SurePrice handles your fit-out, painting, MEPFS and infrastructure projects end to end —
-                    from a transparent, itemised quotation to supplier procurement, contracts and delivery.
+                    SurePrice empowers construction firms to replace manual bidding bottlenecks with intelligent supplier evaluation
+                    and automated cost optimization—turning complex procurement workflows into fast, data-driven decisions.
                 </p>
                 <div class="d-flex flex-wrap gap-2 mt-4">
                     <a href="{{ route('client.quotation.create') }}" class="btn btn-light btn-lg lp-btn-primary">
@@ -184,11 +184,10 @@
     <div class="container">
         <div class="row align-items-center g-5">
             <div class="col-lg-5 lp-reveal">
-                <span class="lp-kicker">Why SurePrice</span>
-                <h2 class="lp-h2">One platform for the whole project</h2>
+                <h2 class="lp-h2">Why SurePrice</h2>
                 <p class="lp-muted">
-                    Clients, our project team and accredited suppliers work in the same system — so quotations,
-                    purchase orders, deliveries and payments always line up.
+                    Purpose-built to bring structure, speed, and financial clarity to construction procurement—from
+                    supplier evaluation to final award.
                 </p>
                 <img src="{{ asset('images/mepf.jpeg') }}" alt="MEPFS works in progress" class="lp-feature-img" loading="lazy">
             </div>
