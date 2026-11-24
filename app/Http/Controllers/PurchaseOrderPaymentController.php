@@ -13,7 +13,7 @@ class PurchaseOrderPaymentController extends Controller
     public function store(Request $request, $poId)
     {
         // Only the purchasing/finance staff record payments to suppliers.
-        abort_unless(in_array(Auth::user()->role, ['admin', 'manager', 'finance', 'procurement', 'contractor'], true), 403);
+        abort_unless(collect(['admin', 'manager', 'finance', 'procurement'])->contains(fn ($role) => Auth::user()->hasRole($role)), 403);
         $po = PurchaseOrder::findOrFail($poId);
         $data = $request->validate([
             'amount' => 'required|numeric|min:0.01',

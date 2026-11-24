@@ -11,8 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Only the listed reverse proxies may set X-Forwarded-* (client IP for throttles, https detection).
+        $middleware->trustProxies(at: array_filter(explode(',', (string) env('TRUSTED_PROXIES', '127.0.0.1'))));
         // Signed-in users who open a guest page (login, register) go to their own home page.
         $middleware->redirectUsersTo(fn (\Illuminate\Http\Request $request) => route($request->user()->homeRoute()));
+        // Production: plain-HTTP requests are redirected to HTTPS (after trusted proxies are applied).
+        $middleware->append(\App\Http\Middleware\ForceHttps::class);
         // Locked accounts (User::lockBy) are signed out on their next request.
         $middleware->web(append: [\App\Http\Middleware\EnsureAccountIsNotLocked::class]);
     })

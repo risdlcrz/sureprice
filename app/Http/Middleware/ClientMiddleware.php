@@ -43,11 +43,10 @@ class ClientMiddleware
                 return redirect()->route('login.form')->with('error', 'No company associated with this account.');
             }
 
-            // Remove or comment out this block to allow approved clients to log in without approval check
-            // if ($user->company->status !== 'approved') {
-            //     Auth::logout();
-            //     return redirect()->route('login.form')->with('error', 'Company account is not approved.');
-            // }
+            // Pending / rejected companies go to their status page (User::homeRoute), not the client area.
+            if ($user->company->status !== 'approved') {
+                return redirect()->route($user->homeRoute());
+            }
 
             // Check company designation
             if ($user->company->designation !== 'client') {

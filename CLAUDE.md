@@ -90,7 +90,7 @@ events).
 ## Known open items
 
 - Apache DocumentRoot should point at `public/`, and `APP_DEBUG=false` in production.
-- The rejected-account appeal address is `SUPPORT_EMAIL` (config `app.support_email`); its default is still a personal address — set it in `.env`.
+- The rejected-account appeal address is `SUPPORT_EMAIL` (config `app.support_email`) — set it in `.env`.
 - `LogAdminActivityMiddleware` exists but is not registered.
 - Some analytics queries use MySQL-only functions (`YEAR`, `MONTH`, `DATE_FORMAT`) — supplier dashboard sales chart,
   warehouse reports, feedback and budget analytics — so those pages don't run on SQLite (tests, scratch DBs).

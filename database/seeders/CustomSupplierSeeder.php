@@ -18,6 +18,11 @@ class CustomSupplierSeeder extends Seeder
 {
     public function run()
     {
+        // Demo accounts with a fixed, published password: never on a live system.
+        if (app()->isProduction()) {
+            $this->command?->warn(static::class . ' skipped: it creates demo accounts and must not run in production.');
+            return;
+        }
         $supplierNames = [
             'Aguila Construction Supply', 'Bayanihan Builders', 'Luzviminda Hardware', 'Mabuhay Materials Co.',
             'Pinoy Prime Supplies', 'Tagumpay Trading', 'Lakbay Construction Depot', 'Matatag Merchandising',

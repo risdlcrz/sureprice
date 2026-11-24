@@ -324,7 +324,7 @@ class MessageController extends Controller
     public function destroyMessage(Message $message)
     {
         $user = Auth::user();
-        if ($message->sender_id !== $user->id && $user->user_type !== 'admin') {
+        if ($message->sender_id !== $user->id && !$user->isAdmin()) {
             abort(403);
         }
         $message->delete();
@@ -337,7 +337,7 @@ class MessageController extends Controller
     public function removeAttachment(Message $message)
     {
         $user = Auth::user();
-        if ($message->sender_id !== $user->id && $user->user_type !== 'admin') {
+        if ($message->sender_id !== $user->id && !$user->isAdmin()) {
             abort(403);
         }
         if ($message->image) {

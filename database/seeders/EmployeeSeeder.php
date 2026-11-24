@@ -12,6 +12,11 @@ class EmployeeSeeder extends Seeder
 {
     public function run(): void
     {
+        // Demo accounts with a fixed, published password: never on a live system.
+        if (app()->isProduction()) {
+            $this->command?->warn(static::class . ' skipped: it creates demo accounts and must not run in production.');
+            return;
+        }
         // More realistic Filipino data (DEMO/TEST DATA)
         $employeeCount = 60;
         $firstNames = ['Juan', 'Maria', 'Jose', 'Ana', 'Pedro', 'Luz', 'Carlos', 'Rosa', 'Antonio', 'Carmen', 'Miguel', 'Isabel', 'Manuel', 'Teresa', 'Francisco', 'Gloria', 'Ramon', 'Elena', 'Roberto', 'Patricia', 'Andres', 'Emilio', 'Estrella', 'Julio', 'Ligaya', 'Mariano', 'Nicanor', 'Pilar', 'Salvador', 'Victoria'];

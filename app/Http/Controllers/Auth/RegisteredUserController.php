@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\Employee;
 use App\Models\Company;
 use App\Models\CompanyDocument;
 use Illuminate\Auth\Events\Registered;
@@ -14,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use App\Support\Uploads;
 use App\Support\SafeErrors;
@@ -51,17 +51,15 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request)
     {
-        $type = $request->input('type'); // expect 'employee' or 'company'
+        // Public sign-up is for client / supplier companies only. Staff accounts are created by an admin
+        // (Information Management), never self-registered, so nobody can give themselves a staff role here.
+        if ($request->input('type') !== 'company') {
+            return back()->withInput()->withErrors(['type' => 'Invalid registration type.']);
+        }
 
         // Validate first, before starting transaction
         try {
-            if ($type === 'employee') {
-                $validated = $this->validateEmployee($request);
-            } elseif ($type === 'company') {
-                $validated = $this->validateCompany($request);
-            } else {
-                return back()->withInput()->withErrors(['type' => 'Invalid registration type.']);
-            }
+            $validated = $this->validateCompany($request);
         } catch (ValidationException $e) {
             return back()->withErrors($e->validator)->withInput();
         }
@@ -69,52 +67,20 @@ class RegisteredUserController extends Controller
         DB::beginTransaction();
 
         try {
-            if ($type === 'employee') {
-                $user = $this->createUser($validated, 'employee');
-                $employee = $this->createEmployeeRecord($user->id, $validated);
-            } elseif ($type === 'company') {
-                $user = $this->createUser($validated, 'company');
-                $company = $this->createCompanyRecord($user->id, $validated);
-                $this->handleFileUploads($company, $request);
-            } else {
-                return back()->withInput()->withErrors(['type' => 'Invalid registration type.']);
-            }
+            $user = $this->createUser($validated, 'company');
+            $company = $this->createCompanyRecord($user->id, $validated);
+            $this->handleFileUploads($company, $request);
 
-            // Do not log in the user after registration
-            // Auth::login($user);
-
+            // Not logged in: the company waits for an admin to approve it.
             DB::commit();
 
-            // Redirect to pending approval page for both client and supplier
-            if ($type === 'company' && in_array($company->designation, ['client', 'supplier'])) {
-                return redirect()->route('pending.approval');
-            }
-            if ($type === 'employee') {
-                return redirect()->route('pending.approval');
-            }
-
-            // fallback redirect
             return redirect()->route('pending.approval');
-
         } catch (\Exception $e) {
             DB::rollBack();
-            SafeErrors::log($e, $type . ' registration failed');
+            SafeErrors::log($e, 'company registration failed');
 
             return back()->withInput()->withErrors(['error' => 'Registration could not be completed. Please try again, or contact support if it keeps happening.']);
         }
-    }
-
-    protected function validateEmployee(Request $request)
-    {
-        return $request->validate([
-            'firstname' => 'required|string|max:50',
-            'lastname' => 'required|string|max:50',
-            'username' => 'required|string|max:50|unique:users',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|string|confirmed',
-            'role' => 'required|in:procurement,warehousing,finance',
-            'type' => 'required|in:employee,company'
-        ]);
     }
 
     protected function validateCompany(Request $request)
@@ -123,7 +89,7 @@ class RegisteredUserController extends Controller
         $rules = [
             'username' => 'required|string|max:50|unique:users',
             'email' => 'required|email|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'string', 'confirmed', Password::defaults()],
             'contact_person' => 'required|string|max:100',
             'mobile_number' => ['required', 'regex:/^09\d{9}$/'],
             'telephone_number' => 'nullable|string|max:20',
@@ -150,7 +116,7 @@ class RegisteredUserController extends Controller
             'sample_price_list' => 'nullable',
             'agree_terms' => 'required|accepted',
             'agree_contact' => 'nullable|boolean',
-            'type' => 'required|in:employee,company',
+            'type' => 'required|in:company',
         ];
 
         // Which document uploads are required for this designation (the file rules themselves come from Uploads below)
@@ -192,46 +158,14 @@ class RegisteredUserController extends Controller
 
     protected function createUser(array $data, string $type)
     {
-        $name = null;
-        
-        if ($type === 'employee') {
-            $name = $data['firstname'] . ' ' . $data['lastname'];
-        } elseif ($type === 'company') {
-            // For company registrations, use company_name if available, otherwise use contact_person
-            if (!empty($data['company_name'])) {
-                $name = $data['company_name'];
-            } else {
-                // For individual clients, use contact_person as the name
-                $name = $data['contact_person'];
-            }
-        }
-
-        $role = null;
-        if ($type === 'company') {
-            $role = $data['designation']; // 'client' or 'supplier'
-        } elseif ($type === 'employee') {
-            $role = $data['role'];
-        }
-
         return User::create([
-            'name' => $name,
+            // Individual clients have no company name: use the contact person.
+            'name' => !empty($data['company_name']) ? $data['company_name'] : $data['contact_person'],
             'username' => $data['username'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'user_type' => $type,
-            'role' => $role,
-        ]);
-    }
-
-    protected function createEmployeeRecord(int $userId, array $data)
-    {
-        return Employee::create([
-            'user_id' => $userId,
-            'username' => $data['username'],
-            'first_name' => $data['firstname'],
-            'last_name' => $data['lastname'],
-            'email' => $data['email'],
-            'role' => $data['role'],
+            'role' => $data['designation'], // 'client' or 'supplier'
         ]);
     }
 

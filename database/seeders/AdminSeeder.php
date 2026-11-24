@@ -11,6 +11,11 @@ class AdminSeeder extends Seeder
 {
     public function run()
     {
+        // Demo accounts with a fixed, published password: never on a live system.
+        if (app()->isProduction()) {
+            $this->command?->warn(static::class . ' skipped: it creates demo accounts and must not run in production.');
+            return;
+        }
         $admins = [
             [
                 'name' => 'Manager One',

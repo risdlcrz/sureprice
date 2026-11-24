@@ -13,6 +13,11 @@ class CustomClientSeeder extends Seeder
 {
     public function run()
     {
+        // Demo accounts with a fixed, published password: never on a live system.
+        if (app()->isProduction()) {
+            $this->command?->warn(static::class . ' skipped: it creates demo accounts and must not run in production.');
+            return;
+        }
         $clientCompanies = [
             'Mabini Realty Group', 'Bayanihan Foods Corp.', 'Lakbay Travel Agency', 'Luntian Eco Solutions',
             'Silangan Tech Ventures', 'Gintong Ani Farms', 'Kaagapay Lending Inc.', 'Dalisay Water Refilling',

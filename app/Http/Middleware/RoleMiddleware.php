@@ -22,6 +22,10 @@ class RoleMiddleware
             abort(403, 'Unauthorized action.');
         }
         $user = Auth::user();
+        // Client / supplier companies get no role access until an admin approves them.
+        if ($user->user_type === 'company' && $user->company?->status !== 'approved') {
+            abort(403, 'Company account is not approved.');
+        }
         foreach ($roles as $role) {
             if ($user->hasRole($role)) {
                 return $next($request);

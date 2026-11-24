@@ -20,11 +20,10 @@ class SupplierMiddleware
         if (Auth::check() && Auth::user()->hasRole('supplier')) {
             // Additional check for approval status if necessary
             $user = Auth::user();
-            // Remove or comment out this block to allow approved suppliers to log in without approval check
-            // if ($user->company && $user->company->status !== 'approved') {
-            //     Auth::logout();
-            //     return redirect()->route('login.form')->with('error', 'Your supplier account is not approved yet.');
-            // }
+            // Pending / rejected companies go to their status page (User::homeRoute), not the supplier area.
+            if ($user->company?->status !== 'approved') {
+                return redirect()->route($user->homeRoute());
+            }
             return $next($request);
         }
 

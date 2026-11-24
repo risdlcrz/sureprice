@@ -10,7 +10,7 @@ class CompanyController extends Controller
 
     public function searchForChat(Request $request)
     {
-        if (!auth()->check() || !(auth()->user()->user_type === 'admin' || auth()->user()->role === 'manager')) {
+        if (!auth()->check() || !(auth()->user()->isAdmin() || auth()->user()->hasRole('manager'))) {
             return response()->json(['data' => []], 403);
         }
         $search = $request->input('search', '');

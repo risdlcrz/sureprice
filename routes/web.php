@@ -62,11 +62,11 @@ Route::middleware(['auth'])->get('/home', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/account', [\App\Http\Controllers\AccountController::class, 'edit'])->name('account.edit');
     Route::put('/account', [\App\Http\Controllers\AccountController::class, 'update'])->name('account.update');
-    Route::post('/account/photo', [\App\Http\Controllers\AccountController::class, 'updatePhoto'])->name('account.photo.update');
+    Route::post('/account/photo', [\App\Http\Controllers\AccountController::class, 'updatePhoto'])->middleware('throttle:uploads')->name('account.photo.update');
     Route::delete('/account/photo', [\App\Http\Controllers\AccountController::class, 'destroyPhoto'])->name('account.photo.destroy');
     Route::get('/avatars/{user}', [\App\Http\Controllers\AvatarController::class, 'show'])->name('avatars.show');
     // Clients: change the registered company name (applied after an admin approves the uploaded proof)
-    Route::post('/account/company-name', [\App\Http\Controllers\CompanyChangeRequestController::class, 'store'])->name('account.company-name.store');
+    Route::post('/account/company-name', [\App\Http\Controllers\CompanyChangeRequestController::class, 'store'])->middleware('throttle:uploads')->name('account.company-name.store');
     Route::delete('/account/company-name/{changeRequest}', [\App\Http\Controllers\CompanyChangeRequestController::class, 'destroy'])->name('account.company-name.destroy');
     Route::get('/company-changes/{changeRequest}/proof', [\App\Http\Controllers\CompanyChangeRequestController::class, 'proof'])->name('company-changes.proof');
 });
@@ -92,7 +92,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login.form');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login');
     Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
-    Route::post('/register/company', [RegisteredUserController::class, 'store'])->name('register.company');
+    Route::post('/register/company', [RegisteredUserController::class, 'store'])->middleware('throttle:auth')->name('register.company');
 });
 // Handle Logout
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
@@ -101,7 +101,7 @@ Route::get('/pending-approval', [RegisteredUserController::class, 'pendingApprov
 
 // ================== Guest Quotation (Ask Quotation - no login required) ==================
 Route::get('/client/quotation/create', [\App\Http\Controllers\ClientQuotationController::class, 'create'])->name('client.quotation.create');
-Route::post('/client/quotation/store', [\App\Http\Controllers\ClientQuotationController::class, 'store'])->name('client.quotation.store');
+Route::post('/client/quotation/store', [\App\Http\Controllers\ClientQuotationController::class, 'store'])->middleware('throttle:public-form')->name('client.quotation.store');
 
 // ================== Supplier Invitation Response (link from the invitation email - no login required) ==================
 Route::get('/invitations/{code}', [SupplierInvitationController::class, 'showResponse'])->name('supplier.respond');
@@ -171,8 +171,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware('role:admin,manager,procurement,contractor')->group(function () {
         // Supporting routes for contract form
-        Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
-        Route::get('/materials/search', [MaterialController::class, 'search'])->name('materials.search');
+        Route::get('/clients/search', [ClientController::class, 'search'])->middleware('throttle:search')->name('clients.search');
+        Route::get('/materials/search', [MaterialController::class, 'search'])->middleware('throttle:search')->name('materials.search');
         Route::get('/materials/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('materials.suppliers');
         // Material Routes
         Route::prefix('materials')->name('materials.')->group(function () {
@@ -184,7 +184,7 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/{material}', [MaterialController::class, 'update'])->name('update');
             Route::delete('/{material}', [MaterialController::class, 'destroy'])->name('destroy');
             Route::delete('/{material}/images/{image}', [MaterialController::class, 'destroyImage'])->name('images.destroy');
-            Route::get('/search', [MaterialController::class, 'search'])->name('search');
+            Route::get('/search', [MaterialController::class, 'search'])->middleware('throttle:search')->name('search');
             Route::get('/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('suppliers');
             Route::post('/update-srp', [MaterialController::class, 'updateSrpPrices'])->name('update-srp');
             Route::post('/ajax-store', [MaterialController::class, 'ajaxStore'])->name('ajax-store');
@@ -193,10 +193,10 @@ Route::middleware(['auth'])->group(function () {
         });
         // API Material Routes
         Route::prefix('api/materials')->name('api.materials.')->group(function () {
-            Route::get('/search', [MaterialController::class, 'apiSearch'])->name('search');
+            Route::get('/search', [MaterialController::class, 'apiSearch'])->middleware('throttle:search')->name('search');
             Route::get('/{material}/suppliers', [MaterialController::class, 'suppliers'])->name('suppliers');
             Route::get('/all', [MaterialController::class, 'getAllMaterials'])->name('all');
-            Route::get('/search-by-supplier', [MaterialController::class, 'searchBySupplier'])->name('search-by-supplier');
+            Route::get('/search-by-supplier', [MaterialController::class, 'searchBySupplier'])->middleware('throttle:search')->name('search-by-supplier');
         });
         // Inquiry Routes
         Route::resource('inquiries', InquiryController::class);
@@ -261,7 +261,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', [WarrantyRequestController::class, 'index'])->name('index');
             Route::get('/export', [WarrantyRequestController::class, 'export'])->name('export');
             Route::get('/template', [WarrantyRequestController::class, 'template'])->name('template');
-            Route::post('/import', [WarrantyRequestController::class, 'import'])->name('import');
+            Route::post('/import', [WarrantyRequestController::class, 'import'])->middleware('throttle:uploads')->name('import');
             Route::get('/{warrantyRequest}', [WarrantyRequestController::class, 'show'])->name('show');
             Route::post('/{warrantyRequest}/status', [WarrantyRequestController::class, 'updateStatus'])->name('update-status');
         });
@@ -302,7 +302,7 @@ Route::middleware(['auth'])->group(function () {
     // Message routes
     Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
     Route::post('/messages/start', [MessageController::class, 'startConversation'])->name('messages.start');
-    Route::post('/messages/{conversation}', [MessageController::class, 'store'])->name('messages.store');
+    Route::post('/messages/{conversation}', [MessageController::class, 'store'])->middleware('throttle:uploads')->name('messages.store');
     Route::delete('/messages/{conversation}', [MessageController::class, 'destroy'])->name('messages.destroy');
     Route::delete('/messages/message/{message}', [MessageController::class, 'destroyMessage'])->name('messages.message.destroy');
     Route::delete('/messages/attachment/{message}', [MessageController::class, 'removeAttachment'])->name('messages.attachment.remove');
@@ -313,7 +313,7 @@ Route::middleware(['auth'])->group(function () {
     // Make company search for chat available to all authenticated users (admin check in controller)
     Route::get('/admin/companies/search-for-chat', [\App\Http\Controllers\CompanyController::class, 'searchForChat'])->name('admin.companies.search-for-chat');
     // Purchase Order Payment Routes
-    Route::post('/purchase-orders/{po}/payments', [PurchaseOrderPaymentController::class, 'store'])->name('purchase-orders.payments.store');
+    Route::post('/purchase-orders/{po}/payments', [PurchaseOrderPaymentController::class, 'store'])->middleware('throttle:uploads')->name('purchase-orders.payments.store');
     Route::post('/purchase-order-payments/{payment}/verify', [PurchaseOrderPaymentController::class, 'verify'])->name('purchase-order-payments.verify');
     Route::middleware('role:admin,manager')->group(function () {
         Route::post('/clients/{id}/ban', [\App\Http\Controllers\PartyController::class, 'ban'])->name('clients.ban');
@@ -328,9 +328,9 @@ Route::middleware(['auth', 'role:admin,manager,finance'])->group(function () {
     Route::get('/payments', [PaymentController::class, 'index'])->name('payments.index');
     Route::get('/payments/{payment}', [PaymentController::class, 'show'])->name('payments.show');
     Route::post('/payments/{payment}/mark-as-paid', [PaymentController::class, 'markAsPaid'])->name('payments.markAsPaid');
-    Route::post('/payments/{payment}/upload-proof', [PaymentController::class, 'uploadProof'])->name('payments.uploadProof');
-    Route::post('/payments/{payment}/submit-client-proof', [PaymentController::class, 'submitClientProof'])->name('payments.submitClientProof');
-    Route::post('/payments/{payment}/submit-admin-proof', [PaymentController::class, 'submitAdminProof'])->name('payments.submitAdminProof');
+    Route::post('/payments/{payment}/upload-proof', [PaymentController::class, 'uploadProof'])->middleware('throttle:uploads')->name('payments.uploadProof');
+    Route::post('/payments/{payment}/submit-client-proof', [PaymentController::class, 'submitClientProof'])->middleware('throttle:uploads')->name('payments.submitClientProof');
+    Route::post('/payments/{payment}/submit-admin-proof', [PaymentController::class, 'submitAdminProof'])->middleware('throttle:uploads')->name('payments.submitAdminProof');
     Route::post('/payments/{payment}/verify', [PaymentController::class, 'verify'])->name('payments.verify');
     Route::post('/payments/{payment}/reject', [PaymentController::class, 'rejectPayment'])->name('payments.reject');
     Route::post('/payments/{payment}/request-more-info', [PaymentController::class, 'requestMoreInfo'])->name('payments.request-more-info');
@@ -341,7 +341,7 @@ Route::middleware(['auth', \App\Http\Middleware\ClientMiddleware::class])->prefi
     Route::get('/payments', [\App\Http\Controllers\ClientPaymentController::class, 'index'])->name('payments');
     Route::get('/payments/dashboard', [\App\Http\Controllers\ClientPaymentController::class, 'dashboard'])->name('payments.dashboard');
     Route::get('/payments/{payment}', [\App\Http\Controllers\ClientPaymentController::class, 'show'])->name('payments.show');
-    Route::post('/payments/{payment}/submit-proof', [\App\Http\Controllers\PaymentController::class, 'submitClientProof'])->name('payments.submit-client-proof');
+    Route::post('/payments/{payment}/submit-proof', [\App\Http\Controllers\PaymentController::class, 'submitClientProof'])->middleware('throttle:uploads')->name('payments.submit-client-proof');
     
     // Client Feedback Routes
     Route::get('/feedback', [\App\Http\Controllers\ClientFeedbackController::class, 'index'])->name('feedback.index');
@@ -408,12 +408,12 @@ Route::middleware(['auth', \App\Http\Middleware\ProcurementMiddleware::class])->
 // ================== Email Verification Routes ==================
 // **Removed duplicate route /email/verify here**
 // Remove duplicate client search route
-// Route::get('/clients/search', [ClientController::class, 'search'])->name('clients.search');
+// Route::get('/clients/search', [ClientController::class, 'search'])->middleware('throttle:search')->name('clients.search');
 // Admin protected routes
 // Manager protected operational routes
 Route::middleware(['auth', 'role:admin,manager'])->group(function () {
     Route::resource('information-management', InformationManagementController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
-    Route::post('information-management/import', [InformationManagementController::class, 'import'])->name('information-management.import');
+    Route::post('information-management/import', [InformationManagementController::class, 'import'])->middleware('throttle:uploads')->name('information-management.import');
     Route::get('information-management/template/download', [InformationManagementController::class, 'template'])->name('information-management.template');
     Route::get('/analytics-dashboard', [AnalyticsController::class, 'index'])->name('admin.analytics');
     Route::get('/supplier-rankings', [AnalyticsController::class, 'supplierRankings'])->name('admin.supplier-rankings');
@@ -605,7 +605,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     })->name('dbadmin');
 });
 
-Route::post('/purchase-order-payments/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderPaymentController::class, 'store'])->middleware('auth')->name('purchase-order-payments.store');
+Route::post('/purchase-order-payments/{purchaseOrder}', [\App\Http\Controllers\PurchaseOrderPaymentController::class, 'store'])->middleware(['auth', 'throttle:uploads'])->name('purchase-order-payments.store');
 
 
 // Removed development-only diagnostic endpoints (auth and party debug routes) to keep production routing lean and faster.

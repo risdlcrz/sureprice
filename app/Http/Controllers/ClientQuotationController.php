@@ -87,7 +87,7 @@ class ClientQuotationController extends Controller
 
         // Ensure user is a client (e.g. company with designation client)
         $user = auth()->user();
-        if (!$user->isClientCompany()) {
+        if (!$user->isClientCompany() || $user->company->status !== 'approved') {
             Session::put('guest_quotation_data', $request->all());
             Session::put('redirect_after_login', route('client.quotation.create'));
             return redirect()->route('login.form')
